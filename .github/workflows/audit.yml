@@ -1,0 +1,35 @@
+name: audit
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  rust:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-24.04]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - run: cargo build --release --workspace
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test --workspace
+
+  audit:
+    runs-on: ubuntu-24.04
+    needs: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: dtolnay/rust-toolchain@stable
+      - run: pip install maturin scipy pandas pyarrow
+      - run: maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml
+      - run: pip install target/wheels/rustscenic-*.whl
+      - run: echo "real-time audit pipeline wires up with v0.1 grn implementation"

@@ -18,7 +18,7 @@ enum Commands {
         tfs: String,
         #[arg(long)]
         output: String,
-        #[arg(long, default_value_t = num_cpus::get())]
+        #[arg(long, default_value_t = 0)]
         threads: usize,
         #[arg(long, default_value_t = 777)]
         seed: u64,
