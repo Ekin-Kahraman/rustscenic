@@ -1,0 +1,16 @@
+[package]
+name = "rustscenic-py"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[lib]
+name = "_rustscenic"
+crate-type = ["cdylib"]
+
+[dependencies]
+rustscenic-core = { path = "../rustscenic-core" }
+rustscenic-grn = { path = "../rustscenic-grn" }
+pyo3 = { workspace = true }
+numpy = { workspace = true }
