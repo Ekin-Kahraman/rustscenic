@@ -1,0 +1,426 @@
+# rustscenic — design spec
+
+**Date:** 2026-04-16
+**Author:** Ekin Kahraman (with Claude)
+**Status:** Draft — awaiting user review
+**Target v1.0 completion:** ~2 weeks active Claude+user time, shipped stage-by-stage
+
+---
+
+## 0. One-paragraph pitch
+
+`rustscenic` is a Rust + PyO3 reimplementation of the four slow stages of the SCENIC+ single-cell regulatory-network pipeline — GRNBoost2, AUCell, pycisTopic (LDA), and pycisTarget (motif enrichment) — shipped as a single pip-installable wheel with zero Python runtime dep rot. Each stage is a drop-in replacement for its pyscenic / aertslab counterpart, numerically faithful (edge-rank Spearman ≥0.95, topic ARI ≥0.85), and 3–10× faster. End-to-end SCENIC+ on a 50k-cell dataset goes from **8–16 hours (if it installs at all) → 1–2 hours, one pip install.**
+
+---
+
+## 1. Problem
+
+### 1.1 The bottleneck Moha actually named
+
+From the Apr 13 2026 email thread with Kuan Huang (Mount Sinai) and Mohamed El Moussaoui:
+
+- **Moha #1 pain:** "dependency management... many tools rely on other packages behind the scenes, and this can easily break the environment... combine several tools with incompatible dependencies."
+- **Moha #4 pain:** "scATAC-seq workflows are also quite slow, especially tools involving pycisTopic, pycisTarget, and SCENIC+."
+- **Kuan's explicit steer:** "Maybe addressing moha's ideas is more straightforward in terms of tool dev."
+
+### 1.2 What the profiling confirmed
+
+Local audit (Apr 16 2026) verified both pain points as real:
+
+- **arboreto 0.1.6 (the GRN inference backbone of pyscenic) does not install on modern Python stacks.** Broken against dask 2024+, numpy 2.x, pandas 3.x. Tried 5 dask versions — all fail. Moha's #1 pain, manifested.
+- **pycisTopic repo dormant since Sept 2024** (19 months, 64 open issues, 60 about slowness/memory). Community PR #226 opened 6 days before this spec adding a `tomotopy` backend — patching the symptom, not the dep web.
+- **arboreto last commit: 1 in 4 years.** pyscenic in pure maintenance mode.
+- **flashscenic (Mar 2026, Hao Zhu)** replaced GRNBoost2 with a diffusion model on GPU — fast, but not numerically faithful to pyscenic and requires CUDA + PyTorch stack.
+
+### 1.3 Runtime pain at realistic scales
+
+Per local cProfile on PBMC-3k with 1274 TFs (see `validation/reports/2026-04-16-grnboost2-profile.md`):
+
+| Scale | Single core | 8 cores |
+|---|---|---|
+| PBMC 3k (2700 × 1274 TFs) | 20 min | 2.5 min |
+| 50k-cell atlas | 6 h | 45 min |
+| 200k-cell SCENIC+ eGRN step | 24 h | 3 h |
+
+Time breakdown at GRNBoost2 stage:
+- 62% in sklearn Cython `Tree.build` (the actual work)
+- 38% in Python overhead (sklearn validation, `inspect`, boosting-stage Python loop, numpy scratch)
+- ~4% in Dask scheduling (NOT the bottleneck)
+
+### 1.4 Why no existing tool fixes this
+
+| Tool | What it does | Why it doesn't solve the problem |
+|---|---|---|
+| arboreto (aertslab) | Reference GRNBoost2 | Abandoned, broken on modern deps |
+| pyscenic (aertslab) | Full SCENIC pipeline Python | Same |
+| pycisTopic (aertslab) | LDA topic modeling | Dormant, Mallet-Java is slow and OOMs |
+| pycistarget (aertslab) | Motif enrichment | Tied to aertslab feather rankings DB (10s GB) |
+| flashscenic (hao zhu) | GPU fast SCENIC | Changes algorithm (RegDiffusion), not reproducible; requires CUDA |
+| tomotopy PR #226 | C++ AVX-512 Gibbs | Unmerged; fixes one stage; still needs the full broken stack |
+| rapids-singlecell | GPU scverse acceleration | Explicitly doesn't include SCENIC |
+| SnapATAC2 / PeakVI | scATAC embeddings | Can't feed SCENIC+ downstream |
+
+**Open niche:** CPU-native Rust+PyO3 drop-in that restores installability AND delivers 3–10× per stage AND preserves numerical equivalence with pyscenic. No one has shipped this.
+
+---
+
+## 2. Scope
+
+### 2.1 In scope for v1.0
+
+Four stages, one PyO3 wheel, one CLI binary:
+
+| Stage | Replaces | Target speedup | Correctness metric |
+|---|---|---|---|
+| `grn` | arboreto.grnboost2 | 3–5× | Edge-rank Spearman ≥0.95 on top-10k edges |
+| `aucell` | pyscenic AUCell | 2–3× | Per-cell regulon AUC r ≥0.99 |
+| `topics` | pycisTopic LDA | 3–10× | Topic assignment ARI ≥0.85 (30-run mean) |
+| `cistarget` | pycistarget | 3–10× | Motif-rank AUC correlation ≥0.95 |
+
+### 2.2 Explicitly NOT in scope
+
+These were candidates that the audit struck:
+
+- **Adaptive-QC / Yates cancer-aware QC.** Profiling showed QC is a seconds-level problem. Not a real bottleneck. This was Ekin's original email commitment to Kuan on Apr 14 — superseded by profile data.
+- **Spatial Visium HD scalability.** BPCells (CPU, bioRxiv 2025) + rapids-singlecell (GPU) already own the niche. SpaceRanger v4 (June 2025) ships native segmentation, moving the field away from 11M-spot raw analysis.
+- **Visualization compounding.** matplotlib/datashader problem, not a Rust problem.
+- **GPU acceleration.** flashscenic's angle. Different tool, different project.
+- **End-to-end SCENIC+ orchestration.** Users still use the `scenicplus` Python package for pipeline wiring. We replace the slow stages inside it.
+- **R bindings, Julia bindings, JVM bindings.** Out of scope.
+- **Novel methodology** (e.g., inventing a new GRN algorithm). We are faithful to the existing algorithms — our contribution is engineering, not methodology.
+
+### 2.3 Versioning roadmap
+
+- **v0.1** — `grn` stage alone. ~3 days active time.
+- **v0.2** — adds `aucell`. ~1 day.
+- **v0.3** — adds `topics`. ~2–3 days.
+- **v0.4** — adds `cistarget`. ~2–3 days.
+- **v1.0** — integration, docs, PyPI release, agent skill. ~1–2 days.
+
+Each release is independently useful; users can upgrade stage-by-stage.
+
+---
+
+## 3. Architecture
+
+### 3.1 Repo layout
+
+```
+rustscenic/
+├── Cargo.toml                    # workspace
+├── pyproject.toml                # maturin config
+├── README.md
+├── crates/
+│   ├── rustscenic-core/          # shared: sparse CSR/CSC, errors, PyO3 utils
+│   ├── rustscenic-grn/           # v0.1: GRNBoost2 replacement
+│   ├── rustscenic-aucell/        # v0.2: AUCell regulon scoring
+│   ├── rustscenic-topics/        # v0.3: online VB LDA or tomotopy wrap
+│   ├── rustscenic-cistarget/     # v0.4: motif rankings lookup
+│   ├── rustscenic-cli/           # single binary: `rustscenic <stage>` subcommands
+│   └── rustscenic-py/            # PyO3 wheel — maturin-built
+├── python/rustscenic/            # Python package: re-exports + AnnData glue
+├── validation/
+│   ├── reference/
+│   │   ├── Dockerfile            # pyscenic 0.12.1 + arboreto 0.1.6 + dask 2024.1.1 pinned
+│   │   ├── datasets.sh           # fetch PBMC-10k, aertslab refs
+│   │   └── run_reference.py      # generate baseline outputs
+│   ├── baselines/                # git-LFS committed golden outputs (parquet)
+│   ├── compare.py                # diff vs baseline, emit metrics
+│   ├── benchmarks.py             # wall-clock, peak RSS, append CSV
+│   └── results.csv               # append-only audit log, git-tracked
+├── .github/workflows/
+│   ├── audit.yml                 # per-PR: build, compare, benchmark, post
+│   └── release.yml               # tag → PyPI + GitHub release
+├── skills/rustscenic.md          # agent skill (RastQC-style)
+└── docs/
+    └── specs/
+        └── 2026-04-16-rustscenic-design.md    # THIS FILE
+```
+
+### 3.2 Dependencies (Rust side)
+
+Shared across stages:
+- `pyo3 = 0.24` — Python bindings (version pinned to match rustqc/rustscrublet)
+- `numpy = 0.24` — zero-copy numpy ⇔ ndarray
+- `rayon = 1.10` — data parallelism
+- `sprs = 0.11` — sparse CSR/CSC (already in rustscrublet)
+- `ndarray = 0.16` — dense arrays
+- `anyhow` / `thiserror` — errors
+- `serde` + `arrow-parquet` — output serialization
+- `hdf5 = 0.8` — AnnData/H5AD reading
+
+Stage-specific:
+- `grn`: custom histogram-based GBM (no external crate — ports LightGBM's histogram algorithm, ~500 lines, faithful to sklearn semantics)
+- `aucell`: uses `rustscrublet/src/sparse.rs` patterns
+- `topics`: `statrs` for digamma/gamma, custom online VB (Hoffman 2010 update rules)
+- `cistarget`: `memmap2` for mmap'd feather rankings, `arrow2` for feather parsing
+
+### 3.3 Python package surface
+
+```python
+import anndata as ad
+import rustscenic
+
+# Stage 1: GRN inference
+adata = ad.read_h5ad("data.h5ad")
+tfs = rustscenic.load_tfs("hs_hgnc_tfs.txt")
+adjacencies = rustscenic.grn.infer(adata, tf_names=tfs, n_threads=8, seed=777)
+# → pandas DataFrame with (TF, target, importance)
+
+# Stage 2: AUCell
+regulons = rustscenic.regulons_from_adjacencies(adjacencies, motif_db)
+auc_matrix = rustscenic.aucell.score(adata, regulons)
+
+# Stage 3: cisTopic LDA
+atac_adata = ad.read_h5ad("atac.h5ad")
+topics = rustscenic.topics.fit(atac_adata, n_topics=100, method="online_vb", seed=777)
+
+# Stage 4: cisTarget
+enrichments = rustscenic.cistarget.enrich(topics, feather_db="hg38_screen_v10.feather")
+```
+
+### 3.4 CLI surface
+
+```
+rustscenic grn \
+  --expression data.h5ad \
+  --tfs hs_hgnc_tfs.txt \
+  --output grn.parquet \
+  --threads 8 --seed 777
+
+rustscenic aucell \
+  --adjacencies grn.parquet \
+  --expression data.h5ad \
+  --output auc.parquet
+
+rustscenic topics \
+  --atac atac.h5ad \
+  --n-topics 100 \
+  --method online_vb \
+  --output topics.parquet
+
+rustscenic cistarget \
+  --topics topics.parquet \
+  --feather-db hg38_screen_v10.feather \
+  --output enrichment.parquet
+```
+
+---
+
+## 4. v0.1 detailed scope: `grn` stage
+
+### 4.1 Algorithm
+
+Faithful port of `sklearn.ensemble.GradientBoostingRegressor` as used by `arboreto.algo.grnboost2`:
+
+- Loss: Huber (arboreto default; matches sklearn's `HuberLoss` with `alpha=0.9`)
+- `n_estimators=5000` (arboreto default)
+- `max_depth=3`
+- `learning_rate=0.01`
+- `subsample=0.9` (stochastic GBM)
+- Early stopping: when improvement over last 50 iterations <1e-5
+- Feature importance: sum of split-gains across all trees, normalized per target
+
+Implementation acceleration vs sklearn:
+1. **Histogram-based binning** (LightGBM's trick): pre-bin features to 255 buckets once, then split evaluation is O(buckets) not O(n_cells).
+2. **No GIL callbacks** during fit.
+3. **Per-target-gene rayon parallelism**: 20k targets parallelized across cores, no Dask.
+4. **f32 throughout** (sklearn uses f64): 2× memory bandwidth.
+5. **Zero-copy sparse input**: PyO3 passes CSR buffer pointers, no numpy densification.
+
+### 4.2 Inputs
+
+- AnnData `.h5ad` OR dense TSV (cells × genes) OR 10x MEX directory
+- TF list: TSV with one gene symbol per line
+- Optional: `--tf-col` to read TFs from an AnnData var column
+
+### 4.3 Outputs
+
+- `grn.parquet`: `(TF: str, target: str, importance: f32)` schema, matches `arboreto.algo.grnboost2` output
+- `grn.json`: metadata (wall-clock, peak RSS, git SHA, seed, dataset SHA256, rustscenic version)
+
+### 4.4 Validation (real-time audit)
+
+**Reference baseline:**
+- Build Docker image with pyscenic 0.12.1 + arboreto 0.1.6 + dask 2024.1.1 + numpy 1.26 + pandas 2.1 + lightgbm 4.6 + scanpy 1.11
+- Run `arboreto.grnboost2(expression_matrix, tf_names=tfs, seed=777)` on PBMC-3k
+- Save output to `validation/baselines/pbmc3k_grn.parquet`
+- Commit to git-LFS
+
+**Per-commit audit (CI):**
+- Build wheel via maturin
+- Install wheel + run `rustscenic grn --seed 777` on same PBMC-3k
+- `validation/compare.py --stage grn`:
+  - Edge-rank Spearman on top-10k edges: must ≥0.95
+  - Exact-rank agreement on top-100 edges per TF: must ≥0.75
+- `validation/benchmarks.py --stage grn`:
+  - Wall-clock vs reference: log ratio
+  - Peak RSS: log MB
+- Append row to `validation/results.csv`
+- Post PR comment with diff: `grn: Spearman 0.957 (Δ-0.002), wall 142s (ref 620s, 4.4×)`
+
+### 4.5 Success criteria (v0.1 hard gates)
+
+- [ ] Spearman ≥0.95 vs pyscenic on PBMC-3k with matching seed
+- [ ] 3× or better wall-clock single-thread vs arboreto (if arboreto can install)
+- [ ] `pip install rustscenic==0.1.0` succeeds on: Python 3.9/3.10/3.11/3.12/3.13 × macOS arm64/x86_64 × Linux x86_64/aarch64
+- [ ] Wheel size ≤8 MB uncompressed
+- [ ] Zero Python runtime deps except numpy, pandas, pyarrow
+- [ ] Agent skill at `~/.claude/skills/rustscenic/SKILL.md`
+
+### 4.6 Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| Histogram GBM matches sklearn trees but not speed | Medium | Collapses speed to 1.6× | Still ships; install fix alone is valuable |
+| Stochastic GBM output divergence at matching seed | Medium | Fails Spearman gate | Implement bit-identical RNG (numpy's MT19937 in Rust via `rand_pcg` / `rand_mt`) |
+| sklearn Huber loss implementation subtleties | Low | Tree quality drift | Port Huber exactly from sklearn `_loss/losses.py` line-by-line |
+| PyO3 0.24 API breakage during development | Low | Build friction | Pin exact version, match rustqc/rustscrublet working config |
+
+---
+
+## 5. v0.2–v0.4 scope summaries
+
+### v0.2: `aucell` (~1 day)
+- Algorithm: argsort genes per cell; recovery-curve AUC on regulons
+- Reuse: `rustscrublet/src/sparse.rs` patterns
+- Validation: per-cell regulon AUC correlation ≥0.99 vs pyscenic.aucell on PBMC-10k
+
+### v0.3: `topics` (~2–3 days)
+- Default: wrap tomotopy (if PR #226 merged) OR port Hoffman 2010 online VB
+- Digamma/gamma via `statrs`
+- Validation: topic assignment ARI ≥0.85 (30-run mean, different seeds) vs pycisTopic-Mallet on PBMC-10k Multiome
+- Output format: cell-topic + topic-region matrices in parquet (pycisTopic-compatible schema)
+
+### v0.4: `cistarget` (~2–3 days)
+- mmap the aertslab feather ranking DB (10–50 GB)
+- Per-motif recovery curves on ranked regions per topic
+- rayon parallel across motifs
+- Validation: motif-rank AUC correlation ≥0.95 vs pycistarget
+
+---
+
+## 6. Real-time audit architecture
+
+### 6.1 Design principle
+
+**Every commit must improve or preserve all of: correctness ≥ threshold, speed ≥ baseline, install ≥ matrix.** No "validate later." No "TODO: benchmark."
+
+### 6.2 What runs on every PR
+
+```yaml
+# .github/workflows/audit.yml (abridged)
+jobs:
+  audit:
+    strategy:
+      matrix:
+        os: [macos-14, ubuntu-24.04, windows-2022]
+        python: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - run: cargo build --release --workspace
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test --workspace
+      - run: maturin build --release
+      - run: pip install target/wheels/rustscenic-*.whl
+      - run: docker pull rustscenic-reference:latest
+      - run: python validation/run_ours.py --all-stages
+      - run: python validation/compare.py --all-stages --fail-below-threshold
+      - run: python validation/benchmarks.py --all-stages
+      - run: python validation/post_pr_comment.py
+```
+
+### 6.3 results.csv schema (append-only, git-tracked)
+
+```csv
+commit_sha,stage,dataset,metric_name,value,wall_clock_s,peak_rss_mb,date
+<sha>,grn,pbmc3k,spearman_top10k,0.9572,142.3,480,2026-04-16T14:22:11Z
+<sha>,grn,pbmc3k,exact_rank_top100,0.781,142.3,480,2026-04-16T14:22:11Z
+```
+
+### 6.4 Trajectory tracking
+
+README renders a mermaid chart of Spearman + wall-clock over commits. Regression visible in a glance.
+
+### 6.5 Reference environment
+
+Docker image published to ghcr.io/ekin-kahraman/rustscenic-reference. Fixed at:
+- pyscenic 0.12.1
+- arboreto 0.1.6
+- dask 2024.1.1
+- numpy 1.26.4
+- pandas 2.1.4
+- lightgbm 4.6.0
+- scanpy 1.11.5
+
+This image is our ground truth. We don't upgrade it except to document divergence.
+
+---
+
+## 7. Release & distribution
+
+- **crates.io:** `rustscenic-core`, `rustscenic-grn`, etc. (publish in order as stages land)
+- **PyPI:** `rustscenic` — one wheel, contains all stages available at that release
+- **GitHub releases:** pre-built wheels for all supported platforms
+- **Agent skill:** `skills/rustscenic.md` bundled with release
+- **Homebrew tap:** deferred to post-v1.0 based on adoption
+
+---
+
+## 8. Relationship to Ekin's existing repos
+
+Reusable infrastructure (no code duplication):
+- `rustqc` — PyO3 wiring patterns, numpy interop
+- `rustscrublet` — sparse CSR ops, gene filter, normalization, PCA, HNSW-KNN patterns
+- `rustcell` — CLI arg parsing, HTML report scaffolding
+- `rustnn` — not directly used (brute-force KNN doesn't scale past 10k)
+
+Reference where applicable; don't fork. If we need e.g. sparse CSR utilities across all rewrites, consider extracting to a shared `ekincore` crate post-v1.0.
+
+---
+
+## 9. Communication plan
+
+### 9.1 Email to Kuan after v0.1 lands
+
+Draft (to be sent when v0.1 is merged to main with passing audit):
+
+> Subject: rustscenic v0.1 — following your steer
+>
+> Hi Kuan,
+>
+> Quick update. The profiling I ran on GRNBoost2 showed QC-level tools are seconds-level problems for users — adaptive-QC / Yates wouldn't move the needle. Following your suggestion to address Moha's ideas, I've scoped a Rust+PyO3 replacement for the SCENIC+ slow stages — GRNBoost2 first, with AUCell, pycisTopic, and pycisTarget to follow.
+>
+> v0.1 (just GRN inference) is live at github.com/Ekin-Kahraman/rustscenic. Numerical equivalence with pyscenic (edge-rank Spearman X.XX on PBMC-3k), Y× faster, one pip install with no dask/numpy/pandas dep rot.
+>
+> Happy to jump on a call once v0.3 (topics) lands if there's lab interest in validation on your datasets.
+>
+> Ekin
+
+### 9.2 Post-v1.0
+
+- Submit brief to bioRxiv co-authored with Kuan (if interested)
+- Announce on scverse Slack, bioinformatics.stackexchange, bsky
+- Add to SCENIC+ ecosystem tools page via PR to aertslab docs
+
+---
+
+## 10. Open questions (non-blocking; decide during v0.1)
+
+1. Python version floor — 3.9 (matches scanpy 1.10) or 3.10? **Default: 3.9** to maximize install base.
+2. Should `rustscenic grn` accept sparse numpy ndarray directly, or always go through AnnData? **Default: accept both.**
+3. Error handling: `thiserror` crate-level + `PyException` on Python side, or just `anyhow`? **Default: `thiserror`** for library crates, `anyhow` for CLI binary.
+4. How to handle reference runs when arboreto won't install: pin a working commit + document the pinned-env recipe, or use a pre-rendered baseline only? **Default: pre-rendered baseline + documented recipe.** Reproducibility matters but users shouldn't have to reproduce baselines themselves.
+5. Regarding tomotopy PR #226 — wrap (subprocess/FFI) or replace? **Default: decide at v0.3 based on merge status.**
+
+---
+
+## 11. Definition of done
+
+**v0.1 done =** `grn` stage passes correctness + speed + install gates on all target platforms; agent skill deployed; results.csv tracking baseline.
+
+**v1.0 done =** all four stages pass gates; PyPI `rustscenic==1.0.0` live; README benchmarks + mermaid trajectory; Kuan email sent; agent skill at `~/.claude/skills/rustscenic/SKILL.md`.
+
+---
+
+_End of spec._
