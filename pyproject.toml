@@ -1,0 +1,34 @@
+[build-system]
+requires = ["maturin>=1.5"]
+build-backend = "maturin"
+
+[project]
+name = "rustscenic"
+version = "0.1.0"
+description = "Fast SCENIC+ stage replacements in Rust (GRNBoost2, AUCell, cisTopic, cisTarget)"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Ekin Kahraman" }]
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+    "numpy>=1.21",
+    "pandas>=1.5",
+    "pyarrow>=10",
+]
+
+[project.urls]
+Homepage = "https://github.com/Ekin-Kahraman/rustscenic"
+Documentation = "https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/specs/2026-04-16-rustscenic-design.md"
+
+[tool.maturin]
+manifest-path = "crates/rustscenic-py/Cargo.toml"
+python-source = "python"
+module-name = "rustscenic._rustscenic"
