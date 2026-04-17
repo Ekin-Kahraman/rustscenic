@@ -83,8 +83,8 @@ pub fn fit_and_importances_binned(
             &mut tree_rng,
         );
 
-        for k in 0..n_samples {
-            predictions[k] += cfg.learning_rate * predict_binned(&tree, binned, k);
+        for (k, p) in predictions.iter_mut().enumerate().take(n_samples) {
+            *p += cfg.learning_rate * predict_binned(&tree, binned, k);
         }
 
         for f in 0..n_features {
