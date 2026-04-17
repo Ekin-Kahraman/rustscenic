@@ -529,6 +529,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94300abf3f1ae2e2b8ffb7b58043de3d399c73fa6f4b73826402a5c457614dbe"
 
 [[package]]
+name = "rustscenic-aucell"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "approx 0.5.1",
+ "ndarray 0.16.1",
+ "rayon",
+ "rustscenic-core",
+ "thiserror",
+]
+
+[[package]]
 name = "rustscenic-cli"
 version = "0.1.0"
 dependencies = [
@@ -569,8 +581,10 @@ dependencies = [
 name = "rustscenic-py"
 version = "0.1.0"
 dependencies = [
+ "ndarray 0.16.1",
  "numpy",
  "pyo3",
+ "rustscenic-aucell",
  "rustscenic-core",
  "rustscenic-grn",
 ]

@@ -12,5 +12,7 @@ crate-type = ["cdylib"]
 [dependencies]
 rustscenic-core = { path = "../rustscenic-core" }
 rustscenic-grn = { path = "../rustscenic-grn" }
+rustscenic-aucell = { path = "../rustscenic-aucell" }
 pyo3 = { workspace = true, features = ["abi3-py310"] }
 numpy = { workspace = true }
+ndarray = { workspace = true }

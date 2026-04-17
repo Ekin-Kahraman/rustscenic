@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/rustscenic-core",
     "crates/rustscenic-grn",
+    "crates/rustscenic-aucell",
     "crates/rustscenic-cli",
     "crates/rustscenic-py",
 ]
