@@ -6,7 +6,7 @@
 //! sklearn's Cython RNG tape. For v0.1 we rely on statistical equivalence
 //! (Spearman/Jaccard gates) rather than bit-identity.
 
-use rand::{Rng, RngCore, SeedableRng};
+use rand::{RngCore, SeedableRng};
 use rand::rngs::StdRng;
 
 pub struct TargetRng {

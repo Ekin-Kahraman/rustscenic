@@ -1,5 +1,5 @@
 //! PyO3 bindings for rustscenic. Python package name: `rustscenic`.
-use numpy::{PyArray1, PyArrayMethods, PyReadonlyArray2};
+use numpy::{PyArray1, PyReadonlyArray2};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 
