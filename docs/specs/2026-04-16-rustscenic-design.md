@@ -211,15 +211,15 @@ rustscenic cistarget \
 
 ### 4.1 Algorithm
 
-**Semantics faithful to sklearn's `GradientBoostingRegressor` as used by `arboreto.algo.grnboost2` (confirmed against `arboreto/core.py:150-213`):**
+**Semantics faithful to sklearn's `GradientBoostingRegressor` as used by `arboreto.algo.grnboost2` (confirmed by inspecting arboreto.core.SGBM_KWARGS + sklearn defaults, 2026-04-17):**
 
-- Loss: Huber (sklearn `HuberLoss` with `alpha=0.9`; arboreto default `SGBM_KWARGS`)
-- `n_estimators=5000`
-- `max_depth=3`, `max_features="sqrt"`
-- `learning_rate=0.01`, `subsample=0.9`
-- Early stopping via arboreto's `EarlyStopMonitor` (window 25): halt when recent improvement stalls
-- Importance: sklearn's per-feature Gini accumulation, **multiplied by `n_estimators`** per arboreto/core.py:168
-- Output schema: `['TF', 'target', 'importance']` (capital TF), filtered to `importance > 0`, sorted descending per target
+- Loss: **`squared_error`** (sklearn default; arboreto does NOT override)
+- Criterion: `friedman_mse` (sklearn default)
+- `n_estimators=5000`, `learning_rate=0.01`, `subsample=0.9`, `max_features=0.1` (per `SGBM_KWARGS`)
+- `max_depth=3`, `min_samples_split=2`, `min_samples_leaf=1` (sklearn defaults; arboreto does NOT override)
+- Early stopping: arboreto's `EarlyStopMonitor` (window 25) — a `monitor` callback to sklearn's fit loop, not sklearn's `n_iter_no_change`. Halts when recent MSE improvement on the training set stalls.
+- Feature importance: sklearn's per-feature split-gain accumulation, **multiplied by `n_estimators_` actually fit** per arboreto/core.py:168. Note: when early stopping fires, `n_estimators_ < 5000`.
+- Output schema: `['TF', 'target', 'importance']` (capital TF), filtered `importance > 0`, sorted descending per target.
 
 **Implementation optimizations (internal, do not change outputs modulo float precision):**
 1. Histogram binning (255 buckets) — split eval O(buckets × features) not O(cells × features).
