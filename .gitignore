@@ -11,3 +11,5 @@ build/
 !validation/baselines/.gitkeep
 validation/reference/data/
 validation/reference/data/**
+validation/ours/
+python/rustscenic/_rustscenic.*.so
