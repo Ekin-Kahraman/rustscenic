@@ -9,3 +9,5 @@ build/
 .DS_Store
 validation/baselines/*.parquet
 !validation/baselines/.gitkeep
+validation/reference/data/
+validation/reference/data/**
