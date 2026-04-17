@@ -1,0 +1,21 @@
+{
+  "wall_clock_s": 392.7683764999965,
+  "n_tfs_used": 1274,
+  "n_cells": 2700,
+  "n_genes_total": 13714,
+  "n_targets_run": 13714,
+  "seed": 777,
+  "dataset_sha256": "17f376e95c1f6acf0ad52d6096f92f25886127368aa8a955b04916b147779cc1",
+  "n_workers": 8,
+  "reference_stack": {
+    "python": "3.11.9",
+    "arboreto": "0.1.6",
+    "dask": "2026.3.0",
+    "numpy": "1.26.4",
+    "pandas": "2.1.4"
+  },
+  "n_edges_full": 949577,
+  "n_edges_top10k": 10000,
+  "importance_min_top10k": 2.5699104495073652,
+  "importance_max_top10k": 16.016563083540763
+}

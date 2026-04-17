@@ -7,7 +7,7 @@ venv/
 dist/
 build/
 .DS_Store
-validation/baselines/*.parquet
+# validation/baselines/*.parquet are COMMITTED (small — top-k adjacencies only)
 !validation/baselines/.gitkeep
 validation/reference/data/
 validation/reference/data/**
