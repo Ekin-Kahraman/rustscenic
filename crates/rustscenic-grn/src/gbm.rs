@@ -5,12 +5,10 @@
 //! subsample=0.9, max_depth=3.
 //!
 //! Early stopping mirrors arboreto's `EarlyStopMonitor` (window=25):
-//! compute MSE on the IN-BAG subsample each iter; if MSE[i] >= MSE[i-window],
-//! stop. Subsample MSE plateaus (unlike full-train MSE) so stopping fires.
+//! if in-bag MSE[i] >= MSE[i-window], stop. Disabled with window=0.
 //!
-//! Allocation hygiene: residuals/predictions buffers are allocated once per
-//! target and reused across estimators. Tree + histogram scratch buffers are
-//! held at the outer loop and reset in place.
+//! `exclude_feature` is passed through to the tree builder so targets that are
+//! themselves TFs don't include their own expression column as a predictor.
 
 use rand::rngs::StdRng;
 
@@ -20,7 +18,12 @@ use crate::tree::{fit_tree_with_scratch, predict_binned, Tree, TreeScratch};
 use crate::GrnConfig;
 
 /// Fit a GBM on pre-binned features, return per-TF denormalized importances.
-pub fn fit_and_importances_binned(binned: &BinnedMatrix, y: &[f32], cfg: &GrnConfig) -> Vec<f32> {
+pub fn fit_and_importances_binned(
+    binned: &BinnedMatrix,
+    y: &[f32],
+    cfg: &GrnConfig,
+    exclude_feature: Option<usize>,
+) -> Vec<f32> {
     let n_samples = binned.n_samples;
     let n_features = binned.n_features;
     let mut importances = vec![0.0_f32; n_features];
@@ -37,22 +40,21 @@ pub fn fit_and_importances_binned(binned: &BinnedMatrix, y: &[f32], cfg: &GrnCon
     let window = cfg.early_stop_window;
     let mut mse_history: Vec<f32> = Vec::with_capacity(cfg.n_estimators);
 
-    // Reusable buffers
     let mut sample_idx: Vec<usize> = Vec::with_capacity(n_samples);
     let mut hist_buf = NodeHist::zeros(MAX_BINS);
-    let mut scratch = TreeScratch::new(n_features);
+    // Reinitialize the feature pool each time (tree.rs mutates it via swap_remove
+    // for exclusion; we want fresh 0..n_features per tree regardless of the
+    // excluded feature, so the tree builder re-excludes as needed).
     let mut tree = Tree { nodes: Vec::with_capacity(64) };
     let mut gains_buf = vec![0.0_f32; n_features];
 
     let mut n_fit = 0usize;
 
     for i in 0..cfg.n_estimators {
-        // Residuals for squared-error loss
         for k in 0..n_samples {
             residuals[k] = y[k] - predictions[k];
         }
 
-        // Subsample rows
         let mut tree_rng: StdRng = rng_state.for_tree(i);
         sample_idx.clear();
         if (cfg.subsample - 1.0).abs() < 1e-6 {
@@ -64,15 +66,18 @@ pub fn fit_and_importances_binned(binned: &BinnedMatrix, y: &[f32], cfg: &GrnCon
             continue;
         }
 
-        // Fit tree with reusable scratch
         tree.nodes.clear();
         gains_buf.fill(0.0);
+        // Rebuild scratch's feature pool fresh each tree; excluded feature is applied
+        // inside fit_tree_with_scratch -> choose_feature_subset.
+        let mut scratch = TreeScratch::new(n_features);
         fit_tree_with_scratch(
             binned,
             &residuals,
             &sample_idx,
             cfg.max_depth,
             max_features_per_split,
+            exclude_feature,
             &mut tree,
             &mut gains_buf,
             &mut hist_buf,
@@ -80,7 +85,6 @@ pub fn fit_and_importances_binned(binned: &BinnedMatrix, y: &[f32], cfg: &GrnCon
             &mut tree_rng,
         );
 
-        // Update predictions for ALL samples
         for k in 0..n_samples {
             predictions[k] += cfg.learning_rate * predict_binned(&tree, binned, k);
         }
@@ -89,7 +93,6 @@ pub fn fit_and_importances_binned(binned: &BinnedMatrix, y: &[f32], cfg: &GrnCon
             importances[f] += gains_buf[f];
         }
 
-        // In-bag MSE for early stopping (matches sklearn train_score_ under subsampling)
         let mut mse_inbag = 0.0_f32;
         for &k in &sample_idx {
             let d = y[k] - predictions[k];
@@ -99,8 +102,6 @@ pub fn fit_and_importances_binned(binned: &BinnedMatrix, y: &[f32], cfg: &GrnCon
         mse_history.push(mse_inbag);
         n_fit = i + 1;
 
-        // Window comparison (arboreto EarlyStopMonitor): stop if no improvement
-        // between iteration i-window and iteration i. Disabled by window=0.
         if window > 0 && mse_history.len() > window {
             let past = mse_history[mse_history.len() - 1 - window];
             if mse_inbag >= past {
@@ -109,11 +110,7 @@ pub fn fit_and_importances_binned(binned: &BinnedMatrix, y: &[f32], cfg: &GrnCon
         }
     }
 
-    // Denormalize per arboreto/core.py:168 — multiply sklearn feature_importances_
-    // by `trained_regressor.estimators_.shape[0]` (actual fit count, NOT configured).
-    // sklearn normalizes feature_importances_ to sum=1 regardless of n_fit; then
-    // arboreto rescales by actual n_fit. Early-stopping iteration count thus
-    // controls the per-target importance scale.
+    // Denormalize per arboreto/core.py:168 — × trained_regressor.estimators_.shape[0]
     let total: f32 = importances.iter().sum();
     if total > 0.0 {
         for v in &mut importances {
@@ -138,6 +135,7 @@ fn hash_y(y: &[f32]) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::histogram::BinnedMatrix;
 
     #[test]
     fn recovers_linear_signal() {
@@ -163,7 +161,31 @@ mod tests {
             early_stop_window: 25,
             seed: 42,
         };
-        let imp = fit_and_importances_binned(&bm, &y, &cfg);
+        let imp = fit_and_importances_binned(&bm, &y, &cfg, None);
         assert!(imp[0] > imp[1] * 3.0, "imp[0]={} imp[1]={} imp[2]={} imp[3]={}", imp[0], imp[1], imp[2], imp[3]);
+    }
+
+    #[test]
+    fn excludes_self_feature() {
+        let n = 300;
+        let nf = 3;
+        let mut x = vec![0.0_f32; n * nf];
+        let mut y = vec![0.0_f32; n];
+        for i in 0..n {
+            let a = (i as f32) / n as f32;
+            x[i * nf] = a;               // perfect predictor
+            x[i * nf + 1] = ((i * 3) as f32) * 0.37 % 1.0;
+            x[i * nf + 2] = ((i * 17) as f32) * 0.13 % 1.0;
+            y[i] = 5.0 * a;
+        }
+        let bm = BinnedMatrix::from_dense(&x, n, nf);
+        let cfg = GrnConfig {
+            n_estimators: 200, learning_rate: 0.1, max_features: 1.0,
+            subsample: 1.0, max_depth: 3, early_stop_window: 0, seed: 7,
+        };
+        let imp = fit_and_importances_binned(&bm, &y, &cfg, Some(0));
+        assert_eq!(imp[0], 0.0, "excluded feature must have zero importance");
+        // Since feature 0 was excluded, some gain must go elsewhere
+        assert!(imp[1] + imp[2] > 0.0);
     }
 }

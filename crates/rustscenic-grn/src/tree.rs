@@ -1,9 +1,12 @@
 //! Histogram-based regression decision tree.
 //!
 //! Uses pre-binned features and per-node histograms to score splits in
-//! O(bins + |node_samples|) per feature, not O(n log n). All scratch buffers
-//! (per-node sample partitions, feature subsets) are held by the caller and
-//! reused across trees to avoid allocation churn in the boosting loop.
+//! O(bins + |node_samples|) per feature, not O(n log n). Left/right partitions
+//! are local Vecs per recursive call — small allocations (a few KB each) but
+//! eliminates the cross-sibling aliasing bug in the prior scratch-stack design.
+//!
+//! `exclude_feature` lets callers drop a single feature from consideration,
+//! used to exclude self-TF when the target gene is itself in the TF set.
 
 use rand::RngCore;
 
@@ -26,14 +29,10 @@ pub enum Node {
     },
 }
 
-/// Reusable scratch for tree fitting. One per worker thread.
+/// Reusable scratch for tree fitting (held by the boosting loop, one per target).
 pub struct TreeScratch {
-    /// feature subset buffer (reused each split)
     pub feat_sub: Vec<usize>,
-    /// column pool for sample_indices (reused)
     pub feat_pool: Vec<usize>,
-    /// stack of sample-partitions per recursion level, pre-sized
-    pub partitions: Vec<Vec<usize>>,
 }
 
 impl TreeScratch {
@@ -41,7 +40,6 @@ impl TreeScratch {
         Self {
             feat_sub: Vec::with_capacity(n_features),
             feat_pool: (0..n_features).collect(),
-            partitions: (0..16).map(|_| Vec::with_capacity(4096)).collect(),
         }
     }
 }
@@ -54,57 +52,66 @@ pub fn fit_tree_with_scratch(
     sample_idx: &[usize],
     max_depth: usize,
     max_features_per_split: usize,
+    exclude_feature: Option<usize>,
     tree: &mut Tree,
     gains: &mut [f32],
     hist_buf: &mut NodeHist,
     scratch: &mut TreeScratch,
     rng: &mut impl RngCore,
 ) {
-    // Copy sample_idx into first partition buffer
-    let part0 = scratch.partitions[0].clone();
-    let _ = part0;
-    // Actually populate partition 0 with sample_idx
-    scratch.partitions[0].clear();
-    scratch.partitions[0].extend_from_slice(sample_idx);
-
-    build_node_iter(binned, y, 0, max_depth, max_features_per_split, tree, gains, hist_buf, scratch, rng);
+    // Clone incoming sample_idx into an owned Vec so recursion can freely reuse
+    // it. One small clone per tree (not per split).
+    let root_samples: Vec<usize> = sample_idx.to_vec();
+    build_node_rec(
+        binned,
+        y,
+        &root_samples,
+        0,
+        max_depth,
+        max_features_per_split,
+        exclude_feature,
+        tree,
+        gains,
+        hist_buf,
+        scratch,
+        rng,
+    );
 }
 
 #[allow(clippy::too_many_arguments)]
-fn build_node_iter(
+fn build_node_rec(
     binned: &BinnedMatrix,
     y: &[f32],
-    level: usize,
+    samples: &[usize],
+    depth: usize,
     max_depth: usize,
     max_features_per_split: usize,
+    exclude_feature: Option<usize>,
     tree: &mut Tree,
     gains: &mut [f32],
     hist_buf: &mut NodeHist,
     scratch: &mut TreeScratch,
     rng: &mut impl RngCore,
 ) -> usize {
-    // Work out current-level sample partition (scratch.partitions[level])
-    let samples_len = scratch.partitions[level].len();
-    if samples_len == 0 {
-        let idx = tree.nodes.len();
-        tree.nodes.push(Node::Leaf { value: 0.0 });
-        return idx;
-    }
-    let leaf_value = mean_at(&scratch.partitions[level], y);
-
+    let leaf_value = mean_at(samples, y);
     let idx = tree.nodes.len();
     tree.nodes.push(Node::Leaf { value: leaf_value });
 
-    if level >= max_depth || samples_len < 2 {
+    if depth >= max_depth || samples.len() < 2 {
         return idx;
     }
 
-    // Pick random feature subset (avoids alloc using scratch.feat_pool/feat_sub)
-    choose_feature_subset(rng, &mut scratch.feat_pool, &mut scratch.feat_sub, max_features_per_split);
+    choose_feature_subset(
+        rng,
+        &mut scratch.feat_pool,
+        &mut scratch.feat_sub,
+        max_features_per_split,
+        exclude_feature,
+    );
 
     let mut best: Option<(usize, u8, f32)> = None;
     for &f in &scratch.feat_sub {
-        hist_buf.accumulate(binned, f, y, &scratch.partitions[level]);
+        hist_buf.accumulate(binned, f, y, samples);
         if let Some((bin, gain, _)) = hist_buf.best_split() {
             match best {
                 None => best = Some((f, bin as u8, gain)),
@@ -116,64 +123,56 @@ fn build_node_iter(
 
     if let Some((feature, bin_threshold, gain)) = best {
         gains[feature] += gain;
-
-        // Partition samples by bin ≤ threshold into scratch.partitions[level+1]
-        // Right partition goes into scratch.partitions[level+2]
-        // (We use two partitions per depth; 16 preallocated cover depth 7)
-        while scratch.partitions.len() <= level + 2 {
-            scratch.partitions.push(Vec::with_capacity(4096));
-        }
         let nf = binned.n_features;
 
-        // Swap out parent partition so we can borrow new ones mutably
-        let parent = std::mem::take(&mut scratch.partitions[level]);
-        scratch.partitions[level + 1].clear();
-        // borrow right partition via split index trick
-        let (pre, post) = scratch.partitions.split_at_mut(level + 2);
-        let left_part = &mut pre[level + 1];
-        let right_part = &mut post[0];
-        right_part.clear();
-        for &s in &parent {
+        // Partition into owned left/right Vecs. Small allocations (~few KB each)
+        // but avoids any aliasing between sibling subtrees.
+        let mut left_samples = Vec::with_capacity(samples.len() / 2);
+        let mut right_samples = Vec::with_capacity(samples.len() / 2);
+        for &s in samples {
             if binned.bins[s * nf + feature] <= bin_threshold {
-                left_part.push(s);
+                left_samples.push(s);
             } else {
-                right_part.push(s);
+                right_samples.push(s);
             }
         }
-        // Put parent back (next sibling at same level would overwrite it if we recurse deeper)
-        scratch.partitions[level] = parent;
 
-        let left = build_node_iter(
-            binned, y, level + 1, max_depth, max_features_per_split,
-            tree, gains, hist_buf, scratch, rng,
+        let left = build_node_rec(
+            binned, y, &left_samples, depth + 1, max_depth, max_features_per_split,
+            exclude_feature, tree, gains, hist_buf, scratch, rng,
         );
-        // The recursion may have mutated partitions[level+1] and below;
-        // for the RIGHT child we still have scratch.partitions[level+2] intact as we prepared it.
-        // Move it into the slot at level+1 for the right subtree.
-        let right_partition = std::mem::take(&mut scratch.partitions[level + 2]);
-        scratch.partitions[level + 1] = right_partition;
-
-        let right = build_node_iter(
-            binned, y, level + 1, max_depth, max_features_per_split,
-            tree, gains, hist_buf, scratch, rng,
+        let right = build_node_rec(
+            binned, y, &right_samples, depth + 1, max_depth, max_features_per_split,
+            exclude_feature, tree, gains, hist_buf, scratch, rng,
         );
 
         tree.nodes[idx] = Node::Split { feature, bin_threshold, gain, left, right };
     }
-
     idx
 }
 
 fn choose_feature_subset(
     rng: &mut impl RngCore,
-    pool: &mut [usize],
+    pool: &mut Vec<usize>,
     out: &mut Vec<usize>,
     k: usize,
+    exclude_feature: Option<usize>,
 ) {
+    // If this is the first call (or feat_pool has become out of date), ensure it's
+    // initialized to 0..n_features minus the excluded index. `pool.len()` is the
+    // effective number of features the caller has staged.
+    if let Some(excl) = exclude_feature {
+        if let Some(pos) = pool.iter().position(|&x| x == excl) {
+            pool.swap_remove(pos);
+        }
+    }
     let n = pool.len();
+    if n == 0 {
+        out.clear();
+        return;
+    }
     let k = k.min(n).max(1);
     out.clear();
-    // Fisher-Yates partial shuffle on the shared pool (order is randomized across trees)
     for i in 0..k {
         let j = i + (rng.next_u64() as usize) % (n - i);
         pool.swap(i, j);
@@ -181,15 +180,15 @@ fn choose_feature_subset(
     out.extend_from_slice(&pool[..k]);
 }
 
-fn mean_at(sample_idx: &[usize], y: &[f32]) -> f32 {
-    if sample_idx.is_empty() {
+fn mean_at(samples: &[usize], y: &[f32]) -> f32 {
+    if samples.is_empty() {
         return 0.0;
     }
     let mut s = 0.0_f32;
-    for &i in sample_idx {
+    for &i in samples {
         s += y[i];
     }
-    s / sample_idx.len() as f32
+    s / samples.len() as f32
 }
 
 pub fn predict_binned(tree: &Tree, binned: &BinnedMatrix, sample: usize) -> f32 {
@@ -224,7 +223,7 @@ mod tests {
         let mut gains = vec![0.0_f32; 1];
         let mut hist = NodeHist::zeros(crate::histogram::MAX_BINS);
         let mut scratch = TreeScratch::new(1);
-        fit_tree_with_scratch(&bm, &y, &sample_idx, 1, 1, &mut tree, &mut gains, &mut hist, &mut scratch, &mut rng);
+        fit_tree_with_scratch(&bm, &y, &sample_idx, 1, 1, None, &mut tree, &mut gains, &mut hist, &mut scratch, &mut rng);
         assert!(gains[0] > 0.0);
         let err: f32 = (0..40).map(|i| (predict_binned(&tree, &bm, i) - y[i]).abs()).sum();
         assert!(err < 1.0, "err = {}", err);
@@ -251,7 +250,66 @@ mod tests {
         let mut gains = vec![0.0_f32; nf];
         let mut hist = NodeHist::zeros(crate::histogram::MAX_BINS);
         let mut scratch = TreeScratch::new(nf);
-        fit_tree_with_scratch(&bm, &y, &sample_idx, 3, 2, &mut tree, &mut gains, &mut hist, &mut scratch, &mut rng);
+        fit_tree_with_scratch(&bm, &y, &sample_idx, 3, 2, None, &mut tree, &mut gains, &mut hist, &mut scratch, &mut rng);
         assert!(gains[0] > gains[1] * 2.0, "g[0]={} g[1]={}", gains[0], gains[1]);
+    }
+
+    #[test]
+    fn right_subtree_uses_correct_samples() {
+        // Previously the partition-stack scheme corrupted samples between
+        // sibling subtrees. This test catches that regression: construct a
+        // tree where the right subtree has a strong secondary signal that
+        // would be invisible if its sample set were corrupted.
+        let n = 600;
+        let nf = 2;
+        let mut x = vec![0.0_f32; n * nf];
+        let mut y = vec![0.0_f32; n];
+        for i in 0..n {
+            let a: f32 = if i < n / 2 { 0.0 } else { 1.0 };      // primary: feature 0 splits halves
+            let b: f32 = (i % 10) as f32 / 10.0;                  // secondary
+            x[i * nf] = a;
+            x[i * nf + 1] = b;
+            // Signal: left half y = noise; right half y strongly depends on b
+            y[i] = if i < n / 2 {
+                ((i % 3) as f32) * 0.01
+            } else {
+                3.0 * b
+            };
+        }
+        let bm = BinnedMatrix::from_dense(&x, n, nf);
+        let mut rng = StdRng::seed_from_u64(1);
+        let mut tree = Tree { nodes: Vec::new() };
+        let mut gains = vec![0.0_f32; nf];
+        let mut hist = NodeHist::zeros(crate::histogram::MAX_BINS);
+        let mut scratch = TreeScratch::new(nf);
+        fit_tree_with_scratch(&bm, &y, &(0..n).collect::<Vec<_>>(), 3, 2, None, &mut tree, &mut gains, &mut hist, &mut scratch, &mut rng);
+        // Secondary feature should accumulate SIGNIFICANT gain via the right subtree
+        // (nearly all of it comes from the right half of the data).
+        assert!(gains[1] > 10.0, "right-subtree secondary signal should show: g[1]={} g[0]={}", gains[1], gains[0]);
+    }
+
+    #[test]
+    fn exclude_feature_is_respected() {
+        let n = 200;
+        let nf = 3;
+        let mut x = vec![0.0_f32; n * nf];
+        let mut y = vec![0.0_f32; n];
+        for i in 0..n {
+            let a = (i as f32) / n as f32;
+            x[i * nf] = a; // perfect predictor
+            x[i * nf + 1] = ((i * 7) as f32) * 0.3 % 1.0;
+            x[i * nf + 2] = ((i * 13) as f32) * 0.5 % 1.0;
+            y[i] = 5.0 * a;
+        }
+        let bm = BinnedMatrix::from_dense(&x, n, nf);
+        let mut rng = StdRng::seed_from_u64(7);
+        let mut tree = Tree { nodes: Vec::new() };
+        let mut gains = vec![0.0_f32; nf];
+        let mut hist = NodeHist::zeros(crate::histogram::MAX_BINS);
+        let mut scratch = TreeScratch::new(nf);
+        // Exclude the perfect-predictor feature 0; gains must be on others.
+        fit_tree_with_scratch(&bm, &y, &(0..n).collect::<Vec<_>>(), 3, 3, Some(0), &mut tree, &mut gains, &mut hist, &mut scratch, &mut rng);
+        assert_eq!(gains[0], 0.0, "excluded feature must receive zero gain");
+        assert!(gains[1] + gains[2] > 0.0);
     }
 }
