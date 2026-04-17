@@ -102,15 +102,19 @@ pub fn infer(
                 .map(|c| expression[c * n_genes + target_idx])
                 .collect();
 
-            // Exclude self-TF from importance by masking the feature after fit
+            // If this target is itself one of the TFs, drop that column from the
+            // feature subset at fit time (not just after). Otherwise the self
+            // column is a perfect predictor → absorbs all split gain → every
+            // other TF's importance collapses to ~0 for that target.
             let exclude_self = tf_name_to_idx.get(target_name.as_str()).copied();
 
-            let importances = gbm::fit_and_importances_binned(&binned_all, &target_expr, cfg);
+            let importances =
+                gbm::fit_and_importances_binned(&binned_all, &target_expr, cfg, exclude_self);
 
             importances
                 .into_iter()
                 .enumerate()
-                .filter(|(i, imp)| *imp > 0.0 && Some(*i) != exclude_self)
+                .filter(|(_, imp)| *imp > 0.0)
                 .map(|(i, imp)| Adjacency {
                     tf: tf_names_vec[i].clone(),
                     target: target_name.clone(),
