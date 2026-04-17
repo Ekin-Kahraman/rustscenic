@@ -16,6 +16,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
+      - uses: Swatinem/rust-cache@v2
       - run: cargo build --release --workspace
       - run: cargo clippy --all-targets -- -D warnings
       - run: cargo test --workspace
@@ -29,7 +30,8 @@ jobs:
         with:
           python-version: "3.11"
       - uses: dtolnay/rust-toolchain@stable
-      - run: pip install maturin scipy pandas pyarrow
+      - uses: Swatinem/rust-cache@v2
+      - run: pip install maturin scipy pandas pyarrow psutil numpy
       - run: maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml
       - run: pip install target/wheels/rustscenic-*.whl
       - run: echo "real-time audit pipeline wires up with v0.1 grn implementation"
