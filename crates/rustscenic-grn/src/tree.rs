@@ -45,6 +45,9 @@ impl TreeScratch {
 }
 
 /// Fit a regression tree. Writes into `tree` and `gains` (caller resets).
+///
+/// The scratch's `feat_pool` is refilled to `0..n_features` on every call to
+/// avoid state leakage from a previous tree's exclude_feature swap_remove.
 #[allow(clippy::too_many_arguments)]
 pub fn fit_tree_with_scratch(
     binned: &BinnedMatrix,
@@ -59,8 +62,10 @@ pub fn fit_tree_with_scratch(
     scratch: &mut TreeScratch,
     rng: &mut impl RngCore,
 ) {
-    // Clone incoming sample_idx into an owned Vec so recursion can freely reuse
-    // it. One small clone per tree (not per split).
+    // Refill the feature pool to 0..n_features so exclude-feature logic starts fresh
+    scratch.feat_pool.clear();
+    scratch.feat_pool.extend(0..binned.n_features);
+    // Clone incoming sample_idx into an owned Vec so recursion can freely reuse it.
     let root_samples: Vec<usize> = sample_idx.to_vec();
     build_node_rec(
         binned,
