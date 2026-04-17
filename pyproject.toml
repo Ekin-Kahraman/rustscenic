@@ -9,7 +9,7 @@ description = "Fast SCENIC+ stage replacements in Rust (GRNBoost2, AUCell, cisTo
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Ekin Kahraman" }]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
     "Intended Audience :: Science/Research",

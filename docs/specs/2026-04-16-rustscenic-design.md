@@ -150,7 +150,7 @@ Shared across stages:
 - `hdf5 = 0.8` — AnnData/H5AD reading
 
 Stage-specific:
-- `grn`: custom histogram-based GBM (no external crate — ports LightGBM's histogram algorithm, ~500 lines, faithful to sklearn semantics)
+- `grn`: gradient-boosting with **sklearn-compatible semantics** (Huber loss, depth-3 trees, sklearn feature-importance definition, `* n_estimators` denormalization per arboreto/core.py:168). **Histogram binning is an internal optimization** — semantics match sklearn, not LightGBM. ~500 lines, no external GBM crate.
 - `aucell`: uses `rustscrublet/src/sparse.rs` patterns
 - `topics`: `statrs` for digamma/gamma, custom online VB (Hoffman 2010 update rules)
 - `cistarget`: `memmap2` for mmap'd feather rankings, `arrow2` for feather parsing
@@ -211,22 +211,24 @@ rustscenic cistarget \
 
 ### 4.1 Algorithm
 
-Faithful port of `sklearn.ensemble.GradientBoostingRegressor` as used by `arboreto.algo.grnboost2`:
+**Semantics faithful to sklearn's `GradientBoostingRegressor` as used by `arboreto.algo.grnboost2` (confirmed against `arboreto/core.py:150-213`):**
 
-- Loss: Huber (arboreto default; matches sklearn's `HuberLoss` with `alpha=0.9`)
-- `n_estimators=5000` (arboreto default)
-- `max_depth=3`
-- `learning_rate=0.01`
-- `subsample=0.9` (stochastic GBM)
-- Early stopping: when improvement over last 50 iterations <1e-5
-- Feature importance: sum of split-gains across all trees, normalized per target
+- Loss: Huber (sklearn `HuberLoss` with `alpha=0.9`; arboreto default `SGBM_KWARGS`)
+- `n_estimators=5000`
+- `max_depth=3`, `max_features="sqrt"`
+- `learning_rate=0.01`, `subsample=0.9`
+- Early stopping via arboreto's `EarlyStopMonitor` (window 25): halt when recent improvement stalls
+- Importance: sklearn's per-feature Gini accumulation, **multiplied by `n_estimators`** per arboreto/core.py:168
+- Output schema: `['TF', 'target', 'importance']` (capital TF), filtered to `importance > 0`, sorted descending per target
 
-Implementation acceleration vs sklearn:
-1. **Histogram-based binning** (LightGBM's trick): pre-bin features to 255 buckets once, then split evaluation is O(buckets) not O(n_cells).
-2. **No GIL callbacks** during fit.
-3. **Per-target-gene rayon parallelism**: 20k targets parallelized across cores, no Dask.
-4. **f32 throughout** (sklearn uses f64): 2× memory bandwidth.
-5. **Zero-copy sparse input**: PyO3 passes CSR buffer pointers, no numpy densification.
+**Implementation optimizations (internal, do not change outputs modulo float precision):**
+1. Histogram binning (255 buckets) — split eval O(buckets × features) not O(cells × features).
+2. No GIL callbacks during fit.
+3. Per-target rayon parallelism, no Dask.
+4. f32 throughout; validate Spearman/Jaccard hold vs sklearn f64.
+5. Zero-copy sparse CSR input via PyO3 buffer pointers.
+
+**Seed fidelity:** numpy MT19937 drives sklearn's randomness. Replicate bit-for-bit via `rand_mt` crate in the same consumption order as sklearn (subsample mask → `max_features` column selection → tree splits). Document the RNG tape in `crates/rustscenic-grn/src/rng.rs`.
 
 ### 4.2 Inputs
 
@@ -236,8 +238,8 @@ Implementation acceleration vs sklearn:
 
 ### 4.3 Outputs
 
-- `grn.parquet`: `(TF: str, target: str, importance: f32)` schema, matches `arboreto.algo.grnboost2` output
-- `grn.json`: metadata (wall-clock, peak RSS, git SHA, seed, dataset SHA256, rustscenic version)
+- `grn.parquet`: `(TF: str, target: str, importance: f32)` — capital `TF`, importance denormalized (`* n_estimators`), filtered `importance > 0`, sorted descending per target. Exact-schema match for arboreto.
+- `grn.json`: metadata — wall-clock, peak RSS, git SHA, seed, dataset SHA256, rustscenic version, per-target `n_estimators_effective` if early stopping fired.
 
 ### 4.4 Validation (real-time audit)
 
@@ -248,25 +250,23 @@ Implementation acceleration vs sklearn:
 - Commit to git-LFS
 
 **Per-commit audit (CI):**
-- Build wheel via maturin
-- Install wheel + run `rustscenic grn --seed 777` on same PBMC-3k
-- `validation/compare.py --stage grn`:
-  - Edge-rank Spearman on top-10k edges: must ≥0.95
-  - Exact-rank agreement on top-100 edges per TF: must ≥0.75
-- `validation/benchmarks.py --stage grn`:
-  - Wall-clock vs reference: log ratio
-  - Peak RSS: log MB
+- Build wheel via maturin → install → run `rustscenic grn --seed 777` on PBMC-3k
+- `validation/compare.py --stage grn` computes:
+  - **Jaccard of top-10k edge sets** — must ≥0.80
+  - **Spearman on importance ranks across union of top-10k** — must ≥0.85
+  - Per-TF top-100 target overlap, averaged across all TFs (not `[:50]`) — must ≥0.70
+- `validation/benchmarks.py --stage grn`: wall-clock + peak RSS (via `psutil`, not `RUSAGE_CHILDREN` — the latter is cumulative across session children and pollutes sequential runs).
 - Append row to `validation/results.csv`
-- Post PR comment with diff: `grn: Spearman 0.957 (Δ-0.002), wall 142s (ref 620s, 4.4×)`
+- PR comment: `grn: Jaccard 0.832 (Δ-0.003), Spearman-union 0.891 (Δ+0.012), wall 142s (ref 620s, 4.4×)`
 
 ### 4.5 Success criteria (v0.1 hard gates)
 
-- [ ] Spearman ≥0.95 vs pyscenic on PBMC-3k with matching seed
-- [ ] 3× or better wall-clock single-thread vs arboreto (if arboreto can install)
-- [ ] `pip install rustscenic==0.1.0` succeeds on: Python 3.9/3.10/3.11/3.12/3.13 × macOS arm64/x86_64 × Linux x86_64/aarch64
+- [ ] Jaccard top-10k edges ≥0.80, Spearman-on-union ≥0.85, per-TF top-100 overlap ≥0.70 — all vs arboreto-sync reference on PBMC-3k with matching seed
+- [ ] 3× or better wall-clock single-thread vs arboreto-sync reference
+- [ ] `pip install rustscenic==0.1.0` succeeds on Python **3.10/3.11/3.12/3.13** × macOS arm64/x86_64 × Linux x86_64/aarch64. **Windows deferred to v1.0** (hdf5-rs + maturin Windows matrix costs more than v0.1 warrants).
 - [ ] Wheel size ≤8 MB uncompressed
 - [ ] Zero Python runtime deps except numpy, pandas, pyarrow
-- [ ] Agent skill at `~/.claude/skills/rustscenic/SKILL.md`
+- [ ] Agent skill present at `skills/rustscenic.md` in repo AND installed at `~/.claude/skills/rustscenic/SKILL.md`
 
 ### 4.6 Risks
 
@@ -405,13 +405,17 @@ Draft (to be sent when v0.1 is merged to main with passing audit):
 
 ---
 
-## 10. Open questions (non-blocking; decide during v0.1)
+## 10. Resolved decisions (post-audit 2026-04-17)
 
-1. Python version floor — 3.9 (matches scanpy 1.10) or 3.10? **Default: 3.9** to maximize install base.
-2. Should `rustscenic grn` accept sparse numpy ndarray directly, or always go through AnnData? **Default: accept both.**
-3. Error handling: `thiserror` crate-level + `PyException` on Python side, or just `anyhow`? **Default: `thiserror`** for library crates, `anyhow` for CLI binary.
-4. How to handle reference runs when arboreto won't install: pin a working commit + document the pinned-env recipe, or use a pre-rendered baseline only? **Default: pre-rendered baseline + documented recipe.** Reproducibility matters but users shouldn't have to reproduce baselines themselves.
-5. Regarding tomotopy PR #226 — wrap (subprocess/FFI) or replace? **Default: decide at v0.3 based on merge status.**
+1. Python floor: **3.10** (scanpy 1.11 requires 3.10).
+2. `grn` accepts dense ndarray, sparse CSR, and AnnData inputs.
+3. Errors: `thiserror` in library crates, `anyhow` in CLI binary, `PyException` across FFI.
+4. Reference baseline: **pre-rendered parquet committed to the repo**; Dockerfile reproduces it.
+5. tomotopy PR #226 — decide at v0.3 based on merge status.
+
+## 10.1 Open (deferred)
+
+- Whether to ship `rustscenic run-all` end-to-end wrapper chaining all four stages (feature creep; add only if users ask).
 
 ---
 

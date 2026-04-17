@@ -2,7 +2,7 @@
 
 Rust + PyO3 reimplementation of the four slow stages of the SCENIC+ single-cell regulatory-network pipeline. Drop-in replacements for `arboreto.grnboost2`, `pyscenic.aucell`, `pycisTopic`, and `pycistarget` — one `pip install`, zero Python runtime dep rot, 3–10× faster per stage.
 
-**Status:** scaffolding (v0.1 under active development)
+**Status:** scaffolded 2026-04-16, audit-fixed 2026-04-17, v0.1 `grn` implementation pending.
 
 ## Why
 
