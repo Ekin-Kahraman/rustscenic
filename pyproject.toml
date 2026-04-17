@@ -24,6 +24,9 @@ dependencies = [
     "pyarrow>=10",
 ]
 
+[project.scripts]
+rustscenic = "rustscenic.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/Ekin-Kahraman/rustscenic"
 Documentation = "https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/specs/2026-04-16-rustscenic-design.md"
