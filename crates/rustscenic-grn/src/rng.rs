@@ -62,6 +62,17 @@ pub fn subsample_rows(rng: &mut impl RngCore, n: usize, frac: f32) -> Vec<usize>
         .collect()
 }
 
+/// Fill `out` in place with bernoulli-sampled row indices.
+pub fn subsample_rows_into(rng: &mut impl RngCore, n: usize, frac: f32, out: &mut Vec<usize>) {
+    out.clear();
+    for i in 0..n {
+        let u: f32 = (rng.next_u32() as f32) / (u32::MAX as f32);
+        if u < frac {
+            out.push(i);
+        }
+    }
+}
+
 /// Module-level `rand` helper matching numpy's integer generation range style.
 pub fn uniform_u32(rng: &mut impl RngCore) -> u32 {
     rng.next_u32()
