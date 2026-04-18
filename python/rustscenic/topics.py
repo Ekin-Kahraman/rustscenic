@@ -72,7 +72,17 @@ def fit(
     -------
     TopicsResult
     """
+    if not isinstance(n_topics, int) or n_topics < 1:
+        raise ValueError(f"n_topics must be a positive integer, got {n_topics!r}")
+    if n_passes < 1:
+        raise ValueError(f"n_passes must be >= 1, got {n_passes}")
+    if batch_size < 1:
+        raise ValueError(f"batch_size must be >= 1, got {batch_size}")
+
     row_ptr, col_idx, counts, n_words, cell_names, peak_names = _coerce(expression)
+
+    if n_words == 0:
+        raise ValueError("expression has 0 peaks/genes — nothing to model")
 
     if alpha is None:
         alpha = 1.0 / n_topics

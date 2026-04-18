@@ -54,13 +54,30 @@ def score(
     reg_names: list[str] = []
     reg_gene_indices: list[list[int]] = []
 
+    dropped_empty = 0
     for reg in regulons:
         name, genes = _coerce_regulon(reg)
         idx = [gene_to_idx[g] for g in genes if g in gene_to_idx]
         if not idx:
+            dropped_empty += 1
             continue
         reg_names.append(name)
         reg_gene_indices.append(idx)
+
+    if dropped_empty > 0 and not reg_names:
+        import warnings
+        warnings.warn(
+            f"all {dropped_empty} regulons dropped — no genes overlap the expression "
+            f"matrix. Check that regulon gene symbols match your AnnData.var_names.",
+            UserWarning, stacklevel=2,
+        )
+    elif dropped_empty > 0:
+        import warnings
+        warnings.warn(
+            f"{dropped_empty} of {dropped_empty + len(reg_names)} regulons dropped "
+            f"(no genes overlap expression matrix).",
+            UserWarning, stacklevel=2,
+        )
 
     auc = _aucell_score(X, reg_names, reg_gene_indices, top_frac)
     return pd.DataFrame(np.asarray(auc), index=cell_names, columns=reg_names)

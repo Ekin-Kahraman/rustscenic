@@ -46,10 +46,24 @@ def infer(
     X, gene_names = _coerce_expression(expression)
     if X.dtype != np.float32:
         X = X.astype(np.float32, copy=False)
-    # numpy may produce F-order; _rustscenic expects C-contiguous
     X = np.ascontiguousarray(X)
 
+    # Warn on duplicate gene symbols — silent success can produce wrong results
+    # when multiple columns map to the same TF name at aggregation time.
+    dup_count = len(gene_names) - len(set(gene_names))
+    if dup_count > 0:
+        import warnings
+        warnings.warn(
+            f"{dup_count} duplicate gene name(s) in input; only the first match "
+            f"will be used for each duplicate. Use AnnData.var_names_make_unique() "
+            f"or deduplicate upstream.",
+            UserWarning, stacklevel=2,
+        )
+
     tfs_list = list(tf_names)
+    if not tfs_list:
+        import warnings
+        warnings.warn("empty TF list — returning empty DataFrame", UserWarning, stacklevel=2)
 
     tfs, targets, importances = _grn_infer(
         X,
