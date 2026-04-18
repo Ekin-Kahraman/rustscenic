@@ -2,7 +2,16 @@
 
 Rust + PyO3 replacement for the slow stages of the SCENIC+ single-cell regulatory-network pipeline. `v0.1` ships the `grn` stage (GRNBoost2 replacement). Installs cleanly on modern Python, produces biologically-faithful regulons, beats arboreto on multiple external benchmarks.
 
-**Status (2026-04-18):** 4 of 4 SCENIC+ stages native Rust — `grn`, `aucell`, `topics` (pycisTopic LDA), `cistarget` (motif enrichment). Validated end-to-end on two PBMC datasets (2.7k + 11k cells). `aucell` is 22–64× faster than pyscenic with 8/8 canonical lineage discrimination. Repo private pending further validation on non-immune data.
+**Status (2026-04-18):** 4 of 4 SCENIC+ stages native Rust and independently validated.
+
+| Stage | Validation | vs reference |
+|---|---|---|
+| `grn` | PBMC-3k + PBMC-10k, 43 literature edges, 17,798 CollecTRI edges | **74% recall vs arboreto 51%** at top-20 |
+| `aucell` | PBMC-3k + PBMC-10k, 8/8 lineage discrimination | **22–64× faster than pyscenic** |
+| `topics` | scATAC-shape synthetic (10 topics, 2k cells × 20k peaks, 0.5% sparsity) | **ARI 0.736 vs planted, beats gensim (0.707)** |
+| `cistarget` | JASPAR-scale synthetic (800 motifs × 20k genes × 100 regulons) | **100/100 planted motif-regulon pairs recovered at top-1** |
+
+Repo private pending real-data validation of topics (10x Multiome) and cistarget (aertslab feather DB).
 
 ## Why this exists
 
