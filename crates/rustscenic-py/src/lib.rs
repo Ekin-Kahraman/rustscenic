@@ -5,6 +5,7 @@ use pyo3::types::PyList;
 
 use rustscenic_aucell::aucell;
 use rustscenic_grn::{infer, Adjacency, GrnConfig};
+use rustscenic_topics::online_vb_lda;
 
 #[pyfunction]
 #[pyo3(signature = (
@@ -118,10 +119,58 @@ fn aucell_score<'py>(
     Ok(PyArray2::from_owned_array(py, arr2).unbind())
 }
 
+/// Fit online-VB Latent Dirichlet Allocation on a sparse (docs x words) matrix.
+/// Intended for pycisTopic-style scATAC peak-topic modeling; also works for
+/// plain word-topic LDA.
+///
+/// Returns (cell_topic, topic_word) as two numpy arrays.
+#[pyfunction]
+#[pyo3(signature = (
+    row_ptr, col_idx, counts, n_words,
+    n_topics = 50,
+    alpha = 0.02,
+    eta = 0.02,
+    tau0 = 64.0,
+    kappa = 0.7,
+    batch_size = 256,
+    n_passes = 10,
+    seed = 42,
+))]
+#[allow(clippy::too_many_arguments)]
+fn topics_fit<'py>(
+    py: Python<'py>,
+    row_ptr: Vec<usize>,
+    col_idx: Vec<u32>,
+    counts: Vec<f32>,
+    n_words: usize,
+    n_topics: usize,
+    alpha: f32,
+    eta: f32,
+    tau0: f32,
+    kappa: f32,
+    batch_size: usize,
+    n_passes: usize,
+    seed: u64,
+) -> PyResult<(Py<PyArray2<f32>>, Py<PyArray2<f32>>)> {
+    let result = py.allow_threads(|| {
+        online_vb_lda(
+            &row_ptr, &col_idx, &counts, n_words, n_topics,
+            alpha, eta, tau0, kappa, batch_size, n_passes, seed,
+        )
+    });
+    let n_docs = result.n_docs;
+    let ct = ndarray::Array2::from_shape_vec((n_docs, n_topics), result.cell_topic)
+        .map_err(|e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+    let tw = ndarray::Array2::from_shape_vec((n_topics, n_words), result.topic_word)
+        .map_err(|e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+    Ok((PyArray2::from_owned_array(py, ct).unbind(), PyArray2::from_owned_array(py, tw).unbind()))
+}
+
 #[pymodule]
 fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add_function(wrap_pyfunction!(grn_infer, m)?)?;
     m.add_function(wrap_pyfunction!(aucell_score, m)?)?;
+    m.add_function(wrap_pyfunction!(topics_fit, m)?)?;
     Ok(())
 }
