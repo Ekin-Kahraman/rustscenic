@@ -90,4 +90,4 @@ MIT. Algorithm implementations are independent reimplementations following aerts
 
 ## Contact
 
-Ekin Kahraman · evk23umu@uea.ac.uk · github.com/Ekin-Kahraman
+Open an issue at [github.com/Ekin-Kahraman/rustscenic](https://github.com/Ekin-Kahraman/rustscenic/issues).

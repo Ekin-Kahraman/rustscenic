@@ -1,3 +1,6 @@
+// numerical inner loops read from multiple arrays by index — allow to keep readability.
+#![allow(clippy::needless_range_loop)]
+
 //! Online variational Bayes Latent Dirichlet Allocation (pycisTopic replacement).
 //!
 //! Implements Hoffman-Blei-Bach 2010 online VB LDA for scATAC peak-topic

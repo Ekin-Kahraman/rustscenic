@@ -56,8 +56,7 @@ pub fn fit_tree_with_scratch(
     scratch: &mut TreeScratch,
     rng: &mut impl RngCore,
 ) {
-    scratch.feat_pool.clear();
-    scratch.feat_pool.extend(0..binned.n_features);
+    // feat_pool reset happens inside choose_feature_subset per call now.
     let root_samples: Vec<usize> = sample_idx.to_vec();
     build_node_rec(
         binned, y, &root_samples, 0, max_depth, max_features_per_split,
@@ -90,7 +89,7 @@ fn build_node_rec(
 
     choose_feature_subset(
         rng, &mut scratch.feat_pool, &mut scratch.feat_sub,
-        max_features_per_split, exclude_feature,
+        max_features_per_split, exclude_feature, binned.n_features,
     );
 
     let mut best: Option<(usize, u8, f32)> = None;
@@ -137,7 +136,13 @@ fn choose_feature_subset(
     out: &mut Vec<usize>,
     k: usize,
     exclude_feature: Option<usize>,
+    n_features_total: usize,
 ) {
+    // Reset pool to 0..n_features every call. Fisher-Yates on a scrambled pool
+    // still produces a uniform k-subset statistically, but the reset removes
+    // any doubt and is cheap (small Vec clone-in-place, no allocation).
+    pool.clear();
+    pool.extend(0..n_features_total);
     if let Some(excl) = exclude_feature {
         if let Some(pos) = pool.iter().position(|&x| x == excl) {
             pool.swap_remove(pos);
@@ -150,8 +155,11 @@ fn choose_feature_subset(
     }
     let k = k.min(n).max(1);
     out.clear();
+    // Use rand's gen_range for bias-free uniform sampling (though modulo bias
+    // for n < 10^6 is ~10^-19 in practice, eliminate it by construction).
+    use rand::Rng;
     for i in 0..k {
-        let j = i + (rng.next_u64() as usize) % (n - i);
+        let j = i + rng.gen_range(0..(n - i));
         pool.swap(i, j);
     }
     out.extend_from_slice(&pool[..k]);

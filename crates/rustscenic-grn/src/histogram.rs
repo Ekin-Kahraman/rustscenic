@@ -25,6 +25,16 @@ impl BinnedMatrix {
     /// Cells with the same value can end up in the same bin — we dedup cut points.
     pub fn from_dense(x: &[f32], n_samples: usize, n_features: usize) -> Self {
         assert_eq!(x.len(), n_samples * n_features);
+        // Reject NaN up front — silent corruption via NaN in partial_cmp + partition_point.
+        // Fail fast with clear message rather than producing plausible-looking wrong bins.
+        if x.iter().any(|v| v.is_nan()) {
+            panic!(
+                "input expression matrix contains NaN values — \
+                binarization semantics are undefined. \
+                Clean upstream: scanpy.pp.normalize_total + sc.pp.log1p can produce \
+                NaN from 0-count cells; filter cells with min_genes first."
+            );
+        }
         let mut bins = vec![0u8; n_samples * n_features];
         let mut n_bins_per_feature = vec![1u16; n_features];
 
