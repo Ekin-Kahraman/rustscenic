@@ -97,24 +97,45 @@ def cmd_aucell(args: argparse.Namespace) -> int:
     expression, gene_names, n_cells = _load_expression(expr_path)
     # Regulons expected as TSV: regulon_name\tgene1,gene2,...  OR  regulon_name\tgene  (long form)
     # Accept either format; auto-detect by checking first line.
-    lines = reg_path.read_text().strip().splitlines()
     regulons: list[tuple[str, list[str]]] = []
-    # GRN-adjacencies format (from `rustscenic grn` output)
-    if "TF" in lines[0] and "target" in lines[0] and "importance" in lines[0]:
-        df = pd.read_csv(reg_path, sep="\t" if reg_path.suffix == ".tsv" else ",")
-        # Top-N targets per TF
-        top = args.top_n_targets
+    # Load by extension — the common workflow is `rustscenic grn --output grn.parquet`
+    # followed by `rustscenic aucell --regulons grn.parquet`.
+    if reg_path.suffix.lower() == ".parquet":
+        df = pd.read_parquet(reg_path)
+        if not {"TF", "target", "importance"}.issubset(df.columns):
+            print(f"error: {reg_path} doesn't look like a GRN adjacencies parquet "
+                  f"(missing TF/target/importance columns). Got: {df.columns.tolist()}",
+                  file=sys.stderr)
+            return 2
         for tf, group in df.groupby("TF"):
-            top_targets = group.nlargest(top, "importance")["target"].tolist()
+            top_targets = group.nlargest(args.top_n_targets, "importance")["target"].tolist()
             if len(top_targets) >= args.min_genes:
                 regulons.append((f"{tf}_regulon", top_targets))
     else:
-        for ln in lines:
-            if "\t" in ln:
-                name, genes_str = ln.split("\t", 1)
-                genes = [g.strip() for g in genes_str.split(",") if g.strip()]
-                if len(genes) >= args.min_genes:
-                    regulons.append((name.strip(), genes))
+        lines = reg_path.read_text().splitlines()
+        if not lines:
+            print(f"error: {reg_path} is empty", file=sys.stderr)
+            return 2
+        header = lines[0]
+        if "TF" in header and "target" in header and "importance" in header:
+            # GRN-adjacencies TSV/CSV
+            df = pd.read_csv(reg_path, sep="\t" if reg_path.suffix == ".tsv" else ",")
+            for tf, group in df.groupby("TF"):
+                top_targets = group.nlargest(args.top_n_targets, "importance")["target"].tolist()
+                if len(top_targets) >= args.min_genes:
+                    regulons.append((f"{tf}_regulon", top_targets))
+        else:
+            # Plain regulons TSV: name\tgene,gene,...
+            for ln in lines:
+                if "\t" in ln:
+                    name, genes_str = ln.split("\t", 1)
+                    genes = [g.strip() for g in genes_str.split(",") if g.strip()]
+                    if len(genes) >= args.min_genes:
+                        regulons.append((name.strip(), genes))
+
+    if not regulons:
+        print(f"error: no regulons loaded from {reg_path}", file=sys.stderr)
+        return 2
 
     print(f"rustscenic {__version__}  aucell  cells={n_cells}  regulons={len(regulons)}  top_frac={args.top_frac}",
           file=sys.stderr, flush=True)

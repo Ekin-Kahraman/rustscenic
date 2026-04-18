@@ -43,10 +43,9 @@ def enrich(
     ----------
     rankings
         DataFrame with motifs as rows (index = motif names) and genes as columns.
-        Values = rank of gene for that motif. Compatible with aertslab feather-DB
-        schema (just `pd.read_feather(...).set_index('motifs').T` it).
-        Alternatively pass a DataFrame with genes as rows, motifs as columns —
-        we detect orientation by checking which axis matches more of `regulons`.
+        Values = rank of gene for that motif (lower rank = stronger association).
+        Use ``load_aertslab_feather()`` to load the aertslab feather DB in the
+        correct orientation.
     regulons
         Iterable of `(name, gene_list)` tuples, or objects with `.name` + `.genes`.
     top_frac
@@ -61,10 +60,15 @@ def enrich(
     pandas.DataFrame with columns [regulon, motif, auc], sorted descending
     by AUC. Only rows where auc >= auc_threshold.
     """
-    # Expect motifs as rows (index), genes as columns. Caller can transpose
-    # if they have the opposite layout — we don't guess.
+    # Expect motifs as rows, genes as columns. Refuse to guess orientation —
+    # a wrong guess silently produces an empty result.
     motif_names = list(rankings.index)
     gene_names = list(rankings.columns)
+    if rankings.values.dtype == object:
+        raise TypeError(
+            "rankings DataFrame has dtype=object (likely non-numeric or "
+            "wrong columns). Ensure rank values are numeric before passing."
+        )
     # Convert rankings (lower = better) into "expression" (higher = better)
     # by negating — AUCell's recovery AUC expects descending sort by value.
     # Use -rank so smaller rank maps to larger pseudo-expression.

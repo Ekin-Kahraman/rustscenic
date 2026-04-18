@@ -36,11 +36,7 @@ rustscenic grn --expression data.h5ad --tfs hs_hgnc_tfs.txt --output grn.parquet
 
 ## Versioning
 
-- v0.1: `grn` stage (GRNBoost2 replacement)
-- v0.2: + `aucell` (regulon scoring)
-- v0.3: + `topics` (pycisTopic LDA)
-- v0.4: + `cistarget` (motif enrichment)
-- v1.0: all four stages shipped as one wheel
+v0.1.0 ships all four stages: `grn`, `aucell`, `topics`, `cistarget`.
 
 ## Don't use for
 

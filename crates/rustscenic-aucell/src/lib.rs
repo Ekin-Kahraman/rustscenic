@@ -14,8 +14,9 @@
 //! Output: (n_cells x n_regulons) f32 matrix of normalized recovery AUCs.
 //!
 //! Matches pyscenic.aucell.aucell at the algorithm level. Runtime:
-//!     O(n_cells * n_genes * log(n_genes))  for argsort
-//!   + O(n_cells * sum_r |G_r intersect top-K|)  for AUC aggregation
+//! O(n_cells * n_genes * log(n_genes))  for argsort
+//! + O(n_cells * sum_r |G_r intersect top-K|)  for AUC aggregation
+//!
 //! Rayon-parallelized over cells.
 
 use rayon::prelude::*;
@@ -75,8 +76,16 @@ pub fn aucell(
                         auc_sum += (max_rank_u32 - r) as u64;
                     }
                 }
-                let denom = (max_rank as u64) * (gene_set.len() as u64).max(1);
-                let norm = (auc_sum as f64) / (denom as f64);
+                // True maximum AUC: if all |G| regulon genes fell at top ranks 0..|G|-1,
+                // auc_sum = sum_{i=0..|G|} (K - i) = K*|G| - |G|*(|G|-1)/2
+                // We use min(|G|, K) because extras past K can never contribute.
+                let g = (gene_set.len() as u64).min(max_rank as u64);
+                if g == 0 {
+                    cell_out[r_idx] = 0.0;
+                    continue;
+                }
+                let max_auc = (max_rank as u64) * g - g * g.saturating_sub(1) / 2;
+                let norm = (auc_sum as f64) / (max_auc as f64);
                 cell_out[r_idx] = norm.clamp(0.0, 1.0) as f32;
             }
         });

@@ -124,6 +124,13 @@ def _coerce(expression):
     else:
         raise TypeError("expression must be AnnData, DataFrame, or (sparse, cells, peaks) tuple")
 
+    if X.nnz > np.iinfo(np.uint32).max:
+        raise OverflowError(
+            f"input matrix has {X.nnz} nonzeros, exceeding uint32 max "
+            f"({np.iinfo(np.uint32).max}). Subset or bin the matrix first."
+        )
+    if X.shape[1] > np.iinfo(np.uint32).max:
+        raise OverflowError(f"too many features/peaks ({X.shape[1]}) for uint32 index")
     return (
         np.asarray(X.indptr, dtype=np.int64),
         np.asarray(X.indices, dtype=np.uint32),

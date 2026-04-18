@@ -29,7 +29,7 @@ rustscenic = "rustscenic.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/Ekin-Kahraman/rustscenic"
-Documentation = "https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/specs/2026-04-16-rustscenic-design.md"
+Documentation = "https://github.com/Ekin-Kahraman/rustscenic#readme"
 
 [tool.maturin]
 manifest-path = "crates/rustscenic-py/Cargo.toml"

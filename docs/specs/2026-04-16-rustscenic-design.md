@@ -1,5 +1,7 @@
 # rustscenic — design spec
 
+**INTERNAL PLANNING DOCUMENT.** This is the original project planning spec; it references private email correspondence between Ekin and collaborators. Not for public distribution. For user-facing documentation see the README.
+
 **Date:** 2026-04-16
 **Author:** Ekin Kahraman (with Claude)
 **Status:** Draft — awaiting user review

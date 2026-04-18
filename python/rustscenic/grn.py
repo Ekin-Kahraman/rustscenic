@@ -102,5 +102,15 @@ def _coerce_expression(expression):
 
 
 def load_tfs(path: Union[str, Path]) -> list[str]:
-    """Load a TF list (one gene symbol per line) from a text file."""
-    return Path(path).read_text().strip().splitlines()
+    """Load a TF list (one gene symbol per line) from a text file.
+
+    Strips whitespace (including \\r from Windows line endings) and skips
+    blank lines / comment lines starting with ``#``.
+    """
+    out = []
+    for line in Path(path).read_text().splitlines():
+        s = line.strip()
+        if not s or s.startswith("#"):
+            continue
+        out.append(s)
+    return out

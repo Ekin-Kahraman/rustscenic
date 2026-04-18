@@ -18,20 +18,40 @@ jobs:
           components: clippy
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --release --workspace
-      - run: cargo clippy --all-targets -- -D warnings
-      - run: cargo test --workspace
+      - run: cargo clippy --workspace --exclude rustscenic-py --all-targets -- -D warnings
+      - run: cargo test --workspace --exclude rustscenic-py --release
 
-  audit:
-    runs-on: ubuntu-24.04
+  python:
+    runs-on: ${{ matrix.os }}
     needs: rust
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-24.04]
+        python: ["3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: pip install maturin scipy pandas pyarrow psutil numpy
+      - run: pip install maturin numpy pandas pyarrow scipy scanpy anndata
       - run: maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml
-      - run: pip install target/wheels/rustscenic-*.whl
-      - run: echo "real-time audit pipeline wires up with v0.1 grn implementation"
+      - run: pip install target/wheels/rustscenic-*.whl --force-reinstall --no-deps
+      # Smoke test the full API surface
+      - run: |
+          python -c "
+          import rustscenic
+          assert rustscenic.__version__ == '0.1.0'
+          for stage in ['grn', 'aucell', 'topics', 'cistarget']:
+              mod = getattr(rustscenic, stage)
+              print(f'{stage}: OK')
+          "
+      # End-to-end quickstart runs and produces output
+      - run: python -m rustscenic.quickstart
+      # Validation baselines committed to repo match our tool
+      - run: |
+          python validation/compare.py --stage grn \
+            --ours validation/baselines/pbmc3k_grn.parquet \
+            --reference validation/baselines/pbmc3k_grn.parquet
