@@ -1,12 +1,11 @@
 //! Histogram-based regression decision tree.
 //!
-//! Uses pre-binned features and per-node histograms to score splits in
-//! O(bins + |node_samples|) per feature, not O(n log n). Left/right partitions
-//! are local Vecs per recursive call — small allocations (a few KB each) but
-//! eliminates the cross-sibling aliasing bug in the prior scratch-stack design.
+//! Per-split partitioning uses two local Vec<usize> buffers (left/right) with
+//! sequential push() — cache-friendly sequential writes. Explicit allocation
+//! per split is cheaper than in-place Hoare partition's random swaps at tree
+//! sizes typical of arboreto-style GBM (depth-3 trees on 100-10000 samples).
 //!
-//! `exclude_feature` lets callers drop a single feature from consideration,
-//! used to exclude self-TF when the target gene is itself in the TF set.
+//! Safety: left and right Vecs are independently owned, no aliasing.
 
 use rand::RngCore;
 
@@ -29,7 +28,6 @@ pub enum Node {
     },
 }
 
-/// Reusable scratch for tree fitting (held by the boosting loop, one per target).
 pub struct TreeScratch {
     pub feat_sub: Vec<usize>,
     pub feat_pool: Vec<usize>,
@@ -44,10 +42,6 @@ impl TreeScratch {
     }
 }
 
-/// Fit a regression tree. Writes into `tree` and `gains` (caller resets).
-///
-/// The scratch's `feat_pool` is refilled to `0..n_features` on every call to
-/// avoid state leakage from a previous tree's exclude_feature swap_remove.
 #[allow(clippy::too_many_arguments)]
 pub fn fit_tree_with_scratch(
     binned: &BinnedMatrix,
@@ -62,24 +56,12 @@ pub fn fit_tree_with_scratch(
     scratch: &mut TreeScratch,
     rng: &mut impl RngCore,
 ) {
-    // Refill the feature pool to 0..n_features so exclude-feature logic starts fresh
     scratch.feat_pool.clear();
     scratch.feat_pool.extend(0..binned.n_features);
-    // Clone incoming sample_idx into an owned Vec so recursion can freely reuse it.
     let root_samples: Vec<usize> = sample_idx.to_vec();
     build_node_rec(
-        binned,
-        y,
-        &root_samples,
-        0,
-        max_depth,
-        max_features_per_split,
-        exclude_feature,
-        tree,
-        gains,
-        hist_buf,
-        scratch,
-        rng,
+        binned, y, &root_samples, 0, max_depth, max_features_per_split,
+        exclude_feature, tree, gains, hist_buf, scratch, rng,
     );
 }
 
@@ -107,11 +89,8 @@ fn build_node_rec(
     }
 
     choose_feature_subset(
-        rng,
-        &mut scratch.feat_pool,
-        &mut scratch.feat_sub,
-        max_features_per_split,
-        exclude_feature,
+        rng, &mut scratch.feat_pool, &mut scratch.feat_sub,
+        max_features_per_split, exclude_feature,
     );
 
     let mut best: Option<(usize, u8, f32)> = None;
@@ -129,9 +108,6 @@ fn build_node_rec(
     if let Some((feature, bin_threshold, gain)) = best {
         gains[feature] += gain;
         let nf = binned.n_features;
-
-        // Partition into owned left/right Vecs. Small allocations (~few KB each)
-        // but avoids any aliasing between sibling subtrees.
         let mut left_samples = Vec::with_capacity(samples.len() / 2);
         let mut right_samples = Vec::with_capacity(samples.len() / 2);
         for &s in samples {
@@ -150,7 +126,6 @@ fn build_node_rec(
             binned, y, &right_samples, depth + 1, max_depth, max_features_per_split,
             exclude_feature, tree, gains, hist_buf, scratch, rng,
         );
-
         tree.nodes[idx] = Node::Split { feature, bin_threshold, gain, left, right };
     }
     idx
@@ -163,9 +138,6 @@ fn choose_feature_subset(
     k: usize,
     exclude_feature: Option<usize>,
 ) {
-    // If this is the first call (or feat_pool has become out of date), ensure it's
-    // initialized to 0..n_features minus the excluded index. `pool.len()` is the
-    // effective number of features the caller has staged.
     if let Some(excl) = exclude_feature {
         if let Some(pos) = pool.iter().position(|&x| x == excl) {
             pool.swap_remove(pos);
@@ -261,25 +233,16 @@ mod tests {
 
     #[test]
     fn right_subtree_uses_correct_samples() {
-        // Previously the partition-stack scheme corrupted samples between
-        // sibling subtrees. This test catches that regression: construct a
-        // tree where the right subtree has a strong secondary signal that
-        // would be invisible if its sample set were corrupted.
         let n = 600;
         let nf = 2;
         let mut x = vec![0.0_f32; n * nf];
         let mut y = vec![0.0_f32; n];
         for i in 0..n {
-            let a: f32 = if i < n / 2 { 0.0 } else { 1.0 };      // primary: feature 0 splits halves
-            let b: f32 = (i % 10) as f32 / 10.0;                  // secondary
+            let a: f32 = if i < n / 2 { 0.0 } else { 1.0 };
+            let b: f32 = (i % 10) as f32 / 10.0;
             x[i * nf] = a;
             x[i * nf + 1] = b;
-            // Signal: left half y = noise; right half y strongly depends on b
-            y[i] = if i < n / 2 {
-                ((i % 3) as f32) * 0.01
-            } else {
-                3.0 * b
-            };
+            y[i] = if i < n / 2 { ((i % 3) as f32) * 0.01 } else { 3.0 * b };
         }
         let bm = BinnedMatrix::from_dense(&x, n, nf);
         let mut rng = StdRng::seed_from_u64(1);
@@ -288,9 +251,7 @@ mod tests {
         let mut hist = NodeHist::zeros(crate::histogram::MAX_BINS);
         let mut scratch = TreeScratch::new(nf);
         fit_tree_with_scratch(&bm, &y, &(0..n).collect::<Vec<_>>(), 3, 2, None, &mut tree, &mut gains, &mut hist, &mut scratch, &mut rng);
-        // Secondary feature should accumulate SIGNIFICANT gain via the right subtree
-        // (nearly all of it comes from the right half of the data).
-        assert!(gains[1] > 10.0, "right-subtree secondary signal should show: g[1]={} g[0]={}", gains[1], gains[0]);
+        assert!(gains[1] > 10.0, "right-subtree secondary signal: g[1]={} g[0]={}", gains[1], gains[0]);
     }
 
     #[test]
@@ -301,7 +262,7 @@ mod tests {
         let mut y = vec![0.0_f32; n];
         for i in 0..n {
             let a = (i as f32) / n as f32;
-            x[i * nf] = a; // perfect predictor
+            x[i * nf] = a;
             x[i * nf + 1] = ((i * 7) as f32) * 0.3 % 1.0;
             x[i * nf + 2] = ((i * 13) as f32) * 0.5 % 1.0;
             y[i] = 5.0 * a;
@@ -312,9 +273,8 @@ mod tests {
         let mut gains = vec![0.0_f32; nf];
         let mut hist = NodeHist::zeros(crate::histogram::MAX_BINS);
         let mut scratch = TreeScratch::new(nf);
-        // Exclude the perfect-predictor feature 0; gains must be on others.
         fit_tree_with_scratch(&bm, &y, &(0..n).collect::<Vec<_>>(), 3, 3, Some(0), &mut tree, &mut gains, &mut hist, &mut scratch, &mut rng);
-        assert_eq!(gains[0], 0.0, "excluded feature must receive zero gain");
+        assert_eq!(gains[0], 0.0);
         assert!(gains[1] + gains[2] > 0.0);
     }
 }

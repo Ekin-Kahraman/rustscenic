@@ -40,13 +40,11 @@ pub fn fit_and_importances_binned(
     let window = cfg.early_stop_window;
     let mut mse_history: Vec<f32> = Vec::with_capacity(cfg.n_estimators);
 
+    // Reusable buffers — all allocated once per target, re-used across all trees.
     let mut sample_idx: Vec<usize> = Vec::with_capacity(n_samples);
     let mut hist_buf = NodeHist::zeros(MAX_BINS);
     let mut tree = Tree { nodes: Vec::with_capacity(64) };
     let mut gains_buf = vec![0.0_f32; n_features];
-    // Allocate scratch ONCE per target (not per tree). Tree fitter refills
-    // the feat_pool from 0..n_features inside its own entry to re-apply
-    // exclude_feature without retaining state across trees.
     let mut scratch = TreeScratch::new(n_features);
 
     let mut n_fit = 0usize;
