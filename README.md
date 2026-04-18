@@ -10,6 +10,7 @@ Rust + PyO3 replacement for the slow stages of the SCENIC+ single-cell regulator
 | `aucell` | PBMC-3k + PBMC-10k, 8/8 lineage discrimination | **22–64× faster than pyscenic** |
 | `topics` | scATAC-shape synthetic (10 topics, 2k cells × 20k peaks, 0.5% sparsity) | **ARI 0.736 vs planted, beats gensim (0.707)** |
 | `cistarget` | JASPAR-scale synthetic (800 motifs × 20k genes × 100 regulons) | **100/100 planted motif-regulon pairs recovered at top-1** |
+| **cross-species** | Paul15 mouse hematopoiesis (scanpy-bundled, 2730 cells × 3451 genes, 32 TFs) | Gata1 → erythroid, Cebpa → granulocyte, Irf8 → monocyte/DC — all 5 top clusters per TF, 5.5s wall |
 
 Repo private pending real-data validation of topics (10x Multiome) and cistarget (aertslab feather DB).
 
