@@ -1,13 +1,10 @@
-"""rustscenic CLI entry point.
+"""rustscenic CLI entry point — covers all 4 SCENIC+ stages.
 
-Usage:
-    rustscenic grn --expression data.h5ad --tfs tfs.txt --output grn.parquet [--seed 777]
+    rustscenic grn       --expression --tfs --output [--seed ...]
+    rustscenic aucell    --expression --regulons --output [--top-frac ...]
+    rustscenic topics    --expression --output [--n-topics --n-passes ...]
+    rustscenic cistarget --rankings --regulons --output [--top-frac --auc-threshold]
     rustscenic --version
-
-The CLI is a thin Python wrapper around `rustscenic.grn.infer`. Input formats
-mirror arboreto's conventions so existing pipelines can swap one call for the
-other. Output parquet matches the arboreto.grnboost2 schema exactly:
-    (TF: str, target: str, importance: f32)
 """
 from __future__ import annotations
 
@@ -18,107 +15,240 @@ import time
 from pathlib import Path
 
 
-def cmd_grn(args: argparse.Namespace) -> int:
-    import anndata as ad  # lazy import to keep --help fast
+def _load_expression(path: Path):
+    import anndata as ad
     import pandas as pd
-    from . import grn as rs_grn
+
+    suffix = path.suffix.lower()
+    if suffix == ".h5ad":
+        adata = ad.read_h5ad(path)
+        return adata, list(adata.var_names), adata.n_obs
+    elif suffix in (".tsv", ".csv"):
+        sep = "\t" if suffix == ".tsv" else ","
+        df = pd.read_csv(path, sep=sep, index_col=0)
+        return df, list(df.columns), len(df)
+    else:
+        raise SystemExit(f"error: unsupported format {suffix}. Use .h5ad, .tsv, or .csv")
+
+
+def _save(df, path: Path) -> None:
+    ext = path.suffix.lower()
+    if ext == ".parquet":
+        df.to_parquet(path, index=False)
+    elif ext in (".tsv", ".txt"):
+        df.to_csv(path, sep="\t", index=False)
+    elif ext == ".csv":
+        df.to_csv(path, index=False)
+    else:
+        df.to_parquet(path.with_suffix(".parquet"), index=False)
+
+
+def cmd_grn(args: argparse.Namespace) -> int:
     from . import __version__
+    from . import grn as rs_grn
 
     expr_path = Path(args.expression)
     if not expr_path.exists():
         print(f"error: expression file not found: {expr_path}", file=sys.stderr)
         return 2
 
-    suffix = expr_path.suffix.lower()
-    if suffix == ".h5ad":
-        adata = ad.read_h5ad(expr_path)
-        gene_names = list(adata.var_names)
-        expression = adata
-    elif suffix in (".tsv", ".csv"):
-        sep = "\t" if suffix == ".tsv" else ","
-        df = pd.read_csv(expr_path, sep=sep, index_col=0)
-        gene_names = list(df.columns)
-        expression = df
-    else:
-        print(f"error: unsupported expression format {suffix}. Use .h5ad, .tsv, or .csv",
-              file=sys.stderr)
-        return 2
-
-    tfs_path = Path(args.tfs)
-    if not tfs_path.exists():
-        print(f"error: tf list not found: {tfs_path}", file=sys.stderr)
-        return 2
-    tfs = rs_grn.load_tfs(tfs_path)
+    expression, gene_names, n_cells = _load_expression(expr_path)
+    tfs = rs_grn.load_tfs(Path(args.tfs))
     tfs_in = [t for t in tfs if t in set(gene_names)]
-    if len(tfs_in) == 0:
-        print(f"error: none of the {len(tfs)} TFs in {tfs_path} found in expression data",
-              file=sys.stderr)
+    if not tfs_in:
+        print(f"error: no TFs in {args.tfs} found in expression data", file=sys.stderr)
         return 2
 
-    n_cells = adata.n_obs if suffix == ".h5ad" else len(df)
     print(f"rustscenic {__version__}  grn  cells={n_cells}  genes={len(gene_names)}  tfs={len(tfs_in)}  seed={args.seed}",
           file=sys.stderr, flush=True)
 
     t0 = time.monotonic()
     out = rs_grn.infer(
-        expression,
-        tfs_in,
-        n_estimators=args.n_estimators,
-        learning_rate=args.learning_rate,
-        max_features=args.max_features,
-        subsample=args.subsample,
-        max_depth=args.max_depth,
-        early_stop_window=args.early_stop_window,
+        expression, tfs_in,
+        n_estimators=args.n_estimators, learning_rate=args.learning_rate,
+        max_features=args.max_features, subsample=args.subsample,
+        max_depth=args.max_depth, early_stop_window=args.early_stop_window,
         seed=args.seed,
+    )
+    wall = time.monotonic() - t0
+    output_path = Path(args.output)
+    _save(out, output_path)
+    meta = {
+        "wall_clock_s": round(wall, 2), "n_edges": int(len(out)),
+        "n_cells": int(n_cells), "n_genes": int(len(gene_names)),
+        "n_tfs_used": len(tfs_in), "seed": args.seed,
+        "rustscenic_version": __version__, "stage": "grn",
+    }
+    output_path.with_suffix(".json").write_text(json.dumps(meta, indent=2))
+    print(f"wrote {output_path}  ({len(out)} edges, wall {wall:.1f}s)", file=sys.stderr)
+    return 0
+
+
+def cmd_aucell(args: argparse.Namespace) -> int:
+    from . import __version__
+    from . import aucell as rs_aucell
+    import pandas as pd
+
+    expr_path = Path(args.expression)
+    reg_path = Path(args.regulons)
+    if not expr_path.exists() or not reg_path.exists():
+        print(f"error: input file missing", file=sys.stderr); return 2
+
+    expression, gene_names, n_cells = _load_expression(expr_path)
+    # Regulons expected as TSV: regulon_name\tgene1,gene2,...  OR  regulon_name\tgene  (long form)
+    # Accept either format; auto-detect by checking first line.
+    lines = reg_path.read_text().strip().splitlines()
+    regulons: list[tuple[str, list[str]]] = []
+    # GRN-adjacencies format (from `rustscenic grn` output)
+    if "TF" in lines[0] and "target" in lines[0] and "importance" in lines[0]:
+        df = pd.read_csv(reg_path, sep="\t" if reg_path.suffix == ".tsv" else ",")
+        # Top-N targets per TF
+        top = args.top_n_targets
+        for tf, group in df.groupby("TF"):
+            top_targets = group.nlargest(top, "importance")["target"].tolist()
+            if len(top_targets) >= args.min_genes:
+                regulons.append((f"{tf}_regulon", top_targets))
+    else:
+        for ln in lines:
+            if "\t" in ln:
+                name, genes_str = ln.split("\t", 1)
+                genes = [g.strip() for g in genes_str.split(",") if g.strip()]
+                if len(genes) >= args.min_genes:
+                    regulons.append((name.strip(), genes))
+
+    print(f"rustscenic {__version__}  aucell  cells={n_cells}  regulons={len(regulons)}  top_frac={args.top_frac}",
+          file=sys.stderr, flush=True)
+
+    t0 = time.monotonic()
+    auc = rs_aucell.score(expression, regulons, top_frac=args.top_frac)
+    wall = time.monotonic() - t0
+
+    output_path = Path(args.output)
+    # AUC is (cells x regulons); save as parquet with index, or TSV
+    if output_path.suffix.lower() == ".parquet":
+        auc.to_parquet(output_path)
+    else:
+        auc.to_csv(output_path, sep="\t" if output_path.suffix == ".tsv" else ",")
+    meta = {
+        "wall_clock_s": round(wall, 2), "n_cells": int(n_cells),
+        "n_regulons": len(regulons), "top_frac": args.top_frac,
+        "rustscenic_version": __version__, "stage": "aucell",
+    }
+    output_path.with_suffix(".json").write_text(json.dumps(meta, indent=2))
+    print(f"wrote {output_path}  ({auc.shape[0]}x{auc.shape[1]}, wall {wall:.1f}s)", file=sys.stderr)
+    return 0
+
+
+def cmd_topics(args: argparse.Namespace) -> int:
+    from . import __version__
+    from . import topics as rs_topics
+
+    expr_path = Path(args.expression)
+    expression, gene_names, n_cells = _load_expression(expr_path)
+    print(f"rustscenic {__version__}  topics  cells={n_cells}  peaks={len(gene_names)}  K={args.n_topics}  passes={args.n_passes}",
+          file=sys.stderr, flush=True)
+
+    t0 = time.monotonic()
+    res = rs_topics.fit(
+        expression, n_topics=args.n_topics, n_passes=args.n_passes,
+        batch_size=args.batch_size, seed=args.seed,
     )
     wall = time.monotonic() - t0
 
     output_path = Path(args.output)
+    out_ct = output_path.with_name(output_path.stem + "_cell_topic" + output_path.suffix)
+    out_tp = output_path.with_name(output_path.stem + "_topic_peak" + output_path.suffix)
     if output_path.suffix.lower() == ".parquet":
-        out.to_parquet(output_path, index=False)
-    elif output_path.suffix.lower() in (".tsv", ".txt"):
-        out.to_csv(output_path, sep="\t", index=False)
-    elif output_path.suffix.lower() == ".csv":
-        out.to_csv(output_path, index=False)
+        res.cell_topic.to_parquet(out_ct)
+        res.topic_peak.to_parquet(out_tp)
     else:
-        # default to parquet if extension is unfamiliar
-        out.to_parquet(output_path.with_suffix(".parquet"), index=False)
-
+        res.cell_topic.to_csv(out_ct, sep="\t" if output_path.suffix == ".tsv" else ",")
+        res.topic_peak.to_csv(out_tp, sep="\t" if output_path.suffix == ".tsv" else ",")
     meta = {
-        "wall_clock_s": round(wall, 2),
-        "n_edges": int(len(out)),
-        "n_cells": int(n_cells),
-        "n_genes": int(len(gene_names)),
-        "n_tfs_used": len(tfs_in),
-        "seed": args.seed,
-        "rustscenic_version": __version__,
+        "wall_clock_s": round(wall, 2), "n_cells": int(n_cells),
+        "n_peaks": int(len(gene_names)), "n_topics": args.n_topics,
+        "rustscenic_version": __version__, "stage": "topics",
     }
-    meta_path = output_path.with_suffix(".json")
-    meta_path.write_text(json.dumps(meta, indent=2))
+    output_path.with_suffix(".json").write_text(json.dumps(meta, indent=2))
+    print(f"wrote {out_ct} + {out_tp}  (wall {wall:.1f}s)", file=sys.stderr)
+    return 0
 
-    print(f"wrote {output_path}  ({len(out)} edges, wall {wall:.1f}s)", file=sys.stderr)
+
+def cmd_cistarget(args: argparse.Namespace) -> int:
+    from . import __version__
+    from . import cistarget as rs_cistarget
+    import pandas as pd
+
+    rank_path = Path(args.rankings)
+    reg_path = Path(args.regulons)
+
+    if rank_path.suffix.lower() == ".feather":
+        rankings = rs_cistarget.load_aertslab_feather(rank_path)
+    elif rank_path.suffix.lower() in (".tsv", ".csv"):
+        sep = "\t" if rank_path.suffix == ".tsv" else ","
+        rankings = pd.read_csv(rank_path, sep=sep, index_col=0)
+    else:
+        raise SystemExit(f"error: unsupported rankings format {rank_path.suffix}")
+
+    regulons = []
+    for ln in reg_path.read_text().strip().splitlines():
+        if "\t" in ln:
+            name, genes_str = ln.split("\t", 1)
+            genes = [g.strip() for g in genes_str.split(",") if g.strip()]
+            if genes:
+                regulons.append((name.strip(), genes))
+
+    print(f"rustscenic {__version__}  cistarget  motifs={rankings.shape[0]}  genes={rankings.shape[1]}  regulons={len(regulons)}",
+          file=sys.stderr, flush=True)
+
+    t0 = time.monotonic()
+    out = rs_cistarget.enrich(rankings, regulons, top_frac=args.top_frac, auc_threshold=args.auc_threshold)
+    wall = time.monotonic() - t0
+
+    output_path = Path(args.output)
+    _save(out, output_path)
+    print(f"wrote {output_path}  ({len(out)} enriched, wall {wall:.1f}s)", file=sys.stderr)
     return 0
 
 
 def main(argv: list[str] | None = None) -> int:
     from . import __version__
-    p = argparse.ArgumentParser(prog="rustscenic", description="Fast SCENIC+ stage replacements")
+    p = argparse.ArgumentParser(prog="rustscenic", description="Fast SCENIC+ stage replacements (Rust + PyO3)")
     p.add_argument("--version", action="version", version=f"rustscenic {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    pg = sub.add_parser("grn", help="Infer gene regulatory network (GRNBoost2 replacement)")
-    pg.add_argument("--expression", required=True, help="Expression matrix: .h5ad, .tsv, or .csv")
-    pg.add_argument("--tfs", required=True, help="TF list: one gene symbol per line")
-    pg.add_argument("--output", required=True, help="Output path (.parquet, .tsv, .csv)")
-    pg.add_argument("--seed", type=int, default=777)
+    pg = sub.add_parser("grn", help="GRN inference (GRNBoost2 replacement)")
+    pg.add_argument("--expression", required=True); pg.add_argument("--tfs", required=True)
+    pg.add_argument("--output", required=True); pg.add_argument("--seed", type=int, default=777)
     pg.add_argument("--n-estimators", type=int, default=5000)
     pg.add_argument("--learning-rate", type=float, default=0.01)
-    pg.add_argument("--max-features", type=float, default=0.1)
-    pg.add_argument("--subsample", type=float, default=0.9)
-    pg.add_argument("--max-depth", type=int, default=3)
-    pg.add_argument("--early-stop-window", type=int, default=25,
-                    help="EarlyStopMonitor window; 0 disables")
+    pg.add_argument("--max-features", type=float, default=0.1); pg.add_argument("--subsample", type=float, default=0.9)
+    pg.add_argument("--max-depth", type=int, default=3); pg.add_argument("--early-stop-window", type=int, default=25)
     pg.set_defaults(func=cmd_grn)
+
+    pa = sub.add_parser("aucell", help="Regulon activity scoring (AUCell replacement)")
+    pa.add_argument("--expression", required=True)
+    pa.add_argument("--regulons", required=True, help="Path to grn.tsv/parquet or regulons TSV (name\\tgene,gene,...)")
+    pa.add_argument("--output", required=True); pa.add_argument("--top-frac", type=float, default=0.05)
+    pa.add_argument("--top-n-targets", type=int, default=50,
+                    help="When regulons input is a grn output, keep top-N targets per TF (default 50)")
+    pa.add_argument("--min-genes", type=int, default=10,
+                    help="Drop regulons with fewer than this many genes (default 10)")
+    pa.set_defaults(func=cmd_aucell)
+
+    pt = sub.add_parser("topics", help="Topic modeling (pycisTopic LDA replacement, online VB)")
+    pt.add_argument("--expression", required=True, help="Cells × peaks / cells × genes matrix")
+    pt.add_argument("--output", required=True, help="Output prefix; writes *_cell_topic and *_topic_peak")
+    pt.add_argument("--n-topics", type=int, default=50); pt.add_argument("--n-passes", type=int, default=10)
+    pt.add_argument("--batch-size", type=int, default=256); pt.add_argument("--seed", type=int, default=42)
+    pt.set_defaults(func=cmd_topics)
+
+    pc = sub.add_parser("cistarget", help="Motif enrichment (pycistarget replacement, core algorithm)")
+    pc.add_argument("--rankings", required=True, help=".feather (aertslab) or .tsv/.csv motif × gene rankings")
+    pc.add_argument("--regulons", required=True, help="Regulons TSV (name\\tgene,gene,...)")
+    pc.add_argument("--output", required=True); pc.add_argument("--top-frac", type=float, default=0.05)
+    pc.add_argument("--auc-threshold", type=float, default=0.05)
+    pc.set_defaults(func=cmd_cistarget)
 
     args = p.parse_args(argv)
     return args.func(args)
