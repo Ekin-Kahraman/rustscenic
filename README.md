@@ -2,7 +2,7 @@
 
 Rust + PyO3 replacement for the slow stages of the SCENIC+ single-cell regulatory-network pipeline. `v0.1` ships the `grn` stage (GRNBoost2 replacement). Installs cleanly on modern Python, produces biologically-faithful regulons, beats arboreto on multiple external benchmarks.
 
-**Status (2026-04-17):** v0.1-alpha. Validated on two PBMC datasets (2.7k + 11k cells). Repo private until v1.0 (all four stages).
+**Status (2026-04-18):** 4 of 4 SCENIC+ stages native Rust — `grn`, `aucell`, `topics` (pycisTopic LDA), `cistarget` (motif enrichment). Validated end-to-end on two PBMC datasets (2.7k + 11k cells). `aucell` is 22–64× faster than pyscenic with 8/8 canonical lineage discrimination. Repo private pending further validation on non-immune data.
 
 ## Why this exists
 
@@ -102,10 +102,37 @@ modules = list(modules_from_adjacencies(grn, ex_mtx, top_n_targets=(50,), top_n_
 auc = aucell(ex_mtx, modules, num_workers=1)  # cells × regulons matrix
 ```
 
+## Full pipeline surface
+
+```python
+import anndata as ad
+import rustscenic
+
+# Stage 1: GRN inference (arboreto.grnboost2 replacement)
+adata = ad.read_h5ad("scRNA.h5ad")
+tfs = rustscenic.grn.load_tfs("allTFs_hg38.txt")
+grn = rustscenic.grn.infer(adata, tfs, seed=777)
+
+# Stage 2: Regulon activity scoring (pyscenic.AUCell replacement, 22-64x faster)
+from pyscenic.utils import modules_from_adjacencies
+regulons = list(modules_from_adjacencies(grn, adata.to_df(), top_n_targets=(50,)))
+auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
+
+# Stage 3: Topic modeling on scATAC (pycisTopic LDA replacement, online VB)
+atac = ad.read_h5ad("scATAC_binarized.h5ad")
+topics_result = rustscenic.topics.fit(atac, n_topics=100, n_passes=10)
+
+# Stage 4: Motif enrichment (pycistarget replacement, algorithm only)
+# Users provide motif ranking DataFrame from aertslab feather DBs
+import pyarrow.feather as feather
+rankings = rustscenic.cistarget.load_aertslab_feather("hg38_screen_v10.feather")
+enrichments = rustscenic.cistarget.enrich(rankings, regulons, top_frac=0.05)
+```
+
 ## What rustscenic does NOT do
 
 - Not bit-identical to sklearn's Cython GBR. Different RNG tape, different tie-breaks. Within-TF rankings are highly similar (72% top-10 overlap with arboreto on PBMC-3k; SPI1 dominates myeloid targets in both).
-- v0.1 covers the `grn` stage only. `aucell` (v0.2), `topics` / cisTopic-LDA (v0.3), `cistarget` motif enrichment (v0.4) not yet implemented. Use pyscenic/aertslab tools for stages 2–4 (rustscenic's `grn` output is drop-in compatible).
+- Does NOT ship the aertslab motif-ranking feather databases (10–50 GB). Users fetch from resources.aertslab.org and pass the DataFrame to `cistarget.enrich`.
 - Not faster on GPU than flashscenic — this is a CPU-native tool. If you have an A100, use flashscenic and accept the RegDiffusion algorithm swap.
 
 ## License
