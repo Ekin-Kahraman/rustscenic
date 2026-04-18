@@ -70,11 +70,19 @@ pub fn online_vb_lda(
     let bs = batch_size.max(1).min(n_docs);
 
     // lambda[k * W + w] = topic-word variational parameters (unnormalized Dirichlet)
-    // Initialize ~Gamma(100, 1/100) with small randomness so topics start distinct
+    // Initialize with gamma(100, 1/100) ≈ mean 1, std 0.1. Without enough variance
+    // across topics, variational updates stabilize at trivial single-topic solutions
+    // (topic collapse). This init matches gensim's LdaModel default.
     let mut rng = StdRng::seed_from_u64(seed);
     let mut lambda = vec![0.0_f64; n_topics * n_words];
     for v in lambda.iter_mut() {
-        *v = 1.0 + 0.01 * rng.gen::<f64>();
+        // gamma(shape=100, scale=1/100) via Marsaglia-Tsang method (statrs has one,
+        // but we inline a simple transformed normal approximation — sufficient for init)
+        // Mean 1.0, std 0.1.
+        let u1: f64 = rng.gen();
+        let u2: f64 = rng.gen();
+        let z = (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos();
+        *v = (1.0 + 0.1 * z).max(0.01);
     }
 
     // Precomputed E[log beta_kw] — recomputed each batch
@@ -112,8 +120,18 @@ pub fn online_vb_lda(
                     let doc_cols = &col_idx[start..end];
                     let doc_counts = &counts[start..end];
 
-                    // Init gamma_d uniformly
-                    let mut gamma_d = vec![alpha as f64 + 1.0; n_topics];
+                    // Init gamma_d with asymmetric noise to break topic-label symmetry.
+                    // A uniform init + deterministic E-step converges to trivial symmetric
+                    // posteriors on sparse data (topic collapse). Per-doc random seeds
+                    // derived from doc index + global seed for reproducibility.
+                    let mut doc_rng = StdRng::seed_from_u64(seed.wrapping_add(d as u64));
+                    let mut gamma_d = vec![0.0_f64; n_topics];
+                    for g in gamma_d.iter_mut() {
+                        let u1: f64 = doc_rng.gen();
+                        let u2: f64 = doc_rng.gen();
+                        let z = (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos();
+                        *g = (alpha as f64 + 1.0 + 0.1 * z).max(0.01);
+                    }
                     let mut elog_theta = vec![0.0_f64; n_topics];
 
                     for _iter in 0..50 {
@@ -218,7 +236,15 @@ pub fn online_vb_lda(
             }
             let doc_cols = &col_idx[start..end];
             let doc_counts = &counts[start..end];
-            let mut gamma_d = vec![alpha as f64 + 1.0; n_topics];
+            // Same asymmetric init for final E-step pass
+            let mut doc_rng = StdRng::seed_from_u64(seed.wrapping_add(d as u64).wrapping_add(1_000_000));
+            let mut gamma_d = vec![0.0_f64; n_topics];
+            for g in gamma_d.iter_mut() {
+                let u1: f64 = doc_rng.gen();
+                let u2: f64 = doc_rng.gen();
+                let z = (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos();
+                *g = (alpha as f64 + 1.0 + 0.1 * z).max(0.01);
+            }
             let mut elog_theta = vec![0.0_f64; n_topics];
             for _iter in 0..100 {
                 update_elog_theta(&gamma_d, &mut elog_theta);
