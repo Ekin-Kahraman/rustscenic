@@ -119,6 +119,6 @@ curl -o fbm.h5 https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyt
 
 ## Get help
 
-- Full docs: README.md + docs/specs/
+- Full docs: README.md + CHANGELOG.md + [VALIDATION_SUMMARY](validation/VALIDATION_SUMMARY.md)
 - Agent skill (Claude Code): auto-loads when you mention "SCENIC" or "arboreto"
-- Issues: `docs/specs/` contains the design spec and known limitations
+- Issues: open one at https://github.com/Ekin-Kahraman/rustscenic/issues; see [docs/topic-collapse.md](docs/topic-collapse.md) for the one known algorithmic caveat (v0.2 roadmap item)

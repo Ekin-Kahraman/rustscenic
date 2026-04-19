@@ -5,7 +5,7 @@
 
 **Dataset:** Ziegler et al. 2021 *Cell* — 58-donor nasopharyngeal scRNA-seq, 18 airway cell types, 18,073 COVID+ / 14,515 COVID− cells. After preprocessing: **31,602 cells × 3,044 genes**, 59 regulons.
 
-**Full analysis + reproducible scripts + biological interpretation:** `Ekin-Kahraman/rustscenic-airway-case` (private repo).
+**Full analysis + reproducible scripts + biological interpretation** live in a companion case-study repository (currently private pending a follow-up publication). The tool-validation numbers + figures here are complete for verifying the install / speed / agreement claims without it.
 
 ## Setup — isolates AUCell stage
 
@@ -82,9 +82,9 @@ This is the strongest single line of evidence for numerical fidelity:
 
 ## Where to read more
 
-- **Biological findings** (COVID± differential regulons — IFN response ↑, AP-1 stress ↓ in squamous metaplasia, WNT ↑ in secretory): not tool validation, lives in `Ekin-Kahraman/rustscenic-airway-case`. Candidate for a standalone regulatory-biology paper.
+- **Biological findings** (COVID± differential regulons — IFN response ↑, AP-1 stress ↓ in squamous metaplasia, WNT ↑ in secretory): not tool validation, kept with the companion case-study (private pending publication). Candidate for a standalone regulatory-biology paper.
 - **Scripts** that produced these numbers: same case-study repo (`scripts/03_headtohead_pyscenic_aucell.py`, `scripts/04_comparison_figures.py`). Requires the Ziegler h5ad, so they live there, not here.
 
 ## Provenance
 
-All numbers traced to `results/comparison/summary.json` in the case-study repo and `results/comparison_run.log` (full stdout). Re-run from scratch: clone case-study repo, point at your Ziegler h5ad, run scripts 01–04 in order.
+All numbers produced by scripts in the companion case-study (private). Public users can reproduce by downloading the Ziegler h5ad from GEO, using rustscenic's public API, and matching the preprocessing in `validation/ours/` + the HVG∪TFs union pattern from `examples/pbmc3k_end_to_end.py`.

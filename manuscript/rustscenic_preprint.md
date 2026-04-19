@@ -115,7 +115,7 @@ To close the loop on "does this work on the data users actually run", we ran bot
 
 **Biological extension:** The per-cell regulon activity matrix enabled a downstream COVID+ / COVID− differential analysis (Wilcoxon + BH-FDR per cell type, ≥100 cells per arm). IRF7-driven type I interferon programme is upregulated in COVID+ cells across 7 of 11 cell types (strongest in Ionocytes +1.34 log₂FC q=6e-17). An AP-1 / stress-response programme (JUN, JUNB, NR4A1, XBP1) is suppressed in squamous cells (all log₂FC < −0.5, q < 1e-90). A WNT / regenerative programme (TCF7, LEF1, EOMES) is upregulated in secretory cells. These findings extend the cell-type-proportion deconvolution analyses reported in the covid-airway-deconvolution companion project (Kahraman 2026, *in preparation*) from "which cells are perturbed" to "which regulatory programmes rewire during infection".
 
-Full head-to-head scripts, reproducibility plan, and biological interpretation are in the companion repository `Ekin-Kahraman/rustscenic-airway-case`.
+Full head-to-head scripts and biological interpretation are part of a companion case-study manuscript (in preparation); the tool-validation numbers and figures in this preprint are independently verifiable from the open-source rustscenic package and the Ziegler h5ad available from GEO.
 
 ### Determinism + robustness
 

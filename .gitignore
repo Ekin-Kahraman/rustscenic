@@ -17,3 +17,4 @@ python/rustscenic/__pycache__/
 *.whl
 data/
 examples/out/
+docs/specs/

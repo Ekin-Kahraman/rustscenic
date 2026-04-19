@@ -153,7 +153,7 @@ End-to-end example: [`examples/pbmc3k_end_to_end.py`](examples/pbmc3k_end_to_end
 - `crates/` — Rust workspace: `rustscenic-{core,grn,aucell,topics,cistarget,cli,py}`
 - `python/rustscenic/` — Python package (lazy imports, CLI entry point)
 - `validation/` — reproducible benchmark scripts + validation documents for every claim above
-- `docs/specs/` — design spec
+- `docs/topic-collapse.md` — known algorithmic caveat (Online VB LDA behaviour on sparse scATAC)
 - `skills/rustscenic.md` — Claude Code agent skill
 
 ## License
