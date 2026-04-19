@@ -50,6 +50,9 @@ jobs:
           "
       # End-to-end quickstart runs and produces output
       - run: python -m rustscenic.quickstart
+      # Full 4-stage example on real PBMC-3k (downloads 10x tarball)
+      - run: pip install scanpy igraph leidenalg
+      - run: python examples/pbmc3k_end_to_end.py
       # Validation baselines committed to repo match our tool
       - run: |
           python validation/compare.py --stage grn \
