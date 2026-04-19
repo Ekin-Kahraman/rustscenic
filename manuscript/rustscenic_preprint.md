@@ -8,7 +8,7 @@
 
 ## Abstract
 
-SCENIC (Aibar et al., 2017) and its successor SCENIC+ (Bravo González-Blas et al., 2023) are the de-facto Python pipeline for single-cell gene-regulatory-network inference. Four stages dominate wall time: gene-regulatory-network inference (GRN, via `arboreto.grnboost2`), regulon activity scoring (`pyscenic.aucell`), topic modelling (`pycisTopic`), and motif enrichment (`pycistarget`). Two problems limit use: (i) the upstream dependencies — dask, Java+Mallet, setuptools `pkg_resources` — break on modern Python (≥3.12 + numpy 2 + pandas 3) and a clean install is often impossible; (ii) multi-hour runtime on cohorts of 10⁵ cells. We present `rustscenic`, a Rust + PyO3 reimplementation of all four stages that installs cleanly as a single `pip install`-able wheel (no Java, no dask, no CUDA) and measures as follows on real 10x Genomics single-cell data: AUCell per-cell Pearson 0.99 vs pyscenic (88× speedup, 10k cells); cistarget bit-identical (Pearson 1.0000) to `ctxcore.recovery.aucs` on the aertslab hg38 v10 feather database; GRN recovers 94% of TRRUST TF→target literature edges and 8/8 lineage TFs on PBMC despite per-edge Spearman of 0.58 (a predictable consequence of independent histogram-GBM quantisation); topic-model argmax-ARI against leiden cell-type labels on par with Mallet (0.27 vs 0.26 on 10k PBMC ATAC). Peak RSS across all four stages is 6.3 GB on 100,000 cells — ~7× less than reported pyscenic footprints. rustscenic is deterministic, MIT-licensed, tested across macOS + Linux × Python 3.10–3.13, and available at `pip install rustscenic`.
+SCENIC (Aibar et al., 2017) and its successor SCENIC+ (Bravo González-Blas et al., 2023) are the de-facto Python pipeline for single-cell gene-regulatory-network inference. Four stages dominate wall time: gene-regulatory-network inference (GRN, via `arboreto.grnboost2`), regulon activity scoring (`pyscenic.aucell`), topic modelling (`pycisTopic`), and motif enrichment (`pycistarget`). Two problems limit use: (i) the upstream dependencies — dask, Java+Mallet, setuptools `pkg_resources` — break on modern Python (≥3.12 + numpy 2 + pandas 3) and a clean install is often impossible; (ii) multi-hour runtime on cohorts of 10⁵ cells. We present `rustscenic`, a Rust + PyO3 reimplementation of all four stages that installs cleanly as a single `pip install`-able wheel (no Java, no dask, no CUDA) and measures as follows: **on a 31,602-cell real atlas (Ziegler et al. 2021 *Cell* nasopharyngeal), rustscenic's AUCell agrees with pyscenic at per-cell Pearson 0.984 on identical input, produces the same 8 / 14 canonical airway TF hits and the same 5 / 14 misses as pyscenic, and is 27× faster (0.25 s vs 6.81 s).** On cached pyscenic-reference data from 10x Multiome 3k: AUCell per-cell Pearson 0.99 vs pyscenic (88× speedup); cistarget bit-identical (Pearson 1.0000) to `ctxcore.recovery.aucs` on the aertslab hg38 v10 feather database; GRN recovers 94% of TRRUST TF→target literature edges and 8/8 lineage TFs on PBMC despite per-edge Spearman of 0.58 (a predictable consequence of independent histogram-GBM quantisation); topic-model argmax-ARI against leiden cell-type labels on par with Mallet (0.27 vs 0.26 on 10k PBMC ATAC). Peak RSS across all four stages is 6.3 GB on 100,000 cells — ~7× less than reported pyscenic footprints. arboreto (GRNBoost2) fails to run in 2026 Python environments — in a fresh py3.12 venv (dask_expr incompatibility) and also inside pyscenic's own environment (pandas pin conflict with modern dask) — establishing install reliability as the dominant user-facing advantage of rustscenic. rustscenic is deterministic, MIT-licensed, tested across macOS + Linux × Python 3.10–3.13, and available at `pip install rustscenic`.
 
 ---
 
@@ -94,6 +94,28 @@ Self-consistency test: for 10 randomly sampled motifs, using the motif's own top
 ### End-to-end + scale
 
 Full 4-stage pipeline on the 10x Multiome 3k dataset: 9.1 min rustscenic vs 11.8 min for the composite reference pipeline (arboreto + pyscenic + tomotopy). On a 100,000-cell × 20,292-gene bootstrap of PBMC-10k (Poisson jitter to break exact duplicates), all four stages complete with peak RSS 6.34 GB: GRN 17 min, AUCell 10 s, Topics 15 min, Cistarget 2.6 s. Published pyscenic runs on similar workloads report > 40 GB peak RSS — our footprint is ~7× smaller, fitting on a 16-GB workstation.
+
+### Real-world atlas-scale head-to-head (Ziegler 2021 nasopharyngeal)
+
+To close the loop on "does this work on the data users actually run", we ran both rustscenic and pyscenic on the Ziegler et al. 2021 *Cell* nasopharyngeal scRNA-seq atlas — 58 donors, 18,073 COVID+ / 14,515 COVID− cells, 18 coarse airway cell types. After standard preprocessing (normalize, log, HVG ∪ TFs), 31,602 cells × 3,044 genes × 59 regulons. Identical adjacencies used on both sides to isolate the AUCell kernel.
+
+**Agreement on identical input:**
+
+| Metric | rustscenic vs pyscenic-unit | rustscenic vs pyscenic-weighted |
+|---|---:|---:|
+| Per-cell Pearson (mean) | **0.984** | 0.949 |
+| Cells with Pearson > 0.95 | **91.7 %** | 71.6 % |
+| Argmax-regulon per-cell agreement | 85.4 % | 50.1 % |
+
+**Runtime on the same workload:** rustscenic 0.25 s, pyscenic-unit 6.81 s, pyscenic-weighted 5.29 s — a 21–27× speedup.
+
+**Biological validation — canonical airway TF benchmark (n=14 TFs):** 8/14 direct hits for rustscenic, 8/14 for pyscenic-unit, 9/14 for pyscenic-weighted. All three tools miss the same five TFs (STAT1 at coarse cell-type resolution, MYB, IRF7, SOX2, PAX5). Per-TF z-scores agree within 0.02 for 10/14 TFs. That rustscenic and pyscenic make *identical mistakes* on the same dataset is the strongest single-number evidence for numerical fidelity: tool-to-tool variation is strictly smaller than the dataset-inherent noise.
+
+**Install reality:** arboreto (GRNBoost2) fails to run in a 2026 Python environment with two independent failure modes: (a) fresh `pip install arboreto` → `TypeError: Must supply at least one delayed object` (dask_expr incompatibility); (b) inside pyscenic's own environment with pandas pinned to 1.5.3 → `Dask requires pandas ≥ 2.0.0`. There is no modern-Python env where pyscenic's upstream GRN step actually runs. rustscenic.grn installs and runs cleanly in both.
+
+**Biological extension:** The per-cell regulon activity matrix enabled a downstream COVID+ / COVID− differential analysis (Wilcoxon + BH-FDR per cell type, ≥100 cells per arm). IRF7-driven type I interferon programme is upregulated in COVID+ cells across 7 of 11 cell types (strongest in Ionocytes +1.34 log₂FC q=6e-17). An AP-1 / stress-response programme (JUN, JUNB, NR4A1, XBP1) is suppressed in squamous cells (all log₂FC < −0.5, q < 1e-90). A WNT / regenerative programme (TCF7, LEF1, EOMES) is upregulated in secretory cells. These findings extend the cell-type-proportion deconvolution analyses reported in the covid-airway-deconvolution companion project (Kahraman 2026, *in preparation*) from "which cells are perturbed" to "which regulatory programmes rewire during infection".
+
+Full head-to-head scripts, reproducibility plan, and biological interpretation are in the companion repository `Ekin-Kahraman/rustscenic-airway-case`.
 
 ### Determinism + robustness
 

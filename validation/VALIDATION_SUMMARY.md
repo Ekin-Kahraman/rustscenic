@@ -5,7 +5,8 @@
 
 ## Headline
 
-- **AUCell vs pyscenic: per-cell Pearson 0.99 mean, 99.5% >0.95 on 10x Multiome (deep audit 2026-04-18). Per-regulon Pearson 0.87 was the weaker metric — per-cell is what downstream analysis uses.**
+- **AUCell vs pyscenic on 10x Multiome (deep audit 2026-04-18): per-cell Pearson 0.99 mean, 99.5% > 0.95. Per-regulon 0.87.**
+- **AUCell vs pyscenic on Ziegler 2021 nasopharyngeal atlas (31,602 cells, 2026-04-19): per-cell Pearson 0.984 mean, 91.7% > 0.95. Same 8/14 canonical TF hits in both tools, same 5/14 misses. 27× faster (0.25 s vs 6.81 s). See [`ziegler_headtohead_2026-04-19.md`](ziegler_headtohead_2026-04-19.md).**
 - **Cistarget vs ctxcore: Pearson 1.0000, mean abs diff 2.4e-05 (aertslab hg38 v10). Bit-identical to float32. At TRRUST-scale (166 TFs) only 19% rank-#1 — property of the TRRUST-vs-motif benchmark, not our code.**
 - **Topics vs Mallet on 10k PBMC ATAC: ARI vs leiden 0.27 vs 0.26 (comparable), NPMI 0.12 vs 0.20 (Mallet wins coherence), unique topics 5/30 vs 24/30 (we collapse aggressively). Mallet is 1.5-1.8× faster.**
 - **GRN vs arboreto on multiome3k, n_estimators=5000: per-edge Spearman 0.58, top-100 Jaccard 0.10. Biology agrees at coarse level (94% known edges, 8/8 lineage TFs, 13/13 canonical). Downstream AUCell still agrees per-cell at 0.99.**

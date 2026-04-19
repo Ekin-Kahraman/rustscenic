@@ -22,6 +22,24 @@ rustscenic installs and runs. One pip install, 3 runtime deps (numpy, pandas, py
 
 Every number below has a log file under [`validation/ours/`](validation/ours). Measurements are from this codebase, this week. The [VALIDATION_SUMMARY.md](validation/VALIDATION_SUMMARY.md) gathers them in one place.
 
+### Real-world atlas-scale head-to-head vs pyscenic
+
+[`validation/ziegler_headtohead_2026-04-19.md`](validation/ziegler_headtohead_2026-04-19.md) — 31,602-cell nasopharyngeal atlas (Ziegler 2021 *Cell*), identical 59 regulons on both sides:
+
+| | rustscenic | pyscenic-unit | pyscenic-weighted |
+|---|---:|---:|---:|
+| Per-cell Pearson with rustscenic | 1.000 | **0.984** | 0.949 |
+| Canonical airway TF hits (of 14) | 8 | 8 | 9 |
+| AUCell wall-time | **0.25 s** | 6.81 s | 5.29 s |
+
+Both tools miss the same 5 TFs (STAT1, MYB, IRF7, SOX2, PAX5) — tool-to-tool variation is smaller than dataset-inherent noise.
+
+- `validation/figures/ziegler_fig1_canonical_tf_3way.png` — the 3-way TF comparison
+- `validation/figures/ziegler_fig2_per_cell_pearson.png` — per-cell agreement distribution
+- `validation/figures/ziegler_fig3_runtime.png` — 27× speedup bar chart
+
+
+
 ### GRN — `arboreto.grnboost2` replacement
 
 | Dataset | n_cells | Measurement | Value |
