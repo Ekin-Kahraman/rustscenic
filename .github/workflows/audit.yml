@@ -39,7 +39,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: pip install maturin numpy pandas pyarrow scipy scanpy anndata
+      - run: pip install maturin numpy pandas pyarrow scipy scanpy anndata certifi
       - run: maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml
       - run: pip install target/wheels/rustscenic-*.whl --force-reinstall --no-deps
       # Smoke test the full API surface
