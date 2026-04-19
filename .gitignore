@@ -16,3 +16,4 @@ python/rustscenic/_rustscenic*.so
 python/rustscenic/__pycache__/
 *.whl
 data/
+examples/out/

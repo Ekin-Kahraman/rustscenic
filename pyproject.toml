@@ -5,18 +5,32 @@ build-backend = "maturin"
 [project]
 name = "rustscenic"
 version = "0.1.0"
-description = "Fast SCENIC+ stage replacements in Rust (GRNBoost2, AUCell, cisTopic, cisTarget)"
+description = "Fast Rust+PyO3 drop-in replacements for the four slow SCENIC+ stages (GRNBoost2, AUCell, cisTopic, cisTarget) — installs and runs where arboreto+pyscenic dependencies no longer do."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Ekin Kahraman" }]
 requires-python = ">=3.10"
+keywords = [
+    "single-cell", "scRNA-seq", "scATAC-seq", "SCENIC", "SCENIC+",
+    "gene regulatory network", "GRN", "transcription factor",
+    "regulon", "AUCell", "pycisTopic", "pycistarget",
+    "bioinformatics", "computational biology", "Rust", "PyO3",
+]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
     "Programming Language :: Rust",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
     "numpy>=1.21",
@@ -30,6 +44,9 @@ rustscenic = "rustscenic.cli:main"
 [project.urls]
 Homepage = "https://github.com/Ekin-Kahraman/rustscenic"
 Documentation = "https://github.com/Ekin-Kahraman/rustscenic#readme"
+Repository = "https://github.com/Ekin-Kahraman/rustscenic"
+Issues = "https://github.com/Ekin-Kahraman/rustscenic/issues"
+Changelog = "https://github.com/Ekin-Kahraman/rustscenic/blob/main/CHANGELOG.md"
 
 [tool.maturin]
 manifest-path = "crates/rustscenic-py/Cargo.toml"
