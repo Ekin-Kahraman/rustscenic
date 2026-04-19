@@ -51,6 +51,7 @@ def fit(
     batch_size: int = 256,
     n_passes: int = 10,
     seed: int = 42,
+    verbose: bool = True,
 ) -> TopicsResult:
     """Fit LDA on a (cells × peaks) count / binarized matrix.
 
@@ -89,15 +90,34 @@ def fit(
     if eta is None:
         eta = 1.0 / n_topics
 
+    import sys, time
+    n_docs = len(row_ptr) - 1
+    nnz = len(col_idx)
+    if verbose:
+        print(
+            f"[rustscenic.topics] online-VB LDA — {n_docs:,} docs × "
+            f"{n_words:,} vocab (nnz={nnz:,}), K={n_topics}, {n_passes} passes, "
+            f"batch_size={batch_size}. Running in parallel...",
+            file=sys.stderr, flush=True,
+        )
+    t0 = time.monotonic()
     ct, tw = _topics_fit(
         list(row_ptr), list(col_idx), list(counts.astype(np.float32)),
         int(n_words), int(n_topics),
         float(alpha), float(eta), float(tau0), float(kappa),
         int(batch_size), int(n_passes), int(seed),
     )
+    wall = time.monotonic() - t0
     topic_names = [f"Topic_{k}" for k in range(n_topics)]
     cell_topic = pd.DataFrame(np.asarray(ct), index=cell_names, columns=topic_names)
     topic_peak = pd.DataFrame(np.asarray(tw), index=topic_names, columns=peak_names)
+    unique = int(np.unique(cell_topic.values.argmax(axis=1)).size)
+    if verbose:
+        print(
+            f"[rustscenic.topics] done in {wall:.1f}s — "
+            f"{unique}/{n_topics} topics carry an argmax assignment.",
+            file=sys.stderr, flush=True,
+        )
     return TopicsResult(cell_topic=cell_topic, topic_peak=topic_peak, n_topics=n_topics)
 
 

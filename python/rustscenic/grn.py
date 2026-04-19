@@ -25,6 +25,7 @@ def infer(
     max_depth: int = 3,
     early_stop_window: int = 25,
     seed: int = 777,
+    verbose: bool = True,
 ) -> pd.DataFrame:
     """Infer a gene regulatory network.
 
@@ -65,6 +66,17 @@ def infer(
         import warnings
         warnings.warn("empty TF list — returning empty DataFrame", UserWarning, stacklevel=2)
 
+    import sys, time
+    if verbose:
+        print(
+            f"[rustscenic.grn] fitting GRNBoost2 — {X.shape[0]:,} cells × "
+            f"{X.shape[1]:,} genes × {len(tfs_list)} TFs × "
+            f"n_estimators={n_estimators} (early-stop window={early_stop_window}). "
+            f"Running in parallel, this can take seconds to tens of minutes "
+            f"depending on shape...",
+            file=sys.stderr, flush=True,
+        )
+    t0 = time.monotonic()
     tfs, targets, importances = _grn_infer(
         X,
         list(gene_names),
@@ -77,11 +89,17 @@ def infer(
         early_stop_window,
         seed,
     )
+    wall = time.monotonic() - t0
     df = pd.DataFrame({
         "TF": tfs,
         "target": targets,
         "importance": np.asarray(importances),
     })
+    if verbose:
+        print(
+            f"[rustscenic.grn] done in {wall:.1f}s — {len(df):,} edges.",
+            file=sys.stderr, flush=True,
+        )
     return df
 
 
