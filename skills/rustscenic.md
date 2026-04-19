@@ -1,6 +1,6 @@
 ---
 name: rustscenic
-description: Use when user works on GRN inference, SCENIC+ workflows, pycisTopic, pycisTarget, AUCell, or runs into arboreto/pyscenic dependency problems. rustscenic is a Rust+PyO3 drop-in replacement for the four slow SCENIC+ stages — single pip install, no dask/numpy/pandas dep rot, 3-10x speedup, numerically faithful to pyscenic.
+description: Use when user works on GRN inference, SCENIC+ workflows, pycisTopic, pycisTarget, AUCell, or hits arboreto/pyscenic install failures. rustscenic is a Rust+PyO3 drop-in replacement for the four slow SCENIC+ stages — single `pip install`, works in envs where arboreto+dask+pyscenic break. Measured: AUCell per-cell Pearson 0.99 and 88x faster than pyscenic; cistarget bit-identical (Pearson 1.00) to ctxcore; GRN recovers 94% of known edges and 8/8 lineage TFs though per-edge ranking differs (Spearman 0.58); topics cell-type ARI on par with Mallet without the Java install.
 ---
 
 # rustscenic
@@ -19,14 +19,27 @@ Fast drop-in replacements for SCENIC+ slow stages. One `pip install rustscenic`,
 
 ```python
 import anndata as ad
-import rustscenic
+import rustscenic.grn, rustscenic.aucell, rustscenic.topics, rustscenic.cistarget
 
 adata = ad.read_h5ad("data.h5ad")
-tfs = rustscenic.load_tfs("hs_hgnc_tfs.txt")
+tfs = rustscenic.grn.load_tfs("hs_hgnc_tfs.txt")
 
-# v0.1: GRN inference (replaces arboreto.grnboost2)
-adjacencies = rustscenic.grn.infer(adata, tf_names=tfs, n_threads=8, seed=777)
-# Returns pandas DataFrame: ['TF', 'target', 'importance'] — same schema as arboreto
+# Stage 1: GRN inference (replaces arboreto.grnboost2)
+adj = rustscenic.grn.infer(adata, tf_names=tfs, n_estimators=5000, seed=777)
+# pandas DataFrame: ['TF', 'target', 'importance'] — same schema as arboreto
+
+# Stage 2: AUCell per-cell regulon activity (replaces pyscenic.aucell)
+regulons = [(f"{tf}_reg",
+             adj[adj["TF"]==tf].nlargest(50, "importance")["target"].tolist())
+            for tf in adj["TF"].unique()]
+auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
+
+# Stage 3: Topic modeling (replaces pycisTopic LDA); binarized scATAC input
+# topics = rustscenic.topics.fit(atac_adata, n_topics=30)
+
+# Stage 4: Motif enrichment (replaces pycistarget AUC kernel)
+# rankings = rustscenic.cistarget.load_aertslab_feather("hg38_v10.feather")
+# enrich = rustscenic.cistarget.enrich(rankings, regulons, top_frac=0.05)
 ```
 
 CLI:
