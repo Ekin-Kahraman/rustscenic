@@ -1,0 +1,33 @@
+version: 2
+updates:
+  # Rust dependencies (Cargo.lock + workspace Cargo.toml)
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      rust-minor:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions versions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        update-types:
+          - "major"
+          - "minor"
+          - "patch"
+
+  # pyproject.toml python deps
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
