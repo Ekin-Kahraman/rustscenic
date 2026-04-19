@@ -38,7 +38,22 @@ pub fn aucell(
     assert_eq!(expression.len(), n_cells * n_genes, "expression size mismatch");
     assert!((0.0..=1.0).contains(&top_frac), "top_frac must be in (0, 1]");
 
-    let max_rank: usize = ((top_frac * n_genes as f32) as usize).max(1);
+    // Reject NaN in expression — silent corruption via partial_cmp tie-breaks.
+    if expression.iter().any(|v| v.is_nan()) {
+        panic!(
+            "expression matrix contains NaN values — AUCell ranking is undefined. \
+            Filter upstream (scanpy.pp.normalize_total + sc.pp.log1p on raw count \
+            matrices, or drop rows with all-zero expression first)."
+        );
+    }
+
+    // ctxcore.recovery.derive_rank_cutoff semantics (preserves R-SCENIC values):
+    //   rank_cutoff = round(auc_threshold * n_genes) - 1
+    // This is a 1-off-by-one that the Aertslab ctxcore bakes in for R
+    // compatibility. Matching it keeps per-cell AUCs numerically equal to
+    // pyscenic's output (verified against ctxcore.recovery.aucs).
+    let rank_cutoff_raw = (top_frac * n_genes as f32).round() as i64;
+    let rank_cutoff = (rank_cutoff_raw - 1).max(0) as usize;
     let n_regulons = regulons.len();
     if n_regulons == 0 {
         return Vec::new();
@@ -67,24 +82,27 @@ pub fn aucell(
                 rank[g as usize] = pos as u32;
             }
 
-            let max_rank_u32 = max_rank as u32;
+            let rank_cutoff_u32 = rank_cutoff as u32;
             for (r_idx, (_, gene_set)) in regulons.iter().enumerate() {
+                // ctxcore.recovery.weighted_auc1d: filter ranks < rank_cutoff,
+                // then Riemann-sum the staircase recovery curve up to rank_cutoff.
+                // For unit weights this equals sum of (rank_cutoff - r) for r < rank_cutoff,
+                // which is algebraically the same as the "right Riemann" form.
                 let mut auc_sum: u64 = 0;
                 for &g in gene_set {
                     let r = rank[g];
-                    if r < max_rank_u32 {
-                        auc_sum += (max_rank_u32 - r) as u64;
+                    if r < rank_cutoff_u32 {
+                        auc_sum += (rank_cutoff_u32 - r) as u64;
                     }
                 }
-                // True maximum AUC: if all |G| regulon genes fell at top ranks 0..|G|-1,
-                // auc_sum = sum_{i=0..|G|} (K - i) = K*|G| - |G|*(|G|-1)/2
-                // We use min(|G|, K) because extras past K can never contribute.
-                let g = (gene_set.len() as u64).min(max_rank as u64);
-                if g == 0 {
+                let g_len = gene_set.len() as u64;
+                if g_len == 0 {
                     cell_out[r_idx] = 0.0;
                     continue;
                 }
-                let max_auc = (max_rank as u64) * g - g * g.saturating_sub(1) / 2;
+                // ctxcore.recovery.aucs: maxauc = (rank_cutoff + 1) * y_max where
+                // y_max = sum of weights (= |G| for unit weights).
+                let max_auc = (rank_cutoff as u64 + 1) * g_len;
                 let norm = (auc_sum as f64) / (max_auc as f64);
                 cell_out[r_idx] = norm.clamp(0.0, 1.0) as f32;
             }
@@ -106,13 +124,16 @@ mod tests {
     }
 
     #[test]
-    fn single_cell_top_ranked_regulon_hits_one() {
-        // 5 genes, 1 cell, gene 0 is expressed highest; regulon contains gene 0
+    fn single_cell_top_ranked_regulon_matches_ctxcore() {
+        // 5 genes, 1 cell, gene 0 is expressed highest; regulon contains gene 0.
+        // top_frac=0.4 -> rank_cutoff = round(0.4*5)-1 = 1 (ctxcore R-compat).
+        // Only gene 0 has rank 0 < 1, auc_sum = (1 - 0) * 1 = 1.
+        // max_auc = (rank_cutoff+1) * |G| = 2 * 1 = 2.
+        // Expected: 1 / 2 = 0.5 — verified equal to ctxcore.recovery.aucs output.
         let expr = vec![10.0_f32, 1.0, 1.0, 1.0, 1.0];
         let regs = vec![("R".to_string(), vec![0])];
-        let out = aucell(&expr, 1, 5, &regs, 0.4); // top 2
-        // rank(gene 0) = 0, auc = max_rank - 0 = 2, denom = max_rank * 1 = 2 → 1.0
-        assert_abs_diff_eq!(out[0], 1.0, epsilon = 1e-6);
+        let out = aucell(&expr, 1, 5, &regs, 0.4);
+        assert_abs_diff_eq!(out[0], 0.5, epsilon = 1e-6);
     }
 
     #[test]
