@@ -1,0 +1,64 @@
+name: Bug report
+description: Something crashes or produces wrong output
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One sentence — what happened.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproducible example
+      description: |
+        The shortest Python snippet that reproduces the bug. Synthetic inputs are fine.
+        If the bug requires a specific dataset, link to it or explain how to generate it.
+      render: python
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs actual
+      description: What should have happened, and what actually happened.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: rustscenic version
+      description: Output of `pip show rustscenic | grep Version`
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      description: Output of `python --version`
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      description: e.g. macOS 14.5 aarch64, Ubuntu 24.04 x86_64
+    validations:
+      required: true
+  - type: textarea
+    id: traceback
+    attributes:
+      label: Full traceback or error output
+      description: If applicable.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues for duplicates.
+          required: true
+        - label: I tried upgrading to the latest rustscenic release.
+          required: true
