@@ -23,12 +23,14 @@ jobs:
       - run: cargo build --release --workspace --exclude rustscenic-py
       - run: cargo clippy --workspace --exclude rustscenic-py --all-targets -- -D warnings
       - run: cargo test --workspace --exclude rustscenic-py --release
+      # cargo-audit: fails build on known vulns in Cargo.lock. Unmaintained /
+      # unsound informational warnings are surfaced but non-fatal. Ubuntu only —
+      # we're checking the dep graph, not target triples.
       - name: cargo-audit (Rust supply chain)
-        # Only run once per matrix (ubuntu), not for every OS
         if: matrix.os == 'ubuntu-24.04'
-        uses: rustsec/audit-check@v2.0.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cargo install --quiet --locked cargo-audit
+          cargo audit
 
   python:
     runs-on: ${{ matrix.os }}
