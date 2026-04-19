@@ -1,0 +1,89 @@
+name: release
+
+# Fires when a semver tag is pushed (e.g. v0.1.0).
+# Builds wheels for Linux x86_64/aarch64 + macOS x86_64/aarch64, sdist,
+# then uploads everything to PyPI via trusted publishing.
+#
+# Setup: in PyPI project Settings → Publishing, add a "Trusted Publisher" for
+# this repo/workflow. No API token is stored in GitHub secrets.
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wheels-linux:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          manylinux: '2_17'
+          args: --release --manifest-path crates/rustscenic-py/Cargo.toml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux-${{ matrix.target }}
+          path: target/wheels/*.whl
+
+  wheels-macos:
+    runs-on: macos-14
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x86_64, aarch64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --manifest-path crates/rustscenic-py/Cargo.toml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.target }}
+          path: target/wheels/*.whl
+
+  sdist:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --manifest-path crates/rustscenic-py/Cargo.toml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: target/wheels/*.tar.gz
+
+  publish:
+    needs: [wheels-linux, wheels-macos, sdist]
+    runs-on: ubuntu-24.04
+    # Only publish on real tag pushes, not manual dispatch
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      id-token: write   # required for PyPI trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
+          skip-existing: true
