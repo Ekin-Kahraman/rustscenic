@@ -4,6 +4,8 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
+description = "Python bindings for rustscenic (internal; the PyPI package is 'rustscenic')"
+repository = "https://github.com/Ekin-Kahraman/rustscenic"
 
 [lib]
 name = "_rustscenic"
