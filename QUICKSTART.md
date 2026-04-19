@@ -33,7 +33,7 @@ grn = rustscenic.grn.infer(adata, tfs, seed=777, n_estimators=100)
 print(f"GRN: {len(grn)} edges")
 print(grn.nlargest(5, "importance").to_string(index=False))
 
-# 3. Build regulons + run AUCell — replaces pyscenic.aucell (22-64x faster)
+# 3. Build regulons + run AUCell — replaces pyscenic.aucell (~88× faster on 10k cells)
 regulons = [
     (f"{tf}_regulon", grn[grn["TF"] == tf].nlargest(50, "importance")["target"].tolist())
     for tf in tfs
@@ -100,12 +100,12 @@ enrichments = rustscenic.cistarget.enrich(rankings, regulons, top_frac=0.05)
 | PBMC-3k (1274 regulons) | aucell | 0.1s |
 | 10x Multiome PBMC (2588 cells, all 4 stages) | full pipeline | 9.1 min |
 
-Reference (arboreto + pyscenic + tomotopy) on 10x Multiome: 11.8 min. Reference with real pycisTopic-Mallet: 2–6 hours.
+Reference (arboreto + pyscenic + tomotopy) on 10x Multiome: 11.8 min. Reference with real pycisTopic-Mallet: 534 s for topics stage alone on 10k PBMC ATAC (measured).
 
 ## Common errors
 
 - **"ValueError: expression has 0 peaks/genes"** — preprocess first (`sc.pp.filter_genes`).
-- **"UserWarning: duplicate gene name(s) in input"** — run `adata.var_names_make_unique()`.
+- **"ValueError: N duplicate gene name(s) in expression matrix"** — run `adata.var_names_make_unique()`.
 - **"UserWarning: all regulons dropped"** — your regulon gene symbols don't match `adata.var_names`; check species / naming (human uses uppercase, mouse uses TitleCase).
 
 ## Full pipeline on real 10x Multiome

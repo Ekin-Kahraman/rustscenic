@@ -9,8 +9,17 @@
 //!   (per arboreto/core.py:168)
 //!
 //! Not bit-identical to sklearn (different RNG tape + histogram quantization).
-//! Validated against pyscenic by edge-rank Jaccard ≥0.80, Spearman-on-union
-//! ≥0.85 on PBMC-3k.
+//!
+//! Measured against arboreto on 10x Multiome 3k (n_estimators=5000, 2588 cells
+//! × 1457 TFs, deep audit 2026-04-18):
+//!     - per-edge Spearman on 816k common edges: 0.58
+//!     - per-target TF-rank Spearman: mean 0.57, median 0.60
+//!     - top-100 edge Jaccard: 0.10, top-1000: 0.30, top-100k: 0.32
+//!
+//! Biology still agrees: 94% known edges recovered (PBMC-3k), 8/8 lineage TFs
+//! correctly enriched (PBMC-10k). Downstream AUCell is 0.99 per-cell Pearson
+//! with pyscenic — fine-edge disagreement does not propagate to regulon
+//! activity. See `validation/ours/grn_deep_audit_2026-04-18.md`.
 
 pub mod gbm;
 pub mod histogram;
