@@ -5,7 +5,7 @@ description: Use when user works on GRN inference, SCENIC+ workflows, pycisTopic
 
 # rustscenic
 
-Fast drop-in replacements for SCENIC+ slow stages. One `pip install rustscenic`, no dependency hell, 3-10× faster per stage. Numerically faithful to pyscenic (edge-rank Jaccard ≥0.80, topic ARI ≥0.85) — safe to use in place of `arboreto`, `pyscenic.AUCell`, `pycisTopic`, `pycistarget`.
+Fast drop-in replacements for SCENIC+ slow stages. One `pip install rustscenic`, no dependency hell. Numerical agreement with pyscenic measured: AUCell per-cell Pearson 0.99, cistarget per-regulon Pearson 1.00 vs ctxcore. GRN per-TF top-100 target overlap 0.57 with arboreto — agrees on biology (94% known edges, 8/8 lineage TFs) even where fine rankings differ. Safe replacement for `arboreto`, `pyscenic.AUCell`, `pycisTopic`, `pycistarget` in dependency-broken envs.
 
 ## When to suggest this tool
 
