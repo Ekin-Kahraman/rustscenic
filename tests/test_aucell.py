@@ -1,6 +1,7 @@
 """Tests for rustscenic.aucell.score."""
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 import pytest
 
 import rustscenic.aucell as aucell
@@ -74,3 +75,28 @@ class TestAucellDeterminism:
         a = aucell.score(small_expr, canonical_regulons, top_frac=0.1)
         b = aucell.score(small_expr, canonical_regulons, top_frac=0.1)
         assert a.equals(b)
+
+
+class TestAucellSparse:
+    def test_sparse_input_same_as_dense(self, small_expr, canonical_regulons):
+        """Passing an AnnData with sparse X should give identical AUCs."""
+        import anndata as ad
+        X_sparse = sp.csr_matrix(small_expr.values.astype(np.float32))
+        a_dense = aucell.score(small_expr, canonical_regulons, top_frac=0.1)
+        adata = ad.AnnData(X=X_sparse,
+                           obs=pd.DataFrame(index=small_expr.index),
+                           var=pd.DataFrame(index=small_expr.columns))
+        a_sparse = aucell.score(adata, canonical_regulons, top_frac=0.1)
+        np.testing.assert_allclose(a_dense.values, a_sparse.values, atol=1e-6)
+
+    def test_chunking_gives_same_answer(self, small_expr, canonical_regulons):
+        """chunk_size < n_cells must not change the result."""
+        import anndata as ad
+        X_sparse = sp.csr_matrix(small_expr.values.astype(np.float32))
+        adata = ad.AnnData(X=X_sparse,
+                           obs=pd.DataFrame(index=small_expr.index),
+                           var=pd.DataFrame(index=small_expr.columns))
+        whole = aucell.score(adata, canonical_regulons, top_frac=0.1, chunk_size=1_000_000)
+        chunked = aucell.score(adata, canonical_regulons, top_frac=0.1, chunk_size=13)
+        np.testing.assert_allclose(whole.values, chunked.values, atol=1e-6)
+        assert list(whole.index) == list(chunked.index)
