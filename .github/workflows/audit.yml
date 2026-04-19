@@ -17,7 +17,10 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      - run: cargo build --release --workspace
+      # rustscenic-py is a pyo3 cdylib — linking requires maturin's Python
+      # link flags (undefined dynamic_lookup on macOS). It's built separately
+      # in the python job via maturin, so exclude it from the raw cargo build.
+      - run: cargo build --release --workspace --exclude rustscenic-py
       - run: cargo clippy --workspace --exclude rustscenic-py --all-targets -- -D warnings
       - run: cargo test --workspace --exclude rustscenic-py --release
 
