@@ -97,7 +97,7 @@ Same seed twice = bit-identical output across **all 4 stages** (GRN, AUCell, Top
 | Topics | 918 s (15 min) | 5.78 GB | K=30, 3 passes, 215M nnz |
 | Cistarget | **2.6 s** | 6.34 GB | 100 regulons × 5,876 motifs (aertslab DB) |
 
-**Total peak RSS: 6.34 GB.** pyscenic is reported to exceed 40 GB on similar workloads — our footprint is ~7× smaller, which removes Moha's main OOM pain point at scale. AUCell and cistarget are near-instant at 100k scale.
+**Total peak RSS: 6.34 GB.** pyscenic is reported to exceed 40 GB on similar workloads — our footprint is ~7× smaller, which removes the primary OOM pain point at atlas scale. AUCell and cistarget are near-instant at 100k scale.
 
 ## What's honest
 
