@@ -39,7 +39,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: pip install maturin numpy pandas pyarrow scipy scanpy anndata certifi
+      - run: pip install maturin numpy pandas pyarrow scipy scanpy anndata certifi pytest
       - run: maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml
       - run: pip install target/wheels/rustscenic-*.whl --force-reinstall --no-deps
       # Smoke test the full API surface
@@ -51,6 +51,8 @@ jobs:
               mod = getattr(rustscenic, stage)
               print(f'{stage}: OK')
           "
+      # Python unit test suite
+      - run: pytest tests/ -v
       # End-to-end quickstart runs and produces output
       - run: python -m rustscenic.quickstart
       # Full 4-stage example on real PBMC-3k (downloads 10x tarball)
