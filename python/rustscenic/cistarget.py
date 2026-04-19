@@ -69,6 +69,12 @@ def enrich(
             "rankings DataFrame has dtype=object (likely non-numeric or "
             "wrong columns). Ensure rank values are numeric before passing."
         )
+    if not np.all(np.isfinite(rankings.values)):
+        raise ValueError(
+            "rankings contain NaN or Inf values — motif enrichment is "
+            "undefined on non-finite ranks. Load the feather file cleanly "
+            "(aertslab feathers are int16) and check for upstream corruption."
+        )
     # Convert rankings (lower = better) into "expression" (higher = better)
     # by negating — AUCell's recovery AUC expects descending sort by value.
     # Use -rank so smaller rank maps to larger pseudo-expression.

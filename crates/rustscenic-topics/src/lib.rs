@@ -70,6 +70,17 @@ pub fn online_vb_lda(
     assert_eq!(col_idx.len(), counts.len());
     let n_docs = row_ptr.len() - 1;
     assert!(n_topics > 0);
+
+    // Reject NaN/Inf in counts — the VB variational updates use logs and
+    // digammas that propagate non-finite values silently into garbage topic
+    // assignments. Fail fast with a clear message.
+    if counts.iter().any(|v| !v.is_finite()) {
+        panic!(
+            "input counts contain NaN or Inf values — LDA is undefined on \
+            non-finite counts. Cast your (cell, peak) matrix to integer counts \
+            or binarize before calling topics.fit()."
+        );
+    }
     let bs = batch_size.max(1).min(n_docs);
 
     // lambda[k * W + w] = topic-word variational parameters (unnormalized Dirichlet)
