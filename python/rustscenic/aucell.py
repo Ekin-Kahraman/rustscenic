@@ -50,6 +50,14 @@ def score(
         X = X.astype(np.float32, copy=False)
     X = np.ascontiguousarray(X)
 
+    dup_count = len(gene_names) - len(set(gene_names))
+    if dup_count > 0:
+        raise ValueError(
+            f"{dup_count} duplicate gene name(s) in expression matrix — regulon "
+            f"gene-to-column lookup is ambiguous. Call AnnData.var_names_make_unique() "
+            f"or deduplicate upstream."
+        )
+
     gene_to_idx = {g: i for i, g in enumerate(gene_names)}
     reg_names: list[str] = []
     reg_gene_indices: list[list[int]] = []
