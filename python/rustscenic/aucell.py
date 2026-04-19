@@ -24,6 +24,7 @@ def score(
     regulons: Iterable,
     *,
     top_frac: float = 0.05,
+    chunk_size: int = 10_000,
 ) -> pd.DataFrame:
     """Compute per-cell regulon activity matrix.
 
@@ -39,16 +40,18 @@ def score(
     top_frac
         Fraction of top-ranked genes per cell used as AUC cutoff (default 0.05,
         matches pyscenic).
+    chunk_size
+        For sparse input, densify and score at most this many cells at a time
+        (default 10_000). Keeps peak RSS to ~chunk_size × n_genes × 4 bytes
+        during the densification step. Set to None or >= n_cells to densify
+        everything in one go.
 
     Returns
     -------
     pandas.DataFrame of shape (n_cells, n_regulons). Index: cell barcodes.
     Columns: regulon names.
     """
-    X, gene_names, cell_names = _coerce(expression)
-    if X.dtype != np.float32:
-        X = X.astype(np.float32, copy=False)
-    X = np.ascontiguousarray(X)
+    X_raw, gene_names, cell_names = _coerce(expression)
 
     dup_count = len(gene_names) - len(set(gene_names))
     if dup_count > 0:
@@ -87,19 +90,53 @@ def score(
             UserWarning, stacklevel=2,
         )
 
-    auc = _aucell_score(X, reg_names, reg_gene_indices, top_frac)
+    # Score in chunks if the input is sparse — densifying 100k x 20k is 8 GB
+    # float32, and the peak during conversion is 2x that. Chunking bounds
+    # instantaneous RSS to chunk_size × n_genes × 4 bytes.
+    import scipy.sparse as sp
+    n_cells = len(cell_names)
+    if sp.issparse(X_raw):
+        if chunk_size is None or chunk_size >= n_cells:
+            X = X_raw.toarray()
+            if X.dtype != np.float32:
+                X = X.astype(np.float32, copy=False)
+            X = np.ascontiguousarray(X)
+            auc = _aucell_score(X, reg_names, reg_gene_indices, top_frac)
+        else:
+            # Dense-per-chunk; concat.
+            parts = []
+            for start in range(0, n_cells, chunk_size):
+                end = min(start + chunk_size, n_cells)
+                X_chunk = X_raw[start:end].toarray()
+                if X_chunk.dtype != np.float32:
+                    X_chunk = X_chunk.astype(np.float32, copy=False)
+                X_chunk = np.ascontiguousarray(X_chunk)
+                parts.append(np.asarray(_aucell_score(X_chunk, reg_names, reg_gene_indices, top_frac)))
+            auc = np.concatenate(parts, axis=0) if parts else np.zeros((0, len(reg_names)), dtype=np.float32)
+    else:
+        X = np.asarray(X_raw)
+        if X.dtype != np.float32:
+            X = X.astype(np.float32, copy=False)
+        X = np.ascontiguousarray(X)
+        auc = _aucell_score(X, reg_names, reg_gene_indices, top_frac)
     return pd.DataFrame(np.asarray(auc), index=cell_names, columns=reg_names)
 
 
 def _coerce(expression):
+    """Return (X, gene_names, cell_names) — X may be dense numpy OR scipy sparse."""
+    import scipy.sparse as sp
     if hasattr(expression, "X") and hasattr(expression, "var_names"):
-        X = expression.X.toarray() if hasattr(expression.X, "toarray") else np.asarray(expression.X)
+        X = expression.X
+        if not sp.issparse(X):
+            X = np.asarray(X)
         return X, list(expression.var_names), list(expression.obs_names)
     if isinstance(expression, pd.DataFrame):
         return np.asarray(expression.values), list(expression.columns), list(expression.index)
     if isinstance(expression, tuple) and len(expression) == 2:
         X, gene_names = expression
-        return np.asarray(X), list(gene_names), list(range(np.asarray(X).shape[0]))
+        if not sp.issparse(X):
+            X = np.asarray(X)
+        return X, list(gene_names), list(range(X.shape[0]))
     raise TypeError("expression must be AnnData, pandas.DataFrame, or (matrix, gene_names) tuple")
 
 
