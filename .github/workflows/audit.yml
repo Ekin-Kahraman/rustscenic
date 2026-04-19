@@ -23,6 +23,12 @@ jobs:
       - run: cargo build --release --workspace --exclude rustscenic-py
       - run: cargo clippy --workspace --exclude rustscenic-py --all-targets -- -D warnings
       - run: cargo test --workspace --exclude rustscenic-py --release
+      - name: cargo-audit (Rust supply chain)
+        # Only run once per matrix (ubuntu), not for every OS
+        if: matrix.os == 'ubuntu-24.04'
+        uses: rustsec/audit-check@v2.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   python:
     runs-on: ${{ matrix.os }}
