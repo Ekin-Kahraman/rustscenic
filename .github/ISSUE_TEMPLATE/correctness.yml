@@ -1,0 +1,52 @@
+name: Correctness issue
+description: Our output disagrees with pyscenic / arboreto / pycisTopic / pycistarget
+labels: ["correctness"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Correctness issues are top priority. Known tolerated divergences:
+
+        - **GRN per-edge Spearman 0.58** vs arboreto (Rust histogram-GBM ≠ sklearn Cython GBR).
+          Biology agrees at coarse resolution. Log at `validation/ours/grn_deep_audit_2026-04-18.md`.
+        - **Topics** collapses at K ≥ 30 on sparse binary scATAC. `docs/topic-collapse.md`.
+        - **AUCell tie-break** differs from pyscenic (we use gene-index tie-break; pyscenic shuffles).
+          Typical per-regulon Pearson 0.87, per-cell Pearson 0.99.
+
+        If your issue isn't one of these, please file it below.
+  - type: textarea
+    id: our_output
+    attributes:
+      label: rustscenic output
+      description: Copy/paste the relevant slice.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: reference_output
+    attributes:
+      label: Reference tool output
+      description: Same input, same parameters, pyscenic / arboreto / pycisTopic / pycistarget.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: |
+        Script or notebook code. Include versions of both rustscenic and the reference tool.
+      render: python
+    validations:
+      required: true
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Stage
+      options:
+        - grn
+        - aucell
+        - topics
+        - cistarget
+    validations:
+      required: true
