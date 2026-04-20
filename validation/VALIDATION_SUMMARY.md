@@ -3,25 +3,25 @@
 **Last updated:** 2026-04-20
 **Scope:** four SCENIC+ stages (grn, aucell, topics, cistarget) — correctness, reproducibility, robustness, scale.
 
-## The sell — what bottlenecks rustscenic actually fixes
+## Measured against the pyscenic / arboreto reference
 
-Every row is a bottleneck users of the pyscenic / arboreto / pycisTopic stack experience right now. Every number has a log file in this directory.
+Every row has a log file in this directory. Numbers are measured on this codebase with identical input on both sides.
 
-| Bottleneck | Reference stack | **rustscenic** | Improvement |
-|---|---|---|---|
-| Install on Python 3.12+ | ❌ arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` | ✅ `pip install rustscenic` | only tool that installs |
-| AUCell wall-time, 31,602 cells × 59 regulons | 6.81 s (pyscenic) | **0.25 s** | **27×** |
-| AUCell wall-time, 10,290 cells × 1,457 regulons | 18.6 s (pyscenic) | **0.21 s** | **88×** |
-| Peak RSS, 4 stages on 100k cells | > 40 GB (reported) | **6.3 GB** | **~7×** less |
-| Cistarget kernel vs `ctxcore.recovery.aucs` | reference | **Pearson 1.0000** (abs diff 2.4e-5) | bit-identical |
-| AUCell per-cell Pearson vs pyscenic, Ziegler 31,602 cells | reference | **0.984** (91.7% cells > 0.95) | same biology |
-| Canonical airway TF hits (Ziegler, n=14) | 8/14 (pyscenic-unit) | **8/14** — same hits, same 5/14 misses | tool-to-tool noise |
-| Deterministic under threads + seed | no (dask) | **yes** (bit-identical) | reproducible |
-| Runtime dependencies | 40+ | **4** (numpy, pandas, pyarrow, scipy) | clean |
-| CPU architecture | x86_64 only | x86_64 + **aarch64** | Apple Silicon + ARM servers |
-| Robustness edge cases | varies | **10/10** handled | no silent corruption |
+| Axis | Reference stack | rustscenic |
+|---|---|---|
+| Installs on fresh Python 3.12 venv (2026-04) | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` | `pip install rustscenic` succeeds |
+| AUCell wall-time, 31,602 cells × 59 regulons (Ziegler atlas) | 6.81 s (pyscenic) | 0.25 s |
+| AUCell wall-time, 10,290 cells × 1,457 regulons (10x Multiome) | 18.6 s (pyscenic) | 0.21 s |
+| Peak RSS, 4 stages on 100,000 cells × 20,292 genes | > 40 GB (reported) | 6.3 GB |
+| Cistarget kernel vs `ctxcore.recovery.aucs` | reference | Pearson 1.0000, mean abs diff 2.4 × 10⁻⁵ |
+| AUCell per-cell Pearson vs pyscenic, Ziegler 31,602 cells | reference | 0.984 mean (91.7% of cells > 0.95) |
+| Canonical airway TF hits matching literature (Ziegler, n=14) | 8/14 (pyscenic, unit weights) | 8/14 — same hits, same 5/14 misses |
+| Bit-identical output under same seed across threaded runs | no (dask non-determinism) | yes |
+| Runtime dependencies | 40+ | 4 (numpy, pandas, pyarrow, scipy) |
+| Wheel architectures | x86_64 | x86_64 + aarch64 |
+| Robustness test suite | — | 10/10 edge cases handled |
 
-**Positioning:** best CPU-only, install-first, pyscenic-numerical tool in 2026. Not competing with GPU tools (flashSCENIC, rapids-singlecell) or multiomic enhancer-aware pipelines (scenicplus).
+rustscenic covers the four legacy SCENIC / SCENIC+ slow stages on CPU. Out of scope: GPU workloads (flashSCENIC), multiomic enhancer-aware GRN (scenicplus), TF-activity scoring from prebuilt regulons (decoupler-py), R Bioconductor (Epiregulon).
 
 ## Headline agreements (what we measured, and where)
 
