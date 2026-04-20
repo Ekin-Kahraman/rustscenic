@@ -1,5 +1,10 @@
 # rustscenic
 
+[![CI](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg)](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
+[![Rust](https://img.shields.io/badge/Rust-stable-orange)](https://www.rust-lang.org/)
+
 A Rust + PyO3 reimplementation of the four slow stages of the SCENIC / SCENIC+ single-cell regulatory-network pipeline, shipped as one pip-installable wheel.
 
 ```bash
