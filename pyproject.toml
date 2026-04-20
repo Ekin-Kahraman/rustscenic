@@ -9,7 +9,7 @@ description = "Fast Rust+PyO3 drop-in replacements for the four slow SCENIC+ sta
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "Ekin Kahraman" }]
+authors = [{ name = "Ekin Kahraman", email = "evk23umu@uea.ac.uk" }]
 requires-python = ">=3.10"
 keywords = [
     "single-cell", "scRNA-seq", "scATAC-seq", "SCENIC", "SCENIC+",

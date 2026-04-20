@@ -14,7 +14,7 @@ rustscenic processes numeric matrices and gene-name strings. The attack surface 
 
 If you find a vulnerability — memory unsafety, arbitrary file write, crash on crafted input, supply-chain concern — please **do not** open a public issue.
 
-Email: ekinkhrmn2005@outlook.com
+Email: evk23umu@uea.ac.uk
 Subject: `rustscenic security: <short description>`
 
 Include:
