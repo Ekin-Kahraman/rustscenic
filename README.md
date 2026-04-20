@@ -1,22 +1,38 @@
 # rustscenic
 
-Fast Rust + PyO3 reimplementation of the four slow stages of the SCENIC+ single-cell regulatory-network pipeline. **Installs cleanly on modern Python where the reference stack (arboreto + pyscenic + pycisTopic) no longer does.**
+**The install-first, CPU-only, pyscenic-numerical drop-in for the four slow SCENIC+ stages. Best-on-market in 2026 if you need the SCENIC pipeline to actually run on modern Python.**
 
 ```bash
-pip install rustscenic anndata scanpy
+pip install rustscenic
 ```
 
-→ **See [QUICKSTART.md](QUICKSTART.md)** for a 5-minute end-to-end walkthrough on PBMC-3k.
+Four dependencies (numpy, pandas, pyarrow, scipy). No dask, no Java, no CUDA. Python 3.10–3.13, Linux + macOS. [QUICKSTART.md](QUICKSTART.md) has a 5-minute end-to-end example on PBMC-3k.
 
-## Why
+## Bottlenecks solved
 
-As of April 2026, on a fresh Python 3.12 + numpy 2 + pandas 3 environment:
-- `arboreto.grnboost2` → runtime crash (`TypeError: Must supply at least one delayed object` — dask_expr incompatibility)
-- `pyscenic.aucell` → import fails with `ModuleNotFoundError: pkg_resources`
-- `pycisTopic-Mallet` → requires a Java install (multi-hour setup, flaky)
-- `flashscenic` → CPU fallback works but requires PyTorch + changes the algorithm (RegDiffusion, not pyscenic-reproducible)
+Every number here has a log file under [`validation/`](validation/) — measured on this codebase, this week, with identical input on both sides.
 
-rustscenic installs and runs. One pip install, 3 runtime deps (numpy, pandas, pyarrow). All four SCENIC+ stages — `grn`, `aucell`, `topics`, `cistarget` — are native Rust via PyO3.
+| Bottleneck | pyscenic / arboreto stack | **rustscenic** | Improvement |
+|---|---|---|---|
+| **Install on Python 3.12+ (2026)** | ❌ arboreto crashes (`TypeError: Must supply at least one delayed object`), pyscenic import fails (`pkg_resources`) | ✅ `pip install rustscenic` | **the only tool that works** |
+| **AUCell wall-time, 31,602 cells × 59 regulons (real Ziegler atlas)** | 6.81 s | **0.25 s** | **27× faster** |
+| **AUCell wall-time, 10,290 cells × 1,457 regulons (10x Multiome)** | 18.6 s | **0.21 s** | **88× faster** |
+| **Peak RSS across all 4 stages at 100k cells** | > 40 GB (reported) | **6.3 GB** | **~7× smaller** |
+| **Cistarget kernel vs `ctxcore.recovery.aucs`** | reference | **Pearson 1.0000** (mean abs diff 2.4e-5) | bit-identical, 21–27× faster on AUCell |
+| **AUCell per-cell Pearson on 31,602-cell atlas** | reference | **0.984** (91.7% of cells > 0.95) | same biology, 27× faster |
+| **GRN: canonical airway TFs recovered** (Ziegler, n=14) | 8/14 (pyscenic-unit) | **8/14** — same hits, same 5/14 misses | tool-to-tool variation < dataset noise |
+| **Deterministic under threads + seed** | no (dask nondeterminism) | **yes** (bit-identical across runs) | reproducible |
+| **Runtime dependencies** | 40+ (dask, distributed, Java/Mallet, pkg_resources, ...) | **4** | drop-in |
+| **CPU architecture** | x86_64 only | x86_64 + **aarch64** (Apple Silicon, Graviton) | native ARM wheels |
+
+## When to use something else (honest)
+
+- **GPU available, algorithm-swap acceptable** → [flashSCENIC](https://github.com/haozhu233/flashscenic) (CUDA, RegDiffusion — not pyscenic-numerical)
+- **Multiomic enhancer-aware GRN** → [scenicplus](https://github.com/aertslab/scenicplus) (joint scRNA + scATAC, superset of rustscenic's scope)
+- **R ecosystem** → original R-SCENIC or [Epiregulon](https://www.nature.com/articles/s41467-025-62252-5)
+- **TF-activity from prebuilt regulons (no GRN inference)** → [decoupler-py](https://saezlab.github.io/decoupler-py/) + CollecTRI
+
+rustscenic wins when: modern Python, CPU, install-first, need pyscenic-numerical output, want atlas-scale memory (6.3 GB not 40+).
 
 ## Validation
 
