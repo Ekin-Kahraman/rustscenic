@@ -15,5 +15,9 @@
 //! plan vs pycisTopic.
 
 pub mod fragments;
+pub mod matrix;
+pub mod peaks;
 
 pub use fragments::{read_fragments, Fragment, FragmentTable};
+pub use matrix::{build_cell_peak_matrix, CsrMatrix};
+pub use peaks::{read_peaks, Peak, PeakTable};
