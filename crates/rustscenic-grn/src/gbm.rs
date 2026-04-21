@@ -5,7 +5,7 @@
 //! subsample=0.9, max_depth=3.
 //!
 //! Early stopping mirrors arboreto's `EarlyStopMonitor` (window=25):
-//! if in-bag MSE[i] >= MSE[i-window], stop. Disabled with window=0.
+//! if in-bag `MSE[i] >= MSE[i-window]`, stop. Disabled with window=0.
 //!
 //! `exclude_feature` is passed through to the tree builder so targets that are
 //! themselves TFs don't include their own expression column as a predictor.

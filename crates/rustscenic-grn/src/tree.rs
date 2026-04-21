@@ -1,6 +1,6 @@
 //! Histogram-based regression decision tree.
 //!
-//! Per-split partitioning uses two local Vec<usize> buffers (left/right) with
+//! Per-split partitioning uses two local `Vec<usize>` buffers (left/right) with
 //! sequential push() — cache-friendly sequential writes. Explicit allocation
 //! per split is cheaper than in-place Hoare partition's random swaps at tree
 //! sizes typical of arboreto-style GBM (depth-3 trees on 100-10000 samples).
