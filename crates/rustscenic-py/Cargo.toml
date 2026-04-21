@@ -16,6 +16,8 @@ rustscenic-core = { path = "../rustscenic-core" }
 rustscenic-grn = { path = "../rustscenic-grn" }
 rustscenic-aucell = { path = "../rustscenic-aucell" }
 rustscenic-topics = { path = "../rustscenic-topics" }
+rustscenic-preproc = { path = "../rustscenic-preproc" }
 pyo3 = { workspace = true, features = ["abi3-py310"] }
 numpy = { workspace = true }
 ndarray = { workspace = true }
+anyhow = { workspace = true }

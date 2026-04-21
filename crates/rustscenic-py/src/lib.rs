@@ -5,7 +5,12 @@ use pyo3::types::PyList;
 
 use rustscenic_aucell::aucell;
 use rustscenic_grn::{infer, Adjacency, GrnConfig};
+use rustscenic_preproc::{
+    build_cell_peak_matrix, fragments::{fragments_per_barcode, total_counts_per_barcode},
+    read_fragments, read_peaks,
+};
 use rustscenic_topics::online_vb_lda;
+use std::path::PathBuf;
 
 #[pyfunction]
 #[pyo3(signature = (
@@ -166,11 +171,68 @@ fn topics_fit<'py>(
     Ok((PyArray2::from_owned_array(py, ct).unbind(), PyArray2::from_owned_array(py, tw).unbind()))
 }
 
+/// Build a cells x peaks sparse matrix from a 10x fragments file and a peak BED.
+///
+/// Returns a tuple:
+///   (data, indices, indptr, shape, barcodes, peaks, qc_fragments_per_cell,
+///    qc_total_counts_per_cell)
+///
+/// The first four elements can feed `scipy.sparse.csr_matrix((data, indices, indptr), shape=shape)`
+/// directly. `barcodes` is the cell-row ordering; `peaks` is the peak-column ordering
+/// (matches the input BED order). QC arrays are parallel to `barcodes`.
+///
+/// Paths accept both `.tsv`/`.bed` plain files and `.gz` compressed.
+#[pyfunction]
+#[pyo3(signature = (fragments_path, peaks_path))]
+fn preproc_fragments_to_matrix<'py>(
+    py: Python<'py>,
+    fragments_path: PathBuf,
+    peaks_path: PathBuf,
+) -> PyResult<(
+    Py<PyArray1<u32>>,   // data
+    Py<PyArray1<u32>>,   // indices
+    Py<PyArray1<u64>>,   // indptr
+    (usize, usize),      // shape (n_cells, n_peaks)
+    Py<PyList>,          // barcode names
+    Py<PyList>,          // peak names
+    Py<PyArray1<u32>>,   // fragments per barcode
+    Py<PyArray1<u32>>,   // total counts per barcode
+)> {
+    let (csr, barcodes, peak_names, fpc, tcc) = py.allow_threads(|| -> anyhow::Result<_> {
+        let fragments = read_fragments(&fragments_path)?;
+        let fpc = fragments_per_barcode(&fragments);
+        let tcc = total_counts_per_barcode(&fragments);
+        let peaks = read_peaks(&peaks_path)?;
+        let (csr, bnames, pnames) = build_cell_peak_matrix(&fragments, &peaks);
+        Ok((csr, bnames, pnames, fpc, tcc))
+    }).map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+
+    let data = PyArray1::from_vec(py, csr.data);
+    let indices = PyArray1::from_vec(py, csr.indices);
+    let indptr = PyArray1::from_vec(py, csr.indptr);
+    let shape = (csr.n_rows, csr.n_cols);
+    let barcodes_py = PyList::new(py, barcodes.iter().map(|s| s.as_str()))?;
+    let peaks_py = PyList::new(py, peak_names.iter().map(|s| s.as_str()))?;
+    let fpc_arr = PyArray1::from_vec(py, fpc);
+    let tcc_arr = PyArray1::from_vec(py, tcc);
+    Ok((
+        data.unbind(),
+        indices.unbind(),
+        indptr.unbind(),
+        shape,
+        barcodes_py.unbind(),
+        peaks_py.unbind(),
+        fpc_arr.unbind(),
+        tcc_arr.unbind(),
+    ))
+}
+
 #[pymodule]
 fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add_function(wrap_pyfunction!(grn_infer, m)?)?;
     m.add_function(wrap_pyfunction!(aucell_score, m)?)?;
     m.add_function(wrap_pyfunction!(topics_fit, m)?)?;
+    m.add_function(wrap_pyfunction!(preproc_fragments_to_matrix, m)?)?;
     Ok(())
 }
