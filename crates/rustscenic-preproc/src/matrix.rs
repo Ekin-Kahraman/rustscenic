@@ -102,8 +102,7 @@ pub fn build_cell_peak_matrix(
 
             // Walk forward from first_candidate, stop when fragment starts
             // are past peak end.
-            for j in first_candidate..frags_sorted.len() {
-                let f = frags_sorted[j];
+            for &f in frags_sorted.iter().skip(first_candidate) {
                 let f_start = fragments.start[f];
                 if f_start >= p_end {
                     break;
