@@ -1,0 +1,16 @@
+[package]
+name = "rustscenic-preproc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+
+[dependencies]
+rustscenic-core = { path = "../rustscenic-core" }
+rayon = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+flate2 = "1.0"
+
+[dev-dependencies]
+tempfile = "3"

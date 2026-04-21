@@ -5,6 +5,7 @@ members = [
     "crates/rustscenic-grn",
     "crates/rustscenic-aucell",
     "crates/rustscenic-topics",
+    "crates/rustscenic-preproc",
     "crates/rustscenic-cli",
     "crates/rustscenic-py",
 ]
