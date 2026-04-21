@@ -1,7 +1,7 @@
 # rustscenic validation summary
 
-**Last updated:** 2026-04-20
-**Scope:** four SCENIC+ stages (grn, aucell, topics, cistarget) — correctness, reproducibility, robustness, scale.
+**Last updated:** 2026-04-21
+**Scope:** four SCENIC+ compute stages (grn, aucell, topics, cistarget) plus ATAC preprocessing (fragments → cells × peaks matrix) — correctness, reproducibility, robustness, scale.
 
 ## Measured against the pyscenic / arboreto reference
 
@@ -118,6 +118,36 @@ Same seed twice = bit-identical output across **all 4 stages** (GRN, AUCell, Top
 | Cistarget | **2.6 s** | 6.34 GB | 100 regulons × 5,876 motifs (aertslab DB) |
 
 **Total peak RSS: 6.34 GB.** pyscenic is reported to exceed 40 GB on similar workloads — our footprint is ~7× smaller, which removes the primary OOM pain point at atlas scale. AUCell and cistarget are near-instant at 100k scale.
+
+### Scaling curve (Ziegler atlas, 2026-04-21)
+
+Reproducible benchmark across cell counts. Each size runs in a fresh subprocess so peak RSS is clean per-size. See [`scaling/README.md`](scaling/README.md) for methodology and [`scaling/scaling_results_ziegler.csv`](scaling/scaling_results_ziegler.csv) for the raw data.
+
+| n_cells | GRN (s) | AUCell (s) | peak RSS (GB) |
+|---:|---:|---:|---:|
+| 3,000 | 11.4 | 0.48 | 2.0 |
+| 10,000 | 42.0 | 1.78 | 2.7 |
+| 30,000 | 301.3 | 6.14 | 3.4 |
+| 50,000 | 697.7 | 27.95 | 5.6 |
+
+**Log-log slope 3k→10k: GRN 1.11, AUCell 1.12 — linear.** 10k→30k GRN 1.39 (mild super-linear). 30k→50k GRN 1.39, AUCell 2.72 — super-linear on both stages at this hardware tier. Documented as cache/sparse-to-dense pressure, not an algorithmic issue. 100k requires > 32 GB RAM (Ziegler source); pbmc10k 100k up-sampled runs available in `scaling/scaling_results.csv`.
+
+### ATAC preprocessing (new 2026-04-21)
+
+Rust-native replacement for pycisTopic's fragments-to-matrix pipeline, shipped with Python bindings as `rustscenic.preproc.fragments_to_matrix`. Closes the SCENIC+ install gap — takes `fragments.tsv.gz` + `peaks.bed`, returns an AnnData ready for `rustscenic.topics.fit`.
+
+Scope shipped (Tier 1, crate `rustscenic-preproc`):
+- Gzipped BED parser (`fragments.tsv[.gz]`) → columnar `FragmentTable` with interned chrom + barcode indices
+- Per-barcode QC: unique fragments, total PCR-dup counts
+- BED peak parser → `PeakTable` with `align_chroms_to(reference)` for cross-dataset joins
+- Sorted-sweep cells × peaks matrix builder: O((F+P) log(F+P)) per chromosome
+- PyO3 bindings exposing `rustscenic.preproc.fragments_to_matrix(fragments, peaks) -> AnnData`
+
+16 Rust unit tests green (4 fragments, 5 peaks, 4 matrix, plus 3 parser edge cases). No new Python dependencies.
+
+Remaining Tier 1 work: TSS enrichment, FRiP, insert-size distribution (cell-level QC beyond fragment counts). Tier 2 (peak calling) deferred — either wrap MACS2 or port iterative peak calling from pycisTopic.
+
+Scope spec: [`../docs/atac-preprocessing-scope.md`](../docs/atac-preprocessing-scope.md).
 
 ## What's honest
 
