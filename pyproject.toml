@@ -54,3 +54,6 @@ Changelog = "https://github.com/Ekin-Kahraman/rustscenic/blob/main/CHANGELOG.md"
 manifest-path = "crates/rustscenic-py/Cargo.toml"
 python-source = "python"
 module-name = "rustscenic._rustscenic"
+include = [
+    { path = "python/rustscenic/data/*.txt", format = ["wheel", "sdist"] },
+]
