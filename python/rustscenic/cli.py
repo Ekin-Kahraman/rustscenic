@@ -232,6 +232,35 @@ def cmd_cistarget(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_pipeline(args: argparse.Namespace) -> int:
+    """End-to-end: preproc + topics + grn + cistarget + aucell, one call."""
+    from . import pipeline
+
+    if (args.fragments is None) != (args.peaks is None):
+        print("error: --fragments and --peaks must be supplied together", file=sys.stderr)
+        return 2
+
+    result = pipeline.run(
+        rna=Path(args.rna),
+        output_dir=Path(args.output),
+        fragments=Path(args.fragments) if args.fragments else None,
+        peaks=Path(args.peaks) if args.peaks else None,
+        tfs=Path(args.tfs),
+        motif_rankings=Path(args.motif_rankings) if args.motif_rankings else None,
+        grn_n_estimators=args.grn_n_estimators,
+        grn_top_targets=args.grn_top_targets,
+        aucell_top_frac=args.aucell_top_frac,
+        topics_n_topics=args.topics_n_topics,
+        topics_n_passes=args.topics_n_passes,
+        cistarget_top_frac=args.cistarget_top_frac,
+        cistarget_auc_threshold=args.cistarget_auc_threshold,
+        seed=args.seed,
+        verbose=True,
+    )
+    print(f"pipeline done → {result.output_dir}", file=sys.stderr)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     from . import __version__
     p = argparse.ArgumentParser(prog="rustscenic", description="Fast SCENIC+ stage replacements (Rust + PyO3)")
@@ -270,6 +299,26 @@ def main(argv: list[str] | None = None) -> int:
     pc.add_argument("--output", required=True); pc.add_argument("--top-frac", type=float, default=0.05)
     pc.add_argument("--auc-threshold", type=float, default=0.05)
     pc.set_defaults(func=cmd_cistarget)
+
+    pp = sub.add_parser(
+        "pipeline",
+        help="End-to-end SCENIC+ (preproc + topics + grn + cistarget + aucell)",
+    )
+    pp.add_argument("--rna", required=True, help="RNA expression (.h5ad)")
+    pp.add_argument("--output", required=True, help="Output directory for all artifacts")
+    pp.add_argument("--tfs", required=True, help="Newline-separated TF names file")
+    pp.add_argument("--fragments", default=None, help="Optional: 10x fragments.tsv[.gz]")
+    pp.add_argument("--peaks", default=None, help="Optional: consensus peaks BED (required with --fragments)")
+    pp.add_argument("--motif-rankings", default=None, help="Optional: motif ranking parquet/feather")
+    pp.add_argument("--grn-n-estimators", type=int, default=500)
+    pp.add_argument("--grn-top-targets", type=int, default=50)
+    pp.add_argument("--aucell-top-frac", type=float, default=0.05)
+    pp.add_argument("--topics-n-topics", type=int, default=30)
+    pp.add_argument("--topics-n-passes", type=int, default=3)
+    pp.add_argument("--cistarget-top-frac", type=float, default=0.05)
+    pp.add_argument("--cistarget-auc-threshold", type=float, default=0.05)
+    pp.add_argument("--seed", type=int, default=777)
+    pp.set_defaults(func=cmd_pipeline)
 
     args = p.parse_args(argv)
     return args.func(args)

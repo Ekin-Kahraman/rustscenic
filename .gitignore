@@ -15,6 +15,10 @@ validation/ours/
 python/rustscenic/_rustscenic*.so
 python/rustscenic/__pycache__/
 *.whl
-data/
+# Ignore top-level and nested data/ directories for datasets, but allow
+# the tiny bundled resources under python/rustscenic/data (TF lists etc.)
+/data/
+validation/*/data/
+!python/rustscenic/data/
 examples/out/
 docs/specs/
