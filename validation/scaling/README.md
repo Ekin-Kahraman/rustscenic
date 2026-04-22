@@ -99,6 +99,55 @@ PR #12 pooled the buffers in `TreeScratch` with `take_partition_buf` /
 so the pool stabilises at 6 buffers per thread and never allocates
 after warm-up. Also removed a redundant `root_samples.to_vec()` copy.
 
+## Complexity analysis (algorithmic guarantee)
+
+After PR #12 every per-cell loop in GRN inference is linear in
+`n_cells`. Walking the loop:
+
+| Stage | Cost | Depends on `n_cells` as |
+|---|---|---|
+| Feature binning (one-time) | `O(n_cells × n_features)` | linear |
+| Sub-sampling rows (per tree) | `O(n_cells)` | linear |
+| Residual update (per tree) | `O(n_cells)` | linear |
+| Histogram accumulation (per split, per feature) | `O(n_samples_in_node)` | linear in `n_cells` at root, ≤ linear deeper |
+| Tree prediction over training rows (per tree) | `O(n_cells × max_depth)` | linear (max_depth const.) |
+| Partition samples → left/right (per split) | `O(n_samples)` with zero allocation after pool warm-up | linear |
+| Per-target GBM total | `O(n_estimators × n_cells)` | linear |
+| Full GRN, parallel over targets | `O(n_estimators × n_targets × n_cells / n_cores)` | **linear** |
+
+Feature count `n_features` is bounded by the TF list length (typically
+20–2,000, not `n_cells`-dependent). `max_depth` is a fixed
+hyperparameter (3 for GRNBoost2 defaults). `n_estimators` is a
+user-set hyperparameter independent of `n_cells`. None of those can
+turn the per-cell cost non-linear.
+
+AUCell is similarly O(n_cells × n_genes × log n_genes) — argsort
+dominates, and the `log n_genes` factor does not depend on `n_cells`.
+Linear in `n_cells` for any fixed gene panel.
+
+The only paths that can produce **effective** super-linear wall-time
+on a machine where the algorithm is O(n):
+
+1. Memory pressure / paging when `n_cells × n_genes × 4` exceeds
+   physical RAM (hit locally at 50k on Ziegler).
+2. L3 cache misses when the per-thread working set grows past cache.
+3. Allocator page-fault contention (the bug PR #12 fixed).
+
+(1) is hardware, not algorithm. (3) is solved. (2) is mitigable with
+chunked target-gene processing — tracked for future work but not
+currently observed inside measured ranges.
+
+## CI regression test
+
+`tests/test_scaling_regression.py` fits GRN at four cell counts
+(1k / 2k / 4k / 8k) on synthetic data every CI run, fits a log-log
+slope, and fails the build if the slope exceeds **1.30**. A clean
+linear run is ≈ 1.0; PR #12's result is ~1.05–1.17. Anything above
+1.3 means super-linearity has crept back in and the build stops.
+
+Runs in ~15s on CI. The point isn't to benchmark, it's to catch
+regressions the next time someone touches the inner loops.
+
 ## Up-sampling caveat
 
 For cells above the source-dataset size, `subsample()` draws with
