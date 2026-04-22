@@ -24,22 +24,44 @@ python validation/scaling/bench_scaling.py \
 Each cell count runs in a fresh subprocess so `ru_maxrss` reports a clean
 per-size peak rather than the cumulative peak across the whole benchmark.
 
-## Results (2026-04-21)
+## Results
 
 ### Ziegler 2021 nasopharyngeal atlas (31,602 distinct cells, 32,871 genes)
 
 This is the reference number — real single-cell atlas data, no up-sampling.
+
+#### Pre-fix (2026-04-21)
 
 | n_cells | GRN (s) | AUCell (s) | peak RSS (GB) |
 |---:|---:|---:|---:|
 | 3,000 | 11.4 | 0.48 | 2.0 |
 | 10,000 | 42.0 | 1.78 | 2.7 |
 | 30,000 | 301.3 | 6.14 | 3.4 |
+| 50,000 | 697.7 | 27.95 | 5.6 |
 
-| Transition | GRN time / cells | AUCell time / cells |
-|---|---:|---:|
-| 3k → 10k | 1.11× (linear) | 1.12× (linear) |
-| 10k → 30k | 2.39× (super-linear) | 1.15× (near-linear) |
+10k → 30k showed GRN 2.39× over linear — a real super-linear regime. Diagnosed
+as per-split `Vec<usize>` allocation churn compounding under rayon contention.
+See `crates/rustscenic-grn/src/tree.rs` history for the fix (PR #12).
+
+#### Post-fix (2026-04-22)
+
+With the pooled `TreeScratch::partition_bufs` allocator change:
+
+| n_cells | GRN (s) | AUCell (s) | peak RSS (GB) |
+|---:|---:|---:|---:|
+| 10,000 | 39.5 | 1.67 | 2.9 |
+| 30,000 | 139.2 | 6.50 | 3.3 |
+
+| Transition | GRN pre | GRN post | AUCell post |
+|---|---:|---:|---:|
+| 10k → 30k | **2.39× over linear** | **1.17× over linear** | 1.30× over linear |
+
+GRN at 30k: **2.16× faster** (301s → 139s). Super-linearity eliminated.
+
+50k post-fix couldn't complete on this 32 GB laptop — during the re-run the
+system was already using 12.4 GB of 13.3 GB swap, so any 50k+ cell run thrashed.
+That's a hardware ceiling, not a fix regression. A clean 50k+ run belongs
+on HPC (Hali or Minerva) where RAM headroom removes the swap confound.
 
 ### pbmc10k (11k source, up-sampled above)
 
@@ -56,34 +78,26 @@ runner and reflects peak across the whole benchmark, not per-size.
 
 ## Scaling summary
 
-| Stage | Ziegler slope (3k–30k) | Verdict |
+| Stage | Ziegler slope post-fix (10k–30k) | Verdict |
 |---|---:|---|
-| AUCell | 1.11 | Essentially linear on real atlas data |
-| GRN (3k–10k) | 1.11 | Linear |
-| GRN (10k–30k) | 1.42 | Super-linear, ~2.4× worse than linear at 30k |
+| GRN | 1.17 | Linear after PR #12 (was 2.39 before) |
+| AUCell | 1.30 | Near-linear; pending deeper profiling |
 
-Peak memory on Ziegler grows sub-linearly: 10× cells → 1.7× RSS.
+Peak memory on Ziegler grows sub-linearly: 3× cells → 1.14× RSS.
 
-## Why GRN is super-linear at 30k
+## Root cause of the original super-linearity
 
-GRNBoost2 tree fitting is O(n log n) per tree due to split-finding sort.
-With ~300 trees, that adds roughly log(n) / log(n₀) overhead on top of
-linear, which would predict ~3.4× for a 3× cell jump from 10k to 30k.
-We saw 7.2× — so log-n alone doesn't explain it. Likely additional
-contributors:
+`tree::build_node_rec` allocated two fresh `Vec<usize>` partition buffers
+per split node. For depth-3 trees that's 14 allocations per tree ×
+`n_estimators` × ~20k targets = ~84M allocations per GRN run, with
+buffer sizes growing with n_cells. Modern allocators served the
+allocations fast, but populating fresh pages forced page-faults whose
+cost compounded under rayon worker contention at larger cell counts.
 
-- Sparse-to-dense conversion memory pressure at higher cell counts.
-- Cache behaviour: the working set exceeds L3 around 30k on this
-  machine.
-- PyO3 GIL release overhead across threads at larger allocation sizes.
-
-This is a real finding, not an artifact. The fix is to profile GRN at
-atlas scale and either:
-
-1. Keep expression matrix sparse through the tree fitting (bigger
-   engineering change).
-2. Stream cell batches through the tree builder (standard GBM trick).
-3. Accept the super-linearity and document as the honest upper bound.
+PR #12 pooled the buffers in `TreeScratch` with `take_partition_buf` /
+`return_partition_buf`. DFS keeps at most 2 × max_depth buffers live,
+so the pool stabilises at 6 buffers per thread and never allocates
+after warm-up. Also removed a redundant `root_samples.to_vec()` copy.
 
 ## Up-sampling caveat
 
@@ -107,8 +121,15 @@ document up-sampling explicitly when you cross that ratio.
   subprocess per cell count.
 - TF list: same 21-TF union as `examples/pbmc3k_end_to_end.py`.
 
-## 100k+ follow-up
+## 50k+ follow-up
 
-A Ziegler 100k run (only 3.2× up-sampling — below the 5× threshold)
-is the next data point. Takes ~25 min for GRN alone. Will extend this
-table when it completes.
+The local 32 GB laptop swaps hard above 50k cells on the Ziegler
+expression matrix (~6.6 GB for 50k × 32,871 genes, doubled during TF
+extraction + binning). Clean scaling numbers above 30k need HPC.
+
+Planned: re-run at 10k, 30k, 50k, 100k, 200k, 300k on Hali or Minerva
+once access lands, validating the PR #12 fix holds through atlas-wide
+scale. This data point is the gating factor for Kuan's proposed
+cellxgene sweep (hundreds of cell types × 30–100k each) — we need to
+confirm the per-cell-type cost stays linear through that regime
+before committing Minerva time.
