@@ -31,6 +31,14 @@ pub enum Node {
 pub struct TreeScratch {
     pub feat_sub: Vec<usize>,
     pub feat_pool: Vec<usize>,
+    /// Pool of partition buffers reused across tree splits. `build_node_rec`
+    /// needs two temp `Vec<usize>` per split to partition samples into
+    /// left / right children. Freshly allocating them scales memory traffic
+    /// with n_samples × (2 × splits_per_tree × n_trees × n_targets), which
+    /// becomes super-linear at 30k+ cells due to page-fault + allocator cost.
+    /// Pooling caps the live buffer count at ~2 × max_depth and amortises the
+    /// allocation to zero after the first few trees.
+    pub partition_bufs: Vec<Vec<usize>>,
 }
 
 impl TreeScratch {
@@ -38,7 +46,28 @@ impl TreeScratch {
         Self {
             feat_sub: Vec::with_capacity(n_features),
             feat_pool: (0..n_features).collect(),
+            partition_bufs: Vec::new(),
         }
+    }
+
+    /// Take a partition buffer from the pool, or allocate one with the given
+    /// minimum capacity. The returned Vec is empty (`clear()`ed).
+    pub fn take_partition_buf(&mut self, min_cap: usize) -> Vec<usize> {
+        match self.partition_bufs.pop() {
+            Some(mut buf) => {
+                buf.clear();
+                if buf.capacity() < min_cap {
+                    buf.reserve(min_cap - buf.capacity());
+                }
+                buf
+            }
+            None => Vec::with_capacity(min_cap),
+        }
+    }
+
+    /// Return a partition buffer to the pool for reuse.
+    pub fn return_partition_buf(&mut self, buf: Vec<usize>) {
+        self.partition_bufs.push(buf);
     }
 }
 
@@ -57,9 +86,10 @@ pub fn fit_tree_with_scratch(
     rng: &mut impl RngCore,
 ) {
     // feat_pool reset happens inside choose_feature_subset per call now.
-    let root_samples: Vec<usize> = sample_idx.to_vec();
+    // Root samples are passed through as a borrowed slice — the extra
+    // `to_vec()` copy was pure allocation overhead per tree.
     build_node_rec(
-        binned, y, &root_samples, 0, max_depth, max_features_per_split,
+        binned, y, sample_idx, 0, max_depth, max_features_per_split,
         exclude_feature, tree, gains, hist_buf, scratch, rng,
     );
 }
@@ -107,8 +137,9 @@ fn build_node_rec(
     if let Some((feature, bin_threshold, gain)) = best {
         gains[feature] += gain;
         let nf = binned.n_features;
-        let mut left_samples = Vec::with_capacity(samples.len() / 2);
-        let mut right_samples = Vec::with_capacity(samples.len() / 2);
+        // Pooled partition buffers — see TreeScratch::partition_bufs comment.
+        let mut left_samples = scratch.take_partition_buf(samples.len() / 2);
+        let mut right_samples = scratch.take_partition_buf(samples.len() / 2);
         for &s in samples {
             if binned.bins[s * nf + feature] <= bin_threshold {
                 left_samples.push(s);
@@ -126,6 +157,11 @@ fn build_node_rec(
             exclude_feature, tree, gains, hist_buf, scratch, rng,
         );
         tree.nodes[idx] = Node::Split { feature, bin_threshold, gain, left, right };
+
+        // Return buffers AFTER the recursive calls finish — those calls borrow
+        // the slices, so the Vecs must outlive them.
+        scratch.return_partition_buf(left_samples);
+        scratch.return_partition_buf(right_samples);
     }
     idx
 }
