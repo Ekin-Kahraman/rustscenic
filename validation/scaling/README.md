@@ -121,15 +121,39 @@ document up-sampling explicitly when you cross that ratio.
   subprocess per cell count.
 - TF list: same 21-TF union as `examples/pbmc3k_end_to_end.py`.
 
+## pbmc10k post-fix cross-check (2026-04-22)
+
+Same pooled-partition-buffer build, smaller-memory source (11k cells ×
+20,292 genes). Confirms the fix lands on a different source too:
+
+| n_cells | GRN pre (s) | GRN post (s) | speedup |
+|---:|---:|---:|---:|
+| 30,000 | 111.8 | 80.5 | **1.39×** |
+
+Smaller speedup than on Ziegler (2.16×) because pbmc10k pre-fix was
+already close to linear at 30k (slope 1.05) — there was less
+super-linearity to fix. On Ziegler (slope 2.39 pre-fix), the fix
+had more to bite into.
+
 ## 50k+ follow-up
 
 The local 32 GB laptop swaps hard above 50k cells on the Ziegler
 expression matrix (~6.6 GB for 50k × 32,871 genes, doubled during TF
 extraction + binning). Clean scaling numbers above 30k need HPC.
 
+Attempted locally (2026-04-22):
+
+- Ziegler 50k: swap filled to 14/14 GB within 60 s of load; aborted.
+- pbmc10k 100k: reached the tree-fitting phase but never finished
+  inside 43 minutes before abort. Memory-bound at ~5 GB RSS with
+  5–7 cores active, clearly paging.
+
+Both are hardware ceilings, not fix regressions. On an HPC node with
+sufficient RAM (64–128 GB), the PR #12 allocation fix should continue
+to deliver near-linear scaling at 100k–300k cells.
+
 Planned: re-run at 10k, 30k, 50k, 100k, 200k, 300k on Hali or Minerva
-once access lands, validating the PR #12 fix holds through atlas-wide
-scale. This data point is the gating factor for Kuan's proposed
-cellxgene sweep (hundreds of cell types × 30–100k each) — we need to
-confirm the per-cell-type cost stays linear through that regime
-before committing Minerva time.
+once access lands. This is the gating data point for Kuan's proposed
+cellxgene sweep (hundreds of cell types × 30–100k each) — need to
+confirm the per-cell-type cost stays linear before committing
+Minerva time.
