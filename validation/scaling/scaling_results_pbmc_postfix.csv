@@ -1,0 +1,2 @@
+n_cells,n_regulons,n_edges,t_grn_s,t_auc_s,rss_peak_mb,auc_rows,auc_cols,n_estimators,notes
+30000,21,425670,80.47963308403268,3.535235458984971,7764.359375,30000,21,100,"postfix pbmc10k source, PR #12 partition-buffer pool"
