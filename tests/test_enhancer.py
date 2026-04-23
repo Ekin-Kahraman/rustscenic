@@ -160,3 +160,41 @@ def test_correlation_sign_preserved():
     links = link_peaks_to_genes(rna, atac, gene_coords, min_abs_corr=0.5)
     assert len(links) == 1
     assert links["correlation"].iloc[0] < 0
+
+
+def test_densification_warning_fires_when_matrix_is_huge(monkeypatch):
+    """Warn users before the sparse→dense step blows past 8 GiB per matrix.
+
+    We don't actually build a 10 GB matrix — we patch the threshold down
+    to 1 KiB and check the warning text includes the dataset shape.
+    """
+    import warnings
+    import rustscenic.enhancer as enh
+
+    rng = np.random.default_rng(0)
+    n = 40
+    rna = ad.AnnData(
+        X=rng.normal(size=(n, 3)).astype(np.float32),
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(n)]),
+        var=pd.DataFrame(index=["G1", "G2", "G3"]),
+    )
+    atac = ad.AnnData(
+        X=rng.normal(size=(n, 2)).astype(np.float32),
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(n)]),
+        var=pd.DataFrame(index=["chr1:100-200", "chr1:500-600"]),
+    )
+    gene_coords = pd.DataFrame({
+        "gene": ["G1", "G2", "G3"],
+        "chrom": ["chr1"] * 3,
+        "tss": [150, 550, 900],
+    })
+
+    monkeypatch.setattr(enh, "_DENSIFY_WARN_BYTES", 1)  # trip immediately
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        link_peaks_to_genes(rna, atac, gene_coords, min_abs_corr=0.0)
+    messages = [str(w.message) for w in caught]
+    assert any("densify" in m for m in messages), (
+        f"expected densification warning, got: {messages}"
+    )

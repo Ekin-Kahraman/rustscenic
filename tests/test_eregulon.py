@@ -195,3 +195,38 @@ def test_eregulons_sorted_by_edge_count_descending():
     )
     n_edges = [e.n_enhancer_links for e in eregs]
     assert n_edges == sorted(n_edges, reverse=True)
+
+
+def test_catastrophic_drop_emits_warning():
+    """> 50% TF drop triggers a diagnostic warning so silent-empty isn't silent."""
+    import warnings
+
+    # Two TFs in cistarget (SPI1, PAX5), GRN only supports SPI1 → one survives
+    # if we raise min_target_genes high enough the intersection drops both.
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        eregs = build_eregulons(
+            _fixture_grn(), _fixture_cistarget(), _fixture_enhancer_links(),
+            min_target_genes=100, min_enhancer_links=1,
+        )
+    assert len(eregs) == 0
+    drop_warnings = [w for w in caught if "kept only" in str(w.message)]
+    assert drop_warnings, "silent zero-output should have emitted a warning"
+    assert "use_grn_intersection=False" in str(drop_warnings[0].message)
+
+
+def test_catastrophic_drop_quiet_when_healthy():
+    """Healthy runs (≥ 50% of input TFs survive) do not spam warnings."""
+    import warnings
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        eregs = build_eregulons(
+            _fixture_grn(), _fixture_cistarget(), _fixture_enhancer_links(),
+            min_target_genes=3, min_enhancer_links=1,
+        )
+    assert len(eregs) >= 1
+    drop_warnings = [w for w in caught if "kept only" in str(w.message)]
+    assert not drop_warnings, (
+        f"healthy run should not warn about drops, got: {drop_warnings}"
+    )

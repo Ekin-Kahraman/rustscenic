@@ -201,7 +201,49 @@ def build_eregulons(
         )
 
     eregulons.sort(key=lambda e: (-e.n_enhancer_links, -len(e.target_genes)))
+
+    _warn_if_catastrophic_drop(eregulons, ct, use_grn_intersection)
     return eregulons
+
+
+def _warn_if_catastrophic_drop(
+    eregulons: list[ERegulon],
+    ct: pd.DataFrame,
+    use_grn_intersection: bool,
+) -> None:
+    """Warn when the intersection dropped > 50% of cistarget TFs.
+
+    A common failure mode: a strict `use_grn_intersection=True` wipes
+    out most regulons because GRN and enhancer links name genes under
+    different conventions (ENSEMBL vs symbol), or the peak_id keys
+    didn't actually match across the three inputs. Without this warning
+    the user sees an empty or tiny output and has no clue why.
+    """
+    import warnings
+
+    n_input_tfs = ct["tf"].nunique()
+    n_output = len(eregulons)
+    if n_input_tfs == 0:
+        return
+    if n_output >= max(1, n_input_tfs // 2):
+        return
+    reason = (
+        "try use_grn_intersection=False — the GRN ∩ enhancer-link step "
+        "dropped most TFs, which usually means GRN gene names and "
+        "enhancer_links `gene` column use different conventions (symbol "
+        "vs ENSEMBL)"
+        if use_grn_intersection
+        else (
+            "check that cistarget `peak_id` values overlap "
+            "enhancer_links `peak_id` values — the two sets appear to "
+            "be keyed differently"
+        )
+    )
+    warnings.warn(
+        f"build_eregulons kept only {n_output} of {n_input_tfs} input "
+        f"TFs. {reason}.",
+        UserWarning, stacklevel=3,
+    )
 
 
 def eregulons_to_dataframe(eregulons: Sequence[ERegulon]) -> pd.DataFrame:
