@@ -17,6 +17,11 @@ import numpy as np
 import pandas as pd
 
 from rustscenic._rustscenic import aucell_score as _aucell_score
+from rustscenic._gene_resolution import (
+    regulon_coverage,
+    warn_if_likely_unnormalized,
+    warn_if_poor_coverage,
+)
 
 
 def score(
@@ -32,6 +37,10 @@ def score(
     ----------
     expression
         AnnData, pandas DataFrame (cells × genes), or (matrix, gene_names) tuple.
+        For AnnData inputs, gene names are resolved via
+        ``rustscenic._gene_resolution.resolve_gene_names`` so cellxgene /
+        ENSEMBL-ID-keyed datasets are matched against regulon gene symbols
+        automatically.
     regulons
         Either:
           - A dict mapping regulon_name -> set/list of target-gene symbols
@@ -49,9 +58,11 @@ def score(
     Returns
     -------
     pandas.DataFrame of shape (n_cells, n_regulons). Index: cell barcodes.
-    Columns: regulon names.
+    Columns: regulon names. Per-regulon gene-coverage counts are stored on
+    the DataFrame's ``.attrs["regulon_coverage"]`` dict, keyed by regulon name.
     """
     X_raw, gene_names, cell_names = _coerce(expression)
+    warn_if_likely_unnormalized(X_raw, stacklevel=3)
 
     dup_count = len(gene_names) - len(set(gene_names))
     if dup_count > 0:
@@ -64,16 +75,24 @@ def score(
     gene_to_idx = {g: i for i, g in enumerate(gene_names)}
     reg_names: list[str] = []
     reg_gene_indices: list[list[int]] = []
+    # Accumulate (name, genes) pairs once so we can report coverage
+    # alongside the AUC matrix and also warn on poor overlap.
+    reg_pairs: list[tuple[str, list[str]]] = []
 
     dropped_empty = 0
     for reg in regulons:
         name, genes = _coerce_regulon(reg)
-        idx = [gene_to_idx[g] for g in genes if g in gene_to_idx]
+        genes_list = list(genes)
+        reg_pairs.append((name, genes_list))
+        idx = [gene_to_idx[g] for g in genes_list if g in gene_to_idx]
         if not idx:
             dropped_empty += 1
             continue
         reg_names.append(name)
         reg_gene_indices.append(idx)
+
+    coverage = regulon_coverage(gene_names, reg_pairs)
+    warn_if_poor_coverage(coverage, stacklevel=3)
 
     if dropped_empty > 0 and not reg_names:
         import warnings
@@ -119,17 +138,27 @@ def score(
             X = X.astype(np.float32, copy=False)
         X = np.ascontiguousarray(X)
         auc = _aucell_score(X, reg_names, reg_gene_indices, top_frac)
-    return pd.DataFrame(np.asarray(auc), index=cell_names, columns=reg_names)
+    df = pd.DataFrame(np.asarray(auc), index=cell_names, columns=reg_names)
+    # Store per-regulon coverage as metadata so downstream code can
+    # diagnose low-overlap regulons without rerunning.
+    df.attrs["regulon_coverage"] = coverage
+    return df
 
 
 def _coerce(expression):
-    """Return (X, gene_names, cell_names) — X may be dense numpy OR scipy sparse."""
+    """Return (X, gene_names, cell_names) — X may be dense numpy OR scipy sparse.
+
+    For AnnData inputs, ``gene_names`` comes from
+    ``_gene_resolution.resolve_gene_names`` which auto-detects cellxgene /
+    ENSEMBL-in-var_names datasets and swaps to the symbol column.
+    """
     import scipy.sparse as sp
+    from rustscenic._gene_resolution import resolve_gene_names
     if hasattr(expression, "X") and hasattr(expression, "var_names"):
         X = expression.X
         if not sp.issparse(X):
             X = np.asarray(X)
-        return X, list(expression.var_names), list(expression.obs_names)
+        return X, resolve_gene_names(expression), list(expression.obs_names)
     if isinstance(expression, pd.DataFrame):
         return np.asarray(expression.values), list(expression.columns), list(expression.index)
     if isinstance(expression, tuple) and len(expression) == 2:
