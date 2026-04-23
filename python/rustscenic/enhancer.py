@@ -113,6 +113,21 @@ def link_peaks_to_genes(
         for chrom, sub in genes_in_rna.groupby("_chrom_norm")
     }
 
+    # Guard against the silent-zero mode: peaks on chroms the gene_coords
+    # never name (or vice versa). After normalisation, the intersection
+    # should be non-empty; if it is, the pipeline will produce zero links.
+    overlap = set(gene_by_chrom) & set(peaks["_chrom_norm"].unique())
+    if not overlap:
+        import warnings
+        warnings.warn(
+            f"no chromosome name overlaps between peaks and gene_coords "
+            f"even after UCSC/Ensembl normalisation. Peak chroms: "
+            f"{sorted(set(peaks['_chrom_norm'].unique()))[:5]}; "
+            f"gene_coords chroms: {sorted(gene_by_chrom)[:5]}. The "
+            f"resulting link DataFrame will be empty.",
+            UserWarning, stacklevel=3,
+        )
+
     _warn_if_densification_expensive(rna_adata, atac_adata)
     rna_X = _densify(rna_adata.X).astype(np.float32, copy=False)  # (n_cells, n_genes_rna)
     atac_X = _densify(atac_adata.X).astype(np.float32, copy=False)  # (n_cells, n_peaks)

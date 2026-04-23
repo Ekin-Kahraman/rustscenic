@@ -1,0 +1,45 @@
+name: Nightly real-data validation
+
+# Runs the Kamath 2022 end-to-end validation on a schedule.
+# Catches two classes of regression unit tests can't:
+#   1. Synthetic fixtures drifting from real convention changes (cellxgene
+#      schema updates, new ENSEMBL release adds version suffixes, etc.).
+#   2. Upstream URL rot (aertslab motif rankings, cellxgene datasets API).
+#
+# workflow_dispatch is enabled so reruns from the UI are trivial.
+
+on:
+  schedule:
+    # 04:17 UTC Mondays — offset from the hour so we don't compete with
+    # every other nightly job in the GitHub-hosted runner queue.
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+
+jobs:
+  kamath-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install maturin + runtime deps
+        run: |
+          pip install maturin anndata scanpy numpy pandas scipy pyarrow
+      - name: Build rustscenic
+        run: maturin develop --release
+      - name: Download Kamath OPC dataset
+        run: |
+          mkdir -p validation/kamath
+          curl -fL -o validation/kamath/kamath_opc.h5ad \
+            https://datasets.cellxgene.cziscience.com/f25a8375-1db5-49a0-9c85-b72dbe5e2a92.h5ad
+          ls -lh validation/kamath/kamath_opc.h5ad
+      - name: Run Kamath end-to-end validation
+        run: python validation/kamath/validate_kamath_fix.py
+      - name: Report on failure
+        if: failure()
+        run: |
+          echo "::error::Kamath validation failed — upstream schema change or regression."
+          echo "Rerun locally: python validation/kamath/validate_kamath_fix.py"

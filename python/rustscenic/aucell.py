@@ -62,6 +62,20 @@ def score(
     Columns: regulon names. Per-regulon gene-coverage counts are stored on
     the DataFrame's ``.attrs["regulon_coverage"]`` dict, keyed by regulon name.
     """
+    if not 0.0 < top_frac <= 1.0:
+        raise ValueError(
+            f"top_frac must be in (0, 1], got {top_frac}. "
+            f"top_frac=0 scores every cell to zero; top_frac>1 is invalid."
+        )
+    if top_frac > 0.3:
+        import warnings
+        warnings.warn(
+            f"top_frac={top_frac} is unusually high — pyscenic defaults to "
+            f"0.05 and values > 0.3 saturate every regulon near its ceiling. "
+            f"Are you sure?",
+            UserWarning, stacklevel=3,
+        )
+
     X_raw, gene_names, cell_names = _coerce(expression)
     warn_if_likely_unnormalized(X_raw, stacklevel=3)
 
@@ -106,9 +120,14 @@ def score(
 
     if dropped_empty > 0 and not reg_names:
         import warnings
+        from rustscenic._gene_resolution import diagnose_zero_tf_overlap
+        # Pool all regulon genes as a stand-in for "TFs" — the diagnostic
+        # works the same way (convention-mismatch is symmetric).
+        all_reg_genes = [g for _, gs in reg_pairs for g in gs]
+        hint = diagnose_zero_tf_overlap(all_reg_genes[:50], gene_names)
         warnings.warn(
-            f"all {dropped_empty} regulons dropped — no genes overlap the expression "
-            f"matrix. Check that regulon gene symbols match your AnnData.var_names.",
+            f"all {dropped_empty} regulons dropped — no genes overlap the "
+            f"expression matrix. {hint}",
             UserWarning, stacklevel=2,
         )
     elif dropped_empty > 0:

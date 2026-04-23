@@ -205,11 +205,22 @@ fn group_tss_by_chrom(
     table: &FragmentTable,
     tss_sites: &[TssSite],
 ) -> Vec<(u32, Vec<u32>)> {
-    // Build chrom_name -> chrom_idx lookup for the fragment table.
+    use crate::peaks::normalise_chrom;
+    // Pre-normalise the fragment-table chrom names so TSS passed in either
+    // UCSC (`chr1`) or Ensembl (`1`) convention joins — same pattern the
+    // peaks module uses. Without this, a TSS BED in the wrong convention
+    // produces a silently all-zero enrichment (the exact class of bug that
+    // hit the cellxgene integration earlier).
+    let frag_chroms_norm: Vec<String> = table
+        .chrom_names
+        .iter()
+        .map(|n| normalise_chrom(n))
+        .collect();
     let mut sites_by_chrom: Vec<Vec<u32>> = (0..table.n_chroms()).map(|_| Vec::new()).collect();
     for tss in tss_sites {
-        for (i, name) in table.chrom_names.iter().enumerate() {
-            if name == &tss.chrom {
+        let tss_norm = normalise_chrom(&tss.chrom);
+        for (i, name) in frag_chroms_norm.iter().enumerate() {
+            if name == &tss_norm {
                 sites_by_chrom[i].push(tss.position);
                 break;
             }

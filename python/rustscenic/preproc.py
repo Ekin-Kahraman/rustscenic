@@ -76,6 +76,26 @@ def fragments_to_matrix(
         fragments_path, peaks_path
     )
 
+    # Guard against the 6-column strand BED parse mode — if > 90% of
+    # "barcodes" are unique (i.e. one per fragment), the barcode column
+    # is almost certainly a per-row ID (peak name, gene name), not a
+    # cell barcode. Column count in a 10x cellranger fragments.tsv is
+    # 5: chrom start end barcode count. A 6-column strand-BED is
+    # chrom start end name score strand — the barcode parse lands on
+    # `name`, one per line.
+    total_frags = int(np.asarray(fpc, dtype=np.uint64).sum())
+    if barcodes and total_frags > 100 and len(barcodes) > 0.9 * total_frags:
+        import warnings
+        warnings.warn(
+            f"{len(barcodes)} unique 'barcodes' parsed from {total_frags} "
+            f"fragments — almost one-per-row. This usually means the file "
+            f"is a 6-column strand BED (chrom, start, end, name, score, "
+            f"strand) rather than a 10x cellranger fragments.tsv "
+            f"(chrom, start, end, barcode, count). Convert with e.g. "
+            f"awk or resave as 5-col cellranger format first.",
+            UserWarning, stacklevel=2,
+        )
+
     X = csr_matrix((data, indices, indptr), shape=shape)
 
     obs = pd.DataFrame(

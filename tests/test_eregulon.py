@@ -230,3 +230,33 @@ def test_catastrophic_drop_quiet_when_healthy():
     assert not drop_warnings, (
         f"healthy run should not warn about drops, got: {drop_warnings}"
     )
+
+
+def test_polarity_suffix_normalised_to_bare_tf():
+    """scenicplus emits `TF(+)` / `TF_activator` / `TF_extended` variants.
+    The intersection step must map all back to the bare TF symbol."""
+    grn = pd.DataFrame([
+        ("SPI1", "GENE_A", 0.5), ("SPI1", "GENE_B", 0.4), ("SPI1", "GENE_C", 0.3),
+        ("SPI1", "GENE_D", 0.2), ("SPI1", "GENE_E", 0.1),
+    ], columns=["TF", "target", "importance"])
+    cistarget = pd.DataFrame([
+        {"regulon": "SPI1(+)", "motif": "m", "peak_id": f"peak_{i}", "auc": 0.2}
+        for i in range(3)
+    ] + [
+        {"regulon": "SPI1_extended", "motif": "m", "peak_id": f"peak_{i}", "auc": 0.2}
+        for i in range(3, 5)
+    ])
+    enhancer_links = pd.DataFrame([
+        {"peak_id": f"peak_{i}", "gene": g, "correlation": 0.3}
+        for i in range(5)
+        for g in ["GENE_A", "GENE_B", "GENE_C", "GENE_D", "GENE_E"]
+    ])
+    eregs = build_eregulons(
+        grn, cistarget, enhancer_links,
+        min_target_genes=3, min_enhancer_links=1,
+    )
+    # Both polarity suffixes should map to SPI1
+    assert len(eregs) >= 1
+    assert any(e.tf == "SPI1" for e in eregs), (
+        f"polarity suffix stripping failed; TFs seen: {[e.tf for e in eregs]}"
+    )
