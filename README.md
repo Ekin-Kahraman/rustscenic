@@ -5,17 +5,20 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Rust](https://img.shields.io/badge/Rust-stable-orange)](https://www.rust-lang.org/)
 
-A Rust + PyO3 reimplementation of the four slow stages of the SCENIC / SCENIC+ single-cell regulatory-network pipeline, shipped as one pip-installable wheel.
+A Rust + PyO3 reimplementation of the SCENIC / SCENIC+ single-cell regulatory-network pipeline, shipped as one pip-installable wheel.
 
 ```bash
-pip install rustscenic
+# Stable wheel (pending PyPI publish config — installs from GitHub Release today):
+pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.1.0/rustscenic-0.1.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+# Or source:
+pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.1.0
 ```
 
 Four runtime dependencies (numpy, pandas, pyarrow, scipy). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64). No dask, no Java, no CUDA.
 
 ## What it does
 
-Drop-in replacements for the four slow stages of the aertslab SCENIC stack:
+Rust-native replacements for the compute stages plus the glue that scenicplus builds eRegulons from:
 
 | Stage | **rustscenic** | Replaces |
 |---|---|---|
@@ -23,6 +26,13 @@ Drop-in replacements for the four slow stages of the aertslab SCENIC stack:
 | Per-cell regulon activity scoring | `rustscenic.aucell.score` | `pyscenic.aucell.aucell` |
 | Topic modelling on scATAC peaks | `rustscenic.topics.fit` | `pycisTopic` (Mallet) |
 | Motif-regulon enrichment | `rustscenic.cistarget.enrich` | `pycistarget` AUC kernel |
+| ATAC fragments → cells × peaks matrix | `rustscenic.preproc.fragments_to_matrix` | `pycisTopic` fragment loader |
+| Cell QC (TSS enrichment, FRiP, insert size) | `rustscenic.preproc.qc` | `pycisTopic.qc` |
+| Enhancer → gene correlation | `rustscenic.enhancer.link_peaks_to_genes` | `scenicplus` p2g linking |
+| eRegulon assembly (TF × enhancers × target genes) | `rustscenic.eregulon.build_eregulons` | `scenicplus` eRegulon builder |
+| End-to-end pipeline orchestrator | `rustscenic.pipeline.run` | `scenicplus` snakemake |
+
+Bundled with the wheel: HGNC (1,839 human) and MGI (1,721 mouse) TF lists via `rustscenic.data.tfs(species)`. Motif rankings auto-download on first use via `rustscenic.data.download_motif_rankings`. Cellxgene-curated h5ads (ENSEMBL IDs in `var_names`, gene symbols in `var["feature_name"]`) are auto-detected so atlas data works without manual patching.
 
 ## Quick example (PBMC-3k, end-to-end)
 
