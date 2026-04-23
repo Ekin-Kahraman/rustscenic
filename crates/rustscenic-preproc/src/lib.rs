@@ -8,6 +8,8 @@
 //!   fragment table.
 //! - Cell QC: fragments-per-barcode, insert-size distribution, TSS
 //!   enrichment, FRiP.
+//! - Iterative peak calling: Corces-2018-style density-window consensus
+//!   peaks from pseudobulked fragments (MACS2-free).
 //! - Matrix build: intersect fragments against a peak BED and produce a
 //!   cells × peaks sparse matrix.
 //!
@@ -16,10 +18,12 @@
 
 pub mod fragments;
 pub mod matrix;
+pub mod peak_calling;
 pub mod peaks;
 pub mod qc;
 
 pub use fragments::{read_fragments, Fragment, FragmentTable};
 pub use matrix::{build_cell_peak_matrix, CsrMatrix};
+pub use peak_calling::{call_peaks_from_pseudobulks, PeakCallingConfig};
 pub use peaks::{read_peaks, Peak, PeakTable};
 pub use qc::{frip, insert_size_stats, tss_enrichment, InsertSizeStats, TssSite};
