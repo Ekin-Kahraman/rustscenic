@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 from rustscenic._rustscenic import grn_infer as _grn_infer
+from rustscenic._gene_resolution import warn_if_likely_unnormalized
 
 
 def infer(
@@ -49,6 +50,8 @@ def infer(
         X = X.astype(np.float32, copy=False)
     X = np.ascontiguousarray(X)
 
+    warn_if_likely_unnormalized(X, stacklevel=3)
+
     # Warn on duplicate gene symbols — silent success can produce wrong results
     # when multiple columns map to the same TF name at aggregation time.
     dup_count = len(gene_names) - len(set(gene_names))
@@ -65,6 +68,31 @@ def infer(
     if not tfs_list:
         import warnings
         warnings.warn("empty TF list — returning empty DataFrame", UserWarning, stacklevel=2)
+
+    # Report TF-list / gene-list overlap. Zero overlap is the specific
+    # failure mode users hit on cellxgene-curated h5ads — the TF list is
+    # gene symbols, var_names are ENSEMBL IDs. `_coerce_expression` now
+    # auto-resolves the convention, but the user can still pass a
+    # mismatched TF list (e.g. mouse TFs against a human dataset).
+    gene_set = set(gene_names)
+    tfs_present = [t for t in tfs_list if t in gene_set]
+    if tfs_list and not tfs_present:
+        import warnings
+        warnings.warn(
+            f"none of the {len(tfs_list)} supplied TFs match any gene in the "
+            f"expression matrix — returning empty DataFrame. Check that the TF "
+            f"list species / symbol convention matches the dataset (e.g. human "
+            f"HGNC `SPI1` vs mouse MGI `Spi1`, or cellxgene ENSEMBL IDs).",
+            UserWarning, stacklevel=2,
+        )
+    elif tfs_list and len(tfs_present) < 0.2 * len(tfs_list):
+        import warnings
+        warnings.warn(
+            f"only {len(tfs_present)} of {len(tfs_list)} supplied TFs are present "
+            f"in the expression matrix. GRN will fit a very narrow regulator set. "
+            f"Example missing TFs: {[t for t in tfs_list if t not in gene_set][:5]}.",
+            UserWarning, stacklevel=2,
+        )
 
     import sys, time
     if verbose:
@@ -104,10 +132,19 @@ def infer(
 
 
 def _coerce_expression(expression):
+    """Return ``(X_dense, gene_names)`` from AnnData / DataFrame / tuple input.
+
+    For AnnData, gene names come from
+    :func:`rustscenic._gene_resolution.resolve_gene_names`, which
+    auto-detects cellxgene-style datasets (ENSEMBL IDs in ``var_names``,
+    gene symbols in ``var["feature_name"]``) and swaps to the symbol
+    column so user-supplied TF lists match.
+    """
+    from rustscenic._gene_resolution import resolve_gene_names
     if hasattr(expression, "X") and hasattr(expression, "var_names"):
         # AnnData
         X = expression.X.toarray() if hasattr(expression.X, "toarray") else np.asarray(expression.X)
-        gene_names = list(expression.var_names)
+        gene_names = resolve_gene_names(expression)
         return X, gene_names
     if isinstance(expression, pd.DataFrame):
         return np.asarray(expression.values), list(expression.columns)
