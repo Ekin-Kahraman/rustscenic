@@ -6,8 +6,14 @@ use pyo3::types::PyList;
 use rustscenic_aucell::aucell;
 use rustscenic_grn::{infer, Adjacency, GrnConfig};
 use rustscenic_preproc::{
-    build_cell_peak_matrix, fragments::{fragments_per_barcode, total_counts_per_barcode},
+    build_cell_peak_matrix,
+    call_peaks_from_pseudobulks,
+    fragments::{fragments_per_barcode, total_counts_per_barcode},
+    frip as preproc_frip_fn,
+    insert_size_stats as preproc_insert_size_stats_fn,
     read_fragments, read_peaks,
+    tss_enrichment as preproc_tss_enrichment_fn,
+    PeakCallingConfig, TssSite,
 };
 use rustscenic_topics::online_vb_lda;
 use std::path::PathBuf;
@@ -227,6 +233,189 @@ fn preproc_fragments_to_matrix<'py>(
     ))
 }
 
+/// Per-barcode insert-size distribution from a fragments file.
+///
+/// Returns a tuple of parallel arrays indexed by barcode:
+///   (barcodes, mean, median, n_fragments, sub_nucleosomal,
+///    mono_nucleosomal, di_nucleosomal).
+#[pyfunction]
+#[pyo3(signature = (fragments_path,))]
+fn preproc_insert_size_stats<'py>(
+    py: Python<'py>,
+    fragments_path: PathBuf,
+) -> PyResult<(
+    Py<PyList>,          // barcodes
+    Py<PyArray1<f32>>,   // mean
+    Py<PyArray1<f32>>,   // median
+    Py<PyArray1<u32>>,   // n_fragments
+    Py<PyArray1<u32>>,   // sub
+    Py<PyArray1<u32>>,   // mono
+    Py<PyArray1<u32>>,   // di
+)> {
+    let (barcodes, means, medians, counts, sub, mono, di) =
+        py.allow_threads(|| -> anyhow::Result<_> {
+            let fragments = read_fragments(&fragments_path)?;
+            let stats = preproc_insert_size_stats_fn(&fragments);
+            let mut means = Vec::with_capacity(stats.len());
+            let mut medians = Vec::with_capacity(stats.len());
+            let mut counts = Vec::with_capacity(stats.len());
+            let mut sub = Vec::with_capacity(stats.len());
+            let mut mono = Vec::with_capacity(stats.len());
+            let mut di = Vec::with_capacity(stats.len());
+            for s in &stats {
+                means.push(s.mean);
+                medians.push(s.median);
+                counts.push(s.n_fragments);
+                sub.push(s.sub_nucleosomal);
+                mono.push(s.mono_nucleosomal);
+                di.push(s.di_nucleosomal);
+            }
+            Ok((fragments.barcode_names, means, medians, counts, sub, mono, di))
+        })
+        .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+    Ok((
+        PyList::new(py, barcodes.iter().map(|s| s.as_str()))?.unbind(),
+        PyArray1::from_vec(py, means).unbind(),
+        PyArray1::from_vec(py, medians).unbind(),
+        PyArray1::from_vec(py, counts).unbind(),
+        PyArray1::from_vec(py, sub).unbind(),
+        PyArray1::from_vec(py, mono).unbind(),
+        PyArray1::from_vec(py, di).unbind(),
+    ))
+}
+
+/// Per-barcode fraction of fragments in peaks.
+#[pyfunction]
+#[pyo3(signature = (fragments_path, peaks_path))]
+fn preproc_frip<'py>(
+    py: Python<'py>,
+    fragments_path: PathBuf,
+    peaks_path: PathBuf,
+) -> PyResult<(Py<PyList>, Py<PyArray1<f32>>)> {
+    let (barcodes, scores) = py
+        .allow_threads(|| -> anyhow::Result<_> {
+            let fragments = read_fragments(&fragments_path)?;
+            let peaks = read_peaks(&peaks_path)?;
+            let scores = preproc_frip_fn(&fragments, &peaks);
+            Ok((fragments.barcode_names, scores))
+        })
+        .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+    Ok((
+        PyList::new(py, barcodes.iter().map(|s| s.as_str()))?.unbind(),
+        PyArray1::from_vec(py, scores).unbind(),
+    ))
+}
+
+/// Per-barcode TSS enrichment score.
+///
+/// `tss_chroms` and `tss_positions` must be parallel lists; each pair
+/// defines one TSS. The chromosome name space must match
+/// `fragments.chrom_names` (after normalisation, which the Rust layer
+/// handles via `normalise_chrom`).
+#[pyfunction]
+#[pyo3(signature = (fragments_path, tss_chroms, tss_positions))]
+fn preproc_tss_enrichment<'py>(
+    py: Python<'py>,
+    fragments_path: PathBuf,
+    tss_chroms: Vec<String>,
+    tss_positions: Vec<u32>,
+) -> PyResult<(Py<PyList>, Py<PyArray1<f32>>)> {
+    if tss_chroms.len() != tss_positions.len() {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "tss_chroms ({}) and tss_positions ({}) must have the same length",
+            tss_chroms.len(),
+            tss_positions.len()
+        )));
+    }
+    let tss_sites: Vec<TssSite> = tss_chroms
+        .into_iter()
+        .zip(tss_positions)
+        .map(|(chrom, position)| TssSite { chrom, position })
+        .collect();
+    let (barcodes, scores) = py
+        .allow_threads(|| -> anyhow::Result<_> {
+            let fragments = read_fragments(&fragments_path)?;
+            let scores = preproc_tss_enrichment_fn(&fragments, &tss_sites);
+            Ok((fragments.barcode_names, scores))
+        })
+        .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+    Ok((
+        PyList::new(py, barcodes.iter().map(|s| s.as_str()))?.unbind(),
+        PyArray1::from_vec(py, scores).unbind(),
+    ))
+}
+
+/// Iterative density-window consensus peak calling from pseudobulked fragments.
+///
+/// `cluster_per_barcode` must have length `n_barcodes` (queried via the
+/// fragment file on the Rust side). Entries in `[0, n_clusters)` mark the
+/// barcode's cluster; `u32::MAX` marks a barcode as unassigned.
+///
+/// Returns parallel arrays describing the consensus peaks:
+///   (chroms, starts, ends, names).
+#[pyfunction]
+#[pyo3(signature = (
+    fragments_path,
+    cluster_per_barcode,
+    n_clusters,
+    window_size = 50,
+    min_fragments_per_window = 3,
+    quantile_threshold = 0.95,
+    max_gap = 250,
+    peak_half_width = 250,
+))]
+#[allow(clippy::too_many_arguments)]
+fn preproc_call_peaks<'py>(
+    py: Python<'py>,
+    fragments_path: PathBuf,
+    cluster_per_barcode: Vec<u32>,
+    n_clusters: usize,
+    window_size: u32,
+    min_fragments_per_window: u32,
+    quantile_threshold: f32,
+    max_gap: u32,
+    peak_half_width: u32,
+) -> PyResult<(Py<PyList>, Py<PyArray1<u32>>, Py<PyArray1<u32>>, Py<PyList>)> {
+    let cfg = PeakCallingConfig {
+        window_size,
+        min_fragments_per_window,
+        quantile_threshold,
+        max_gap,
+        peak_half_width,
+    };
+    let (chrom_names, starts, ends, names) = py
+        .allow_threads(|| -> anyhow::Result<_> {
+            let fragments = read_fragments(&fragments_path)?;
+            if cluster_per_barcode.len() != fragments.n_barcodes() {
+                anyhow::bail!(
+                    "cluster_per_barcode has length {} but the fragments file \
+                     contains {} distinct barcodes",
+                    cluster_per_barcode.len(),
+                    fragments.n_barcodes()
+                );
+            }
+            let peaks = call_peaks_from_pseudobulks(
+                &fragments,
+                &cluster_per_barcode,
+                n_clusters,
+                &cfg,
+            );
+            let chrom_names_out: Vec<String> = peaks
+                .chrom_idx
+                .iter()
+                .map(|&i| peaks.chrom_names[i as usize].clone())
+                .collect();
+            Ok((chrom_names_out, peaks.start, peaks.end, peaks.name))
+        })
+        .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+    Ok((
+        PyList::new(py, chrom_names.iter().map(|s| s.as_str()))?.unbind(),
+        PyArray1::from_vec(py, starts).unbind(),
+        PyArray1::from_vec(py, ends).unbind(),
+        PyList::new(py, names.iter().map(|s| s.as_str()))?.unbind(),
+    ))
+}
+
 #[pymodule]
 fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
@@ -234,5 +423,9 @@ fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(aucell_score, m)?)?;
     m.add_function(wrap_pyfunction!(topics_fit, m)?)?;
     m.add_function(wrap_pyfunction!(preproc_fragments_to_matrix, m)?)?;
+    m.add_function(wrap_pyfunction!(preproc_insert_size_stats, m)?)?;
+    m.add_function(wrap_pyfunction!(preproc_frip, m)?)?;
+    m.add_function(wrap_pyfunction!(preproc_tss_enrichment, m)?)?;
+    m.add_function(wrap_pyfunction!(preproc_call_peaks, m)?)?;
     Ok(())
 }
