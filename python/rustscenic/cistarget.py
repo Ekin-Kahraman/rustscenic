@@ -83,13 +83,42 @@ def enrich(
     gene_to_idx = {g: i for i, g in enumerate(gene_names)}
     reg_names: list[str] = []
     reg_gene_indices: list[list[int]] = []
+    reg_pairs: list[tuple[str, list[str]]] = []
+    dropped_empty = 0
     for reg in regulons:
         name, genes = _coerce_regulon(reg)
-        idx = [gene_to_idx[g] for g in genes if g in gene_to_idx]
+        genes_list = list(genes)
+        reg_pairs.append((name, genes_list))
+        idx = [gene_to_idx[g] for g in genes_list if g in gene_to_idx]
         if not idx:
+            dropped_empty += 1
             continue
         reg_names.append(name)
         reg_gene_indices.append(idx)
+
+    # Silent-zero guardrails: this is the cistarget mirror of the cellxgene
+    # bug Fuaad hit on aucell. If regulon genes don't match the rankings'
+    # gene columns (for example: regulons built with HGNC symbols but the
+    # aertslab v10 feather indexed by ENSEMBL; or mouse regulons passed
+    # against an hg38 ranking), every lookup misses and the output is
+    # silently empty. Warn loudly with a diagnostic the user can act on.
+    from rustscenic._gene_resolution import regulon_coverage, warn_if_poor_coverage
+    coverage = regulon_coverage(gene_names, reg_pairs)
+    warn_if_poor_coverage(coverage, stacklevel=3)
+    if dropped_empty > 0 and not reg_names:
+        import warnings
+        warnings.warn(
+            f"all {dropped_empty} regulons dropped — none of their genes appear "
+            f"in the rankings DataFrame columns. Common causes: (1) rankings "
+            f"indexed by ENSEMBL while regulons use gene symbols; (2) species "
+            f"mismatch between rankings (e.g. hg38) and regulons (e.g. mouse "
+            f"MGI); (3) rankings orientation swapped (motifs-in-cols vs "
+            f"motifs-in-rows). First regulon genes: "
+            f"{reg_pairs[0][1][:3] if reg_pairs else 'n/a'}. First 3 ranking "
+            f"columns: {gene_names[:3]}.",
+            UserWarning, stacklevel=2,
+        )
+        return pd.DataFrame(columns=["regulon", "motif", "auc"])
 
     # Run the per-motif (as "cells") AUC scoring
     auc = _aucell_score(np.ascontiguousarray(scores), reg_names, reg_gene_indices, top_frac)

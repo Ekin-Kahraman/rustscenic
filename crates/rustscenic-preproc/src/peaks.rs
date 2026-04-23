@@ -64,20 +64,61 @@ impl PeakTable {
     /// a parallel Vec where each element is the new chrom index, or
     /// `None` if the peak's chromosome isn't present in the reference.
     ///
+    /// Uses normalised matching so that `chr1` and `1` are treated as
+    /// the same chromosome (UCSC vs Ensembl convention), along with
+    /// the `chrM` / `chrMT` / `MT` mitochondrial aliases. Without this
+    /// normalisation, a peak BED with Ensembl chrom names against a
+    /// fragments file with UCSC chrom names silently drops every peak
+    /// — the same silent-zero failure class as the cellxgene ENSEMBL
+    /// var_names bug, just in a different layer.
+    ///
     /// Use this before joining peaks to fragments so chromosome
     /// comparisons reduce to `u32` equality.
     pub fn align_chroms_to(&self, reference_chrom_names: &[String]) -> Vec<Option<u32>> {
+        let normalised_refs: Vec<String> = reference_chrom_names
+            .iter()
+            .map(|n| normalise_chrom(n))
+            .collect();
         let mapping: Vec<Option<u32>> = self
             .chrom_names
             .iter()
             .map(|cn| {
-                reference_chrom_names
+                let cn_norm = normalise_chrom(cn);
+                normalised_refs
                     .iter()
-                    .position(|r| r == cn)
+                    .position(|r| r == &cn_norm)
                     .map(|i| i as u32)
             })
             .collect();
         self.chrom_idx.iter().map(|&c| mapping[c as usize]).collect()
+    }
+}
+
+/// Normalise a chromosome name to a canonical form for alignment.
+///
+/// - Strip a leading `chr` prefix (so `chr1` and `1` match)
+/// - Collapse mitochondrial aliases `M` and `MT` to `MT`
+/// - Uppercase the remainder so `chrX` and `chrx` match
+///
+/// Designed for the small set of conventions real data uses (UCSC,
+/// Ensembl, NCBI RefSeq). Returns a new owned String so callers can
+/// reuse it as a hashmap key.
+pub fn normalise_chrom(name: &str) -> String {
+    let trimmed = name.trim();
+    // Strip leading "chr" (case-insensitive) if present
+    let no_prefix = if trimmed.len() >= 3
+        && trimmed[..3].eq_ignore_ascii_case("chr")
+    {
+        &trimmed[3..]
+    } else {
+        trimmed
+    };
+    let upper = no_prefix.to_ascii_uppercase();
+    // Canonicalise mitochondrial name
+    if upper == "M" {
+        "MT".to_string()
+    } else {
+        upper
     }
 }
 
@@ -206,6 +247,48 @@ chr2\t100\t200\t.
         let reference = vec!["chr3".to_string()];
         let aligned = t.align_chroms_to(&reference);
         assert_eq!(aligned, vec![None, None, None, None]);
+    }
+
+    #[test]
+    fn align_chroms_handles_ucsc_vs_ensembl_convention() {
+        // BED has `chr1`/`chr2` (UCSC); reference uses Ensembl `1`/`2`.
+        let t = read_peaks_from(Cursor::new(SAMPLE_BED)).unwrap();
+        let reference = vec!["1".to_string(), "2".to_string()];
+        let aligned = t.align_chroms_to(&reference);
+        // Peaks: chr1, chr1, chr2, chr2 → 0, 0, 1, 1 after normalisation
+        assert_eq!(aligned, vec![Some(0), Some(0), Some(1), Some(1)]);
+    }
+
+    #[test]
+    fn align_chroms_handles_reverse_convention() {
+        // BED has Ensembl `1`/`2`; reference has UCSC `chr1`/`chr2`.
+        let bed = "1\t100\t200\n2\t300\t400\n";
+        let t = read_peaks_from(Cursor::new(bed)).unwrap();
+        let reference = vec!["chr1".to_string(), "chr2".to_string()];
+        let aligned = t.align_chroms_to(&reference);
+        assert_eq!(aligned, vec![Some(0), Some(1)]);
+    }
+
+    #[test]
+    fn align_chroms_collapses_mitochondrial_aliases() {
+        let bed = "chrM\t1\t100\n";
+        let t = read_peaks_from(Cursor::new(bed)).unwrap();
+        let reference = vec!["MT".to_string()];
+        let aligned = t.align_chroms_to(&reference);
+        assert_eq!(aligned, vec![Some(0)]);
+    }
+
+    #[test]
+    fn normalise_chrom_strips_prefix_and_canonicalises_mt() {
+        use super::normalise_chrom;
+        assert_eq!(normalise_chrom("chr1"), "1");
+        assert_eq!(normalise_chrom("1"), "1");
+        assert_eq!(normalise_chrom("CHR2"), "2");
+        assert_eq!(normalise_chrom("chrX"), "X");
+        assert_eq!(normalise_chrom("chrM"), "MT");
+        assert_eq!(normalise_chrom("chrMT"), "MT");
+        assert_eq!(normalise_chrom("MT"), "MT");
+        assert_eq!(normalise_chrom(" chr1 "), "1");
     }
 
     #[test]
