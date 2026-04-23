@@ -99,10 +99,18 @@ def link_peaks_to_genes(
             "check species + symbol convention"
         )
 
-    # For fast lookup: group genes by chrom, sort by tss.
+    # Normalise chrom names on both sides so "chr1"/"1" join correctly
+    # regardless of whether peak BED and gene_coords use the same
+    # convention (they often don't).
+    genes_in_rna = genes_in_rna.assign(
+        _chrom_norm=genes_in_rna["chrom"].map(_normalise_chrom)
+    )
+    peaks = peaks.assign(_chrom_norm=peaks["chrom"].map(_normalise_chrom))
+
+    # For fast lookup: group genes by normalised chrom, sort by tss.
     gene_by_chrom = {
         chrom: sub.sort_values("tss").reset_index(drop=True)
-        for chrom, sub in genes_in_rna.groupby("chrom")
+        for chrom, sub in genes_in_rna.groupby("_chrom_norm")
     }
 
     rna_X = _densify(rna_adata.X).astype(np.float32, copy=False)  # (n_cells, n_genes_rna)
@@ -115,13 +123,14 @@ def link_peaks_to_genes(
     # so we amortise the sorted-gene-TSS work and compute the correlation
     # over the slice of candidate genes in one vectorised call.
     peak_centers = ((peaks["start"].values + peaks["end"].values) // 2).astype(np.int64)
+    peak_chroms_norm = peaks["_chrom_norm"].values
     peak_chroms = peaks["chrom"].values
     peak_starts = peaks["start"].values
     peak_ends = peaks["end"].values
     peak_ids = list(peaks.index)
     for chrom, gg in gene_by_chrom.items():
-        # Positional indices of peaks on this chromosome
-        peak_positions = np.where(peak_chroms == chrom)[0]
+        # Match peaks by normalised chrom so "chr1" peaks join to "1" genes
+        peak_positions = np.where(peak_chroms_norm == chrom)[0]
         if peak_positions.size == 0:
             continue
         tss = gg["tss"].values.astype(np.int64)
@@ -215,9 +224,20 @@ def _peak_frame(atac_adata, peak_coords) -> pd.DataFrame:
 
 
 def _parse_peak_names(names):
-    """Parse peak names like ``chr1:100-200`` or ``chr1-100-200`` to a DataFrame."""
+    """Parse peak names like ``chr1:100-200``, ``1:100-200``, ``chr1-100-200``.
+
+    Accepts both UCSC (``chr1``) and Ensembl (``1``) chromosome conventions
+    because real-world peak BEDs use either. The full chrom token is
+    preserved as-is (including any ``chr`` prefix) so downstream callers
+    that joined on ``chr1`` keep working; chromosome-name normalisation
+    for cross-convention joining is done in ``_normalise_chrom`` at join
+    time rather than here.
+    """
     import re
-    pat = re.compile(r"^(chr[\dXYMTI]+)[:\-_](\d+)[\-_](\d+)$")
+    pat = re.compile(
+        r"^((?:chr)?[\dXYMTIivxmt]+)[:\-_](\d+)[\-_](\d+)$",
+        re.IGNORECASE,
+    )
     rows = []
     for n in names:
         m = pat.match(str(n))
@@ -225,6 +245,19 @@ def _parse_peak_names(names):
             return None
         rows.append((m.group(1), int(m.group(2)), int(m.group(3))))
     return pd.DataFrame(rows, columns=["chrom", "start", "end"])
+
+
+def _normalise_chrom(name: str) -> str:
+    """Strip ``chr`` prefix and collapse mito aliases so UCSC and Ensembl
+    chrom names match. Mirrors the Rust-side ``normalise_chrom``.
+    """
+    if not isinstance(name, str):
+        name = str(name)
+    s = name.strip()
+    if len(s) >= 3 and s[:3].lower() == "chr":
+        s = s[3:]
+    s = s.upper()
+    return "MT" if s == "M" else s
 
 
 def _validate_gene_coords(gene_coords: pd.DataFrame) -> pd.DataFrame:
