@@ -113,6 +113,7 @@ def link_peaks_to_genes(
         for chrom, sub in genes_in_rna.groupby("_chrom_norm")
     }
 
+    _warn_if_densification_expensive(rna_adata, atac_adata)
     rna_X = _densify(rna_adata.X).astype(np.float32, copy=False)  # (n_cells, n_genes_rna)
     atac_X = _densify(atac_adata.X).astype(np.float32, copy=False)  # (n_cells, n_peaks)
 
@@ -279,6 +280,35 @@ def _densify(X):
     if sp.issparse(X):
         return X.toarray()
     return np.asarray(X)
+
+
+# Warn the user before `link_peaks_to_genes` densifies a matrix larger
+# than this (bytes, per-matrix). Module-level so tests can patch down.
+_DENSIFY_WARN_BYTES = 8 * 1024**3  # 8 GiB
+
+
+def _warn_if_densification_expensive(rna_adata, atac_adata) -> None:
+    """Warn before materialising large float32 matrices from sparse input.
+
+    `link_peaks_to_genes` builds dense RNA and ATAC matrices for the
+    correlation loop. On 100k cells × 100k peaks that's 40 GB — a
+    common surprise for users who never saw the sparse-to-dense step.
+    Raise a warning so a user can interrupt before their laptop swaps
+    itself to death.
+    """
+    import warnings
+
+    for name, ad_obj in [("rna_adata", rna_adata), ("atac_adata", atac_adata)]:
+        bytes_needed = ad_obj.n_obs * ad_obj.n_vars * 4  # float32
+        if bytes_needed >= _DENSIFY_WARN_BYTES:
+            gib = bytes_needed / 1024**3
+            warnings.warn(
+                f"link_peaks_to_genes will densify {name} to a "
+                f"{ad_obj.n_obs} × {ad_obj.n_vars} float32 matrix "
+                f"(~{gib:.1f} GiB). If this OOMs, subset to highly "
+                f"variable peaks / genes first, or batch by chromosome.",
+                UserWarning, stacklevel=3,
+            )
 
 
 def _pearson_matrix(x: np.ndarray, Y: np.ndarray) -> np.ndarray:
