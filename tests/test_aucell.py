@@ -52,11 +52,22 @@ class TestAucellEdgeCases:
             auc = aucell.score(small_expr, regs, top_frac=0.1)
         assert list(auc.columns) == ["ok"]
 
-    def test_duplicate_gene_names_raises_valueerror(self, rng):
+    def test_duplicate_gene_names_auto_dedupes_with_warning(self, rng):
+        """Duplicate symbols (common after ENSEMBL→HGNC swap) sum rather
+        than raise — losing half the signal to a cryptic error is the
+        silent-regression class we're here to prevent."""
+        import warnings
+
         X = rng.random((20, 5)).astype(np.float32)
         df = pd.DataFrame(X, columns=["a", "b", "c", "a", "e"])  # duplicate 'a'
-        with pytest.raises(ValueError, match="duplicate gene name"):
-            aucell.score(df, [("R", ["a", "b"])], top_frac=0.2)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            auc = aucell.score(df, [("R", ["a", "b"])], top_frac=0.2)
+        assert auc.shape == (20, 1)
+        dedup_msgs = [
+            w for w in caught if "duplicate gene name" in str(w.message)
+        ]
+        assert dedup_msgs, "auto-dedupe should emit a warning"
 
     def test_nan_input_panics(self, rng):
         X = rng.random((10, 5)).astype(np.float32)
