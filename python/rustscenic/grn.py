@@ -12,7 +12,10 @@ import numpy as np
 import pandas as pd
 
 from rustscenic._rustscenic import grn_infer as _grn_infer
-from rustscenic._gene_resolution import warn_if_likely_unnormalized
+from rustscenic._gene_resolution import (
+    dedupe_by_symbol,
+    warn_if_likely_unnormalized,
+)
 
 
 def infer(
@@ -52,17 +55,24 @@ def infer(
 
     warn_if_likely_unnormalized(X, stacklevel=3)
 
-    # Warn on duplicate gene symbols — silent success can produce wrong results
-    # when multiple columns map to the same TF name at aggregation time.
+    # Duplicate gene symbols typically come from ENSEMBL → symbol
+    # resolution (multiple transcripts collapsing). Sum columns so
+    # regression sees one row per gene, not silently lose data.
     dup_count = len(gene_names) - len(set(gene_names))
     if dup_count > 0:
         import warnings
+        from collections import Counter
+        top_dupes = [n for n, c in Counter(gene_names).most_common(3) if c > 1]
         warnings.warn(
-            f"{dup_count} duplicate gene name(s) in input; only the first match "
-            f"will be used for each duplicate. Use AnnData.var_names_make_unique() "
-            f"or deduplicate upstream.",
+            f"{dup_count} duplicate gene name(s) after ENSEMBL→symbol "
+            f"resolution (e.g. {top_dupes}). Summing expression across "
+            f"duplicate symbols so GRN inputs are unambiguous. Pass the "
+            f"AnnData through `rustscenic._gene_resolution.dedupe_by_symbol()` "
+            f"upstream if you want full control.",
             UserWarning, stacklevel=2,
         )
+        X, gene_names = dedupe_by_symbol(X, gene_names)
+        X = np.ascontiguousarray(X.astype(np.float32, copy=False))
 
     tfs_list = list(tf_names)
     if not tfs_list:

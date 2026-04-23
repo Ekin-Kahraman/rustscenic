@@ -125,6 +125,36 @@ def main() -> int:
                 f"regulons with < 50% coverage: {low[:3]}... (may mask gene-name conv mismatch)"
             )
 
+    # --- 3.5. Duplicate-symbol auto-dedupe on the FULL gene set ---
+    # Kamath has 11 duplicate symbols after ENSEMBL→HGNC swap
+    # (e.g. SPATA13 mapped by 2 ENSG IDs). Before PR #28 this raised
+    # a cryptic ValueError. Now it sums columns with a warning.
+    print("\nDup-safety check: AUCell on full 33k-gene matrix")
+    full_adata = ad.read_h5ad(H5AD)[:500, :].copy()
+    with warnings.catch_warnings(record=True) as full_caught:
+        warnings.simplefilter("always")
+        import rustscenic.aucell
+        full_auc = rustscenic.aucell.score(
+            full_adata,
+            [("R_full", ["SPATA13", "MALAT1"])],
+            top_frac=0.05,
+        )
+    dup_warned = [
+        w for w in full_caught if "duplicate gene name" in str(w.message)
+    ]
+    print(f"  full-matrix AUC shape: {full_auc.shape}")
+    print(f"  dup-dedupe warning fired: {bool(dup_warned)}")
+    print(f"  coverage: {full_auc.attrs['regulon_coverage']}")
+    if not dup_warned:
+        failures.append(
+            "full-gene Kamath run didn't fire duplicate-symbol warning — "
+            "silent dedupe is back"
+        )
+    if (full_auc.values > 0).sum() == 0:
+        failures.append(
+            "full-gene Kamath run scored all-zero — dedupe broke the signal"
+        )
+
     # --- 4. GRN on ENSEMBL-keyed data must also resolve via feature_name ---
     import rustscenic.grn
     real_tfs = [s for s in symbol_pool[:100] if len(s) < 10][:3]

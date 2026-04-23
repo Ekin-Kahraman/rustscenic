@@ -18,6 +18,7 @@ import pandas as pd
 
 from rustscenic._rustscenic import aucell_score as _aucell_score
 from rustscenic._gene_resolution import (
+    dedupe_by_symbol,
     regulon_coverage,
     warn_if_likely_unnormalized,
     warn_if_poor_coverage,
@@ -66,11 +67,20 @@ def score(
 
     dup_count = len(gene_names) - len(set(gene_names))
     if dup_count > 0:
-        raise ValueError(
-            f"{dup_count} duplicate gene name(s) in expression matrix — regulon "
-            f"gene-to-column lookup is ambiguous. Call AnnData.var_names_make_unique() "
-            f"or deduplicate upstream."
+        import warnings
+        from collections import Counter
+        top_dupes = [
+            n for n, c in Counter(gene_names).most_common(3) if c > 1
+        ]
+        warnings.warn(
+            f"{dup_count} duplicate gene name(s) after ENSEMBL→symbol "
+            f"resolution (e.g. {top_dupes}). Summing expression across "
+            f"duplicate symbols so regulon lookup stays unambiguous. "
+            f"Pass the AnnData through `rustscenic._gene_resolution."
+            f"dedupe_by_symbol()` upstream if you want full control.",
+            UserWarning, stacklevel=3,
         )
+        X_raw, gene_names = dedupe_by_symbol(X_raw, gene_names)
 
     gene_to_idx = {g: i for i, g in enumerate(gene_names)}
     reg_names: list[str] = []

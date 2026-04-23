@@ -208,9 +208,70 @@ def warn_if_likely_unnormalized(X, *, max_threshold: float = 50.0, stacklevel: i
         )
 
 
+def dedupe_by_symbol(X, gene_names: Sequence[str]):
+    """Collapse duplicate gene-symbol columns by summing their expression.
+
+    When an ENSEMBL → symbol swap produces duplicate symbols (e.g.
+    several transcripts collapsing onto the same HGNC symbol, or
+    pseudogenes sharing a parent name), downstream regulon lookup is
+    ambiguous. The scanpy / limma convention is to sum the columns:
+    total per-gene expression aggregated across transcripts. This
+    preserves signal; the alternative (drop all but one) silently
+    loses half the gene's reads.
+
+    Returns
+    -------
+    (X_deduped, unique_gene_names) — X may be sparse (scipy.sparse) or
+    dense numpy; the return type matches the input.
+    """
+    names_list = list(gene_names)
+    from collections import defaultdict
+
+    index_of: dict[str, int] = {}
+    groups: list[list[int]] = []
+    for i, g in enumerate(names_list):
+        if g in index_of:
+            groups[index_of[g]].append(i)
+        else:
+            index_of[g] = len(groups)
+            groups.append([i])
+
+    if len(groups) == len(names_list):
+        return X, names_list
+
+    unique_names = [names_list[g[0]] for g in groups]
+
+    import scipy.sparse as sp
+    if sp.issparse(X):
+        # Build a gene × unique_gene aggregation matrix and right-multiply.
+        n_genes = len(names_list)
+        n_unique = len(groups)
+        rows = []
+        cols = []
+        for dst, src_indices in enumerate(groups):
+            for src in src_indices:
+                rows.append(src)
+                cols.append(dst)
+        data = np.ones(len(rows), dtype=X.dtype)
+        agg = sp.csr_matrix(
+            (data, (rows, cols)), shape=(n_genes, n_unique), dtype=X.dtype
+        )
+        return X @ agg, unique_names
+
+    arr = np.asarray(X)
+    out = np.zeros((arr.shape[0], len(groups)), dtype=arr.dtype)
+    for dst, src_indices in enumerate(groups):
+        if len(src_indices) == 1:
+            out[:, dst] = arr[:, src_indices[0]]
+        else:
+            out[:, dst] = arr[:, src_indices].sum(axis=1)
+    return out, unique_names
+
+
 __all__ = [
     "resolve_gene_names",
     "regulon_coverage",
     "warn_if_poor_coverage",
     "warn_if_likely_unnormalized",
+    "dedupe_by_symbol",
 ]
