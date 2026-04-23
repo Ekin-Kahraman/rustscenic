@@ -19,6 +19,7 @@ python/rustscenic/__pycache__/
 # the tiny bundled resources under python/rustscenic/data (TF lists etc.)
 /data/
 validation/*/data/
+validation/kamath/*.h5ad
 !python/rustscenic/data/
 examples/out/
 docs/specs/
