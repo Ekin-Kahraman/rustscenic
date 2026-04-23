@@ -205,3 +205,65 @@ def test_aucell_matches_regulons_after_ensembl_swap():
     # Per-regulon coverage metadata must round-trip on .attrs.
     assert "regulon_coverage" in auc.attrs
     assert auc.attrs["regulon_coverage"]["R_sym"] == (5, 5)
+
+
+# ---- diagnose_zero_tf_overlap -------------------------------------------
+
+
+def test_diagnose_mouse_data_with_human_tfs():
+    """Human HGNC TFs + mouse MGI data: the hint must name the case mismatch."""
+    from rustscenic._gene_resolution import diagnose_zero_tf_overlap
+    mouse = ["Spi1", "Pax5", "Foxj1", "Gata1", "Runx1"]
+    human_tfs = ["SPI1", "PAX5", "FOXJ1"]
+    hint = diagnose_zero_tf_overlap(human_tfs, mouse)
+    assert "UPPERCASE" in hint and "Titlecase" in hint
+    assert "tf.title()" in hint
+
+
+def test_diagnose_human_data_with_mouse_tfs():
+    from rustscenic._gene_resolution import diagnose_zero_tf_overlap
+    human = ["SPI1", "PAX5", "FOXJ1", "GATA1", "RUNX1"]
+    mouse_tfs = ["Spi1", "Pax5", "Foxj1"]
+    hint = diagnose_zero_tf_overlap(mouse_tfs, human)
+    assert "Titlecase" in hint and "UPPERCASE" in hint
+    assert "tf.upper()" in hint
+
+
+def test_diagnose_ensembl_data_symbol_tfs():
+    from rustscenic._gene_resolution import diagnose_zero_tf_overlap
+    genes = ["ENSG00000100001", "ENSG00000100002", "ENSG00000100003"]
+    tfs = ["SPI1", "PAX5"]
+    hint = diagnose_zero_tf_overlap(tfs, genes)
+    assert "ENSEMBL" in hint and "feature_name" in hint
+
+
+def test_diagnose_versioned_vs_unversioned_ensembl():
+    from rustscenic._gene_resolution import diagnose_zero_tf_overlap
+    versioned = ["ENSG00000100001.7", "ENSG00000100002.3"]
+    unversioned_tfs = ["ENSG00000100001", "ENSG00000100002"]
+    hint = diagnose_zero_tf_overlap(unversioned_tfs, versioned)
+    assert "versioned" in hint and "split('.')" in hint
+
+
+# ---- versioned ENSEMBL auto-strip in resolve_gene_names ----------------
+
+
+def test_versioned_ensembl_var_names_auto_stripped():
+    """When var_names are versioned ENSEMBL (ENSG...7) with no symbol
+    column, strip versions so unversioned regulons can match."""
+    import anndata as ad
+    rng = np.random.default_rng(0)
+    versioned = [f"ENSG0000011{i:04d}.{(i % 9) + 1}" for i in range(30)]
+    X = rng.random((20, 30)).astype(np.float32)
+    adata = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(20)]),
+        var=pd.DataFrame(index=versioned),  # no feature_name column
+    )
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        names = resolve_gene_names(adata)
+    # Versions stripped
+    assert all("." not in n for n in names)
+    # Warning fired
+    assert any("versioned" in str(w.message) for w in caught)

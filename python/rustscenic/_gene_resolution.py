@@ -120,6 +120,22 @@ def resolve_gene_names(adata, *, quiet: bool = False) -> list[str]:
                     UserWarning, stacklevel=2,
                 )
             return swapped
+
+    # No symbol column found. If var_names are VERSIONED ENSEMBL, strip
+    # versions — downstream regulons are almost always unversioned, so
+    # the match rate goes from 0 to ~100%.
+    versioned = sum(1 for n in names[:20] if "." in str(n))
+    if versioned >= min(10, len(names) // 2):
+        stripped = [str(n).split(".", 1)[0] for n in names]
+        if not quiet:
+            warnings.warn(
+                f"var_names are versioned ENSEMBL IDs (e.g. {names[0]!r}) "
+                f"and no gene-symbol column was found. Stripping versions "
+                f"({stripped[0]!r}) so unversioned regulons can match. "
+                f"Add `var['feature_name']` to preserve versions.",
+                UserWarning, stacklevel=2,
+            )
+        return stripped
     return names
 
 
@@ -268,10 +284,92 @@ def dedupe_by_symbol(X, gene_names: Sequence[str]):
     return out, unique_names
 
 
+def diagnose_zero_tf_overlap(
+    tf_names: Sequence[str], gene_names: Sequence[str]
+) -> str:
+    """Return an actionable hint when a TF list has zero gene overlap.
+
+    Figures out WHICH convention mismatch is most likely — case
+    (SPI1 vs Spi1), ENSEMBL vs symbol, or versioned vs unversioned
+    ENSEMBL — and tells the user how to fix it. Far more useful than
+    a generic "check your conventions" message.
+    """
+    tf_list = list(tf_names)
+    gene_list = list(gene_names)
+    if not tf_list or not gene_list:
+        return "TF list and/or gene list is empty."
+
+    gene_set = set(gene_list)
+
+    # Case mismatch: TFs are uppercase, genes are titlecase (or reverse)
+    title_versions = {t: t.title() if t.isupper() else None for t in tf_list[:10]}
+    title_hits = sum(
+        1 for t, alt in title_versions.items() if alt and alt in gene_set
+    )
+    if title_hits >= len(tf_list[:10]) // 2:
+        return (
+            f"TF list looks UPPERCASE (human HGNC) but data looks "
+            f"Titlecase (mouse MGI). Try `[tf.title() for tf in tf_names]` "
+            f"or pass the mouse TF list from `rustscenic.data.tfs('mouse')`."
+        )
+    upper_versions = {t: t.upper() if not t.isupper() else None for t in tf_list[:10]}
+    upper_hits = sum(
+        1 for t, alt in upper_versions.items() if alt and alt in gene_set
+    )
+    if upper_hits >= len(tf_list[:10]) // 2:
+        return (
+            f"TF list looks Titlecase (mouse MGI) but data looks "
+            f"UPPERCASE (human HGNC). Try `[tf.upper() for tf in tf_names]` "
+            f"or pass the human TF list from `rustscenic.data.tfs('human')`."
+        )
+
+    # ENSEMBL convention mismatch
+    sample_gene = gene_list[0]
+    sample_tf = tf_list[0]
+    if _ENSEMBL_RE.match(str(sample_gene)) and not _ENSEMBL_RE.match(str(sample_tf)):
+        return (
+            f"data var_names are ENSEMBL IDs (e.g. {sample_gene!r}) but TF "
+            f"list is gene symbols (e.g. {sample_tf!r}). The auto-swap "
+            f"(cellxgene convention) couldn't find a `feature_name` / "
+            f"`gene_symbol` column in `adata.var` — add one, or pass "
+            f"ENSEMBL-IDed TF names."
+        )
+    if _ENSEMBL_RE.match(str(sample_tf)) and not _ENSEMBL_RE.match(str(sample_gene)):
+        return (
+            f"TF list is ENSEMBL IDs (e.g. {sample_tf!r}) but data is "
+            f"symbols (e.g. {sample_gene!r}). Convert TFs to symbols before "
+            f"calling — e.g. via biomart or `mygene.MyGeneInfo().getgenes()`."
+        )
+
+    # Versioned-vs-unversioned ENSEMBL IDs
+    if _ENSEMBL_RE.match(str(sample_tf)) and _ENSEMBL_RE.match(str(sample_gene)):
+        tf_has_version = "." in str(sample_tf)
+        gene_has_version = "." in str(sample_gene)
+        if tf_has_version != gene_has_version:
+            if tf_has_version:
+                return (
+                    f"TFs are versioned ENSEMBL (e.g. {sample_tf!r}) but "
+                    f"data is unversioned ({sample_gene!r}). Strip versions: "
+                    f"`[t.split('.')[0] for t in tf_names]`."
+                )
+            return (
+                f"TFs are unversioned ENSEMBL ({sample_tf!r}) but data is "
+                f"versioned ({sample_gene!r}). Strip on the data side: "
+                f"`adata.var_names = [v.split('.')[0] for v in adata.var_names]`."
+            )
+
+    # Fallback — give a concrete example so at least debugging is fast
+    return (
+        f"TF example: {sample_tf!r}; data example: {sample_gene!r}. "
+        f"No automatic hint available — check symbol convention and species."
+    )
+
+
 __all__ = [
     "resolve_gene_names",
     "regulon_coverage",
     "warn_if_poor_coverage",
     "warn_if_likely_unnormalized",
     "dedupe_by_symbol",
+    "diagnose_zero_tf_overlap",
 ]

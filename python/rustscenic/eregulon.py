@@ -128,9 +128,15 @@ def build_eregulons(
     if ct.empty:
         return []
 
-    # Normalise regulon names to bare TF symbols. cistarget regulons are
-    # typically named "TF_regulon" — strip the suffix if present.
-    ct["tf"] = ct["regulon"].astype(str).str.replace(r"_regulon$", "", regex=True)
+    # Normalise regulon names to bare TF symbols. pyscenic / scenicplus
+    # emit variants: "TF_regulon", "TF(+)", "TF(-)", "TF_activator",
+    # "TF_repressor", "TF_extended", ...
+    tf_col = ct["regulon"].astype(str)
+    tf_col = tf_col.str.replace(r"_regulon$", "", regex=True)
+    tf_col = tf_col.str.replace(r"_extended$", "", regex=True)
+    tf_col = tf_col.str.replace(r"_(activator|repressor)$", "", regex=True)
+    tf_col = tf_col.str.replace(r"\s*\([+\-]\)\s*$", "", regex=True)
+    ct["tf"] = tf_col
 
     # GRN TF → {predicted targets}
     grn_targets: dict[str, set[str]] | None = None

@@ -188,3 +188,45 @@ def test_call_peaks_wrong_cluster_length_raises():
                 cluster_per_barcode=[0, 0, 0],  # 3, but only 2 barcodes
                 n_clusters=1,
             )
+
+
+# ---- TSS chrom-normalisation regression -----------------------------------
+
+
+def test_tss_enrichment_chrom_convention_mismatch_no_longer_silent_zero():
+    """Fragments in `chr1` + TSS in `1` (Ensembl) must still register —
+    exact same class as the Fuaad cellxgene silent-zero, one layer
+    down in the Rust preproc core."""
+    # 10 fragments around position 10_000 on chr1 (UCSC-style)
+    frag_lines = [
+        f"chr1\t{10_000 + i * 3}\t{10_080 + i * 3}\tAAA-1\t1"
+        for i in range(10)
+    ]
+    frag_path, td = _write_fragments(frag_lines)
+    # TSS in Ensembl chrom convention — should still match
+    tss = pd.DataFrame({"chrom": ["1"], "position": [10_000]})
+    with td:
+        scores = rustscenic.preproc.qc.tss_enrichment(frag_path, tss)
+    assert scores["AAA-1"] > 0, (
+        "chrom convention mismatch silently dropped every TSS "
+        "(regression of the normalise_chrom fix)"
+    )
+
+
+def test_fragments_to_matrix_warns_on_6column_strand_bed():
+    """6-col strand BED (chrom start end name score strand) passed in place
+    of a 5-col cellranger fragments.tsv would silently treat peak-names
+    as cell barcodes. Detect via near-one-per-row 'barcodes' and warn."""
+    # Fake a 6-col BED where col 4 is a per-row feature ID (not a barcode)
+    import warnings
+    lines = [f"chr1\t{1000 + i * 100}\t{1080 + i * 100}\tfeature_{i}\t1" for i in range(200)]
+    frag_path, td_f = _write_fragments(lines)
+    # Need a peaks file — any one, even empty
+    peaks_path, td_p = _write_peaks_bed(["chr1\t1000\t20000\tpeak"])
+    with td_f, td_p, warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        _ = rustscenic.preproc.fragments_to_matrix(frag_path, peaks_path)
+    msgs = [str(w.message) for w in caught]
+    assert any("one-per-row" in m or "strand BED" in m for m in msgs), (
+        f"one-per-row barcode pattern should have warned, got: {msgs}"
+    )

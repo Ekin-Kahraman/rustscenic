@@ -111,3 +111,36 @@ class TestAucellSparse:
         chunked = aucell.score(adata, canonical_regulons, top_frac=0.1, chunk_size=13)
         np.testing.assert_allclose(whole.values, chunked.values, atol=1e-6)
         assert list(whole.index) == list(chunked.index)
+
+
+def test_aucell_top_frac_zero_raises():
+    """top_frac=0 used to silently score every cell to zero. Now raises."""
+    import numpy as np
+    rng = np.random.default_rng(0)
+    X = rng.random((10, 5)).astype(np.float32)
+    df = pd.DataFrame(X, columns=list("abcde"))
+    with pytest.raises(ValueError, match="top_frac"):
+        aucell.score(df, [("R", ["a", "b"])], top_frac=0.0)
+
+
+def test_aucell_top_frac_over_one_raises():
+    import numpy as np
+    rng = np.random.default_rng(0)
+    X = rng.random((10, 5)).astype(np.float32)
+    df = pd.DataFrame(X, columns=list("abcde"))
+    with pytest.raises(ValueError, match="top_frac"):
+        aucell.score(df, [("R", ["a", "b"])], top_frac=1.5)
+
+
+def test_aucell_top_frac_high_warns():
+    """Unusually high top_frac saturates regulons — warn so users notice."""
+    import warnings
+    import numpy as np
+    rng = np.random.default_rng(0)
+    X = rng.random((10, 5)).astype(np.float32)
+    df = pd.DataFrame(X, columns=list("abcde"))
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        aucell.score(df, [("R", ["a", "b"])], top_frac=0.5)
+    msgs = [str(w.message) for w in caught]
+    assert any("top_frac=0.5" in m and "unusually high" in m for m in msgs)

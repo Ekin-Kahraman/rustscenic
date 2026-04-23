@@ -88,11 +88,11 @@ def infer(
     tfs_present = [t for t in tfs_list if t in gene_set]
     if tfs_list and not tfs_present:
         import warnings
+        from rustscenic._gene_resolution import diagnose_zero_tf_overlap
+        hint = diagnose_zero_tf_overlap(tfs_list, gene_names)
         warnings.warn(
             f"none of the {len(tfs_list)} supplied TFs match any gene in the "
-            f"expression matrix — returning empty DataFrame. Check that the TF "
-            f"list species / symbol convention matches the dataset (e.g. human "
-            f"HGNC `SPI1` vs mouse MGI `Spi1`, or cellxgene ENSEMBL IDs).",
+            f"expression matrix — returning empty DataFrame. {hint}",
             UserWarning, stacklevel=2,
         )
     elif tfs_list and len(tfs_present) < 0.2 * len(tfs_list):
