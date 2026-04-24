@@ -6,7 +6,6 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
-rustscenic-core = { path = "../rustscenic-core" }
 rayon = { workspace = true }
 anyhow = { workspace = true }
 thiserror = { workspace = true }

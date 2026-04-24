@@ -1,5 +1,66 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **ATAC preprocessing**: `rustscenic.preproc.fragments_to_matrix`,
+  `call_peaks` (Corces-2018 iterative consensus), `qc.insert_size_stats`,
+  `qc.frip`, `qc.tss_enrichment` (MACS2-free, Java-free).
+- **Enhancer-to-gene linking** (`rustscenic.enhancer.link_peaks_to_genes`)
+  — Pearson / Spearman peak↔gene correlation, chrom-convention normalised.
+- **eRegulon assembly** (`rustscenic.eregulon.build_eregulons`) — three-way
+  intersection of GRN × cistarget × enhancer links.
+- **End-to-end orchestrator** (`rustscenic.pipeline.run`) + bundled TF
+  lists (`rustscenic.data.tfs`) + motif-rankings downloader.
+- **Quickstart** — `python -m rustscenic.quickstart` runs PBMC-3k end-to-end
+  with a synthetic fallback when the network is down.
+
+### Robustness (silent-regression guards closed)
+- Auto-swap ENSEMBL var_names → `var["feature_name"]` (cellxgene convention)
+  — was silently scoring AUCell to zero on Kamath-class data.
+- Auto-dedupe duplicate symbols (sum columns, scanpy/limma `avereps`
+  convention) instead of raising a cryptic `ValueError`.
+- Auto-strip versioned ENSEMBL IDs (`ENSG...7` → `ENSG...`) when no
+  symbol column is present.
+- UCSC vs Ensembl chrom normalisation across peak calling, FRiP,
+  TSS enrichment, and enhancer→gene linking.
+- Species-case mismatch diagnostic (HGNC `SPI1` vs MGI `Spi1`) with
+  one-line fix hint.
+- `diagnose_zero_tf_overlap` emits the actual convention mismatch
+  instead of "check your conventions".
+- `top_frac` validation: `(0, 1]` bounded, warn above `0.3`.
+- Backed AnnData (`read_h5ad(path, backed='r')`) now materialises
+  cleanly in both AUCell and GRN.
+- Dict regulons (`{"R1": [...]}`) supported alongside list of tuples.
+- Scenicplus `TF(+)` / `TF(-)` / `TF_activator` / `TF_extended` polarity
+  suffixes stripped in eRegulon assembly.
+- 6-column strand BED mis-parse detection (warns when the barcode
+  column is near one-per-row).
+- `build_eregulons` warns when > 50% of TFs drop from the intersection.
+- `link_peaks_to_genes` warns before densifying a > 8 GiB matrix.
+- `data.tfs()` accepts `"hs"` / `"human"` / `"hg38"` aliases (same for mouse).
+
+### Validation
+- **Real Kamath 2022 OPC cells** (13,691 × 33,295, cellxgene schema)
+  round-trips ENSEMBL auto-swap, duplicate auto-sum, AUCell non-zero on
+  every regulon, GRN recovers all requested HGNC-symbol TFs. Script:
+  `validation/kamath/validate_kamath_fix.py`.
+
+### Performance
+- **GRN partition-buffer pool** eliminates per-split `Vec<usize>` churn
+  that was causing super-linear scaling on 30k+ cell runs. Measured
+  2.16× faster on Ziegler 30k cells, slope restored to linear (CI
+  regression test enforces `O(N_cells)` slope ≤ 1.30).
+
+### Cleanup
+- Removed dead `rustscenic-cli` stub crate and unused `rustscenic-core`
+  scaffold crate (four placeholder dependencies, zero imports).
+- Completed PyO3 type stubs for the preproc bindings.
+
+### Workflow
+- Nightly `nightly-real-data.yml` CI runs the Kamath end-to-end
+  validation weekly — catches cellxgene schema drift / URL rot.
+
 ## 0.1.0 — 2026-04-19
 
 Initial release. All four SCENIC+ slow stages reimplemented in Rust + PyO3:

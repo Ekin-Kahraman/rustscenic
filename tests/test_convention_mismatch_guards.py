@@ -213,11 +213,10 @@ def test_full_pipeline_survives_both_chrom_and_var_names_conventions():
             rna, atac, gene_coords, max_distance=1_000_000, min_abs_corr=0.3,
         )
 
-    # Chroms between peaks ("1") and gene_coords ("chr1") are a conscious
-    # mismatch the enhancer linker doesn't normalise today — it's a TODO.
-    # But the RNA-side var_names resolver should have fired.
-    # We verify that at minimum, aucell on the cellxgene RNA still works
-    # (which is the "Fuaad" scenario specifically).
+    # Chroms between peaks ("1") and gene_coords ("chr1") are normalised
+    # in the enhancer linker (PR #29) so peak↔gene joins still work across
+    # UCSC/Ensembl. Additionally verify AUCell on the cellxgene RNA works —
+    # the original Fuaad scenario.
     auc = rustscenic.aucell.score(
         rna, [("R_latent_A", ["SYM0", "SYM1", "SYM2", "SYM3"])], top_frac=0.3,
     )
