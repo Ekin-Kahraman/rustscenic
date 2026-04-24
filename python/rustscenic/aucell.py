@@ -103,6 +103,12 @@ def score(
     # alongside the AUC matrix and also warn on poor overlap.
     reg_pairs: list[tuple[str, list[str]]] = []
 
+    # Accept both forms the docstring advertises:
+    #   - list of (name, genes) tuples / pyscenic Regulon objects
+    #   - dict mapping name -> genes
+    if isinstance(regulons, dict):
+        regulons = list(regulons.items())
+
     dropped_empty = 0
     for reg in regulons:
         name, genes = _coerce_regulon(reg)
@@ -184,7 +190,22 @@ def _coerce(expression):
     import scipy.sparse as sp
     from rustscenic._gene_resolution import resolve_gene_names
     if hasattr(expression, "X") and hasattr(expression, "var_names"):
-        X = expression.X
+        # Backed AnnData (read_h5ad(..., backed='r')) exposes X as an
+        # anndata `_CSRDataset` / `_CSCDataset`, neither a numpy array nor
+        # a scipy.sparse matrix. Materialise it so downstream ops work.
+        if not hasattr(expression, "isbacked") or not expression.isbacked:
+            X = expression.X
+        else:
+            import warnings
+            warnings.warn(
+                "AnnData is backed (disk-resident). Materialising X to a "
+                "sparse matrix in memory — if this OOMs, subset cells or "
+                "genes before passing to rustscenic.",
+                UserWarning, stacklevel=3,
+            )
+            X = expression.X[:]  # anndata backed → scipy.sparse
+            if sp.issparse(X) and not isinstance(X, sp.csr_matrix):
+                X = X.tocsr()
         if not sp.issparse(X):
             X = np.asarray(X)
         return X, resolve_gene_names(expression), list(expression.obs_names)

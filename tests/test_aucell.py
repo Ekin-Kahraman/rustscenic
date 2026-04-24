@@ -144,3 +144,39 @@ def test_aucell_top_frac_high_warns():
         aucell.score(df, [("R", ["a", "b"])], top_frac=0.5)
     msgs = [str(w.message) for w in caught]
     assert any("top_frac=0.5" in m and "unusually high" in m for m in msgs)
+
+
+def test_aucell_accepts_dict_regulons():
+    """Docstring advertises dict form; it must actually work."""
+    import numpy as np
+    rng = np.random.default_rng(0)
+    X = rng.random((20, 5)).astype(np.float32)
+    df = pd.DataFrame(X, columns=list("abcde"))
+    auc = aucell.score(df, {"R1": ["a", "b"], "R2": ["c", "d"]}, top_frac=0.2)
+    assert auc.shape == (20, 2)
+    assert set(auc.columns) == {"R1", "R2"}
+
+
+def test_aucell_backed_anndata_materialises_cleanly():
+    """Backed AnnData (read_h5ad(..., backed='r')) must work without
+    a cryptic IndexError — real users use this for large files."""
+    import anndata as ad
+    import numpy as np
+    import scipy.sparse as sp
+    import tempfile, os, warnings
+    rng = np.random.default_rng(0)
+    X = sp.csr_matrix(rng.random((30, 10)).astype(np.float32))
+    adata = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(30)]),
+        var=pd.DataFrame(index=list("abcdefghij")),
+    )
+    with tempfile.TemporaryDirectory() as td:
+        path = os.path.join(td, "small.h5ad")
+        adata.write_h5ad(path)
+        backed = ad.read_h5ad(path, backed="r")
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            auc = aucell.score(backed, [("R", ["a", "b"])], top_frac=0.3)
+        assert auc.shape == (30, 1)
+        assert any("backed" in str(w.message).lower() for w in caught)
