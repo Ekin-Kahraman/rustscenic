@@ -163,7 +163,7 @@ rustscenic cistarget --rankings motifs.feather --regulons grn.parquet --output e
 - `python/rustscenic/` — Python package, CLI entry point, type stubs
 - `examples/pbmc3k_end_to_end.py` — end-to-end script on real PBMC-3k
 - `validation/` — reproducible benchmark scripts + measurement reports for every number above, plus `VALIDATION_SUMMARY.md`
-- `tests/` — pytest suite (34 Python tests) + Rust crate tests (19)
+- `tests/` — pytest suite (106 Python tests) + Rust crate tests (51)
 - `manuscript/` — preprint source
 - `docs/topic-collapse.md` — known algorithmic caveat
 

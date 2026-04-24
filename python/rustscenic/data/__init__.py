@@ -37,9 +37,19 @@ def tfs(species: Literal["hs", "mm"] = "hs") -> list[str]:
     Plain Python list of TF gene symbols, suitable to pass directly as
     the ``tf_names`` argument to ``rustscenic.grn.infer``.
     """
-    filename = {"hs": "allTFs_hg38.txt", "mm": "allTFs_mm.txt"}.get(species)
-    if filename is None:
-        raise ValueError(f"unknown species {species!r} — use 'hs' or 'mm'")
+    # Accept the common long-form aliases the codebase suggests elsewhere
+    # so a user following the species-hint diagnostic doesn't hit a new error.
+    alias = {
+        "hs": "hs", "human": "hs", "homo_sapiens": "hs", "hg38": "hs",
+        "mm": "mm", "mouse": "mm", "mus_musculus": "mm", "mm10": "mm",
+    }
+    canonical = alias.get(str(species).lower())
+    if canonical is None:
+        raise ValueError(
+            f"unknown species {species!r} — use 'hs' / 'human' / 'hg38' "
+            f"for human, 'mm' / 'mouse' / 'mm10' for mouse"
+        )
+    filename = {"hs": "allTFs_hg38.txt", "mm": "allTFs_mm.txt"}[canonical]
     path = _DATA_DIR / filename
     return [ln.strip() for ln in path.read_text().splitlines() if ln.strip()]
 

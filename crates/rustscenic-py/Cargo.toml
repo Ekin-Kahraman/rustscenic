@@ -12,7 +12,6 @@ name = "_rustscenic"
 crate-type = ["cdylib"]
 
 [dependencies]
-rustscenic-core = { path = "../rustscenic-core" }
 rustscenic-grn = { path = "../rustscenic-grn" }
 rustscenic-aucell = { path = "../rustscenic-aucell" }
 rustscenic-topics = { path = "../rustscenic-topics" }

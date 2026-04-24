@@ -23,7 +23,6 @@
 
 pub mod gbm;
 pub mod histogram;
-pub mod importance;
 pub mod rng;
 pub mod tree;
 
