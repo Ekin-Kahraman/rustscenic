@@ -152,8 +152,21 @@ def _coerce_expression(expression):
     """
     from rustscenic._gene_resolution import resolve_gene_names
     if hasattr(expression, "X") and hasattr(expression, "var_names"):
-        # AnnData
-        X = expression.X.toarray() if hasattr(expression.X, "toarray") else np.asarray(expression.X)
+        # AnnData. Handle backed ('r') mode explicitly — _CSRDataset /
+        # _CSCDataset doesn't have .toarray() and np.asarray() on it
+        # returns a 0-d array, triggering a cryptic IndexError downstream.
+        if getattr(expression, "isbacked", False):
+            import warnings
+            warnings.warn(
+                "AnnData is backed (disk-resident). Materialising X to "
+                "dense in memory for GRN — if this OOMs, subset cells "
+                "or genes before passing to rustscenic.grn.infer.",
+                UserWarning, stacklevel=3,
+            )
+            X_raw = expression.X[:]
+        else:
+            X_raw = expression.X
+        X = X_raw.toarray() if hasattr(X_raw, "toarray") else np.asarray(X_raw)
         gene_names = resolve_gene_names(expression)
         return X, gene_names
     if isinstance(expression, pd.DataFrame):
