@@ -459,3 +459,36 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path):
     assert result.cistarget_path.exists()
     assert result.enhancer_links_path.exists()
     assert result.eregulons_path.exists()
+    assert result.n_eregulons is not None
+
+    # Region-only should also work. The exact region-cistarget path must
+    # not accidentally depend on gene-based motif rankings having run
+    # first; real SCENIC+ users may bring only region ranking DBs for
+    # eRegulon assembly.
+    out_region_only = tmp_path / "pipeline_region_only"
+    region_only = rustscenic.pipeline.run(
+        rna,
+        out_region_only,
+        fragments=str(frag_path),
+        peaks=str(peaks_path),
+        tfs=["G000", "G005", "G010"],
+        motif_rankings=None,
+        region_motif_rankings=region_rankings,
+        gene_coords=gene_coords,
+        grn_n_estimators=15,
+        grn_top_targets=10,
+        topics_n_topics=5,
+        topics_n_passes=2,
+        cistarget_top_frac=0.3,
+        cistarget_auc_threshold=0.0,
+        enhancer_min_abs_corr=0.15,
+        eregulon_min_target_genes=2,
+        eregulon_min_enhancer_links=1,
+        seed=0,
+        verbose=False,
+    )
+    assert region_only.cistarget_path is not None
+    assert region_only.cistarget_path.exists()
+    assert region_only.eregulons_path is not None
+    assert region_only.eregulons_path.exists()
+    assert region_only.n_eregulons is not None
