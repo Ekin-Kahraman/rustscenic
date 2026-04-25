@@ -1,0 +1,86 @@
+# 5-minute tester quickstart
+
+For collaborators trying rustscenic on their own data. The goal of
+this page is to get you from **`pip install`** to **first useful
+output** in under five minutes, and to tell you exactly what to send
+back if anything is off.
+
+## Install
+
+```bash
+pip install --upgrade git+https://github.com/Ekin-Kahraman/rustscenic@v0.2.0
+```
+
+Wheels are also at the [v0.2.0 release page](https://github.com/Ekin-Kahraman/rustscenic/releases/tag/v0.2.0)
+if your network can't pull from git directly.
+
+Requires Python 3.10–3.13. Linux + macOS only (Windows untested).
+Brings four runtime deps: numpy, pandas, pyarrow, scipy.
+
+## RNA-only smoke test (10 lines)
+
+If you have a scRNA AnnData and a TF list, this is the smallest run
+that exercises GRN + AUCell:
+
+```python
+import anndata as ad
+import rustscenic.grn
+import rustscenic.aucell
+
+adata = ad.read_h5ad("your_data.h5ad")
+tfs = ["SPI1", "PAX5", "TCF7"]   # or rustscenic.data.tfs("human")
+
+grn = rustscenic.grn.infer(adata, tf_names=tfs, n_estimators=50)
+regulons = [(tf, grn[grn.TF == tf].nlargest(20, "importance").target.tolist())
+            for tf in tfs]
+auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
+print(auc.head(), auc.attrs["regulon_coverage"])
+```
+
+If `auc.attrs["regulon_coverage"]` shows `0/N` for any regulon,
+that's a coverage warning — paste the warning text and the regulon
+name back to me and I'll tell you why.
+
+## What to expect on cellxgene-format AnnData
+
+If `adata.var_names[0]` looks like `ENSG00000…`, rustscenic prints:
+
+```
+UserWarning: var_names look like ENSEMBL IDs (e.g. 'ENSG…'); using
+`var['feature_name']` for gene-symbol matching (cellxgene/10x
+convention). First three swaps: [(...), (...), (...)]
+```
+
+That's the auto-swap firing. If it doesn't fire on data you know is
+ENSEMBL, that's a bug — please report.
+
+## Datasets I've already validated against
+
+- **Kamath et al. 2022** (cellxgene asset
+  `f25a8375-1db5-49a0-9c85-b72dbe5e2a92`, OPC cells, 13,691 × 33,295).
+  Validation script: `validation/kamath/validate_kamath_fix.py`. If
+  you want to reproduce or compare against this baseline, run that
+  script first.
+- **Ziegler 2021** airway atlas (scaling benchmark, 1k → 50k cells).
+
+If you pick a dataset I haven't tested yet, that's exactly what we
+want — the gaps left in our coverage are dataset-shape-specific.
+
+## What to send back
+
+If the run looks wrong, please paste:
+1. The exact `pip install` line you ran (so we know which version)
+2. The shape: `print(adata.shape, adata.X.dtype)`
+3. The first ~20 lines of `var_names` and the columns of `adata.var`
+4. **All warning text** that came out of the rustscenic call
+5. The output of the function — first few rows + `.shape`
+
+Then I can usually tell you within an hour whether it's a known
+class of bug, a config issue on your side, or something new for me
+to fix.
+
+## Where to ask
+
+Post in our Slack thread — quickest. Or open a GitHub issue at
+[Ekin-Kahraman/rustscenic/issues](https://github.com/Ekin-Kahraman/rustscenic/issues)
+if it's a clear repro you want tracked.

@@ -159,7 +159,7 @@ rustscenic cistarget --rankings motifs.feather --regulons grn.parquet --output e
 
 ## Repo layout
 
-- `crates/` — Rust workspace: `rustscenic-{core, grn, aucell, topics, py, cli}`
+- `crates/` — Rust workspace: `rustscenic-{grn, aucell, topics, preproc, py}`
 - `python/rustscenic/` — Python package, CLI entry point, type stubs
 - `examples/pbmc3k_end_to_end.py` — end-to-end script on real PBMC-3k
 - `validation/` — reproducible benchmark scripts + measurement reports for every number above, plus `VALIDATION_SUMMARY.md`
