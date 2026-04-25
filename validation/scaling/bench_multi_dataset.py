@@ -28,6 +28,7 @@ import pandas as pd
 import scipy.sparse as sp
 
 HERE = Path(__file__).parent
+DATA_DIR = HERE.parent / "multi_dataset"
 
 
 def rss_gb() -> float:
@@ -75,7 +76,7 @@ DATASETS = [
     {
         "label": "S_mouse_ovary",
         "tier": "S (1.2k mouse cellxgene)",
-        "loader": lambda: ad.read_h5ad(HERE / "mouse_ovary.h5ad"),
+        "loader": lambda: ad.read_h5ad(DATA_DIR / "mouse_ovary.h5ad"),
         "tfs": ("mouse", ["Pax5", "Spi1", "Tcf7", "Gata1", "Sox2", "Foxj1"]),
     },
     {
@@ -93,7 +94,7 @@ DATASETS = [
     {
         "label": "L_tabsap_intestine",
         "tier": "L 30.1k human cellxgene",
-        "loader": lambda: ad.read_h5ad(HERE / "tabsap_intestine.h5ad"),
+        "loader": lambda: ad.read_h5ad(DATA_DIR / "tabsap_intestine.h5ad"),
         "tfs": ("human", ["SPI1", "PAX5", "TCF7", "CEBPB", "GATA3", "FOXJ1"]),
     },
 ]
@@ -212,8 +213,9 @@ def main() -> int:
     for row in rows:
         print(f"{row[0]:<20s} {row[1]:<32s} {row[2]:<8s} {row[3]:<8s} {row[4]:<6s} {row[5]}")
 
-    (HERE / "results.json").write_text(json.dumps(results, indent=2, default=str))
-    print(f"\nresults → {HERE / 'results.json'}")
+    out_path = DATA_DIR / "results.json"
+    out_path.write_text(json.dumps(results, indent=2, default=str))
+    print(f"\nresults → {out_path}")
     return 0
 
 

@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Rust](https://img.shields.io/badge/Rust-stable-orange)](https://www.rust-lang.org/)
 
-A Rust + PyO3 reimplementation of the SCENIC / SCENIC+ single-cell regulatory-network pipeline, shipped as one pip-installable wheel.
+A Rust + PyO3 reimplementation of the slow CPU stages in the SCENIC / SCENIC+ single-cell regulatory-network workflow, shipped as one installable Python package.
 
 ```bash
 # Universal source install while PyPI trusted-publishing is being configured:
@@ -22,7 +22,7 @@ Four runtime dependencies (numpy, pandas, pyarrow, scipy). Python 3.10–3.13, L
 
 ## What it does
 
-Rust-native replacements for the compute stages plus the glue that scenicplus builds eRegulons from:
+Rust-native replacements for the compute stages plus the glue that scenicplus builds eRegulons from. The RNA SCENIC path is the most mature; SCENIC+ eRegulons are usable for collaborator testing, with strict region-cistarget parity still pending.
 
 | Stage | **rustscenic** | Replaces |
 |---|---|---|
@@ -66,7 +66,7 @@ Same input on both sides. Every row has a log file under [`validation/`](validat
 
 | Axis | pyscenic / arboreto | **rustscenic** |
 |---|---|---|
-| Installs on fresh Python 3.12 venv (2026-04) | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` | `pip install` succeeds; all 4 stages import |
+| Installs on fresh Python 3.10–3.13 venv (2026-04) | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` in current stacks | GitHub Release wheels and source install succeed; all 4 core stages import |
 | AUCell wall-time, Ziegler 2021 atlas (31,602 × 59) | 6.81 s (pyscenic) | 0.25 s |
 | AUCell wall-time, 10x Multiome (10,290 × 1,457) | 18.6 s (pyscenic) | 0.21 s |
 | Peak RSS, 4 stages on 100,000 cells × 20,292 genes | > 40 GB (reported) | 6.3 GB |

@@ -233,7 +233,7 @@ def cmd_cistarget(args: argparse.Namespace) -> int:
 
 
 def cmd_pipeline(args: argparse.Namespace) -> int:
-    """End-to-end: preproc + topics + grn + cistarget + aucell, one call."""
+    """Run available stages: preproc + topics + grn + cistarget + aucell."""
     from . import pipeline
 
     if (args.fragments is None) != (args.peaks is None):
@@ -302,7 +302,7 @@ def main(argv: list[str] | None = None) -> int:
 
     pp = sub.add_parser(
         "pipeline",
-        help="End-to-end SCENIC+ (preproc + topics + grn + cistarget + aucell)",
+        help="Pipeline runner (preproc + topics + grn + cistarget + aucell)",
     )
     pp.add_argument("--rna", required=True, help="RNA expression (.h5ad)")
     pp.add_argument("--output", required=True, help="Output directory for all artifacts")

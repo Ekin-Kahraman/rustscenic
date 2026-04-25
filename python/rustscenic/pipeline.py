@@ -1,10 +1,10 @@
-"""End-to-end SCENIC+ orchestrator.
+"""End-to-end rustscenic stage orchestrator.
 
 Public API:
     rustscenic.pipeline.run(rna, output_dir, *, fragments=None, peaks=None,
                             tfs=None, motif_rankings=None, ...) -> PipelineResult
 
-One call runs every SCENIC+ stage the user provides input for:
+One call runs every rustscenic stage the user provides input for:
 
     1. preproc  (fragments + peaks)      → cells × peaks AnnData
     2. topics   (cells × peaks AnnData)  → cell-topic + topic-peak matrices
@@ -86,7 +86,7 @@ def run(
     seed: int = 777,
     verbose: bool = True,
 ) -> PipelineResult:
-    """Run the full SCENIC+ pipeline end-to-end.
+    """Run the available rustscenic stages end-to-end.
 
     The workflow runs only the stages the user supplies inputs for. At
     minimum, ``rna`` is required (for GRN + AUCell). Providing
@@ -118,8 +118,9 @@ def run(
         to a parquet/csv file with the same shape. When supplied
         alongside ``fragments`` + ``peaks``, the orchestrator runs
         ``rustscenic.enhancer.link_peaks_to_genes`` and (if cistarget
-        also ran) ``rustscenic.eregulon.build_eregulons`` — closing the
-        SCENIC+ pipeline rather than stopping at AUCell.
+        also ran) ``rustscenic.eregulon.build_eregulons``. Current
+        eRegulons use a gene-based cistarget bridge onto linked peaks;
+        strict scenicplus region-cistrome parity is still pending.
 
     Returns
     -------

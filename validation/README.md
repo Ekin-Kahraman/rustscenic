@@ -26,8 +26,8 @@ filesystem (`/Users/ekin/rustscenic/validation/reference/data/...`). These
 are the original research scripts committed for reproducibility, **not**
 user-facing entry points — if you want to regenerate numbers on your own
 environment, you will need to adapt the paths. The rustscenic package
-itself (what `pip install rustscenic` gives you) does not contain any
-hardcoded paths.
+itself (GitHub Release wheel / source install today, PyPI once live)
+does not contain any hardcoded paths.
 
 For user-facing pipelines, see `examples/pbmc3k_end_to_end.py` in the
 repo root — that script downloads its own data and has zero hardcoded

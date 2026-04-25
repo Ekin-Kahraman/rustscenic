@@ -4,7 +4,8 @@ Moha flagged on 2026-04-20 that the current rustscenic pipeline starts
 at the cell × peak matrix. In a real scATAC workflow, the expensive,
 install-heavy work happens *before* that point: parsing fragments,
 calling peaks, building the matrix. Absorbing this into rustscenic
-collapses the full SCENIC+ install story to one `pip install`.
+collapses most of the SCENIC+ ATAC install story into the same
+GitHub wheel/source install used for the RNA stages.
 
 This doc maps pycisTopic's preprocessing surface to what rustscenic
 needs to implement, and flags which pieces are Rust-shaped and which
@@ -44,12 +45,15 @@ Source: `aertslab/pycisTopic/src/pycisTopic/` on GitHub.
 ## What rustscenic currently takes as input
 
 `rustscenic.topics.fit` accepts an `AnnData` with cells × peaks as its
-`.X` (peaks in `.var_names`). Everything above — the journey from
-`fragments.tsv.gz` to that matrix — is on the user today.
+`.X` (peaks in `.var_names`). `rustscenic.preproc` can now build that
+matrix from `fragments.tsv[.gz]` plus a peak BED, compute FRiP / TSS /
+insert-size QC, and call MACS2-free consensus peaks. The remaining
+gap is real-data validation against MACS2 / ENCODE peak sets, not
+missing API surface.
 
 ## Proposed rustscenic scope (two tiers)
 
-### Tier 1 — Fragment I/O + QC + matrix construction (Rust-native)
+### Tier 1 — Fragment I/O + QC + matrix construction (Rust-native) — shipped
 
 Implement in Rust. These are I/O-and-counting workloads that Rust
 flattens:
@@ -98,17 +102,12 @@ result = rustscenic.preproc.fragments_to_matrix(
 # QC metrics in .obs, peak info in .var.
 ```
 
-### Tier 2 — Peak calling (delegate)
+### Tier 2 — Peak calling — shipped, reference cross-check pending
 
-Don't rebuild. Two options, user picks:
-
-- **Option A — wrap MACS2 via `subprocess`:** adds macs2 as an optional
-  Python dep. One `pip install` + one command. Fine for a laptop.
-- **Option B — port iterative peak calling from pycisTopic:** pure
-  Python/Rust, no external binary. More work, but fully self-contained.
-
-Recommendation: Option A for v0.2 (fast), Option B as a follow-up
-when there's bandwidth. Document the MACS2 extra clearly.
+rustscenic now ships the self-contained Corces-2018-style
+density-window / iterative consensus peak caller. It does not shell out
+to MACS2. The next validation step is to benchmark its output against
+MACS2 broadPeak files on real ENCODE / 10x multiome fragments.
 
 ## What stays out of scope
 
@@ -128,18 +127,17 @@ pip install pycisTopic          # breaks on modern Python
 pip install macs2               # needs numpy + conda-ish
 ```
 
-After Tier 1:
+After v0.2:
 ```
 pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.2.0
                                 # covers 4 SCENIC+ compute stages
                                 # + fragment I/O, QC, matrix build
-pip install macs2               # only if user does their own
-                                # peak calling (Option A)
+                                # + MACS2-free consensus peak calling
 ```
 
-After Tier 2 (optional, further):
+After PyPI setup:
 ```
-pip install rustscenic          # full end-to-end, no MACS2 once PyPI is live
+pip install rustscenic          # same package, once PyPI is live
 ```
 
 ## Dependencies by tier
