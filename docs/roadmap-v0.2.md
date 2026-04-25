@@ -1,4 +1,4 @@
-# Roadmap to v0.2.0
+# Roadmap after v0.2.0
 
 Prioritised from the two-round forward audit (docs/independent-debate.md
 + the v2 audit findings). Ordered by value-per-effort.
@@ -14,9 +14,9 @@ work of the last two days made official.
 - [x] Type stubs complete
 - [x] Kamath real-data validation scripted
 - [x] Nightly CI job in place
-- [ ] **Version bump**: atomic `0.1.0 → 0.2.0` in
+- [x] **Version bump**: atomic `0.1.0 → 0.2.0` in
       `Cargo.toml` / `pyproject.toml` / `README.md:12` / `audit.yml:57`
-- [ ] **Release tag** + GitHub Release with wheels
+- [x] **Release tag** + GitHub Release with wheels
 - [ ] **PyPI publish** (blocked on user-side: PyPI trusted-publisher
       config. Fallback: GitHub Release wheels + `pip install git+...`)
 
@@ -102,8 +102,9 @@ don't want to assemble stages themselves.
   A broken `pip install rustscenic` from PyPI is worse than a working
   `pip install git+...`.
 
-## Today (2026-04-24)
+## Today (2026-04-25)
 
-18 PRs merged this week. Silent-zero class fully closed on the
-datasets we tested. Fuaad unblocked. Next concrete action:
-ship v0.2.0.
+v0.2.0 is tagged and GitHub Release wheels are published. Silent-zero
+class is closed on the datasets we tested. Next concrete action:
+prove a real 100k-cell multiome end-to-end run and reduce full-TF GRN
+runtime for collaborator-facing workflows.

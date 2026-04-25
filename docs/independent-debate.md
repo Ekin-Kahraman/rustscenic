@@ -71,21 +71,20 @@ only if rustscenic emits a warning when the cut gets catastrophic.
 `len(eregulons) < 0.5 × len(unique_cistarget_tfs)`, and document the
 threshold-tuning path.
 
-## 4. "one pip install" is from a GitHub Release, not PyPI
+## 4. "one install" is from GitHub, not PyPI yet
 
 PyPI trusted-publisher config requires the user's PyPI account state.
-We documented the GitHub Release wheel URL in README as the short-term
-install path. The URL works (HTTP 200, 502 KB, tested Apr 23). But:
+The short-term install path is GitHub: either `pip install git+...@v0.2.0`
+or a platform-specific wheel from the v0.2.0 Release. But:
 - `pip install rustscenic` from PyPI returns nothing yet.
-- The Release wheel name is platform-locked (`manylinux_2_17_x86_64`)
-  and won't install on macOS aarch64 without the matching wheel.
-- We publish 3 wheels per release but the README shows only one — users
-  on Apple Silicon have to click through to find theirs.
+- Release wheel names are platform-locked. Users need the matching
+  macOS / Linux, x86_64 / aarch64 wheel.
+- The release workflow must keep publishing GitHub Release assets even
+  while PyPI remains gated.
 
 **Gap to close:** either (a) resolve PyPI trusted-publishing config
-(user action), or (b) rewrite the README install section to point at
-`pip install git+https://github.com/.../rustscenic@v0.1.0` as the
-recommended path and link the Release page for wheel downloads.
+(user action), or (b) keep GitHub Release wheels as the official
+distribution path and keep README examples platform-specific.
 
 ## 5. Scaling proof covers GRN only
 
