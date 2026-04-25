@@ -12,7 +12,12 @@ use rand::RngCore;
 
 pub const MAX_BINS: usize = 255; // fits in u8 with 0 reserved as "unassigned"
 
-/// Column-major binned features. `bins[s * n_features + f]` = bin index of sample s on feature f.
+/// Column-major binned features. `bins[f * n_samples + s]` = bin index of
+/// sample s on feature f. Column-major because the dominant op (NodeHist
+/// accumulate, tree partition) reads one feature's column at a time —
+/// row-major would stride by n_features bytes per access and trash the
+/// cache. Switching to column-major fits each column in L1/L2 for the
+/// typical (3k–100k samples × 30k features) shape.
 pub struct BinnedMatrix {
     pub bins: Vec<u8>,
     pub n_samples: usize,
@@ -67,11 +72,14 @@ impl BinnedMatrix {
 
             n_bins_per_feature[f] = (edges.len() + 1) as u16;
 
-            // Assign bins via binary search on edges
+            // Assign bins via binary search on edges. Writes go into the
+            // column-major slot `bins[f * n_samples + s]` so each feature's
+            // bin column lives contiguously.
+            let col_base = f * n_samples;
             for s in 0..n_samples {
                 let v = x[s * n_features + f];
                 let b = edges.partition_point(|&e| e < v);
-                bins[s * n_features + f] = b.min(MAX_BINS - 1) as u8;
+                bins[col_base + s] = b.min(MAX_BINS - 1) as u8;
             }
         }
 
@@ -115,9 +123,13 @@ impl NodeHist {
         sample_idx: &[usize],
     ) {
         self.clear();
-        let nf = binned.n_features;
+        // Column-major: feature's bin column lives at [base, base+n_samples).
+        // The whole column fits in L1/L2 for typical (≤100k samples × 1B
+        // each) shapes, so each `bins[base + s]` access hits cache once.
+        let base = feature * binned.n_samples;
+        let col = &binned.bins[base..base + binned.n_samples];
         for &s in sample_idx {
-            let b = binned.bins[s * nf + feature] as usize;
+            let b = col[s] as usize;
             let yv = y[s];
             self.sum_y[b] += yv;
             self.sum_y_sq[b] += yv * yv;
