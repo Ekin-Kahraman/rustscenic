@@ -35,8 +35,17 @@ def main() -> int:
     print(f"  X dtype: {adata.X.dtype}")
     print(f"  X max: {float(adata.X.max() if not hasattr(adata.X, 'data') else adata.X.data.max()):.1f}")
 
-    # Pick gene-relevant TFs likely to be present
-    candidate_tfs = ["SPI1", "PAX5", "TCF7", "CEBPB", "GATA3", "FOXP3"]
+    # By default scan a curated 50-TF list (production-realistic); pass
+    # `--tfs short` to use the 6-TF check that backs PR #50's slope claim.
+    import argparse
+    p = argparse.ArgumentParser()
+    p.add_argument("--tfs", choices=["short", "fifty"], default="fifty")
+    args = p.parse_args()
+    if args.tfs == "short":
+        candidate_tfs = ["SPI1", "PAX5", "TCF7", "CEBPB", "GATA3", "FOXP3"]
+    else:
+        import rustscenic.data
+        candidate_tfs = rustscenic.data.tfs("human")[:50]
 
     rng = np.random.default_rng(0)
     cell_counts = [2_000, 5_000, 10_000, 20_000, 40_000]
