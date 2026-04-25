@@ -27,3 +27,4 @@ docs/specs/
 # that don't belong in a public repo.
 AGENTS.md
 validation/real_multiome/
+validation/multi_dataset/
