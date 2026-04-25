@@ -143,39 +143,39 @@ pub fn tss_enrichment(
     let mut flank_counts: Vec<u64> = vec![0; n_barcodes];
 
     // Resolve TSS chroms into fragment's chrom index space once.
-    // For each TSS, find the matching chrom_idx in the fragment table
-    // (or None if the chrom isn't present).
+    // Build per-chrom sorted-site arrays so the per-fragment binary
+    // search can index by chrom_idx directly. Replaces the previous
+    // `for chrom: for fragment` nested loop (O(n_chroms × n_fragments)).
     let tss_by_chrom = group_tss_by_chrom(table, tss_sites);
+    let n_chroms = table.n_chroms();
+    let mut sorted_sites_by_chrom: Vec<Vec<u32>> =
+        (0..n_chroms).map(|_| Vec::new()).collect();
+    for (chrom_idx, mut sites) in tss_by_chrom {
+        sites.sort_unstable();
+        sorted_sites_by_chrom[chrom_idx as usize] = sites;
+    }
 
-    for (chrom_idx, site_positions) in tss_by_chrom {
-        if site_positions.is_empty() {
+    // Single pass over fragments: dispatch to the matching chrom's
+    // sorted TSS list and accumulate.
+    for i in 0..table.len() {
+        let chrom_idx = table.chrom_idx[i] as usize;
+        let sorted_sites = &sorted_sites_by_chrom[chrom_idx];
+        if sorted_sites.is_empty() {
             continue;
         }
-        let mut sorted_sites = site_positions;
-        sorted_sites.sort_unstable();
-
-        // Iterate fragments on this chromosome. For each fragment, add 1
-        // to center_counts[bc] and flank_counts[bc] for every TSS the
-        // fragment overlaps the center/flank window of. Binary search in
-        // the sorted TSS list bounds the work.
-        for i in 0..table.len() {
-            if table.chrom_idx[i] != chrom_idx {
-                continue;
-            }
-            let frag_start = table.start[i];
-            let frag_end = table.end[i];
-            let bc = table.barcode_idx[i] as usize;
-            accumulate_tss_overlap(
-                frag_start,
-                frag_end,
-                &sorted_sites,
-                CENTER_HALFWIDTH,
-                FLANK_HALFWIDTH,
-                bc,
-                &mut center_counts,
-                &mut flank_counts,
-            );
-        }
+        let frag_start = table.start[i];
+        let frag_end = table.end[i];
+        let bc = table.barcode_idx[i] as usize;
+        accumulate_tss_overlap(
+            frag_start,
+            frag_end,
+            sorted_sites,
+            CENTER_HALFWIDTH,
+            FLANK_HALFWIDTH,
+            bc,
+            &mut center_counts,
+            &mut flank_counts,
+        );
     }
 
     (0..n_barcodes)

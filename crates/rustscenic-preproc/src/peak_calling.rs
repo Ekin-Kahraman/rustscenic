@@ -113,6 +113,47 @@ pub fn call_peaks_from_pseudobulks(
     // tiling correctly without needing an external chrom-sizes BED.
     let chrom_extents = compute_chrom_extents(fragments);
 
+    // Single pass over fragments: bucket each insertion into the
+    // matching (cluster, chrom, bin). Replaces the previous nested loop
+    // `for cluster: for chrom: for fragment` which scaled
+    // O(clusters × chroms × n_fragments). Now O(n_fragments) up front
+    // plus O(clusters × chroms × n_windows) for the merge phase.
+    let mut window_counts_by_pair: Vec<Vec<Vec<u32>>> = (0..n_clusters)
+        .map(|_| {
+            (0..n_chroms)
+                .map(|c| {
+                    let max_pos = chrom_extents[c];
+                    if max_pos == 0 {
+                        Vec::new()
+                    } else {
+                        vec![0u32; ((max_pos / ws) + 1) as usize]
+                    }
+                })
+                .collect()
+        })
+        .collect();
+
+    for i in 0..fragments.len() {
+        let bc = fragments.barcode_idx[i] as usize;
+        let cluster = cluster_per_barcode[bc];
+        if (cluster as usize) >= n_clusters {
+            continue;
+        }
+        let chrom_idx = fragments.chrom_idx[i] as usize;
+        let bins = &mut window_counts_by_pair[cluster as usize][chrom_idx];
+        if bins.is_empty() {
+            continue;
+        }
+        let s_bin = (fragments.start[i] / ws) as usize;
+        let e_bin = (fragments.end[i].saturating_sub(1) / ws) as usize;
+        if s_bin < bins.len() {
+            bins[s_bin] = bins[s_bin].saturating_add(1);
+        }
+        if e_bin != s_bin && e_bin < bins.len() {
+            bins[e_bin] = bins[e_bin].saturating_add(1);
+        }
+    }
+
     let mut all_candidates: Vec<CandidatePeak> = Vec::new();
 
     for cluster_id in 0..n_clusters as u32 {
@@ -121,31 +162,13 @@ pub fn call_peaks_from_pseudobulks(
             if max_pos == 0 {
                 continue;
             }
-            let n_windows = ((max_pos / ws) + 1) as usize;
-            let mut window_counts = vec![0u32; n_windows];
-
-            // Count insertions from this cluster's barcodes on this chrom.
-            // ATAC treats BOTH fragment ends as insertion events; count each.
-            for i in 0..fragments.len() {
-                if fragments.chrom_idx[i] != chrom_idx {
-                    continue;
-                }
-                let bc = fragments.barcode_idx[i] as usize;
-                if cluster_per_barcode[bc] != cluster_id {
-                    continue;
-                }
-                let s_bin = (fragments.start[i] / ws) as usize;
-                let e_bin = (fragments.end[i].saturating_sub(1) / ws) as usize;
-                if s_bin < window_counts.len() {
-                    window_counts[s_bin] = window_counts[s_bin].saturating_add(1);
-                }
-                if e_bin != s_bin && e_bin < window_counts.len() {
-                    window_counts[e_bin] = window_counts[e_bin].saturating_add(1);
-                }
+            let window_counts = &window_counts_by_pair[cluster_id as usize][chrom_idx as usize];
+            if window_counts.is_empty() {
+                continue;
             }
 
             // Cluster-specific significance threshold.
-            let threshold = quantile_of_nonzero(&window_counts, cfg.quantile_threshold)
+            let threshold = quantile_of_nonzero(window_counts, cfg.quantile_threshold)
                 .max(min_count);
 
             // Mark windows above threshold, merge consecutive ones

@@ -58,12 +58,13 @@ _AERTSLAB_RANKINGS_BASE = "https://resources.aertslab.org/cistarget/databases"
 
 
 def download_motif_rankings(
-    species: Literal["hs", "mm"] = "hs",
-    genome: str = "hg38",
+    species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
+    genome: Optional[str] = None,
     version: str = "v10nr_clust_public",
     region: str = "gene_based",
     score_type: str = "rankings",
     cache_dir: Optional[Path] = None,
+    filename: Optional[str] = None,
     verbose: bool = True,
 ):
     """Download (and cache) an aertslab motif-ranking database.
@@ -75,9 +76,11 @@ def download_motif_rankings(
     Parameters
     ----------
     species
-        ``"hs"`` or ``"mm"``.
+        ``"hs"`` / ``"human"`` / ``"hg38"`` for human, or
+        ``"mm"`` / ``"mouse"`` / ``"mm10"`` for mouse.
     genome
-        e.g. ``"hg38"`` (with species="hs") or ``"mm10"`` (with species="mm").
+        Defaults to ``"hg38"`` for human, ``"mm10"`` for mouse. Override
+        if you want a different aertslab DB build.
     version
         aertslab DB version string, e.g. ``"v10nr_clust_public"``.
     region
@@ -87,6 +90,10 @@ def download_motif_rankings(
         ``"rankings"`` for cistarget; ``"scores"`` for alternate analyses.
     cache_dir
         Override the default cache directory.
+    filename
+        Escape hatch: pass an aertslab feather filename directly to
+        bypass the canonical-name lookup. Useful when aertslab releases
+        a new build whose name we haven't mapped yet.
 
     Returns
     -------
@@ -97,6 +104,8 @@ def download_motif_rankings(
     -----
     aertslab hosts rankings at ``resources.aertslab.org/cistarget/databases/``.
     See https://resources.aertslab.org/ for the authoritative file list.
+    Mouse (mm10) ranking filenames are best-effort defaults — if a 404
+    fires, pass ``filename=`` explicitly with the exact aertslab name.
     """
     import pandas as pd
     import urllib.request
@@ -106,34 +115,70 @@ def download_motif_rankings(
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
 
+    # Normalise the species alias the same way `tfs()` does so users
+    # following the diagnostic hints from `_gene_resolution` don't hit
+    # an inconsistent error here.
+    species_alias = {
+        "hs": "hs", "human": "hs", "homo_sapiens": "hs", "hg38": "hs",
+        "mm": "mm", "mouse": "mm", "mus_musculus": "mm", "mm10": "mm",
+    }
+    canonical_species = species_alias.get(str(species).lower())
+    if canonical_species is None:
+        raise ValueError(
+            f"unknown species {species!r}. Use 'hs'/'human'/'hg38' for "
+            f"human, 'mm'/'mouse'/'mm10' for mouse."
+        )
+    if genome is None:
+        genome = "hg38" if canonical_species == "hs" else "mm10"
+
     # aertslab paths follow:
     #   <base>/<version>/<genome>/<species>_hgnc__<genome>__<region>__<score_type>.feather
     # e.g. v10nr_clust_public/hg38/hg38_refseq__10kb_up_and_down_tss.regions_vs_motifs.rankings.feather
     # The exact pattern varies by version — resolve at call time.
-    # We do the simplest default: documented filename for v10nr_clust_public hg38 gene-based rankings.
     default_name = {
         ("hs", "hg38", "v10nr_clust_public", "gene_based", "rankings"):
             "hg38_refseq_r80__10kb_up_and_down_tss.genes_vs_motifs.rankings.feather",
         ("hs", "hg38", "v10nr_clust_public", "region_based", "rankings"):
             "hg38_refseq_r80__10kb_up_and_down_tss.regions_vs_motifs.rankings.feather",
+        # Mouse mm10 — naming follows the same aertslab convention. If
+        # the URL 404s, pass `filename=` directly with the exact name
+        # from https://resources.aertslab.org/cistarget/databases/.
+        ("mm", "mm10", "v10nr_clust_public", "gene_based", "rankings"):
+            "mm10_refseq-r80__10kb_up_and_down_tss.genes_vs_motifs.rankings.feather",
+        ("mm", "mm10", "v10nr_clust_public", "region_based", "rankings"):
+            "mm10_refseq-r80__10kb_up_and_down_tss.regions_vs_motifs.rankings.feather",
     }
-    key = (species, genome, version, region, score_type)
-    if key not in default_name:
-        raise ValueError(
-            f"no canonical filename mapped for {key!r}. See "
-            f"https://resources.aertslab.org/cistarget/databases/ for the "
-            f"authoritative list and pass the URL by calling "
-            f"`urllib.request.urlretrieve(...)` directly."
-        )
 
-    fname = default_name[key]
+    if filename is not None:
+        fname = filename
+    else:
+        key = (canonical_species, genome, version, region, score_type)
+        if key not in default_name:
+            raise ValueError(
+                f"no canonical filename mapped for {key!r}. See "
+                f"https://resources.aertslab.org/cistarget/databases/ for "
+                f"the authoritative list, then re-call with `filename=...`."
+            )
+        fname = default_name[key]
+
     url = f"{_AERTSLAB_RANKINGS_BASE}/{version}/{genome}/{fname}"
     local_path = cache_dir / fname
 
     if not local_path.exists():
         if verbose:
             print(f"downloading {fname} → {local_path}", flush=True)
-        urllib.request.urlretrieve(url, local_path)
+        try:
+            urllib.request.urlretrieve(url, local_path)
+        except urllib.error.HTTPError as e:
+            # Clean up the partial file so a retry with the right
+            # filename doesn't get short-circuited by the cache check.
+            if local_path.exists():
+                local_path.unlink()
+            raise RuntimeError(
+                f"failed to download {url} ({e}). Check the canonical "
+                f"name at https://resources.aertslab.org/cistarget/databases/ "
+                f"and pass it via `filename=...`."
+            ) from e
 
     return pd.read_feather(local_path).set_index(pd.read_feather(local_path).columns[0])
 

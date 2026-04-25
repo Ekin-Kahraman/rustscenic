@@ -63,26 +63,32 @@ pub fn build_cell_peak_matrix(
     let mut counts: HashMap<(u32, u32), u32> = HashMap::new();
 
     let n_chroms = fragments.n_chroms();
+    // One pass over fragments + peaks to bucket row indices by chrom.
+    // Replaces the previous `for c in 0..n_chroms { fragments.iter().filter ... }`
+    // pattern (O(n_chroms × n_fragments)). Now O(n_fragments + n_peaks)
+    // upfront, plus the per-chrom sort/sweep.
+    let mut frags_by_chrom: Vec<Vec<usize>> = (0..n_chroms).map(|_| Vec::new()).collect();
+    for (i, &cc) in fragments.chrom_idx.iter().enumerate() {
+        frags_by_chrom[cc as usize].push(i);
+    }
+    let mut peaks_by_chrom: Vec<Vec<usize>> = (0..n_chroms).map(|_| Vec::new()).collect();
+    for (i, &m) in peak_chrom_aligned.iter().enumerate() {
+        if let Some(c) = m {
+            peaks_by_chrom[c as usize].push(i);
+        }
+    }
+
     for c in 0..n_chroms as u32 {
-        let frag_rows: Vec<usize> = fragments
-            .chrom_idx
-            .iter()
-            .enumerate()
-            .filter_map(|(i, &cc)| (cc == c).then_some(i))
-            .collect();
-        let peak_rows: Vec<usize> = peak_chrom_aligned
-            .iter()
-            .enumerate()
-            .filter_map(|(i, &m)| (m == Some(c)).then_some(i))
-            .collect();
+        let frag_rows = &frags_by_chrom[c as usize];
+        let peak_rows = &peaks_by_chrom[c as usize];
         if frag_rows.is_empty() || peak_rows.is_empty() {
             continue;
         }
 
-        // Sort by start
-        let mut frags_sorted = frag_rows.clone();
+        // Sort by start (still per-chrom, but on the pre-bucketed slice)
+        let mut frags_sorted: Vec<usize> = frag_rows.clone();
         frags_sorted.sort_by_key(|&i| fragments.start[i]);
-        let mut peaks_sorted = peak_rows.clone();
+        let mut peaks_sorted: Vec<usize> = peak_rows.clone();
         peaks_sorted.sort_by_key(|&i| peaks.start[i]);
 
         // Sorted-sweep: for each peak, find overlapping fragments.
