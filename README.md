@@ -26,7 +26,7 @@ rustscenic is being built as the single-install replacement for the practical SC
 
 The project is intentionally not a thin wrapper around the old stack. The target is a simpler architecture that makes regulatory-network analysis easier to install, cheaper to run on CPU, deterministic under a fixed seed, and robust to real atlas conventions such as ENSEMBL `var_names`, duplicate gene symbols, backed AnnData, and UCSC/Ensembl chromosome mismatches.
 
-v0.2.0 already replaces the main compute stages used by pySCENIC / arboreto / pycisTopic / pycistarget / scenicplus in common Python pipelines. The remaining work is concentrated in known parity gaps: region-level cistarget/cistromes, a Mallet-class ATAC topic model, MACS2 reference cross-checks, and full 100k-cell real multiome validation.
+v0.2.0 already replaces the main compute stages used by pySCENIC / arboreto / pycisTopic / pycistarget / scenicplus in common Python pipelines. Region-based cistarget is wired into eRegulon assembly; the remaining replacement proof is concentrated in Mallet-class ATAC topic modelling, MACS2 reference cross-checks, full 100k-cell real multiome validation, and head-to-head scenicplus parity numbers on real region-ranking databases.
 
 ## What it does
 

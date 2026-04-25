@@ -114,14 +114,18 @@ def run(
         Motif ranking DataFrame, or a path to a parquet / feather file
         with motifs as rows and genes as columns. If provided, cistarget
         runs to filter regulons to motif-enriched TFs.
+    region_motif_rankings
+        Optional region-based motif ranking DataFrame, or path, with motifs
+        as rows and peak / region IDs as columns. When supplied alongside
+        ATAC inputs and gene coordinates, eRegulon assembly uses this exact
+        region-cistarget path instead of the gene-cistarget bridge.
     gene_coords
         DataFrame with columns ``['gene', 'chrom', 'tss']``, or a path
         to a parquet/csv file with the same shape. When supplied
         alongside ``fragments`` + ``peaks``, the orchestrator runs
-        ``rustscenic.enhancer.link_peaks_to_genes`` and (if cistarget
-        also ran) ``rustscenic.eregulon.build_eregulons``. Current
-        eRegulons use a gene-based cistarget bridge onto linked peaks;
-        strict scenicplus region-cistrome parity is still pending.
+        ``rustscenic.enhancer.link_peaks_to_genes`` and, when either
+        gene- or region-based motif rankings are supplied,
+        ``rustscenic.eregulon.build_eregulons``.
 
     Returns
     -------
@@ -268,7 +272,7 @@ def run(
     # ---- 4d. eRegulon assembly (optional, needs grn + cistarget + enhancer) ----
     eregulons_path: Optional[Path] = None
     n_eregulons: Optional[int] = None
-    if enriched is not None and enhancer_links is not None:
+    if enhancer_links is not None and (enriched is not None or region_motif_rankings is not None):
         import rustscenic.eregulon
         log("[5d/8] eRegulons: assembling TF × enhancer × target intersection")
         t0 = time.perf_counter()
@@ -298,32 +302,24 @@ def run(
                 if tf_peaks:
                     peak_regulons.append((f"{tf}_regulon", list(tf_peaks)))
             if peak_regulons:
-                region_enrich = rustscenic.cistarget.enrich(
+                region_enrich, enriched_with_peaks = _region_cistarget_with_peak_ids(
                     region_rankings_df,
                     peak_regulons,
                     top_frac=cistarget_top_frac,
                     auc_threshold=cistarget_auc_threshold,
                 )
-                # Reshape into the (regulon, motif, peak_id, auc) form
-                # build_eregulons expects, attributing peaks via the
-                # surviving region cistarget rows.
-                rows = []
-                for _, row in region_enrich.iterrows():
-                    tf = str(row["regulon"]).replace("_regulon", "")
-                    candidate_peaks = next(
-                        (p for n, p in peak_regulons if n == row["regulon"]),
-                        [],
+                if cistarget_path is None:
+                    cistarget_path = output_dir / "region_cistarget_enriched.parquet"
+                    region_enrich.to_parquet(cistarget_path, index=False)
+                    log(
+                        f"      {len(region_enrich):,} region-enriched pairs → "
+                        f"{cistarget_path.name}"
                     )
-                    for peak in candidate_peaks:
-                        rows.append({
-                            "regulon": row["regulon"],
-                            "motif": row["motif"],
-                            "peak_id": peak,
-                            "auc": row["auc"],
-                        })
-                enriched_with_peaks = pd.DataFrame(rows) if rows else pd.DataFrame(
-                    columns=["regulon", "motif", "peak_id", "auc"]
-                )
+                else:
+                    region_enrich.to_parquet(
+                        output_dir / "region_cistarget_enriched.parquet",
+                        index=False,
+                    )
             else:
                 enriched_with_peaks = pd.DataFrame(
                     columns=["regulon", "motif", "peak_id", "auc"]
@@ -353,7 +349,7 @@ def run(
     elif gene_coords is not None and motif_rankings is not None and not have_atac:
         log("[5d/8] eRegulons: skipped (need ATAC for enhancer linking)")
     elif enriched is None or enhancer_links is None:
-        log("[5d/8] eRegulons: skipped (need cistarget + enhancer links)")
+        log("[5d/8] eRegulons: skipped (need motif rankings + enhancer links)")
 
     # ---- 5. AUCell ----
     log("[6/6] AUCell: per-cell regulon activity")
@@ -369,7 +365,11 @@ def run(
     log(f"      {auc.shape[0]:,} cells × {auc.shape[1]} regulons in {elapsed['aucell']:.1f}s")
 
     # ---- 6. integrate into AnnData ----
-    adata_rna.obs = adata_rna.obs.join(auc, how="left")
+    # Notebook users often re-run the pipeline on the same AnnData object.
+    # Replace previous regulon columns instead of failing on overlap.
+    adata_rna.obs = adata_rna.obs.drop(
+        columns=list(auc.columns), errors="ignore"
+    ).join(auc, how="left")
     integrated_path = output_dir / "rna_with_regulons.h5ad"
     adata_rna.write_h5ad(integrated_path)
     log(f"      integrated → {integrated_path.name}")
@@ -473,6 +473,64 @@ def _attribute_peaks_to_cistarget(
         # Preserve schema so downstream eRegulon validation has columns.
         return pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
     return pd.DataFrame(rows)
+
+
+def _region_cistarget_with_peak_ids(
+    region_rankings: pd.DataFrame,
+    peak_regulons: list[tuple[str, list[str]]],
+    *,
+    top_frac: float,
+    auc_threshold: float,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Run region cistarget and retain the motif-supported peak IDs.
+
+    ``cistarget.enrich`` answers whether a motif is enriched for a peak
+    set, but eRegulon assembly also needs peak identifiers. Keep only
+    peaks from the source peak set that lie inside the motif's top-ranked
+    region window, instead of attributing every linked peak to every
+    enriched motif.
+    """
+    import rustscenic.cistarget
+
+    region_enrich = rustscenic.cistarget.enrich(
+        region_rankings,
+        peak_regulons,
+        top_frac=top_frac,
+        auc_threshold=auc_threshold,
+    )
+    if region_enrich.empty:
+        empty = pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+        return region_enrich, empty
+
+    peak_sets = {name: list(peaks) for name, peaks in peak_regulons}
+    n_regions = region_rankings.shape[1]
+    rank_cutoff = max(1, int(np.ceil(top_frac * n_regions)))
+    rows = []
+    for _, row in region_enrich.iterrows():
+        regulon = str(row["regulon"])
+        motif = row["motif"]
+        if motif not in region_rankings.index:
+            continue
+        motif_ranks = region_rankings.loc[motif]
+        for peak in peak_sets.get(regulon, []):
+            if peak not in motif_ranks.index:
+                continue
+            # Aertslab rankings are lower-is-better. Some fixtures are
+            # 0-based, public databases are typically 1-based; <= cutoff
+            # handles both without dropping the boundary rank.
+            if float(motif_ranks[peak]) <= rank_cutoff:
+                rows.append({
+                    "regulon": regulon,
+                    "motif": motif,
+                    "peak_id": peak,
+                    "auc": row["auc"],
+                })
+
+    if not rows:
+        return region_enrich, pd.DataFrame(
+            columns=["regulon", "motif", "peak_id", "auc"]
+        )
+    return region_enrich, pd.DataFrame(rows)
 
 
 def _peak_coords_from_bed(bed_path, atac_var_names):

@@ -73,9 +73,9 @@ The ambition is full replacement. The risk is not whether we can make a
 demo pass; that is already done. The hard questions are:
 
 1. **Can region-level cistarget/cistromes match scenicplus closely enough
-   to remove the last SCENIC+ parity caveat?** Current eRegulons are built
-   from GRN + enhancer links + a gene-based cistarget bridge. Useful, but
-   not the final replacement contract.
+   on real region-ranking databases?** The exact region-ranking path is
+   now wired into eRegulon assembly. The remaining risk is reference
+   parity on real scenicplus workloads, not missing plumbing.
 2. **Can ATAC topics beat or match Mallet where users actually care: K≥30,
    sparse binary peak matrices, stable topic identities, and good
    coherence?** Online VB currently recovers cell-type structure but
@@ -102,12 +102,10 @@ haven't validated yet:
    diversity. Documented in `docs/topic-collapse.md`. v0.3 candidate
    is a collapsed-Gibbs rewrite; until then we recommend falling back
    to Mallet for K ≥ 30 on scATAC scale.
-2. **SCENIC+ eRegulons need strict region-cistrome parity next**:
-   enhancer→gene linking and the assembly schema are tested end-to-end,
-   but region-level cistarget/cistromes are bridged rather than
-   reproduced. This is the highest-leverage implementation gap because
-   closing it turns rustscenic from a broad compute replacement into a
-   strict scenicplus replacement.
+2. **SCENIC+ eRegulons need real-reference parity numbers next**:
+   enhancer→gene linking, region cistarget, and the assembly schema are
+   tested end-to-end. The next proof point is a direct scenicplus /
+   aertslab-region-ranking comparison on real multiome data.
 3. **GRN per-edge agreement with arboreto** is 0.58 Spearman, not
    1.0. Coarse biology agrees (94% known TF→target edges recovered,
    8/8 lineage TFs correctly enriched), and downstream AUCell is
