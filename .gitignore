@@ -23,3 +23,6 @@ validation/kamath/*.h5ad
 !python/rustscenic/data/
 examples/out/
 docs/specs/
+# Agent briefings stay local — they reference stakeholders and ops detail
+# that don't belong in a public repo.
+AGENTS.md
