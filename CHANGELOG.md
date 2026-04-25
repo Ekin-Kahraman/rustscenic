@@ -83,3 +83,16 @@ Ships as a single `pip install` wheel (maturin + abi3). Runs on Python 3.10–3.
 - **Determinism**: bit-identical output under same seed across all 4 stages.
 
 Full log files under [`validation/ours/`](validation/ours).
+
+## Unreleased
+
+### Performance
+- PyO3 input borrow: `grn_infer` and `aucell_score` now borrow the
+  numpy buffer instead of copying it. Saves ~12 GB instantaneous RSS
+  on a 100k × 30k atlas-scale input.
+
+### Validated
+- **100k cells × 30k genes synthetic atlas-scale end-to-end**:
+  GRN (50 TFs, n_estimators=20) 39.9 min, AUCell (20 regulons) 2.0 min,
+  peak RSS 9.5 GB. Reference scenicplus stack reports > 40 GB at
+  comparable scale. No OOM, no crash.
