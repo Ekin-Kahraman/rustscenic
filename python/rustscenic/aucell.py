@@ -77,6 +77,18 @@ def score(
         )
 
     X_raw, gene_names, cell_names = _coerce(expression)
+    # Warn if the rank-cutoff K = floor(top_frac × n_genes) is so small
+    # that no regulon's members can be inside it. Was a silent-all-zero
+    # mode at very small top_frac on small gene sets.
+    rank_cutoff = int(top_frac * len(gene_names))
+    if rank_cutoff < 1:
+        import warnings
+        warnings.warn(
+            f"top_frac × n_genes = {top_frac} × {len(gene_names)} = "
+            f"{rank_cutoff} — the rank cutoff is below 1, so every AUC "
+            f"will score to 0. Increase top_frac or use a wider gene set.",
+            UserWarning, stacklevel=3,
+        )
     warn_if_likely_unnormalized(X_raw, stacklevel=3)
 
     dup_count = len(gene_names) - len(set(gene_names))

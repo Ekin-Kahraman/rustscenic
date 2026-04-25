@@ -98,6 +98,28 @@ def fragments_to_matrix(
 
     X = csr_matrix((data, indices, indptr), shape=shape)
 
+    # 10x fragments.tsv contains every observed barcode, including empty
+    # droplets and dead cells (often 100k+ in a "3k" sample). Most
+    # downstream analysis wants only the cell-called barcodes from the
+    # 10x filtered_feature_bc_matrix.h5, not the raw set. Warn if the
+    # barcode count looks like a raw fragments file. Heuristic: a real
+    # cell-called sample is typically < 100k cells; raw fragments are
+    # often 10x+ that.
+    if len(barcodes) > 100_000:
+        import warnings
+        median_frags = float(np.median(np.asarray(fpc, dtype=np.uint64)))
+        warnings.warn(
+            f"fragments_to_matrix returned {len(barcodes):,} barcodes "
+            f"(median {median_frags:.0f} fragments/barcode). 10x raw "
+            f"fragments.tsv contains every observed barcode including "
+            f"empty droplets — most downstream analysis wants only the "
+            f"cell-called barcodes. Subset by the 10x "
+            f"filtered_feature_bc_matrix.h5 cell list (or by "
+            f"obs['fragments_per_cell'] > some threshold) before "
+            f"running topics / AUCell on this AnnData.",
+            UserWarning, stacklevel=2,
+        )
+
     obs = pd.DataFrame(
         {
             "fragments_per_cell": np.asarray(fpc, dtype=np.uint32),
