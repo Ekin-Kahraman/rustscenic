@@ -22,8 +22,8 @@ work of the last two days made official.
 
 ## Near-term (next 1-2 weeks)
 
-Goal: kill the remaining HIGH-severity scaling gaps so "full SCENIC+
-at atlas scale" is demonstrated, not claimed.
+Goal: kill the remaining HIGH-severity scaling gaps so integrated
+RNA+ATAC rustscenic at atlas scale is demonstrated, not claimed.
 
 - [ ] **100k-cell end-to-end run** on a real multiome atlas. We have
       the 10x public PBMC 10k Multiome already; the equivalent 100k

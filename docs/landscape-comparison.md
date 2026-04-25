@@ -54,7 +54,7 @@ modes above are impossible by construction.
 Three of the five reference repos ship with zero checked-in tests.
 That's how "installs cleanly on Python 3.7" becomes "dead on Python 3.12".
 
-## Functional scope covered by one pip install
+## Functional scope covered by one install
 
 | Stage | pySCENIC | arboreto | pycisTopic | pycistarget | scenicplus | **rustscenic** |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|
@@ -65,7 +65,7 @@ That's how "installs cleanly on Python 3.7" becomes "dead on Python 3.12".
 | ATAC fragment → matrix | — | — | ✓ (needs pyranges, MACS2) | — | ✓ (needs pycisTopic) | ✓ (PR #5–#9, no new deps) |
 | Bundled TF lists | — | — | — | — | — | ✓ (PR #15, 1,839 hs + 1,721 mm) |
 | Motif DB auto-download | — | — | — | — | — | ✓ (PR #15) |
-| One-call full pipeline | — | — | — | — | partial (snakemake) | ✓ (PR #15, `rustscenic.pipeline.run`) |
+| One-call pipeline runner | — | — | — | — | partial (snakemake) | beta (`rustscenic.pipeline.run`; region-cistarget parity pending) |
 
 ## Speed benchmarks (vs pyscenic, measured on this repo)
 

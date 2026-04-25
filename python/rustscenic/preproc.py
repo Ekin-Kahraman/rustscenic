@@ -12,7 +12,7 @@ beyond the four rustscenic ships with (numpy, pandas, pyarrow, scipy).
 
 Together they replace pycisTopic's fragment parsing, iterative peak
 calling, and per-cell QC — the MACS2-free, Java-free, Python 3.10–3.13
-path through the full SCENIC+ ATAC upstream.
+path through rustscenic's ATAC preprocessing surface.
 
 See `docs/atac-preprocessing-scope.md` for scope + validation plan.
 """

@@ -1,6 +1,6 @@
 # rustscenic validation summary
 
-**Last updated:** 2026-04-21
+**Last updated:** 2026-04-25
 **Scope:** four SCENIC+ compute stages (grn, aucell, topics, cistarget) plus ATAC preprocessing (fragments → cells × peaks matrix) — correctness, reproducibility, robustness, scale.
 
 ## Measured against the pyscenic / arboreto reference
@@ -9,7 +9,7 @@ Every row has a log file in this directory. Numbers are measured on this codebas
 
 | Axis | Reference stack | rustscenic |
 |---|---|---|
-| Installs on fresh Python 3.12 venv (2026-04) | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` | `pip install rustscenic` succeeds |
+| Installs on fresh Python 3.10–3.13 venv (2026-04) | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` in current stacks | GitHub Release wheels and `pip install git+...@v0.2.0` succeed; PyPI name is still gated by trusted-publisher setup |
 | AUCell wall-time, 31,602 cells × 59 regulons (Ziegler atlas) | 6.81 s (pyscenic) | 0.25 s |
 | AUCell wall-time, 10,290 cells × 1,457 regulons (10x Multiome) | 18.6 s (pyscenic) | 0.21 s |
 | Peak RSS, 4 stages on 100,000 cells × 20,292 genes | > 40 GB (reported) | 6.3 GB |
@@ -21,7 +21,7 @@ Every row has a log file in this directory. Numbers are measured on this codebas
 | Wheel architectures | x86_64 | x86_64 + aarch64 |
 | Robustness test suite | — | 10/10 edge cases handled |
 
-rustscenic covers the four legacy SCENIC / SCENIC+ slow stages on CPU. Out of scope: GPU workloads (flashSCENIC), multiomic enhancer-aware GRN (scenicplus), TF-activity scoring from prebuilt regulons (decoupler-py), R Bioconductor (Epiregulon).
+rustscenic covers the four legacy SCENIC / SCENIC+ slow stages on CPU and now includes matched multiome enhancer→gene linking plus eRegulon assembly. It is **not yet a strict feature-complete scenicplus clone**: region-based cistarget/cistromes are bridged from gene-based cistarget output, and fine-grained ATAC topic modelling still trails Mallet. Out of scope: GPU workloads (flashSCENIC), TF-activity scoring from prebuilt regulons (decoupler-py), R Bioconductor (Epiregulon), FASTQ alignment/quantification.
 
 ## Headline agreements (what we measured, and where)
 
@@ -30,6 +30,7 @@ rustscenic covers the four legacy SCENIC / SCENIC+ slow stages on CPU. Out of sc
 - **Cistarget vs ctxcore:** Pearson 1.0000, mean abs diff 2.4e-05 (aertslab hg38 v10). Bit-identical to float32. At TRRUST-scale (166 TFs) only 19% rank-#1 — property of the TRRUST-vs-motif benchmark, not our code.
 - **Topics vs Mallet on 10k PBMC ATAC:** ARI vs leiden 0.27 vs 0.26 (comparable), NPMI 0.12 vs 0.20 (Mallet wins coherence), unique topics 5/30 vs 24/30 (we collapse aggressively). Mallet is 1.5-1.8× faster.
 - **GRN vs arboreto on multiome3k, n_estimators=5000:** per-edge Spearman 0.58, top-100 Jaccard 0.10. Biology agrees at coarse level (94% known edges, 8/8 lineage TFs, 13/13 canonical). Downstream AUCell still agrees per-cell at 0.99.
+- **Real multi-dataset convention audit (2026-04-25):** same GRN→AUCell workflow ran on mouse ovary (1,248 cells), human PBMC multiome RNA (2,711), Kamath OPC (13,691), and Tabula Sapiens large intestine (30,084). All recovered candidate TFs that existed in the matrices and avoided silent-zero failure across cellxgene ENSEMBL var_names. Tabula Sapiens had very sparse AUCell non-zero fraction (0.17%), so this is an input/regulon specificity warning, not a blanket success metric.
 - **All 4 stages bit-deterministic under same seed.**
 - **10/10 robustness edge cases handled** (silent failures fixed: NaN panic, duplicate gene names).
 
@@ -145,22 +146,22 @@ Scope shipped (Tier 1, crate `rustscenic-preproc`):
 
 16 Rust unit tests green (4 fragments, 5 peaks, 4 matrix, plus 3 parser edge cases). No new Python dependencies.
 
-Remaining Tier 1 work: TSS enrichment, FRiP, insert-size distribution (cell-level QC beyond fragment counts). Tier 2 (peak calling) deferred — either wrap MACS2 or port iterative peak calling from pycisTopic.
+Current scope includes fragments→matrix, FRiP, TSS enrichment, insert-size stats, and MACS2-free iterative consensus peak calling. The remaining validation gap is not API coverage; it is real-data agreement against MACS2 / ENCODE-style peak sets.
 
 Scope spec: [`../docs/atac-preprocessing-scope.md`](../docs/atac-preprocessing-scope.md).
 
 ## What's honest
 
 1. **Topics is not a speed win.** Mallet beats us by 17%. The pitch for topics is "no Java install, drop-in, better cell-type recovery on small datasets", not "faster".
-2. **GRN perf at full scale (100k cells, 20k targets, 5000 estimators) hasn't been benchmarked yet.** We know n_estimators=100 works; higher counts need LightGBM histogram subtraction (deferred).
-3. **Memory footprint at 100k cells not yet measured.** Results pending.
-4. **PyPI publish not done; repo private.** Distribution story unverified.
-5. **Tomotopy comparison on large ATAC remains the only larger-than-3k topics test.** Mallet on 10k+ cell ATAC would strengthen the topics story further.
+2. **GRN perf at full biological scale (100k cells, full TF list, 5000 estimators) hasn't been benchmarked yet.** We have 100k memory proof with smaller TF/estimator settings and 30k real-data scaling, but full-TF full-estimator atlas runs need HPC.
+3. **100k-cell integrated real multiome is not done.** Synthetic 100k and real 2.7k multiome pass; the real 100k RNA+ATAC pipeline remains the next credibility gate.
+4. **PyPI publish not done.** Distribution is GitHub Release wheels/source install until PyPI trusted publishing is configured.
+5. **Region-based SCENIC+ cistromes are not implemented.** Current eRegulons are assembled from GRN + enhancer links + a gene-based cistarget bridge; that is useful for testing and many workflows, but it is not strict scenicplus region-cistarget parity.
 
 ## What the tool claims (post-deep-audit, 2026-04-19)
 
 - **Drop-in replacement** for arboreto.grnboost2 / pyscenic.aucell / pycisTopic / pycistarget in Python pipelines — works in envs where their original dask/Java/conda dependencies are broken.
-- **Single `pip install`** — maturin wheel, no dask/Java/conda recipe required. Verified: arboreto fails with `TypeError: Must supply at least one delayed object` in our env; rustscenic runs cleanly in same env.
+- **Single install path** — maturin wheel/source install, no dask/Java/conda recipe required. Verified: GitHub Release wheels and `pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.2.0` run cleanly in fresh Python 3.10–3.13 envs. `pip install rustscenic` waits on PyPI trusted publishing.
 - **Numerical agreement measured, not assumed:**
   - AUCell per-cell Pearson **0.99** vs pyscenic (99.5% of cells > 0.95)
   - Cistarget per-regulon Pearson **1.00** vs ctxcore.recovery.aucs (all 58 tested regulons > 0.9999)

@@ -5,21 +5,23 @@ deciding whether rustscenic is worth integrating with.
 
 ## What it is
 
-A Rust + PyO3 reimplementation of the **SCENIC+** single-cell
-regulatory-network pipeline. One `pip install`, no Java, no MACS2, no
-dask, no CUDA. Replaces:
+A Rust + PyO3 reimplementation of the slow CPU stages in the
+**SCENIC / SCENIC+** single-cell regulatory-network workflow. One
+GitHub wheel/source install today, no Java, no dask, no CUDA. PyPI is
+pending trusted-publisher setup. Replaces or covers:
 
 - `arboreto` / `pyscenic.grn` (GRNBoost2 inference)
 - `pyscenic.aucell` (per-cell regulon scoring)
 - `pycisTopic` (LDA topic models on scATAC)
 - `pycistarget` (motif enrichment AUC kernel)
-- `scenicplus` (eRegulon assembly)
+- `scenicplus` eRegulon assembly mechanics
 - Plus full ATAC preprocessing — fragments → matrix, MACS2-free
   iterative consensus peak calling (Corces 2018), per-cell QC (FRiP,
   TSS enrichment, insert-size).
 
-Ships as one wheel, abi3, Python 3.10–3.13, Linux + macOS (x86_64 +
-aarch64). Four runtime deps: numpy, pandas, pyarrow, scipy.
+Ships as one abi3 wheel for Python 3.10–3.13, Linux + macOS (x86_64 +
+aarch64), plus source install. Four runtime deps: numpy, pandas,
+pyarrow, scipy.
 
 ## What it isn't
 
@@ -30,6 +32,11 @@ aarch64). Four runtime deps: numpy, pandas, pyarrow, scipy.
   JAX DEG efforts are the right place for that.
 - **Not a clustering / dimensionality-reduction tool**: scanpy still
   owns that. We assume your AnnData is already log-normalised + clustered.
+- **Not a strict scenicplus clone yet**: rustscenic has enhancer→gene
+  linking and eRegulon assembly, but region-based cistarget/cistromes
+  are still pending. The current pipeline bridges gene-based cistarget
+  output onto enhancer-linked peaks, which is useful but not identical
+  to scenicplus's full region-cistrome machinery.
 - **Not a pyscenic API clone at the syntax level**: the function names
   are similar but signatures are explicit, not auto-magical.
 
@@ -60,24 +67,29 @@ haven't validated yet:
    diversity. Documented in `docs/topic-collapse.md`. v0.3 candidate
    is a collapsed-Gibbs rewrite; until then we recommend falling back
    to Mallet for K ≥ 30 on scATAC scale.
-2. **GRN per-edge agreement with arboreto** is 0.58 Spearman, not
+2. **SCENIC+ eRegulons are not at strict reference parity yet**:
+   enhancer→gene linking and the assembly schema are tested end-to-end,
+   but region-level cistarget/cistromes are bridged rather than
+   reproduced. Treat this as usable beta for collaborator testing, not
+   final paper-grade scenicplus equivalence.
+3. **GRN per-edge agreement with arboreto** is 0.58 Spearman, not
    1.0. Coarse biology agrees (94% known TF→target edges recovered,
    8/8 lineage TFs correctly enriched), and downstream AUCell is
    0.99 per-cell Pearson with pyscenic — so fine-edge disagreement
    doesn't propagate to regulon activity. But if you're publishing
    per-edge effect sizes against an arboreto baseline, we won't
    match.
-3. **MACS2 cross-check pending**: peak calling matches Corces 2018
+4. **MACS2 cross-check pending**: peak calling matches Corces 2018
    density-window / iterative-overlap-rejection, validated on
    synthetic recovery. We have not yet benchmarked against MACS2 on
    real ENCODE data. F1 vs MACS2 broadPeak is on the v0.3 list.
-4. **100k-cell atlas end-to-end is unmeasured** for the full
+5. **100k-cell atlas end-to-end is unmeasured** for the full
    ATAC + RNA pipeline. We have GRN scaling proof to 50k (linear
    slope post-PR #12) and peak RSS at 100k (6.3 GB across 4 stages),
    but the integrated multi-modal pipeline at 100k cells is the next
    credibility test.
-5. **Windows build**: untested. macOS + Linux only.
-6. **PyPI publish blocked**: trusted-publisher needs config on the
+6. **Windows build**: untested. macOS + Linux only.
+7. **PyPI publish blocked**: trusted-publisher needs config on the
    maintainer's PyPI account. Until that resolves, install via
    GitHub Release wheels or `pip install git+...`.
 
