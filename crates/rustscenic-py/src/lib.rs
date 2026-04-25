@@ -55,7 +55,19 @@ fn grn_infer<'py>(
             n_genes
         )));
     }
-    let expr_vec: Vec<f32> = arr.as_standard_layout().iter().copied().collect();
+    // Borrow the numpy buffer when it's already C-contiguous (the Python
+    // wrapper ensures this via np.ascontiguousarray). Falls back to a copy
+    // only for non-standard-layout inputs — avoids a doubled peak RSS on
+    // 100k × 30k matrices, which is ~12 GB at f32.
+    let owned_fallback;
+    let expr_slice: &[f32] = if let Some(s) = arr.as_slice() {
+        s
+    } else {
+        owned_fallback = arr.as_standard_layout().to_owned();
+        owned_fallback
+            .as_slice()
+            .expect("standard_layout guarantees contiguous slice")
+    };
 
     let cfg = GrnConfig {
         n_estimators,
@@ -68,7 +80,7 @@ fn grn_infer<'py>(
     };
 
     let adjacencies: Vec<Adjacency> =
-        py.allow_threads(|| infer(&expr_vec, n_cells, &gene_names, &tf_names, &cfg));
+        py.allow_threads(|| infer(expr_slice, n_cells, &gene_names, &tf_names, &cfg));
 
     let tfs = PyList::new(py, adjacencies.iter().map(|a| a.tf.as_str()))?;
     let targets = PyList::new(py, adjacencies.iter().map(|a| a.target.as_str()))?;
@@ -118,11 +130,23 @@ fn aucell_score<'py>(
         }
     }
 
-    let expr_vec: Vec<f32> = arr.as_standard_layout().iter().copied().collect();
+    // Borrow the numpy buffer when it's C-contiguous; fall back to a copy
+    // only for non-standard-layout inputs. Saves the duplicate-of-the-input
+    // allocation on large matrices.
+    let owned_fallback;
+    let expr_slice: &[f32] = if let Some(s) = arr.as_slice() {
+        s
+    } else {
+        owned_fallback = arr.as_standard_layout().to_owned();
+        owned_fallback
+            .as_slice()
+            .expect("standard_layout guarantees contiguous slice")
+    };
     let regulons: Vec<(String, Vec<usize>)> =
         regulon_names.into_iter().zip(regulon_gene_indices).collect();
 
-    let out: Vec<f32> = py.allow_threads(|| aucell(&expr_vec, n_cells, n_genes, &regulons, top_frac));
+    let out: Vec<f32> =
+        py.allow_threads(|| aucell(expr_slice, n_cells, n_genes, &regulons, top_frac));
     let n_regulons = regulons.len();
 
     let arr2 = ndarray::Array2::from_shape_vec((n_cells, n_regulons), out)
