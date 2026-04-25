@@ -36,7 +36,10 @@ def _synthetic_fixture():
     tf_genes = ["SPI1", "CEBPD", "MAFB", "CEBPB", "KLF4",
                 "IRF8", "PAX5", "EBF1", "TCF7", "LEF1", "TBX21"]
     gene_names = tf_genes + [f"GENE{i:04d}" for i in range(n_genes - len(tf_genes))]
-    X = rng.lognormal(mean=0.5, sigma=1.0, size=(n_cells, n_genes)).astype("float32")
+    X = rng.poisson(lam=1.5, size=(n_cells, n_genes)).astype("float32")
+    libsize = X.sum(axis=1, keepdims=True)
+    libsize[libsize == 0] = 1.0
+    X = np.log1p(X / libsize * 1e4).astype("float32")
     return (
         ad.AnnData(
             X=X,

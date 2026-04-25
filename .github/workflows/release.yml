@@ -2,7 +2,8 @@ name: release
 
 # Fires when a semver tag is pushed (e.g. v0.1.0).
 # Builds wheels for Linux x86_64/aarch64 + macOS x86_64/aarch64, sdist,
-# then uploads everything to PyPI via trusted publishing.
+# then uploads everything to the GitHub Release. PyPI trusted publishing is
+# optional until the PyPI project is configured with this workflow's claims.
 #
 # Setup: in PyPI project Settings → Publishing, add a "Trusted Publisher" for
 # this repo/workflow. No API token is stored in GitHub secrets.
@@ -71,11 +72,28 @@ jobs:
           name: sdist
           path: target/wheels/*.tar.gz
 
-  publish:
+  github-release:
     needs: [wheels-linux, wheels-macos, sdist]
     runs-on: ubuntu-24.04
-    # Only publish on real tag pushes, not manual dispatch
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+
+  publish-pypi:
+    needs: [github-release]
+    runs-on: ubuntu-24.04
+    # Enable after configuring PyPI trusted publishing for this repo/workflow
+    # and setting the repo variable PYPI_TRUSTED_PUBLISHING=true.
+    if: startsWith(github.ref, 'refs/tags/v') && vars.PYPI_TRUSTED_PUBLISHING == 'true'
     permissions:
       id-token: write   # required for PyPI trusted publishing
     steps:

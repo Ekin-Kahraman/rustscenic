@@ -123,14 +123,15 @@ when there's bandwidth. Document the MACS2 extra clearly.
 
 Today:
 ```
-pip install rustscenic          # works
+pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.2.0
 pip install pycisTopic          # breaks on modern Python
 pip install macs2               # needs numpy + conda-ish
 ```
 
 After Tier 1:
 ```
-pip install rustscenic          # covers 4 SCENIC+ compute stages
+pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.2.0
+                                # covers 4 SCENIC+ compute stages
                                 # + fragment I/O, QC, matrix build
 pip install macs2               # only if user does their own
                                 # peak calling (Option A)
@@ -138,7 +139,7 @@ pip install macs2               # only if user does their own
 
 After Tier 2 (optional, further):
 ```
-pip install rustscenic          # full end-to-end, no MACS2
+pip install rustscenic          # full end-to-end, no MACS2 once PyPI is live
 ```
 
 ## Dependencies by tier

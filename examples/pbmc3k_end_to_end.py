@@ -145,7 +145,7 @@ def main() -> int:
     checks = [
         ("SPI1_regulon", "Mono"),   # SPI1 drives myeloid
         ("PAX5_regulon", "B"),      # PAX5 drives B cells
-        ("TCF7_regulon", "T"),      # TCF7 drives T cell identity
+        ("GATA3_regulon", "T"),     # GATA3 marks helper-T identity in this demo
         ("TBX21_regulon", "NK"),    # T-bet drives NK / Th1
     ]
     print(f"\n      regulon -> most-active cluster lineage (✓ = expected):")

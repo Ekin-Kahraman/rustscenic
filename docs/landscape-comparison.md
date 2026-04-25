@@ -1,4 +1,4 @@
-# Landscape comparison (2026-04-22)
+# Landscape comparison (2026-04-25)
 
 Measured from the GitHub repos and their published releases. This doc
 anchors rustscenic's positioning claims with current, citable data.
@@ -12,7 +12,7 @@ anchors rustscenic's positioning claims with current, citable data.
 | [aertslab/pycisTopic](https://github.com/aertslab/pycisTopic) | 79 | v1.0.2 (2023-04-23) | 2026-03-30 |
 | [aertslab/pycistarget](https://github.com/aertslab/pycistarget) | 18 | v1.1 (2025-01-10) | 2026-04-14 |
 | [aertslab/scenicplus](https://github.com/aertslab/scenicplus) | 251 | v1.0a2 alpha (2025-01-13) | 2026-01-16 |
-| [Ekin-Kahraman/rustscenic](https://github.com/Ekin-Kahraman/rustscenic) | — | (unreleased, main HEAD) | 2026-04-22 |
+| [Ekin-Kahraman/rustscenic](https://github.com/Ekin-Kahraman/rustscenic) | — | v0.2.0 (2026-04-25) | 2026-04-25 |
 
 - pySCENIC's last PyPI release is **3.5 years old**.
 - arboreto's last PyPI release is **5 years old**.
@@ -31,7 +31,7 @@ on `main`.
 | pycisTopic | 84 | 67 | Heavy (polars, pyranges, MACS2, Mallet / Java). Recent v3 rework in PR #226. |
 | pycistarget | 8 | — | Installs; depends on pycisTopic + ctxcore upstream. |
 | scenicplus | 51 | **918** | 918-line pinned requirements file. Recent issue #629 confirms `pkg_resources` deprecation is actively biting scenicplus users on Setuptools ≥ 81. |
-| **rustscenic** | **4** | — | `pip install rustscenic` succeeds on Python 3.10–3.13, Linux + macOS, x86_64 + aarch64. Four runtime deps: numpy, pandas, pyarrow, scipy. |
+| **rustscenic** | **4** | — | GitHub Release wheels and `pip install git+...@v0.2.0` succeed on Python 3.10–3.13, Linux + macOS, x86_64 + aarch64. Four runtime deps: numpy, pandas, pyarrow, scipy. PyPI name publish is pending trusted-publisher setup. |
 
 Documented install failures on the reference stack:
 - arboreto issue [#42](https://github.com/aertslab/arboreto/issues/42) (Oct 2024, still open): `grnboost2 TypeError: Must supply at least one delayed object` — the dask API arboreto depends on was removed. Unpatched for 18 months.
@@ -49,7 +49,7 @@ modes above are impossible by construction.
 | pycisTopic | 0 |
 | pycistarget | 0 |
 | scenicplus | 0 |
-| **rustscenic** | **35 Rust unit tests + 34 Python tests + 19 validation scripts** |
+| **rustscenic** | **51 Rust tests + 106 Python tests + 19 validation scripts** |
 
 Three of the five reference repos ship with zero checked-in tests.
 That's how "installs cleanly on Python 3.7" becomes "dead on Python 3.12".
@@ -91,8 +91,8 @@ Numerical parity vs pyscenic:
 ## Summary positioning
 
 - **Only maintained CPU-Python drop-in for the SCENIC compute stack.** Every competing compute module has either a multi-year-stale PyPI release or known unpatched install breakage.
-- **Single pip install covers 4 compute stages + ATAC preprocessing + bundled TFs + auto-fetch motif DB.** Closest competitor needs ≥ 3 packages stitched together (pySCENIC + pycisTopic + pycistarget + their dependency tangle).
+- **Single install covers 4 compute stages + ATAC preprocessing + bundled TFs + auto-fetch motif DB.** Closest competitor needs ≥ 3 packages stitched together (pySCENIC + pycisTopic + pycistarget + their dependency tangle).
 - **Numerically equivalent to pyscenic** at per-cell AUC (0.98+), bit-identical at cistarget, honest on GRN edge disagreement (documented).
 - **An order of magnitude more tested** than every competing repo combined.
 
-Data cited above is from public GitHub metadata on 2026-04-22.
+Data cited above is from public GitHub metadata and local release validation on 2026-04-25.

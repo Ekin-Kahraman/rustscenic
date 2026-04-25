@@ -8,10 +8,14 @@
 A Rust + PyO3 reimplementation of the SCENIC / SCENIC+ single-cell regulatory-network pipeline, shipped as one pip-installable wheel.
 
 ```bash
-# Stable wheel (pending PyPI publish config — installs from GitHub Release today):
-pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.2.0/rustscenic-0.2.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-# Or source:
+# Universal source install while PyPI trusted-publishing is being configured:
 pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.2.0
+
+# Or install a prebuilt wheel from the v0.2.0 GitHub Release for your platform:
+# macOS Apple Silicon:
+pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.2.0/rustscenic-0.2.0-cp310-abi3-macosx_11_0_arm64.whl
+# Linux x86_64:
+pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.2.0/rustscenic-0.2.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 ```
 
 Four runtime dependencies (numpy, pandas, pyarrow, scipy). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64). No dask, no Java, no CUDA.
@@ -54,7 +58,7 @@ regulons = [
 auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
 ```
 
-Full end-to-end script: [`examples/pbmc3k_end_to_end.py`](examples/pbmc3k_end_to_end.py). Runs cold in ~8 s in a fresh venv. [QUICKSTART.md](QUICKSTART.md) walks through each step.
+Full end-to-end script: [`examples/pbmc3k_end_to_end.py`](examples/pbmc3k_end_to_end.py). Runs cold in seconds in a fresh venv. [`docs/tester-quickstart.md`](docs/tester-quickstart.md) is the collaborator smoke-test path.
 
 ## Measured against the pyscenic / arboreto reference
 
