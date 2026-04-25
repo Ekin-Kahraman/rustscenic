@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Rust](https://img.shields.io/badge/Rust-stable-orange)](https://www.rust-lang.org/)
 
-A Rust + PyO3 reimplementation of the slow CPU stages in the SCENIC / SCENIC+ single-cell regulatory-network workflow, shipped as one installable Python package.
+A Rust + PyO3 replacement for the SCENIC / SCENIC+ compute stack: one install, modern Python, low-memory CPU execution, and atlas-scale regulatory-network analysis without Java, dask, CUDA, or fragile multi-tool environments.
 
 ```bash
 # Universal source install while PyPI trusted-publishing is being configured:
@@ -20,9 +20,17 @@ pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.2.0
 
 Four runtime dependencies (numpy, pandas, pyarrow, scipy). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64). No dask, no Java, no CUDA.
 
+## Goal
+
+rustscenic is being built as the single-install replacement for the practical SCENIC / SCENIC+ workflow: RNA GRN inference, AUCell regulon activity, motif enrichment, ATAC fragment preprocessing, topic modelling, enhancer-gene linking, and eRegulon assembly in one package.
+
+The project is intentionally not a thin wrapper around the old stack. The target is a simpler architecture that makes regulatory-network analysis easier to install, cheaper to run on CPU, deterministic under a fixed seed, and robust to real atlas conventions such as ENSEMBL `var_names`, duplicate gene symbols, backed AnnData, and UCSC/Ensembl chromosome mismatches.
+
+v0.2.0 already replaces the main compute stages used by pySCENIC / arboreto / pycisTopic / pycistarget / scenicplus in common Python pipelines. The remaining work is concentrated in known parity gaps: region-level cistarget/cistromes, a Mallet-class ATAC topic model, MACS2 reference cross-checks, and full 100k-cell real multiome validation.
+
 ## What it does
 
-Rust-native replacements for the compute stages plus the glue that scenicplus builds eRegulons from. The RNA SCENIC path is the most mature; SCENIC+ eRegulons are usable for collaborator testing, with strict region-cistarget parity still pending.
+Rust-native replacements for the compute stages plus the glue that scenicplus builds eRegulons from:
 
 | Stage | **rustscenic** | Replaces |
 |---|---|---|

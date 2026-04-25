@@ -1,14 +1,28 @@
-# What rustscenic is, and what it isn't
+# What rustscenic is
 
-A one-page honest summary for collaborators and ecosystem maintainers
-deciding whether rustscenic is worth integrating with.
+A one-page summary for collaborators and ecosystem maintainers deciding
+whether rustscenic is worth integrating with.
+
+## Thesis
+
+rustscenic is a bet that the SCENIC / SCENIC+ workflow should not require
+users to stitch together old Python, Java/Mallet, dask, MACS2 wrappers,
+pycisTopic, pycistarget, scenicplus, and fragile environment pins before
+they can ask a regulatory-biology question.
+
+The intended endpoint is a **single-install CPU package** that covers the
+full practical workflow from AnnData / fragments through GRN, regulon
+activity, motif enrichment, ATAC preprocessing, enhancer-gene linking, and
+eRegulon assembly. The reason to build it in Rust is not novelty; it is
+memory predictability, deterministic execution, portable wheels, and
+removing entire classes of silent failure that show up in real atlas data.
 
 ## What it is
 
-A Rust + PyO3 reimplementation of the slow CPU stages in the
-**SCENIC / SCENIC+** single-cell regulatory-network workflow. One
-GitHub wheel/source install today, no Java, no dask, no CUDA. PyPI is
-pending trusted-publisher setup. Replaces or covers:
+A Rust + PyO3 replacement for the slow CPU stages in the **SCENIC /
+SCENIC+** single-cell regulatory-network workflow. One GitHub
+wheel/source install today, no Java, no dask, no CUDA. PyPI is pending
+trusted-publisher setup. Replaces or covers:
 
 - `arboreto` / `pyscenic.grn` (GRNBoost2 inference)
 - `pyscenic.aucell` (per-cell regulon scoring)
@@ -23,7 +37,7 @@ Ships as one abi3 wheel for Python 3.10–3.13, Linux + macOS (x86_64 +
 aarch64), plus source install. Four runtime deps: numpy, pandas,
 pyarrow, scipy.
 
-## What it isn't
+## Boundary
 
 - **Not an upstream tool**: starts at the AnnData / fragments stage,
   not at FASTQ. Rob Patro's [alevin-fry](https://github.com/COMBINE-lab/alevin-fry)
@@ -32,13 +46,11 @@ pyarrow, scipy.
   JAX DEG efforts are the right place for that.
 - **Not a clustering / dimensionality-reduction tool**: scanpy still
   owns that. We assume your AnnData is already log-normalised + clustered.
-- **Not a strict scenicplus clone yet**: rustscenic has enhancer→gene
-  linking and eRegulon assembly, but region-based cistarget/cistromes
-  are still pending. The current pipeline bridges gene-based cistarget
-  output onto enhancer-linked peaks, which is useful but not identical
-  to scenicplus's full region-cistrome machinery.
 - **Not a pyscenic API clone at the syntax level**: the function names
   are similar but signatures are explicit, not auto-magical.
+
+The boundary is deliberate: rustscenic should own the regulatory-network
+compute path, not every surrounding single-cell method.
 
 ## Performance vs the references it replaces
 
@@ -55,7 +67,30 @@ Measured on this v0.2.0 release. Full numbers in `CHANGELOG.md` /
 
 Bit-identical output under same seed. 51 Rust tests + 106 Python tests.
 
-## Honest caveats
+## Intellectual Risk
+
+The ambition is full replacement. The risk is not whether we can make a
+demo pass; that is already done. The hard questions are:
+
+1. **Can region-level cistarget/cistromes match scenicplus closely enough
+   to remove the last SCENIC+ parity caveat?** Current eRegulons are built
+   from GRN + enhancer links + a gene-based cistarget bridge. Useful, but
+   not the final replacement contract.
+2. **Can ATAC topics beat or match Mallet where users actually care: K≥30,
+   sparse binary peak matrices, stable topic identities, and good
+   coherence?** Online VB currently recovers cell-type structure but
+   collapses fine-grained topics. This is the largest algorithmic gap.
+3. **Can full-TF GRN stay fast enough at 100k+ cells without making users
+   rent a large node?** The low-memory story is strong; the next target is
+   full biological settings, not toy TF panels.
+4. **Can peak calling agree with MACS2 / ENCODE enough for users to trust
+   a no-MACS2 path?** The implementation is self-contained and passes
+   synthetic/self-consistency tests; reference F1 is the missing proof.
+
+These are engineering and algorithmic risks, not reasons to shrink the
+vision. They define the v0.3/v0.4 work.
+
+## Current Evidence
 
 Where the implementation is weaker than the reference, or where we
 haven't validated yet:
@@ -67,11 +102,12 @@ haven't validated yet:
    diversity. Documented in `docs/topic-collapse.md`. v0.3 candidate
    is a collapsed-Gibbs rewrite; until then we recommend falling back
    to Mallet for K ≥ 30 on scATAC scale.
-2. **SCENIC+ eRegulons are not at strict reference parity yet**:
+2. **SCENIC+ eRegulons need strict region-cistrome parity next**:
    enhancer→gene linking and the assembly schema are tested end-to-end,
    but region-level cistarget/cistromes are bridged rather than
-   reproduced. Treat this as usable beta for collaborator testing, not
-   final paper-grade scenicplus equivalence.
+   reproduced. This is the highest-leverage implementation gap because
+   closing it turns rustscenic from a broad compute replacement into a
+   strict scenicplus replacement.
 3. **GRN per-edge agreement with arboreto** is 0.58 Spearman, not
    1.0. Coarse biology agrees (94% known TF→target edges recovered,
    8/8 lineage TFs correctly enriched), and downstream AUCell is

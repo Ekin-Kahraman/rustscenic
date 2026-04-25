@@ -71,6 +71,7 @@ def run(
     peaks: Union[str, Path, None] = None,
     tfs: Union[str, Path, Iterable[str], None] = None,
     motif_rankings: Union[str, Path, pd.DataFrame, None] = None,
+    region_motif_rankings: Union[str, Path, pd.DataFrame, None] = None,
     gene_coords: Union[str, Path, pd.DataFrame, None] = None,
     grn_n_estimators: int = 500,
     grn_top_targets: int = 50,
@@ -271,15 +272,67 @@ def run(
         import rustscenic.eregulon
         log("[5d/8] eRegulons: assembling TF × enhancer × target intersection")
         t0 = time.perf_counter()
-        # Cistarget here is gene-based — its output identifies which TFs
-        # are motif-enriched in each regulon, but doesn't carry a peak
-        # column. The eRegulon assembler needs (TF → peaks) associations,
-        # so we bridge: each enriched TF gets attributed the peaks linked
-        # to its GRN targets via the enhancer DataFrame. Approximate but
-        # correct in spirit until region-based cistarget ships in v0.3.
-        enriched_with_peaks = _attribute_peaks_to_cistarget(
-            enriched, grn, enhancer_links
-        )
+        # Two paths to (TF → peaks) associations:
+        # 1. EXACT: if region_motif_rankings supplied, run cistarget on
+        #    the linked peaks against region rankings — true motif
+        #    enrichment per peak per TF (matches scenicplus semantics).
+        # 2. APPROXIMATE: gene-only path — attribute peaks via
+        #    GRN targets ∩ enhancer links. Used when region rankings
+        #    aren't available.
+        if region_motif_rankings is not None:
+            import rustscenic.cistarget
+            log("      using region-based cistarget for exact peak attribution")
+            region_rankings_df = _coerce_rankings(region_motif_rankings)
+            # Each TF's regulon is its GRN-predicted targets; we want to
+            # ask: which peaks (linked to those targets via enhancer) carry
+            # the TF's motif? Build per-TF "regulons" of linked peaks.
+            grn_targets_by_tf = grn.groupby("TF")["target"].apply(set).to_dict()
+            peaks_by_target = (
+                enhancer_links.groupby("gene")["peak_id"].apply(set).to_dict()
+            )
+            peak_regulons = []
+            for tf, targets in grn_targets_by_tf.items():
+                tf_peaks: set[str] = set()
+                for tg in targets:
+                    tf_peaks.update(peaks_by_target.get(tg, set()))
+                if tf_peaks:
+                    peak_regulons.append((f"{tf}_regulon", list(tf_peaks)))
+            if peak_regulons:
+                region_enrich = rustscenic.cistarget.enrich(
+                    region_rankings_df,
+                    peak_regulons,
+                    top_frac=cistarget_top_frac,
+                    auc_threshold=cistarget_auc_threshold,
+                )
+                # Reshape into the (regulon, motif, peak_id, auc) form
+                # build_eregulons expects, attributing peaks via the
+                # surviving region cistarget rows.
+                rows = []
+                for _, row in region_enrich.iterrows():
+                    tf = str(row["regulon"]).replace("_regulon", "")
+                    candidate_peaks = next(
+                        (p for n, p in peak_regulons if n == row["regulon"]),
+                        [],
+                    )
+                    for peak in candidate_peaks:
+                        rows.append({
+                            "regulon": row["regulon"],
+                            "motif": row["motif"],
+                            "peak_id": peak,
+                            "auc": row["auc"],
+                        })
+                enriched_with_peaks = pd.DataFrame(rows) if rows else pd.DataFrame(
+                    columns=["regulon", "motif", "peak_id", "auc"]
+                )
+            else:
+                enriched_with_peaks = pd.DataFrame(
+                    columns=["regulon", "motif", "peak_id", "auc"]
+                )
+        else:
+            log("      gene-only — bridging via GRN targets (approximate)")
+            enriched_with_peaks = _attribute_peaks_to_cistarget(
+                enriched, grn, enhancer_links
+            )
         eregs = rustscenic.eregulon.build_eregulons(
             grn,
             enriched_with_peaks,
