@@ -9,9 +9,9 @@ A Rust + PyO3 reimplementation of the SCENIC / SCENIC+ single-cell regulatory-ne
 
 ```bash
 # Stable wheel (pending PyPI publish config — installs from GitHub Release today):
-pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.1.0/rustscenic-0.1.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.2.0/rustscenic-0.2.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 # Or source:
-pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.1.0
+pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.2.0
 ```
 
 Four runtime dependencies (numpy, pandas, pyarrow, scipy). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64). No dask, no Java, no CUDA.
