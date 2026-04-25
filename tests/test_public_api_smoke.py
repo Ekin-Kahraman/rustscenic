@@ -91,3 +91,54 @@ def test_quickstart_synthetic_fallback_runs(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "source=synthetic" in out
     assert "top-10 TF -> target edges" in out
+
+
+def test_download_motif_rankings_accepts_aliases_and_mouse(tmp_path, monkeypatch):
+    """Aliases (`human`/`mouse`/`hg38`/`mm10`) resolve to the canonical
+    species, and mouse mm10 has a default filename mapped."""
+    import rustscenic.data as data
+    import urllib.request
+
+    seen_urls = []
+
+    def fake_urlretrieve(url, local_path):
+        seen_urls.append(url)
+        pd.DataFrame({"motif": ["m1"], "GENE1": [1]}).to_feather(local_path)
+        return local_path, None
+
+    monkeypatch.setattr(urllib.request, "urlretrieve", fake_urlretrieve)
+
+    # human alias
+    out = data.download_motif_rankings(species="human", cache_dir=tmp_path / "h", verbose=False)
+    assert any("hg38" in u for u in seen_urls)
+    # mouse alias resolves to mm10
+    seen_urls.clear()
+    out = data.download_motif_rankings(species="mouse", cache_dir=tmp_path / "m", verbose=False)
+    assert any("mm10" in u for u in seen_urls)
+    # mm10 alias works too
+    seen_urls.clear()
+    out = data.download_motif_rankings(species="mm10", cache_dir=tmp_path / "mm10", verbose=False)
+    assert any("mm10" in u for u in seen_urls)
+
+
+def test_download_motif_rankings_filename_override(tmp_path, monkeypatch):
+    """Explicit `filename=` bypasses the canonical-name lookup."""
+    import rustscenic.data as data
+    import urllib.request
+
+    captured = {}
+
+    def fake_urlretrieve(url, local_path):
+        captured["url"] = url
+        pd.DataFrame({"motif": ["m1"], "GENE1": [1]}).to_feather(local_path)
+        return local_path, None
+
+    monkeypatch.setattr(urllib.request, "urlretrieve", fake_urlretrieve)
+
+    data.download_motif_rankings(
+        species="hs",
+        filename="custom_2026_build.feather",
+        cache_dir=tmp_path,
+        verbose=False,
+    )
+    assert captured["url"].endswith("custom_2026_build.feather")
