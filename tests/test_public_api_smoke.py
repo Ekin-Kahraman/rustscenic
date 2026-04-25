@@ -22,7 +22,7 @@ def test_download_motif_rankings_uses_cache_without_real_network(tmp_path, monke
     import rustscenic.data as data
     import urllib.request
 
-    expected_name = "hg38_refseq_r80__10kb_up_and_down_tss.genes_vs_motifs.rankings.feather"
+    expected_name = "hg38_10kbp_up_10kbp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather"
 
     def fake_urlretrieve(url, local_path):
         assert url.endswith(expected_name)
@@ -142,3 +142,47 @@ def test_download_motif_rankings_filename_override(tmp_path, monkeypatch):
         verbose=False,
     )
     assert captured["url"].endswith("custom_2026_build.feather")
+
+
+def test_motif_ranking_urls_resolve_live(monkeypatch):
+    """Real-network smoke check that the URLs the data module builds
+    actually exist on aertslab. Skipped by default (CI offline policy);
+    enable locally with `RUSTSCENIC_LIVE_NETWORK=1 pytest`. This is the
+    test that would have caught the v0.1.0 URL regression earlier — the
+    prior `urlretrieve` mock made every URL look fine.
+    """
+    import os
+    import urllib.request
+
+    if not os.environ.get("RUSTSCENIC_LIVE_NETWORK"):
+        import pytest
+        pytest.skip("set RUSTSCENIC_LIVE_NETWORK=1 to enable")
+
+    import rustscenic.data as data
+
+    captured = {}
+
+    def fake_urlretrieve(url, local_path):
+        captured["url"] = url
+        # Don't download — issue a HEAD instead and surface the status.
+        req = urllib.request.Request(url, method="HEAD")
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            captured["status"] = resp.status
+        # Write a tiny placeholder so the rest of the call doesn't try
+        # to read an empty path.
+        pd.DataFrame({"motif": ["m1"], "GENE1": [1]}).to_feather(local_path)
+        return local_path, None
+
+    monkeypatch.setattr(urllib.request, "urlretrieve", fake_urlretrieve)
+
+    for species in ("hs", "mm"):
+        captured.clear()
+        data.download_motif_rankings(
+            species=species,
+            cache_dir=os.path.join(os.environ.get("TMPDIR", "/tmp"), f"rustscenic_aertslab_{species}"),
+            verbose=False,
+        )
+        assert captured["status"] == 200, (
+            f"aertslab URL for species={species!r} returned "
+            f"{captured.get('status')}: {captured['url']}"
+        )
