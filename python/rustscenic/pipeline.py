@@ -47,10 +47,13 @@ class PipelineResult:
     aucell_path: Optional[Path] = None
     topics_dir: Optional[Path] = None
     cistarget_path: Optional[Path] = None
+    enhancer_links_path: Optional[Path] = None
+    eregulons_path: Optional[Path] = None
     integrated_adata_path: Optional[Path] = None
     elapsed: dict = field(default_factory=dict)
     n_cells: Optional[int] = None
     n_regulons: Optional[int] = None
+    n_eregulons: Optional[int] = None
 
     def manifest(self) -> dict:
         d = asdict(self)
@@ -68,6 +71,7 @@ def run(
     peaks: Union[str, Path, None] = None,
     tfs: Union[str, Path, Iterable[str], None] = None,
     motif_rankings: Union[str, Path, pd.DataFrame, None] = None,
+    gene_coords: Union[str, Path, pd.DataFrame, None] = None,
     grn_n_estimators: int = 500,
     grn_top_targets: int = 50,
     aucell_top_frac: float = 0.05,
@@ -75,6 +79,10 @@ def run(
     topics_n_passes: int = 3,
     cistarget_top_frac: float = 0.05,
     cistarget_auc_threshold: float = 0.05,
+    enhancer_max_distance: int = 500_000,
+    enhancer_min_abs_corr: float = 0.1,
+    eregulon_min_target_genes: int = 5,
+    eregulon_min_enhancer_links: int = 2,
     seed: int = 777,
     verbose: bool = True,
 ) -> PipelineResult:
@@ -105,6 +113,13 @@ def run(
         Motif ranking DataFrame, or a path to a parquet / feather file
         with motifs as rows and genes as columns. If provided, cistarget
         runs to filter regulons to motif-enriched TFs.
+    gene_coords
+        DataFrame with columns ``['gene', 'chrom', 'tss']``, or a path
+        to a parquet/csv file with the same shape. When supplied
+        alongside ``fragments`` + ``peaks``, the orchestrator runs
+        ``rustscenic.enhancer.link_peaks_to_genes`` and (if cistarget
+        also ran) ``rustscenic.eregulon.build_eregulons`` — closing the
+        SCENIC+ pipeline rather than stopping at AUCell.
 
     Returns
     -------
@@ -192,10 +207,11 @@ def run(
 
     # ---- 4b. cistarget (optional) ----
     cistarget_path = None
+    enriched: Optional[pd.DataFrame] = None
     if motif_rankings is not None:
         import rustscenic.cistarget
         rankings_df = _coerce_rankings(motif_rankings)
-        log(f"[5b/6] cistarget: {len(rankings_df):,} motifs × {rankings_df.shape[1]:,} genes")
+        log(f"[5b/8] cistarget: {len(rankings_df):,} motifs × {rankings_df.shape[1]:,} genes")
         t0 = time.perf_counter()
         enriched = rustscenic.cistarget.enrich(
             rankings_df,
@@ -207,6 +223,83 @@ def run(
         cistarget_path = output_dir / "cistarget_enriched.parquet"
         enriched.to_parquet(cistarget_path, index=False)
         log(f"      {len(enriched):,} enriched pairs in {elapsed['cistarget']:.1f}s")
+
+    # ---- 4c. enhancer → gene linking (optional, requires multiome + gene_coords) ----
+    enhancer_links_path: Optional[Path] = None
+    enhancer_links: Optional[pd.DataFrame] = None
+    have_atac = atac_matrix_path is not None
+    coords_df = _coerce_gene_coords(gene_coords) if gene_coords is not None else None
+    if have_atac and coords_df is not None:
+        import rustscenic.enhancer
+        log(f"[5c/8] enhancer: linking peaks → genes ({len(coords_df):,} TSS records)")
+        t0 = time.perf_counter()
+        adata_atac_for_link = ad.read_h5ad(atac_matrix_path)
+        common = adata_rna.obs_names.intersection(adata_atac_for_link.obs_names)
+        if len(common) == 0:
+            log("      skipped — no shared barcodes between RNA and ATAC")
+        else:
+            # If var_names came from the peak BED's name column they may
+            # not be coord-formatted (`chr1:100-200`). Read coords from
+            # the BED file directly and align to var_names so the linker
+            # always has chrom/start/end.
+            peak_coords = _peak_coords_from_bed(peaks, adata_atac_for_link.var_names)
+            enhancer_links = rustscenic.enhancer.link_peaks_to_genes(
+                adata_rna[common].copy(),
+                adata_atac_for_link[common].copy(),
+                coords_df,
+                peak_coords=peak_coords,
+                max_distance=enhancer_max_distance,
+                min_abs_corr=enhancer_min_abs_corr,
+            )
+            elapsed["enhancer"] = time.perf_counter() - t0
+            enhancer_links_path = output_dir / "enhancer_links.parquet"
+            enhancer_links.to_parquet(enhancer_links_path, index=False)
+            log(
+                f"      {len(enhancer_links):,} peak-gene links in "
+                f"{elapsed['enhancer']:.1f}s"
+            )
+    elif have_atac and gene_coords is None:
+        log("[5c/8] enhancer: skipped (no gene_coords supplied)")
+    else:
+        log("[5c/8] enhancer: skipped (no ATAC inputs)")
+
+    # ---- 4d. eRegulon assembly (optional, needs grn + cistarget + enhancer) ----
+    eregulons_path: Optional[Path] = None
+    n_eregulons: Optional[int] = None
+    if enriched is not None and enhancer_links is not None:
+        import rustscenic.eregulon
+        log("[5d/8] eRegulons: assembling TF × enhancer × target intersection")
+        t0 = time.perf_counter()
+        # Cistarget here is gene-based — its output identifies which TFs
+        # are motif-enriched in each regulon, but doesn't carry a peak
+        # column. The eRegulon assembler needs (TF → peaks) associations,
+        # so we bridge: each enriched TF gets attributed the peaks linked
+        # to its GRN targets via the enhancer DataFrame. Approximate but
+        # correct in spirit until region-based cistarget ships in v0.3.
+        enriched_with_peaks = _attribute_peaks_to_cistarget(
+            enriched, grn, enhancer_links
+        )
+        eregs = rustscenic.eregulon.build_eregulons(
+            grn,
+            enriched_with_peaks,
+            enhancer_links,
+            min_target_genes=eregulon_min_target_genes,
+            min_enhancer_links=eregulon_min_enhancer_links,
+        )
+        elapsed["eregulons"] = time.perf_counter() - t0
+        eregulons_path = output_dir / "eregulons.parquet"
+        rustscenic.eregulon.eregulons_to_dataframe(eregs).to_parquet(
+            eregulons_path, index=False
+        )
+        n_eregulons = len(eregs)
+        log(
+            f"      {n_eregulons} eRegulons assembled in "
+            f"{elapsed['eregulons']:.1f}s"
+        )
+    elif gene_coords is not None and motif_rankings is not None and not have_atac:
+        log("[5d/8] eRegulons: skipped (need ATAC for enhancer linking)")
+    elif enriched is None or enhancer_links is None:
+        log("[5d/8] eRegulons: skipped (need cistarget + enhancer links)")
 
     # ---- 5. AUCell ----
     log("[6/6] AUCell: per-cell regulon activity")
@@ -235,10 +328,13 @@ def run(
         aucell_path=aucell_path,
         topics_dir=topics_dir,
         cistarget_path=cistarget_path,
+        enhancer_links_path=enhancer_links_path,
+        eregulons_path=eregulons_path,
         integrated_adata_path=integrated_path,
         elapsed=elapsed,
         n_cells=n_cells,
         n_regulons=len(regulons),
+        n_eregulons=n_eregulons,
     )
     # Manifest is the single source of truth for "what did this run produce"
     (output_dir / "manifest.json").write_text(json.dumps(result.manifest(), indent=2))
@@ -283,6 +379,97 @@ def _coerce_rankings(rankings):
     if suffix == ".feather":
         return pd.read_feather(path).set_index(path.stem)
     raise ValueError(f"unsupported motif-ranking format: {suffix}")
+
+
+def _attribute_peaks_to_cistarget(
+    enriched: pd.DataFrame,
+    grn: pd.DataFrame,
+    enhancer_links: pd.DataFrame,
+) -> pd.DataFrame:
+    """Bridge gene-based cistarget output to peak-aware eRegulon input.
+
+    Cistarget on a gene-based motif ranking emits ``(regulon, motif, auc)``
+    rows but no peak column — the eRegulon assembler requires one. Until
+    region-based cistarget ships, attribute each enriched TF's peaks via
+    the GRN's predicted targets ∩ enhancer-link peak set: a peak is
+    associated with TF X if it links to a gene that GRN predicts X
+    regulates.
+    """
+    grn_targets_by_tf: dict[str, set[str]] = (
+        grn.groupby("TF")["target"].apply(set).to_dict()
+    )
+    peaks_by_target: dict[str, set[str]] = (
+        enhancer_links.groupby("gene")["peak_id"].apply(set).to_dict()
+    )
+    rows = []
+    for _, ct_row in enriched.iterrows():
+        tf = str(ct_row["regulon"]).replace("_regulon", "")
+        targets = grn_targets_by_tf.get(tf, set())
+        peaks_for_tf: set[str] = set()
+        for tg in targets:
+            peaks_for_tf.update(peaks_by_target.get(tg, set()))
+        for peak in peaks_for_tf:
+            rows.append({
+                "regulon": ct_row["regulon"],
+                "motif": ct_row.get("motif"),
+                "peak_id": peak,
+                "auc": ct_row["auc"],
+            })
+    if not rows:
+        # Preserve schema so downstream eRegulon validation has columns.
+        return pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+    return pd.DataFrame(rows)
+
+
+def _peak_coords_from_bed(bed_path, atac_var_names):
+    """Build a per-peak chrom/start/end DataFrame indexed by ATAC var_names.
+
+    The orchestrator hands `link_peaks_to_genes` an explicit `peak_coords`
+    rather than relying on `chr:start-end` parsing of var_names — that
+    parser only works when no name column was present in the BED.
+    """
+    import gzip as _gzip
+    bed_path = Path(bed_path)
+    opener = _gzip.open if str(bed_path).endswith(".gz") else open
+    rows = []
+    with opener(bed_path, "rt") as fh:
+        for line in fh:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split("\t")
+            if len(parts) < 3:
+                continue
+            chrom, start, end = parts[0], int(parts[1]), int(parts[2])
+            name = parts[3] if len(parts) >= 4 else f"{chrom}:{start}-{end}"
+            rows.append((name, chrom, start, end))
+    bed_df = pd.DataFrame(rows, columns=["name", "chrom", "start", "end"]).set_index("name")
+    # Reindex to match the ATAC AnnData var_names; missing rows fall through
+    # silently here, the linker will warn separately if alignment is poor.
+    aligned = bed_df.reindex(list(atac_var_names))
+    return aligned[["chrom", "start", "end"]].dropna()
+
+
+def _coerce_gene_coords(coords):
+    if isinstance(coords, pd.DataFrame):
+        df = coords
+    else:
+        path = Path(coords)
+        suffix = path.suffix.lower()
+        if suffix == ".parquet":
+            df = pd.read_parquet(path)
+        elif suffix in (".csv", ".tsv"):
+            df = pd.read_csv(path, sep="\t" if suffix == ".tsv" else ",")
+        else:
+            raise ValueError(f"unsupported gene_coords format: {suffix}")
+    required = {"gene", "chrom", "tss"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(
+            f"gene_coords missing columns: {sorted(missing)}. "
+            f"Required: gene, chrom, tss."
+        )
+    return df
 
 
 class _Logger:

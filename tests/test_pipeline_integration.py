@@ -238,3 +238,116 @@ def _make_peak_level_cistarget(ct, tf_names, atac):
                     "auc": 0.2,
                 })
     return pd.DataFrame(rows)
+
+
+# ---- Full SCENIC+ orchestration: enhancer + eRegulon stages -----------
+
+
+def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
+    """The orchestrator must run all 8 stages when fragments + peaks +
+    gene_coords + motif_rankings are all supplied. Closes the audit gap
+    that pipeline.run stopped at AUCell."""
+    import gzip, os, anndata as ad, numpy as np, pandas as pd
+    import rustscenic.pipeline
+
+    rng = np.random.default_rng(0)
+
+    # 200 cells split across 3 programmes; expression + fragment density
+    # both driven by the same activity vector so peak↔gene correlation
+    # is real signal, not a chance artefact.
+    n_cells = 200
+    cluster = np.array([i * 3 // n_cells for i in range(n_cells)], dtype=np.uint32)
+    activity = np.zeros((3, n_cells), dtype=np.float32)
+    for p in range(3):
+        activity[p] = (cluster == p).astype(np.float32) + 0.1 * rng.normal(size=n_cells)
+
+    rna_genes = [f"G{i:03d}" for i in range(30)]
+    X = np.zeros((n_cells, 30), dtype=np.float32)
+    for i in range(15):
+        X[:, i] = activity[i // 5] + 0.2 * rng.normal(size=n_cells)
+    for i in range(15, 30):
+        X[:, i] = rng.normal(size=n_cells).astype(np.float32)
+    X = np.clip(X, 0, None) + 0.1
+    cells = [f"cell{i}" for i in range(n_cells)]
+    rna = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame({"cluster": cluster}, index=cells),
+        var=pd.DataFrame(index=rna_genes),
+    )
+
+    # Fragments — dense per programme region, plus noise
+    frag_lines = []
+    for p in range(3):
+        for ci in np.where(cluster == p)[0]:
+            for _ in range(15):
+                start = 10_000 + p * 100_000 + int(rng.integers(0, 5_000))
+                frag_lines.append(f"chr1\t{start}\t{start+150}\t{cells[ci]}\t1")
+        for ci in np.where(cluster == p)[0]:
+            for _ in range(3):
+                start = int(rng.integers(0, 2_000_000))
+                frag_lines.append(f"chr1\t{start}\t{start+120}\t{cells[ci]}\t1")
+    frag_path = tmp_path / "fragments.tsv.gz"
+    with gzip.open(frag_path, "wt") as fh:
+        fh.write("\n".join(frag_lines) + "\n")
+
+    # Peaks BED covering each programme region
+    peaks_path = tmp_path / "peaks.bed"
+    with open(peaks_path, "w") as fh:
+        for p in range(3):
+            for j in range(3):
+                start = 10_000 + p * 100_000 + j * 5_000
+                fh.write(f"chr1\t{start}\t{start + 500}\tpeak_{p}_{j}\n")
+
+    # Gene coords near each programme's peaks
+    gene_coords = pd.DataFrame(
+        [
+            (f"G{i:03d}", "chr1", 10_000 + (i // 5) * 100_000 + 250)
+            for i in range(15)
+        ],
+        columns=["gene", "chrom", "tss"],
+    )
+
+    # Synthetic motif rankings — each TF ranks its programme's genes high.
+    motif_names = ["M_G000", "M_G005", "M_G010"]
+    n_genes = len(rna_genes)
+    rank_matrix = np.full((len(motif_names), n_genes), n_genes - 1, dtype=np.int32)
+    for tf_idx, motif in enumerate(motif_names):
+        prog_idx = tf_idx
+        for rank, gene_idx in enumerate(
+            [i for i in range(n_genes) if (i // 5 == prog_idx) and (i < 15)]
+        ):
+            rank_matrix[tf_idx, gene_idx] = rank
+    motif_rankings = pd.DataFrame(rank_matrix, index=motif_names, columns=rna_genes)
+
+    out = tmp_path / "pipeline_out"
+    result = rustscenic.pipeline.run(
+        rna,
+        out,
+        fragments=str(frag_path),
+        peaks=str(peaks_path),
+        tfs=["G000", "G005", "G010"],
+        motif_rankings=motif_rankings,
+        gene_coords=gene_coords,
+        grn_n_estimators=15,
+        grn_top_targets=10,
+        topics_n_topics=5,
+        topics_n_passes=2,
+        cistarget_top_frac=0.2,
+        cistarget_auc_threshold=0.0,
+        enhancer_min_abs_corr=0.15,
+        eregulon_min_target_genes=2,
+        eregulon_min_enhancer_links=1,
+        seed=0,
+        verbose=False,
+    )
+
+    # Every stage emitted an artifact
+    assert result.atac_matrix_path.exists()
+    assert result.grn_path.exists()
+    assert result.aucell_path.exists()
+    assert result.cistarget_path.exists()
+    assert result.enhancer_links_path.exists()
+    # eregulons file exists; n_eregulons may be 0 on synthetic data
+    assert result.eregulons_path is not None
+    assert result.eregulons_path.exists()
+    assert result.n_eregulons is not None

@@ -120,46 +120,84 @@ pub fn online_vb_lda(
             update_elog_beta(&lambda, &mut elog_beta, n_topics, n_words, eta as f64);
 
             // E-step: fit each doc's gamma (local variational parameters)
-            // Accumulate sufficient stats s[k,w] = sum_d n_dw * phi_dwk
-            let mut sstats = vec![0.0_f64; n_topics * n_words];
-
-            let batch_sstats: Vec<Vec<f64>> = batch
+            // Accumulate sufficient stats s[k,w] = sum_d n_dw * phi_dwk via
+            // fold/reduce so memory is bounded to O(threads × n_topics × n_words),
+            // not O(batch_size × n_topics × n_words). At K=30 × 200k peaks
+            // × batch_size=256 the previous .collect() held ~12 GB
+            // simultaneously per batch; this keeps it to one accumulator
+            // per Rayon worker.
+            let sstats: Vec<f64> = batch
                 .par_iter()
-                .map(|&d| {
-                    let start = row_ptr[d];
-                    let end = row_ptr[d + 1];
-                    if end == start {
-                        return vec![0.0_f64; n_topics * n_words];
-                    }
-                    let doc_cols = &col_idx[start..end];
-                    let doc_counts = &counts[start..end];
+                .fold(
+                    || vec![0.0_f64; n_topics * n_words],
+                    |mut acc, &d| {
+                        let start = row_ptr[d];
+                        let end = row_ptr[d + 1];
+                        if end == start {
+                            return acc;
+                        }
+                        let doc_cols = &col_idx[start..end];
+                        let doc_counts = &counts[start..end];
 
-                    // Init gamma_d with asymmetric noise to break topic-label symmetry.
-                    // A uniform init + deterministic E-step converges to trivial symmetric
-                    // posteriors on sparse data (topic collapse). Per-doc random seeds
-                    // derived from doc index + global seed for reproducibility.
-                    let mut doc_rng = StdRng::seed_from_u64(seed.wrapping_add(d as u64));
-                    let mut gamma_d = vec![0.0_f64; n_topics];
-                    for g in gamma_d.iter_mut() {
-                        let u1: f64 = doc_rng.gen();
-                        let u2: f64 = doc_rng.gen();
-                        let z = (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos();
-                        *g = (alpha as f64 + 1.0 + 0.1 * z).max(0.01);
-                    }
-                    let mut elog_theta = vec![0.0_f64; n_topics];
+                        // Init gamma_d with asymmetric noise to break topic-label symmetry.
+                        // A uniform init + deterministic E-step converges to trivial symmetric
+                        // posteriors on sparse data (topic collapse). Per-doc random seeds
+                        // derived from doc index + global seed for reproducibility.
+                        let mut doc_rng = StdRng::seed_from_u64(seed.wrapping_add(d as u64));
+                        let mut gamma_d = vec![0.0_f64; n_topics];
+                        for g in gamma_d.iter_mut() {
+                            let u1: f64 = doc_rng.gen();
+                            let u2: f64 = doc_rng.gen();
+                            let z = (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos();
+                            *g = (alpha as f64 + 1.0 + 0.1 * z).max(0.01);
+                        }
+                        let mut elog_theta = vec![0.0_f64; n_topics];
+                        let mut buf = vec![0.0_f64; n_topics];
 
-                    for _iter in 0..50 {
-                        // E[log theta_dk]
+                        for _iter in 0..50 {
+                            update_elog_theta(&gamma_d, &mut elog_theta);
+                            let mut gamma_new = vec![alpha as f64; n_topics];
+                            for (i, &w) in doc_cols.iter().enumerate() {
+                                let w = w as usize;
+                                let nw = doc_counts[i] as f64;
+                                let mut max_log = f64::NEG_INFINITY;
+                                for k in 0..n_topics {
+                                    let lp = elog_theta[k] + elog_beta[k * n_words + w];
+                                    buf[k] = lp;
+                                    if lp > max_log { max_log = lp; }
+                                }
+                                let mut s = 0.0_f64;
+                                for k in 0..n_topics {
+                                    buf[k] = (buf[k] - max_log).exp();
+                                    s += buf[k];
+                                }
+                                if s > 0.0 {
+                                    let inv = 1.0 / s;
+                                    for k in 0..n_topics {
+                                        buf[k] *= inv;
+                                        gamma_new[k] += nw * buf[k];
+                                    }
+                                }
+                            }
+                            let delta = gamma_new
+                                .iter()
+                                .zip(gamma_d.iter())
+                                .map(|(a, b)| (a - b).abs())
+                                .sum::<f64>() / n_topics as f64;
+                            gamma_d = gamma_new;
+                            if delta < 1e-3 {
+                                break;
+                            }
+                        }
+
+                        // Final phi → write local sufficient stats directly
+                        // into this partition's accumulator. No per-doc Vec
+                        // is materialised.
                         update_elog_theta(&gamma_d, &mut elog_theta);
-                        // phi_dwk ∝ exp(E[log theta_dk] + E[log beta_kw])
-                        // accumulate into new gamma without storing full phi
-                        let mut gamma_new = vec![alpha as f64; n_topics];
                         for (i, &w) in doc_cols.iter().enumerate() {
                             let w = w as usize;
                             let nw = doc_counts[i] as f64;
-                            // normalization
                             let mut max_log = f64::NEG_INFINITY;
-                            let mut buf = vec![0.0_f64; n_topics];
                             for k in 0..n_topics {
                                 let lp = elog_theta[k] + elog_beta[k * n_words + w];
                                 buf[k] = lp;
@@ -174,56 +212,22 @@ pub fn online_vb_lda(
                                 let inv = 1.0 / s;
                                 for k in 0..n_topics {
                                     buf[k] *= inv;
-                                    gamma_new[k] += nw * buf[k];
+                                    acc[k * n_words + w] += nw * buf[k];
                                 }
                             }
                         }
-                        let delta = gamma_new
-                            .iter()
-                            .zip(gamma_d.iter())
-                            .map(|(a, b)| (a - b).abs())
-                            .sum::<f64>() / n_topics as f64;
-                        gamma_d = gamma_new;
-                        if delta < 1e-3 {
-                            break;
+                        acc
+                    },
+                )
+                .reduce(
+                    || vec![0.0_f64; n_topics * n_words],
+                    |mut a, b| {
+                        for (x, y) in a.iter_mut().zip(b.iter()) {
+                            *x += *y;
                         }
-                    }
-
-                    // Final phi → local sufficient stats s_local[k,w] += n_dw * phi_dwk
-                    update_elog_theta(&gamma_d, &mut elog_theta);
-                    let mut local_ss = vec![0.0_f64; n_topics * n_words];
-                    for (i, &w) in doc_cols.iter().enumerate() {
-                        let w = w as usize;
-                        let nw = doc_counts[i] as f64;
-                        let mut max_log = f64::NEG_INFINITY;
-                        let mut buf = vec![0.0_f64; n_topics];
-                        for k in 0..n_topics {
-                            let lp = elog_theta[k] + elog_beta[k * n_words + w];
-                            buf[k] = lp;
-                            if lp > max_log { max_log = lp; }
-                        }
-                        let mut s = 0.0_f64;
-                        for k in 0..n_topics {
-                            buf[k] = (buf[k] - max_log).exp();
-                            s += buf[k];
-                        }
-                        if s > 0.0 {
-                            let inv = 1.0 / s;
-                            for k in 0..n_topics {
-                                buf[k] *= inv;
-                                local_ss[k * n_words + w] += nw * buf[k];
-                            }
-                        }
-                    }
-                    local_ss
-                })
-                .collect();
-
-            for local in &batch_sstats {
-                for (a, b) in sstats.iter_mut().zip(local.iter()) {
-                    *a += *b;
-                }
-            }
+                        a
+                    },
+                );
 
             // Online update rule (Hoffman 2010 eq 5):
             //   lambda_kw <- (1-rho) * lambda_kw + rho * (eta + N/|batch| * s_kw)
