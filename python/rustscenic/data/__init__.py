@@ -60,11 +60,14 @@ _AERTSLAB_RANKINGS_BASE = "https://resources.aertslab.org/cistarget/databases"
 def download_motif_rankings(
     species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
     genome: Optional[str] = None,
-    version: str = "v10nr_clust_public",
+    motif_collection: str = "mc_v10_clust",
+    refseq_release: str = "refseq_r80",
     region: str = "gene_based",
+    window: str = "10kbp_up_10kbp_down",
     score_type: str = "rankings",
     cache_dir: Optional[Path] = None,
     filename: Optional[str] = None,
+    url: Optional[str] = None,
     verbose: bool = True,
 ):
     """Download (and cache) an aertslab motif-ranking database.
@@ -73,27 +76,42 @@ def download_motif_rankings(
     tens of GB depending on the DB). Subsequent calls read from the local
     cache at ``cache_dir`` (default: ``~/.cache/rustscenic/cistarget/``).
 
+    Resolves to URLs of the form::
+
+        https://resources.aertslab.org/cistarget/databases/
+            <species_dir>/<genome>/<refseq_release>/<motif_collection>/<region>/
+            <genome>_<window>_full_tx_<motif_collection_short>.
+            <region>s_vs_motifs.<score_type>.feather
+
+    e.g. ``homo_sapiens/hg38/refseq_r80/mc_v10_clust/gene_based/
+    hg38_10kbp_up_10kbp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather``.
+
     Parameters
     ----------
     species
         ``"hs"`` / ``"human"`` / ``"hg38"`` for human, or
         ``"mm"`` / ``"mouse"`` / ``"mm10"`` for mouse.
     genome
-        Defaults to ``"hg38"`` for human, ``"mm10"`` for mouse. Override
-        if you want a different aertslab DB build.
-    version
-        aertslab DB version string, e.g. ``"v10nr_clust_public"``.
+        Defaults to ``"hg38"`` for human, ``"mm10"`` for mouse.
+    motif_collection
+        aertslab motif collection slug. Default ``"mc_v10_clust"``.
+    refseq_release
+        RefSeq release directory. Default ``"refseq_r80"``.
     region
         ``"gene_based"`` (recommended for rustscenic.cistarget) or
         ``"region_based"``.
+    window
+        Region window slug. ``"10kbp_up_10kbp_down"`` (default, broad
+        20kb total) or ``"500bp_up_100bp_down"`` (promoter-only).
     score_type
         ``"rankings"`` for cistarget; ``"scores"`` for alternate analyses.
     cache_dir
         Override the default cache directory.
     filename
-        Escape hatch: pass an aertslab feather filename directly to
-        bypass the canonical-name lookup. Useful when aertslab releases
-        a new build whose name we haven't mapped yet.
+        Escape hatch — pass an aertslab feather filename directly to
+        bypass the auto-built name. Combined with the auto-built dir.
+    url
+        Full URL escape hatch — bypasses both name and dir construction.
 
     Returns
     -------
@@ -103,9 +121,8 @@ def download_motif_rankings(
     Notes
     -----
     aertslab hosts rankings at ``resources.aertslab.org/cistarget/databases/``.
-    See https://resources.aertslab.org/ for the authoritative file list.
-    Mouse (mm10) ranking filenames are best-effort defaults — if a 404
-    fires, pass ``filename=`` explicitly with the exact aertslab name.
+    Browse https://resources.aertslab.org/cistarget/databases/ for the
+    authoritative directory.
     """
     import pandas as pd
     import urllib.request
@@ -119,54 +136,50 @@ def download_motif_rankings(
     # following the diagnostic hints from `_gene_resolution` don't hit
     # an inconsistent error here.
     species_alias = {
-        "hs": "hs", "human": "hs", "homo_sapiens": "hs", "hg38": "hs",
-        "mm": "mm", "mouse": "mm", "mus_musculus": "mm", "mm10": "mm",
+        "hs": ("hs", "homo_sapiens"),
+        "human": ("hs", "homo_sapiens"),
+        "homo_sapiens": ("hs", "homo_sapiens"),
+        "hg38": ("hs", "homo_sapiens"),
+        "mm": ("mm", "mus_musculus"),
+        "mouse": ("mm", "mus_musculus"),
+        "mus_musculus": ("mm", "mus_musculus"),
+        "mm10": ("mm", "mus_musculus"),
     }
-    canonical_species = species_alias.get(str(species).lower())
-    if canonical_species is None:
+    norm = species_alias.get(str(species).lower())
+    if norm is None:
         raise ValueError(
             f"unknown species {species!r}. Use 'hs'/'human'/'hg38' for "
             f"human, 'mm'/'mouse'/'mm10' for mouse."
         )
+    canonical_species, species_dir = norm
     if genome is None:
         genome = "hg38" if canonical_species == "hs" else "mm10"
 
-    # aertslab paths follow:
-    #   <base>/<version>/<genome>/<species>_hgnc__<genome>__<region>__<score_type>.feather
-    # e.g. v10nr_clust_public/hg38/hg38_refseq__10kb_up_and_down_tss.regions_vs_motifs.rankings.feather
-    # The exact pattern varies by version — resolve at call time.
-    default_name = {
-        ("hs", "hg38", "v10nr_clust_public", "gene_based", "rankings"):
-            "hg38_refseq_r80__10kb_up_and_down_tss.genes_vs_motifs.rankings.feather",
-        ("hs", "hg38", "v10nr_clust_public", "region_based", "rankings"):
-            "hg38_refseq_r80__10kb_up_and_down_tss.regions_vs_motifs.rankings.feather",
-        # Mouse mm10 — naming follows the same aertslab convention. If
-        # the URL 404s, pass `filename=` directly with the exact name
-        # from https://resources.aertslab.org/cistarget/databases/.
-        ("mm", "mm10", "v10nr_clust_public", "gene_based", "rankings"):
-            "mm10_refseq-r80__10kb_up_and_down_tss.genes_vs_motifs.rankings.feather",
-        ("mm", "mm10", "v10nr_clust_public", "region_based", "rankings"):
-            "mm10_refseq-r80__10kb_up_and_down_tss.regions_vs_motifs.rankings.feather",
-    }
+    # aertslab filename template, derived from a directory listing of
+    # https://resources.aertslab.org/cistarget/databases/{species_dir}/
+    #   {genome}/refseq_r80/mc_v10_clust/gene_based/
+    # The motif-collection short slug ("v10_clust") is the trailing
+    # piece of the collection ("mc_v10_clust") after stripping the "mc_"
+    # prefix. region_token is "genes" or "regions" (singular→plural).
+    if filename is None:
+        mc_short = motif_collection.split("_", 1)[1] if motif_collection.startswith("mc_") else motif_collection
+        region_token = {"gene_based": "genes", "region_based": "regions"}.get(region, region)
+        filename = (
+            f"{genome}_{window}_full_tx_{mc_short}."
+            f"{region_token}_vs_motifs.{score_type}.feather"
+        )
 
-    if filename is not None:
-        fname = filename
-    else:
-        key = (canonical_species, genome, version, region, score_type)
-        if key not in default_name:
-            raise ValueError(
-                f"no canonical filename mapped for {key!r}. See "
-                f"https://resources.aertslab.org/cistarget/databases/ for "
-                f"the authoritative list, then re-call with `filename=...`."
-            )
-        fname = default_name[key]
+    if url is None:
+        url = (
+            f"{_AERTSLAB_RANKINGS_BASE}/{species_dir}/{genome}/"
+            f"{refseq_release}/{motif_collection}/{region}/{filename}"
+        )
 
-    url = f"{_AERTSLAB_RANKINGS_BASE}/{version}/{genome}/{fname}"
-    local_path = cache_dir / fname
+    local_path = cache_dir / filename
 
     if not local_path.exists():
         if verbose:
-            print(f"downloading {fname} → {local_path}", flush=True)
+            print(f"downloading {filename} → {local_path}", flush=True)
         try:
             urllib.request.urlretrieve(url, local_path)
         except urllib.error.HTTPError as e:
@@ -175,9 +188,10 @@ def download_motif_rankings(
             if local_path.exists():
                 local_path.unlink()
             raise RuntimeError(
-                f"failed to download {url} ({e}). Check the canonical "
-                f"name at https://resources.aertslab.org/cistarget/databases/ "
-                f"and pass it via `filename=...`."
+                f"failed to download {url} ({e}). Browse "
+                f"https://resources.aertslab.org/cistarget/databases/"
+                f"{species_dir}/{genome}/ for the directory and pass the "
+                f"exact `filename=` (or full `url=`) you find there."
             ) from e
 
     return pd.read_feather(local_path).set_index(pd.read_feather(local_path).columns[0])
