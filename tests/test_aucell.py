@@ -180,3 +180,19 @@ def test_aucell_backed_anndata_materialises_cleanly():
             auc = aucell.score(backed, [("R", ["a", "b"])], top_frac=0.3)
         assert auc.shape == (30, 1)
         assert any("backed" in str(w.message).lower() for w in caught)
+
+
+def test_aucell_too_small_top_frac_warns():
+    """top_frac so small that floor(top_frac × n_genes) < 1 = silent zero
+    before the audit. Now warns explicitly so the user can debug."""
+    import warnings
+    import numpy as np
+    rng = np.random.default_rng(0)
+    X = rng.random((20, 10)).astype(np.float32)
+    df = pd.DataFrame(X, columns=[f"G{i}" for i in range(10)])
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        aucell.score(df, [("R", ["G0", "G1"])], top_frac=0.05)
+    msgs = [str(w.message) for w in caught]
+    # 0.05 × 10 = 0.5 → rank cutoff 0
+    assert any("rank cutoff" in m and "below 1" in m for m in msgs), msgs

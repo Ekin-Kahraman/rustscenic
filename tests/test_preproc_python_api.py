@@ -230,3 +230,18 @@ def test_fragments_to_matrix_warns_on_6column_strand_bed():
     assert any("one-per-row" in m or "strand BED" in m for m in msgs), (
         f"one-per-row barcode pattern should have warned, got: {msgs}"
     )
+
+
+def test_fragments_to_matrix_warns_on_unfiltered_barcodes():
+    """Raw 10x fragments.tsv has 100k+ barcodes (every observed). Warn
+    so users know to subset to cell-called barcodes before downstream."""
+    import warnings
+    # 110_000 barcodes, 1 fragment each — looks like a raw fragments file
+    lines = [f"chr1\t{i*100}\t{i*100 + 100}\tBC{i:08d}\t1" for i in range(110_000)]
+    frag_path, td = _write_fragments(lines)
+    peaks_path, td_p = _write_peaks_bed(["chr1\t0\t20000000\tpeak"])
+    with td, td_p, warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        _ = rustscenic.preproc.fragments_to_matrix(frag_path, peaks_path)
+    msgs = [str(w.message) for w in caught]
+    assert any("cell-called barcodes" in m for m in msgs), msgs
