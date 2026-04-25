@@ -26,3 +26,4 @@ docs/specs/
 # Agent briefings stay local — they reference stakeholders and ops detail
 # that don't belong in a public repo.
 AGENTS.md
+validation/real_multiome/

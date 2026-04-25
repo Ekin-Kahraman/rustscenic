@@ -136,12 +136,15 @@ fn build_node_rec(
 
     if let Some((feature, bin_threshold, gain)) = best {
         gains[feature] += gain;
-        let nf = binned.n_features;
         // Pooled partition buffers — see TreeScratch::partition_bufs comment.
         let mut left_samples = scratch.take_partition_buf(samples.len() / 2);
         let mut right_samples = scratch.take_partition_buf(samples.len() / 2);
+        // Column-major bin layout: one feature's column is contiguous,
+        // fits in cache for the partition scan.
+        let base = feature * binned.n_samples;
+        let col = &binned.bins[base..base + binned.n_samples];
         for &s in samples {
-            if binned.bins[s * nf + feature] <= bin_threshold {
+            if col[s] <= bin_threshold {
                 left_samples.push(s);
             } else {
                 right_samples.push(s);
@@ -213,13 +216,13 @@ fn mean_at(samples: &[usize], y: &[f32]) -> f32 {
 }
 
 pub fn predict_binned(tree: &Tree, binned: &BinnedMatrix, sample: usize) -> f32 {
-    let nf = binned.n_features;
+    let n_samples = binned.n_samples;
     let mut cur = 0;
     loop {
         match &tree.nodes[cur] {
             Node::Leaf { value } => return *value,
             Node::Split { feature, bin_threshold, left, right, .. } => {
-                let b = binned.bins[sample * nf + *feature];
+                let b = binned.bins[*feature * n_samples + sample];
                 cur = if b <= *bin_threshold { *left } else { *right };
             }
         }
