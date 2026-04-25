@@ -155,25 +155,36 @@ def download_motif_rankings(
     if genome is None:
         genome = "hg38" if canonical_species == "hs" else "mm10"
 
-    # aertslab filename template, derived from a directory listing of
-    # https://resources.aertslab.org/cistarget/databases/{species_dir}/
-    #   {genome}/refseq_r80/mc_v10_clust/gene_based/
-    # The motif-collection short slug ("v10_clust") is the trailing
-    # piece of the collection ("mc_v10_clust") after stripping the "mc_"
-    # prefix. region_token is "genes" or "regions" (singular→plural).
+    # aertslab paths differ between gene_based and region_based on the
+    # directory tree:
+    #   gene_based:    {species_dir}/{genome}/{refseq_release}/{motif_collection}/gene_based/
+    #                  {genome}_{window}_full_tx_{mc_short}.genes_vs_motifs.{score_type}.feather
+    #   region_based:  {species_dir}/{genome}/screen/{motif_collection}/region_based/
+    #                  {genome}_screen_{mc_short}.regions_vs_motifs.{score_type}.feather
+    # The motif-collection short slug ("v10_clust") is the trailing piece
+    # of the collection ("mc_v10_clust") after stripping the "mc_" prefix.
+    mc_short = motif_collection.split("_", 1)[1] if motif_collection.startswith("mc_") else motif_collection
     if filename is None:
-        mc_short = motif_collection.split("_", 1)[1] if motif_collection.startswith("mc_") else motif_collection
-        region_token = {"gene_based": "genes", "region_based": "regions"}.get(region, region)
-        filename = (
-            f"{genome}_{window}_full_tx_{mc_short}."
-            f"{region_token}_vs_motifs.{score_type}.feather"
-        )
+        if region == "region_based":
+            filename = f"{genome}_screen_{mc_short}.regions_vs_motifs.{score_type}.feather"
+        else:
+            region_token = {"gene_based": "genes"}.get(region, region)
+            filename = (
+                f"{genome}_{window}_full_tx_{mc_short}."
+                f"{region_token}_vs_motifs.{score_type}.feather"
+            )
 
     if url is None:
-        url = (
-            f"{_AERTSLAB_RANKINGS_BASE}/{species_dir}/{genome}/"
-            f"{refseq_release}/{motif_collection}/{region}/{filename}"
-        )
+        if region == "region_based":
+            url = (
+                f"{_AERTSLAB_RANKINGS_BASE}/{species_dir}/{genome}/"
+                f"screen/{motif_collection}/region_based/{filename}"
+            )
+        else:
+            url = (
+                f"{_AERTSLAB_RANKINGS_BASE}/{species_dir}/{genome}/"
+                f"{refseq_release}/{motif_collection}/{region}/{filename}"
+            )
 
     local_path = cache_dir / filename
 

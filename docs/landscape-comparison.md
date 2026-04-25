@@ -90,8 +90,9 @@ Numerical parity vs pyscenic:
 
 ## Summary positioning
 
+- **Single-install replacement track for the SCENIC / SCENIC+ compute stack.** The project goal is not another wrapper; it is one CPU package for GRN, AUCell, motif enrichment, ATAC preprocessing, topics, enhancer→gene, and eRegulons.
 - **Only maintained CPU-Python drop-in for the SCENIC compute stack.** Every competing compute module has either a multi-year-stale PyPI release or known unpatched install breakage.
-- **Single install covers 4 compute stages + ATAC preprocessing + bundled TFs + auto-fetch motif DB.** Closest competitor needs ≥ 3 packages stitched together (pySCENIC + pycisTopic + pycistarget + their dependency tangle).
+- **Single install covers 4 compute stages + ATAC preprocessing + bundled TFs + auto-fetch motif DB.** Closest competitor needs ≥ 3 packages stitched together (pySCENIC + pycisTopic + pycistarget + their dependency tangle). The next strict-parity milestone is region-level cistarget/cistromes.
 - **Numerically equivalent to pyscenic** at per-cell AUC (0.98+), bit-identical at cistarget, honest on GRN edge disagreement (documented).
 - **An order of magnitude more tested** than every competing repo combined.
 

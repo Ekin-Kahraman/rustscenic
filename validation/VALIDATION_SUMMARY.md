@@ -21,7 +21,7 @@ Every row has a log file in this directory. Numbers are measured on this codebas
 | Wheel architectures | x86_64 | x86_64 + aarch64 |
 | Robustness test suite | — | 10/10 edge cases handled |
 
-rustscenic covers the four legacy SCENIC / SCENIC+ slow stages on CPU and now includes matched multiome enhancer→gene linking plus eRegulon assembly. It is **not yet a strict feature-complete scenicplus clone**: region-based cistarget/cistromes are bridged from gene-based cistarget output, and fine-grained ATAC topic modelling still trails Mallet. Out of scope: GPU workloads (flashSCENIC), TF-activity scoring from prebuilt regulons (decoupler-py), R Bioconductor (Epiregulon), FASTQ alignment/quantification.
+rustscenic is the single-install replacement track for the practical SCENIC / SCENIC+ compute workflow. It covers the four legacy slow stages on CPU and now includes matched multiome enhancer→gene linking plus eRegulon assembly. The remaining strict-parity work is explicit: region-level cistarget/cistromes, Mallet-class fine-grained ATAC topics, MACS2 reference cross-checks, and full-TF real 100k multiome validation. Out of scope: GPU workloads (flashSCENIC), TF-activity scoring from prebuilt regulons (decoupler-py), R Bioconductor (Epiregulon), FASTQ alignment/quantification.
 
 ## Headline agreements (what we measured, and where)
 
@@ -156,7 +156,7 @@ Scope spec: [`../docs/atac-preprocessing-scope.md`](../docs/atac-preprocessing-s
 2. **GRN perf at full biological scale (100k cells, full TF list, 5000 estimators) hasn't been benchmarked yet.** We have 100k memory proof with smaller TF/estimator settings and 30k real-data scaling, but full-TF full-estimator atlas runs need HPC.
 3. **100k-cell integrated real multiome is not done.** Synthetic 100k and real 2.7k multiome pass; the real 100k RNA+ATAC pipeline remains the next credibility gate.
 4. **PyPI publish not done.** Distribution is GitHub Release wheels/source install until PyPI trusted publishing is configured.
-5. **Region-based SCENIC+ cistromes are not implemented.** Current eRegulons are assembled from GRN + enhancer links + a gene-based cistarget bridge; that is useful for testing and many workflows, but it is not strict scenicplus region-cistarget parity.
+5. **Region-based SCENIC+ cistromes are the next replacement milestone.** Current eRegulons are assembled from GRN + enhancer links + a gene-based cistarget bridge; useful for testing and many workflows, but the full replacement contract requires strict scenicplus region-cistarget parity.
 
 ## What the tool claims (post-deep-audit, 2026-04-19)
 

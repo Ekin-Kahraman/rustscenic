@@ -175,14 +175,55 @@ def test_motif_ranking_urls_resolve_live(monkeypatch):
 
     monkeypatch.setattr(urllib.request, "urlretrieve", fake_urlretrieve)
 
+    import tempfile
     for species in ("hs", "mm"):
-        captured.clear()
-        data.download_motif_rankings(
-            species=species,
-            cache_dir=os.path.join(os.environ.get("TMPDIR", "/tmp"), f"rustscenic_aertslab_{species}"),
-            verbose=False,
-        )
-        assert captured["status"] == 200, (
-            f"aertslab URL for species={species!r} returned "
-            f"{captured.get('status')}: {captured['url']}"
-        )
+        for region in ("gene_based", "region_based"):
+            captured.clear()
+            # Fresh cache so we always actually issue the HEAD via the
+            # mocked urlretrieve (otherwise a prior cache hit short-
+            # circuits the download path and `status` never gets set).
+            with tempfile.TemporaryDirectory() as fresh_cache:
+                data.download_motif_rankings(
+                    species=species,
+                    region=region,
+                    cache_dir=fresh_cache,
+                    verbose=False,
+                )
+            assert captured.get("status") == 200, (
+                f"aertslab URL for species={species!r} region={region!r} "
+                f"returned {captured.get('status')}: {captured.get('url')}"
+            )
+
+
+def test_download_motif_rankings_region_based_path(tmp_path, monkeypatch):
+    """Region-based downloads use a different aertslab subtree
+    (screen/mc_v10_clust/region_based/) and a different filename
+    pattern (genome_screen_v10_clust.regions_vs_motifs.*.feather)."""
+    import rustscenic.data as data
+    import urllib.request
+
+    captured = {}
+
+    def fake_urlretrieve(url, local_path):
+        captured["url"] = url
+        pd.DataFrame({"features": ["m1"], "p1": [1]}).to_feather(local_path)
+        return local_path, None
+
+    monkeypatch.setattr(urllib.request, "urlretrieve", fake_urlretrieve)
+
+    data.download_motif_rankings(
+        species="hs", region="region_based",
+        cache_dir=tmp_path, verbose=False,
+    )
+    assert "screen/mc_v10_clust/region_based" in captured["url"], captured["url"]
+    assert "regions_vs_motifs" in captured["url"], captured["url"]
+    assert "screen_v10_clust" in captured["url"], captured["url"]
+
+    # Mouse
+    captured.clear()
+    data.download_motif_rankings(
+        species="mm", region="region_based",
+        cache_dir=tmp_path / "mm", verbose=False,
+    )
+    assert "mus_musculus/mm10/screen" in captured["url"], captured["url"]
+    assert "mm10_screen" in captured["url"], captured["url"]
