@@ -76,12 +76,69 @@ on HPC (Hali or Minerva) where RAM headroom removes the swap confound.
 \* RSS above 10k in the pbmc10k table is from the older cumulative-RSS
 runner and reflects peak across the whole benchmark, not per-size.
 
+### Microglia atlas 91k (real cellxgene, 58,232 genes, 50 TFs)
+
+This is the counterexample to the earlier "linear at atlas scale" claim.
+The run uses a real 91,838-cell cellxgene microglia atlas, the first 50
+bundled human TFs present in the matrix, and `n_estimators=20`.
+Raw JSON: [`microglia_91k_grn_scaling.json`](microglia_91k_grn_scaling.json).
+
+| n_cells | GRN (s) | AUCell (s) | peak RSS (GB) | GRN per-cell |
+|---:|---:|---:|---:|---:|
+| 5,000 | 36.7 | 0.73 | 4.4 | 7.3 ms |
+| 10,000 | 94.2 | 1.55 | 4.4 | 9.4 ms |
+| 20,000 | 230.3 | 4.70 | 4.4 | 11.5 ms |
+| 40,000 | 681.9 | 9.89 | 5.1 | 17.0 ms |
+| 80,000 | 5,478.3 | 14.29 | 7.8 | 68.5 ms |
+| 91,838 | 6,590.6 | 14.98 | 7.8 | 71.8 ms |
+
+GRN log-log slope across the full run is **1.81**. The cliff is the
+40k→80k transition: 8.0× wall-clock for 2× cells, segment slope 3.01.
+AUCell does not show the same cliff.
+
+Interpretation after audit: the cliff was not explained by allocator
+churn alone. The dominant issue was row-major strided target extraction:
+the old loop pulled one target gene at a time from a cells × genes dense
+matrix, so each target caused a cache/TLB-hostile pass with stride
+`n_genes`. Target blocking now materialises 64 consecutive targets at a
+time into a compact column-major buffer.
+
+Post-scratch sanity on the same atlas, before re-running the expensive
+40k/80k/91.8k points:
+
+| n_cells | pre-scratch GRN | post-scratch GRN | speedup |
+|---:|---:|---:|---:|
+| 5,000 | 36.7 s | 27.7 s | 1.33× |
+| 10,000 | 94.2 s | 57.6 s | 1.64× |
+| 20,000 | 230.3 s | 125.7 s | 1.83× |
+
+The 5k→20k post-scratch slope was **1.09**, but a later 40k/80k/91.8k
+rerun showed scratch-only did not fix atlas scale. Target blocking is the
+actual atlas fix:
+
+| n_cells | original GRN | scratch-only GRN | target-blocked GRN | speedup vs original |
+|---:|---:|---:|---:|---:|
+| 5,000 | 36.7 s | 27.7 s | 30.9 s | 1.19× |
+| 10,000 | 94.2 s | 57.6 s | 64.1 s | 1.47× |
+| 20,000 | 230.3 s | 125.7 s | 132.4 s | 1.74× |
+| 40,000 | 681.9 s | 1,140 s hot-run | 287.7 s | 2.37× |
+| 80,000 | 5,478.3 s | 6,300 s hot-run | 735.3 s | 7.45× |
+| 91,838 | 6,590.6 s | 8,070 s hot-run | 864.1 s | 7.63× |
+
+Post target-blocking slope across 5k→91.8k is **1.15**. The old
+40k→80k segment was slope 3.01; target blocking reduces it to 1.35.
+That is a substantial fix, not perfect linearity.
+
 ## Scaling summary
 
-| Stage | Ziegler slope post-fix (10k–30k) | Verdict |
+| Stage | Measured range | Slope / behavior | Verdict |
 |---|---:|---|
-| GRN | 1.17 | Linear after PR #12 (was 2.39 before) |
-| AUCell | 1.30 | Near-linear; pending deeper profiling |
+| GRN | Ziegler 10k–30k, 21 TFs | 1.17 | Near-linear in this range |
+| GRN | Gland Atlas 2k–40k, 6 TFs | 1.11 | Linear narrow-TF check |
+| GRN | Microglia 5k–91.8k, 50 TFs | 1.81 | Super-linear at atlas scale; 40k→80k cliff |
+| GRN | Microglia 5k–20k post-scratch, 50 TFs | 1.09 | Early fix signal; not full cliff proof |
+| GRN | Microglia 5k–91.8k post-target-blocking, 50 TFs | 1.15 | Atlas cliff materially fixed; still mildly super-linear |
+| AUCell | Microglia 40k→91.8k | 9.9s→15.0s | Not the bottleneck |
 
 Peak memory on Ziegler grows sub-linearly: 3× cells → 1.14× RSS.
 
@@ -99,10 +156,11 @@ PR #12 pooled the buffers in `TreeScratch` with `take_partition_buf` /
 so the pool stabilises at 6 buffers per thread and never allocates
 after warm-up. Also removed a redundant `root_samples.to_vec()` copy.
 
-## Complexity analysis (algorithmic guarantee)
+## Complexity analysis
 
 After PR #12 every per-cell loop in GRN inference is linear in
-`n_cells`. Walking the loop:
+`n_cells`, but measured wall-clock can still become super-linear when
+the memory system dominates. Walking the loop:
 
 | Stage | Cost | Depends on `n_cells` as |
 |---|---|---|
@@ -118,8 +176,10 @@ After PR #12 every per-cell loop in GRN inference is linear in
 Feature count `n_features` is bounded by the TF list length (typically
 20–2,000, not `n_cells`-dependent). `max_depth` is a fixed
 hyperparameter (3 for GRNBoost2 defaults). `n_estimators` is a
-user-set hyperparameter independent of `n_cells`. None of those can
-turn the per-cell cost non-linear.
+user-set hyperparameter independent of `n_cells`. These keep the
+algorithmic work linear for fixed settings, but they do not guarantee
+linear wall-clock on a laptop once per-worker buffers reach multi-MB
+sizes and are churned across tens of thousands of target genes.
 
 AUCell is similarly O(n_cells × n_genes × log n_genes) — argsort
 dominates, and the `log n_genes` factor does not depend on `n_cells`.
@@ -133,9 +193,11 @@ on a machine where the algorithm is O(n):
 2. L3 cache misses when the per-thread working set grows past cache.
 3. Allocator page-fault contention (the bug PR #12 fixed).
 
-(1) is hardware, not algorithm. (3) is solved. (2) is mitigable with
-chunked target-gene processing — tracked for future work but not
-currently observed inside measured ranges.
+(1) is hardware pressure, not a semantic bug. (3) was reduced by PR #12
+inside each tree, and later by worker-local GBM scratch buffers. The
+microglia 91k run exposed a larger memory-layout issue: one strided
+row-major pass per target gene. Target blocking fixes the biggest part
+of that by copying 64 target genes at a time into column-major buffers.
 
 ## CI regression test
 
@@ -164,8 +226,8 @@ document up-sampling explicitly when you cross that ratio.
 - Cells below source size: drawn without replacement.
 - Cells above source size: drawn with replacement + σ = 0.01 Gaussian
   perturbation on normalised counts.
-- GRN: `n_estimators=300`. Scaling ratios hold at higher estimator
-  counts by tree construction linearity in `n_estimators`.
+- GRN: benchmark-specific `n_estimators`; do not extrapolate small-TF
+  or low-cell-count slopes to full atlas runs without measuring.
 - Peak RSS: `resource.getrusage(RUSAGE_SELF).ru_maxrss` from a fresh
   subprocess per cell count.
 - TF list: same 21-TF union as `examples/pbmc3k_end_to_end.py`.
@@ -197,12 +259,13 @@ Attempted locally (2026-04-22):
   inside 43 minutes before abort. Memory-bound at ~5 GB RSS with
   5–7 cores active, clearly paging.
 
-Both are hardware ceilings, not fix regressions. On an HPC node with
-sufficient RAM (64–128 GB), the PR #12 allocation fix should continue
-to deliver near-linear scaling at 100k–300k cells.
+Both are hardware ceilings, not fix regressions, but the later 91k
+microglia run shows that sufficient RAM alone does not guarantee
+near-linear GRN wall-clock. Re-run the 50k+ curve after each GRN
+allocator/cache optimisation before making atlas-scale speed claims.
 
 Planned: re-run at 10k, 30k, 50k, 100k, 200k, 300k on Hali or Minerva
 once access lands. This is the gating data point for Kuan's proposed
 cellxgene sweep (hundreds of cell types × 30–100k each) — need to
-confirm the per-cell-type cost stays linear before committing
-Minerva time.
+measure the per-cell-type cost after the worker-local buffer reuse
+patch before committing Minerva time.

@@ -118,10 +118,12 @@ haven't validated yet:
    synthetic recovery. We have not yet benchmarked against MACS2 on
    real ENCODE data. F1 vs MACS2 broadPeak is on the v0.3 list.
 5. **100k-cell atlas end-to-end is unmeasured** for the full
-   ATAC + RNA pipeline. We have GRN scaling proof to 50k (linear
-   slope post-PR #12) and peak RSS at 100k (6.3 GB across 4 stages),
-   but the integrated multi-modal pipeline at 100k cells is the next
-   credibility test.
+   ATAC + RNA pipeline. We have peak RSS proof at 100k (6.3 GB across
+   four stages), but a real 91k microglia GRN run with 50 TFs exposed
+   a 40k→80k wall-clock cliff. Worker-local scratch buffers plus target
+   blocking reduce the same 91,838-cell run from 6,590.6 s to 864.1 s
+   and the full 5k→91.8k slope from 1.81 to 1.15. Integrated 100k
+   multiome remains the next credibility test.
 6. **Windows build**: untested. macOS + Linux only.
 7. **PyPI publish blocked**: trusted-publisher needs config on the
    maintainer's PyPI account. Until that resolves, install via

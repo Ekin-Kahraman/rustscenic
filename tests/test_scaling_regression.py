@@ -7,8 +7,10 @@ on real data. Anything above 1.30 means super-linearity has come back
 in — the test fails and the build stops.
 
 Uses synthetic data with 50 target genes + 10 TFs + n_estimators=20
-so the whole test runs in ~15 s on CI. This is not a benchmark; it's
-a tripwire on the algorithmic complexity guarantee.
+so the whole test runs quickly on CI. This is not an atlas benchmark;
+it's a small-shape tripwire for obvious algorithmic regressions. It
+will not catch the 40k→80k real-atlas memory-system cliff documented
+in validation/scaling/microglia_91k_grn_scaling.json.
 
 If this test gets flaky on CI runners with wildly varying load, bump
 the threshold to 1.40 and document. But do not disable it — the whole
@@ -30,7 +32,7 @@ import rustscenic.grn
 CELL_COUNTS = [1_000, 2_000, 4_000, 8_000]
 N_GENES = 80          # few enough to be fast; the TFs are a subset of these
 N_TFS = 10            # constant across sizes so per-feature cost doesn't move
-N_ESTIMATORS = 20     # reduced from the 5000 default for speed; scaling ratio holds
+N_ESTIMATORS = 20     # reduced from the 5000 default for CI speed
 # Slope threshold: fail if empirical log-log slope exceeds this. 1.0 = perfectly
 # linear; 1.30 is ~30% super-linear, comfortably above measurement noise but
 # well below the 2.39× pre-PR-#12 regime we actually want to catch.
@@ -65,10 +67,9 @@ def _log_log_slope(xs: list[float], ys: list[float]) -> float:
 def test_grn_scaling_is_linear():
     """GRN wall-time must scale at most 30% super-linear in n_cells.
 
-    Regression guard on the PR #12 partition-buffer fix. If future
-    changes reintroduce allocation churn or any other super-linear
-    term, this test will catch it — the build breaks, the regression
-    never reaches main.
+    Regression guard on the PR #12 partition-buffer fix at small CI
+    sizes. Atlas-scale allocator/cache cliffs still require the real
+    scaling benches under validation/scaling/.
     """
     times: list[float] = []
     edges: list[int] = []

@@ -1,0 +1,80 @@
+{
+  "input": "validation/multi_dataset/microglia_91k.h5ad",
+  "dataset": "91,838-cell cellxgene microglia atlas",
+  "purpose": "Post target-blocking GRN scaling check on the real atlas that exposed the 40k->80k wall-clock cliff.",
+  "implementation": "Worker-local GBM scratch buffers plus target blocking. Target blocking materialises 64 consecutive target genes at a time from row-major expression into a compact column-major target buffer, avoiding one strided full-matrix pass per target gene.",
+  "tfs": "first 50 bundled human TFs, after expression-matrix resolution",
+  "n_estimators": 20,
+  "seed": 0,
+  "results": [
+    {
+      "n_cells": 5000,
+      "n_genes": 58232,
+      "n_tfs": 46,
+      "wall_s": 30.9,
+      "pre_fix_wall_s": 36.681,
+      "scratch_only_wall_s": 27.65,
+      "speedup_vs_pre_fix": 1.19,
+      "edges": 855908
+    },
+    {
+      "n_cells": 10000,
+      "n_genes": 58232,
+      "n_tfs": 49,
+      "wall_s": 64.1,
+      "pre_fix_wall_s": 94.164,
+      "scratch_only_wall_s": 57.58,
+      "speedup_vs_pre_fix": 1.47,
+      "edges": 930489
+    },
+    {
+      "n_cells": 20000,
+      "n_genes": 58232,
+      "n_tfs": 50,
+      "wall_s": 132.4,
+      "pre_fix_wall_s": 230.304,
+      "scratch_only_wall_s": 125.68,
+      "speedup_vs_pre_fix": 1.74,
+      "edges": 1032633
+    },
+    {
+      "n_cells": 40000,
+      "n_genes": 58232,
+      "n_tfs": 50,
+      "wall_s": 287.7,
+      "pre_fix_wall_s": 681.932,
+      "scratch_only_hot_wall_s": 1140,
+      "speedup_vs_pre_fix": 2.37,
+      "edges": 1156635
+    },
+    {
+      "n_cells": 80000,
+      "n_genes": 58232,
+      "n_tfs": 50,
+      "wall_s": 735.3,
+      "pre_fix_wall_s": 5478.254,
+      "scratch_only_hot_wall_s": 6300,
+      "speedup_vs_pre_fix": 7.45,
+      "edges": 1128991
+    },
+    {
+      "n_cells": 91838,
+      "n_genes": 58232,
+      "n_tfs": 50,
+      "wall_s": 864.1,
+      "pre_fix_wall_s": 6590.617,
+      "scratch_only_hot_wall_s": 8070,
+      "speedup_vs_pre_fix": 7.63,
+      "edges": 1140669
+    }
+  ],
+  "grn_slope_5k_to_91838": 1.1480400877979988,
+  "segment_slopes": {
+    "5k_to_10k": 1.0527175187143667,
+    "10k_to_20k": 1.046506860188477,
+    "20k_to_40k": 1.1196620989320694,
+    "40k_to_80k": 1.353767763848709,
+    "80k_to_91838": 1.1696411906142452
+  },
+  "interpretation": "The original atlas cliff was dominated by row-major strided target extraction, not just per-target allocator churn. Target blocking changes the 40k->80k segment from an 8.0x wall-clock jump to 2.56x and the full 91,838-cell run from 6,590.6s to 864.1s on the same local atlas setup. The 40k->80k segment remains mildly super-linear, so atlas-scale GRN should be described as near-linear/post-blocking rather than perfectly linear."
+}
