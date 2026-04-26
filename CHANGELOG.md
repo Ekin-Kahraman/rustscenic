@@ -1,5 +1,50 @@
 # Changelog
 
+## 0.3.0 — 2026-04-26
+
+### Performance
+- **GRN atlas-scale fix**: worker-local `GbmScratch` + 64-target column-major
+  blocking. The 8× cliff at 40k→80k cells is gone. Real 91,838-cell microglia
+  GRN: 110 min → 14.4 min. Full 5k→91.8k log-log slope: 1.81 → 1.15.
+- **GRN binned-matrix column-major**: 10.6% wall-clock saving on real PBMC Multiome.
+- **PyO3 input borrow**: ~12 GB instantaneous RSS saved at atlas scale.
+- **Topics par_iter().fold().reduce()**: ~30× lower memory bound for online VB LDA.
+- **Chrom × fragment loop inversions** in peak calling, TSS, matrix builder.
+
+### Capabilities
+- **Region-based cistarget**: exact eRegulon assembly when region rankings supplied.
+- **Regulon specificity scores**: `rustscenic.specificity.regulon_specificity_scores`.
+- **Topic candidate enhancers**: `rustscenic.specificity.candidate_enhancers_per_topic`.
+- **Mouse mm10 motif rankings download path**.
+
+### Robustness
+- **Aertslab URL fix** — broken since v0.1.0 (mocked tests never caught it).
+  Live HTTP smoke now runs.
+- Duplicate-symbol auto-sum (scanpy/limma avereps).
+- Backed AnnData support in AUCell + GRN.
+- Dict regulons accepted (docstring promised, finally works).
+- Versioned ENSEMBL `.N` suffix auto-strip when no symbol column.
+- `top_frac` bounds + saturation warning + tiny-cutoff warning.
+- 6-column strand BED detection.
+- eRegulon catastrophic-drop warning + > 8 GiB densification warning.
+- scenicplus polarity suffix stripping (`TF(+)`, `_extended`, `_activator`).
+- Actionable zero-overlap diagnostics that name the specific mismatch.
+- Repeat `pipeline.run` calls no longer crash on overlapping regulon columns.
+
+### Validation
+- Kamath 2022 OPC end-to-end on real cellxgene data.
+- Multi-dataset bench: 1.2k mouse → 30k human, all coverage 100%.
+- 10x PBMC 3k Multiome full pipeline run.
+- 100k × 30k synthetic atlas E2E at 9.5 GB peak RSS.
+- 91k microglia atlas GRN scaling — slope 1.15.
+- Bench vs MACS2: 9.9× faster, F1 0.825.
+- Bench vs gensim LDA: gensim still 1.5–2.7× faster at K=10/30 (documented).
+
+### Cleanup
+- Removed dead `rustscenic-cli` and `rustscenic-core` crates.
+- pipeline.run goes end-to-end (preproc → topics → GRN → cistarget → enhancer → eRegulon → AUCell).
+- Quickstart hardened against transient scanpy network failures.
+
 ## 0.2.0 — 2026-04-24
 
 ### Added
