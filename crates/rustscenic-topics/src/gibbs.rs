@@ -8,20 +8,20 @@
 //! instead of tens of passes).
 //!
 //! Algorithm (Griffiths & Steyvers 2004):
-//!   - Each token (d, w_i) has a topic assignment z_d_i ∈ [0, K)
-//!   - Maintain count matrices:
-//!       n_dk[d, k] — # tokens in doc d assigned to topic k
-//!       n_kw[k, w] — # tokens of word w assigned to topic k
-//!       n_k[k]     — Σ_w n_kw[k, w]
-//!   - Per-token Gibbs step:
-//!       1. subtract token's current contribution from counts
-//!       2. compute P(z = k') ∝ (n_dk + α)(n_kw + η) / (n_k + Wη) for all k'
-//!       3. sample new z from that distribution
-//!       4. add new token contribution to counts
-//!   - Repeat for `n_iters` sweeps over the corpus
+//! - Each token (d, w_i) has a topic assignment z_d_i ∈ [0, K)
+//! - Maintain count matrices:
+//!   n_dk\[d, k\] = # tokens in doc d assigned to topic k,
+//!   n_kw\[k, w\] = # tokens of word w assigned to topic k,
+//!   n_k\[k\]     = Σ_w n_kw\[k, w\]
+//! - Per-token Gibbs step:
+//!   1. subtract token's current contribution from counts
+//!   2. compute P(z = k') ∝ (n_dk + α)(n_kw + η) / (n_k + Wη) for all k'
+//!   3. sample new z from that distribution
+//!   4. add new token contribution to counts
+//! - Repeat for `n_iters` sweeps over the corpus
 //!
 //! Output: posterior point estimates
-//!   theta[d, k] = (n_dk + α) / (Σ_k' n_dk' + Kα)
+//! theta\[d, k\] = (n_dk + α) / (Σ_k' n_dk' + Kα)
 //!   beta[k, w]  = (n_kw + η) / (n_k + Wη)
 //!
 //! The implementation is single-threaded for correctness — concurrent
