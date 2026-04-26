@@ -1,0 +1,42 @@
+{
+  "input": "validation/multi_dataset/microglia_91k.h5ad",
+  "dataset": "91,838-cell cellxgene microglia atlas",
+  "purpose": "Post worker-local GBM scratch-buffer sanity check on the same real atlas that exposed the 40k->80k GRN cliff. This is not the full cliff rerun.",
+  "tfs": "first 50 bundled human TFs, after expression-matrix resolution",
+  "n_estimators": 20,
+  "seed": 0,
+  "results": [
+    {
+      "n_cells": 5000,
+      "n_genes": 58232,
+      "n_tfs": 46,
+      "wall_s": 27.65,
+      "pre_scratch_wall_s": 36.681,
+      "speedup_vs_pre_scratch": 1.33,
+      "edges": 855908,
+      "compute_units": 267867200000
+    },
+    {
+      "n_cells": 10000,
+      "n_genes": 58232,
+      "n_tfs": 49,
+      "wall_s": 57.58,
+      "pre_scratch_wall_s": 94.164,
+      "speedup_vs_pre_scratch": 1.64,
+      "edges": 930489,
+      "compute_units": 570673600000
+    },
+    {
+      "n_cells": 20000,
+      "n_genes": 58232,
+      "n_tfs": 49,
+      "wall_s": 125.68,
+      "pre_scratch_wall_s": 230.304,
+      "speedup_vs_pre_scratch": 1.83,
+      "edges": 1031473,
+      "compute_units": 1141347200000
+    }
+  ],
+  "grn_slope_5k_to_20k": 1.0922018500860644,
+  "interpretation": "The scratch-buffer patch improves the same real microglia atlas through 20k cells and restores near-linear behavior over 5k->20k. It does not prove the 40k->80k cliff is fixed; rerun 40k, 80k, and 91,838 before making atlas-scale GRN claims."
+}

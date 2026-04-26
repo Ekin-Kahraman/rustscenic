@@ -1,0 +1,69 @@
+{
+  "input": "validation/multi_dataset/microglia_91k.h5ad",
+  "dataset": "real cellxgene microglia atlas",
+  "shape": [91838, 58232],
+  "tfs": "human first 50 bundled TFs",
+  "n_estimators": 20,
+  "seed": 0,
+  "date": "2026-04-26",
+  "hardware": "macOS arm64 laptop, 32 GB RAM",
+  "results": [
+    {
+      "n_cells": 5000,
+      "grn_s": 36.68100591702387,
+      "aucell_s": 0.7341629160800949,
+      "edges": 877370,
+      "auc_shape": [5000, 46],
+      "rss_gb": 4.4388275146484375
+    },
+    {
+      "n_cells": 10000,
+      "grn_s": 94.16362008301076,
+      "aucell_s": 1.545598333934322,
+      "edges": 968197,
+      "auc_shape": [10000, 49],
+      "rss_gb": 4.4388275146484375
+    },
+    {
+      "n_cells": 20000,
+      "grn_s": 230.30362716596574,
+      "aucell_s": 4.69580795802176,
+      "edges": 1086576,
+      "auc_shape": [20000, 50],
+      "rss_gb": 4.4388275146484375
+    },
+    {
+      "n_cells": 40000,
+      "grn_s": 681.9318530409364,
+      "aucell_s": 9.886555458069779,
+      "edges": 1225291,
+      "auc_shape": [40000, 50],
+      "rss_gb": 5.1156463623046875
+    },
+    {
+      "n_cells": 80000,
+      "grn_s": 5478.253919749986,
+      "aucell_s": 14.293691709055565,
+      "edges": 1239484,
+      "auc_shape": [80000, 50],
+      "rss_gb": 7.8400115966796875
+    },
+    {
+      "n_cells": 91838,
+      "grn_s": 6590.617470291909,
+      "aucell_s": 14.977697791997343,
+      "edges": 1234944,
+      "auc_shape": [91838, 50],
+      "rss_gb": 7.8400115966796875
+    }
+  ],
+  "grn_slope": 1.80780697653923,
+  "segment_slopes": [
+    {"from": 5000, "to": 10000, "slope": 1.36},
+    {"from": 10000, "to": 20000, "slope": 1.29},
+    {"from": 20000, "to": 40000, "slope": 1.57},
+    {"from": 40000, "to": 80000, "slope": 3.01},
+    {"from": 80000, "to": 91838, "slope": 1.34}
+  ],
+  "interpretation": "GRN becomes effectively super-linear at atlas scale. The cliff is between 40k and 80k cells; AUCell remains near/sub-linear. Primary suspected cause before PR follow-up: per-target allocation/page-fault traffic in GRN worker buffers, not AUCell or gene-name resolution."
+}

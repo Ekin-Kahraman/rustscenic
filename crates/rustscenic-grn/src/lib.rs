@@ -30,6 +30,15 @@ use rayon::prelude::*;
 
 use crate::histogram::BinnedMatrix;
 
+/// Target genes materialised together for GRN fitting.
+///
+/// The expression matrix arrives row-major (cells × genes). Extracting one
+/// target at a time is a cache-hostile stride of `n_genes` floats for every
+/// target. At atlas shapes, that repeats a TLB/cache miss pattern tens of
+/// thousands of times. Blocking targets scans each row once per target window,
+/// copies contiguous source values, and fits from compact column-major targets.
+const TARGET_BLOCK_SIZE: usize = 64;
+
 #[derive(Debug, Clone)]
 pub struct Adjacency {
     pub tf: String,
@@ -64,7 +73,8 @@ impl Default for GrnConfig {
 
 /// Infer a GRN from a dense (n_cells × n_genes) f32 expression matrix.
 ///
-/// Pre-bins the TF matrix once, then parallelizes across target genes.
+/// Pre-bins the TF matrix once, then processes target genes in cache-friendly
+/// blocks while fitting targets inside each block in parallel.
 pub fn infer(
     expression: &[f32],
     n_cells: usize,
@@ -73,7 +83,11 @@ pub fn infer(
     cfg: &GrnConfig,
 ) -> Vec<Adjacency> {
     let n_genes = gene_names.len();
-    assert_eq!(expression.len(), n_cells * n_genes, "expression size mismatch");
+    assert_eq!(
+        expression.len(),
+        n_cells * n_genes,
+        "expression size mismatch"
+    );
 
     let gene_ix: std::collections::HashMap<&str, usize> = gene_names
         .iter()
@@ -102,36 +116,66 @@ pub fn infer(
         .map(|(i, n)| (n.as_str(), i))
         .collect();
 
-    (0..n_genes)
-        .into_par_iter()
-        .flat_map_iter(|target_idx| {
-            let target_name = &gene_names[target_idx];
-            let target_expr: Vec<f32> = (0..n_cells)
-                .map(|c| expression[c * n_genes + target_idx])
-                .collect();
+    let mut all_edges = Vec::new();
+    for block_start in (0..n_genes).step_by(TARGET_BLOCK_SIZE) {
+        let block_end = (block_start + TARGET_BLOCK_SIZE).min(n_genes);
+        let block_width = block_end - block_start;
+        let mut target_block = vec![0.0_f32; block_width * n_cells];
 
-            // If this target is itself one of the TFs, drop that column from the
-            // feature subset at fit time (not just after). Otherwise the self
-            // column is a perfect predictor → absorbs all split gain → every
-            // other TF's importance collapses to ~0 for that target.
-            let exclude_self = tf_name_to_idx.get(target_name.as_str()).copied();
+        // Materialise the target window as column-major:
+        // target_block[local_target * n_cells + cell].
+        //
+        // Source reads are contiguous within each row; downstream GBM reads each
+        // target's response vector contiguously. This directly attacks the
+        // row-major strided target extraction cliff observed on the 91k atlas.
+        for c in 0..n_cells {
+            let row_base = c * n_genes + block_start;
+            let row = &expression[row_base..row_base + block_width];
+            for (local_idx, &v) in row.iter().enumerate() {
+                target_block[local_idx * n_cells + c] = v;
+            }
+        }
 
-            let importances =
-                gbm::fit_and_importances_binned(&binned_all, &target_expr, cfg, exclude_self);
+        let block_edges: Vec<Adjacency> = (0..block_width)
+            .into_par_iter()
+            .map_init(
+                || gbm::GbmScratch::new(n_cells, tf_cols.len(), cfg.n_estimators),
+                |gbm_scratch, local_idx| {
+                    let target_idx = block_start + local_idx;
+                    let target_name = &gene_names[target_idx];
+                    let target_expr = &target_block[local_idx * n_cells..(local_idx + 1) * n_cells];
 
-            importances
-                .into_iter()
-                .enumerate()
-                .filter(|(_, imp)| *imp > 0.0)
-                .map(|(i, imp)| Adjacency {
-                    tf: tf_names_vec[i].clone(),
-                    target: target_name.clone(),
-                    importance: imp,
-                })
-                .collect::<Vec<_>>()
-                .into_iter()
-        })
-        .collect()
+                    // If this target is itself one of the TFs, drop that column from the
+                    // feature subset at fit time (not just after). Otherwise the self
+                    // column is a perfect predictor → absorbs all split gain → every
+                    // other TF's importance collapses to ~0 for that target.
+                    let exclude_self = tf_name_to_idx.get(target_name.as_str()).copied();
+
+                    let importances = gbm::fit_and_importances_binned_with_scratch(
+                        &binned_all,
+                        target_expr,
+                        cfg,
+                        exclude_self,
+                        gbm_scratch,
+                    );
+
+                    importances
+                        .into_iter()
+                        .enumerate()
+                        .filter(|(_, imp)| *imp > 0.0)
+                        .map(|(i, imp)| Adjacency {
+                            tf: tf_names_vec[i].clone(),
+                            target: target_name.clone(),
+                            importance: imp,
+                        })
+                        .collect::<Vec<_>>()
+                },
+            )
+            .flatten_iter()
+            .collect();
+        all_edges.extend(block_edges);
+    }
+    all_edges
 }
 
 fn build_tf_matrix(

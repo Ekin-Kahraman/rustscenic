@@ -133,6 +133,44 @@ Reproducible benchmark across cell counts. Each size runs in a fresh subprocess 
 
 **Log-log slope 3k→10k: GRN 1.11, AUCell 1.12 — linear.** 10k→30k GRN 1.39 (mild super-linear). 30k→50k GRN 1.39, AUCell 2.72 — super-linear on both stages at this hardware tier. Documented as cache/sparse-to-dense pressure, not an algorithmic issue. 100k requires > 32 GB RAM (Ziegler source); pbmc10k 100k up-sampled runs available in `scaling/scaling_results.csv`.
 
+### Atlas-scale GRN cliff (microglia 91k, 2026-04-26)
+
+Real 91,838-cell cellxgene microglia atlas, 58,232 genes, 50 bundled
+human TFs, `n_estimators=20`. AUCell remains fast (15.0 s at 91,838
+cells), but GRN becomes effectively super-linear:
+
+| n_cells | GRN (s) | AUCell (s) | peak RSS |
+|---:|---:|---:|---:|
+| 5,000 | 36.7 | 0.7 | 4.4 GB |
+| 10,000 | 94.2 | 1.5 | 4.4 GB |
+| 20,000 | 230.3 | 4.7 | 4.4 GB |
+| 40,000 | 681.9 | 9.9 | 5.1 GB |
+| 80,000 | 5,478.3 | 14.3 | 7.8 GB |
+| 91,838 | 6,590.6 | 15.0 | 7.8 GB |
+
+Full-run GRN slope before fixes was **1.81**; the 40k→80k segment was
+the cliff (8.0× wall-clock for 2× cells). This invalidated broad
+"linear at atlas scale" wording. Worker-local GBM scratch buffers helped
+5k→20k but did not fix the 40k+ cliff. The actual issue was row-major
+strided target extraction: one cache/TLB-hostile pass through the dense
+cells × genes matrix per target gene.
+
+Post target-blocking on the same atlas:
+
+| n_cells | target-blocked GRN (s) | speedup vs original |
+|---:|---:|---:|
+| 5,000 | 30.9 | 1.19× |
+| 10,000 | 64.1 | 1.47× |
+| 20,000 | 132.4 | 1.74× |
+| 40,000 | 287.7 | 2.37× |
+| 80,000 | 735.3 | 7.45× |
+| 91,838 | 864.1 | 7.63× |
+
+Post-blocking full-run slope is **1.15**; the 40k→80k segment is now
+2.56× wall-clock for 2× cells (slope 1.35), not 8.0×. This materially
+fixes the atlas cliff, but we should still phrase it as near-linear
+atlas-scale GRN, not perfectly linear.
+
 ### ATAC preprocessing (new 2026-04-21)
 
 Rust-native replacement for pycisTopic's fragments-to-matrix pipeline, shipped with Python bindings as `rustscenic.preproc.fragments_to_matrix`. Closes the SCENIC+ install gap — takes `fragments.tsv.gz` + `peaks.bed`, returns an AnnData ready for `rustscenic.topics.fit`.
@@ -153,7 +191,7 @@ Scope spec: [`../docs/atac-preprocessing-scope.md`](../docs/atac-preprocessing-s
 ## What's honest
 
 1. **Topics is not a speed win.** Mallet beats us by 17%. The pitch for topics is "no Java install, drop-in, better cell-type recovery on small datasets", not "faster".
-2. **GRN perf at full biological scale (100k cells, full TF list, 5000 estimators) hasn't been benchmarked yet.** We have 100k memory proof with smaller TF/estimator settings and 30k real-data scaling, but full-TF full-estimator atlas runs need HPC.
+2. **GRN perf at full biological scale is improved but still the main scaling frontier.** A real 91k microglia run with 50 TFs and 20 estimators originally showed slope 1.81 and a 40k→80k wall-clock cliff. Worker-local scratch plus target blocking reduces the same atlas run to slope 1.15 and 864.1 s at 91,838 cells. Full-TF / 5000-estimator atlas runs still need HPC validation before we claim broad GRN leadership.
 3. **100k-cell integrated real multiome is not done.** Synthetic 100k and real 2.7k multiome pass; the real 100k RNA+ATAC pipeline remains the next credibility gate.
 4. **PyPI publish not done.** Distribution is GitHub Release wheels/source install until PyPI trusted publishing is configured.
 5. **Region-based SCENIC+ cistromes are wired into the pipeline.** The exact region-ranking path now feeds eRegulon assembly. The remaining replacement proof is direct scenicplus parity on real region-ranking databases.
