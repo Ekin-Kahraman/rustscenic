@@ -95,13 +95,17 @@ vision. They define the v0.3/v0.4 work.
 Where the implementation is weaker than the reference, or where we
 haven't validated yet:
 
-1. **Topic modelling at K ≥ 30 on scATAC**: our Online VB LDA
-   collapses aggressively (5/30 unique topics vs Mallet's 24/30 on
-   PBMC 10k × 67k peaks). NPMI coherence 0.123 vs 0.196. Same
-   collapse pattern as gensim's VB. Mallet still wins for topic-count
-   diversity. Documented in `docs/topic-collapse.md`. v0.3 candidate
-   is a collapsed-Gibbs rewrite; until then we recommend falling back
-   to Mallet for K ≥ 30 on scATAC scale.
+1. **Topic modelling at K ≥ 30 on scATAC** has two paths:
+   `topics.fit` (Online VB LDA) collapses aggressively at K ≥ 30 on
+   sparse scATAC (5/30 unique topics on PBMC 10k × 67k peaks; 2/30
+   on PBMC 1500 × 98k peaks). Use `topics.fit_gibbs` (collapsed
+   Gibbs, shipped v0.3.1) for fine topic decomposition: 21/30 unique
+   topics on the same 1500 × 98k benchmark, mean pairwise top-20
+   peak overlap 0.005 vs VB's 0.373, at only 1.2× the wall-clock.
+   Same algorithm class as Mallet, no Java required. Outstanding
+   for v0.4: NPMI head-to-head against published Mallet numbers and
+   an explicit thread-parallel sparse-LDA Gibbs to recover atlas
+   speed.
 2. **SCENIC+ eRegulons need real-reference parity numbers next**:
    enhancer→gene linking, region cistarget, and the assembly schema are
    tested end-to-end. The next proof point is a direct scenicplus /
