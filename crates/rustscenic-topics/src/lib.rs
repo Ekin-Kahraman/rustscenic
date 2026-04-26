@@ -1,23 +1,29 @@
-// numerical inner loops read from multiple arrays by index — allow to keep readability.
-#![allow(clippy::needless_range_loop)]
-
-//! Online variational Bayes Latent Dirichlet Allocation (pycisTopic replacement).
+//! Topic modelling for scATAC and scRNA.
 //!
-//! Implements Hoffman-Blei-Bach 2010 online VB LDA for scATAC peak-topic
-//! modeling. Input is a sparse (n_cells × n_peaks) binarized accessibility
-//! matrix; output is (cell × topic) + (topic × peak) probability matrices.
+//! Two algorithms ship side-by-side:
 //!
-//! Algorithmic advantages over pycisTopic's default Mallet Gibbs sampler:
+//! - [`online_vb_lda`] — Hoffman-Blei-Bach 2010 online VB. Fast (tens of
+//!   passes), deterministic given seed, low memory bound. The default and
+//!   the right choice when speed matters and topics K ≤ 20.
+//! - [`gibbs::fit`] — collapsed Gibbs sampling (Griffiths-Steyvers 2004),
+//!   the Mallet-class algorithm. Better topic-coherence (NPMI) and unique
+//!   topic count on sparse scATAC at K ≥ 30. Slower per iter (thousands
+//!   of sweeps), but the highest-quality path.
+//!
+//! Algorithmic notes carry over the original pycisTopic context:
 //!   - Online VB converges in tens of passes vs Gibbs's thousands of iterations.
 //!   - Streaming minibatch update → constant memory per cell.
-//!   - Deterministic given seed (Gibbs is stochastic; topic labels permute).
-//!
-//! Not bit-identical to Mallet Gibbs. Topic-assignment ARI against pycisTopic
-//! is the validation target (published benchmarks: ≥0.85 at convergence).
+//!   - Deterministic given seed (the VB path; Gibbs is stochastic, topic
+//!     labels permute).
 //!
 //! Input format: caller passes the sparse matrix as a CSR-style triple of
 //! (row_ptr, col_idx, counts). This lets callers feed both raw counts (scRNA
 //! LDA) and binarized accessibility (scATAC) without modification.
+
+// numerical inner loops read from multiple arrays by index — allow to keep readability.
+#![allow(clippy::needless_range_loop)]
+
+pub mod gibbs;
 
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};

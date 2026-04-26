@@ -201,6 +201,51 @@ fn topics_fit<'py>(
     Ok((PyArray2::from_owned_array(py, ct).unbind(), PyArray2::from_owned_array(py, tw).unbind()))
 }
 
+/// Fit collapsed-Gibbs LDA on a sparse (docs x words) matrix.
+///
+/// The Mallet-class topic model — better topic-coherence (NPMI) on sparse
+/// scATAC at K ≥ 30 than online VB, at the cost of thousands of
+/// iterations instead of tens of passes. Returns (theta, beta) as two
+/// numpy arrays of shape (n_docs, n_topics) and (n_topics, n_words).
+#[pyfunction]
+#[pyo3(signature = (
+    row_ptr, col_idx, counts, n_words,
+    n_topics = 50,
+    alpha = 0.1,
+    eta = 0.01,
+    n_iters = 200,
+    seed = 42,
+))]
+#[allow(clippy::too_many_arguments)]
+fn topics_fit_gibbs<'py>(
+    py: Python<'py>,
+    row_ptr: Vec<usize>,
+    col_idx: Vec<u32>,
+    counts: Vec<f32>,
+    n_words: usize,
+    n_topics: usize,
+    alpha: f32,
+    eta: f32,
+    n_iters: usize,
+    seed: u64,
+) -> PyResult<(Py<PyArray2<f32>>, Py<PyArray2<f32>>)> {
+    let result = py.allow_threads(|| {
+        rustscenic_topics::gibbs::fit(
+            &row_ptr, &col_idx, &counts, n_words, n_topics,
+            alpha, eta, n_iters, seed,
+        )
+    });
+    let n_docs = row_ptr.len().saturating_sub(1);
+    let theta = ndarray::Array2::from_shape_vec((n_docs, n_topics), result.theta)
+        .map_err(|e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+    let beta = ndarray::Array2::from_shape_vec((n_topics, n_words), result.beta)
+        .map_err(|e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+    Ok((
+        PyArray2::from_owned_array(py, theta).unbind(),
+        PyArray2::from_owned_array(py, beta).unbind(),
+    ))
+}
+
 /// Build a cells x peaks sparse matrix from a 10x fragments file and a peak BED.
 ///
 /// Returns a tuple:
@@ -446,6 +491,7 @@ fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(grn_infer, m)?)?;
     m.add_function(wrap_pyfunction!(aucell_score, m)?)?;
     m.add_function(wrap_pyfunction!(topics_fit, m)?)?;
+    m.add_function(wrap_pyfunction!(topics_fit_gibbs, m)?)?;
     m.add_function(wrap_pyfunction!(preproc_fragments_to_matrix, m)?)?;
     m.add_function(wrap_pyfunction!(preproc_insert_size_stats, m)?)?;
     m.add_function(wrap_pyfunction!(preproc_frip, m)?)?;

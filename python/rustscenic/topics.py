@@ -20,7 +20,10 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from rustscenic._rustscenic import topics_fit as _topics_fit
+from rustscenic._rustscenic import (
+    topics_fit as _topics_fit,
+    topics_fit_gibbs as _topics_fit_gibbs,
+)
 
 
 @dataclass
@@ -115,6 +118,91 @@ def fit(
     if verbose:
         print(
             f"[rustscenic.topics] done in {wall:.1f}s — "
+            f"{unique}/{n_topics} topics carry an argmax assignment.",
+            file=sys.stderr, flush=True,
+        )
+    return TopicsResult(cell_topic=cell_topic, topic_peak=topic_peak, n_topics=n_topics)
+
+
+def fit_gibbs(
+    expression,
+    *,
+    n_topics: int = 50,
+    alpha: Optional[float] = None,
+    eta: Optional[float] = None,
+    n_iters: int = 200,
+    seed: int = 42,
+    verbose: bool = True,
+) -> TopicsResult:
+    """Fit collapsed-Gibbs LDA on a (cells × peaks) count / binarized matrix.
+
+    The Mallet-class topic model — better topic-coherence (NPMI) on
+    sparse scATAC at K ≥ 30 than the default online-VB
+    :func:`fit`, at the cost of thousands of iterations instead of tens
+    of passes. Use this when topic quality matters more than wall-clock,
+    typically for small-to-medium samples where you can afford the
+    Gibbs sampling time.
+
+    Parameters
+    ----------
+    expression
+        AnnData, pandas DataFrame, or (sparse-csr, cell_names, peak_names) tuple.
+    n_topics
+        Number of latent topics K. Mallet typical range: 30–100.
+    alpha, eta
+        Dirichlet priors. Default 0.1 / 0.01 — Griffiths & Steyvers
+        2004's "good defaults" for LDA, slightly less concentrated than
+        the 1/K we use for online VB.
+    n_iters
+        Number of Gibbs sweeps over the corpus. 200 is a reasonable
+        default for convergence on small samples; bump to 500–1000 for
+        higher-quality posterior estimates.
+    seed
+        Random seed. Topics are stochastic — bit-identical under same
+        seed, label-permuted across seeds.
+
+    Returns
+    -------
+    TopicsResult — same shape as :func:`fit`, columns are
+    ``Topic_0 .. Topic_{K-1}``.
+    """
+    if not isinstance(n_topics, int) or n_topics < 1:
+        raise ValueError(f"n_topics must be a positive integer, got {n_topics!r}")
+    if n_iters < 1:
+        raise ValueError(f"n_iters must be >= 1, got {n_iters}")
+
+    row_ptr, col_idx, counts, n_words, cell_names, peak_names = _coerce(expression)
+    if n_words == 0:
+        raise ValueError("expression has 0 peaks/genes — nothing to model")
+    if alpha is None:
+        alpha = 0.1
+    if eta is None:
+        eta = 0.01
+
+    import sys, time
+    n_docs = len(row_ptr) - 1
+    nnz = len(col_idx)
+    if verbose:
+        print(
+            f"[rustscenic.topics] collapsed-Gibbs LDA — {n_docs:,} docs × "
+            f"{n_words:,} vocab (nnz={nnz:,}), K={n_topics}, "
+            f"{n_iters} sweeps, alpha={alpha}, eta={eta}",
+            file=sys.stderr, flush=True,
+        )
+    t0 = time.monotonic()
+    theta, beta = _topics_fit_gibbs(
+        list(row_ptr), list(col_idx), list(counts.astype(np.float32)),
+        int(n_words), int(n_topics),
+        float(alpha), float(eta), int(n_iters), int(seed),
+    )
+    wall = time.monotonic() - t0
+    topic_names = [f"Topic_{k}" for k in range(n_topics)]
+    cell_topic = pd.DataFrame(np.asarray(theta), index=cell_names, columns=topic_names)
+    topic_peak = pd.DataFrame(np.asarray(beta), index=topic_names, columns=peak_names)
+    unique = int(np.unique(cell_topic.values.argmax(axis=1)).size)
+    if verbose:
+        print(
+            f"[rustscenic.topics] Gibbs done in {wall:.1f}s — "
             f"{unique}/{n_topics} topics carry an argmax assignment.",
             file=sys.stderr, flush=True,
         )
