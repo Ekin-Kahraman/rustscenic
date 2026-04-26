@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.3.1 — 2026-04-27
+
+### Added
+- **Collapsed-Gibbs LDA** (`rustscenic.topics.fit_gibbs`) — Mallet-class
+  topic model. Closes the only place rustscenic still lost to
+  references on quality. Shipped after the v0.3.0 tag was cut, so this
+  patch release brings the wheel artifacts in line with main.
+
+  Real PBMC ATAC, 1,500 cells × 98k peaks, K=30:
+  - Online VB: 2/30 unique argmax topics (collapsed)
+  - Collapsed Gibbs: **21/30 unique argmax topics**, only 1.2× slower
+  - Top-20 peak overlap: VB 0.373 → Gibbs 0.005 (75× more diverse)
+
+  3 Rust unit tests + 5 Python tests cover synthetic recovery,
+  determinism, AnnData input, edge cases.
+
+### Validation
+- 200k synthetic GRN scaling: 9 min, slope 1.30, 8.6 GB RSS.
+- Real multiome end-to-end first run on 10x PBMC 3k Multiome:
+  6.2 min total wall-clock, all 6 stages connect.
+
+### Docs
+- `docs/topic-collapse.md` updated to point at the shipped
+  `topics.fit_gibbs` API instead of recommending Mallet.
+- `docs/bench-vs-references.md` carries the K=30 quality numbers.
+- `docs/what-rustscenic-is.md` no longer lists Gibbs as a future
+  candidate.
+
+### Test counts
+129 Python tests + 54 Rust tests pass.
+
 ## 0.3.0 — 2026-04-26
 
 ### Performance
