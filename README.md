@@ -9,13 +9,13 @@ A Rust + PyO3 replacement for the SCENIC / SCENIC+ compute stack: one install, m
 
 ```bash
 # Universal source install while PyPI trusted-publishing is being configured:
-pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.2.0
+pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.0
 
 # Or install a prebuilt wheel from the v0.2.0 GitHub Release for your platform:
 # macOS Apple Silicon:
-pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.2.0/rustscenic-0.2.0-cp310-abi3-macosx_11_0_arm64.whl
+pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.3.0/rustscenic-0.3.0-cp310-abi3-macosx_11_0_arm64.whl
 # Linux x86_64:
-pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.2.0/rustscenic-0.2.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.3.0/rustscenic-0.3.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 ```
 
 Four runtime dependencies (numpy, pandas, pyarrow, scipy). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64). No dask, no Java, no CUDA.
