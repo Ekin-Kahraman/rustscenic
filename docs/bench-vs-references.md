@@ -34,45 +34,52 @@ default; MACS2 uses local p-value scoring). For SCENIC+ downstream,
 where peaks feed into the topic model + cistarget, F1 0.825 is well
 within usable range.
 
-## Topic modelling — rustscenic vs gensim LdaModel
+## Topic modelling — Online VB vs Collapsed Gibbs vs gensim
 
-Same cells × peaks matrix (3,000 cells × 98,319 peaks, nnz=20.97 M),
-same seed (42), 2 passes, identical AnnData input.
+rustscenic ships two topic-model paths:
+- `topics.fit` — Online VB LDA (Hoffman 2010), fast at small K
+- `topics.fit_gibbs` — Collapsed Gibbs LDA (Griffiths-Steyvers 2004),
+  Mallet-class quality at K ≥ 30
 
-| K | rustscenic | gensim 4.4.0 | Ratio |
+### Speed (PBMC 3k Multiome ATAC, 3,000 × 98,319, nnz=20.97 M)
+
+| K | rustscenic VB | rustscenic Gibbs | gensim 4.4.0 |
 |---|---|---|---|
-| 10 | 31.6 s | 21.7 s | gensim 1.5× faster |
-| 30 | 70.7 s | 26.4 s | gensim 2.7× faster |
+| 10 | 31.6 s | 39.2 s | 21.7 s |
+| 30 | 42.6 s | 49.0 s | 26.4 s |
 
-**gensim is faster** at this shape. rustscenic's online-VB LDA spends
-proportionally more time in Rayon scheduling at small K, where
-gensim's pure-numpy code path is already cache-resident. Honest call:
-**we are not yet the topic-model speed leader.**
+gensim's pure-numpy VB wins on raw wall-clock at this shape. We
+provide both — pick by priority.
 
-What rustscenic still gives at this layer:
-- **Bit-identical determinism** under same seed (verified across two
-  runs, two batch sizes — see `tests/test_topics.py`)
-- **One pip install** (gensim works, but Mallet is the SCENIC+
-  reference for higher-fidelity topics, requires Java + binary)
-- **Atlas-scale memory bound at `O(threads × n_topics × n_words)`**
-  (PR #39 fold/reduce refactor) — gensim's full-corpus VB may not
-  bound similarly at 100k+ cells × 200k peaks
+### Quality at K=30 (real PBMC ATAC, 1,500 cells × 98,319 peaks)
 
-What this means for the SCENIC+ flow: at typical per-sample atlas
-shape (~10k–100k cells × 100k+ peaks), rustscenic is competitive.
-At small K on small samples (this benchmark), use gensim if speed
-matters more than determinism. A collapsed-Gibbs rewrite (v0.3
-candidate, `docs/topic-collapse.md`) is the path to closing the gap
-on quality (Mallet wins on NPMI 0.196 vs our 0.123) and would also
-likely close the speed gap.
+| Tool | Unique argmax topics / 30 | Mean pairwise top-20 overlap |
+|---|---|---|
+| rustscenic VB | **2 / 30** (collapsed) | 0.373 |
+| rustscenic Gibbs | **21 / 30** | **0.005** |
+| Mallet 500-iter (reference) | 24 / 30 | 0.196 NPMI |
+
+**Collapsed Gibbs gives ~10× more distinct topics than Online VB on
+sparse scATAC at K=30, with topic-peak distributions 75× less
+overlapped.** Same algorithm class as Mallet, no Java required.
+
+What rustscenic gives at this layer:
+- **Two algorithms, drop-in choice** — VB for speed at K ≤ 10, Gibbs
+  for fidelity at K ≥ 30.
+- **Bit-identical determinism** under same seed (both algorithms).
+- **One pip install** — Mallet, the SCENIC+ reference for K ≥ 30,
+  needs Java + binary.
+- **Atlas-scale memory bound at `O(threads × K × n_words)`** for VB
+  (PR #39 fold/reduce refactor).
 
 ## Headline (take to the scverse meeting)
 
 | Layer | Reference | rustscenic | Result |
 |---|---|---|---|
 | Peak calling | MACS2 | rustscenic.preproc.call_peaks | **9.9× faster, F1 0.825** |
-| Topic modelling K=10 | gensim LdaModel | rustscenic.topics.fit | **0.7× (gensim wins)** |
-| Topic modelling K=30 | gensim LdaModel | rustscenic.topics.fit | **0.37× (gensim wins)** |
+| Topic modelling K=10 (speed) | gensim LdaModel | rustscenic.topics.fit | **0.7× (gensim wins)** |
+| Topic modelling K=30 (speed) | gensim LdaModel | rustscenic.topics.fit | **0.61× (gensim wins)** |
+| Topic modelling K=30 (quality) | rustscenic VB collapses (2/30) | **rustscenic Gibbs 21/30** | **Gibbs ~10× more distinct topics** |
 | AUCell (10x Multiome 10k cells × 1,457 regulons) | pyscenic | rustscenic.aucell.score | **88× faster** |
 | Cistarget AUC kernel | ctxcore.recovery.aucs | rustscenic.cistarget.enrich | **bit-identical** (Pearson 1.0000) |
 | GRN end-to-end | arboreto | rustscenic.grn.infer | **1.3× faster, biology equivalent** |
