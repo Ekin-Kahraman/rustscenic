@@ -11,7 +11,7 @@ A Rust + PyO3 replacement for the SCENIC / SCENIC+ compute stack: one install, m
 # Universal source install while PyPI trusted-publishing is being configured:
 pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.0
 
-# Or install a prebuilt wheel from the v0.2.0 GitHub Release for your platform:
+# Or install a prebuilt wheel from the v0.3.0 GitHub Release for your platform:
 # macOS Apple Silicon:
 pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.3.0/rustscenic-0.3.0-cp310-abi3-macosx_11_0_arm64.whl
 # Linux x86_64:
@@ -26,7 +26,7 @@ rustscenic is being built as the single-install replacement for the practical SC
 
 The project is intentionally not a thin wrapper around the old stack. The target is a simpler architecture that makes regulatory-network analysis easier to install, cheaper to run on CPU, deterministic under a fixed seed, and robust to real atlas conventions such as ENSEMBL `var_names`, duplicate gene symbols, backed AnnData, and UCSC/Ensembl chromosome mismatches.
 
-v0.2.0 already replaces the main compute stages used by pySCENIC / arboreto / pycisTopic / pycistarget / scenicplus in common Python pipelines. Region-based cistarget is wired into eRegulon assembly; the remaining replacement proof is concentrated in Mallet-class ATAC topic modelling, MACS2 reference cross-checks, full 100k-cell real multiome validation, and head-to-head scenicplus parity numbers on real region-ranking databases.
+v0.3.0 replaces the main compute stages used by pySCENIC / arboreto / pycisTopic / pycistarget / scenicplus in common Python pipelines. Region-based cistarget is wired into eRegulon assembly, and the atlas-scale GRN cliff is materially improved by target blocking. The remaining replacement proof is concentrated in Mallet-class ATAC topic modelling, MACS2 reference cross-checks, full 100k-cell real multiome validation, and head-to-head scenicplus parity numbers on real region-ranking databases.
 
 ## What it does
 
