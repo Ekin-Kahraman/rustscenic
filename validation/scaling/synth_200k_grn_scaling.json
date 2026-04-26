@@ -1,0 +1,11 @@
+{
+  "shape": "n_genes=15000",
+  "results": [
+    {"n_cells": 50000, "grn_s": 88.7, "edges": 713292, "rss_gb": 3.88, "per_cell_ms": 1.77},
+    {"n_cells": 100000, "grn_s": 189.4, "edges": 713808, "rss_gb": 7.14, "per_cell_ms": 1.89},
+    {"n_cells": 150000, "grn_s": 309.4, "edges": 714238, "rss_gb": 7.46, "per_cell_ms": 2.06},
+    {"n_cells": 200000, "grn_s": 539.6, "edges": 714404, "rss_gb": 8.60, "per_cell_ms": 2.70}
+  ],
+  "slope_50k_200k": 1.30,
+  "headline": "200k synthetic GRN runs in 9 min on a laptop. Slope 1.30. RSS 8.6 GB."
+}
