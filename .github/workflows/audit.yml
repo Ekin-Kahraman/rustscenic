@@ -54,7 +54,7 @@ jobs:
       - run: |
           python -c "
           import rustscenic
-          assert rustscenic.__version__ == '0.3.2'
+          assert rustscenic.__version__ == '0.3.3'
           for stage in ['grn', 'aucell', 'topics', 'cistarget']:
               mod = getattr(rustscenic, stage)
               print(f'{stage}: OK')

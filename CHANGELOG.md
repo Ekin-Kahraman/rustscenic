@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.3 — 2026-04-27
 
 ### Performance
 - **Sparse enhancer-to-gene Pearson** (`python/rustscenic/enhancer.py`).
