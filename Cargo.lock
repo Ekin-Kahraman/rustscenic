@@ -336,7 +336,6 @@ dependencies = [
  "portable-atomic",
  "portable-atomic-util",
  "rawpointer",
- "rayon",
 ]
 
 [[package]]
@@ -352,6 +351,7 @@ dependencies = [
  "portable-atomic",
  "portable-atomic-util",
  "rawpointer",
+ "rayon",
 ]
 
 [[package]]
@@ -420,7 +420,7 @@ checksum = "a7cfbf3f0feededcaa4d289fe3079b03659e85c5b5a177f4ba6fb01ab4fb3e39"
 dependencies = [
  "libc",
  "ndarray 0.16.1",
- "num-complex 0.4.6",
+ "num-complex 0.2.4",
  "num-integer",
  "num-traits",
  "pyo3",
@@ -661,7 +661,7 @@ version = "0.3.3"
 dependencies = [
  "anyhow",
  "approx 0.5.1",
- "ndarray 0.16.1",
+ "ndarray 0.17.2",
  "rayon",
  "thiserror",
 ]
@@ -672,7 +672,7 @@ version = "0.3.3"
 dependencies = [
  "anyhow",
  "approx 0.5.1",
- "ndarray 0.16.1",
+ "ndarray 0.17.2",
  "rand",
  "rand_mt",
  "rayon",
@@ -696,7 +696,7 @@ name = "rustscenic-py"
 version = "0.3.3"
 dependencies = [
  "anyhow",
- "ndarray 0.16.1",
+ "ndarray 0.17.2",
  "numpy",
  "pyo3",
  "rustscenic-aucell",
@@ -710,7 +710,7 @@ name = "rustscenic-topics"
 version = "0.3.3"
 dependencies = [
  "approx 0.5.1",
- "ndarray 0.16.1",
+ "ndarray 0.17.2",
  "rand",
  "rayon",
  "statrs",
