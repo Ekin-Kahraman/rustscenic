@@ -26,7 +26,7 @@ rustscenic is being built as the single-install replacement for the practical SC
 
 The project is intentionally not a thin wrapper around the old stack. The target is a simpler architecture that makes regulatory-network analysis easier to install, cheaper to run on CPU, deterministic under a fixed seed, and robust to real atlas conventions such as ENSEMBL `var_names`, duplicate gene symbols, backed AnnData, and UCSC/Ensembl chromosome mismatches.
 
-v0.3.0 replaces the main compute stages used by pySCENIC / arboreto / pycisTopic / pycistarget / scenicplus in common Python pipelines. Region-based cistarget is wired into eRegulon assembly, and the atlas-scale GRN cliff is materially improved by target blocking. The remaining replacement proof is concentrated in Mallet-class ATAC topic modelling, MACS2 reference cross-checks, full 100k-cell real multiome validation, and head-to-head scenicplus parity numbers on real region-ranking databases.
+v0.3.1 replaces the main compute stages used by pySCENIC / arboreto / pycisTopic / pycistarget / scenicplus in common Python pipelines. Region-based cistarget is wired into eRegulon assembly, the atlas-scale GRN cliff is materially improved by target blocking, and Mallet-class ATAC topic modelling now ships in two paths: serial collapsed Gibbs (`topics.fit_gibbs`) and parallel AD-LDA (`n_threads=N`). The remaining replacement proof is concentrated in MACS2 reference cross-checks against ENCODE multi-tissue, full 100k-cell real multiome validation, and head-to-head scenicplus parity numbers on real region-ranking databases.
 
 ## What it does
 
@@ -36,7 +36,8 @@ Rust-native replacements for the compute stages plus the glue that scenicplus bu
 |---|---|---|
 | Gene-regulatory network inference | `rustscenic.grn.infer` | `arboreto.grnboost2` |
 | Per-cell regulon activity scoring | `rustscenic.aucell.score` | `pyscenic.aucell.aucell` |
-| Topic modelling on scATAC peaks | `rustscenic.topics.fit` | `pycisTopic` (Mallet) |
+| Topic modelling on scATAC peaks (Online VB) | `rustscenic.topics.fit` | `pycisTopic` (gensim VB) |
+| Topic modelling K ≥ 30 (Mallet-class collapsed Gibbs) | `rustscenic.topics.fit_gibbs` | `pycisTopic` (Mallet, Java) |
 | Motif-regulon enrichment | `rustscenic.cistarget.enrich` | `pycistarget` AUC kernel |
 | ATAC fragments → cells × peaks matrix | `rustscenic.preproc.fragments_to_matrix` | `pycisTopic` fragment loader |
 | Cell QC (TSS enrichment, FRiP, insert size) | `rustscenic.preproc.qc` | `pycisTopic.qc` |
@@ -114,16 +115,22 @@ Edge rankings disagree with arboreto at fine grain (Spearman 0.58, top-100 Jacca
 | Wall-time, 10k cells × 1,457 regulons | 0.21 s (vs 18.6 s pyscenic) |
 | 100 k cells × 500 regulons | 10 s, 5.6 GB peak RSS |
 
-### Topics — `pycisTopic` LDA replacement (Online VB)
+### Topics — `pycisTopic` LDA replacement (Online VB + collapsed Gibbs)
 
-10 x PBMC 10 k ATAC, 8,728 cells × 67,448 peaks, K = 30:
+Two algorithms ship side-by-side:
+- `rustscenic.topics.fit` — Online VB LDA, fastest at K ≤ 10.
+- `rustscenic.topics.fit_gibbs` — collapsed Gibbs (Mallet's algorithm class). Add `n_threads=N` for parallel AD-LDA.
 
-| Tool | Wall | Unique topics (of 30) | NPMI coherence | ARI vs leiden |
-|---|---|---|---|---|
-| Mallet (pycisTopic reference) | 534 s | 24 | 0.196 | 0.258 |
-| **rustscenic** (Online VB) | 620–942 s (seed-dependent) | 5 – 6 | 0.123 | 0.18 – 0.33 |
+Real PBMC 3k Multiome ATAC, 1,500 cells × 98,319 peaks, K = 30, intrinsic top-10 NPMI on the training corpus:
 
-Mallet recovers more distinct topics and higher coherence. Our Online VB LDA collapses aggressively at K = 30 on this dataset — see [`docs/topic-collapse.md`](docs/topic-collapse.md). Cell-type recovery (ARI vs leiden) is comparable. For fine-grained K ≥ 30 topic decomposition use Mallet via pycisTopic; for a no-Java drop-in that tracks cell-type structure, rustscenic works.
+| Tool | Wall | Unique topics (of 30) | Top-10 NPMI mean |
+|---|---|---|---|
+| `rustscenic.topics.fit` (Online VB) | 104 s | 2 / 30 (collapsed) | +0.012 |
+| `rustscenic.topics.fit_gibbs` (serial) | 191 s | **22 / 30** | **+0.031** |
+| `rustscenic.topics.fit_gibbs` (8-thread) | **84 s** | 25 / 30 | +0.019 |
+| Mallet (pycisTopic reference) | n/a | 24 / 30 | 0.196 (extrinsic) |
+
+Collapsed Gibbs gives ~11× more distinct topics than Online VB on sparse scATAC at K = 30 and ~2.7× higher intrinsic NPMI; the parallel AD-LDA path adds a 2.56× wall-clock speedup at 8 threads while preserving topic diversity. Mallet's published 0.196 is an extrinsic NPMI (different protocol, not directly comparable in absolute scale). See [`docs/topic-collapse.md`](docs/topic-collapse.md) and [`docs/bench-vs-references.md`](docs/bench-vs-references.md). Reproduce with `python validation/scaling/bench_npmi_head_to_head.py` and `python validation/scaling/bench_gibbs_parallel.py`.
 
 ### Cistarget — `pycistarget` AUC kernel replacement
 
