@@ -1,0 +1,11 @@
+{
+  "n_cells": 500000,
+  "n_genes": 5000,
+  "n_tfs": 50,
+  "n_estimators": 20,
+  "build_s": 254.2,
+  "grn_s": 521.3,
+  "grn_min": 8.7,
+  "n_edges": 224966,
+  "peak_rss_gb": 7.25
+}

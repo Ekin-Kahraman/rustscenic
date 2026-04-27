@@ -3,6 +3,15 @@
 ## Unreleased
 
 ### Validation
+- **500k synthetic GRN** (`grn_500k.json`): 500,000 cells × 5,000
+  genes × 50 TFs (n_estimators=20). **521s (8.7 min) wall-clock,
+  224,966 edges, 7.25 GB peak RSS.** Extends the GRN cell-count
+  scaling proof from 200k (which used 15k genes) to 500k. Apples-to-
+  apples comparison with the 200k × 15k bench is constrained by
+  laptop RAM — 500k × 15k dense ≈ 30 GB; 500k × 5k = 10 GB fits.
+  Per-cell GRN time (3.7 ms / 50 TFs) sits in line with the 200k ×
+  15k bench's 2.7 ms / 50 TFs scaled by gene density.
+
 - **100k synthetic atlas full-pipeline E2E** (`bench_e2e_100k_synthetic.py`):
   100,000 cells × 15,000 genes / 50,000 peaks × K=30, all 7 stages of
   the rustscenic pipeline connected end-to-end (skipping fragments→matrix
