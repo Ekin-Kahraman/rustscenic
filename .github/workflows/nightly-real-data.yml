@@ -28,8 +28,10 @@ jobs:
       - name: Install maturin + runtime deps
         run: |
           pip install maturin anndata scanpy numpy pandas scipy pyarrow
-      - name: Build rustscenic
-        run: maturin develop --release
+      - name: Build rustscenic wheel
+        run: maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml
+      - name: Install built wheel
+        run: pip install target/wheels/rustscenic-*.whl --force-reinstall --no-deps
       - name: Download Kamath OPC dataset
         run: |
           mkdir -p validation/kamath
