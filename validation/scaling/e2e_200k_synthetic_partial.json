@@ -1,0 +1,29 @@
+{
+  "n_cells": 200000,
+  "n_genes": 8000,
+  "n_peaks": 30000,
+  "K": 30,
+  "completed_stages": ["build", "topics", "grn", "regulons", "cistarget"],
+  "stalled_stage": "enhancer",
+  "elapsed_partial": {
+    "build": 326.2,
+    "topics": 420.1,
+    "grn": 214.3,
+    "regulons": 0.3,
+    "cistarget": 0.03
+  },
+  "rss_at_stall_gb": 6.49,
+  "bench_killed_after_min": 74,
+  "topics_unique": 30,
+  "grn_edges": 229687,
+  "cistarget_hits": 900,
+  "diagnosis": [
+    "Enhancer stage densifies both RNA and ATAC matrices for the per-peak Pearson loop.",
+    "200k cells × 30k peaks float32 ATAC dense = 24 GB. Plus 200k × 8k RNA = 6.4 GB.",
+    "Combined ~30 GB densification on a 32 GB laptop triggers heavy paging.",
+    "Single-threaded Python loop over peaks made stall observable: process at 50% CPU, no progress for ~50 min.",
+    "100k×50k bench succeeded because exact peak RSS reporting on macOS undercounts swapped pages — the actual working set there was likely also far above ru_maxrss.",
+    "Real fix: rewrite enhancer correlation to operate on the sparse ATAC matrix without densifying. v0.4 candidate."
+  ],
+  "next_step": "Rewrite link_peaks_to_genes to keep ATAC sparse during the correlation loop (sparse Pearson trick: precompute per-column means and norms, do sparse dot-products column-wise)."
+}

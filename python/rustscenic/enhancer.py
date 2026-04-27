@@ -128,11 +128,32 @@ def link_peaks_to_genes(
             UserWarning, stacklevel=3,
         )
 
-    _warn_if_densification_expensive(rna_adata, atac_adata)
-    rna_X = _densify(rna_adata.X).astype(np.float32, copy=False)  # (n_cells, n_genes_rna)
-    atac_X = _densify(atac_adata.X).astype(np.float32, copy=False)  # (n_cells, n_peaks)
+    # Keep ATAC sparse (CSC for fast column extraction); only RNA is
+    # materialised dense. Densifying ATAC at atlas scale (100k+ cells ×
+    # 30k+ peaks) causes a 24+ GB blow-up that thrashes laptop swap.
+    # The Pearson loop only ever needs one peak column at a time — see
+    # `_pearson_sparse_x_dense_Y` for the streaming sparse-aware path.
+    import scipy.sparse as sp
 
-    corr_fn = _spearman_matrix if method == "spearman" else _pearson_matrix
+    _warn_if_densification_expensive_rna(rna_adata)
+    rna_X = _densify(rna_adata.X).astype(np.float32, copy=False)  # (n_cells, n_genes_rna)
+
+    atac_raw = atac_adata.X
+    if sp.issparse(atac_raw):
+        atac_csc = atac_raw.tocsc().astype(np.float32, copy=False)
+    else:
+        atac_csc = sp.csc_matrix(atac_raw, dtype=np.float32)
+
+    if method == "spearman":
+        # Spearman needs rank-transformed inputs; fall back to dense path.
+        # Atlas-scale Spearman remains an open follow-up (sparse rank is
+        # not free). At small/medium scale this matches existing semantics.
+        atac_X = _densify(atac_raw).astype(np.float32, copy=False)
+        corr_fn = _spearman_matrix
+        sparse_path = False
+    else:
+        corr_fn = None  # use sparse path below
+        sparse_path = True
 
     rows = []
     # Iterate peaks in chrom-order; batch peaks on the same chromosome
@@ -163,10 +184,20 @@ def link_peaks_to_genes(
             candidate_rna_cols = gene_col_idx[lo:hi]
             candidate_tss = tss[lo:hi]
 
-            peak_vec = atac_X[:, i]
             rna_block = rna_X[:, candidate_rna_cols]
 
-            corr = corr_fn(peak_vec, rna_block)
+            if sparse_path:
+                # Slice peak column from CSC sparse: O(nnz_peak) extraction
+                col_start = atac_csc.indptr[i]
+                col_end = atac_csc.indptr[i + 1]
+                peak_indices = atac_csc.indices[col_start:col_end]
+                peak_data = atac_csc.data[col_start:col_end]
+                corr = _pearson_sparse_x_dense_Y(
+                    peak_indices, peak_data, atac_csc.shape[0], rna_block,
+                )
+            else:
+                peak_vec = atac_X[:, i]
+                corr = corr_fn(peak_vec, rna_block)
             keep = np.abs(corr) >= min_abs_corr
             if not keep.any():
                 continue
@@ -302,6 +333,30 @@ def _densify(X):
 _DENSIFY_WARN_BYTES = 8 * 1024**3  # 8 GiB
 
 
+def _warn_if_densification_expensive_rna(rna_adata) -> None:
+    """Warn before materialising the dense RNA matrix.
+
+    Pearson `link_peaks_to_genes` keeps ATAC sparse (CSC) and only
+    densifies RNA, so the bound is `n_cells × n_genes_rna × 4 bytes`.
+    Spearman currently still densifies both — the dense-both
+    `_warn_if_densification_expensive` function below is kept for
+    that path.
+    """
+    import warnings
+
+    bytes_needed = rna_adata.n_obs * rna_adata.n_vars * 4
+    if bytes_needed >= _DENSIFY_WARN_BYTES:
+        gib = bytes_needed / 1024**3
+        warnings.warn(
+            f"link_peaks_to_genes will densify rna_adata to a "
+            f"{rna_adata.n_obs} × {rna_adata.n_vars} float32 matrix "
+            f"(~{gib:.1f} GiB). Subset to highly variable genes if "
+            f"this OOMs.",
+            UserWarning,
+            stacklevel=3,
+        )
+
+
 def _warn_if_densification_expensive(rna_adata, atac_adata) -> None:
     """Warn before materialising large float32 matrices from sparse input.
 
@@ -343,6 +398,59 @@ def _pearson_matrix(x: np.ndarray, Y: np.ndarray) -> np.ndarray:
     num = x_centered @ Y_centered
     with np.errstate(divide="ignore", invalid="ignore"):
         return np.where(denom > 0, num / denom, 0.0).astype(np.float32)
+
+
+def _pearson_sparse_x_dense_Y(
+    x_indices: np.ndarray,
+    x_data: np.ndarray,
+    n_cells: int,
+    Y: np.ndarray,
+) -> np.ndarray:
+    """Pearson correlation of a sparse vector x against every column of dense Y.
+
+    Closes the atlas-scale densification gap: streams one peak's
+    nonzeros at a time instead of materialising the full
+    ``(n_cells, n_peaks)`` ATAC matrix. Mathematically equivalent to
+    ``_pearson_matrix(x_dense, Y)`` to float32 precision.
+
+    Algorithm — for each gene column j:
+        Pearson(x, Y[:, j]) = (E[x·Y_j] − μ_x μ_{Y_j}) / (σ_x σ_{Y_j})
+
+    where:
+      μ_x = sum(x_data) / n_cells
+      σ_x = sqrt(sum(x_data^2)/n_cells − μ_x^2)
+      μ_{Y_j}, σ_{Y_j} computed once over the dense block
+      E[x·Y_j] = (x_data @ Y[x_indices, j]) / n_cells
+                       — only nonzeros contribute, so it's O(nnz)
+    """
+    x_data = x_data.astype(np.float64, copy=False)
+    Y = Y.astype(np.float64, copy=False)
+    n = float(n_cells)
+
+    x_sum = float(x_data.sum())
+    x_sumsq = float((x_data * x_data).sum())
+    x_mean = x_sum / n
+    x_var = x_sumsq / n - x_mean * x_mean
+    x_var = max(x_var, 0.0)
+    x_std = np.sqrt(x_var)
+
+    Y_mean = Y.mean(axis=0)
+    Y_centered = Y - Y_mean
+    Y_norm = np.sqrt(np.sum(Y_centered * Y_centered, axis=0))
+    Y_std = Y_norm / np.sqrt(n)
+
+    if x_indices.size == 0:
+        # Vector of zeros: Pearson is undefined. Return zero.
+        return np.zeros(Y.shape[1], dtype=np.float32)
+
+    # Sum over nonzeros: x_data @ Y[indices, :] gives per-column dot products
+    cross_sum = x_data @ Y[x_indices, :]      # shape (n_genes_block,)
+    e_xy = cross_sum / n
+    cov = e_xy - x_mean * Y_mean
+    denom = x_std * Y_std
+    with np.errstate(divide="ignore", invalid="ignore"):
+        out = np.where(denom > 0, cov / denom, 0.0)
+    return out.astype(np.float32)
 
 
 def _spearman_matrix(x: np.ndarray, Y: np.ndarray) -> np.ndarray:

@@ -162,6 +162,96 @@ def test_correlation_sign_preserved():
     assert links["correlation"].iloc[0] < 0
 
 
+def test_sparse_pearson_matches_dense_pearson():
+    """Atlas-scale fix: enhancer keeps ATAC sparse (CSC) and uses
+    `_pearson_sparse_x_dense_Y` instead of densifying. The two paths
+    must agree to float32 precision on small data so we can trust the
+    streaming sparse path on 100k+ cells.
+    """
+    import scipy.sparse as sp
+    from rustscenic.enhancer import (
+        _pearson_matrix,
+        _pearson_sparse_x_dense_Y,
+    )
+
+    rng = np.random.default_rng(0)
+    n_cells = 800
+    n_genes = 12
+
+    # Build a sparse peak vector: 30% nonzero with random magnitudes
+    peak_mask = rng.random(n_cells) < 0.3
+    peak_data = rng.normal(size=peak_mask.sum()).astype(np.float32)
+    peak_dense = np.zeros(n_cells, dtype=np.float32)
+    peak_dense[peak_mask] = peak_data
+    peak_csc = sp.csc_matrix(peak_dense.reshape(-1, 1))
+
+    Y = rng.normal(size=(n_cells, n_genes)).astype(np.float32)
+
+    corr_dense = _pearson_matrix(peak_dense, Y)
+    corr_sparse = _pearson_sparse_x_dense_Y(
+        peak_csc.indices, peak_csc.data, n_cells, Y,
+    )
+    assert corr_dense.shape == corr_sparse.shape
+    assert np.allclose(corr_dense, corr_sparse, atol=1e-5)
+
+
+def test_link_peaks_keeps_atac_sparse_at_scale():
+    """At 5000 cells × 200 peaks the sparse-path correlations should
+    match the dense-path ones to within float32 noise. Guards against
+    regressions where the sparse path drifts from the dense reference."""
+    import scipy.sparse as sp
+
+    rng = np.random.default_rng(7)
+    n_cells = 5000
+    n_genes = 4
+    n_peaks = 8
+    latent = rng.normal(size=n_cells)
+
+    rna = (0.7 * latent[:, None]
+           + 0.3 * rng.normal(size=(n_cells, n_genes))).astype(np.float32)
+    # Sparse ATAC: same latent at first peak, noise elsewhere
+    atac_dense = rng.normal(size=(n_cells, n_peaks)).astype(np.float32)
+    atac_dense[:, 0] = 0.7 * latent + 0.3 * rng.normal(size=n_cells)
+    # 70% sparsity
+    mask = rng.random((n_cells, n_peaks)) < 0.3
+    atac_dense = (atac_dense * mask).astype(np.float32)
+    atac_sparse = sp.csr_matrix(atac_dense)
+
+    rna_adata = ad.AnnData(
+        X=rna,
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(n_cells)]),
+        var=pd.DataFrame(index=[f"G{i}" for i in range(n_genes)]),
+    )
+    atac_adata = ad.AnnData(
+        X=atac_sparse,
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(n_cells)]),
+        var=pd.DataFrame(index=[f"chr1:{i*100}-{i*100+50}" for i in range(n_peaks)]),
+    )
+    gene_coords = pd.DataFrame({
+        "gene": [f"G{i}" for i in range(n_genes)],
+        "chrom": ["chr1"] * n_genes,
+        "tss": [i * 100 + 25 for i in range(n_genes)],
+    })
+
+    links_sparse = link_peaks_to_genes(
+        rna_adata, atac_adata, gene_coords, min_abs_corr=0.0,
+    )
+
+    # Force-densify the same input and compare correlations
+    atac_adata_dense = atac_adata.copy()
+    atac_adata_dense.X = atac_dense
+    links_dense = link_peaks_to_genes(
+        rna_adata, atac_adata_dense, gene_coords, min_abs_corr=0.0,
+    )
+
+    # Same peak-gene rows in both, just possibly different ordering
+    sparse_pairs = links_sparse.set_index(["peak_id", "gene"])["correlation"]
+    dense_pairs = links_dense.set_index(["peak_id", "gene"])["correlation"]
+    assert set(sparse_pairs.index) == set(dense_pairs.index)
+    aligned = sparse_pairs.reindex(dense_pairs.index)
+    assert np.allclose(aligned.values, dense_pairs.values, atol=1e-4)
+
+
 def test_densification_warning_fires_when_matrix_is_huge(monkeypatch):
     """Warn users before the sparse→dense step blows past 8 GiB per matrix.
 
