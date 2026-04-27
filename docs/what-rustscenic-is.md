@@ -99,13 +99,16 @@ haven't validated yet:
    `topics.fit` (Online VB LDA) collapses aggressively at K ≥ 30 on
    sparse scATAC (5/30 unique topics on PBMC 10k × 67k peaks; 2/30
    on PBMC 1500 × 98k peaks). Use `topics.fit_gibbs` (collapsed
-   Gibbs, shipped v0.3.1) for fine topic decomposition: 21/30 unique
+   Gibbs, shipped v0.3.1) for fine topic decomposition: 22/30 unique
    topics on the same 1500 × 98k benchmark, mean pairwise top-20
-   peak overlap 0.005 vs VB's 0.373, at only 1.2× the wall-clock.
-   Same algorithm class as Mallet, no Java required. Outstanding
-   for v0.4: NPMI head-to-head against published Mallet numbers and
-   an explicit thread-parallel sparse-LDA Gibbs to recover atlas
-   speed.
+   peak overlap 0.005 vs VB's 0.373, intrinsic top-10 NPMI +0.031
+   vs VB's +0.012 (~2.7× higher coherence), at only 1.2× the
+   serial wall-clock. AD-LDA parallel path (`n_threads=N`,
+   shipped) gives 2.56× speedup at 8 threads on real PBMC ATAC
+   with quality preserved (NPMI within sampling variance). Same
+   algorithm class as Mallet, no Java required. Outstanding for
+   v0.4: extrinsic NPMI head-to-head against an actual Mallet run
+   on the same corpus.
 2. **SCENIC+ eRegulons need real-reference parity numbers next**:
    enhancer→gene linking, region cistarget, and the assembly schema are
    tested end-to-end. The next proof point is a direct scenicplus /

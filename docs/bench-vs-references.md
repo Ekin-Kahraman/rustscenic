@@ -87,7 +87,8 @@ What rustscenic gives at this layer:
 | Peak calling | MACS2 | rustscenic.preproc.call_peaks | **9.9× faster, F1 0.825** |
 | Topic modelling K=10 (speed) | gensim LdaModel | rustscenic.topics.fit | **0.7× (gensim wins)** |
 | Topic modelling K=30 (speed) | gensim LdaModel | rustscenic.topics.fit | **0.61× (gensim wins)** |
-| Topic modelling K=30 (quality) | rustscenic VB collapses (2/30) | **rustscenic Gibbs 21/30** | **Gibbs ~10× more distinct topics** |
+| Topic modelling K=30 (quality) | rustscenic VB 2/30, NPMI +0.012 | **rustscenic Gibbs 22/30, NPMI +0.031** | **Gibbs ~11× distinct, ~2.7× higher coherence** |
+| Topic modelling K=30 (parallel speed) | rustscenic Gibbs serial 214s | **rustscenic Gibbs 8-thread 84s** | **2.56× via AD-LDA** |
 | AUCell (10x Multiome 10k cells × 1,457 regulons) | pyscenic | rustscenic.aucell.score | **88× faster** |
 | Cistarget AUC kernel | ctxcore.recovery.aucs | rustscenic.cistarget.enrich | **bit-identical** (Pearson 1.0000) |
 | GRN end-to-end | arboreto | rustscenic.grn.infer | **1.3× faster, biology equivalent** |
