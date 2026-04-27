@@ -11,7 +11,7 @@ A Rust + PyO3 replacement for the SCENIC / SCENIC+ compute stack: one install, m
 # Universal source install while PyPI trusted-publishing is being configured:
 pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.3
 
-# Or install a prebuilt wheel from the v0.3.3 GitHub Release for your platform:
+# Or install a prebuilt wheel from the latest tagged GitHub Release for your platform:
 # macOS Apple Silicon:
 pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.3.3/rustscenic-0.3.3-cp310-abi3-macosx_11_0_arm64.whl
 # Linux x86_64:
@@ -156,7 +156,7 @@ Bit-identical to `ctxcore.recovery.aucs` at float32 precision. The 19 % rank-#1 
 | rustscenic, **100k synthetic multiome E2E** | **12.7 min** | **7.09 GB** | **7 (all)** |
 | rustscenic, **200k synthetic multiome E2E** | **16.8 min** | **7.44 GB** | **7 (all)** |
 
-Memory: 100k synthetic multiome 7-stage E2E peaks at **7.09 GB RSS**, vs scenicplus stack's reported > 40 GB at comparable scale. Bit-identical output under the same seed across threaded runs, verified across three consecutive runs per stage. 10 / 10 robustness edge-case tests pass (foreign genes, NaN input, duplicate gene names, all-zero cells, large regulons, object-dtype rankings, n_topics = 0, very-sparse matrices). Reproduce with `python validation/scaling/bench_e2e_100k_synthetic.py`.
+Memory: 100k synthetic multiome 7-stage E2E peaks at **7.09 GB RSS**, vs scenicplus stack's reported > 40 GB at comparable scale. Bit-identical output under the same seed across threaded runs, verified across three consecutive runs per stage. 10 / 10 robustness edge-case tests pass (foreign genes, NaN input, duplicate gene names, all-zero cells, large regulons, object-dtype rankings, n_topics = 0, very-sparse matrices). Reproduce with `python validation/scaling/bench_e2e_100k_synthetic.py`; reproduce the 200k synthetic run with `python validation/scaling/bench_e2e_200k_synthetic.py`.
 
 ## Scope and alternatives
 
@@ -184,7 +184,7 @@ rustscenic cistarget --rankings motifs.feather --regulons grn.parquet --output e
 - `python/rustscenic/` — Python package, CLI entry point, type stubs
 - `examples/pbmc3k_end_to_end.py` — end-to-end script on real PBMC-3k
 - `validation/` — reproducible benchmark scripts + measurement reports for every number above, plus `VALIDATION_SUMMARY.md`
-- `tests/` — pytest suite (106 Python tests) + Rust crate tests (51)
+- `tests/` — pytest suite (138 Python tests) + Rust crate tests (57)
 - `manuscript/` — preprint source
 - `docs/topic-collapse.md` — known algorithmic caveat
 

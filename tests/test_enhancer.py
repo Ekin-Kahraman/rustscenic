@@ -288,3 +288,37 @@ def test_densification_warning_fires_when_matrix_is_huge(monkeypatch):
     assert any("densify" in m for m in messages), (
         f"expected densification warning, got: {messages}"
     )
+
+
+def test_spearman_warns_for_dense_atac_fallback(monkeypatch):
+    """Spearman still rank-transforms dense ATAC, unlike the sparse Pearson path."""
+    import warnings
+    import rustscenic.enhancer as enh
+
+    rng = np.random.default_rng(11)
+    n = 50
+    rna = ad.AnnData(
+        X=rng.normal(size=(n, 2)).astype(np.float32),
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(n)]),
+        var=pd.DataFrame(index=["G1", "G2"]),
+    )
+    atac = ad.AnnData(
+        X=rng.normal(size=(n, 2)).astype(np.float32),
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(n)]),
+        var=pd.DataFrame(index=["chr1:100-200", "chr1:500-600"]),
+    )
+    gene_coords = pd.DataFrame({
+        "gene": ["G1", "G2"],
+        "chrom": ["chr1", "chr1"],
+        "tss": [150, 550],
+    })
+
+    monkeypatch.setattr(enh, "_DENSIFY_WARN_BYTES", 1)
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        link_peaks_to_genes(
+            rna, atac, gene_coords, method="spearman", min_abs_corr=0.0,
+        )
+    messages = [str(w.message) for w in caught]
+    assert any("rna_adata" in m for m in messages), messages
+    assert any("atac_adata" in m for m in messages), messages

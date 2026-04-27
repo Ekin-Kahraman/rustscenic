@@ -1,11 +1,16 @@
 """GRN scaling at 500k synthetic cells — extends the v0.3.1 200k story."""
 from __future__ import annotations
-import json, resource, sys, time
+
+import json
+import resource
+import sys
+import time
 from pathlib import Path
-import numpy as np
-import anndata as ad
-import pandas as pd
 import warnings
+
+import anndata as ad
+import numpy as np
+import pandas as pd
 
 import rustscenic.grn
 
@@ -55,4 +60,6 @@ result = {
     "peak_rss_gb": round(rss_gb, 2),
 }
 print(json.dumps(result, indent=2), flush=True)
-Path("/Users/ekin/rustscenic/validation/scaling/grn_500k.json").write_text(json.dumps(result, indent=2))
+out = Path(__file__).parent / "grn_500k.json"
+out.write_text(json.dumps(result, indent=2))
+print(f"record → {out}", flush=True)

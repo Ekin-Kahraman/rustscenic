@@ -8,10 +8,10 @@ back if anything is off.
 ## Install
 
 ```bash
-pip install --upgrade git+https://github.com/Ekin-Kahraman/rustscenic@v0.2.0
+pip install --upgrade git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.3
 ```
 
-Wheels are also at the [v0.2.0 release page](https://github.com/Ekin-Kahraman/rustscenic/releases/tag/v0.2.0)
+Wheels are also at the [latest release page](https://github.com/Ekin-Kahraman/rustscenic/releases/latest)
 if your network can't pull from git directly.
 
 Requires Python 3.10–3.13. Linux + macOS only (Windows untested).

@@ -133,7 +133,7 @@
   parallel path shipped here).
 
 ### Test counts
-135 Python tests + 57 Rust tests pass.
+138 Python tests + 57 Rust tests pass.
 
 ## 0.3.1 — 2026-04-27
 

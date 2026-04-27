@@ -74,8 +74,8 @@ threshold-tuning path.
 ## 4. "one install" is from GitHub, not PyPI yet
 
 PyPI trusted-publisher config requires the user's PyPI account state.
-The short-term install path is GitHub: either `pip install git+...@v0.2.0`
-or a platform-specific wheel from the v0.2.0 Release. But:
+The short-term install path is GitHub: either `pip install git+...@v0.3.3`
+or a platform-specific wheel from the latest tagged Release. But:
 - `pip install rustscenic` from PyPI returns nothing yet.
 - Release wheel names are platform-locked. Users need the matching
   macOS / Linux, x86_64 / aarch64 wheel.

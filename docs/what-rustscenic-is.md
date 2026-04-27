@@ -54,7 +54,7 @@ compute path, not every surrounding single-cell method.
 
 ## Performance vs the references it replaces
 
-Measured on this v0.2.0 release. Full numbers in `CHANGELOG.md` /
+Measured on the current 0.3.x line. Full numbers in `CHANGELOG.md` /
 `validation/`.
 
 | Stage | Reference | rustscenic |
@@ -65,7 +65,7 @@ Measured on this v0.2.0 release. Full numbers in `CHANGELOG.md` /
 | End-to-end (10x Multiome 3k, 4 stages) | 11.8 min ref pipeline | 9.1 min |
 | Peak RSS (100k cells × 20k genes, 4 stages) | > 40 GB reported | 6.3 GB |
 
-Bit-identical output under same seed. 51 Rust tests + 106 Python tests.
+Bit-identical output under same seed. 57 Rust tests + 138 Python tests.
 
 ## Intellectual Risk
 
@@ -186,4 +186,4 @@ scope:
   tested? Send a slice; if it breaks, we want it to break in CI.
 
 Repo: <https://github.com/Ekin-Kahraman/rustscenic>
-Latest: v0.2.0 (2026-04-25)
+Latest tagged release: v0.3.3 (2026-04-27).

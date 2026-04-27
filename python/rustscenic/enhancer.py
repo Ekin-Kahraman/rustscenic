@@ -135,9 +135,6 @@ def link_peaks_to_genes(
     # `_pearson_sparse_x_dense_Y` for the streaming sparse-aware path.
     import scipy.sparse as sp
 
-    _warn_if_densification_expensive_rna(rna_adata)
-    rna_X = _densify(rna_adata.X).astype(np.float32, copy=False)  # (n_cells, n_genes_rna)
-
     atac_raw = atac_adata.X
     if sp.issparse(atac_raw):
         atac_csc = atac_raw.tocsc().astype(np.float32, copy=False)
@@ -148,10 +145,14 @@ def link_peaks_to_genes(
         # Spearman needs rank-transformed inputs; fall back to dense path.
         # Atlas-scale Spearman remains an open follow-up (sparse rank is
         # not free). At small/medium scale this matches existing semantics.
+        _warn_if_densification_expensive(rna_adata, atac_adata)
+        rna_X = _densify(rna_adata.X).astype(np.float32, copy=False)
         atac_X = _densify(atac_raw).astype(np.float32, copy=False)
         corr_fn = _spearman_matrix
         sparse_path = False
     else:
+        _warn_if_densification_expensive_rna(rna_adata)
+        rna_X = _densify(rna_adata.X).astype(np.float32, copy=False)
         corr_fn = None  # use sparse path below
         sparse_path = True
 
