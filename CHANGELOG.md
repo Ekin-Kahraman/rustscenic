@@ -9,12 +9,18 @@
   patch release brings the wheel artifacts in line with main.
 
   Real PBMC ATAC, 1,500 cells × 98k peaks, K=30:
-  - Online VB: 2/30 unique argmax topics (collapsed)
-  - Collapsed Gibbs: **21/30 unique argmax topics**, only 1.2× slower
+  - Online VB: 2/30 unique argmax topics (collapsed), NPMI +0.012
+  - Collapsed Gibbs: **22/30 unique argmax topics**, NPMI **+0.031**
   - Top-20 peak overlap: VB 0.373 → Gibbs 0.005 (75× more diverse)
+  - Gibbs intrinsic NPMI is **2.7× higher** than VB on the same corpus
 
   3 Rust unit tests + 5 Python tests cover synthetic recovery,
   determinism, AnnData input, edge cases.
+
+- **`rustscenic.topics.coherence_npmi`** — per-topic intrinsic NPMI
+  metric for fitted topic models. Backs the published quality
+  comparison; runs entirely in Rust. Reproduce with
+  `python validation/scaling/bench_npmi_head_to_head.py`.
 
 ### Validation
 - 200k synthetic GRN scaling: 9 min, slope 1.30, 8.6 GB RSS.

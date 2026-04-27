@@ -95,3 +95,54 @@ def test_gibbs_alpha_eta_defaults():
         (X, cells, peaks), n_topics=2, n_iters=20, verbose=False,
     )
     assert r.n_topics == 2
+
+
+def test_coherence_npmi_separates_planted_from_random():
+    """Planted-topic NPMI must be measurably higher than a random topic
+    on the same corpus. Backs the published quality comparison —
+    if this passes, the metric is at least monotone in topic structure."""
+    X, cells, peaks = _two_topic_corpus(80, 20)
+
+    # Real topic-peak: place mass on the planted halves
+    planted = np.zeros((2, 20), dtype=np.float32)
+    planted[0, :10] = 1.0 / 10
+    planted[1, 10:] = 1.0 / 10
+    planted_result = rustscenic.topics.TopicsResult(
+        cell_topic=pd.DataFrame(np.zeros((80, 2), dtype=np.float32),
+                                index=cells, columns=["Topic_0", "Topic_1"]),
+        topic_peak=pd.DataFrame(planted, index=["Topic_0", "Topic_1"], columns=peaks),
+        n_topics=2,
+    )
+    npmi_planted = rustscenic.topics.coherence_npmi(
+        planted_result, (X, cells, peaks), top_n=5,
+    )
+
+    # Random topic-peak: uniform mass
+    rng = np.random.default_rng(0)
+    rand_tw = rng.dirichlet(np.ones(20), size=2).astype(np.float32)
+    random_result = rustscenic.topics.TopicsResult(
+        cell_topic=pd.DataFrame(np.zeros((80, 2), dtype=np.float32),
+                                index=cells, columns=["Topic_0", "Topic_1"]),
+        topic_peak=pd.DataFrame(rand_tw, index=["Topic_0", "Topic_1"], columns=peaks),
+        n_topics=2,
+    )
+    npmi_random = rustscenic.topics.coherence_npmi(
+        random_result, (X, cells, peaks), top_n=5,
+    )
+
+    assert npmi_planted.shape == (2,)
+    assert npmi_random.shape == (2,)
+    # Planted topics should score strictly higher than random topics
+    assert npmi_planted.mean() > npmi_random.mean()
+
+
+def test_coherence_npmi_rejects_column_mismatch():
+    """Caller-error: corpus columns must match the fit's topic_peak."""
+    X, cells, peaks = _two_topic_corpus(40, 15)
+    r = rustscenic.topics.fit_gibbs(
+        (X, cells, peaks), n_topics=2, n_iters=20, seed=0, verbose=False,
+    )
+    # Corpus with the same shape but a different peak ordering
+    wrong_peaks = list(reversed(peaks))
+    with pytest.raises(ValueError, match="column order"):
+        rustscenic.topics.coherence_npmi(r, (X, cells, wrong_peaks), top_n=5)

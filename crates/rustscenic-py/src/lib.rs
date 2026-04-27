@@ -15,7 +15,7 @@ use rustscenic_preproc::{
     tss_enrichment as preproc_tss_enrichment_fn,
     PeakCallingConfig, TssSite,
 };
-use rustscenic_topics::online_vb_lda;
+use rustscenic_topics::{online_vb_lda, topic_coherence_npmi};
 use std::path::PathBuf;
 
 #[pyfunction]
@@ -244,6 +244,45 @@ fn topics_fit_gibbs<'py>(
         PyArray2::from_owned_array(py, theta).unbind(),
         PyArray2::from_owned_array(py, beta).unbind(),
     ))
+}
+
+/// Topic-coherence NPMI per topic.
+///
+/// Mean pairwise NPMI over the top-N words of each topic against the
+/// supplied corpus's document containment. Higher = better. The standard
+/// intrinsic topic-quality metric for LDA, used to compare rustscenic's
+/// online VB vs collapsed Gibbs vs Mallet on the same corpus.
+#[pyfunction]
+#[pyo3(signature = (topic_word, n_topics, n_words, row_ptr, col_idx, top_n = 10))]
+fn topics_npmi<'py>(
+    py: Python<'py>,
+    topic_word: PyReadonlyArray2<'py, f32>,
+    n_topics: usize,
+    n_words: usize,
+    row_ptr: Vec<usize>,
+    col_idx: Vec<u32>,
+    top_n: usize,
+) -> PyResult<Py<PyArray1<f32>>> {
+    let arr = topic_word.as_array();
+    if arr.shape() != [n_topics, n_words] {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "topic_word shape {:?} mismatch (n_topics, n_words)=({}, {})",
+            arr.shape(),
+            n_topics,
+            n_words,
+        )));
+    }
+    let owned;
+    let tw_slice: &[f32] = if let Some(s) = arr.as_slice() {
+        s
+    } else {
+        owned = arr.as_standard_layout().to_owned();
+        owned.as_slice().expect("standard_layout guarantees contiguous")
+    };
+    let coh = py.allow_threads(|| {
+        topic_coherence_npmi(tw_slice, n_topics, n_words, top_n, &row_ptr, &col_idx)
+    });
+    Ok(PyArray1::from_vec(py, coh).unbind())
 }
 
 /// Build a cells x peaks sparse matrix from a 10x fragments file and a peak BED.
@@ -492,6 +531,7 @@ fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(aucell_score, m)?)?;
     m.add_function(wrap_pyfunction!(topics_fit, m)?)?;
     m.add_function(wrap_pyfunction!(topics_fit_gibbs, m)?)?;
+    m.add_function(wrap_pyfunction!(topics_npmi, m)?)?;
     m.add_function(wrap_pyfunction!(preproc_fragments_to_matrix, m)?)?;
     m.add_function(wrap_pyfunction!(preproc_insert_size_stats, m)?)?;
     m.add_function(wrap_pyfunction!(preproc_frip, m)?)?;

@@ -53,15 +53,23 @@ provide both — pick by priority.
 
 ### Quality at K=30 (real PBMC ATAC, 1,500 cells × 98,319 peaks)
 
-| Tool | Unique argmax topics / 30 | Mean pairwise top-20 overlap |
-|---|---|---|
-| rustscenic VB | **2 / 30** (collapsed) | 0.373 |
-| rustscenic Gibbs | **21 / 30** | **0.005** |
-| Mallet 500-iter (reference) | 24 / 30 | 0.196 NPMI |
+| Tool | Unique argmax topics / 30 | Top-20 peak overlap | Top-10 NPMI (intrinsic, mean) |
+|---|---|---|---|
+| rustscenic VB | **2 / 30** (collapsed) | 0.373 | **+0.012** |
+| rustscenic Gibbs | **22 / 30** | **0.005** | **+0.031** |
+| Mallet 500-iter (reference) | 24 / 30 | n/a | 0.196 (extrinsic, different protocol) |
 
-**Collapsed Gibbs gives ~10× more distinct topics than Online VB on
+**Collapsed Gibbs gives 11× more distinct topics than Online VB on
 sparse scATAC at K=30, with topic-peak distributions 75× less
-overlapped.** Same algorithm class as Mallet, no Java required.
+overlapped, and ~2.7× higher intrinsic NPMI on the training corpus.**
+Same algorithm class as Mallet, no Java required.
+
+NPMI numbers reproduce with `python validation/scaling/bench_npmi_head_to_head.py`.
+Mallet's published 0.196 is extrinsic NPMI (against an external reference
+corpus); our 0.012 / 0.031 are intrinsic top-10 NPMI on the training
+corpus and are not directly comparable in absolute scale — what is
+comparable is the *Gibbs / VB ratio*, which is where the algorithmic
+gap lives.
 
 What rustscenic gives at this layer:
 - **Two algorithms, drop-in choice** — VB for speed at K ≤ 10, Gibbs

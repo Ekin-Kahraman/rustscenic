@@ -23,6 +23,7 @@ import pandas as pd
 from rustscenic._rustscenic import (
     topics_fit as _topics_fit,
     topics_fit_gibbs as _topics_fit_gibbs,
+    topics_npmi as _topics_npmi,
 )
 
 
@@ -207,6 +208,51 @@ def fit_gibbs(
             file=sys.stderr, flush=True,
         )
     return TopicsResult(cell_topic=cell_topic, topic_peak=topic_peak, n_topics=n_topics)
+
+
+def coherence_npmi(
+    result: TopicsResult,
+    corpus,
+    *,
+    top_n: int = 10,
+) -> np.ndarray:
+    """Per-topic NPMI coherence for a fitted topic model.
+
+    Parameters
+    ----------
+    result
+        :class:`TopicsResult` from :func:`fit` or :func:`fit_gibbs`.
+    corpus
+        Corpus to score against (AnnData / DataFrame / sparse-tuple,
+        same shape conventions as :func:`fit`). Should have the same
+        peak/word vocabulary as ``result`` — column order must match
+        ``result.topic_peak.columns``.
+    top_n
+        Top-N peaks per topic to evaluate pairwise NPMI over. 10 is
+        standard for LDA topic-coherence.
+
+    Returns
+    -------
+    np.ndarray of shape (n_topics,) — mean pairwise NPMI per topic.
+    Higher is better; positive values mean top-words co-occur more
+    than independence would predict.
+    """
+    row_ptr, col_idx, _, n_words, _, peak_names = _coerce(corpus)
+    if list(peak_names) != list(result.topic_peak.columns):
+        raise ValueError(
+            "corpus column order does not match the fit's topic_peak columns; "
+            "supply the same peak/word ordering used at fit time"
+        )
+    tw = np.ascontiguousarray(result.topic_peak.values, dtype=np.float32)
+    out = _topics_npmi(
+        tw,
+        int(result.n_topics),
+        int(n_words),
+        list(row_ptr),
+        list(col_idx),
+        int(top_n),
+    )
+    return np.asarray(out)
 
 
 def _coerce(expression):
