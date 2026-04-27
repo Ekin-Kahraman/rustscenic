@@ -1,11 +1,22 @@
 # Changelog
 
-## Unreleased
+## 0.3.2 — 2026-04-27
+
+### Added
+- **`rustscenic.topics.coherence_npmi(result, corpus, top_n=10)`** — per-topic
+  intrinsic NPMI metric for fitted topic models, runs entirely in Rust.
+  Backs the published quality comparison; reproducible with
+  `python validation/scaling/bench_npmi_head_to_head.py`.
+- **`pipeline.run(..., topics_method='gibbs', topics_n_iters, topics_n_threads)`**:
+  the end-to-end orchestrator can now fit topics with the Mallet-class
+  collapsed-Gibbs sampler instead of online VB. `topics_method='vb'`
+  (default) preserves existing behaviour.
 
 ### Performance
 - **Parallel collapsed-Gibbs LDA** (`rustscenic.topics.fit_gibbs(..., n_threads=N)`)
-  — AD-LDA (Newman et al. 2009) implementation: documents partitioned across
-  Rayon workers with thread-local n_kw deltas merged at sweep boundaries.
+  — AD-LDA (Newman et al. 2009): documents partitioned across Rayon
+  workers with thread-local `n_kw` deltas merged at sweep boundaries.
+  Persistent per-thread buffers + parallel merge over topic rows.
 
   Real PBMC ATAC, 1500 cells × 98k peaks, K=30, 200 sweeps:
   - Serial:   214s, 22/30 unique topics, NPMI +0.031
@@ -19,14 +30,35 @@
 
   Quality preserved across thread counts and corpus sizes.
   Bit-deterministic at fixed `n_threads`, drops to the original
-  `fit` path at `n_threads=1`. Speedup plateau around 1.6× at
-  atlas scale is consistent with memory-bandwidth bound on the
-  n_kw read path; sparse-LDA hash-table approach is the next
-  optimisation to break through it.
+  `fit` path at `n_threads=1`. Speedup plateau around 1.6× at atlas
+  scale is consistent with memory-bandwidth bound on the n_kw read
+  path; sparse-LDA hash-table approach is the next optimisation.
 
-  3 new Rust tests (n_threads=1 matches serial, planted-recovery at
-  n_threads=4, determinism). Reproduce with
-  `python validation/scaling/bench_gibbs_parallel.py`.
+### Validation
+- **NPMI head-to-head, real PBMC ATAC, K=30**: VB +0.012 vs Gibbs
+  +0.031 (~2.7× higher coherence) on the same corpus quoted in
+  `docs/topic-collapse.md`. Mallet's published 0.196 is extrinsic
+  (different protocol) and now flagged as not directly comparable in
+  absolute scale.
+- **Real PBMC Multiome E2E with `topics_method='gibbs'`**: 74s total
+  wall-clock through preproc → topics (Gibbs, 4-thread) → GRN →
+  enhancer → AUCell.
+
+### CI
+- **Nightly maturin venv fix**: `nightly-real-data.yml` switched from
+  `maturin develop --release` (requires venv) to `maturin build` +
+  `pip install` of the resulting wheel. Live cellxgene Kamath OPC
+  validation green again post-fix.
+
+### Docs
+- `docs/topic-collapse.md`, `docs/bench-vs-references.md`,
+  `docs/what-rustscenic-is.md`, README.md updated with measured NPMI
+  and parallel-Gibbs numbers; the K≥30 "outstanding for v0.4" item is
+  now scoped down to extrinsic-Mallet-NPMI head-to-head (the AD-LDA
+  parallel path shipped here).
+
+### Test counts
+135 Python tests + 57 Rust tests pass.
 
 ## 0.3.1 — 2026-04-27
 
