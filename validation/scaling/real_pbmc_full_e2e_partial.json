@@ -1,0 +1,31 @@
+{
+  "dataset": "10x PBMC 3k Multiome",
+  "n_rna_cells": 2711,
+  "n_rna_genes": 36601,
+  "n_atac_cells": 462264,
+  "n_atac_peaks": 98319,
+  "atac_nnz": 22698997,
+  "motif_rankings_path": "data/cistarget/hg38_500bp_up_100bp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather",
+  "motif_rankings_shape": [5876, 27015],
+  "topics_method": "gibbs",
+  "topics_n_threads": 4,
+  "topics_n_iters": 100,
+  "topics_n_topics": 10,
+  "completed_stages": [
+    {"stage": "preproc", "wall_s": 9.4, "output": "ATAC cells_by_peaks (462264, 98319)"},
+    {"stage": "topics_gibbs", "wall_s": 32.0, "output": "10/10 unique argmax topics"},
+    {"stage": "grn", "wall_s": 12.6, "output": "591,022 edges (30 TFs)"},
+    {"stage": "regulons", "wall_s": 0.1, "output": "27 regulons (≥10 targets)"},
+    {"stage": "cistarget", "wall_s": 1.5, "output": "35,410 enriched motif-regulon pairs"},
+    {"stage": "enhancer_links", "wall_s": 19.0, "output": "9,971 peak-gene links"}
+  ],
+  "stalled_stage": "eregulon_assembly_gene_only_bridge",
+  "diagnosis": [
+    "First time the cistarget stage actually runs on real PBMC data with real aertslab hg38 v10 motif rankings — 35,410 enriched pairs in 1.5s.",
+    "Pipeline stalls in the eRegulon assembly step's `gene-only — bridging via GRN targets (approximate)` path.",
+    "When only `motif_rankings` (gene-based) is provided, pipeline.run bridges to peak-level via GRN ∩ enhancer links. The bridge does Python loops that are slow at 35k cistarget × 10k links scale.",
+    "Region-based cistarget path (`region_motif_rankings` argument, exact eRegulon assembly) was added in v0.3.0 and is the real fix for users; this gene-only bridge is a fallback.",
+    "Stages 1-5 are now demonstrated working on real PBMC Multiome data with the real aertslab feather — the most complete real-data validation rustscenic has shipped."
+  ],
+  "next_step": "Profile + speed up the gene-only bridge in pipeline.run (eRegulon assembly section). Or: cleaner — recommend `region_motif_rankings` for real workflows in the docs."
+}
