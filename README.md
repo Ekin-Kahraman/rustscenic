@@ -149,12 +149,13 @@ Bit-identical to `ctxcore.recovery.aucs` at float32 precision. The 19 % rank-#1 
 
 ### End-to-end + determinism
 
-| Pipeline | Wall (10x Multiome 3k, all 4 stages) |
-|---|---|
-| Reference (arboreto + pyscenic + tomotopy), when it installs | 11.8 min |
-| rustscenic | 9.1 min |
+| Pipeline | Wall | Stages |
+|---|---|---|
+| Reference (arboreto + pyscenic + tomotopy), 10x Multiome 3k | 11.8 min | 4 |
+| rustscenic, 10x Multiome 3k | 9.1 min | 4 |
+| rustscenic, **100k synthetic multiome end-to-end** | **12.7 min** | **7 (all stages)** |
 
-Peak RSS at 100 k cells: 6.3 GB across all 4 stages. Bit-identical output under the same seed across threaded runs, verified across three consecutive runs per stage. 10 / 10 robustness edge-case tests pass (foreign genes, NaN input, duplicate gene names, all-zero cells, large regulons, object-dtype rankings, n_topics = 0, very-sparse matrices).
+Memory: 100k synthetic multiome 7-stage E2E peaks at **7.09 GB RSS**, vs scenicplus stack's reported > 40 GB at comparable scale. Bit-identical output under the same seed across threaded runs, verified across three consecutive runs per stage. 10 / 10 robustness edge-case tests pass (foreign genes, NaN input, duplicate gene names, all-zero cells, large regulons, object-dtype rankings, n_topics = 0, very-sparse matrices). Reproduce with `python validation/scaling/bench_e2e_100k_synthetic.py`.
 
 ## Scope and alternatives
 

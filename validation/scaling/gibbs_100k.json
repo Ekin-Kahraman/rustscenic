@@ -1,0 +1,12 @@
+{
+  "n_cells": 100000,
+  "n_peaks": 50000,
+  "K": 30,
+  "n_iters": 50,
+  "n_threads": 8,
+  "wall_s": 543.9,
+  "wall_min": 9.1,
+  "unique_argmax_topics": 27,
+  "npmi_mean": 0.4964506924152374,
+  "peak_rss_gb": 8.38
+}

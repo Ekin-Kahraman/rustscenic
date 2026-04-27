@@ -1,0 +1,60 @@
+{
+  "n_cells": 100000,
+  "n_genes": 15000,
+  "n_peaks": 50000,
+  "K": 30,
+  "elapsed": {
+    "build": 240.5,
+    "topics": 487.5,
+    "grn": 143.0,
+    "regulons": 0.3,
+    "cistarget": 0.0,
+    "enhancer": 116.3,
+    "eregulon": 0.8,
+    "aucell": 14.7,
+    "TOTAL": 762.6
+  },
+  "rss_marks": [
+    {
+      "label": "after_build",
+      "rss_gb": 7.09
+    },
+    {
+      "label": "after_topics",
+      "rss_gb": 7.09
+    },
+    {
+      "label": "after_grn",
+      "rss_gb": 7.09
+    },
+    {
+      "label": "after_regulons",
+      "rss_gb": 7.09
+    },
+    {
+      "label": "after_cistarget",
+      "rss_gb": 7.09
+    },
+    {
+      "label": "after_enhancer",
+      "rss_gb": 7.09
+    },
+    {
+      "label": "after_eregulon",
+      "rss_gb": 7.09
+    },
+    {
+      "label": "after_aucell",
+      "rss_gb": 7.09
+    }
+  ],
+  "unique_topics": 30,
+  "n_grn_edges": 441734,
+  "n_cistarget_hits": 900,
+  "n_enhancer_links": 93750,
+  "n_eregulons": 30,
+  "aucell_shape": [
+    100000,
+    30
+  ]
+}

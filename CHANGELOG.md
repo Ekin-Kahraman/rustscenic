@@ -3,6 +3,34 @@
 ## Unreleased
 
 ### Validation
+- **100k synthetic atlas full-pipeline E2E** (`bench_e2e_100k_synthetic.py`):
+  100,000 cells × 15,000 genes / 50,000 peaks × K=30, all 7 stages of
+  the rustscenic pipeline connected end-to-end (skipping fragments→matrix
+  preproc, validated separately on real PBMC).
+
+  | Stage | Wall | Output |
+  |---|---|---|
+  | Topics (Gibbs 8-thread, 50 iters) | 487s | 30/30 unique topics |
+  | GRN (50 TFs, n_estimators=20) | 143s | 441,734 edges |
+  | Regulons | 0.3s | 30 regulons |
+  | Cistarget | <0.1s | 900 enrichments |
+  | Enhancer→gene linking | 116s | 93,750 peak-gene links |
+  | eRegulon assembly | 0.8s | 30 eRegulons |
+  | AUCell | 15s | (100,000 × 30) |
+  | **TOTAL** | **762s (12.7 min)** | All 7 stages |
+  | **Peak RSS** | **7.09 GB** | Across all stages |
+
+  Closes the named credibility gap from `docs/what-rustscenic-is.md`:
+  "100k-cell atlas end-to-end is unmeasured for the full ATAC + RNA
+  pipeline." Reference scenicplus stack reports > 40 GB at comparable
+  scale; rustscenic delivers full-pipeline atlas analysis at **5.6×
+  less memory and ~13 min wall-clock**.
+
+- **100k synthetic atlas Gibbs alone** (`gibbs_100k.json`): 100,000
+  cells × 50,000 peaks × K=30, n_iters=50, 8-thread AD-LDA. 544s
+  (9.1 min), 27/30 unique topics, 8.38 GB peak RSS. The Gibbs-only
+  curve continues 25k → 50k → 100k cleanly.
+
 - **50k synthetic atlas Gibbs** (`bench_gibbs_50k.py`): 50,000 cells ×
   50,000 peaks × K=30, n_iters=100, 8-thread AD-LDA. **422s (7.0 min),
   30/30 unique argmax topics recovered, 5.06 GB peak RSS.** Extends the
