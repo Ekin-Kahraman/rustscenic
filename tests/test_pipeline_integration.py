@@ -353,6 +353,92 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     assert result.n_eregulons is not None
 
 
+def test_pipeline_run_topics_method_gibbs(tmp_path):
+    """When ``topics_method='gibbs'`` (with ``topics_n_threads > 1``)
+    the orchestrator runs the parallel collapsed-Gibbs sampler instead
+    of online VB. Verifies that the alternative path runs end-to-end
+    and the topics artifact is present."""
+    import gzip, anndata as ad, numpy as np, pandas as pd
+    import rustscenic.pipeline
+
+    rng = np.random.default_rng(0)
+    n_cells = 60
+    cluster = np.array([i * 3 // n_cells for i in range(n_cells)], dtype=np.uint32)
+    rna_genes = [f"G{i:03d}" for i in range(20)]
+    X = np.zeros((n_cells, 20), dtype=np.float32)
+    for i in range(20):
+        X[:, i] = (cluster == (i % 3)).astype(np.float32) + 0.1 * rng.normal(size=n_cells)
+    X = np.clip(X, 0, None) + 0.1
+    cells = [f"cell{i}" for i in range(n_cells)]
+    rna = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame({"cluster": cluster}, index=cells),
+        var=pd.DataFrame(index=rna_genes),
+    )
+
+    # Sparse fragments file — enough for the topics fit to have signal.
+    frag_lines = []
+    for p in range(3):
+        for ci in np.where(cluster == p)[0]:
+            for _ in range(20):
+                start = 10_000 + p * 100_000 + int(rng.integers(0, 5_000))
+                frag_lines.append(f"chr1\t{start}\t{start+150}\t{cells[ci]}\t1")
+    frag_path = tmp_path / "fragments.tsv.gz"
+    with gzip.open(frag_path, "wt") as fh:
+        fh.write("\n".join(frag_lines) + "\n")
+
+    peaks_path = tmp_path / "peaks.bed"
+    with open(peaks_path, "w") as fh:
+        for p in range(3):
+            for j in range(3):
+                start = 10_000 + p * 100_000 + j * 5_000
+                fh.write(f"chr1\t{start}\t{start + 500}\tpeak_{p}_{j}\n")
+
+    out = tmp_path / "pipeline_out"
+    result = rustscenic.pipeline.run(
+        rna, out,
+        fragments=str(frag_path), peaks=str(peaks_path),
+        tfs=["G000", "G005", "G010"],
+        grn_n_estimators=10, grn_top_targets=5,
+        topics_n_topics=4, topics_n_passes=2,
+        topics_method="gibbs", topics_n_iters=20, topics_n_threads=2,
+        seed=0, verbose=False,
+    )
+
+    # The orchestrator wrote the ATAC matrix and a topics directory
+    assert result.atac_matrix_path.exists()
+    assert (out / "topics" / "cell_topic.npy").exists()
+    assert (out / "topics" / "topic_peak.npy").exists()
+
+
+def test_pipeline_run_topics_method_invalid(tmp_path):
+    """Unknown topics_method raises a clear ValueError."""
+    import gzip, anndata as ad, numpy as np, pandas as pd
+    import rustscenic.pipeline
+    import pytest
+
+    rng = np.random.default_rng(0)
+    rna = ad.AnnData(
+        X=np.abs(rng.normal(size=(10, 5)).astype(np.float32)) + 0.1,
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(10)]),
+        var=pd.DataFrame(index=[f"g{i}" for i in range(5)]),
+    )
+    frag_path = tmp_path / "fragments.tsv.gz"
+    with gzip.open(frag_path, "wt") as fh:
+        fh.write("chr1\t100\t200\tc0\t1\n")
+    peaks_path = tmp_path / "peaks.bed"
+    peaks_path.write_text("chr1\t100\t200\tpeak0\n")
+
+    with pytest.raises(ValueError, match="topics_method"):
+        rustscenic.pipeline.run(
+            rna, tmp_path / "out",
+            fragments=str(frag_path), peaks=str(peaks_path),
+            tfs=["g0"], topics_n_topics=2,
+            topics_method="not_a_method",
+            verbose=False,
+        )
+
+
 def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path):
     """When `region_motif_rankings` is supplied, pipeline.run runs
     region-based cistarget against the linked peaks (exact path) instead
