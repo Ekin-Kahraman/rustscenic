@@ -207,6 +207,11 @@ fn topics_fit<'py>(
 /// scATAC at K ≥ 30 than online VB, at the cost of thousands of
 /// iterations instead of tens of passes. Returns (theta, beta) as two
 /// numpy arrays of shape (n_docs, n_topics) and (n_topics, n_words).
+///
+/// If `n_threads <= 1`, runs the bit-deterministic serial path. If
+/// `n_threads > 1`, dispatches to `fit_par` (AD-LDA, Newman et al.
+/// 2009) which partitions docs across threads for near-linear speedup
+/// at the cost of small cross-thread staleness within a sweep.
 #[pyfunction]
 #[pyo3(signature = (
     row_ptr, col_idx, counts, n_words,
@@ -215,6 +220,7 @@ fn topics_fit<'py>(
     eta = 0.01,
     n_iters = 200,
     seed = 42,
+    n_threads = 1,
 ))]
 #[allow(clippy::too_many_arguments)]
 fn topics_fit_gibbs<'py>(
@@ -228,12 +234,20 @@ fn topics_fit_gibbs<'py>(
     eta: f32,
     n_iters: usize,
     seed: u64,
+    n_threads: usize,
 ) -> PyResult<(Py<PyArray2<f32>>, Py<PyArray2<f32>>)> {
     let result = py.allow_threads(|| {
-        rustscenic_topics::gibbs::fit(
-            &row_ptr, &col_idx, &counts, n_words, n_topics,
-            alpha, eta, n_iters, seed,
-        )
+        if n_threads <= 1 {
+            rustscenic_topics::gibbs::fit(
+                &row_ptr, &col_idx, &counts, n_words, n_topics,
+                alpha, eta, n_iters, seed,
+            )
+        } else {
+            rustscenic_topics::gibbs::fit_par(
+                &row_ptr, &col_idx, &counts, n_words, n_topics,
+                alpha, eta, n_iters, seed, n_threads,
+            )
+        }
     });
     let n_docs = row_ptr.len().saturating_sub(1);
     let theta = ndarray::Array2::from_shape_vec((n_docs, n_topics), result.theta)

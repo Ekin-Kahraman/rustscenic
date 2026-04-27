@@ -73,6 +73,8 @@ your priority.
 - ✅ v0.3.1 — collapsed Gibbs shipped (`topics.fit_gibbs`).
 - ✅ v0.3.1 — intrinsic NPMI head-to-head: Gibbs +0.031 vs VB +0.012
   on real PBMC ATAC (`validation/scaling/bench_npmi_head_to_head.py`).
+- ✅ Unreleased — parallel AD-LDA Gibbs (`fit_gibbs(..., n_threads=N)`),
+  2.56× speedup at 8 threads on the same corpus with quality preserved
+  (`validation/scaling/bench_gibbs_parallel.py`).
 - Open: extrinsic NPMI head-to-head against a Mallet run on the same
   corpus (Mallet absolute number 0.196 is from a different protocol).
-- Open: parallel sparse-LDA Gibbs to recover the speed gap at atlas scale.

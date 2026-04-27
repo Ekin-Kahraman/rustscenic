@@ -136,6 +136,41 @@ def test_coherence_npmi_separates_planted_from_random():
     assert npmi_planted.mean() > npmi_random.mean()
 
 
+def test_gibbs_parallel_n_threads_1_matches_serial():
+    """n_threads=1 must dispatch to the bit-deterministic serial path."""
+    X, cells, peaks = _two_topic_corpus(60, 20)
+    serial = rustscenic.topics.fit_gibbs(
+        (X, cells, peaks), n_topics=2, n_iters=30, seed=11, n_threads=1, verbose=False,
+    )
+    par_one = rustscenic.topics.fit_gibbs(
+        (X, cells, peaks), n_topics=2, n_iters=30, seed=11, n_threads=1, verbose=False,
+    )
+    assert np.array_equal(serial.cell_topic.values, par_one.cell_topic.values)
+    assert np.array_equal(serial.topic_peak.values, par_one.topic_peak.values)
+
+
+def test_gibbs_parallel_recovers_planted_topics():
+    """AD-LDA path with n_threads=4 still recovers two planted topics."""
+    X, cells, peaks = _two_topic_corpus(80, 20)
+    r = rustscenic.topics.fit_gibbs(
+        (X, cells, peaks), n_topics=2, n_iters=200, seed=42, n_threads=4, verbose=False,
+    )
+    argmax = r.cell_topic.values.argmax(axis=1)
+    first_half = argmax[:40]
+    second_half = argmax[40:]
+    # Allow a few more drift docs than serial, AD-LDA is approximate.
+    assert (first_half == first_half[0]).sum() >= 35
+    assert (second_half != first_half[0]).sum() >= 35
+
+
+def test_gibbs_parallel_rejects_n_threads_zero():
+    X, cells, peaks = _two_topic_corpus(20, 10)
+    with pytest.raises(ValueError, match="n_threads"):
+        rustscenic.topics.fit_gibbs(
+            (X, cells, peaks), n_topics=2, n_iters=10, n_threads=0, verbose=False,
+        )
+
+
 def test_coherence_npmi_rejects_column_mismatch():
     """Caller-error: corpus columns must match the fit's topic_peak."""
     X, cells, peaks = _two_topic_corpus(40, 15)
