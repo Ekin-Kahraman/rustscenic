@@ -124,16 +124,21 @@ haven't validated yet:
    density-window / iterative-overlap-rejection, validated on
    synthetic recovery. We have not yet benchmarked against MACS2 on
    real ENCODE data. F1 vs MACS2 broadPeak is on the v0.3 list.
-5. **100k-cell atlas end-to-end** is now measured (synthetic). Full
-   7-stage pipeline (topics → GRN → regulons → cistarget → enhancer
-   → eRegulon → AUCell) on 100,000 × 15,000 RNA + 100,000 × 50,000
-   ATAC: **762 s (12.7 min) total wall-clock at 7.09 GB peak RSS** —
-   see `validation/scaling/bench_e2e_100k_synthetic.py`. Reference
-   scenicplus stack reports > 40 GB at comparable scale, so the
-   memory delta is **~5.6×**. Real 100k+ multiome E2E (not synthetic)
-   is the next step — synthetic demonstrates plumbing + scaling, not
-   biology. The earlier 91k microglia GRN cliff was fixed by target
-   blocking + worker-local scratch (5k→91.8k slope: 1.81 → 1.15).
+5. **100k–200k-cell atlas end-to-end** is now measured (synthetic).
+   Full 7-stage pipeline (topics → GRN → regulons → cistarget →
+   enhancer → eRegulon → AUCell):
+   - 100k × 15k RNA + 100k × 50k ATAC: **762 s (12.7 min), 7.09 GB
+     peak RSS** (`bench_e2e_100k_synthetic.py`).
+   - 200k × 8k RNA + 200k × 30k ATAC: **1009 s (16.8 min), 7.44 GB
+     peak RSS** (`bench_e2e_200k_synthetic.py`).
+
+   Reference scenicplus stack reports > 40 GB at comparable scale —
+   memory delta is **~5.4×**. The 200k step required a sparse-aware
+   rewrite of `enhancer.link_peaks_to_genes` (ATAC stays `csc` instead
+   of densifying); shipped in the same commit. Real 100k+ multiome
+   E2E (not synthetic) is the next step. The earlier 91k microglia
+   GRN cliff was fixed by target blocking + worker-local scratch
+   (5k→91.8k slope: 1.81 → 1.15).
 6. **Windows build**: untested. macOS + Linux only.
 7. **PyPI publish blocked**: trusted-publisher needs config on the
    maintainer's PyPI account. Until that resolves, install via

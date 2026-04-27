@@ -2,7 +2,32 @@
 
 ## Unreleased
 
+### Performance
+- **Sparse enhancer-to-gene Pearson** (`python/rustscenic/enhancer.py`).
+  The previous correlation loop densified both RNA and ATAC at the
+  start of the function — fine at 100k cells × 50k peaks (~20 GB
+  ATAC dense, OS swap absorbed it), broken at 200k × 30k (24 GB
+  dense ATAC stalled the single-threaded peak loop indefinitely).
+
+  Fix: keep ATAC as `scipy.sparse.csc` and stream one peak column at
+  a time through a new `_pearson_sparse_x_dense_Y` helper. Pearson is
+  rewritten to consume only the column's nonzeros — work per peak
+  goes from `O(n_cells × n_candidate_genes)` to
+  `O(nnz_peak × n_candidate_genes)`. Numerically equivalent to the
+  dense path within float32 noise (1e-5 tolerance, 2 new tests).
+
+  Result on the 200k synthetic E2E (`bench_e2e_200k_synthetic.py`):
+  enhancer step **74-min stall → 503s (8.4 min)** with peak RSS
+  unchanged at 7.06 GB.
+
 ### Validation
+- **200k synthetic full 7-stage E2E** (`e2e_200k_synthetic.json`):
+  200,000 cells × 8,000 genes / 30,000 peaks × K=30. **1009s
+  (16.8 min) total wall-clock at 7.44 GB peak RSS, 30/30 unique
+  topics, 229,687 GRN edges, 93,750 enhancer links, 30 eRegulons,
+  AUCell shape (200000, 30).** Doubles the v0.3.2 E2E proof from
+  100k cells; 1.05× memory growth from 100k → 200k.
+
 - **500k synthetic GRN** (`grn_500k.json`): 500,000 cells × 5,000
   genes × 50 TFs (n_estimators=20). **521s (8.7 min) wall-clock,
   224,966 edges, 7.25 GB peak RSS.** Extends the GRN cell-count
