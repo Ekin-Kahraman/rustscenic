@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Validation
+- **50k synthetic atlas Gibbs** (`bench_gibbs_50k.py`): 50,000 cells ×
+  50,000 peaks × K=30, n_iters=100, 8-thread AD-LDA. **422s (7.0 min),
+  30/30 unique argmax topics recovered, 5.06 GB peak RSS.** Extends the
+  v0.3.2 atlas validation curve from 25k cells to 50k with quality
+  preserved.
+
+### Fixes
+- `bench_gibbs_50k.py` now reports `peak_rss_gb` correctly on macOS;
+  `ru_maxrss` is bytes on darwin and KB on linux — normalise per-platform.
+
 ## 0.3.2 — 2026-04-27
 
 ### Added

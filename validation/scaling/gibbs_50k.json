@@ -1,0 +1,14 @@
+{
+  "n_cells": 50000,
+  "n_peaks": 50000,
+  "nnz_per_cell": 8000,
+  "K": 30,
+  "n_iters": 100,
+  "n_threads": 8,
+  "wall_s": 422.1,
+  "unique_argmax_topics": 30,
+  "npmi_mean": 0.5041046142578125,
+  "npmi_median": 0.5037041902542114,
+  "peak_rss_gb": 5.06,
+  "_rss_note": "macOS reports ru_maxrss in bytes; raw 5180.53 MB → 5.06 GB. Bench script unit fix landed in same commit."
+}
