@@ -53,15 +53,23 @@ provide both — pick by priority.
 
 ### Quality at K=30 (real PBMC ATAC, 1,500 cells × 98,319 peaks)
 
-| Tool | Unique argmax topics / 30 | Mean pairwise top-20 overlap |
-|---|---|---|
-| rustscenic VB | **2 / 30** (collapsed) | 0.373 |
-| rustscenic Gibbs | **21 / 30** | **0.005** |
-| Mallet 500-iter (reference) | 24 / 30 | 0.196 NPMI |
+| Tool | Unique argmax topics / 30 | Top-20 peak overlap | Top-10 NPMI (intrinsic, mean) |
+|---|---|---|---|
+| rustscenic VB | **2 / 30** (collapsed) | 0.373 | **+0.012** |
+| rustscenic Gibbs | **22 / 30** | **0.005** | **+0.031** |
+| Mallet 500-iter (reference) | 24 / 30 | n/a | 0.196 (extrinsic, different protocol) |
 
-**Collapsed Gibbs gives ~10× more distinct topics than Online VB on
+**Collapsed Gibbs gives 11× more distinct topics than Online VB on
 sparse scATAC at K=30, with topic-peak distributions 75× less
-overlapped.** Same algorithm class as Mallet, no Java required.
+overlapped, and ~2.7× higher intrinsic NPMI on the training corpus.**
+Same algorithm class as Mallet, no Java required.
+
+NPMI numbers reproduce with `python validation/scaling/bench_npmi_head_to_head.py`.
+Mallet's published 0.196 is extrinsic NPMI (against an external reference
+corpus); our 0.012 / 0.031 are intrinsic top-10 NPMI on the training
+corpus and are not directly comparable in absolute scale — what is
+comparable is the *Gibbs / VB ratio*, which is where the algorithmic
+gap lives.
 
 What rustscenic gives at this layer:
 - **Two algorithms, drop-in choice** — VB for speed at K ≤ 10, Gibbs
@@ -79,7 +87,8 @@ What rustscenic gives at this layer:
 | Peak calling | MACS2 | rustscenic.preproc.call_peaks | **9.9× faster, F1 0.825** |
 | Topic modelling K=10 (speed) | gensim LdaModel | rustscenic.topics.fit | **0.7× (gensim wins)** |
 | Topic modelling K=30 (speed) | gensim LdaModel | rustscenic.topics.fit | **0.61× (gensim wins)** |
-| Topic modelling K=30 (quality) | rustscenic VB collapses (2/30) | **rustscenic Gibbs 21/30** | **Gibbs ~10× more distinct topics** |
+| Topic modelling K=30 (quality) | rustscenic VB 2/30, NPMI +0.012 | **rustscenic Gibbs 22/30, NPMI +0.031** | **Gibbs ~11× distinct, ~2.7× higher coherence** |
+| Topic modelling K=30 (parallel speed) | rustscenic Gibbs serial 214s | **rustscenic Gibbs 8-thread 84s** | **2.56× via AD-LDA** |
 | AUCell (10x Multiome 10k cells × 1,457 regulons) | pyscenic | rustscenic.aucell.score | **88× faster** |
 | Cistarget AUC kernel | ctxcore.recovery.aucs | rustscenic.cistarget.enrich | **bit-identical** (Pearson 1.0000) |
 | GRN end-to-end | arboreto | rustscenic.grn.infer | **1.3× faster, biology equivalent** |

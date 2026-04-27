@@ -11,15 +11,23 @@ matters.
 
 ## Measured comparison (real PBMC Multiome ATAC, 1500 cells, K=30)
 
-| Tool | Wall-clock | Unique argmax topics / 30 | Mean pairwise top-20 overlap |
-| --- | --- | --- | --- |
-| `topics.fit` (Online VB) | 42.6 s | 2 / 30 | 0.373 |
-| `topics.fit_gibbs` (Collapsed Gibbs) | 49.0 s | **21 / 30** | **0.005** |
-| Mallet 500-iter (reference) | n/a | 24 / 30 | 0.196 NPMI |
+| Tool | Wall-clock | Unique argmax topics / 30 | Top-20 peak overlap | Top-10 NPMI (intrinsic, mean) |
+| --- | --- | --- | --- | --- |
+| `topics.fit` (Online VB) | 104.0 s | 2 / 30 | 0.373 | **+0.012** |
+| `topics.fit_gibbs` (Collapsed Gibbs) | 191.3 s | **22 / 30** | **0.005** | **+0.031** |
+| Mallet 500-iter (reference) | n/a | 24 / 30 | n/a | 0.196 (extrinsic) |
 
-Gibbs is only **1.2× slower** than Online VB at this scale and
-recovers nearly Mallet-class topic diversity in a single Rust call —
-no Java, no MACS2, no subprocess.
+Gibbs recovers nearly Mallet-class topic diversity in a single Rust call —
+no Java, no MACS2, no subprocess. The shipped Gibbs gives **22/30 unique
+argmax topics** (vs Mallet's 24/30) and **2.7× higher intrinsic NPMI**
+than the Online VB on the same corpus.
+
+NPMI numbers reproduce with `python validation/scaling/bench_npmi_head_to_head.py`.
+Note: Mallet's published 0.196 is extrinsic NPMI (against an external
+reference corpus); our 0.012 / 0.031 are intrinsic top-10 NPMI on the
+training corpus and are not directly comparable in absolute scale —
+the comparable quantity is the *Gibbs / VB ratio*, which is where the
+algorithmic gap lives.
 
 ## Why it happens
 
@@ -62,6 +70,11 @@ your priority.
 
 ## Roadmap
 
-- ✅ v0.3 — collapsed Gibbs shipped (`topics.fit_gibbs`).
-- Open: NPMI head-to-head benchmark vs Mallet on a public ATAC corpus.
-- Open: parallel sparse-LDA Gibbs to recover the speed gap at atlas scale.
+- ✅ v0.3.1 — collapsed Gibbs shipped (`topics.fit_gibbs`).
+- ✅ v0.3.1 — intrinsic NPMI head-to-head: Gibbs +0.031 vs VB +0.012
+  on real PBMC ATAC (`validation/scaling/bench_npmi_head_to_head.py`).
+- ✅ Unreleased — parallel AD-LDA Gibbs (`fit_gibbs(..., n_threads=N)`),
+  2.56× speedup at 8 threads on the same corpus with quality preserved
+  (`validation/scaling/bench_gibbs_parallel.py`).
+- Open: extrinsic NPMI head-to-head against a Mallet run on the same
+  corpus (Mallet absolute number 0.196 is from a different protocol).

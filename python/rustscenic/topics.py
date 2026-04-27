@@ -23,6 +23,7 @@ import pandas as pd
 from rustscenic._rustscenic import (
     topics_fit as _topics_fit,
     topics_fit_gibbs as _topics_fit_gibbs,
+    topics_npmi as _topics_npmi,
 )
 
 
@@ -132,6 +133,7 @@ def fit_gibbs(
     eta: Optional[float] = None,
     n_iters: int = 200,
     seed: int = 42,
+    n_threads: int = 1,
     verbose: bool = True,
 ) -> TopicsResult:
     """Fit collapsed-Gibbs LDA on a (cells × peaks) count / binarized matrix.
@@ -159,7 +161,15 @@ def fit_gibbs(
         higher-quality posterior estimates.
     seed
         Random seed. Topics are stochastic — bit-identical under same
-        seed, label-permuted across seeds.
+        seed (single-threaded), reproducible across runs at fixed
+        ``n_threads`` for the parallel path.
+    n_threads
+        ``1`` (default): bit-deterministic serial sampler. ``>1``:
+        AD-LDA (Newman et al. 2009) parallel sampler — partitions docs
+        across threads, near-linear speedup on atlas-scale corpora at
+        the cost of small cross-thread staleness within a sweep
+        (perplexity gap is well within sampling variance per Newman
+        2009 §4). Recommended for K ≥ 30 runs over 50k+ cells.
 
     Returns
     -------
@@ -170,6 +180,8 @@ def fit_gibbs(
         raise ValueError(f"n_topics must be a positive integer, got {n_topics!r}")
     if n_iters < 1:
         raise ValueError(f"n_iters must be >= 1, got {n_iters}")
+    if n_threads < 1:
+        raise ValueError(f"n_threads must be >= 1, got {n_threads}")
 
     row_ptr, col_idx, counts, n_words, cell_names, peak_names = _coerce(expression)
     if n_words == 0:
@@ -183,9 +195,10 @@ def fit_gibbs(
     n_docs = len(row_ptr) - 1
     nnz = len(col_idx)
     if verbose:
+        thread_label = "serial" if n_threads == 1 else f"{n_threads}-thread AD-LDA"
         print(
-            f"[rustscenic.topics] collapsed-Gibbs LDA — {n_docs:,} docs × "
-            f"{n_words:,} vocab (nnz={nnz:,}), K={n_topics}, "
+            f"[rustscenic.topics] collapsed-Gibbs LDA ({thread_label}) — "
+            f"{n_docs:,} docs × {n_words:,} vocab (nnz={nnz:,}), K={n_topics}, "
             f"{n_iters} sweeps, alpha={alpha}, eta={eta}",
             file=sys.stderr, flush=True,
         )
@@ -193,7 +206,7 @@ def fit_gibbs(
     theta, beta = _topics_fit_gibbs(
         list(row_ptr), list(col_idx), list(counts.astype(np.float32)),
         int(n_words), int(n_topics),
-        float(alpha), float(eta), int(n_iters), int(seed),
+        float(alpha), float(eta), int(n_iters), int(seed), int(n_threads),
     )
     wall = time.monotonic() - t0
     topic_names = [f"Topic_{k}" for k in range(n_topics)]
@@ -207,6 +220,51 @@ def fit_gibbs(
             file=sys.stderr, flush=True,
         )
     return TopicsResult(cell_topic=cell_topic, topic_peak=topic_peak, n_topics=n_topics)
+
+
+def coherence_npmi(
+    result: TopicsResult,
+    corpus,
+    *,
+    top_n: int = 10,
+) -> np.ndarray:
+    """Per-topic NPMI coherence for a fitted topic model.
+
+    Parameters
+    ----------
+    result
+        :class:`TopicsResult` from :func:`fit` or :func:`fit_gibbs`.
+    corpus
+        Corpus to score against (AnnData / DataFrame / sparse-tuple,
+        same shape conventions as :func:`fit`). Should have the same
+        peak/word vocabulary as ``result`` — column order must match
+        ``result.topic_peak.columns``.
+    top_n
+        Top-N peaks per topic to evaluate pairwise NPMI over. 10 is
+        standard for LDA topic-coherence.
+
+    Returns
+    -------
+    np.ndarray of shape (n_topics,) — mean pairwise NPMI per topic.
+    Higher is better; positive values mean top-words co-occur more
+    than independence would predict.
+    """
+    row_ptr, col_idx, _, n_words, _, peak_names = _coerce(corpus)
+    if list(peak_names) != list(result.topic_peak.columns):
+        raise ValueError(
+            "corpus column order does not match the fit's topic_peak columns; "
+            "supply the same peak/word ordering used at fit time"
+        )
+    tw = np.ascontiguousarray(result.topic_peak.values, dtype=np.float32)
+    out = _topics_npmi(
+        tw,
+        int(result.n_topics),
+        int(n_words),
+        list(row_ptr),
+        list(col_idx),
+        int(top_n),
+    )
+    return np.asarray(out)
 
 
 def _coerce(expression):

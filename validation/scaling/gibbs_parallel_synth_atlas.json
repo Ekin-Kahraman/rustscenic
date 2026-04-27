@@ -1,0 +1,61 @@
+{
+  "K": 30,
+  "n_iters": 100,
+  "n_peaks": 50000,
+  "runs": [
+    {
+      "n_cells": 3000,
+      "n_threads": 1,
+      "wall_s": 43.0,
+      "unique_argmax_topics": 27
+    },
+    {
+      "n_cells": 3000,
+      "n_threads": 4,
+      "wall_s": 27.5,
+      "unique_argmax_topics": 29
+    },
+    {
+      "n_cells": 3000,
+      "n_threads": 8,
+      "wall_s": 23.8,
+      "unique_argmax_topics": 29
+    },
+    {
+      "n_cells": 10000,
+      "n_threads": 1,
+      "wall_s": 131.2,
+      "unique_argmax_topics": 30
+    },
+    {
+      "n_cells": 10000,
+      "n_threads": 4,
+      "wall_s": 102.4,
+      "unique_argmax_topics": 27
+    },
+    {
+      "n_cells": 10000,
+      "n_threads": 8,
+      "wall_s": 81.3,
+      "unique_argmax_topics": 28
+    },
+    {
+      "n_cells": 25000,
+      "n_threads": 1,
+      "wall_s": 350.9,
+      "unique_argmax_topics": 28
+    },
+    {
+      "n_cells": 25000,
+      "n_threads": 4,
+      "wall_s": 241.4,
+      "unique_argmax_topics": 28
+    },
+    {
+      "n_cells": 25000,
+      "n_threads": 8,
+      "wall_s": 216.8,
+      "unique_argmax_topics": 29
+    }
+  ]
+}

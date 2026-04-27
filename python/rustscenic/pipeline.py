@@ -78,6 +78,9 @@ def run(
     aucell_top_frac: float = 0.05,
     topics_n_topics: int = 30,
     topics_n_passes: int = 3,
+    topics_method: str = "vb",
+    topics_n_iters: int = 200,
+    topics_n_threads: int = 1,
     cistarget_top_frac: float = 0.05,
     cistarget_auc_threshold: float = 0.05,
     enhancer_max_distance: int = 500_000,
@@ -126,6 +129,20 @@ def run(
         ``rustscenic.enhancer.link_peaks_to_genes`` and, when either
         gene- or region-based motif rankings are supplied,
         ``rustscenic.eregulon.build_eregulons``.
+    topics_method
+        ``"vb"`` (default) — online VB LDA, fast at small K (≤ 10).
+        ``"gibbs"`` — collapsed-Gibbs LDA (Mallet-class), slower per
+        sweep but recovers ~10× more distinct topics on sparse scATAC
+        at K ≥ 30. Pair with ``topics_n_threads > 1`` for AD-LDA
+        parallel speedup at atlas scale.
+    topics_n_iters
+        Gibbs sweeps (only used when ``topics_method='gibbs'``). 200
+        is a reasonable default; bump to 500–1000 for higher-quality
+        posterior estimates.
+    topics_n_threads
+        Threads for the Gibbs sampler (only used when
+        ``topics_method='gibbs'``). 1 = bit-deterministic serial
+        path. > 1 = AD-LDA parallel path.
 
     Returns
     -------
@@ -162,14 +179,27 @@ def run(
 
         # Topics on the sparse ATAC matrix
         import rustscenic.topics
-        log(f"[3/6] topics: fitting LDA K={topics_n_topics}")
+        if topics_method not in ("vb", "gibbs"):
+            raise ValueError(
+                f"topics_method must be 'vb' or 'gibbs', got {topics_method!r}"
+            )
+        log(f"[3/6] topics: fitting LDA K={topics_n_topics} via {topics_method}")
         t0 = time.perf_counter()
-        topics_result = rustscenic.topics.fit(
-            adata_atac,
-            n_topics=topics_n_topics,
-            n_passes=topics_n_passes,
-            seed=seed,
-        )
+        if topics_method == "vb":
+            topics_result = rustscenic.topics.fit(
+                adata_atac,
+                n_topics=topics_n_topics,
+                n_passes=topics_n_passes,
+                seed=seed,
+            )
+        else:
+            topics_result = rustscenic.topics.fit_gibbs(
+                adata_atac,
+                n_topics=topics_n_topics,
+                n_iters=topics_n_iters,
+                n_threads=topics_n_threads,
+                seed=seed,
+            )
         elapsed["topics"] = time.perf_counter() - t0
         log(f"      fit in {elapsed['topics']:.1f}s")
 

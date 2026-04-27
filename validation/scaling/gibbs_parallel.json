@@ -1,0 +1,37 @@
+{
+  "corpus_shape": [
+    1500,
+    98319
+  ],
+  "K": 30,
+  "runs": [
+    {
+      "n_threads": 1,
+      "wall_s": 214.3,
+      "unique_argmax_topics": 22,
+      "npmi_mean": 0.03116789273917675,
+      "npmi_median": 0.014973136596381664
+    },
+    {
+      "n_threads": 2,
+      "wall_s": 246.8,
+      "unique_argmax_topics": 24,
+      "npmi_mean": 0.03492487967014313,
+      "npmi_median": 0.01862051524221897
+    },
+    {
+      "n_threads": 4,
+      "wall_s": 119.9,
+      "unique_argmax_topics": 21,
+      "npmi_mean": 0.031186724081635475,
+      "npmi_median": 0.013272859156131744
+    },
+    {
+      "n_threads": 8,
+      "wall_s": 83.6,
+      "unique_argmax_topics": 25,
+      "npmi_mean": 0.018624207004904747,
+      "npmi_median": 0.0146213099360466
+    }
+  ]
+}

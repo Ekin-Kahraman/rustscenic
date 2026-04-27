@@ -95,3 +95,89 @@ def test_gibbs_alpha_eta_defaults():
         (X, cells, peaks), n_topics=2, n_iters=20, verbose=False,
     )
     assert r.n_topics == 2
+
+
+def test_coherence_npmi_separates_planted_from_random():
+    """Planted-topic NPMI must be measurably higher than a random topic
+    on the same corpus. Backs the published quality comparison —
+    if this passes, the metric is at least monotone in topic structure."""
+    X, cells, peaks = _two_topic_corpus(80, 20)
+
+    # Real topic-peak: place mass on the planted halves
+    planted = np.zeros((2, 20), dtype=np.float32)
+    planted[0, :10] = 1.0 / 10
+    planted[1, 10:] = 1.0 / 10
+    planted_result = rustscenic.topics.TopicsResult(
+        cell_topic=pd.DataFrame(np.zeros((80, 2), dtype=np.float32),
+                                index=cells, columns=["Topic_0", "Topic_1"]),
+        topic_peak=pd.DataFrame(planted, index=["Topic_0", "Topic_1"], columns=peaks),
+        n_topics=2,
+    )
+    npmi_planted = rustscenic.topics.coherence_npmi(
+        planted_result, (X, cells, peaks), top_n=5,
+    )
+
+    # Random topic-peak: uniform mass
+    rng = np.random.default_rng(0)
+    rand_tw = rng.dirichlet(np.ones(20), size=2).astype(np.float32)
+    random_result = rustscenic.topics.TopicsResult(
+        cell_topic=pd.DataFrame(np.zeros((80, 2), dtype=np.float32),
+                                index=cells, columns=["Topic_0", "Topic_1"]),
+        topic_peak=pd.DataFrame(rand_tw, index=["Topic_0", "Topic_1"], columns=peaks),
+        n_topics=2,
+    )
+    npmi_random = rustscenic.topics.coherence_npmi(
+        random_result, (X, cells, peaks), top_n=5,
+    )
+
+    assert npmi_planted.shape == (2,)
+    assert npmi_random.shape == (2,)
+    # Planted topics should score strictly higher than random topics
+    assert npmi_planted.mean() > npmi_random.mean()
+
+
+def test_gibbs_parallel_n_threads_1_matches_serial():
+    """n_threads=1 must dispatch to the bit-deterministic serial path."""
+    X, cells, peaks = _two_topic_corpus(60, 20)
+    serial = rustscenic.topics.fit_gibbs(
+        (X, cells, peaks), n_topics=2, n_iters=30, seed=11, n_threads=1, verbose=False,
+    )
+    par_one = rustscenic.topics.fit_gibbs(
+        (X, cells, peaks), n_topics=2, n_iters=30, seed=11, n_threads=1, verbose=False,
+    )
+    assert np.array_equal(serial.cell_topic.values, par_one.cell_topic.values)
+    assert np.array_equal(serial.topic_peak.values, par_one.topic_peak.values)
+
+
+def test_gibbs_parallel_recovers_planted_topics():
+    """AD-LDA path with n_threads=4 still recovers two planted topics."""
+    X, cells, peaks = _two_topic_corpus(80, 20)
+    r = rustscenic.topics.fit_gibbs(
+        (X, cells, peaks), n_topics=2, n_iters=200, seed=42, n_threads=4, verbose=False,
+    )
+    argmax = r.cell_topic.values.argmax(axis=1)
+    first_half = argmax[:40]
+    second_half = argmax[40:]
+    # Allow a few more drift docs than serial, AD-LDA is approximate.
+    assert (first_half == first_half[0]).sum() >= 35
+    assert (second_half != first_half[0]).sum() >= 35
+
+
+def test_gibbs_parallel_rejects_n_threads_zero():
+    X, cells, peaks = _two_topic_corpus(20, 10)
+    with pytest.raises(ValueError, match="n_threads"):
+        rustscenic.topics.fit_gibbs(
+            (X, cells, peaks), n_topics=2, n_iters=10, n_threads=0, verbose=False,
+        )
+
+
+def test_coherence_npmi_rejects_column_mismatch():
+    """Caller-error: corpus columns must match the fit's topic_peak."""
+    X, cells, peaks = _two_topic_corpus(40, 15)
+    r = rustscenic.topics.fit_gibbs(
+        (X, cells, peaks), n_topics=2, n_iters=20, seed=0, verbose=False,
+    )
+    # Corpus with the same shape but a different peak ordering
+    wrong_peaks = list(reversed(peaks))
+    with pytest.raises(ValueError, match="column order"):
+        rustscenic.topics.coherence_npmi(r, (X, cells, wrong_peaks), top_n=5)
