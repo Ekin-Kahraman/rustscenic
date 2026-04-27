@@ -12,8 +12,17 @@
   - 4-thread: 120s, 21/30 unique, NPMI +0.031 (**1.79×**)
   - 8-thread:  84s, 25/30 unique, NPMI +0.019 (**2.56×**)
 
-  Quality preserved across thread counts. Bit-deterministic at fixed
-  `n_threads`, drops to the original `fit` path at `n_threads=1`.
+  Synthetic atlas-scale (50k peaks, 8000 nnz/cell, K=30, 100 sweeps):
+  - 3k cells:  43s → 24s (1.81× at 8 threads, 29/30 unique)
+  - 10k cells: 131s → 81s (1.61× at 8 threads, 28/30 unique)
+  - 25k cells: 351s → 217s (1.62× at 8 threads, 29/30 unique)
+
+  Quality preserved across thread counts and corpus sizes.
+  Bit-deterministic at fixed `n_threads`, drops to the original
+  `fit` path at `n_threads=1`. Speedup plateau around 1.6× at
+  atlas scale is consistent with memory-bandwidth bound on the
+  n_kw read path; sparse-LDA hash-table approach is the next
+  optimisation to break through it.
 
   3 new Rust tests (n_threads=1 matches serial, planted-recovery at
   n_threads=4, determinism). Reproduce with
