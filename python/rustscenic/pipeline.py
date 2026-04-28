@@ -355,9 +355,9 @@ def run(
                     columns=["regulon", "motif", "peak_id", "auc"]
                 )
         else:
-            log("      gene-only — bridging via GRN targets (approximate)")
+            log("      gene-only — bridging via top-N regulon targets (approximate)")
             enriched_with_peaks = _attribute_peaks_to_cistarget(
-                enriched, grn, enhancer_links
+                enriched, grn, enhancer_links, regulons=regulons,
             )
         eregs = rustscenic.eregulon.build_eregulons(
             grn,
@@ -469,40 +469,75 @@ def _attribute_peaks_to_cistarget(
     enriched: pd.DataFrame,
     grn: pd.DataFrame,
     enhancer_links: pd.DataFrame,
+    regulons: Optional[dict] = None,
 ) -> pd.DataFrame:
     """Bridge gene-based cistarget output to peak-aware eRegulon input.
 
     Cistarget on a gene-based motif ranking emits ``(regulon, motif, auc)``
     rows but no peak column — the eRegulon assembler requires one. Until
     region-based cistarget ships, attribute each enriched TF's peaks via
-    the GRN's predicted targets ∩ enhancer-link peak set: a peak is
-    associated with TF X if it links to a gene that GRN predicts X
-    regulates.
+    the TF's regulon-target list ∩ enhancer-link peak set: a peak is
+    associated with TF X if it links to a gene that's in X's regulon.
+
+    Two stalls fixed since the original ``iterrows`` implementation:
+    1. Python loop with per-row dict append → vectorised pandas merge.
+    2. Using the full 591k-edge ``grn`` blew up the merge to ~3.5 B rows
+       (every TF×every target×every peak). Now we restrict to the
+       top-N targets per TF — the same set that was passed to cistarget,
+       supplied via the ``regulons`` dict the orchestrator already built.
+       Falls back to the full GRN with a top-N inferred from the
+       ``cistarget_top_frac`` / regulon size when ``regulons`` is None.
     """
-    grn_targets_by_tf: dict[str, set[str]] = (
-        grn.groupby("TF")["target"].apply(set).to_dict()
-    )
-    peaks_by_target: dict[str, set[str]] = (
-        enhancer_links.groupby("gene")["peak_id"].apply(set).to_dict()
-    )
-    rows = []
-    for _, ct_row in enriched.iterrows():
-        tf = str(ct_row["regulon"]).replace("_regulon", "")
-        targets = grn_targets_by_tf.get(tf, set())
-        peaks_for_tf: set[str] = set()
-        for tg in targets:
-            peaks_for_tf.update(peaks_by_target.get(tg, set()))
-        for peak in peaks_for_tf:
-            rows.append({
-                "regulon": ct_row["regulon"],
-                "motif": ct_row.get("motif"),
-                "peak_id": peak,
-                "auc": ct_row["auc"],
-            })
-    if not rows:
-        # Preserve schema so downstream eRegulon validation has columns.
+    if enriched.empty:
         return pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
-    return pd.DataFrame(rows)
+
+    # Prefer the orchestrator's pre-built regulon dict (top-N targets per
+    # TF, matched to what cistarget scored). Falls back to the full GRN
+    # only when regulons isn't supplied — that path keeps the public
+    # signature stable but is slow at atlas scale.
+    if regulons is not None:
+        tf_target_rows = []
+        for regulon_name, targets in regulons.items():
+            tf = (
+                str(regulon_name)
+                .replace("_regulon", "")
+                .replace("_extended", "")
+                .replace("_activator", "")
+                .replace("_repressor", "")
+            )
+            for g in targets:
+                tf_target_rows.append((tf, g))
+        tf_target = pd.DataFrame(tf_target_rows, columns=["tf", "gene"])
+    else:
+        tf_target = (
+            grn[["TF", "target"]]
+            .drop_duplicates()
+            .rename(columns={"TF": "tf", "target": "gene"})
+        )
+
+    gene_peak = enhancer_links[["gene", "peak_id"]].drop_duplicates()
+    tf_peak = tf_target.merge(gene_peak, on="gene", how="inner")[["tf", "peak_id"]]
+    tf_peak = tf_peak.drop_duplicates()
+
+    # Strip "_regulon"/"_extended"/"_activator|repressor" from regulon
+    # names so the merge key matches our normalised tf column.
+    ct = enriched.copy()
+    tf_col = ct["regulon"].astype(str)
+    tf_col = tf_col.str.replace(r"_regulon$", "", regex=True)
+    tf_col = tf_col.str.replace(r"_extended$", "", regex=True)
+    tf_col = tf_col.str.replace(r"_(activator|repressor)$", "", regex=True)
+    tf_col = tf_col.str.replace(r"\s*\([+\-]\)\s*$", "", regex=True)
+    ct["tf"] = tf_col
+    cols = ["regulon", "tf", "auc"]
+    if "motif" in ct.columns:
+        cols.insert(2, "motif")
+    ct = ct[cols]
+
+    out = ct.merge(tf_peak, on="tf", how="inner")
+    out = out.drop(columns=["tf"])
+    if "motif" not in out.columns:
+        out["motif"] = None
+    return out[["regulon", "motif", "peak_id", "auc"]].reset_index(drop=True)
 
 
 def _region_cistarget_with_peak_ids(

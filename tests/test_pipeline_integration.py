@@ -411,6 +411,85 @@ def test_pipeline_run_topics_method_gibbs(tmp_path):
     assert (out / "topics" / "topic_peak.npy").exists()
 
 
+def test_attribute_peaks_to_cistarget_at_scale():
+    """The gene-only cistarget→peak bridge stalled at real-PBMC scale
+    (35k cistarget × 30 targets × 5 peaks ≈ 5M Python row dicts via
+    iterrows). The vectorised merge-based replacement must:
+      1. Produce the same conceptual output (one row per
+         (regulon, motif, peak_id) where the TF's GRN target is
+         linked to that peak via enhancer correlation).
+      2. Complete in seconds at 5k+ cistarget rows.
+    """
+    import time
+    import pandas as pd
+    from rustscenic.pipeline import _attribute_peaks_to_cistarget
+
+    rng = np.random.default_rng(0)
+
+    # 30 TFs × 50 targets each
+    n_tfs = 30
+    n_targets_per_tf = 50
+    grn_rows = []
+    for t in range(n_tfs):
+        for tg in range(n_targets_per_tf):
+            grn_rows.append({
+                "TF": f"TF{t}",
+                "target": f"GENE_{t}_{tg}",
+                "importance": float(rng.uniform()),
+            })
+    grn = pd.DataFrame(grn_rows)
+
+    # ~10 enhancer links per gene
+    link_rows = []
+    for t in range(n_tfs):
+        for tg in range(n_targets_per_tf):
+            for p in range(10):
+                link_rows.append({
+                    "peak_id": f"chr1:{t}_{tg}_{p}",
+                    "gene": f"GENE_{t}_{tg}",
+                    "correlation": 0.6,
+                })
+    enhancer_links = pd.DataFrame(link_rows)
+
+    # 5,010 cistarget enrichments (~167 motifs / TF × 30 TFs)
+    enriched_rows = []
+    for t in range(n_tfs):
+        for m in range(167):
+            enriched_rows.append({
+                "regulon": f"TF{t}_regulon",
+                "motif": f"motif_{t}_{m}",
+                "auc": 0.5,
+            })
+    enriched = pd.DataFrame(enriched_rows)
+
+    t0 = time.monotonic()
+    out = _attribute_peaks_to_cistarget(enriched, grn, enhancer_links)
+    elapsed = time.monotonic() - t0
+
+    # Pre-fix this stalled indefinitely on real PBMC; lock the regression
+    assert elapsed < 30, f"bridge took {elapsed:.1f}s, regression"
+    assert set(out.columns) == {"regulon", "motif", "peak_id", "auc"}
+    # Magnitude check: 30 TFs × 167 motifs × 50 targets × 10 peaks per gene
+    # = 2.5M rows. Allow a 50% lower bound for any drift.
+    assert len(out) >= n_tfs * 167 * 50 * 10 // 2, (
+        f"unexpectedly small output: {len(out)} rows"
+    )
+    assert set(out["regulon"].unique()) == set(enriched["regulon"].unique())
+
+
+def test_attribute_peaks_to_cistarget_handles_empty():
+    """Empty cistarget → empty output frame with the right schema."""
+    import pandas as pd
+    from rustscenic.pipeline import _attribute_peaks_to_cistarget
+
+    enriched = pd.DataFrame(columns=["regulon", "motif", "auc"])
+    grn = pd.DataFrame({"TF": [], "target": [], "importance": []})
+    links = pd.DataFrame(columns=["peak_id", "gene", "correlation"])
+    out = _attribute_peaks_to_cistarget(enriched, grn, links)
+    assert list(out.columns) == ["regulon", "motif", "peak_id", "auc"]
+    assert out.empty
+
+
 def test_pipeline_run_topics_method_invalid(tmp_path):
     """Unknown topics_method raises a clear ValueError."""
     import gzip, anndata as ad, numpy as np, pandas as pd

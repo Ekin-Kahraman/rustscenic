@@ -1,0 +1,18 @@
+{
+  "n_cells": 2711,
+  "n_genes": 36601,
+  "n_tfs": 30,
+  "topics_method": "gibbs",
+  "topics_n_threads": 4,
+  "elapsed": {
+    "preproc": 9.501259124954231,
+    "topics": 37.445672250003554,
+    "grn": 19.04185329109896,
+    "cistarget": 2.1990134170046076,
+    "enhancer": 23.86809629201889,
+    "eregulons": 0.3756234170868993,
+    "aucell": 0.29305566591210663
+  },
+  "total": 93.38171766605228,
+  "n_eregulons": 23
+}
