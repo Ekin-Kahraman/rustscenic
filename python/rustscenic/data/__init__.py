@@ -205,7 +205,8 @@ def download_motif_rankings(
                 f"exact `filename=` (or full `url=`) you find there."
             ) from e
 
-    return pd.read_feather(local_path).set_index(pd.read_feather(local_path).columns[0])
+    rankings = pd.read_feather(local_path)
+    return rankings.set_index(rankings.columns[0])
 
 
 _GENCODE_URLS = {

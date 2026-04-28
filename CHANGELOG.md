@@ -71,14 +71,14 @@
   v0.3.2 atlas validation curve from 25k cells to 50k with quality
   preserved.
 
-- **Real PBMC 3k Multiome structural E2E with cistarget**
-  (`bench_real_pbmc_full_e2e.py`): real RNA, real ATAC fragments, and
-  real aertslab hg38 gene motif rankings run through preproc → Gibbs
-  topics → GRN → cistarget → enhancer → eRegulon → AUCell in 78s. The
-  committed result uses synthetic random TSS coordinates and is therefore
-  a structural code-path validation, not biological enhancer/eRegulon
-  validation. The script now requires `RUSTSCENIC_GENE_COORDS` for
-  biological interpretation, or an explicit
+- **Real PBMC 3k Multiome E2E with real gene coordinates**
+  (`bench_real_pbmc_full_e2e.py`): real RNA, real ATAC fragments, real
+  aertslab hg38 gene motif rankings, and GENCODE v46 hg38 TSS
+  coordinates run through preproc → Gibbs topics → GRN → cistarget →
+  enhancer → eRegulon → AUCell in **70s**. Outputs: 591,022 GRN edges,
+  35,410 cistarget hits, 21,284 enhancer links, and 19 eRegulons. The
+  script accepts `RUSTSCENIC_GENE_COORDS` for pinned coordinate tables
+  and only falls back to synthetic random TSS coordinates with explicit
   `RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS=1` smoke-test opt-in.
 
 ### Fixes
@@ -146,7 +146,7 @@
   parallel path shipped here).
 
 ### Test counts
-142 Python tests + 57 Rust tests pass.
+144 Python tests + 57 Rust tests pass.
 
 ## 0.3.1 — 2026-04-27
 

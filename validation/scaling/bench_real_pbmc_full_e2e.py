@@ -59,7 +59,7 @@ def load_gene_coords(rna: ad.AnnData) -> tuple[pd.DataFrame, str, str]:
         missing = {"gene", "chrom", "tss"} - set(coords.columns)
         if missing:
             sys.exit(f"gene coords missing required columns: {sorted(missing)}")
-        return coords, "real", str(path)
+        return coords, "real_user_supplied", str(path)
 
     # No explicit path supplied: try the bundled GENCODE downloader as the
     # default biological source. Falls back to synthetic chr1 TSS only if
@@ -79,7 +79,7 @@ def load_gene_coords(rna: ad.AnnData) -> tuple[pd.DataFrame, str, str]:
     try:
         import rustscenic.data
         coords = rustscenic.data.download_gene_coords("hs", verbose=True)
-        return coords, "gencode_v46_hg38", (
+        return coords, "real_gencode_v46_hg38", (
             "biological PBMC validation via GENCODE v46 hg38 TSS"
         )
     except Exception as e:
@@ -146,7 +146,7 @@ def main() -> int:
     gene_coords, gene_coords_mode, gene_coords_source = load_gene_coords(rna)
     print(f"  gene_coords: {gene_coords_mode} ({len(gene_coords):,} records)",
           flush=True)
-    if gene_coords_mode != "real":
+    if gene_coords_mode.startswith("synthetic"):
         print(f"  WARNING: {gene_coords_source}", flush=True)
 
     import rustscenic.data
@@ -203,7 +203,7 @@ def main() -> int:
         "gene_coords_source": gene_coords_source,
         "biological_interpretation": (
             "real PBMC pipeline validation"
-            if gene_coords_mode == "real"
+            if gene_coords_mode.startswith("real")
             else "structural smoke only; random TSS coordinates invalidate "
                  "biological enhancer/eRegulon interpretation"
         ),

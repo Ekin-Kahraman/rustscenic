@@ -65,7 +65,7 @@ Measured on the current 0.3.x line. Full numbers in `CHANGELOG.md` /
 | End-to-end (10x Multiome 3k, 4 stages) | 11.8 min ref pipeline | 9.1 min |
 | Peak RSS (100k cells × 20k genes, 4 stages) | > 40 GB reported | 6.3 GB |
 
-Bit-identical output under same seed. 57 Rust tests + 142 Python tests.
+Bit-identical output under same seed. 57 Rust tests + 144 Python tests.
 
 ## Intellectual Risk
 
