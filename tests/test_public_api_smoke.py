@@ -50,6 +50,53 @@ def test_download_motif_rankings_uses_cache_without_real_network(tmp_path, monke
     pd.testing.assert_frame_equal(out, cached)
 
 
+def test_download_gene_coords_parses_gencode_gtf(tmp_path, monkeypatch):
+    """download_gene_coords must parse a GENCODE-style gzipped GTF into a
+    (gene, chrom, tss) DataFrame, picking strand-aware TSS, and cache the
+    parquet so a second call doesn't re-download.
+    """
+    import gzip
+    import rustscenic.data as data
+    import urllib.request
+
+    fake_gtf = (
+        "##description: fake GENCODE for tests\n"
+        "chr1\tHAVANA\tgene\t100\t500\t.\t+\t.\t"
+        'gene_id "ENSG00000000001.1"; gene_name "GENE_PLUS"; gene_type "protein_coding";\n'
+        "chr1\tHAVANA\tgene\t1000\t1500\t.\t-\t.\t"
+        'gene_id "ENSG00000000002.1"; gene_name "GENE_MINUS"; gene_type "protein_coding";\n'
+        # Non-gene records must be ignored
+        "chr1\tHAVANA\ttranscript\t100\t500\t.\t+\t.\tgene_name \"GENE_PLUS\";\n"
+        # Duplicate gene name keeps the first occurrence
+        "chr2\tHAVANA\tgene\t2000\t2500\t.\t+\t.\t"
+        'gene_id "ENSG00000000001.2"; gene_name "GENE_PLUS";\n'
+    )
+
+    def fake_urlretrieve(url, local_path):
+        with gzip.open(local_path, "wt") as fh:
+            fh.write(fake_gtf)
+        return local_path, None
+
+    monkeypatch.setattr(urllib.request, "urlretrieve", fake_urlretrieve)
+    out = data.download_gene_coords(cache_dir=tmp_path, verbose=False)
+    assert list(out.columns) == ["gene", "chrom", "tss"]
+    assert len(out) == 2
+    plus = out[out["gene"] == "GENE_PLUS"].iloc[0]
+    minus = out[out["gene"] == "GENE_MINUS"].iloc[0]
+    assert plus["chrom"] == "chr1"
+    assert plus["tss"] == 100   # + strand → TSS = start
+    assert minus["chrom"] == "chr1"
+    assert minus["tss"] == 1500  # - strand → TSS = end
+
+    # Second call must hit the parquet cache without redownload
+    def fail_if_called(*_args, **_kwargs):
+        raise AssertionError("cache hit should not download again")
+
+    monkeypatch.setattr(urllib.request, "urlretrieve", fail_if_called)
+    cached = data.download_gene_coords(cache_dir=tmp_path, verbose=False)
+    pd.testing.assert_frame_equal(out, cached)
+
+
 def test_pipeline_run_rna_only_smoke(tmp_path):
     import rustscenic.pipeline
 

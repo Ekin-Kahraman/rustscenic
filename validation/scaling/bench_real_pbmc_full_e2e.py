@@ -61,23 +61,35 @@ def load_gene_coords(rna: ad.AnnData) -> tuple[pd.DataFrame, str, str]:
             sys.exit(f"gene coords missing required columns: {sorted(missing)}")
         return coords, "real", str(path)
 
-    if os.environ.get("RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS") != "1":
-        sys.exit(
-            "missing real gene coordinates. Set RUSTSCENIC_GENE_COORDS to a "
-            "gene,chrom,tss CSV/TSV/parquet file. For structural smoke only, "
-            "set RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS=1."
+    # No explicit path supplied: try the bundled GENCODE downloader as the
+    # default biological source. Falls back to synthetic chr1 TSS only if
+    # the user explicitly opts in (RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS=1).
+    if os.environ.get("RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS") == "1":
+        rng = np.random.default_rng(0)
+        coords = pd.DataFrame({
+            "gene": rna.var["feature_name"].astype(str).values,
+            "chrom": ["chr1"] * rna.n_vars,
+            "tss": rng.integers(0, 250_000_000, size=rna.n_vars),
+        })
+        return coords, "synthetic_random_chr1_tss", (
+            "structural smoke only; enhancer/eRegulon outputs are not "
+            "biological PBMC validation"
         )
 
-    rng = np.random.default_rng(0)
-    coords = pd.DataFrame({
-        "gene": rna.var["feature_name"].astype(str).values,
-        "chrom": ["chr1"] * rna.n_vars,
-        "tss": rng.integers(0, 250_000_000, size=rna.n_vars),
-    })
-    return coords, "synthetic_random_chr1_tss", (
-        "structural smoke only; enhancer/eRegulon outputs are not "
-        "biological PBMC validation"
-    )
+    try:
+        import rustscenic.data
+        coords = rustscenic.data.download_gene_coords("hs", verbose=True)
+        return coords, "gencode_v46_hg38", (
+            "biological PBMC validation via GENCODE v46 hg38 TSS"
+        )
+    except Exception as e:
+        sys.exit(
+            f"failed to fetch GENCODE gene coords ({e}). Either pass "
+            f"RUSTSCENIC_GENE_COORDS=<path> to a gene,chrom,tss "
+            f"CSV/TSV/parquet, or set "
+            f"RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS=1 for a "
+            f"structural smoke run."
+        )
 
 
 def load_10x_h5(path: Path) -> ad.AnnData:

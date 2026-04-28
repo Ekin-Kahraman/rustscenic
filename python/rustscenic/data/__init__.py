@@ -208,4 +208,119 @@ def download_motif_rankings(
     return pd.read_feather(local_path).set_index(pd.read_feather(local_path).columns[0])
 
 
-__all__ = ["tfs", "download_motif_rankings"]
+_GENCODE_URLS = {
+    "hs": (
+        "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/"
+        "release_46/gencode.v46.basic.annotation.gtf.gz"
+    ),
+    "mm": (
+        "https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/"
+        "release_M35/gencode.vM35.basic.annotation.gtf.gz"
+    ),
+}
+
+
+def download_gene_coords(
+    species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
+    cache_dir: Optional[Path] = None,
+    url: Optional[str] = None,
+    verbose: bool = True,
+):
+    """Download and cache GENCODE gene TSS coordinates as ``(gene, chrom, tss)``.
+
+    The end-to-end pipeline's enhancer→gene linking step needs real
+    gene-TSS coordinates for biological interpretation. This helper
+    fetches a GENCODE basic-annotation GTF on first use, parses it to
+    a TSS-per-gene table (TSS = ``start`` on + strand, ``end`` on -
+    strand), and caches the result as parquet for fast reuse.
+
+    Returns a ``DataFrame`` with columns ``["gene", "chrom", "tss"]``
+    suitable for ``rustscenic.enhancer.link_peaks_to_genes`` and
+    ``rustscenic.pipeline.run(gene_coords=...)``.
+
+    Parameters
+    ----------
+    species
+        ``"hs"`` / ``"human"`` / ``"hg38"`` (GENCODE release 46) or
+        ``"mm"`` / ``"mouse"`` / ``"mm10"`` (GENCODE release M35).
+    cache_dir
+        Override the default cache directory
+        (``~/.cache/rustscenic/gene_coords/``).
+    url
+        Escape hatch for an alternate GENCODE GTF URL.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Columns ``gene``, ``chrom``, ``tss``. One row per gene; gene
+        symbols come from the GTF's ``gene_name`` attribute.
+    """
+    import gzip
+    import urllib.request
+    import pandas as pd
+
+    species_alias = {
+        "hs": "hs", "human": "hs", "hg38": "hs",
+        "mm": "mm", "mouse": "mm", "mm10": "mm",
+    }
+    norm = species_alias.get(str(species).lower())
+    if norm is None:
+        raise ValueError(
+            f"unknown species {species!r}. Use 'hs'/'human'/'hg38' "
+            f"for human, 'mm'/'mouse'/'mm10' for mouse."
+        )
+    if url is None:
+        url = _GENCODE_URLS[norm]
+
+    if cache_dir is None:
+        cache_dir = Path.home() / ".cache" / "rustscenic" / "gene_coords"
+    cache_dir = Path(cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    parquet_path = cache_dir / f"{norm}_gene_tss.parquet"
+    if parquet_path.exists():
+        return pd.read_parquet(parquet_path)
+
+    gtf_path = cache_dir / Path(url).name
+    if not gtf_path.exists():
+        if verbose:
+            print(f"downloading {Path(url).name} → {gtf_path}", flush=True)
+        urllib.request.urlretrieve(url, gtf_path)
+
+    if verbose:
+        print(f"parsing {gtf_path.name} → {parquet_path.name}", flush=True)
+
+    rows: list[tuple[str, str, int]] = []
+    seen: set[str] = set()
+    with gzip.open(gtf_path, "rt") as fh:
+        for line in fh:
+            if line.startswith("#"):
+                continue
+            fields = line.rstrip("\n").split("\t")
+            if len(fields) < 9 or fields[2] != "gene":
+                continue
+            chrom, start, end, strand, attrs = (
+                fields[0],
+                int(fields[3]),
+                int(fields[4]),
+                fields[6],
+                fields[8],
+            )
+            tss = start if strand == "+" else end
+            gene_name = None
+            for attr in attrs.split(";"):
+                attr = attr.strip()
+                if attr.startswith("gene_name "):
+                    gene_name = attr[len("gene_name "):].strip().strip('"')
+                    break
+            if gene_name is None or gene_name in seen:
+                continue
+            seen.add(gene_name)
+            rows.append((gene_name, chrom, tss))
+
+    out = pd.DataFrame(rows, columns=["gene", "chrom", "tss"])
+    out.to_parquet(parquet_path, index=False)
+    return out
+
+
+__all__ = ["tfs", "download_motif_rankings", "download_gene_coords"]
