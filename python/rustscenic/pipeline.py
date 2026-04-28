@@ -11,7 +11,9 @@ One call runs every rustscenic stage the user provides input for:
     3. grn      (RNA expression + TFs)   → TF-target importances
     4. regulons (grn)                    → top-N targets per TF
     5. cistarget (regulons + motif DB)   → motif-enriched regulons [optional]
-    6. aucell   (RNA + regulons)         → per-cell regulon activity
+    6. enhancer (RNA + ATAC + TSS)       → peak-gene links [optional]
+    7. eRegulon (GRN + motifs + links)   → TF-enhancer-gene modules [optional]
+    8. aucell   (RNA + regulons)         → per-cell regulon activity
 
 Outputs are written to ``output_dir`` as parquet / json / h5ad files so
 downstream notebooks can pick up where the pipeline left off.
@@ -110,9 +112,8 @@ def run(
         AnnData and topics fits on it.
     tfs
         Candidate transcription factor names. Path to a newline-separated
-        file, an iterable of strings, or ``None`` (in which case the
-        caller must provide them; see `rustscenic.data.tfs()` for
-        bundled lists once shipped).
+        file, an iterable of strings, or ``None`` to use the bundled
+        human TF list.
     motif_rankings
         Motif ranking DataFrame, or a path to a parquet / feather file
         with motifs as rows and genes as columns. If provided, cistarget
@@ -158,7 +159,7 @@ def run(
     elapsed: dict = {}
 
     # ---- 1. load / normalise RNA ----
-    log("[1/6] loading RNA expression")
+    log("[1/8] loading RNA expression")
     adata_rna = _coerce_adata(rna)
     n_cells = adata_rna.n_obs
     log(f"      RNA shape: {adata_rna.shape}")
@@ -168,7 +169,7 @@ def run(
     topics_dir = None
     if fragments is not None and peaks is not None:
         import rustscenic.preproc
-        log("[2/6] preproc: fragments + peaks → cells × peaks")
+        log("[2/8] preproc: fragments + peaks → cells × peaks")
         t0 = time.perf_counter()
         adata_atac = rustscenic.preproc.fragments_to_matrix(fragments, peaks)
         elapsed["preproc"] = time.perf_counter() - t0
@@ -183,7 +184,7 @@ def run(
             raise ValueError(
                 f"topics_method must be 'vb' or 'gibbs', got {topics_method!r}"
             )
-        log(f"[3/6] topics: fitting LDA K={topics_n_topics} via {topics_method}")
+        log(f"[3/8] topics: fitting LDA K={topics_n_topics} via {topics_method}")
         t0 = time.perf_counter()
         if topics_method == "vb":
             topics_result = rustscenic.topics.fit(
@@ -210,11 +211,11 @@ def run(
             np.save(topics_dir / "cell_topic.npy", topics_result.cell_topic)
             np.save(topics_dir / "topic_peak.npy", topics_result.topic_peak)
     else:
-        log("[2/6] preproc + topics: skipped (no fragments / peaks)")
-        log("[3/6] topics: skipped")
+        log("[2/8] preproc + topics: skipped (no fragments / peaks)")
+        log("[3/8] topics: skipped")
 
     # ---- 3. GRN ----
-    log("[4/6] GRN inference on RNA")
+    log("[4/8] GRN inference on RNA")
     tf_list = _load_tfs(tfs)
     log(f"      {len(tf_list)} candidate TFs")
     t0 = time.perf_counter()
@@ -231,7 +232,7 @@ def run(
     log(f"      {len(grn):,} edges in {elapsed['grn']:.1f}s → {grn_path.name}")
 
     # ---- 4. build regulons ----
-    log(f"[5/6] regulons: top-{grn_top_targets} targets per TF")
+    log(f"[5/8] regulons: top-{grn_top_targets} targets per TF")
     regulons = {}
     for tf in grn["TF"].unique():
         top = grn[grn["TF"] == tf].nlargest(grn_top_targets, "importance")["target"].tolist()
@@ -247,7 +248,7 @@ def run(
     if motif_rankings is not None:
         import rustscenic.cistarget
         rankings_df = _coerce_rankings(motif_rankings)
-        log(f"[5b/8] cistarget: {len(rankings_df):,} motifs × {rankings_df.shape[1]:,} genes")
+        log(f"[6/8] cistarget: {len(rankings_df):,} motifs × {rankings_df.shape[1]:,} genes")
         t0 = time.perf_counter()
         enriched = rustscenic.cistarget.enrich(
             rankings_df,
@@ -267,7 +268,7 @@ def run(
     coords_df = _coerce_gene_coords(gene_coords) if gene_coords is not None else None
     if have_atac and coords_df is not None:
         import rustscenic.enhancer
-        log(f"[5c/8] enhancer: linking peaks → genes ({len(coords_df):,} TSS records)")
+        log(f"[7/8] enhancer: linking peaks → genes ({len(coords_df):,} TSS records)")
         t0 = time.perf_counter()
         adata_atac_for_link = ad.read_h5ad(atac_matrix_path)
         common = adata_rna.obs_names.intersection(adata_atac_for_link.obs_names)
@@ -295,16 +296,16 @@ def run(
                 f"{elapsed['enhancer']:.1f}s"
             )
     elif have_atac and gene_coords is None:
-        log("[5c/8] enhancer: skipped (no gene_coords supplied)")
+        log("[7/8] enhancer: skipped (no gene_coords supplied)")
     else:
-        log("[5c/8] enhancer: skipped (no ATAC inputs)")
+        log("[7/8] enhancer: skipped (no ATAC inputs)")
 
     # ---- 4d. eRegulon assembly (optional, needs grn + cistarget + enhancer) ----
     eregulons_path: Optional[Path] = None
     n_eregulons: Optional[int] = None
     if enhancer_links is not None and (enriched is not None or region_motif_rankings is not None):
         import rustscenic.eregulon
-        log("[5d/8] eRegulons: assembling TF × enhancer × target intersection")
+        log("[7b/8] eRegulons: assembling TF × enhancer × target intersection")
         t0 = time.perf_counter()
         # Two paths to (TF → peaks) associations:
         # 1. EXACT: if region_motif_rankings supplied, run cistarget on
@@ -377,12 +378,12 @@ def run(
             f"{elapsed['eregulons']:.1f}s"
         )
     elif gene_coords is not None and motif_rankings is not None and not have_atac:
-        log("[5d/8] eRegulons: skipped (need ATAC for enhancer linking)")
+        log("[7b/8] eRegulons: skipped (need ATAC for enhancer linking)")
     elif enriched is None or enhancer_links is None:
-        log("[5d/8] eRegulons: skipped (need motif rankings + enhancer links)")
+        log("[7b/8] eRegulons: skipped (need motif rankings + enhancer links)")
 
     # ---- 5. AUCell ----
-    log("[6/6] AUCell: per-cell regulon activity")
+    log("[8/8] AUCell: per-cell regulon activity")
     t0 = time.perf_counter()
     auc = rustscenic.aucell.score(
         adata_rna,
@@ -459,10 +460,35 @@ def _coerce_rankings(rankings):
     path = Path(rankings)
     suffix = path.suffix.lower()
     if suffix == ".parquet":
-        return pd.read_parquet(path)
+        return _rankings_with_motif_index(pd.read_parquet(path), path)
     if suffix == ".feather":
-        return pd.read_feather(path).set_index(path.stem)
+        return _rankings_with_motif_index(pd.read_feather(path), path)
     raise ValueError(f"unsupported motif-ranking format: {suffix}")
+
+
+def _rankings_with_motif_index(df: pd.DataFrame, path: Path) -> pd.DataFrame:
+    """Normalise aertslab-style ranking files to motifs as the index.
+
+    Public aertslab feather files usually store motif IDs in a ``motifs``
+    column; ad hoc parquet exports often preserve that as the first string
+    column. Accept both shapes so users can pass file paths directly to
+    ``pipeline.run`` instead of hand-loading rankings first.
+    """
+    if df.index.name is not None and not isinstance(df.index, pd.RangeIndex):
+        return df
+    if "motifs" in df.columns:
+        return df.set_index("motifs")
+    if path.stem in df.columns:
+        return df.set_index(path.stem)
+    first_col = df.columns[0] if len(df.columns) else None
+    if first_col is not None and (
+        pd.api.types.is_string_dtype(df[first_col])
+        or pd.api.types.is_object_dtype(df[first_col])
+    ):
+        numeric_rest = df.drop(columns=[first_col])
+        if all(pd.api.types.is_numeric_dtype(numeric_rest[c]) for c in numeric_rest.columns):
+            return df.set_index(first_col)
+    return df
 
 
 def _attribute_peaks_to_cistarget(

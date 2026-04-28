@@ -4,8 +4,14 @@ The existing `bench_full_pipeline_pbmc_multiome.py` runs preproc → topics
 → GRN → enhancer → AUCell on real data. It deliberately skips the
 cistarget step because no motif rankings were provided. This bench
 provides them (cached aertslab hg38 v10 feather) so the cistarget +
-eRegulon path actually executes on real PBMC data — the most complete
-real-data validation rustscenic has shipped.
+eRegulon path executes on real PBMC data.
+
+Important: enhancer-gene links need real gene TSS coordinates for
+biological interpretation. Pass a CSV/TSV/parquet file via
+RUSTSCENIC_GENE_COORDS with columns `gene,chrom,tss`. For a structural
+pipeline smoke test only, set RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS=1
+to use random chr1 TSS coordinates. Synthetic TSS coordinates prove the
+code path runs; they do not validate PBMC enhancer-gene biology.
 
 Run:
   python validation/scaling/bench_real_pbmc_full_e2e.py
@@ -13,6 +19,7 @@ Run:
 from __future__ import annotations
 
 import json
+import os
 import sys
 import time
 import warnings
@@ -31,6 +38,46 @@ RANKINGS = (
     / "cistarget"
     / "hg38_500bp_up_100bp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather"
 )
+
+
+def load_gene_coords(rna: ad.AnnData) -> tuple[pd.DataFrame, str, str]:
+    coords_path = os.environ.get("RUSTSCENIC_GENE_COORDS")
+    if coords_path:
+        path = Path(coords_path)
+        if not path.exists():
+            sys.exit(f"RUSTSCENIC_GENE_COORDS does not exist: {path}")
+        suffix = path.suffix.lower()
+        if suffix == ".parquet":
+            coords = pd.read_parquet(path)
+        elif suffix in (".csv", ".tsv"):
+            coords = pd.read_csv(path, sep="\t" if suffix == ".tsv" else ",")
+        else:
+            sys.exit(
+                "RUSTSCENIC_GENE_COORDS must be .csv, .tsv, or .parquet "
+                f"(got {suffix})"
+            )
+        missing = {"gene", "chrom", "tss"} - set(coords.columns)
+        if missing:
+            sys.exit(f"gene coords missing required columns: {sorted(missing)}")
+        return coords, "real", str(path)
+
+    if os.environ.get("RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS") != "1":
+        sys.exit(
+            "missing real gene coordinates. Set RUSTSCENIC_GENE_COORDS to a "
+            "gene,chrom,tss CSV/TSV/parquet file. For structural smoke only, "
+            "set RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS=1."
+        )
+
+    rng = np.random.default_rng(0)
+    coords = pd.DataFrame({
+        "gene": rna.var["feature_name"].astype(str).values,
+        "chrom": ["chr1"] * rna.n_vars,
+        "tss": rng.integers(0, 250_000_000, size=rna.n_vars),
+    })
+    return coords, "synthetic_random_chr1_tss", (
+        "structural smoke only; enhancer/eRegulon outputs are not "
+        "biological PBMC validation"
+    )
 
 
 def load_10x_h5(path: Path) -> ad.AnnData:
@@ -84,12 +131,11 @@ def main() -> int:
     print(f"  rankings: {motif_rankings.shape} (motifs × genes) in "
           f"{time.monotonic()-t0:.1f}s", flush=True)
 
-    rng = np.random.default_rng(0)
-    gene_coords = pd.DataFrame({
-        "gene": rna.var["feature_name"].astype(str).values,
-        "chrom": ["chr1"] * rna.n_vars,
-        "tss": rng.integers(0, 250_000_000, size=rna.n_vars),
-    })
+    gene_coords, gene_coords_mode, gene_coords_source = load_gene_coords(rna)
+    print(f"  gene_coords: {gene_coords_mode} ({len(gene_coords):,} records)",
+          flush=True)
+    if gene_coords_mode != "real":
+        print(f"  WARNING: {gene_coords_source}", flush=True)
 
     import rustscenic.data
     all_tfs = rustscenic.data.tfs("human")
@@ -141,6 +187,14 @@ def main() -> int:
         "n_tfs": len(tfs),
         "topics_method": "gibbs",
         "topics_n_threads": 4,
+        "gene_coords_mode": gene_coords_mode,
+        "gene_coords_source": gene_coords_source,
+        "biological_interpretation": (
+            "real PBMC pipeline validation"
+            if gene_coords_mode == "real"
+            else "structural smoke only; random TSS coordinates invalidate "
+                 "biological enhancer/eRegulon interpretation"
+        ),
         "elapsed": result.elapsed,
         "total": total,
         "n_eregulons": result.n_eregulons,

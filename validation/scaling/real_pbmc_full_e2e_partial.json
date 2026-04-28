@@ -21,11 +21,11 @@
   ],
   "stalled_stage": "eregulon_assembly_gene_only_bridge",
   "diagnosis": [
-    "First time the cistarget stage actually runs on real PBMC data with real aertslab hg38 v10 motif rankings — 35,410 enriched pairs in 1.5s.",
+    "First time the cistarget stage actually runs on real PBMC RNA/ATAC data with real aertslab hg38 v10 motif rankings — 35,410 enriched pairs in 1.5s.",
     "Pipeline stalls in the eRegulon assembly step's `gene-only — bridging via GRN targets (approximate)` path.",
     "When only `motif_rankings` (gene-based) is provided, pipeline.run bridges to peak-level via GRN ∩ enhancer links. The bridge does Python loops that are slow at 35k cistarget × 10k links scale.",
     "Region-based cistarget path (`region_motif_rankings` argument, exact eRegulon assembly) was added in v0.3.0 and is the real fix for users; this gene-only bridge is a fallback.",
-    "Stages 1-5 are now demonstrated working on real PBMC Multiome data with the real aertslab feather — the most complete real-data validation rustscenic has shipped."
+    "Stages 1-5 are demonstrated working on real PBMC Multiome data with the real aertslab feather. Downstream enhancer/eRegulon biological interpretation still requires real gene TSS coordinates; synthetic/random TSS coordinates are structural smoke only."
   ],
   "next_step": "Profile + speed up the gene-only bridge in pipeline.run (eRegulon assembly section). Or: cleaner — recommend `region_motif_rankings` for real workflows in the docs."
 }

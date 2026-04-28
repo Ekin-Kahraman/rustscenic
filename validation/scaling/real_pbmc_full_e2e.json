@@ -4,15 +4,18 @@
   "n_tfs": 30,
   "topics_method": "gibbs",
   "topics_n_threads": 4,
+  "gene_coords_mode": "synthetic_random_chr1_tss",
+  "gene_coords_source": "structural smoke only; enhancer/eRegulon outputs are not biological PBMC validation",
+  "biological_interpretation": "structural smoke only; random TSS coordinates invalidate biological enhancer/eRegulon interpretation",
   "elapsed": {
-    "preproc": 9.501259124954231,
-    "topics": 37.445672250003554,
-    "grn": 19.04185329109896,
-    "cistarget": 2.1990134170046076,
-    "enhancer": 23.86809629201889,
-    "eregulons": 0.3756234170868993,
-    "aucell": 0.29305566591210663
+    "preproc": 12.062832540948875,
+    "topics": 28.867610958986916,
+    "grn": 13.135416540899314,
+    "cistarget": 1.6928122920216992,
+    "enhancer": 20.825609124964103,
+    "eregulons": 0.42768079100642353,
+    "aucell": 0.3889913749881089
   },
-  "total": 93.38171766605228,
+  "total": 78.12578279094305,
   "n_eregulons": 23
 }

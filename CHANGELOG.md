@@ -71,9 +71,22 @@
   v0.3.2 atlas validation curve from 25k cells to 50k with quality
   preserved.
 
+- **Real PBMC 3k Multiome structural E2E with cistarget**
+  (`bench_real_pbmc_full_e2e.py`): real RNA, real ATAC fragments, and
+  real aertslab hg38 gene motif rankings run through preproc → Gibbs
+  topics → GRN → cistarget → enhancer → eRegulon → AUCell in 78s. The
+  committed result uses synthetic random TSS coordinates and is therefore
+  a structural code-path validation, not biological enhancer/eRegulon
+  validation. The script now requires `RUSTSCENIC_GENE_COORDS` for
+  biological interpretation, or an explicit
+  `RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS=1` smoke-test opt-in.
+
 ### Fixes
 - `bench_gibbs_50k.py` now reports `peak_rss_gb` correctly on macOS;
   `ru_maxrss` is bytes on darwin and KB on linux — normalise per-platform.
+- `pipeline.run` now accepts aertslab-style `.feather` motif ranking
+  paths directly (`motifs` column as row index) instead of requiring
+  callers to hand-load the DataFrame first.
 
 ## 0.3.2 — 2026-04-27
 
@@ -133,7 +146,7 @@
   parallel path shipped here).
 
 ### Test counts
-138 Python tests + 57 Rust tests pass.
+142 Python tests + 57 Rust tests pass.
 
 ## 0.3.1 — 2026-04-27
 

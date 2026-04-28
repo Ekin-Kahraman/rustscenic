@@ -657,3 +657,43 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path):
     assert region_only.eregulons_path is not None
     assert region_only.eregulons_path.exists()
     assert region_only.n_eregulons is not None
+
+
+def test_coerce_rankings_accepts_aertslab_feather_path(tmp_path):
+    """Aertslab motif-ranking feathers store motif IDs in a `motifs`
+    column. Passing that file path directly to pipeline.run must work;
+    the real PBMC benchmark used to hide this by pre-loading the file.
+    """
+    from rustscenic.pipeline import _coerce_rankings
+
+    path = tmp_path / "genes_vs_motifs.rankings.feather"
+    pd.DataFrame({
+        "GATA1": [1, 2],
+        "SPI1": [2, 1],
+        "motifs": ["MOTIF_A", "MOTIF_B"],
+    }).to_feather(path)
+
+    rankings = _coerce_rankings(path)
+
+    assert list(rankings.index) == ["MOTIF_A", "MOTIF_B"]
+    assert list(rankings.columns) == ["GATA1", "SPI1"]
+
+
+def test_coerce_rankings_accepts_first_column_motif_export(tmp_path):
+    """Ad hoc parquet/CSV conversions often name the motif column
+    something other than `motifs`. If the first column is strings and
+    the remaining columns are numeric ranks, use it as the motif index.
+    """
+    from rustscenic.pipeline import _coerce_rankings
+
+    path = tmp_path / "rankings.parquet"
+    pd.DataFrame({
+        "motif_id": ["M1", "M2"],
+        "GENE1": [1, 2],
+        "GENE2": [2, 1],
+    }).to_parquet(path, index=False)
+
+    rankings = _coerce_rankings(path)
+
+    assert list(rankings.index) == ["M1", "M2"]
+    assert list(rankings.columns) == ["GENE1", "GENE2"]
