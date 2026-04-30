@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.3.4 — 2026-04-30
+
+### Fixes
+- **Gene-only eRegulon bridge** (`python/rustscenic/eregulon.py`).
+  The bridge was using the full GRN as the target set, producing a
+  ~3.5B-row merge on real PBMC multiome that stalled the pipeline
+  indefinitely. Vectorised the join and restricted the target set
+  to gene-only candidates. Real PBMC multiome E2E now completes;
+  previously hung at the eRegulon stage.
+
+### Features
+- **`rustscenic.data.download_gene_coords`** — closes the
+  synthetic-TSS gap. GENCODE GTF (hg38 v46 / mm10 vM35),
+  strand-aware TSS extraction, parquet-cached on first call.
+  Real PBMC multiome E2E now validated against real gene
+  coordinates instead of synthetic TSSs.
+
+### Validation
+- **Real PBMC multiome 7-stage E2E** with real gene coordinates.
+  All compute stages green through eRegulon assembly. Reproduce
+  with `python validation/real_multiome/validate_multiome_e2e.py`.
+
+### Robustness
+- Hardened PBMC validation paths and ranking inputs against edge
+  cases surfaced during real-data testing.
+- Tightened scaling docs and enhancer warnings.
+
+### Tests
+- 143 Python + 57 Rust tests pass.
+
+### Dependencies
+- `rand_mt` 4.2.2 → 6.0.3 (#55)
+- `thiserror` 1.0.69 → 2.0.18 (#53)
+
 ## 0.3.3 — 2026-04-27
 
 ### Performance
