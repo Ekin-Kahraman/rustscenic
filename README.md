@@ -9,13 +9,13 @@ A Rust + PyO3 replacement for the SCENIC / SCENIC+ compute stack: one install, m
 
 ```bash
 # Universal source install while PyPI trusted-publishing is being configured:
-pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.3
+pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.4
 
 # Or install a prebuilt wheel from the latest tagged GitHub Release for your platform:
 # macOS Apple Silicon:
-pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.3.3/rustscenic-0.3.3-cp310-abi3-macosx_11_0_arm64.whl
+pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.3.4/rustscenic-0.3.4-cp310-abi3-macosx_11_0_arm64.whl
 # Linux x86_64:
-pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.3.3/rustscenic-0.3.3-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.3.4/rustscenic-0.3.4-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 ```
 
 Four runtime dependencies (numpy, pandas, pyarrow, scipy). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64). No dask, no Java, no CUDA.
@@ -184,7 +184,7 @@ rustscenic cistarget --rankings motifs.feather --regulons grn.parquet --output e
 - `python/rustscenic/` — Python package, CLI entry point, type stubs
 - `examples/pbmc3k_end_to_end.py` — end-to-end script on real PBMC-3k
 - `validation/` — reproducible benchmark scripts + measurement reports for every number above, plus `VALIDATION_SUMMARY.md`
-- `tests/` — pytest suite (142 Python tests) + Rust crate tests (57)
+- `tests/` — pytest suite (144 Python tests) + Rust crate tests (57)
 - `manuscript/` — preprint source
 - `docs/topic-collapse.md` — known algorithmic caveat
 

@@ -49,7 +49,7 @@ modes above are impossible by construction.
 | pycisTopic | 0 |
 | pycistarget | 0 |
 | scenicplus | 0 |
-| **rustscenic** | **57 Rust tests + 142 Python tests + 39 validation scripts** |
+| **rustscenic** | **57 Rust tests + 144 Python tests + 39 validation scripts** |
 
 Three of the five reference repos ship with zero checked-in tests.
 That's how "installs cleanly on Python 3.7" becomes "dead on Python 3.12".

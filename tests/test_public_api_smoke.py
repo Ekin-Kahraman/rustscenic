@@ -97,6 +97,56 @@ def test_download_gene_coords_parses_gencode_gtf(tmp_path, monkeypatch):
     pd.testing.assert_frame_equal(out, cached)
 
 
+def test_real_pbmc_bench_gene_coords_modes_are_interpretable(tmp_path, monkeypatch):
+    """The real-PBMC validation script must distinguish real coordinates
+    from synthetic smoke-test coordinates in its output metadata.
+    """
+    import importlib.util
+    from pathlib import Path
+
+    module_path = Path(__file__).parent.parent / "validation" / "scaling" / "bench_real_pbmc_full_e2e.py"
+    spec = importlib.util.spec_from_file_location("bench_real_pbmc_full_e2e", module_path)
+    bench = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(bench)
+
+    coords_path = tmp_path / "coords.tsv"
+    coords_path.write_text("gene\tchrom\ttss\nGENE1\tchr1\t100\n")
+    monkeypatch.setenv("RUSTSCENIC_GENE_COORDS", str(coords_path))
+    monkeypatch.delenv("RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS", raising=False)
+
+    rna = ad.AnnData(
+        X=np.ones((1, 1), dtype=np.float32),
+        var=pd.DataFrame({"feature_name": ["GENE1"]}, index=["ENSG1"]),
+    )
+    coords, mode, source = bench.load_gene_coords(rna)
+
+    assert mode == "real_user_supplied"
+    assert source == str(coords_path)
+    assert coords.to_dict("records") == [{"gene": "GENE1", "chrom": "chr1", "tss": 100}]
+
+    monkeypatch.delenv("RUSTSCENIC_GENE_COORDS")
+    monkeypatch.setenv("RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS", "1")
+    coords, mode, source = bench.load_gene_coords(rna)
+
+    assert mode == "synthetic_random_chr1_tss"
+    assert "structural smoke only" in source
+    assert list(coords.columns) == ["gene", "chrom", "tss"]
+
+    monkeypatch.delenv("RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS")
+    import rustscenic.data as data
+
+    def fake_download_gene_coords(*_args, **_kwargs):
+        return pd.DataFrame({"gene": ["GENE1"], "chrom": ["chr1"], "tss": [123]})
+
+    monkeypatch.setattr(data, "download_gene_coords", fake_download_gene_coords)
+    coords, mode, source = bench.load_gene_coords(rna)
+
+    assert mode == "real_gencode_v46_hg38"
+    assert "GENCODE v46" in source
+    assert coords.to_dict("records") == [{"gene": "GENE1", "chrom": "chr1", "tss": 123}]
+
+
 def test_pipeline_run_rna_only_smoke(tmp_path):
     import rustscenic.pipeline
 

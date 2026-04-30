@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.3.4 — 2026-04-30
+
+### Fixes
+- **Gene-only eRegulon bridge** (`python/rustscenic/eregulon.py`).
+  The bridge was using the full GRN as the target set, producing a
+  ~3.5B-row merge on real PBMC multiome that stalled the pipeline
+  indefinitely. Vectorised the join and restricted the target set
+  to gene-only candidates. Real PBMC multiome E2E now completes;
+  previously hung at the eRegulon stage.
+
+### Features
+- **`rustscenic.data.download_gene_coords`** — closes the
+  synthetic-TSS gap. GENCODE GTF (hg38 v46 / mm10 vM35),
+  strand-aware TSS extraction, parquet-cached on first call.
+  Real PBMC multiome E2E now validated against real gene
+  coordinates instead of synthetic TSSs.
+
+### Validation
+- **Real PBMC multiome 7-stage E2E** with real gene coordinates.
+  All compute stages green through eRegulon assembly. Reproduce
+  with `python validation/real_multiome/validate_multiome_e2e.py`.
+
+### Robustness
+- Hardened PBMC validation paths and ranking inputs against edge
+  cases surfaced during real-data testing.
+- Tightened scaling docs and enhancer warnings.
+
+### Tests
+- 143 Python + 57 Rust tests pass.
+
+### Dependencies
+- `rand_mt` 4.2.2 → 6.0.3 (#55)
+- `thiserror` 1.0.69 → 2.0.18 (#53)
+
 ## 0.3.3 — 2026-04-27
 
 ### Performance
@@ -71,14 +105,14 @@
   v0.3.2 atlas validation curve from 25k cells to 50k with quality
   preserved.
 
-- **Real PBMC 3k Multiome structural E2E with cistarget**
-  (`bench_real_pbmc_full_e2e.py`): real RNA, real ATAC fragments, and
-  real aertslab hg38 gene motif rankings run through preproc → Gibbs
-  topics → GRN → cistarget → enhancer → eRegulon → AUCell in 78s. The
-  committed result uses synthetic random TSS coordinates and is therefore
-  a structural code-path validation, not biological enhancer/eRegulon
-  validation. The script now requires `RUSTSCENIC_GENE_COORDS` for
-  biological interpretation, or an explicit
+- **Real PBMC 3k Multiome E2E with real gene coordinates**
+  (`bench_real_pbmc_full_e2e.py`): real RNA, real ATAC fragments, real
+  aertslab hg38 gene motif rankings, and GENCODE v46 hg38 TSS
+  coordinates run through preproc → Gibbs topics → GRN → cistarget →
+  enhancer → eRegulon → AUCell in **70s**. Outputs: 591,022 GRN edges,
+  35,410 cistarget hits, 21,284 enhancer links, and 19 eRegulons. The
+  script accepts `RUSTSCENIC_GENE_COORDS` for pinned coordinate tables
+  and only falls back to synthetic random TSS coordinates with explicit
   `RUSTSCENIC_ALLOW_SYNTHETIC_GENE_COORDS=1` smoke-test opt-in.
 
 ### Fixes
@@ -146,7 +180,7 @@
   parallel path shipped here).
 
 ### Test counts
-142 Python tests + 57 Rust tests pass.
+144 Python tests + 57 Rust tests pass.
 
 ## 0.3.1 — 2026-04-27
 
