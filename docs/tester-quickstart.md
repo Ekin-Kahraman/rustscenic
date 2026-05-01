@@ -8,7 +8,7 @@ back if anything is off.
 ## Install
 
 ```bash
-pip install --upgrade git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.3
+pip install --upgrade git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.5
 ```
 
 Wheels are also at the [latest release page](https://github.com/Ekin-Kahraman/rustscenic/releases/latest)

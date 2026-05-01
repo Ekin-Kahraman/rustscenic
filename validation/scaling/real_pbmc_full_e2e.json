@@ -8,14 +8,14 @@
   "gene_coords_source": "biological PBMC validation via GENCODE v46 hg38 TSS",
   "biological_interpretation": "real PBMC pipeline validation",
   "elapsed": {
-    "preproc": 9.525103375082836,
-    "topics": 34.984449958079495,
-    "grn": 14.000152541906573,
-    "cistarget": 1.7059293750207871,
-    "enhancer": 8.40909783297684,
-    "eregulons": 0.47049754206091166,
-    "aucell": 0.3442660829750821
+    "preproc": 9.790133124988643,
+    "topics": 27.00663837500906,
+    "grn": 15.7390446250065,
+    "cistarget": 2.087932541995542,
+    "enhancer": 8.804305708996253,
+    "eregulons": 0.5163014999998268,
+    "aucell": 0.380256083997665
   },
-  "total": 70.1016769579146,
+  "total": 65.0888882910076,
   "n_eregulons": 19
 }

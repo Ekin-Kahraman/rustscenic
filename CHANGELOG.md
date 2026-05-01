@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.5 — 2026-05-01
+
+### Release Integrity
+- Repair the v0.3.4 release cut: the public `v0.3.4` tag was created
+  before the version-bump commit, so GitHub Release assets were
+  correctly built from that tag but incorrectly named `0.3.3` under the
+  `v0.3.4` release page. v0.3.5 is the non-force-push fix: bump
+  `pyproject.toml`, the Rust workspace version, `Cargo.lock`, CI smoke
+  assertions, and install docs together so the tag, wheel names,
+  package metadata, and README URLs all agree.
+
+### Validation
+- Re-affirmed real PBMC 3k Multiome E2E with real GENCODE v46 hg38 TSS
+  coordinates: 591,022 GRN edges, 35,410 cistarget hits, 21,284
+  enhancer links, 19 eRegulons, 65.1s total. Reproduce with
+  `python validation/scaling/bench_real_pbmc_full_e2e.py`.
+
+### Tests
+- 144 Python + 57 Rust tests pass.
+
 ## 0.3.4 — 2026-04-30
 
 ### Fixes
@@ -20,7 +40,7 @@
 ### Validation
 - **Real PBMC multiome 7-stage E2E** with real gene coordinates.
   All compute stages green through eRegulon assembly. Reproduce
-  with `python validation/real_multiome/validate_multiome_e2e.py`.
+  with `python validation/scaling/bench_real_pbmc_full_e2e.py`.
 
 ### Robustness
 - Hardened PBMC validation paths and ranking inputs against edge
@@ -28,7 +48,7 @@
 - Tightened scaling docs and enhancer warnings.
 
 ### Tests
-- 143 Python + 57 Rust tests pass.
+- 144 Python + 57 Rust tests pass.
 
 ### Dependencies
 - `rand_mt` 4.2.2 → 6.0.3 (#55)
@@ -109,7 +129,7 @@
   (`bench_real_pbmc_full_e2e.py`): real RNA, real ATAC fragments, real
   aertslab hg38 gene motif rankings, and GENCODE v46 hg38 TSS
   coordinates run through preproc → Gibbs topics → GRN → cistarget →
-  enhancer → eRegulon → AUCell in **70s**. Outputs: 591,022 GRN edges,
+  enhancer → eRegulon → AUCell in **65s**. Outputs: 591,022 GRN edges,
   35,410 cistarget hits, 21,284 enhancer links, and 19 eRegulons. The
   script accepts `RUSTSCENIC_GENE_COORDS` for pinned coordinate tables
   and only falls back to synthetic random TSS coordinates with explicit

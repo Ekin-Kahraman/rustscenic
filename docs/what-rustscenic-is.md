@@ -186,4 +186,4 @@ scope:
   tested? Send a slice; if it breaks, we want it to break in CI.
 
 Repo: <https://github.com/Ekin-Kahraman/rustscenic>
-Latest tagged release: v0.3.3 (2026-04-27).
+Latest prepared release: v0.3.5 (2026-05-01).

@@ -9,7 +9,7 @@ Every row has a log file in this directory. Numbers are measured on this codebas
 
 | Axis | Reference stack | rustscenic |
 |---|---|---|
-| Installs on fresh Python 3.10–3.13 venv (2026-04) | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` in current stacks | GitHub Release wheels and `pip install git+...@v0.3.3` succeed; PyPI name is still gated by trusted-publisher setup |
+| Installs on fresh Python 3.10–3.13 venv (2026-04) | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` in current stacks | GitHub Release wheels and `pip install git+...@v0.3.5` succeed; PyPI name is still gated by trusted-publisher setup |
 | AUCell wall-time, 31,602 cells × 59 regulons (Ziegler atlas) | 6.81 s (pyscenic) | 0.25 s |
 | AUCell wall-time, 10,290 cells × 1,457 regulons (10x Multiome) | 18.6 s (pyscenic) | 0.21 s |
 | Peak RSS, 4 stages on 100,000 cells × 20,292 genes | > 40 GB (reported) | 6.3 GB |
@@ -199,7 +199,7 @@ Scope spec: [`../docs/atac-preprocessing-scope.md`](../docs/atac-preprocessing-s
 ## What the tool claims (post-deep-audit, 2026-04-19)
 
 - **Drop-in replacement** for arboreto.grnboost2 / pyscenic.aucell / pycisTopic / pycistarget in Python pipelines — works in envs where their original dask/Java/conda dependencies are broken.
-- **Single install path** — maturin wheel/source install, no dask/Java/conda recipe required. Verified: GitHub Release wheels and `pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.3` run cleanly in fresh Python 3.10–3.13 envs. `pip install rustscenic` waits on PyPI trusted publishing.
+- **Single install path** — maturin wheel/source install, no dask/Java/conda recipe required. Verified: GitHub Release wheels and `pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.5` run cleanly in fresh Python 3.10–3.13 envs. `pip install rustscenic` waits on PyPI trusted publishing.
 - **Numerical agreement measured, not assumed:**
   - AUCell per-cell Pearson **0.99** vs pyscenic (99.5% of cells > 0.95)
   - Cistarget per-regulon Pearson **1.00** vs ctxcore.recovery.aucs (all 58 tested regulons > 0.9999)
