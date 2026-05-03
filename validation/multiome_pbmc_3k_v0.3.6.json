@@ -1,7 +1,7 @@
 {
   "release": "v0.3.6",
   "rustscenic_version": "0.3.6",
-  "rustscenic_sha": "f1deacf55c5d16592f5f95d2ab8a900b23c5b70c",
+  "rustscenic_sha": "b86f932f669c1e42cc4c4626b4d7047f4fd79ceb",
   "command": "fresh-venv: pip install rustscenic[validation] @ git+...@v0.3.6 + smoke script",
   "dataset": {
     "name": "10x pbmc_unsorted_3k",
@@ -28,28 +28,28 @@
   },
   "stages": {
     "load_rna": {
-      "wall_s": 0.64,
+      "wall_s": 0.44,
       "peak_rss_gb": 0.68
     },
     "fragments_to_matrix": {
-      "wall_s": 14.91,
-      "peak_rss_gb": 2.23
+      "wall_s": 10.24,
+      "peak_rss_gb": 2.51
     },
     "rna_qc": {
-      "wall_s": 6.73,
-      "peak_rss_gb": 2.23
+      "wall_s": 4.81,
+      "peak_rss_gb": 2.51
     },
     "grn": {
-      "wall_s": 643.74,
-      "peak_rss_gb": 2.23
+      "wall_s": 427.66,
+      "peak_rss_gb": 2.51
     },
     "aucell": {
-      "wall_s": 0.19,
-      "peak_rss_gb": 2.23
+      "wall_s": 0.2,
+      "peak_rss_gb": 2.51
     },
     "topics": {
-      "wall_s": 113.99,
-      "peak_rss_gb": 2.88
+      "wall_s": 116.23,
+      "peak_rss_gb": 2.84
     }
   },
   "results": {
