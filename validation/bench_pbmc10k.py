@@ -11,11 +11,11 @@ import numpy as np
 import pandas as pd
 import anndata as ad
 
-ADATA_PATH = Path("/Users/ekin/rustscenic/validation/reference/data/pbmc10k.h5ad")
-TFS_FILE = Path("/Users/ekin/rustscenic/validation/reference/data/allTFs_hg38.txt")
+ADATA_PATH = Path("/Users/ekin/projects/bio/rustscenic/validation/reference/data/pbmc10k.h5ad")
+TFS_FILE = Path("/Users/ekin/projects/bio/rustscenic/validation/reference/data/allTFs_hg38.txt")
 
 TOOL = sys.argv[1]  # "rustscenic" or "arboreto"
-OUT_DIR = Path("/Users/ekin/rustscenic/validation/ours")
+OUT_DIR = Path("/Users/ekin/projects/bio/rustscenic/validation/ours")
 OUT_DIR.mkdir(exist_ok=True, parents=True)
 
 adata = ad.read_h5ad(ADATA_PATH)

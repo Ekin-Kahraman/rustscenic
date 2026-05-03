@@ -11,9 +11,9 @@ import anndata as ad
 import rustscenic
 import rustscenic.grn
 
-ADATA = ad.read_h5ad("/Users/ekin/rustscenic/validation/reference/data/pbmc3k.h5ad")
+ADATA = ad.read_h5ad("/Users/ekin/projects/bio/rustscenic/validation/reference/data/pbmc3k.h5ad")
 TFS = [t for t in rustscenic.grn.load_tfs(
-    "/Users/ekin/rustscenic/validation/reference/data/allTFs_hg38.txt"
+    "/Users/ekin/projects/bio/rustscenic/validation/reference/data/allTFs_hg38.txt"
 ) if t in set(ADATA.var_names)]
 GENES = set(ADATA.var_names)
 
@@ -132,8 +132,8 @@ def recall_at_k(df, edges, k, tf_col):
             misses.append((tf, target))
     return hits, misses
 
-arb_df = pd.read_parquet("/Users/ekin/rustscenic/validation/reference/data/pbmc3k_grn_full.parquet")
-real_df_full = pd.read_parquet("/Users/ekin/rustscenic/validation/ours/pbmc3k_grn.parquet")
+arb_df = pd.read_parquet("/Users/ekin/projects/bio/rustscenic/validation/reference/data/pbmc3k_grn_full.parquet")
+real_df_full = pd.read_parquet("/Users/ekin/projects/bio/rustscenic/validation/ours/pbmc3k_grn.parquet")
 
 for k in [20, 100]:
     ours_h, ours_m = recall_at_k(real_df_full, GOLD_STANDARD, k, "TF")

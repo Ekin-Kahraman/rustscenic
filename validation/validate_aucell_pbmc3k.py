@@ -13,8 +13,8 @@ import rustscenic
 import rustscenic.aucell
 import rustscenic.grn
 
-ADATA = ad.read_h5ad("/Users/ekin/rustscenic/validation/reference/data/pbmc3k.h5ad")
-our_grn = pd.read_parquet("/Users/ekin/rustscenic/validation/ours/pbmc3k_grn.parquet").rename(columns={"tf": "TF"})
+ADATA = ad.read_h5ad("/Users/ekin/projects/bio/rustscenic/validation/reference/data/pbmc3k.h5ad")
+our_grn = pd.read_parquet("/Users/ekin/projects/bio/rustscenic/validation/ours/pbmc3k_grn.parquet").rename(columns={"tf": "TF"})
 ex_mtx = ADATA.to_df()
 
 # Build regulons once

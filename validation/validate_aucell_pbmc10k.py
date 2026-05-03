@@ -10,7 +10,7 @@ from ctxcore.genesig import Regulon
 import rustscenic
 import rustscenic.aucell
 
-ADATA = ad.read_h5ad("/Users/ekin/rustscenic/validation/reference/data/pbmc10k.h5ad")
+ADATA = ad.read_h5ad("/Users/ekin/projects/bio/rustscenic/validation/reference/data/pbmc10k.h5ad")
 print(f"adata: {ADATA.shape}")
 
 sc.pp.highly_variable_genes(ADATA, n_top_genes=2000, flavor="seurat")
@@ -41,7 +41,7 @@ ADATA.obs["cell_type"] = ADATA.obs["leiden"].map(ann).astype("category")
 print(f"cell_type: {ADATA.obs['cell_type'].value_counts().to_dict()}")
 
 ex_mtx = ADATA.to_df()
-adj = pd.read_parquet("/Users/ekin/rustscenic/validation/ours/pbmc10k_grn_ours.parquet").rename(columns={"tf": "TF"})
+adj = pd.read_parquet("/Users/ekin/projects/bio/rustscenic/validation/ours/pbmc10k_grn_ours.parquet").rename(columns={"tf": "TF"})
 t0 = time.monotonic()
 modules = list(modules_from_adjacencies(adj, ex_mtx, thresholds=(), top_n_targets=(50,),
                                         top_n_regulators=(), min_genes=10, rho_mask_dropouts=False))

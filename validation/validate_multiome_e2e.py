@@ -4,6 +4,9 @@ assignment (should — same cells, same underlying cell-type structure)?
 
 Also: benchmark total wall-clock vs what full pyscenic pipeline would take
 (arboreto 393s on PBMC-3k + pyscenic.aucell 36s on PBMC-10k → scale).
+
+Requires: pip install "rustscenic[validation]"
+(pulls scanpy, anndata, igraph, leidenalg, scikit-learn — not core deps.)
 """
 import time
 from pathlib import Path
@@ -15,9 +18,9 @@ from sklearn.metrics import adjusted_rand_score
 
 import rustscenic, rustscenic.grn, rustscenic.aucell, rustscenic.topics
 
-RNA = Path("/Users/ekin/rustscenic/validation/reference/data/multiome3k/rna.h5ad")
-ATAC = Path("/Users/ekin/rustscenic/validation/reference/data/multiome3k/atac_binarized.h5ad")
-TFS = Path("/Users/ekin/rustscenic/validation/reference/data/allTFs_hg38.txt")
+RNA = Path("/Users/ekin/projects/bio/rustscenic/validation/reference/data/multiome3k/rna.h5ad")
+ATAC = Path("/Users/ekin/projects/bio/rustscenic/validation/reference/data/multiome3k/atac_binarized.h5ad")
+TFS = Path("/Users/ekin/projects/bio/rustscenic/validation/reference/data/allTFs_hg38.txt")
 
 rna = ad.read_h5ad(RNA)
 atac = ad.read_h5ad(ATAC)

@@ -7,32 +7,32 @@ from sklearn.metrics import adjusted_rand_score
 import anndata as ad
 import scanpy as sc
 
-ADATA = ad.read_h5ad("/Users/ekin/rustscenic/validation/reference/data/multiome3k/rna.h5ad")
-ATAC = ad.read_h5ad("/Users/ekin/rustscenic/validation/reference/data/multiome3k/atac_binarized.h5ad")
+ADATA = ad.read_h5ad("/Users/ekin/projects/bio/rustscenic/validation/reference/data/multiome3k/rna.h5ad")
+ATAC = ad.read_h5ad("/Users/ekin/projects/bio/rustscenic/validation/reference/data/multiome3k/atac_binarized.h5ad")
 shared = sorted(set(ADATA.obs_names) & set(ATAC.obs_names))
 ADATA = ADATA[shared]; ATAC = ATAC[shared]
 
 # Reference outputs
-ref_adj = pd.read_parquet("/Users/ekin/rustscenic/validation/ours/reference_pipeline_multiome.adj.parquet")
-ref_auc = pd.read_parquet("/Users/ekin/rustscenic/validation/ours/reference_pipeline_multiome.auc.parquet")
+ref_adj = pd.read_parquet("/Users/ekin/projects/bio/rustscenic/validation/ours/reference_pipeline_multiome.adj.parquet")
+ref_auc = pd.read_parquet("/Users/ekin/projects/bio/rustscenic/validation/ours/reference_pipeline_multiome.auc.parquet")
 
 # Our outputs — re-run grn on SAME data + aucell for fair comparison
 import rustscenic.grn, rustscenic.aucell
-tfs = [t for t in rustscenic.grn.load_tfs("/Users/ekin/rustscenic/validation/reference/data/allTFs_hg38.txt")
+tfs = [t for t in rustscenic.grn.load_tfs("/Users/ekin/projects/bio/rustscenic/validation/reference/data/allTFs_hg38.txt")
        if t in set(ADATA.var_names)]
 
 print(f"Ref adjacencies: {len(ref_adj)}  {ref_adj.columns.tolist()}")
 
 # Load our grn from the earlier multiome e2e run
 import glob
-our_grn_files = glob.glob("/Users/ekin/rustscenic/validation/ours/multiome*grn*")
+our_grn_files = glob.glob("/Users/ekin/projects/bio/rustscenic/validation/ours/multiome*grn*")
 if not our_grn_files:
     print("running rustscenic.grn on 10x Multiome RNA...")
     import time
     t0 = time.monotonic()
     our_adj = rustscenic.grn.infer(ADATA, tfs, seed=777, n_estimators=300, early_stop_window=25)
     print(f"  grn wall: {time.monotonic()-t0:.1f}s  edges: {len(our_adj)}")
-    our_adj.to_parquet("/Users/ekin/rustscenic/validation/ours/multiome3k_grn_ours.parquet", index=False)
+    our_adj.to_parquet("/Users/ekin/projects/bio/rustscenic/validation/ours/multiome3k_grn_ours.parquet", index=False)
 else:
     our_adj = pd.read_parquet(our_grn_files[0]).rename(columns={"tf": "TF"})
     print(f"loaded our grn: {len(our_adj)} edges from {our_grn_files[0]}")

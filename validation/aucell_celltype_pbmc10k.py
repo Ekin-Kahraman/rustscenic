@@ -10,8 +10,8 @@ from pyscenic.utils import modules_from_adjacencies
 from pyscenic.aucell import aucell
 from ctxcore.genesig import Regulon
 
-ADATA = ad.read_h5ad("/Users/ekin/rustscenic/validation/reference/data/pbmc10k.h5ad")
-OUR_GRN = Path("/Users/ekin/rustscenic/validation/ours/pbmc10k_grn_ours.parquet")
+ADATA = ad.read_h5ad("/Users/ekin/projects/bio/rustscenic/validation/reference/data/pbmc10k.h5ad")
+OUR_GRN = Path("/Users/ekin/projects/bio/rustscenic/validation/ours/pbmc10k_grn_ours.parquet")
 print(f"adata: {ADATA.shape}   adjacencies: {pd.read_parquet(OUR_GRN).shape}")
 
 # cluster + annotate

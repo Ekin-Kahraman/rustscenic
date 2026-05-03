@@ -8,7 +8,7 @@ import pandas as pd
 import anndata as ad
 import rustscenic, rustscenic.grn, rustscenic.aucell
 
-ADATA = "/Users/ekin/rustscenic/validation/reference/data/tirosh_melanoma.h5ad"
+ADATA = "/Users/ekin/projects/bio/rustscenic/validation/reference/data/tirosh_melanoma.h5ad"
 adata = ad.read_h5ad(ADATA)
 print(f"Tirosh melanoma: {adata.shape}")
 
@@ -29,7 +29,7 @@ adata.obs["cell_type"] = pd.Categorical(labels)
 print(f"cell types: {adata.obs['cell_type'].value_counts().to_dict()}")
 
 # TF list — aertslab hg38 plus melanoma-specific
-tfs_all = rustscenic.grn.load_tfs("/Users/ekin/rustscenic/validation/reference/data/allTFs_hg38.txt")
+tfs_all = rustscenic.grn.load_tfs("/Users/ekin/projects/bio/rustscenic/validation/reference/data/allTFs_hg38.txt")
 tfs_in = [t for t in tfs_all if t in set(adata.var_names)]
 # Verify melanoma canonical TFs are present
 CANON = ["MITF", "SOX10", "MYC", "TCF7", "LEF1", "PAX5", "EBF1", "TBX21", "EOMES",

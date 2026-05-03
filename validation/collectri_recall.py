@@ -8,8 +8,8 @@ collectri = pd.read_csv("/tmp/collectri_human.tsv", sep="\t")
 # Column 'source' is TF, 'target' is target gene
 print(f"CollecTRI: {len(collectri)} edges, {collectri['source'].nunique()} TFs")
 
-adata = ad.read_h5ad("/Users/ekin/rustscenic/validation/reference/data/pbmc3k.h5ad")
-tfs = open("/Users/ekin/rustscenic/validation/reference/data/allTFs_hg38.txt").read().strip().splitlines()
+adata = ad.read_h5ad("/Users/ekin/projects/bio/rustscenic/validation/reference/data/pbmc3k.h5ad")
+tfs = open("/Users/ekin/projects/bio/rustscenic/validation/reference/data/allTFs_hg38.txt").read().strip().splitlines()
 tfs_in = set(t for t in tfs if t in set(adata.var_names))
 genes_in = set(adata.var_names)
 
@@ -21,8 +21,8 @@ ct_in = collectri[
 print(f"CollecTRI edges with both ends in PBMC-3k expressed genes: {len(ct_in)}")
 print(f"  TFs covered: {ct_in['source'].nunique()}")
 
-ours = pd.read_parquet("/Users/ekin/rustscenic/validation/ours/pbmc3k_grn.parquet").rename(columns={"tf": "TF"})
-arb = pd.read_parquet("/Users/ekin/rustscenic/validation/reference/data/pbmc3k_grn_full.parquet")
+ours = pd.read_parquet("/Users/ekin/projects/bio/rustscenic/validation/ours/pbmc3k_grn.parquet").rename(columns={"tf": "TF"})
+arb = pd.read_parquet("/Users/ekin/projects/bio/rustscenic/validation/reference/data/pbmc3k_grn_full.parquet")
 
 def recall_at_k(df, edges, k):
     # For each TF, get top-k targets; check if CollecTRI edge target is in that top-k

@@ -17,7 +17,7 @@ from sklearn.metrics import adjusted_rand_score
 
 import rustscenic.topics
 
-ATAC = Path("/Users/ekin/rustscenic/validation/reference/data/multiome3k/atac_binarized.h5ad")
+ATAC = Path("/Users/ekin/projects/bio/rustscenic/validation/reference/data/multiome3k/atac_binarized.h5ad")
 adata = ad.read_h5ad(ATAC)
 print(f"ATAC: {adata.shape}  density {adata.X.nnz/(adata.shape[0]*adata.shape[1]):.4f}")
 

@@ -22,7 +22,7 @@ SEED = 42
 N_TOPICS = 20
 N_PASSES = 10
 
-adata = ad.read_h5ad("/Users/ekin/rustscenic/validation/reference/data/pbmc3k.h5ad")
+adata = ad.read_h5ad("/Users/ekin/projects/bio/rustscenic/validation/reference/data/pbmc3k.h5ad")
 X = adata.X.toarray() if hasattr(adata.X, "toarray") else adata.X
 X_bin = (X > 1).astype(np.float32)  # binarize
 print(f"binarized matrix: {X_bin.shape}  nonzero {(X_bin > 0).sum()}  density {(X_bin > 0).mean():.3f}")

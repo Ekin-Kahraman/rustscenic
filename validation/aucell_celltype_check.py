@@ -22,9 +22,9 @@ from pyscenic.utils import modules_from_adjacencies
 from pyscenic.aucell import aucell
 from ctxcore.genesig import Regulon
 
-ADATA_PATH = Path("/Users/ekin/rustscenic/validation/reference/data/pbmc3k.h5ad")
-OUR_GRN = Path("/Users/ekin/rustscenic/validation/ours/pbmc3k_grn.parquet")
-ARB_GRN = Path("/Users/ekin/rustscenic/validation/reference/data/pbmc3k_grn_full.parquet")
+ADATA_PATH = Path("/Users/ekin/projects/bio/rustscenic/validation/reference/data/pbmc3k.h5ad")
+OUR_GRN = Path("/Users/ekin/projects/bio/rustscenic/validation/ours/pbmc3k_grn.parquet")
+ARB_GRN = Path("/Users/ekin/projects/bio/rustscenic/validation/reference/data/pbmc3k_grn_full.parquet")
 
 # -- load + cluster PBMC3k ---------------------------------------------------
 adata = ad.read_h5ad(ADATA_PATH)

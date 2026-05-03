@@ -23,10 +23,10 @@ from pyscenic.aucell import aucell as py_aucell
 from ctxcore.genesig import Regulon
 import tomotopy as tp
 
-RNA = Path("/Users/ekin/rustscenic/validation/reference/data/multiome3k/rna.h5ad")
-ATAC = Path("/Users/ekin/rustscenic/validation/reference/data/multiome3k/atac_binarized.h5ad")
-TFS_FILE = Path("/Users/ekin/rustscenic/validation/reference/data/allTFs_hg38.txt")
-OUT = Path("/Users/ekin/rustscenic/validation/ours/reference_pipeline_multiome.json")
+RNA = Path("/Users/ekin/projects/bio/rustscenic/validation/reference/data/multiome3k/rna.h5ad")
+ATAC = Path("/Users/ekin/projects/bio/rustscenic/validation/reference/data/multiome3k/atac_binarized.h5ad")
+TFS_FILE = Path("/Users/ekin/projects/bio/rustscenic/validation/reference/data/allTFs_hg38.txt")
+OUT = Path("/Users/ekin/projects/bio/rustscenic/validation/ours/reference_pipeline_multiome.json")
 
 rna = ad.read_h5ad(RNA)
 atac = ad.read_h5ad(ATAC)
