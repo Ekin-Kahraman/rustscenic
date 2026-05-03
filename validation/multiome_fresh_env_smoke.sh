@@ -18,8 +18,15 @@ pip install --quiet --upgrade pip
 echo "=== installing rustscenic[validation] @ v0.3.6 ==="
 pip install --quiet --upgrade "rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.6"
 
-# 3. Capture provenance
-RUSTSCENIC_SHA=$(cd "$HOME/projects/bio/rustscenic" && git rev-parse HEAD)
+# 3. Capture provenance — read the installed-package SHA via ls-remote of
+# the actual published tag, not local-repo HEAD. Local HEAD reflects the dev
+# tree; the smoke installs from v0.3.6, which can point at a different commit.
+RUSTSCENIC_TAG="v0.3.6"
+RUSTSCENIC_SHA=$(git ls-remote https://github.com/Ekin-Kahraman/rustscenic.git "refs/tags/${RUSTSCENIC_TAG}^{}" | awk '{print $1}')
+if [ -z "$RUSTSCENIC_SHA" ]; then
+    RUSTSCENIC_SHA=$(git ls-remote https://github.com/Ekin-Kahraman/rustscenic.git "refs/tags/${RUSTSCENIC_TAG}" | awk '{print $1}')
+fi
+echo "tag=${RUSTSCENIC_TAG} sha=${RUSTSCENIC_SHA}"
 PYVER=$(python -c "import sys; print('.'.join(map(str, sys.version_info[:3])))")
 SCANPY_VER=$(python -c "from importlib.metadata import version; print(version('scanpy'))")
 ANNDATA_VER=$(python -c "from importlib.metadata import version; print(version('anndata'))")

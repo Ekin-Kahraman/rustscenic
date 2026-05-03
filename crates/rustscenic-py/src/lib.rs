@@ -6,14 +6,10 @@ use pyo3::types::PyList;
 use rustscenic_aucell::aucell;
 use rustscenic_grn::{infer, Adjacency, GrnConfig};
 use rustscenic_preproc::{
-    build_cell_peak_matrix,
-    call_peaks_from_pseudobulks,
+    build_cell_peak_matrix, call_peaks_from_pseudobulks,
     fragments::{fragments_per_barcode, total_counts_per_barcode},
-    frip as preproc_frip_fn,
-    insert_size_stats as preproc_insert_size_stats_fn,
-    read_fragments, read_peaks,
-    tss_enrichment as preproc_tss_enrichment_fn,
-    PeakCallingConfig, TssSite,
+    frip as preproc_frip_fn, insert_size_stats as preproc_insert_size_stats_fn, read_fragments,
+    read_peaks, tss_enrichment as preproc_tss_enrichment_fn, PeakCallingConfig, TssSite,
 };
 use rustscenic_topics::{online_vb_lda, topic_coherence_npmi};
 use std::path::PathBuf;
@@ -142,15 +138,18 @@ fn aucell_score<'py>(
             .as_slice()
             .expect("standard_layout guarantees contiguous slice")
     };
-    let regulons: Vec<(String, Vec<usize>)> =
-        regulon_names.into_iter().zip(regulon_gene_indices).collect();
+    let regulons: Vec<(String, Vec<usize>)> = regulon_names
+        .into_iter()
+        .zip(regulon_gene_indices)
+        .collect();
 
     let out: Vec<f32> =
         py.allow_threads(|| aucell(expr_slice, n_cells, n_genes, &regulons, top_frac));
     let n_regulons = regulons.len();
 
-    let arr2 = ndarray::Array2::from_shape_vec((n_cells, n_regulons), out)
-        .map_err(|e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+    let arr2 = ndarray::Array2::from_shape_vec((n_cells, n_regulons), out).map_err(
+        |e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()),
+    )?;
     Ok(PyArray2::from_owned_array(py, arr2).unbind())
 }
 
@@ -189,16 +188,21 @@ fn topics_fit<'py>(
 ) -> PyResult<(Py<PyArray2<f32>>, Py<PyArray2<f32>>)> {
     let result = py.allow_threads(|| {
         online_vb_lda(
-            &row_ptr, &col_idx, &counts, n_words, n_topics,
-            alpha, eta, tau0, kappa, batch_size, n_passes, seed,
+            &row_ptr, &col_idx, &counts, n_words, n_topics, alpha, eta, tau0, kappa, batch_size,
+            n_passes, seed,
         )
     });
     let n_docs = result.n_docs;
-    let ct = ndarray::Array2::from_shape_vec((n_docs, n_topics), result.cell_topic)
-        .map_err(|e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
-    let tw = ndarray::Array2::from_shape_vec((n_topics, n_words), result.topic_word)
-        .map_err(|e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
-    Ok((PyArray2::from_owned_array(py, ct).unbind(), PyArray2::from_owned_array(py, tw).unbind()))
+    let ct = ndarray::Array2::from_shape_vec((n_docs, n_topics), result.cell_topic).map_err(
+        |e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()),
+    )?;
+    let tw = ndarray::Array2::from_shape_vec((n_topics, n_words), result.topic_word).map_err(
+        |e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()),
+    )?;
+    Ok((
+        PyArray2::from_owned_array(py, ct).unbind(),
+        PyArray2::from_owned_array(py, tw).unbind(),
+    ))
 }
 
 /// Fit collapsed-Gibbs LDA on a sparse (docs x words) matrix.
@@ -239,21 +243,22 @@ fn topics_fit_gibbs<'py>(
     let result = py.allow_threads(|| {
         if n_threads <= 1 {
             rustscenic_topics::gibbs::fit(
-                &row_ptr, &col_idx, &counts, n_words, n_topics,
-                alpha, eta, n_iters, seed,
+                &row_ptr, &col_idx, &counts, n_words, n_topics, alpha, eta, n_iters, seed,
             )
         } else {
             rustscenic_topics::gibbs::fit_par(
-                &row_ptr, &col_idx, &counts, n_words, n_topics,
-                alpha, eta, n_iters, seed, n_threads,
+                &row_ptr, &col_idx, &counts, n_words, n_topics, alpha, eta, n_iters, seed,
+                n_threads,
             )
         }
     });
     let n_docs = row_ptr.len().saturating_sub(1);
-    let theta = ndarray::Array2::from_shape_vec((n_docs, n_topics), result.theta)
-        .map_err(|e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
-    let beta = ndarray::Array2::from_shape_vec((n_topics, n_words), result.beta)
-        .map_err(|e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+    let theta = ndarray::Array2::from_shape_vec((n_docs, n_topics), result.theta).map_err(
+        |e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()),
+    )?;
+    let beta = ndarray::Array2::from_shape_vec((n_topics, n_words), result.beta).map_err(
+        |e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()),
+    )?;
     Ok((
         PyArray2::from_owned_array(py, theta).unbind(),
         PyArray2::from_owned_array(py, beta).unbind(),
@@ -291,7 +296,9 @@ fn topics_npmi<'py>(
         s
     } else {
         owned = arr.as_standard_layout().to_owned();
-        owned.as_slice().expect("standard_layout guarantees contiguous")
+        owned
+            .as_slice()
+            .expect("standard_layout guarantees contiguous")
     };
     let coh = py.allow_threads(|| {
         topic_coherence_npmi(tw_slice, n_topics, n_words, top_n, &row_ptr, &col_idx)
@@ -317,23 +324,25 @@ fn preproc_fragments_to_matrix<'py>(
     fragments_path: PathBuf,
     peaks_path: PathBuf,
 ) -> PyResult<(
-    Py<PyArray1<u32>>,   // data
-    Py<PyArray1<u32>>,   // indices
-    Py<PyArray1<u64>>,   // indptr
-    (usize, usize),      // shape (n_cells, n_peaks)
-    Py<PyList>,          // barcode names
-    Py<PyList>,          // peak names
-    Py<PyArray1<u32>>,   // fragments per barcode
-    Py<PyArray1<u32>>,   // total counts per barcode
+    Py<PyArray1<u32>>, // data
+    Py<PyArray1<u32>>, // indices
+    Py<PyArray1<u64>>, // indptr
+    (usize, usize),    // shape (n_cells, n_peaks)
+    Py<PyList>,        // barcode names
+    Py<PyList>,        // peak names
+    Py<PyArray1<u32>>, // fragments per barcode
+    Py<PyArray1<u32>>, // total counts per barcode
 )> {
-    let (csr, barcodes, peak_names, fpc, tcc) = py.allow_threads(|| -> anyhow::Result<_> {
-        let fragments = read_fragments(&fragments_path)?;
-        let fpc = fragments_per_barcode(&fragments);
-        let tcc = total_counts_per_barcode(&fragments);
-        let peaks = read_peaks(&peaks_path)?;
-        let (csr, bnames, pnames) = build_cell_peak_matrix(&fragments, &peaks);
-        Ok((csr, bnames, pnames, fpc, tcc))
-    }).map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
+    let (csr, barcodes, peak_names, fpc, tcc) = py
+        .allow_threads(|| -> anyhow::Result<_> {
+            let fragments = read_fragments(&fragments_path)?;
+            let fpc = fragments_per_barcode(&fragments);
+            let tcc = total_counts_per_barcode(&fragments);
+            let peaks = read_peaks(&peaks_path)?;
+            let (csr, bnames, pnames) = build_cell_peak_matrix(&fragments, &peaks);
+            Ok((csr, bnames, pnames, fpc, tcc))
+        })
+        .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
 
     let data = PyArray1::from_vec(py, csr.data);
     let indices = PyArray1::from_vec(py, csr.indices);
@@ -366,16 +375,16 @@ fn preproc_insert_size_stats<'py>(
     py: Python<'py>,
     fragments_path: PathBuf,
 ) -> PyResult<(
-    Py<PyList>,          // barcodes
-    Py<PyArray1<f32>>,   // mean
-    Py<PyArray1<f32>>,   // median
-    Py<PyArray1<u32>>,   // n_fragments
-    Py<PyArray1<u32>>,   // sub
-    Py<PyArray1<u32>>,   // mono
-    Py<PyArray1<u32>>,   // di
+    Py<PyList>,        // barcodes
+    Py<PyArray1<f32>>, // mean
+    Py<PyArray1<f32>>, // median
+    Py<PyArray1<u32>>, // n_fragments
+    Py<PyArray1<u32>>, // sub
+    Py<PyArray1<u32>>, // mono
+    Py<PyArray1<u32>>, // di
 )> {
-    let (barcodes, means, medians, counts, sub, mono, di) =
-        py.allow_threads(|| -> anyhow::Result<_> {
+    let (barcodes, means, medians, counts, sub, mono, di) = py
+        .allow_threads(|| -> anyhow::Result<_> {
             let fragments = read_fragments(&fragments_path)?;
             let stats = preproc_insert_size_stats_fn(&fragments);
             let mut means = Vec::with_capacity(stats.len());
@@ -392,7 +401,15 @@ fn preproc_insert_size_stats<'py>(
                 mono.push(s.mono_nucleosomal);
                 di.push(s.di_nucleosomal);
             }
-            Ok((fragments.barcode_names, means, medians, counts, sub, mono, di))
+            Ok((
+                fragments.barcode_names,
+                means,
+                medians,
+                counts,
+                sub,
+                mono,
+                di,
+            ))
         })
         .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;
     Ok((
@@ -516,12 +533,8 @@ fn preproc_call_peaks<'py>(
                     fragments.n_barcodes()
                 );
             }
-            let peaks = call_peaks_from_pseudobulks(
-                &fragments,
-                &cluster_per_barcode,
-                n_clusters,
-                &cfg,
-            );
+            let peaks =
+                call_peaks_from_pseudobulks(&fragments, &cluster_per_barcode, n_clusters, &cfg);
             let chrom_names_out: Vec<String> = peaks
                 .chrom_idx
                 .iter()

@@ -35,8 +35,15 @@ pub fn aucell(
     regulons: &[(String, Vec<usize>)],
     top_frac: f32,
 ) -> Vec<f32> {
-    assert_eq!(expression.len(), n_cells * n_genes, "expression size mismatch");
-    assert!((0.0..=1.0).contains(&top_frac), "top_frac must be in (0, 1]");
+    assert_eq!(
+        expression.len(),
+        n_cells * n_genes,
+        "expression size mismatch"
+    );
+    assert!(
+        (0.0..=1.0).contains(&top_frac),
+        "top_frac must be in (0, 1]"
+    );
 
     // Reject NaN in expression — silent corruption via partial_cmp tie-breaks.
     if expression.iter().any(|v| v.is_nan()) {
@@ -154,15 +161,18 @@ mod tests {
         ];
         let regs = vec![("R".to_string(), vec![0])];
         let out = aucell(&expr, 2, 5, &regs, 0.4);
-        assert!(out[0] > out[1], "cell 0 should have higher auc for reg {{0}}, got {} vs {}", out[0], out[1]);
+        assert!(
+            out[0] > out[1],
+            "cell 0 should have higher auc for reg {{0}}, got {} vs {}",
+            out[0],
+            out[1]
+        );
     }
 
     #[test]
     fn many_cells_deterministic() {
         // run twice, same seed/data -> same output (no stochasticity in AUCell)
-        let expr: Vec<f32> = (0..100 * 20)
-            .map(|i| ((i * 37 + 1) % 23) as f32)
-            .collect();
+        let expr: Vec<f32> = (0..100 * 20).map(|i| ((i * 37 + 1) % 23) as f32).collect();
         let regs = vec![
             ("R1".to_string(), vec![0, 3, 7, 11]),
             ("R2".to_string(), vec![2, 5, 9]),

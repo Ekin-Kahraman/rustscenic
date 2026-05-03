@@ -15,7 +15,7 @@ Wheels are also at the [latest release page](https://github.com/Ekin-Kahraman/ru
 if your network can't pull from git directly.
 
 Requires Python 3.10–3.13. Linux + macOS only (Windows untested).
-Brings four runtime deps: numpy, pandas, pyarrow, scipy.
+Brings five runtime deps: numpy, pandas, pyarrow, scipy, anndata.
 
 If you are running the example or validation scripts, install the
 validation extra in one line (v0.3.6+):

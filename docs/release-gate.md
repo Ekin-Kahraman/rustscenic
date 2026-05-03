@@ -44,7 +44,7 @@ Anchor claims at v0.3.6:
 
 | Claim | Evidence | Status |
 |---|---|---|
-| "Four runtime dependencies" | `pyproject.toml` core deps | ✓ proven |
+| "Five runtime dependencies" | `pyproject.toml` core deps | ✓ proven |
 | "Python 3.10–3.13, Linux + macOS x86_64+aarch64" | release wheel matrix | ✓ proven (4 wheels per release) |
 | "GitHub Release wheels and source install succeed" | release.yml CI green per tag | ✓ proven on v0.3.6 |
 | AUCell wall-time numbers (Ziegler, Multiome) | `validation/aucell_celltype_pbmc10k.py` log | ⚠ pre-existing logs, not regenerated per release |
@@ -61,16 +61,17 @@ The `⚠` and `❌` rows are the publication-threshold bottleneck.
 
 The release is "publishable end-to-end" only when ALL of:
 
-- [x] Fresh install works on every declared install path (core ✓, examples ✓, validation ✓; reference/benchmarks declared but not auto-tested)
-- [x] Synthetic multiome end-to-end completes via `pipeline.run` (covered by `test_full_scenicplus_smoke.py` + `test_pipeline_integration.py`, 12 passing)
-- [x] **Real-data** PBMC multiome end-to-end completes from a fresh venv without intervention (`validation/multiome_pbmc_3k_v0.3.6.json` — 10x pbmc_unsorted_3k, 5/5 canonical PBMC TFs in regulons, 2.3 GB peak RSS)
-- [x] Memory/time table has hardware, dataset, command, version baked in alongside numbers (per-stage wall+RSS in the artefact; rustscenic SHA, MD5 of dataset files, env all baked)
+- [x] Fresh install works on the **publicly tested** install paths (core ✓, examples ✓, validation ✓; reference/benchmarks declared but not auto-tested in CI)
+- [x] Synthetic full SCENIC+ end-to-end completes via `pipeline.run` (preproc → grn → cistarget → enhancer → eRegulon → aucell, covered by `test_full_scenicplus_smoke.py` + `test_pipeline_integration.py`, 12 passing)
+- [x] **Real-data PBMC RNA+ATAC partial smoke** in fresh venv (`validation/multiome_pbmc_3k_v0.3.6.json` — 10x pbmc_unsorted_3k. RNA QC + GRN + AUCell + ATAC topics + biology-presence check. 5/5 canonical PBMC TFs in regulon set. 2.3 GB peak RSS. **Does NOT yet exercise cistarget / enhancer / eRegulon on real data — those are synthetic-only at the test level.**)
+- [x] Memory/time table has hardware, dataset, command, version baked in alongside numbers (per-stage wall+RSS in the artefact; tag SHA, MD5 of dataset files, env baked)
+- [ ] **Real-data full SCENIC+ end-to-end** including motif-rankings download, cistarget enrichment, enhancer linking, eRegulon assembly, in fresh venv
 - [ ] SCENIC+/pySCENIC parity numbers regenerated against current pyscenic, not 2026-04-snapshot
 - [x] Docs tell users exactly which install path to use (`docs/tester-quickstart.md` ✓)
 - [x] Bit-identical determinism under same seed verified (live + Rust inline tests)
 - [ ] Audit workflow checks each install path's smoke test on every tag push
 
-v0.3.6 satisfies 7 of 8. Outstanding: parity-number regeneration against current pyscenic + audit-workflow per-extra install matrix. Status: "compute stages individually validated, end-to-end collaborator path not yet release-gated".
+v0.3.6 satisfies **6 of 9**. Outstanding: real-data full SCENIC+ E2E (motif download + cistarget + enhancer + eRegulon on real data), parity-number regeneration against current pyscenic, audit-workflow per-extra install matrix. Status: "compute stages individually validated, RNA+ATAC partial smoke proven on real data, full SCENIC+ orchestration proven only on synthetic data".
 
 ## 5. What changes from v0.3.6 to a publishable release
 

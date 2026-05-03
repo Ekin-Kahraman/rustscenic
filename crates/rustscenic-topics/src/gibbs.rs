@@ -186,8 +186,7 @@ pub fn fit(
             continue;
         }
         for w in 0..n_words {
-            beta[k * n_words + w] =
-                ((n_kw[k * n_words + w] as f64 + eta_f64) / row_sum) as f32;
+            beta[k * n_words + w] = ((n_kw[k * n_words + w] as f64 + eta_f64) / row_sum) as f32;
         }
     }
 
@@ -206,18 +205,14 @@ struct ThreadState {
     docs: Vec<usize>,
     tokens: Vec<(u32, u32)>, // (local_doc_idx, word)
     z: Vec<u32>,
-    n_dk: Vec<u32>,    // (docs.len() × n_topics), row-major
-    d_kw: Vec<i32>,    // (n_topics × n_words), reused each sweep
-    d_k: Vec<i32>,     // n_topics, reused each sweep
+    n_dk: Vec<u32>,      // (docs.len() × n_topics), row-major
+    d_kw: Vec<i32>,      // (n_topics × n_words), reused each sweep
+    d_k: Vec<i32>,       // n_topics, reused each sweep
     p_scratch: Vec<f64>, // n_topics, reused each token
 }
 
 /// Greedy bin-pack docs into `n_threads` partitions balanced by token load.
-fn partition_docs_by_load(
-    row_ptr: &[usize],
-    counts: &[f32],
-    n_threads: usize,
-) -> Vec<Vec<usize>> {
+fn partition_docs_by_load(row_ptr: &[usize], counts: &[f32], n_threads: usize) -> Vec<Vec<usize>> {
     let n_docs = row_ptr.len().saturating_sub(1);
     let doc_load: Vec<usize> = (0..n_docs)
         .map(|d| {
@@ -228,8 +223,7 @@ fn partition_docs_by_load(
                 .max(1)
         })
         .collect();
-    let mut bins: Vec<(usize, Vec<usize>)> =
-        (0..n_threads).map(|_| (0, Vec::new())).collect();
+    let mut bins: Vec<(usize, Vec<usize>)> = (0..n_threads).map(|_| (0, Vec::new())).collect();
     let mut doc_order: Vec<usize> = (0..n_docs).collect();
     doc_order.sort_unstable_by_key(|&d| std::cmp::Reverse(doc_load[d]));
     for d in doc_order {
@@ -278,7 +272,15 @@ fn init_thread_states(
         let d_kw = vec![0i32; n_topics * n_words];
         let d_k = vec![0i32; n_topics];
         let p_scratch = vec![0.0_f64; n_topics];
-        out.push(ThreadState { docs, tokens, z, n_dk, d_kw, d_k, p_scratch });
+        out.push(ThreadState {
+            docs,
+            tokens,
+            z,
+            n_dk,
+            d_kw,
+            d_k,
+            p_scratch,
+        });
     }
     out
 }
@@ -396,8 +398,7 @@ fn merge_deltas(
     n_topics: usize,
     n_words: usize,
 ) {
-    n_kw
-        .par_chunks_mut(n_words)
+    n_kw.par_chunks_mut(n_words)
         .enumerate()
         .for_each(|(k, row)| {
             for w in 0..n_words {
@@ -490,9 +491,8 @@ pub fn fit_par(
     assert!(n_iters > 0, "n_iters must be > 0");
 
     let partition = partition_docs_by_load(row_ptr, counts, n_threads);
-    let mut threads = init_thread_states(
-        partition, row_ptr, col_idx, counts, n_topics, n_words, seed,
-    );
+    let mut threads =
+        init_thread_states(partition, row_ptr, col_idx, counts, n_topics, n_words, seed);
     let (mut n_kw, mut n_k) = prime_counts(&mut threads, n_topics, n_words);
 
     let alpha_f64 = alpha as f64;
@@ -512,24 +512,20 @@ pub fn fit_par(
     for iter in 0..n_iters {
         snap_n_kw.copy_from_slice(&n_kw);
         snap_n_k.copy_from_slice(&n_k);
-        threads
-            .par_iter_mut()
-            .enumerate()
-            .for_each(|(t_idx, ts)| {
-                // Mix (seed, iter, t_idx) into a 64-bit-uniform stream.
-                // Plain wrapping_add with a 32-bit stride (0x9E3779B9) leaves
-                // adjacent threads with seeds differing by a small structured
-                // amount, which can correlate the first few outputs of their
-                // RNGs and bias topic sampling on sparse corpora. splitmix64
-                // expands the combination to the full 64-bit range so threads
-                // see independent streams.
-                let rng_seed = splitmix64(
-                    seed
-                        .wrapping_add((iter as u64).wrapping_mul(0xBF58476D1CE4E5B9))
-                        .wrapping_add((t_idx as u64).wrapping_mul(0x9E3779B97F4A7C15)),
-                );
-                run_thread_sweep(ts, &snap_n_kw, &snap_n_k, &params, rng_seed);
-            });
+        threads.par_iter_mut().enumerate().for_each(|(t_idx, ts)| {
+            // Mix (seed, iter, t_idx) into a 64-bit-uniform stream.
+            // Plain wrapping_add with a 32-bit stride (0x9E3779B9) leaves
+            // adjacent threads with seeds differing by a small structured
+            // amount, which can correlate the first few outputs of their
+            // RNGs and bias topic sampling on sparse corpora. splitmix64
+            // expands the combination to the full 64-bit range so threads
+            // see independent streams.
+            let rng_seed = splitmix64(
+                seed.wrapping_add((iter as u64).wrapping_mul(0xBF58476D1CE4E5B9))
+                    .wrapping_add((t_idx as u64).wrapping_mul(0x9E3779B97F4A7C15)),
+            );
+            run_thread_sweep(ts, &snap_n_kw, &snap_n_k, &params, rng_seed);
+        });
         merge_deltas(&mut n_kw, &mut n_k, &threads, n_topics, n_words);
     }
 
@@ -546,8 +542,7 @@ pub fn fit_par(
             continue;
         }
         for w in 0..n_words {
-            beta[k * n_words + w] =
-                ((n_kw[k * n_words + w] as f64 + eta_f64) / row_sum) as f32;
+            beta[k * n_words + w] = ((n_kw[k * n_words + w] as f64 + eta_f64) / row_sum) as f32;
         }
     }
 
@@ -609,13 +604,19 @@ mod tests {
             topic_per_doc.push(if row[0] > row[1] { 0 } else { 1 });
         }
         // First half should all share one topic, second half the other.
-        let first_half: u32 = topic_per_doc[0..30].iter().filter(|&&t| t == topic_per_doc[0]).count() as u32;
+        let first_half: u32 = topic_per_doc[0..30]
+            .iter()
+            .filter(|&&t| t == topic_per_doc[0])
+            .count() as u32;
         let second_half_other: u32 = topic_per_doc[30..]
             .iter()
             .filter(|&&t| t != topic_per_doc[0])
             .count() as u32;
         assert!(first_half >= 28, "first half drift: {first_half}/30");
-        assert!(second_half_other >= 28, "second half drift: {second_half_other}/30");
+        assert!(
+            second_half_other >= 28,
+            "second half drift: {second_half_other}/30"
+        );
     }
 
     #[test]
@@ -671,7 +672,10 @@ mod tests {
             .count() as u32;
         // AD-LDA is approximate; allow a few more drift docs than serial.
         assert!(first_half >= 25, "first half drift: {first_half}/30");
-        assert!(second_half_other >= 25, "second half drift: {second_half_other}/30");
+        assert!(
+            second_half_other >= 25,
+            "second half drift: {second_half_other}/30"
+        );
     }
 
     #[test]

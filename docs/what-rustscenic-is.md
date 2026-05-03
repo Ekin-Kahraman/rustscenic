@@ -34,8 +34,8 @@ trusted-publisher setup. Replaces or covers:
   TSS enrichment, insert-size).
 
 Ships as one abi3 wheel for Python 3.10–3.13, Linux + macOS (x86_64 +
-aarch64), plus source install. Four runtime deps: numpy, pandas,
-pyarrow, scipy.
+aarch64), plus source install. Five runtime deps: numpy, pandas,
+pyarrow, scipy, anndata.
 
 ## Boundary
 

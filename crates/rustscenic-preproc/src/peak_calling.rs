@@ -168,8 +168,8 @@ pub fn call_peaks_from_pseudobulks(
             }
 
             // Cluster-specific significance threshold.
-            let threshold = quantile_of_nonzero(window_counts, cfg.quantile_threshold)
-                .max(min_count);
+            let threshold =
+                quantile_of_nonzero(window_counts, cfg.quantile_threshold).max(min_count);
 
             // Mark windows above threshold, merge consecutive ones
             // (with max_gap/ws tolerance) into candidate peaks.
@@ -231,7 +231,8 @@ fn merge_consensus(
 ) -> PeakTable {
     // Rank by descending peak_count, ties by earlier chrom / start for determinism.
     candidates.sort_by(|a, b| {
-        b.peak_count.cmp(&a.peak_count)
+        b.peak_count
+            .cmp(&a.peak_count)
             .then(a.chrom_idx.cmp(&b.chrom_idx))
             .then(a.start.cmp(&b.start))
     });
@@ -345,14 +346,18 @@ mod tests {
             "expected at least one peak, got {}",
             peaks.len()
         );
-        let hits_peak1 = (0..peaks.len()).any(|i| {
-            peaks.start[i] < 10_500 && peaks.end[i] > 9_500
-        });
-        let hits_peak2 = (0..peaks.len()).any(|i| {
-            peaks.start[i] < 50_500 && peaks.end[i] > 49_500
-        });
-        assert!(hits_peak1, "peak near 10_000 not recovered; peaks={:?}", collect_peaks(&peaks));
-        assert!(hits_peak2, "peak near 50_000 not recovered; peaks={:?}", collect_peaks(&peaks));
+        let hits_peak1 = (0..peaks.len()).any(|i| peaks.start[i] < 10_500 && peaks.end[i] > 9_500);
+        let hits_peak2 = (0..peaks.len()).any(|i| peaks.start[i] < 50_500 && peaks.end[i] > 49_500);
+        assert!(
+            hits_peak1,
+            "peak near 10_000 not recovered; peaks={:?}",
+            collect_peaks(&peaks)
+        );
+        assert!(
+            hits_peak2,
+            "peak near 50_000 not recovered; peaks={:?}",
+            collect_peaks(&peaks)
+        );
     }
 
     #[test]
@@ -371,13 +376,15 @@ mod tests {
         for i in 0..30 {
             lines.push(format!(
                 "chr1\t{}\t{}\tBC_A\t1",
-                5_000 + i * 2, 5_080 + i * 2
+                5_000 + i * 2,
+                5_080 + i * 2
             ));
         }
         for i in 0..30 {
             lines.push(format!(
                 "chr1\t{}\t{}\tBC_B\t1",
-                80_000 + i * 2, 80_080 + i * 2
+                80_000 + i * 2,
+                80_080 + i * 2
             ));
         }
         let t = read_fragments_from(Cursor::new(lines.join("\n"))).unwrap();
@@ -387,9 +394,7 @@ mod tests {
             .iter()
             .map(|n| if n == "BC_A" { 0 } else { 1 })
             .collect();
-        let peaks = call_peaks_from_pseudobulks(
-            &t, &cluster, 2, &PeakCallingConfig::default(),
-        );
+        let peaks = call_peaks_from_pseudobulks(&t, &cluster, 2, &PeakCallingConfig::default());
         assert!(peaks.len() >= 2, "expected ≥2 peaks, got {}", peaks.len());
         let has_a = (0..peaks.len()).any(|i| peaks.start[i] < 5_500 && peaks.end[i] > 4_500);
         let has_b = (0..peaks.len()).any(|i| peaks.start[i] < 80_500 && peaks.end[i] > 79_500);
@@ -404,14 +409,16 @@ mod tests {
         for i in 0..50 {
             lines.push(format!(
                 "chr1\t{}\t{}\tAAA\t1",
-                10_000 + i * 2, 10_080 + i * 2
+                10_000 + i * 2,
+                10_080 + i * 2
             ));
         }
         // Weak peak at 10_300 (20 fragments) — will overlap via the 250bp half-width
         for i in 0..20 {
             lines.push(format!(
                 "chr1\t{}\t{}\tBBB\t1",
-                10_400 + i * 2, 10_480 + i * 2
+                10_400 + i * 2,
+                10_480 + i * 2
             ));
         }
         let t = read_fragments_from(Cursor::new(lines.join("\n"))).unwrap();
@@ -420,9 +427,7 @@ mod tests {
             .iter()
             .map(|n| if n == "AAA" { 0 } else { 1 })
             .collect();
-        let peaks = call_peaks_from_pseudobulks(
-            &t, &cluster, 2, &PeakCallingConfig::default(),
-        );
+        let peaks = call_peaks_from_pseudobulks(&t, &cluster, 2, &PeakCallingConfig::default());
         // With default peak_half_width=250, the 10_000 peak spans ~9_750-10_250
         // and the weak 10_400-ish peak would span ~10_150-10_650. They overlap,
         // so only the stronger should survive.

@@ -77,7 +77,11 @@ impl FragmentTable {
         idx
     }
 
-    fn intern_barcode(&mut self, name: &str, lookup: &mut std::collections::HashMap<String, u32>) -> u32 {
+    fn intern_barcode(
+        &mut self,
+        name: &str,
+        lookup: &mut std::collections::HashMap<String, u32>,
+    ) -> u32 {
         if let Some(&idx) = lookup.get(name) {
             return idx;
         }
@@ -93,8 +97,7 @@ impl FragmentTable {
 /// Accepts `.tsv`, `.tsv.gz`, `.bed`, `.bed.gz`. Detection by extension.
 pub fn read_fragments<P: AsRef<Path>>(path: P) -> Result<FragmentTable> {
     let path = path.as_ref();
-    let file = File::open(path)
-        .with_context(|| format!("failed to open {}", path.display()))?;
+    let file = File::open(path).with_context(|| format!("failed to open {}", path.display()))?;
     let reader: Box<dyn Read> = if path
         .extension()
         .and_then(|e| e.to_str())

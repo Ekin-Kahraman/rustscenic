@@ -149,13 +149,14 @@ def build_eregulons(
             grn.groupby("TF")["target"].apply(set).to_dict()
         )
 
-    # Pre-index enhancer_links for fast per-peak lookup.
-    # Each peak can map to multiple (gene, correlation) pairs.
-    links_by_peak: dict[str, list[tuple[str, float]]] = {}
-    for _, row in enhancer_links[["peak_id", "gene", "correlation"]].iterrows():
-        links_by_peak.setdefault(str(row["peak_id"]), []).append(
-            (str(row["gene"]), float(row["correlation"]))
-        )
+    # Pre-index enhancer_links for fast per-peak lookup. Vectorised: for real
+    # SCENIC+ scale this DataFrame can have 1-2M rows (100k peaks x 10-20 genes
+    # each); iterrows would take 30+ seconds, groupby runs at C speed.
+    el_pos = enhancer_links.loc[enhancer_links["correlation"] > 0, ["peak_id", "gene", "correlation"]]
+    links_by_peak: dict[str, list[tuple[str, float]]] = {
+        str(peak): list(zip(g["gene"].astype(str), g["correlation"].astype(float)))
+        for peak, g in el_pos.groupby("peak_id", sort=False)
+    }
 
     # Assemble per TF.
     eregulons: list[ERegulon] = []
@@ -165,16 +166,13 @@ def build_eregulons(
         if not peaks_for_tf:
             continue
 
-        # Find enhancer-linked targets for these peaks.
+        # Find enhancer-linked targets for these peaks. links_by_peak is
+        # pre-filtered to correlation > 0 above (negative correlation means
+        # repressive link, treated as out-of-scope by default; users can
+        # rebuild with custom enhancer filtering upstream if they want it).
         target_to_peaks: dict[str, set[str]] = {}
         for peak in peaks_for_tf:
-            for gene, corr in links_by_peak.get(peak, ()):
-                # Keep only positive correlations by default — negative
-                # correlation implies TF represses gene, which is a real
-                # but less common case. Users can rebuild with custom
-                # enhancer filtering upstream if they want negatives too.
-                if corr <= 0.0:
-                    continue
+            for gene, _corr in links_by_peak.get(peak, ()):
                 target_to_peaks.setdefault(gene, set()).add(peak)
 
         if use_grn_intersection and grn_targets is not None:
@@ -198,6 +196,21 @@ def build_eregulons(
             tf_group.loc[tf_group[peak_col].astype(str).isin(supporting_peaks), "auc"].mean()
         )
         if pd.isna(motif_auc_mean):
+            # NaN here usually means cistarget peak_col uses a different key
+            # format than enhancer_links.peak_id (e.g. 'chr1:1000-2000' vs
+            # 'chr1_1000_2000'). Warning so users can distinguish "genuine
+            # zero motif AUC" from "key mismatch silenced the join".
+            import warnings as _warnings
+            sample_peak_ct = next(iter(tf_group[peak_col].astype(str)), "?")
+            sample_peak_el = next(iter(supporting_peaks), "?")
+            _warnings.warn(
+                f"motif AUC NaN for TF {tf_str!r}: cistarget peak_col format "
+                f"may not match enhancer_links peak_id. Sample cistarget "
+                f"peak={sample_peak_ct!r}, sample enhancer-link peak={sample_peak_el!r}. "
+                f"Falling back to motif_auc=0.0; check your peak ID conventions.",
+                UserWarning,
+                stacklevel=2,
+            )
             motif_auc_mean = 0.0
 
         eregulons.append(

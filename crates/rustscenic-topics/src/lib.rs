@@ -154,7 +154,8 @@ pub fn online_vb_lda(
                         for g in gamma_d.iter_mut() {
                             let u1: f64 = doc_rng.gen();
                             let u2: f64 = doc_rng.gen();
-                            let z = (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos();
+                            let z =
+                                (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos();
                             *g = (alpha as f64 + 1.0 + 0.1 * z).max(0.01);
                         }
                         let mut elog_theta = vec![0.0_f64; n_topics];
@@ -170,7 +171,9 @@ pub fn online_vb_lda(
                                 for k in 0..n_topics {
                                     let lp = elog_theta[k] + elog_beta[k * n_words + w];
                                     buf[k] = lp;
-                                    if lp > max_log { max_log = lp; }
+                                    if lp > max_log {
+                                        max_log = lp;
+                                    }
                                 }
                                 let mut s = 0.0_f64;
                                 for k in 0..n_topics {
@@ -189,7 +192,8 @@ pub fn online_vb_lda(
                                 .iter()
                                 .zip(gamma_d.iter())
                                 .map(|(a, b)| (a - b).abs())
-                                .sum::<f64>() / n_topics as f64;
+                                .sum::<f64>()
+                                / n_topics as f64;
                             gamma_d = gamma_new;
                             if delta < 1e-3 {
                                 break;
@@ -207,7 +211,9 @@ pub fn online_vb_lda(
                             for k in 0..n_topics {
                                 let lp = elog_theta[k] + elog_beta[k * n_words + w];
                                 buf[k] = lp;
-                                if lp > max_log { max_log = lp; }
+                                if lp > max_log {
+                                    max_log = lp;
+                                }
                             }
                             let mut s = 0.0_f64;
                             for k in 0..n_topics {
@@ -261,7 +267,8 @@ pub fn online_vb_lda(
             let doc_cols = &col_idx[start..end];
             let doc_counts = &counts[start..end];
             // Same asymmetric init for final E-step pass
-            let mut doc_rng = StdRng::seed_from_u64(seed.wrapping_add(d as u64).wrapping_add(1_000_000));
+            let mut doc_rng =
+                StdRng::seed_from_u64(seed.wrapping_add(d as u64).wrapping_add(1_000_000));
             let mut gamma_d = vec![0.0_f64; n_topics];
             for g in gamma_d.iter_mut() {
                 let u1: f64 = doc_rng.gen();
@@ -281,7 +288,9 @@ pub fn online_vb_lda(
                     for k in 0..n_topics {
                         let lp = elog_theta[k] + elog_beta[k * n_words + w];
                         buf[k] = lp;
-                        if lp > max_log { max_log = lp; }
+                        if lp > max_log {
+                            max_log = lp;
+                        }
                     }
                     let mut s = 0.0_f64;
                     for k in 0..n_topics {
@@ -296,15 +305,23 @@ pub fn online_vb_lda(
                         }
                     }
                 }
-                let delta = gamma_new.iter().zip(gamma_d.iter())
+                let delta = gamma_new
+                    .iter()
+                    .zip(gamma_d.iter())
                     .map(|(a, b)| (a - b).abs())
-                    .sum::<f64>() / n_topics as f64;
+                    .sum::<f64>()
+                    / n_topics as f64;
                 gamma_d = gamma_new;
-                if delta < 1e-5 { break; }
+                if delta < 1e-5 {
+                    break;
+                }
             }
             // normalize gamma_d
             let sum = gamma_d.iter().sum::<f64>();
-            gamma_d.iter().map(|g| (g / sum) as f32).collect::<Vec<f32>>()
+            gamma_d
+                .iter()
+                .map(|g| (g / sum) as f32)
+                .collect::<Vec<f32>>()
         })
         .collect();
 
@@ -408,7 +425,9 @@ pub fn topic_coherence_npmi(
 
 // Safety: statrs' ln_gamma is private in some versions, just silence the unused-import check.
 #[allow(dead_code)]
-fn _ensure_ln_gamma_used(x: f64) -> f64 { ln_gamma(x) }
+fn _ensure_ln_gamma_used(x: f64) -> f64 {
+    ln_gamma(x)
+}
 
 #[cfg(test)]
 mod tests {
@@ -437,11 +456,10 @@ mod tests {
             row_ptr.push(col_idx.len());
         }
         let res = online_vb_lda(
-            &row_ptr, &col_idx, &counts,
-            n_words, 2,        // K=2
-            0.5, 0.5,          // alpha, eta
-            64.0, 0.7,         // tau0, kappa
-            50, 30,            // batch, n_passes
+            &row_ptr, &col_idx, &counts, n_words, 2, // K=2
+            0.5, 0.5, // alpha, eta
+            64.0, 0.7, // tau0, kappa
+            50, 30, // batch, n_passes
             42,
         );
         // Most of each half's cell_topic mass should concentrate on one topic
@@ -450,11 +468,20 @@ mod tests {
         for d in 0..200 {
             let a = res.cell_topic[d * 2];
             let b = res.cell_topic[d * 2 + 1];
-            if a > b { top0 += 1; } else { top1 += 1; }
+            if a > b {
+                top0 += 1;
+            } else {
+                top1 += 1;
+            }
         }
         // Majority agreement with some topic label
         let disagreement = top0.min(top1);
-        assert!(disagreement < 40, "topic-A docs should concentrate: {} on topic 0, {} on topic 1", top0, top1);
+        assert!(
+            disagreement < 40,
+            "topic-A docs should concentrate: {} on topic 0, {} on topic 1",
+            top0,
+            top1
+        );
     }
 
     #[test]
@@ -463,7 +490,9 @@ mod tests {
         let row_ptr = vec![0_usize, 0, 2];
         let col_idx: Vec<u32> = vec![0, 1];
         let counts: Vec<f32> = vec![1.0, 1.0];
-        let res = online_vb_lda(&row_ptr, &col_idx, &counts, n_words, 2, 0.5, 0.5, 64.0, 0.7, 1, 5, 0);
+        let res = online_vb_lda(
+            &row_ptr, &col_idx, &counts, n_words, 2, 0.5, 0.5, 64.0, 0.7, 1, 5, 0,
+        );
         // doc 0 is empty -> uniform
         assert_abs_diff_eq!(res.cell_topic[0], 0.5, epsilon = 1e-4);
         assert_abs_diff_eq!(res.cell_topic[1], 0.5, epsilon = 1e-4);

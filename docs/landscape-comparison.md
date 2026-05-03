@@ -31,7 +31,7 @@ on `main`.
 | pycisTopic | 84 | 67 | Heavy (polars, pyranges, MACS2, Mallet / Java). Recent v3 rework in PR #226. |
 | pycistarget | 8 | — | Installs; depends on pycisTopic + ctxcore upstream. |
 | scenicplus | 51 | **918** | 918-line pinned requirements file. Recent issue #629 confirms `pkg_resources` deprecation is actively biting scenicplus users on Setuptools ≥ 81. |
-| **rustscenic** | **4** | — | GitHub Release wheels and `pip install git+...@v0.3.6` succeed on Python 3.10–3.13, Linux + macOS, x86_64 + aarch64. Four runtime deps: numpy, pandas, pyarrow, scipy. PyPI name publish is pending trusted-publisher setup. |
+| **rustscenic** | **5** | — | GitHub Release wheels and `pip install git+...@v0.3.6` succeed on Python 3.10–3.13, Linux + macOS, x86_64 + aarch64. Five runtime deps: numpy, pandas, pyarrow, scipy, anndata. PyPI name publish is pending trusted-publisher setup. |
 
 Documented install failures on the reference stack:
 - arboreto issue [#42](https://github.com/aertslab/arboreto/issues/42) (Oct 2024, still open): `grnboost2 TypeError: Must supply at least one delayed object` — the dask API arboreto depends on was removed. Unpatched for 18 months.

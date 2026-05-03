@@ -193,9 +193,10 @@ def download_motif_rankings(
             print(f"downloading {filename} → {local_path}", flush=True)
         try:
             urllib.request.urlretrieve(url, local_path)
-        except urllib.error.HTTPError as e:
-            # Clean up the partial file so a retry with the right
-            # filename doesn't get short-circuited by the cache check.
+        except (OSError, urllib.error.URLError) as e:
+            # Network timeout / DNS failure / HTTP error all unlink the
+            # partial file so a retry doesn't get short-circuited by the
+            # cache check serving a truncated feather.
             if local_path.exists():
                 local_path.unlink()
             raise RuntimeError(
@@ -206,6 +207,15 @@ def download_motif_rankings(
             ) from e
 
     rankings = pd.read_feather(local_path)
+    if rankings.empty or len(rankings.columns) == 0:
+        raise RuntimeError(
+            f"motif rankings feather at {local_path} is empty (zero rows or "
+            f"zero columns). The download likely returned an empty body for "
+            f"an unsupported species/genome combination. Delete the file and "
+            f"retry with a different filename / url, or browse "
+            f"https://resources.aertslab.org/cistarget/databases/{species_dir}/{genome}/ "
+            f"for valid options."
+        )
     return rankings.set_index(rankings.columns[0])
 
 
@@ -328,7 +338,12 @@ def download_gene_coords(
             rows.append((gene_name, chrom, tss))
 
     out = pd.DataFrame(rows, columns=["gene", "chrom", "tss"])
-    out.to_parquet(parquet_path, index=False)
+    # Atomic write: write to a sibling .tmp then rename. If the process is
+    # killed mid-write (OOM, ctrl-c, etc.) the next run won't find a
+    # truncated parquet at parquet_path and silently load it.
+    tmp_path = parquet_path.with_suffix(".parquet.tmp")
+    out.to_parquet(tmp_path, index=False)
+    tmp_path.replace(parquet_path)
     return out
 
 

@@ -6,8 +6,8 @@
 //! sklearn's Cython RNG tape. For v0.1 we rely on statistical equivalence
 //! (Spearman/Jaccard gates) rather than bit-identity.
 
-use rand::{Rng, RngCore, SeedableRng};
 use rand::rngs::StdRng;
+use rand::{Rng, RngCore, SeedableRng};
 
 pub struct TargetRng {
     inner: StdRng,
@@ -18,12 +18,15 @@ impl TargetRng {
     /// Uses hash-based splitting (no global RNG mutation → parallel safe).
     pub fn new(global_seed: u64, target_idx: usize) -> Self {
         let mixed = splitmix64(global_seed ^ (target_idx as u64).wrapping_mul(0x9E3779B97F4A7C15));
-        Self { inner: StdRng::seed_from_u64(mixed) }
+        Self {
+            inner: StdRng::seed_from_u64(mixed),
+        }
     }
 
     /// Fresh RNG for a specific tree within a target's boosting loop.
     pub fn for_tree(&mut self, tree_idx: usize) -> StdRng {
-        let mixed = splitmix64(self.inner.next_u64() ^ (tree_idx as u64).wrapping_mul(0xBF58476D1CE4E5B9));
+        let mixed =
+            splitmix64(self.inner.next_u64() ^ (tree_idx as u64).wrapping_mul(0xBF58476D1CE4E5B9));
         StdRng::seed_from_u64(mixed)
     }
 
@@ -84,8 +87,8 @@ pub fn uniform_u32(rng: &mut impl RngCore) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::SeedableRng;
     use rand::rngs::StdRng;
+    use rand::SeedableRng;
 
     #[test]
     fn target_rng_is_deterministic() {

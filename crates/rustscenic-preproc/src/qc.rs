@@ -35,7 +35,7 @@ pub struct InsertSizeStats {
     pub median: f32,
     pub n_fragments: u32,
     /// Counts in the three standard nucleosomal bands.
-    pub sub_nucleosomal: u32,  // < 150 bp
+    pub sub_nucleosomal: u32, // < 150 bp
     pub mono_nucleosomal: u32, // 150..300 bp
     pub di_nucleosomal: u32,   // 300..450 bp
 }
@@ -129,12 +129,9 @@ pub fn insert_size_stats(table: &FragmentTable) -> Vec<InsertSizeStats> {
 /// `tss_sites` should be the midpoints of TSS features in the same
 /// chromosome namespace as `table.chrom_names` (or a subset; non-matching
 /// chroms are silently ignored).
-pub fn tss_enrichment(
-    table: &FragmentTable,
-    tss_sites: &[TssSite],
-) -> Vec<f32> {
-    const CENTER_HALFWIDTH: u32 = 50;     // bp
-    const FLANK_HALFWIDTH: u32 = 2_000;   // bp
+pub fn tss_enrichment(table: &FragmentTable, tss_sites: &[TssSite]) -> Vec<f32> {
+    const CENTER_HALFWIDTH: u32 = 50; // bp
+    const FLANK_HALFWIDTH: u32 = 2_000; // bp
     let center_bp = (CENTER_HALFWIDTH * 2 + 1) as f32; // 101
     let flank_bp_total = (FLANK_HALFWIDTH * 2 + 1 - (CENTER_HALFWIDTH * 2 + 1)) as f32; // 3899
 
@@ -148,8 +145,7 @@ pub fn tss_enrichment(
     // `for chrom: for fragment` nested loop (O(n_chroms × n_fragments)).
     let tss_by_chrom = group_tss_by_chrom(table, tss_sites);
     let n_chroms = table.n_chroms();
-    let mut sorted_sites_by_chrom: Vec<Vec<u32>> =
-        (0..n_chroms).map(|_| Vec::new()).collect();
+    let mut sorted_sites_by_chrom: Vec<Vec<u32>> = (0..n_chroms).map(|_| Vec::new()).collect();
     for (chrom_idx, mut sites) in tss_by_chrom {
         sites.sort_unstable();
         sorted_sites_by_chrom[chrom_idx as usize] = sites;
@@ -201,10 +197,7 @@ pub struct TssSite {
     pub position: u32,
 }
 
-fn group_tss_by_chrom(
-    table: &FragmentTable,
-    tss_sites: &[TssSite],
-) -> Vec<(u32, Vec<u32>)> {
+fn group_tss_by_chrom(table: &FragmentTable, tss_sites: &[TssSite]) -> Vec<(u32, Vec<u32>)> {
     use crate::peaks::normalise_chrom;
     // Pre-normalise the fragment-table chrom names so TSS passed in either
     // UCSC (`chr1`) or Ensembl (`1`) convention joins — same pattern the
@@ -315,15 +308,17 @@ pub fn frip(table: &FragmentTable, peaks: &PeakTable) -> Vec<f32> {
     }
 
     (0..n_barcodes)
-        .map(|b| if total[b] == 0 { 0.0 } else { in_peak[b] as f32 / total[b] as f32 })
+        .map(|b| {
+            if total[b] == 0 {
+                0.0
+            } else {
+                in_peak[b] as f32 / total[b] as f32
+            }
+        })
         .collect()
 }
 
-fn fragment_hits_any_peak(
-    frag_start: u32,
-    frag_end: u32,
-    peaks: &[(u32, u32)],
-) -> bool {
+fn fragment_hits_any_peak(frag_start: u32, frag_end: u32, peaks: &[(u32, u32)]) -> bool {
     if peaks.is_empty() {
         return false;
     }
@@ -399,7 +394,10 @@ chr2\t1000\t1100\tBBB-1\t1
             lines.push(format!("chr1\t{}\t{}\tBBB-1\t1", s, s + 50));
         }
         let t = read_fragments_from(Cursor::new(lines.join("\n"))).unwrap();
-        let tss = vec![TssSite { chrom: "chr1".to_string(), position: 10_000 }];
+        let tss = vec![TssSite {
+            chrom: "chr1".to_string(),
+            position: 10_000,
+        }];
         let scores = tss_enrichment(&t, &tss);
         // AAA-1 (all fragments in center window) should have high enrichment;
         // BBB-1 (fragments 5,000-5,500 away, outside flank) should be 0.
@@ -412,7 +410,10 @@ chr2\t1000\t1100\tBBB-1\t1
     fn tss_enrichment_ignores_chroms_not_in_fragments() {
         let t = read_fragments_from(Cursor::new(FRAGS)).unwrap();
         // All TSS are on chr99 which doesn't exist in fragments.
-        let tss = vec![TssSite { chrom: "chr99".to_string(), position: 10_000 }];
+        let tss = vec![TssSite {
+            chrom: "chr99".to_string(),
+            position: 10_000,
+        }];
         let scores = tss_enrichment(&t, &tss);
         for s in scores {
             assert_eq!(s, 0.0);

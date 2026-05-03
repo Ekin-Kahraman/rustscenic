@@ -18,7 +18,9 @@ pub struct Tree {
 
 #[derive(Debug, Clone)]
 pub enum Node {
-    Leaf { value: f32 },
+    Leaf {
+        value: f32,
+    },
     Split {
         feature: usize,
         bin_threshold: u8,
@@ -89,8 +91,18 @@ pub fn fit_tree_with_scratch(
     // Root samples are passed through as a borrowed slice — the extra
     // `to_vec()` copy was pure allocation overhead per tree.
     build_node_rec(
-        binned, y, sample_idx, 0, max_depth, max_features_per_split,
-        exclude_feature, tree, gains, hist_buf, scratch, rng,
+        binned,
+        y,
+        sample_idx,
+        0,
+        max_depth,
+        max_features_per_split,
+        exclude_feature,
+        tree,
+        gains,
+        hist_buf,
+        scratch,
+        rng,
     );
 }
 
@@ -118,8 +130,12 @@ fn build_node_rec(
     }
 
     choose_feature_subset(
-        rng, &mut scratch.feat_pool, &mut scratch.feat_sub,
-        max_features_per_split, exclude_feature, binned.n_features,
+        rng,
+        &mut scratch.feat_pool,
+        &mut scratch.feat_sub,
+        max_features_per_split,
+        exclude_feature,
+        binned.n_features,
     );
 
     let mut best: Option<(usize, u8, f32)> = None;
@@ -152,14 +168,40 @@ fn build_node_rec(
         }
 
         let left = build_node_rec(
-            binned, y, &left_samples, depth + 1, max_depth, max_features_per_split,
-            exclude_feature, tree, gains, hist_buf, scratch, rng,
+            binned,
+            y,
+            &left_samples,
+            depth + 1,
+            max_depth,
+            max_features_per_split,
+            exclude_feature,
+            tree,
+            gains,
+            hist_buf,
+            scratch,
+            rng,
         );
         let right = build_node_rec(
-            binned, y, &right_samples, depth + 1, max_depth, max_features_per_split,
-            exclude_feature, tree, gains, hist_buf, scratch, rng,
+            binned,
+            y,
+            &right_samples,
+            depth + 1,
+            max_depth,
+            max_features_per_split,
+            exclude_feature,
+            tree,
+            gains,
+            hist_buf,
+            scratch,
+            rng,
         );
-        tree.nodes[idx] = Node::Split { feature, bin_threshold, gain, left, right };
+        tree.nodes[idx] = Node::Split {
+            feature,
+            bin_threshold,
+            gain,
+            left,
+            right,
+        };
 
         // Return buffers AFTER the recursive calls finish — those calls borrow
         // the slices, so the Vecs must outlive them.
@@ -221,7 +263,13 @@ pub fn predict_binned(tree: &Tree, binned: &BinnedMatrix, sample: usize) -> f32 
     loop {
         match &tree.nodes[cur] {
             Node::Leaf { value } => return *value,
-            Node::Split { feature, bin_threshold, left, right, .. } => {
+            Node::Split {
+                feature,
+                bin_threshold,
+                left,
+                right,
+                ..
+            } => {
                 let b = binned.bins[*feature * n_samples + sample];
                 cur = if b <= *bin_threshold { *left } else { *right };
             }
@@ -239,7 +287,10 @@ mod tests {
     #[test]
     fn single_feature_split_finds_optimal_threshold() {
         let x: Vec<f32> = (0..40).map(|i| i as f32 / 20.0).collect();
-        let y: Vec<f32> = x.iter().map(|v| if *v < 1.0 { -1.0 } else { 1.0 }).collect();
+        let y: Vec<f32> = x
+            .iter()
+            .map(|v| if *v < 1.0 { -1.0 } else { 1.0 })
+            .collect();
         let bm = BinnedMatrix::from_dense(&x, 40, 1);
         let sample_idx: Vec<usize> = (0..40).collect();
         let mut rng = StdRng::seed_from_u64(0);
@@ -247,9 +298,23 @@ mod tests {
         let mut gains = vec![0.0_f32; 1];
         let mut hist = NodeHist::zeros(crate::histogram::MAX_BINS);
         let mut scratch = TreeScratch::new(1);
-        fit_tree_with_scratch(&bm, &y, &sample_idx, 1, 1, None, &mut tree, &mut gains, &mut hist, &mut scratch, &mut rng);
+        fit_tree_with_scratch(
+            &bm,
+            &y,
+            &sample_idx,
+            1,
+            1,
+            None,
+            &mut tree,
+            &mut gains,
+            &mut hist,
+            &mut scratch,
+            &mut rng,
+        );
         assert!(gains[0] > 0.0);
-        let err: f32 = (0..40).map(|i| (predict_binned(&tree, &bm, i) - y[i]).abs()).sum();
+        let err: f32 = (0..40)
+            .map(|i| (predict_binned(&tree, &bm, i) - y[i]).abs())
+            .sum();
         assert!(err < 1.0, "err = {}", err);
     }
 
@@ -274,8 +339,25 @@ mod tests {
         let mut gains = vec![0.0_f32; nf];
         let mut hist = NodeHist::zeros(crate::histogram::MAX_BINS);
         let mut scratch = TreeScratch::new(nf);
-        fit_tree_with_scratch(&bm, &y, &sample_idx, 3, 2, None, &mut tree, &mut gains, &mut hist, &mut scratch, &mut rng);
-        assert!(gains[0] > gains[1] * 2.0, "g[0]={} g[1]={}", gains[0], gains[1]);
+        fit_tree_with_scratch(
+            &bm,
+            &y,
+            &sample_idx,
+            3,
+            2,
+            None,
+            &mut tree,
+            &mut gains,
+            &mut hist,
+            &mut scratch,
+            &mut rng,
+        );
+        assert!(
+            gains[0] > gains[1] * 2.0,
+            "g[0]={} g[1]={}",
+            gains[0],
+            gains[1]
+        );
     }
 
     #[test]
@@ -289,7 +371,11 @@ mod tests {
             let b: f32 = (i % 10) as f32 / 10.0;
             x[i * nf] = a;
             x[i * nf + 1] = b;
-            y[i] = if i < n / 2 { ((i % 3) as f32) * 0.01 } else { 3.0 * b };
+            y[i] = if i < n / 2 {
+                ((i % 3) as f32) * 0.01
+            } else {
+                3.0 * b
+            };
         }
         let bm = BinnedMatrix::from_dense(&x, n, nf);
         let mut rng = StdRng::seed_from_u64(1);
@@ -297,8 +383,25 @@ mod tests {
         let mut gains = vec![0.0_f32; nf];
         let mut hist = NodeHist::zeros(crate::histogram::MAX_BINS);
         let mut scratch = TreeScratch::new(nf);
-        fit_tree_with_scratch(&bm, &y, &(0..n).collect::<Vec<_>>(), 3, 2, None, &mut tree, &mut gains, &mut hist, &mut scratch, &mut rng);
-        assert!(gains[1] > 10.0, "right-subtree secondary signal: g[1]={} g[0]={}", gains[1], gains[0]);
+        fit_tree_with_scratch(
+            &bm,
+            &y,
+            &(0..n).collect::<Vec<_>>(),
+            3,
+            2,
+            None,
+            &mut tree,
+            &mut gains,
+            &mut hist,
+            &mut scratch,
+            &mut rng,
+        );
+        assert!(
+            gains[1] > 10.0,
+            "right-subtree secondary signal: g[1]={} g[0]={}",
+            gains[1],
+            gains[0]
+        );
     }
 
     #[test]
@@ -320,7 +423,19 @@ mod tests {
         let mut gains = vec![0.0_f32; nf];
         let mut hist = NodeHist::zeros(crate::histogram::MAX_BINS);
         let mut scratch = TreeScratch::new(nf);
-        fit_tree_with_scratch(&bm, &y, &(0..n).collect::<Vec<_>>(), 3, 3, Some(0), &mut tree, &mut gains, &mut hist, &mut scratch, &mut rng);
+        fit_tree_with_scratch(
+            &bm,
+            &y,
+            &(0..n).collect::<Vec<_>>(),
+            3,
+            3,
+            Some(0),
+            &mut tree,
+            &mut gains,
+            &mut hist,
+            &mut scratch,
+            &mut rng,
+        );
         assert_eq!(gains[0], 0.0);
         assert!(gains[1] + gains[2] > 0.0);
     }

@@ -18,7 +18,7 @@ pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.3.6
 pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.3.6/rustscenic-0.3.6-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 ```
 
-Four runtime dependencies (numpy, pandas, pyarrow, scipy). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64). No dask, no Java, no CUDA.
+Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64). No dask, no Java, no CUDA.
 
 ## Goal
 

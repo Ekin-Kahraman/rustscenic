@@ -90,7 +90,10 @@ impl PeakTable {
                     .map(|i| i as u32)
             })
             .collect();
-        self.chrom_idx.iter().map(|&c| mapping[c as usize]).collect()
+        self.chrom_idx
+            .iter()
+            .map(|&c| mapping[c as usize])
+            .collect()
     }
 }
 
@@ -106,9 +109,7 @@ impl PeakTable {
 pub fn normalise_chrom(name: &str) -> String {
     let trimmed = name.trim();
     // Strip leading "chr" (case-insensitive) if present
-    let no_prefix = if trimmed.len() >= 3
-        && trimmed[..3].eq_ignore_ascii_case("chr")
-    {
+    let no_prefix = if trimmed.len() >= 3 && trimmed[..3].eq_ignore_ascii_case("chr") {
         &trimmed[3..]
     } else {
         trimmed
@@ -127,8 +128,7 @@ pub fn normalise_chrom(name: &str) -> String {
 /// `name` is set to `chrom:start-end`.
 pub fn read_peaks<P: AsRef<Path>>(path: P) -> Result<PeakTable> {
     let path = path.as_ref();
-    let file = File::open(path)
-        .with_context(|| format!("failed to open {}", path.display()))?;
+    let file = File::open(path).with_context(|| format!("failed to open {}", path.display()))?;
     let reader: Box<dyn Read> = if path
         .extension()
         .and_then(|e| e.to_str())
@@ -216,12 +216,15 @@ chr2\t100\t200\t.
         assert_eq!(t.len(), 4);
         assert_eq!(t.n_chroms(), 2);
         assert_eq!(t.chrom_names, vec!["chr1", "chr2"]);
-        assert_eq!(t.name, vec![
-            "peak_1".to_string(),
-            "peak_2".to_string(),
-            "chr2:10-50".to_string(),      // no name
-            "chr2:100-200".to_string(),    // dot placeholder
-        ]);
+        assert_eq!(
+            t.name,
+            vec![
+                "peak_1".to_string(),
+                "peak_2".to_string(),
+                "chr2:10-50".to_string(),   // no name
+                "chr2:100-200".to_string(), // dot placeholder
+            ]
+        );
     }
 
     #[test]
