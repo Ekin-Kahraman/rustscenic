@@ -1,0 +1,80 @@
+{
+  "release": "v0.3.6",
+  "rustscenic_version": "0.3.6",
+  "rustscenic_sha": "f1deacf55c5d16592f5f95d2ab8a900b23c5b70c",
+  "command": "fresh-venv: pip install rustscenic[validation] @ git+...@v0.3.6 + smoke script",
+  "dataset": {
+    "name": "10x pbmc_unsorted_3k",
+    "source": "cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_unsorted_3k",
+    "rna_h5_md5": "bd4cc4ff040987e1438f1737be606a27",
+    "atac_fragments_md5_first_8mb": "defe16435368e197839673dc8d671651",
+    "peaks_bed_md5": "81ebb01a7aef0a83ee1ecb084ec78664"
+  },
+  "shapes": {
+    "rna_raw": [
+      3009,
+      36601
+    ],
+    "rna_post_qc": [
+      2767,
+      21335
+    ],
+    "atac_raw_barcodes": [
+      451378,
+      81156
+    ],
+    "shared_cells": 2767,
+    "n_atac_peaks": 81156
+  },
+  "stages": {
+    "load_rna": {
+      "wall_s": 0.64,
+      "peak_rss_gb": 0.68
+    },
+    "fragments_to_matrix": {
+      "wall_s": 14.91,
+      "peak_rss_gb": 2.23
+    },
+    "rna_qc": {
+      "wall_s": 6.73,
+      "peak_rss_gb": 2.23
+    },
+    "grn": {
+      "wall_s": 643.74,
+      "peak_rss_gb": 2.23
+    },
+    "aucell": {
+      "wall_s": 0.19,
+      "peak_rss_gb": 2.23
+    },
+    "topics": {
+      "wall_s": 113.99,
+      "peak_rss_gb": 2.88
+    }
+  },
+  "results": {
+    "n_grn_edges": 2356587,
+    "n_regulons_min10": 1420,
+    "topics_unique_top1_of_K": [
+      3,
+      10
+    ],
+    "canonical_pbmc_tfs_present": {
+      "SPI1": true,
+      "PAX5": true,
+      "GATA3": true,
+      "TBX21": true,
+      "EBF1": true
+    },
+    "canonical_hit_count": "5/5"
+  },
+  "env": {
+    "python": "3.13.9",
+    "scanpy": "1.12.1",
+    "anndata": "0.12.11",
+    "os": "Darwin 25.4.0 arm64",
+    "cpu": "Apple M5",
+    "n_cpus": 10,
+    "total_ram_gb": null
+  }
+}
