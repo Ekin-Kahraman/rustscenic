@@ -63,14 +63,14 @@ The release is "publishable end-to-end" only when ALL of:
 
 - [x] Fresh install works on every declared install path (core ✓, examples ✓, validation ✓; reference/benchmarks declared but not auto-tested)
 - [x] Synthetic multiome end-to-end completes via `pipeline.run` (covered by `test_full_scenicplus_smoke.py` + `test_pipeline_integration.py`, 12 passing)
-- [ ] **Real-data** PBMC multiome end-to-end completes from a fresh venv without intervention
-- [ ] Memory/time table has hardware, dataset, command, version baked in alongside numbers
+- [x] **Real-data** PBMC multiome end-to-end completes from a fresh venv without intervention (`validation/multiome_pbmc_3k_v0.3.6.json` — 10x pbmc_unsorted_3k, 5/5 canonical PBMC TFs in regulons, 2.3 GB peak RSS)
+- [x] Memory/time table has hardware, dataset, command, version baked in alongside numbers (per-stage wall+RSS in the artefact; rustscenic SHA, MD5 of dataset files, env all baked)
 - [ ] SCENIC+/pySCENIC parity numbers regenerated against current pyscenic, not 2026-04-snapshot
 - [x] Docs tell users exactly which install path to use (`docs/tester-quickstart.md` ✓)
 - [x] Bit-identical determinism under same seed verified (live + Rust inline tests)
 - [ ] Audit workflow checks each install path's smoke test on every tag push
 
-v0.3.6 satisfies 5 of 8. Status: "compute stages individually validated, end-to-end collaborator path not yet release-gated".
+v0.3.6 satisfies 7 of 8. Outstanding: parity-number regeneration against current pyscenic + audit-workflow per-extra install matrix. Status: "compute stages individually validated, end-to-end collaborator path not yet release-gated".
 
 ## 5. What changes from v0.3.6 to a publishable release
 
