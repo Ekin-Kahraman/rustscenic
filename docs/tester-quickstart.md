@@ -17,6 +17,23 @@ if your network can't pull from git directly.
 Requires Python 3.10–3.13. Linux + macOS only (Windows untested).
 Brings four runtime deps: numpy, pandas, pyarrow, scipy.
 
+If you are running the example or validation scripts from the current v0.3.5
+release, add the validation dependencies too:
+
+```bash
+pip install --upgrade "scanpy>=1.10" "anndata>=0.10" "igraph>=0.11" "leidenalg>=0.10" "scikit-learn>=1.3"
+```
+
+That adds the ecosystem packages used outside rustscenic core: scanpy,
+anndata, igraph, leidenalg, and scikit-learn.
+
+From a source checkout, or after the next release containing the validation
+extra, use:
+
+```bash
+pip install -e ".[validation]"
+```
+
 ## RNA-only smoke test (10 lines)
 
 If you have a scRNA AnnData and a TF list, this is the smallest run
@@ -78,6 +95,18 @@ If the run looks wrong, please paste:
 Then I can usually tell you within an hour whether it's a known
 class of bug, a config issue on your side, or something new for me
 to fix.
+
+For performance or biological validation runs, send one row per dataset with:
+
+1. Rustscenic version, command, Python version, OS, CPU, and RAM
+2. Cells, genes, peaks, nonzeros, and whether the matrix is sparse or dense
+3. Wall time and peak RSS for each stage: GRN, AUCell, topics, cistarget, enhancer
+4. Topic method, topic count, seed, and number of unique top-1 topics
+5. Marker consistency, ARI/NMI where available, and top regulons per cluster
+
+If Online VB gives few unique top-1 topics on small or sparse ATAC data, rerun
+the topic stage with `topics_method="gibbs"` and the same seed before treating
+topic quality as a RustScenic biology failure.
 
 ## Where to ask
 

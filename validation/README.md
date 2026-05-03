@@ -4,6 +4,24 @@ Reproducibility scripts + measurement artefacts behind the rustscenic README
 numbers. Every claim made in the top-level README and CHANGELOG has a
 corresponding script here.
 
+## Install validation dependencies
+
+The rustscenic core package intentionally keeps clustering and scverse
+dependencies out of the default install. Most collaborator-facing validation
+scripts do use scanpy clustering and sklearn metrics.
+
+From a source checkout, install the validation extra before running them:
+
+```bash
+pip install -e ".[validation]"
+```
+
+For the current v0.3.5 release, install the validation dependencies explicitly:
+
+```bash
+pip install --upgrade "scanpy>=1.10" "anndata>=0.10" "igraph>=0.11" "leidenalg>=0.10" "scikit-learn>=1.3"
+```
+
 ## Layout
 
 - `ziegler_headtohead_2026-04-19.md` — flagship real-atlas head-to-head
@@ -22,7 +40,7 @@ corresponding script here.
 ## ⚠️ Paths are historically hardcoded
 
 Most of the `validate_*.py` scripts hardcode absolute paths to the author's
-filesystem (`/Users/ekin/rustscenic/validation/reference/data/...`). These
+filesystem (`/Users/ekin/projects/bio/rustscenic/validation/reference/data/...`). These
 are the original research scripts committed for reproducibility, **not**
 user-facing entry points — if you want to regenerate numbers on your own
 environment, you will need to adapt the paths. The rustscenic package

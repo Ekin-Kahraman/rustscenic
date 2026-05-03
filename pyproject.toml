@@ -40,6 +40,21 @@ dependencies = [
     "scipy>=1.8",
 ]
 
+[project.optional-dependencies]
+examples = [
+    "anndata>=0.10",
+    "scanpy>=1.10",
+    "igraph>=0.11",
+    "leidenalg>=0.10",
+]
+validation = [
+    "anndata>=0.10",
+    "scanpy>=1.10",
+    "igraph>=0.11",
+    "leidenalg>=0.10",
+    "scikit-learn>=1.3",
+]
+
 [project.scripts]
 rustscenic = "rustscenic.cli:main"
 
