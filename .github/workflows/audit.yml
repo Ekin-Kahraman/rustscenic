@@ -51,12 +51,13 @@ jobs:
       - run: maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml
       - run: pip install target/wheels/rustscenic-*.whl --force-reinstall --no-deps
       # Smoke test the full API surface. Version pulled dynamically from pyproject.toml
-      # via a local-only Python step (no external input) so a release bump can't
-      # desync the workflow assertion.
+      # via a regex (works on Python 3.10+; tomllib is 3.11+ stdlib only) so a
+      # release bump can't desync the workflow assertion.
       - run: |
           python <<'PY'
-          import tomllib, importlib.metadata, rustscenic
-          expected = tomllib.load(open('pyproject.toml','rb'))['project']['version']
+          import re, importlib.metadata, rustscenic
+          with open('pyproject.toml') as f:
+              expected = re.search(r'^version\s*=\s*"([^"]+)"', f.read(), re.MULTILINE).group(1)
           installed = importlib.metadata.version('rustscenic')
           assert installed == expected, f'version mismatch: installed={installed} expected={expected}'
           for stage in ['grn', 'aucell', 'topics', 'cistarget']:
