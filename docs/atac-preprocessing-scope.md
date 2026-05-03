@@ -122,14 +122,14 @@ MACS2 broadPeak files on real ENCODE / 10x multiome fragments.
 
 Today:
 ```
-pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.5
+pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.6
 pip install pycisTopic          # breaks on modern Python
 pip install macs2               # needs numpy + conda-ish
 ```
 
 After v0.2:
 ```
-pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.5
+pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.6
                                 # covers 4 SCENIC+ compute stages
                                 # + fragment I/O, QC, matrix build
                                 # + MACS2-free consensus peak calling

@@ -54,6 +54,25 @@ validation = [
     "leidenalg>=0.10",
     "scikit-learn>=1.3",
 ]
+# Reference (parity vs the SCENIC ecosystem). Linux-friendly; on macOS the
+# canonical reproducible path is the pinned Docker image at validation/reference/Dockerfile.
+reference = [
+    "anndata>=0.10",
+    "scanpy>=1.10",
+    "scikit-learn>=1.3",
+    "pyscenic>=0.12",
+    "arboreto>=0.1.6",
+    "ctxcore>=0.2",
+]
+# Topic-model benchmarks (rustscenic.topics vs tomotopy / gensim LDA).
+benchmarks = [
+    "anndata>=0.10",
+    "scanpy>=1.10",
+    "scikit-learn>=1.3",
+    "tomotopy>=0.12",
+    "gensim>=4.3",
+    "psutil>=5.9",
+]
 
 [project.scripts]
 rustscenic = "rustscenic.cli:main"

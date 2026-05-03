@@ -8,7 +8,7 @@ back if anything is off.
 ## Install
 
 ```bash
-pip install --upgrade git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.5
+pip install --upgrade git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.6
 ```
 
 Wheels are also at the [latest release page](https://github.com/Ekin-Kahraman/rustscenic/releases/latest)
@@ -17,22 +17,26 @@ if your network can't pull from git directly.
 Requires Python 3.10–3.13. Linux + macOS only (Windows untested).
 Brings four runtime deps: numpy, pandas, pyarrow, scipy.
 
-If you are running the example or validation scripts from the current v0.3.5
-release, add the validation dependencies too:
+If you are running the example or validation scripts, install the
+validation extra in one line (v0.3.6+):
 
 ```bash
-pip install --upgrade "scanpy>=1.10" "anndata>=0.10" "igraph>=0.11" "leidenalg>=0.10" "scikit-learn>=1.3"
+pip install --upgrade "rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.6"
 ```
 
 That adds the ecosystem packages used outside rustscenic core: scanpy,
 anndata, igraph, leidenalg, and scikit-learn.
 
-From a source checkout, or after the next release containing the validation
-extra, use:
+From a source checkout, use:
 
 ```bash
 pip install -e ".[validation]"
 ```
+
+For SCENIC-ecosystem parity benchmarks (pyscenic, arboreto, ctxcore), use
+`[reference]`. For topic-model benchmarks (tomotopy, gensim), use `[benchmarks]`.
+The canonical reproducible reference path remains the pinned Docker image at
+`validation/reference/Dockerfile`.
 
 ## RNA-only smoke test (10 lines)
 
