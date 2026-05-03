@@ -516,9 +516,18 @@ pub fn fit_par(
             .par_iter_mut()
             .enumerate()
             .for_each(|(t_idx, ts)| {
-                let rng_seed = seed
-                    .wrapping_add(iter as u64)
-                    .wrapping_add(t_idx as u64 * 0x9E3779B9);
+                // Mix (seed, iter, t_idx) into a 64-bit-uniform stream.
+                // Plain wrapping_add with a 32-bit stride (0x9E3779B9) leaves
+                // adjacent threads with seeds differing by a small structured
+                // amount, which can correlate the first few outputs of their
+                // RNGs and bias topic sampling on sparse corpora. splitmix64
+                // expands the combination to the full 64-bit range so threads
+                // see independent streams.
+                let rng_seed = splitmix64(
+                    seed
+                        .wrapping_add((iter as u64).wrapping_mul(0xBF58476D1CE4E5B9))
+                        .wrapping_add((t_idx as u64).wrapping_mul(0x9E3779B97F4A7C15)),
+                );
                 run_thread_sweep(ts, &snap_n_kw, &snap_n_k, &params, rng_seed);
             });
         merge_deltas(&mut n_kw, &mut n_k, &threads, n_topics, n_words);
@@ -547,6 +556,18 @@ pub fn fit_par(
         beta,
         n_iters_run: n_iters,
     }
+}
+
+/// SplitMix64 — used to mix (seed, iter, t_idx) into a 64-bit-uniform stream
+/// before each parallel sweep. Avoids structured correlation between adjacent
+/// thread RNGs that the previous wrapping_add(0x9E3779B9) construction allowed.
+#[inline]
+fn splitmix64(mut x: u64) -> u64 {
+    x = x.wrapping_add(0x9E3779B97F4A7C15);
+    let mut z = x;
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D049BB133111EB);
+    z ^ (z >> 31)
 }
 
 #[cfg(test)]

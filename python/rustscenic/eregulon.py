@@ -57,6 +57,10 @@ class ERegulon:
     target_genes: list[str] = field(default_factory=list)
     n_enhancer_links: int = 0
     motif_auc: float = 0.0
+    # target -> set of peaks linking to it. Preserves the per-edge support
+    # so eregulons_to_dataframe can emit only real (enhancer, target) pairs
+    # rather than the Cartesian product of (enhancers x target_genes).
+    target_to_peaks: dict = field(default_factory=dict)
 
     def __len__(self) -> int:
         return len(self.target_genes)
@@ -203,6 +207,7 @@ def build_eregulons(
                 target_genes=sorted(target_to_peaks.keys()),
                 n_enhancer_links=n_edges,
                 motif_auc=motif_auc_mean,
+                target_to_peaks={g: sorted(p) for g, p in target_to_peaks.items()},
             )
         )
 
@@ -261,11 +266,24 @@ def eregulons_to_dataframe(eregulons: Sequence[ERegulon]) -> pd.DataFrame:
     """
     rows = []
     for er in eregulons:
-        for enh in er.enhancers:
-            for tgt in er.target_genes:
-                rows.append(
-                    (er.tf, enh, tgt, er.n_enhancer_links, er.motif_auc)
-                )
+        # Emit one row per actual (peak, target_gene) edge, not the Cartesian
+        # product of (enhancers x target_genes) — n_enhancer_links is the true
+        # support count and the dataframe should match it.
+        if er.target_to_peaks:
+            for tgt, peaks in er.target_to_peaks.items():
+                for enh in peaks:
+                    rows.append(
+                        (er.tf, enh, tgt, er.n_enhancer_links, er.motif_auc)
+                    )
+        else:
+            # Fallback for ERegulon objects deserialised from older artefacts
+            # without target_to_peaks; preserve old behaviour rather than
+            # dropping rows on legacy data.
+            for enh in er.enhancers:
+                for tgt in er.target_genes:
+                    rows.append(
+                        (er.tf, enh, tgt, er.n_enhancer_links, er.motif_auc)
+                    )
     return pd.DataFrame(
         rows,
         columns=["tf", "enhancer", "target_gene", "n_enhancer_links", "motif_auc"],

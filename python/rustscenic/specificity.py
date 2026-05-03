@@ -57,20 +57,20 @@ def regulon_specificity_scores(
     groups = np.unique(cell_groups[~pd.isna(cell_groups)])
     auc_arr = auc.values.astype(np.float64)
 
-    # Distribution Q: regulon activity averaged within each group, normalised.
-    # Distribution P: per-group cell-count fraction (i.e., uniform over cells
-    # in that group), broadcasting against regulons.
+    # Distribution Q: per-regulon column-normalised auc (group-independent —
+    # hoist the computation outside the loop so we don't realloc per group).
+    col_sums = auc_arr.sum(axis=0)
+    col_sums[col_sums == 0] = 1.0
+    Q = auc_arr / col_sums  # (n_cells, n_regulons), columns sum to 1
+
+    # Distribution P: per-group cell-count fraction (uniform over cells in that
+    # group), broadcasting against regulons.
     rss = np.zeros((len(groups), auc.shape[1]), dtype=np.float64)
     for gi, g in enumerate(groups):
         mask = cell_groups == g
         n_in = mask.sum()
         if n_in == 0:
             continue
-        # Per-regulon: how concentrated is activity within this group?
-        # Q[c, r] = auc[c, r] / sum(auc[:, r])  (normalised across all cells)
-        col_sums = auc_arr.sum(axis=0)
-        col_sums[col_sums == 0] = 1.0
-        Q = auc_arr / col_sums  # (n_cells, n_regulons), columns sum to 1
         # P[c, r] = 1/n_in if cell c in group g else 0  (column-constant)
         P = mask.astype(np.float64) / max(n_in, 1)
         # JS divergence per regulon: 0.5 * (KL(P || M) + KL(Q || M))

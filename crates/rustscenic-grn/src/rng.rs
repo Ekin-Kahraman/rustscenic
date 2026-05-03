@@ -6,7 +6,7 @@
 //! sklearn's Cython RNG tape. For v0.1 we rely on statistical equivalence
 //! (Spearman/Jaccard gates) rather than bit-identity.
 
-use rand::{RngCore, SeedableRng};
+use rand::{Rng, RngCore, SeedableRng};
 use rand::rngs::StdRng;
 
 pub struct TargetRng {
@@ -41,11 +41,14 @@ fn splitmix64(mut x: u64) -> u64 {
 }
 
 /// Sample `k` distinct indices from `0..n` without replacement (Fisher-Yates head).
-pub fn sample_indices(rng: &mut impl RngCore, n: usize, k: usize) -> Vec<usize> {
+/// Uses `gen_range` for bias-free uniform sampling — matches the pattern in
+/// `tree::choose_feature_subset`. Plain modulo of `next_u64() % m` is biased
+/// when `m` doesn't divide `2^64`.
+pub fn sample_indices(rng: &mut impl Rng, n: usize, k: usize) -> Vec<usize> {
     let k = k.min(n);
     let mut pool: Vec<usize> = (0..n).collect();
     for i in 0..k {
-        let j = i + (rng.next_u64() as usize) % (n - i);
+        let j = i + rng.gen_range(0..(n - i));
         pool.swap(i, j);
     }
     pool.truncate(k);

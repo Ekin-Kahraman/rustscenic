@@ -286,7 +286,15 @@ def download_gene_coords(
     if not gtf_path.exists():
         if verbose:
             print(f"downloading {Path(url).name} → {gtf_path}", flush=True)
-        urllib.request.urlretrieve(url, gtf_path)
+        try:
+            urllib.request.urlretrieve(url, gtf_path)
+        except (OSError, urllib.error.URLError):
+            # Don't leave a truncated GTF on disk; the next run would treat
+            # the partial file as cached and parse a silently incomplete
+            # gene-TSS table, producing biologically wrong eRegulons.
+            if gtf_path.exists():
+                gtf_path.unlink()
+            raise
 
     if verbose:
         print(f"parsing {gtf_path.name} → {parquet_path.name}", flush=True)

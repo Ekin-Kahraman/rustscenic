@@ -38,6 +38,10 @@ dependencies = [
     "pandas>=1.5",
     "pyarrow>=10",
     "scipy>=1.8",
+    # anndata is the central data structure for the SCENIC ecosystem and is
+    # imported unconditionally by `rustscenic.pipeline.run`. Keep it core so
+    # `pip install rustscenic` produces a working orchestrator.
+    "anndata>=0.10",
 ]
 
 [project.optional-dependencies]

@@ -42,7 +42,6 @@ class PipelineResult:
     """
 
     output_dir: Path
-    rna_path: Optional[Path] = None
     atac_matrix_path: Optional[Path] = None
     grn_path: Optional[Path] = None
     regulons_path: Optional[Path] = None
@@ -593,35 +592,49 @@ def _region_cistarget_with_peak_ids(
         empty = pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
         return region_enrich, empty
 
-    peak_sets = {name: list(peaks) for name, peaks in peak_regulons}
     n_regions = region_rankings.shape[1]
     rank_cutoff = max(1, int(np.ceil(top_frac * n_regions)))
-    rows = []
-    for _, row in region_enrich.iterrows():
-        regulon = str(row["regulon"])
-        motif = row["motif"]
-        if motif not in region_rankings.index:
-            continue
-        motif_ranks = region_rankings.loc[motif]
-        for peak in peak_sets.get(regulon, []):
-            if peak not in motif_ranks.index:
-                continue
-            # Aertslab rankings are lower-is-better. Some fixtures are
-            # 0-based, public databases are typically 1-based; <= cutoff
-            # handles both without dropping the boundary rank.
-            if float(motif_ranks[peak]) <= rank_cutoff:
-                rows.append({
-                    "regulon": regulon,
-                    "motif": motif,
-                    "peak_id": peak,
-                    "auc": row["auc"],
-                })
 
-    if not rows:
+    # Vectorised path: build a long-form (regulon, peak) frame, join against
+    # filtered (motif, peak) ranks via region_enrich, drop rows whose peak
+    # exceeds the rank cutoff. Replaces an iterrows + per-row pandas index
+    # lookup loop that stalled at real scale (same anti-pattern v0.3.4 fixed
+    # in the gene-only bridge).
+    peak_long = pd.DataFrame(
+        [(name, p) for name, peaks in peak_regulons for p in peaks],
+        columns=["regulon", "peak_id"],
+    )
+    if peak_long.empty:
         return region_enrich, pd.DataFrame(
             columns=["regulon", "motif", "peak_id", "auc"]
         )
-    return region_enrich, pd.DataFrame(rows)
+
+    # Restrict region_rankings to peaks we actually need, melt to long form.
+    needed_peaks = set(peak_long["peak_id"].astype(str))
+    rank_cols = [p for p in region_rankings.columns if str(p) in needed_peaks]
+    if not rank_cols:
+        return region_enrich, pd.DataFrame(
+            columns=["regulon", "motif", "peak_id", "auc"]
+        )
+    rank_long = (
+        region_rankings[rank_cols]
+        .reset_index()
+        .melt(id_vars=region_rankings.index.name or "index", var_name="peak_id", value_name="rank")
+    )
+    rank_long.columns = ["motif", "peak_id", "rank"]
+    # Aertslab rankings are lower-is-better. <= cutoff handles 0-based and
+    # 1-based fixtures without dropping the boundary rank.
+    rank_long = rank_long[rank_long["rank"].astype(float) <= rank_cutoff]
+
+    enriched = (
+        region_enrich.merge(peak_long, on="regulon", how="inner")
+        .merge(rank_long[["motif", "peak_id"]], on=["motif", "peak_id"], how="inner")
+    )
+    if enriched.empty:
+        return region_enrich, pd.DataFrame(
+            columns=["regulon", "motif", "peak_id", "auc"]
+        )
+    return region_enrich, enriched[["regulon", "motif", "peak_id", "auc"]].copy()
 
 
 def _peak_coords_from_bed(bed_path, atac_var_names):
