@@ -1,0 +1,146 @@
+{
+  "release": "v0.3.10",
+  "smoke_type": "real-data full SCENIC+ E2E via public pipeline.run \u2014 generalisation test",
+  "rustscenic_version": "0.3.10",
+  "rustscenic_sha": "0d89dc81747b28aaf915b442a669e8c256066549",
+  "install_command": "pip install --quiet --upgrade \"rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.10\"",
+  "api_call": "rustscenic.pipeline.run(rna=adata, output_dir=..., adata_atac=adata_atac, motif_rankings=mm_rankings, gene_coords=mm_coords, tfs='mm', grn_n_estimators=100, topics_n_topics=10, topics_n_passes=3, eregulon_min_target_genes=2, eregulon_min_enhancer_links=1, seed=777)",
+  "dataset": {
+    "name": "10x e18_mouse_brain_fresh_5k",
+    "source": "cf.10xgenomics.com/samples/cell-arc/2.0.0/e18_mouse_brain_fresh_5k",
+    "species": "Mus musculus (mm10)",
+    "tissue": "embryonic brain (E18.5)",
+    "rna_h5_md5": "bad86f5a9a537f8a23cf78f221cc5f3a",
+    "atac_fragments_md5_first_8mb": "83ffec5ceac3378ad9c5f825a6107eaa",
+    "peaks_bed_md5": "b8c398e9e7b4505303768be0cfed01f6"
+  },
+  "shapes": {
+    "rna_post_qc": [
+      4770,
+      21664
+    ],
+    "atac_subset_to_rna_cells": [
+      4770,
+      172193
+    ]
+  },
+  "wall_s": {
+    "setup": 52.78,
+    "pipeline_run_total": 826.4
+  },
+  "peak_rss_gb": 4.01,
+  "outputs_non_empty": {
+    "grn": true,
+    "regulons": true,
+    "cistarget": true,
+    "enhancer_links": true,
+    "eregulons": true,
+    "integrated_adata": true
+  },
+  "headline_counts": {
+    "n_grn_edges": 2739545,
+    "n_regulons": 1407,
+    "n_cistarget_rows": 1216912,
+    "n_enhancer_links": 7620,
+    "n_eregulons": 1125
+  },
+  "biological_sanity": {
+    "expected_e18_cortex_tfs": [
+      "Pax6",
+      "Neurod2",
+      "Sox2",
+      "Ascl1",
+      "Tbr1",
+      "Neurog2",
+      "Fezf2",
+      "Eomes",
+      "Foxg1"
+    ],
+    "found_in_regulons": [
+      "Ascl1",
+      "Eomes",
+      "Fezf2",
+      "Foxg1",
+      "Neurod2",
+      "Neurog2",
+      "Pax6",
+      "Sox2",
+      "Tbr1"
+    ],
+    "missing_from_regulons": [],
+    "fraction_recovered": 1.0
+  },
+  "output_inventory": {
+    "atac_matrix_path": {
+      "path": "atac_cells_by_peaks.h5ad",
+      "exists": true,
+      "size_bytes": 372539088
+    },
+    "grn_path": {
+      "path": "grn.parquet",
+      "exists": true,
+      "size_bytes": 16721212
+    },
+    "regulons_path": {
+      "path": "regulons.json",
+      "exists": true,
+      "size_bytes": 1042741
+    },
+    "aucell_path": {
+      "path": "aucell.parquet",
+      "exists": true,
+      "size_bytes": 16336579
+    },
+    "topics_dir": {
+      "path": "topics",
+      "exists": true,
+      "size_bytes": 128
+    },
+    "cistarget_path": {
+      "path": "cistarget_enriched.parquet",
+      "exists": true,
+      "size_bytes": 4532025
+    },
+    "enhancer_links_path": {
+      "path": "enhancer_links.parquet",
+      "exists": true,
+      "size_bytes": 394046
+    },
+    "eregulons_path": {
+      "path": "eregulons.parquet",
+      "exists": true,
+      "size_bytes": 232158
+    },
+    "integrated_adata_path": {
+      "path": "rna_with_regulons.h5ad",
+      "exists": true,
+      "size_bytes": 156872328
+    }
+  },
+  "elapsed_per_stage": {
+    "preproc": 0.0,
+    "topics": 92.51468200000818,
+    "grn": 600.1750618330261,
+    "cistarget": 1.5097375830227975,
+    "enhancer": 23.852107791986782,
+    "eregulons": 44.636349125008564,
+    "aucell": 0.337511124991579
+  },
+  "env": {
+    "python": "3.13.9",
+    "scanpy": "1.12.1",
+    "anndata": "0.12.11",
+    "os": "Darwin 25.4.0 arm64",
+    "cpu": "Apple M5",
+    "n_cpus": 10
+  },
+  "scope_notes": [
+    "Generalisation test for rustscenic v0.3.10: SECOND real multiome dataset, different species (mouse vs human), different tissue (embryonic CNS vs adult PBMC), different cell composition.",
+    "Pre-pipeline setup (RNA QC, ATAC subset, motif/gene-coords download) recorded separately from pipeline.run wall time.",
+    "ATAC matrix is pre-subset to RNA-QC'd cells (the v0.3.8 adata_atac path).",
+    "GRN n_estimators=100 (smoke speed); README claims at n_estimators=5000 \u2014 different operating point.",
+    "eRegulon thresholds set permissively (min_target_genes=2, min_enhancer_links=1) for orchestration proof.",
+    "Topics method=vb (default). If VB collapses topics on this dataset, retry with method='gibbs'.",
+    "Biological sanity uses a small set of E18 mouse cortex marker TFs (PAX6/NEUROD2/SOX2/ASCL1/TBR1/NEUROG2/FEZF2/EOMES/FOXG1). Recovery \u22653/9 is the floor we'd accept for orchestrator-correctness; real biology validation needs the [reference] pipeline + cell-type annotation."
+  ]
+}

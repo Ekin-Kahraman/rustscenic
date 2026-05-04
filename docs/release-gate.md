@@ -33,8 +33,9 @@ Status as of v0.3.10:
 - `examples/atac_fragments_to_matrix.py`: ✅ covered by `tests/test_preproc_python_api.py` (11 tests pass)
 - Full `pipeline.run` (RNA + ATAC + motifs + enhancer + eRegulon): ✅ covered by `tests/test_full_scenicplus_smoke.py` (2 pass) + `tests/test_pipeline_integration.py` (10 pass — multiome, cellxgene-shaped RNA, gene coords, gibbs topics, region cistarget, rankings parsing)
 - Real PBMC multiome end-to-end via public orchestrator: ✅ proven on v0.3.9 (`validation/multiome_pipeline_run_v0.3.9.json` — 2,767 cells, 2.22M GRN edges, 1,420 regulons, 8,621 enhancer links, **1,091 eRegulons**, 451 s pipeline.run wall, 3.67 GB peak RSS, Apple M5)
+- Real mouse brain E18 multiome end-to-end via same public orchestrator (generalisation across species, tissue, developmental stage): ✅ proven on v0.3.10 (`validation/multiome_pipeline_run_v0.3.10_brain_e18.json` — 4,770 cells, 2.74M GRN edges, 1,407 regulons, 7,620 enhancer links, **1,125 eRegulons**, 826 s pipeline.run wall, 4.01 GB peak RSS, **9/9 expected E18 cortex marker TFs (Pax6/Neurod2/Sox2/Ascl1/Tbr1/Neurog2/Fezf2/Eomes/Foxg1) recovered as regulons**)
 
-Aggregate as of v0.3.10: **148 Python tests pass (1 skipped) + 57 Rust inline tests pass (grn 12, topics 8, preproc 32, aucell 5). Bit-identical determinism verified live (68,565-edge GRN identical under same seed). Real-data full SCENIC+ E2E via public `pipeline.run` produces non-empty eRegulons.**
+Aggregate as of v0.3.10: **148 Python tests pass (1 skipped) + 57 Rust inline tests pass (grn 12, topics 8, preproc 32, aucell 5). Bit-identical determinism verified live (68,565-edge GRN identical under same seed). Real-data full SCENIC+ E2E via public `pipeline.run` produces non-empty eRegulons on two real datasets across human PBMC and mouse embryonic brain.**
 
 ## 3. Claim-vs-evidence matrix
 
@@ -54,6 +55,7 @@ Anchor claims at v0.3.10:
 | 100k-cell bootstrap 17 min / 5 GB peak RSS | scaling logs | ⚠ requires real data |
 | Bit-identical output under same seed | `crates/rustscenic-grn/src/rng.rs` + `crates/rustscenic-topics/src/gibbs.rs` inline tests + live 68,565-edge GRN reproducibility check | ✅ proven |
 | End-to-end real PBMC multiome runs without hand-holding | `validation/multiome_pipeline_run_v0.3.9.json` — single `pipeline.run` call on real 10x pbmc_unsorted_3k produces 1,091 eRegulons via the public orchestrator | ✅ proven on v0.3.9 (caller pre-subsets ATAC via `adata_atac=…`; raw-fragments-without-subsetting is a separate open item) |
+| End-to-end multiome generalises across species + tissue (not human-PBMC-only) | `validation/multiome_pipeline_run_v0.3.10_brain_e18.json` — same public `pipeline.run` path on 10x e18_mouse_brain_fresh_5k produces 1,125 eRegulons with 9/9 expected cortex marker TFs (Pax6/Neurod2/Sox2/Ascl1/Tbr1/Neurog2/Fezf2/Eomes/Foxg1) recovered as regulons | ✅ proven on v0.3.10 |
 
 The `⚠` and `❌` rows are the publication-threshold bottleneck.
 
