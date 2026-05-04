@@ -1,0 +1,13 @@
+{
+  "rustscenic_version": "0.3.10",
+  "wall_clock_s": 214.31,
+  "peak_rss_gb": 0.37,
+  "n_edges": 1138108,
+  "n_tfs_used": 1274,
+  "n_cells": 2700,
+  "n_genes": 13714,
+  "n_estimators": 5000,
+  "seed": 777,
+  "input_h5ad": "/Users/ekin/projects/bio/rustscenic/validation/parity_v0310/pbmc3k.h5ad",
+  "input_tfs": "/Users/ekin/projects/bio/rustscenic/validation/parity_v0310/allTFs_hg38.txt"
+}

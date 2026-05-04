@@ -1,10 +1,17 @@
 # Pinned reference environment for rustscenic audit.
-# This image is ground truth. Every PR runs against it; we do not upgrade.
+# This image is ground truth for parity comparisons; every release regenerates
+# numbers against it. Versions are pinned so output is reproducible.
 #
 # Known quirks (baked into our choices here):
 #   - arboreto 0.1.6 sdist is broken on PyPI (build_meta misconfigured) — force --only-binary
 #   - arboreto's Dask cluster path crashes on every modern dask; run_reference.py uses client=None
-FROM python:3.11-slim
+#   - Python 3.11 base pinned to .7 — Python 3.11.9+ shipped an internal change to
+#     inspect.signature() that breaks dask 2024.1.1's derived_from decorator (TypeError:
+#     descriptor '__call__' for 'type' objects doesn't apply to a 'property' object).
+#   - Dask kept at 2024.1.1 — newer dask (2024.5+) broke arboreto, because arboreto 0.1.6
+#     unconditionally calls `from_delayed([], meta=...)` when include_meta=False, and newer
+#     dask raises `TypeError: Must supply at least one delayed object` on empty input.
+FROM python:3.11.7-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl git build-essential libhdf5-dev \

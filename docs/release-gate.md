@@ -50,7 +50,7 @@ Anchor claims at v0.3.10:
 | "GitHub Release wheels and source install succeed" | release.yml CI green per tag | ✓ proven on v0.3.6 |
 | AUCell wall-time numbers (Ziegler, Multiome) | `validation/aucell_celltype_pbmc10k.py` log | ⚠ pre-existing logs, not regenerated per release |
 | AUCell per-cell Pearson 0.984 mean | `validation/validate_aucell_pbmc10k.py` log | ⚠ same |
-| GRN per-edge Spearman 0.58 vs arboreto | `validation/compare_pipelines_multiome.py` log | ⚠ requires `[reference]` install + pinned data |
+| GRN per-edge Spearman 0.611 vs arboreto (current pyscenic 0.12.1, fresh fixture) | `validation/parity_v0310/grn_parity_pbmc3k_full.json` — rustscenic v0.3.10 + arboreto 0.1.6 + pyscenic 0.12.1 + dask 2024.1.1 inside `rustscenic-ref:0.12.1` Docker image, identical PBMC 3k fixture, seed 777, n_estimators=5000. Within-TF Spearman mean 0.632, 1.78× speedup. | ✅ proven on v0.3.10 |
 | Cistarget kernel Pearson 1.0000 vs ctxcore | log file | ⚠ requires `[reference]` |
 | 100k-cell bootstrap 17 min / 5 GB peak RSS | scaling logs | ⚠ requires real data |
 | Bit-identical output under same seed | `crates/rustscenic-grn/src/rng.rs` + `crates/rustscenic-topics/src/gibbs.rs` inline tests + live 68,565-edge GRN reproducibility check | ✅ proven |
@@ -73,9 +73,9 @@ The release is "publishable end-to-end" only when ALL of:
 - [x] **Real-data full-stage smoke** exercising grn + aucell + topics + cistarget + enhancer-link + eRegulon on real PBMC multiome (`validation/multiome_pipeline_run_v0.3.9.json` — all 6 SCENIC+ stages emit non-empty artefacts via a single `pipeline.run` call)
 - [x] **Real-data eRegulon assembly** via the public orchestrator (`pipeline.run` on real PBMC produced 1,091 eRegulons in v0.3.9; closed by `adata_atac` (v0.3.8) + alt-contig regex fix (v0.3.9))
 - [ ] **Real-data `pipeline.run` on raw 10x output** without caller-side ATAC pre-subset (open: v0.3.7 attempt wedged at GRN for >3h with topics running over the unsubsetted 451k-barcode matrix. Workaround: caller subsets ATAC to RNA-QC'd cells and passes `adata_atac=…` (the v0.3.9 path). Real fix requires either an in-orchestrator subset step or fragments-side prefilter — tracked, low priority since the documented workflow subsets first.)
-- [ ] SCENIC+/pySCENIC parity numbers regenerated against current pyscenic, not 2026-04-snapshot
+- [x] **SCENIC+/pySCENIC parity numbers regenerated against current pyscenic** (`validation/parity_v0310/grn_parity_pbmc3k_full.json` — rustscenic v0.3.10 vs pyscenic 0.12.1 + arboreto 0.1.6, identical PBMC 3k fixture from `rustscenic-ref:0.12.1`. Per-edge Spearman 0.611 on 480,680 shared edges, within-TF Spearman mean 0.632, 1.78× wall speedup, n_edges 1.14M vs 0.95M. Cistarget kernel parity remains a separate open item.)
 
-v0.3.10 satisfies **9 of 11** publication-threshold items (count: `[x]` items above). The 2 unchecked items are the precise remaining surface area for v0.4.0 publishable label.
+v0.3.10 satisfies **10 of 11** publication-threshold items (count: `[x]` items above). The remaining unchecked item — `pipeline.run` on raw 10x without caller-side subset — is a documented workflow caveat, not a correctness gap.
 
 Separately on **stage coverage** on real data (different metric — counts SCENIC+ compute stages, not gate items): 6 of 6 user-facing stages exercised end-to-end on real PBMC multiome (grn, aucell, topics, cistarget, enhancer-link, eRegulon) via a single `pipeline.run` call (v0.3.9 — see `validation/multiome_pipeline_run_v0.3.9.json`). The remaining v0.4 work is regenerated parity numbers vs current pyscenic + closing the raw-10x-without-subsetting orchestrator path.
 

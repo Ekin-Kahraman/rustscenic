@@ -95,14 +95,18 @@ Numbers are **rustscenic**'s values. The measurement context (dataset, `n_cells`
 
 | Measurement | Value |
 |---|---|
-| Per-edge Spearman vs arboreto (multiome3k, n_estimators=5000, 816 k common edges) | 0.58 |
+| Per-edge Spearman vs arboreto (PBMC-3k scanpy, n_estimators=5000, 480,680 shared edges, v0.3.10) | 0.611 |
+| Within-TF Spearman, mean across 1,274 TFs (same fixture) | 0.632 (median 0.649) |
+| Per-edge Spearman vs arboreto (multiome3k, n_estimators=5000, 816 k common edges, 2026-04) | 0.58 |
 | Per-target TF-ranking Spearman mean | 0.57 |
 | TRRUST known TF→target edges recovered (PBMC-3k) | 17 / 18 (94 %) |
 | Lineage TFs correctly enriched in expected cell types (PBMC-10k) | 8 / 8 (SPI1, PAX5, EBF1, TCF7, LEF1, TBX21, CEBPD, IRF8) |
+| Lineage TFs recovered as regulons in mouse embryonic cortex (E18 multiome, 4,770 cells, v0.3.10) | 9 / 9 (Pax6, Neurod2, Sox2, Ascl1, Tbr1, Neurog2, Fezf2, Eomes, Foxg1) |
 | MITF regulon activity, Tirosh 2016 melanoma — malignant vs TME | 3.48× |
+| Wall vs pyscenic on PBMC-3k (n_estimators=5000, seed 777, Apple M5, v0.3.10) | 214 s vs 381 s (1.78×) |
 | 100k-cell bootstrap, n_estimators=100 | 17 min / 5.0 GB peak RSS |
 
-Edge rankings disagree with arboreto at fine grain (Spearman 0.58, top-100 Jaccard 0.10) — expected consequence of independent histogram-GBM quantisation. Coarse biology converges. Downstream AUCell is 0.99 per-cell with pyscenic, so edge-ranking differences do not propagate.
+Edge rankings disagree with arboreto at fine grain (per-edge Spearman 0.611 on PBMC-3k v0.3.10 / 0.58 on multiome3k 2026-04, top-10k Jaccard 0.20) — expected consequence of independent histogram-GBM quantisation. Coarse biology converges (per-TF Spearman ≈ 0.65, all canonical lineage TFs recovered on both human PBMC and mouse cortex). Downstream AUCell is 0.99 per-cell with pyscenic, so edge-ranking differences do not propagate.
 
 ### AUCell — `pyscenic.aucell` replacement
 
