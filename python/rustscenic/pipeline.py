@@ -68,6 +68,7 @@ def run(
     rna: Union[str, Path, Any],
     output_dir: Union[str, Path],
     *,
+    adata_atac: Optional[Any] = None,
     fragments: Union[str, Path, None] = None,
     peaks: Union[str, Path, None] = None,
     tfs: Union[str, Path, Iterable[str], None] = None,
@@ -105,10 +106,19 @@ def run(
         (cells × genes).
     output_dir
         Directory where all artifacts are written. Created if missing.
+    adata_atac
+        Pre-built cells × peaks ``AnnData``, or a path to one on disk.
+        Use this when you already have a cleaned/subset ATAC matrix
+        (e.g. cell-called barcodes only, post-QC). Mutually exclusive
+        with ``fragments`` + ``peaks``: if ``adata_atac`` is provided,
+        the fragments + peaks path is skipped. This avoids carrying
+        the full raw 10x barcode set (~450k empty droplets typical)
+        through topics, which can stall downstream stages on consumer
+        hardware.
     fragments, peaks
         Paths to a 10x-style ``fragments.tsv[.gz]`` and peak BED. When
-        both are provided, rustscenic.preproc builds the cells × peaks
-        AnnData and topics fits on it.
+        both are provided AND ``adata_atac`` is not, rustscenic.preproc
+        builds the cells × peaks AnnData and topics fits on it.
     tfs
         Candidate transcription factor names. Path to a newline-separated
         file, an iterable of strings, or ``None`` to use the bundled
@@ -164,15 +174,33 @@ def run(
     log(f"      RNA shape: {adata_rna.shape}")
 
     # ---- 2. preproc + topics (only if ATAC inputs provided) ----
+    # Two paths into the cells × peaks ATAC matrix:
+    #   (a) `adata_atac` — caller passed an already-built (and typically
+    #       cell-QC-subset) AnnData. Skip preproc entirely.
+    #   (b) `fragments` + `peaks` — read raw 10x outputs and call
+    #       `rustscenic.preproc.fragments_to_matrix`. Note this returns
+    #       ALL observed barcodes (including empty droplets); on raw 10x
+    #       this can be ~10–100× larger than the QC-passed cell count
+    #       and stall downstream stages. Prefer (a) for real workflows.
     atac_matrix_path = None
     topics_dir = None
-    if fragments is not None and peaks is not None:
-        import rustscenic.preproc
-        log("[2/8] preproc: fragments + peaks → cells × peaks")
-        t0 = time.perf_counter()
-        adata_atac = rustscenic.preproc.fragments_to_matrix(fragments, peaks)
-        elapsed["preproc"] = time.perf_counter() - t0
-        log(f"      ATAC shape: {adata_atac.shape}, took {elapsed['preproc']:.1f}s")
+    have_atac_input = adata_atac is not None or (fragments is not None and peaks is not None)
+    if have_atac_input:
+        if adata_atac is not None:
+            if isinstance(adata_atac, (str, Path)):
+                log("[2/8] preproc: loading pre-built ATAC AnnData from disk")
+                adata_atac = ad.read_h5ad(adata_atac)
+            else:
+                log("[2/8] preproc: using caller-provided ATAC AnnData (skipping fragments_to_matrix)")
+            elapsed["preproc"] = 0.0
+            log(f"      ATAC shape: {adata_atac.shape}")
+        else:
+            import rustscenic.preproc
+            log("[2/8] preproc: fragments + peaks → cells × peaks")
+            t0 = time.perf_counter()
+            adata_atac = rustscenic.preproc.fragments_to_matrix(fragments, peaks)
+            elapsed["preproc"] = time.perf_counter() - t0
+            log(f"      ATAC shape: {adata_atac.shape}, took {elapsed['preproc']:.1f}s")
 
         atac_matrix_path = output_dir / "atac_cells_by_peaks.h5ad"
         adata_atac.write_h5ad(atac_matrix_path)
@@ -274,11 +302,18 @@ def run(
         if len(common) == 0:
             log("      skipped — no shared barcodes between RNA and ATAC")
         else:
-            # If var_names came from the peak BED's name column they may
-            # not be coord-formatted (`chr1:100-200`). Read coords from
-            # the BED file directly and align to var_names so the linker
-            # always has chrom/start/end.
-            peak_coords = _peak_coords_from_bed(peaks, adata_atac_for_link.var_names)
+            # Two paths to peak coords:
+            #   (a) `peaks` BED supplied — read coords from it (handles the
+            #       case where var_names came from the BED name column and
+            #       aren't `chr:start-end`-formatted).
+            #   (b) `adata_atac` was passed pre-built — caller is expected
+            #       to have either coord-formatted var_names OR `chrom`/
+            #       `start`/`end` columns in `var`. enhancer.link_peaks_to_genes
+            #       handles both via `peak_coords=None`.
+            if peaks is not None:
+                peak_coords = _peak_coords_from_bed(peaks, adata_atac_for_link.var_names)
+            else:
+                peak_coords = None
             enhancer_links = rustscenic.enhancer.link_peaks_to_genes(
                 adata_rna[common].copy(),
                 adata_atac_for_link[common].copy(),

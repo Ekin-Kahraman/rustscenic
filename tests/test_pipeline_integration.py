@@ -353,6 +353,105 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     assert result.n_eregulons is not None
 
 
+def test_pipeline_run_with_pre_built_adata_atac_skips_fragments_to_matrix(tmp_path):
+    """When ``adata_atac`` is supplied, pipeline.run uses it directly and
+    does not call fragments_to_matrix. Closes the v0.4 gate item: real-data
+    workflows pre-subset ATAC to QC'd cells before topics, so the orchestrator
+    must accept a pre-built matrix instead of always rebuilding from raw 10x.
+
+    Also: every downstream stage (topics, enhancer, eRegulon) must still
+    fire, identical to the fragments+peaks path.
+    """
+    import anndata as ad, numpy as np, pandas as pd
+    import rustscenic.pipeline
+
+    rng = np.random.default_rng(0)
+    n_cells = 200
+    cluster = np.array([i * 3 // n_cells for i in range(n_cells)], dtype=np.uint32)
+    activity = np.zeros((3, n_cells), dtype=np.float32)
+    for p in range(3):
+        activity[p] = (cluster == p).astype(np.float32) + 0.1 * rng.normal(size=n_cells)
+
+    rna_genes = [f"G{i:03d}" for i in range(30)]
+    X = np.zeros((n_cells, 30), dtype=np.float32)
+    for i in range(15):
+        X[:, i] = activity[i // 5] + 0.2 * rng.normal(size=n_cells)
+    for i in range(15, 30):
+        X[:, i] = rng.normal(size=n_cells).astype(np.float32)
+    X = np.clip(X, 0, None) + 0.1
+    cells = [f"cell{i}" for i in range(n_cells)]
+    rna = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame({"cluster": cluster}, index=cells),
+        var=pd.DataFrame(index=rna_genes),
+    )
+
+    # Build a cells × peaks matrix directly (this is what a user with a
+    # pre-subset ATAC AnnData would have).
+    n_peaks = 9
+    peak_names = [f"chr1:{10000 + (j // 3) * 100000 + (j % 3) * 5000}-{10500 + (j // 3) * 100000 + (j % 3) * 5000}" for j in range(n_peaks)]
+    peak_X = np.zeros((n_cells, n_peaks), dtype=np.float32)
+    for j in range(n_peaks):
+        prog = j // 3
+        peak_X[:, j] = activity[prog] + 0.1 * rng.normal(size=n_cells)
+    peak_X = np.clip(peak_X, 0, None)
+    var = pd.DataFrame({
+        "chrom": ["chr1"] * n_peaks,
+        "start": [10000 + (j // 3) * 100000 + (j % 3) * 5000 for j in range(n_peaks)],
+        "end": [10500 + (j // 3) * 100000 + (j % 3) * 5000 for j in range(n_peaks)],
+    }, index=peak_names)
+    adata_atac = ad.AnnData(
+        X=peak_X,
+        obs=pd.DataFrame(index=cells),
+        var=var,
+    )
+
+    gene_coords = pd.DataFrame(
+        [(f"G{i:03d}", "chr1", 10_000 + (i // 5) * 100_000 + 250) for i in range(15)],
+        columns=["gene", "chrom", "tss"],
+    )
+
+    motif_names = ["M_G000", "M_G005", "M_G010"]
+    n_genes = len(rna_genes)
+    rank_matrix = np.full((len(motif_names), n_genes), n_genes - 1, dtype=np.int32)
+    for tf_idx in range(3):
+        for rank, gene_idx in enumerate([i for i in range(n_genes) if (i // 5 == tf_idx) and (i < 15)]):
+            rank_matrix[tf_idx, gene_idx] = rank
+    motif_rankings = pd.DataFrame(rank_matrix, index=motif_names, columns=rna_genes)
+
+    out = tmp_path / "pipeline_out"
+    result = rustscenic.pipeline.run(
+        rna,
+        out,
+        adata_atac=adata_atac,
+        tfs=["G000", "G005", "G010"],
+        motif_rankings=motif_rankings,
+        gene_coords=gene_coords,
+        grn_n_estimators=15,
+        grn_top_targets=10,
+        topics_n_topics=5,
+        topics_n_passes=2,
+        cistarget_top_frac=0.2,
+        cistarget_auc_threshold=0.0,
+        enhancer_min_abs_corr=0.15,
+        eregulon_min_target_genes=2,
+        eregulon_min_enhancer_links=1,
+        seed=0,
+        verbose=False,
+    )
+
+    # ATAC path was honoured (fragments_to_matrix not called)
+    assert result.atac_matrix_path is not None
+    assert result.atac_matrix_path.exists()
+    # All downstream stages still fired
+    assert result.grn_path.exists()
+    assert result.aucell_path.exists()
+    assert result.cistarget_path.exists()
+    assert result.enhancer_links_path.exists()
+    assert result.eregulons_path is not None
+    assert result.eregulons_path.exists()
+
+
 def test_pipeline_run_topics_method_gibbs(tmp_path):
     """When ``topics_method='gibbs'`` (with ``topics_n_threads > 1``)
     the orchestrator runs the parallel collapsed-Gibbs sampler instead
