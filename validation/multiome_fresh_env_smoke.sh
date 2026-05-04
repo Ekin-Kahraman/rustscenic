@@ -16,12 +16,12 @@ pip install --quiet --upgrade pip
 
 # 2. Install rustscenic[validation] from v0.3.6 tag (the published install path)
 echo "=== installing rustscenic[validation] @ v0.3.6 ==="
-pip install --quiet --upgrade "rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.6"
+pip install --quiet --upgrade "rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.7"
 
 # 3. Capture provenance — read the installed-package SHA via ls-remote of
 # the actual published tag, not local-repo HEAD. Local HEAD reflects the dev
 # tree; the smoke installs from v0.3.6, which can point at a different commit.
-RUSTSCENIC_TAG="v0.3.6"
+RUSTSCENIC_TAG="v0.3.7"
 RUSTSCENIC_SHA=$(git ls-remote https://github.com/Ekin-Kahraman/rustscenic.git "refs/tags/${RUSTSCENIC_TAG}^{}" | awk '{print $1}')
 if [ -z "$RUSTSCENIC_SHA" ]; then
     RUSTSCENIC_SHA=$(git ls-remote https://github.com/Ekin-Kahraman/rustscenic.git "refs/tags/${RUSTSCENIC_TAG}" | awk '{print $1}')
@@ -132,7 +132,7 @@ artefact = {
     "release": "v0.3.6",
     "rustscenic_version": os.environ["RUSTSCENIC_VER"],
     "rustscenic_sha": os.environ["RUSTSCENIC_SHA"],
-    "command": "fresh-venv: pip install rustscenic[validation] @ git+...@v0.3.6 + smoke script",
+    "command": "fresh-venv: pip install rustscenic[validation] @ git+...@v0.3.7 + smoke script",
     "dataset": {
         "name": "10x pbmc_unsorted_3k",
         "source": "cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_unsorted_3k",
