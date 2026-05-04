@@ -57,12 +57,44 @@ n=10 input allows. Edge-rank Jaccards collapse near zero because tree
 construction RNG dominates the importance ranking when each tree memorises
 the entire training set.
 
-**rustscenic edge inflation note**: rustscenic emits ~4,000 edges per
-canonical TF on this fixture; arboreto emits 100–2,500. rustscenic's
-`importance > 0` cutoff is more lenient on under-determined inputs because
-its histogram-GBM importances rarely round to exact zero. This is a
-threshold-policy difference, not a correctness issue. On PBMC where samples
-are abundant, both pipelines emit ~1M edges of similar magnitude.
+**rustscenic edge inflation — root cause investigation**:
+
+rustscenic emits 6.31M edges, arboreto 2.82M, on identical input. Per-TF
+edge distribution:
+- rustscenic: mean 4,272 / median 4,236 / max 5,342 (near-uniform)
+- arboreto: mean 1,911 / median 889 / max 15,681 (winner-takes-most)
+
+Both pipelines use **identical surface parameters** (verified against
+`arboreto.core.SGBM_KWARGS`):
+- learning_rate=0.01, n_estimators=5000, max_features=0.1, subsample=0.9,
+  max_depth=3, early_stop_window=25
+- Both filter `importance > 0`
+
+Empirical test: re-ran rustscenic with `max_features=sqrt(1476)/1476 = 0.026`
+(matching `max_features='sqrt'` semantics). Result: 6.31M edges, essentially
+unchanged. Confirms `max_features` is NOT the cause.
+
+The 4× edge gap on n=10 input is therefore at the **tree-builder /
+gain-accumulator level**, not at the surface-API level. Hypothesis:
+rustscenic's histogram-GBM accumulates partial gain into more features per
+tree than sklearn's exact-split GBM, so importance rarely rounds to exact
+zero. On PBMC (n=2,700) the gap shrinks to 1.2× because real signal
+dominates over feature-sampling noise; on Kamath (n=10) trees memorise
+trivially and the implementation difference becomes visible.
+
+This is a real, documentable implementation difference — but:
+1. Both pipelines recover the same 12/12 candidate canonical TFs.
+2. rustscenic's "extra" edges have very low importance (median 0.030, p25
+   0.006, vs arboreto median 0.039, p25 0.009 — same order of magnitude
+   distributions). The extra edges land near the importance>0 floor.
+3. Downstream cistarget pruning uses AUC-threshold filtering which is
+   robust to low-importance noise edges.
+4. The effect is sample-size-induced; not visible at meaningful sample
+   counts.
+
+For users: this matters only if you treat the raw GRN output as the final
+ranked edge list. Standard SCENIC+ workflow filters via cistarget motif
+enrichment, which is rank-aware at the regulon level, not edge level.
 
 ## Track 2 — Cross-algorithm comparison (rustscenic vs Kamath/SCENIC GENIE3)
 
