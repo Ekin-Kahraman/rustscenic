@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-# Bounded real-data full-stage smoke on rustscenic v0.3.7.
+# Bounded real-data multi-stage smoke on rustscenic v0.3.7.
 #
-# Honest scope: exercises every public stage (preproc QC, topics, grn, aucell,
-# cistarget, enhancer-link, eRegulon) ON A BOUNDED SUBSET of real PBMC multiome
-# cells. NOT a full-scale validation of pipeline.run on raw 10x output.
+# Honest scope: exercises 5 of 6 SCENIC+ user-facing stages (grn, aucell,
+# topics, cistarget, enhancer-link) ON A BOUNDED SUBSET of real PBMC multiome
+# cells. The 6th stage (eRegulon assembly) is EXPLICITLY SKIPPED — see the
+# scope_caveats section in the artefact and the [8/8] block below for why
+# (gene-based cistarget output lacks peak_id; build_eregulons requires it).
+# NOT a full-scale validation of pipeline.run on raw 10x output.
 #
 # The earlier full pipeline.run path (validation/multiome_fresh_env_smoke.sh +
 # the unbounded version of this script) wedged at GRN for >3h after topics

@@ -73,7 +73,9 @@ The release is "publishable end-to-end" only when ALL of:
 - [ ] **Real-data `pipeline.run` on raw 10x output** without subsetting (open: the v0.3.7 attempt wedged at GRN for >3h after topics ran on the unsubsetted 451k-barcode matrix; needs an `adata_atac` parameter or fragments-subset preprocessing; tracked but deprioritised — users following the documented workflow subset first)
 - [ ] SCENIC+/pySCENIC parity numbers regenerated against current pyscenic, not 2026-04-snapshot
 
-v0.3.7 satisfies **7 of 11** items. The 4 open items are the precise remaining surface area for v0.4.0 publishable label. Status: "5/6 user-facing stages individually proven on real data (with the 6th, eRegulon, blocked on a known sub-issue); pipeline.run orchestration scaling on raw 10x is the headline gap".
+v0.3.7 satisfies **7 of 11** publication-threshold items (count: `[x]` items above). The 4 unchecked items are the precise remaining surface area for v0.4.0 publishable label.
+
+Separately on **stage coverage** on real data (different metric — counts SCENIC+ compute stages, not gate items): 5 of 6 user-facing stages exercised end-to-end on real PBMC multiome (grn, aucell, topics, cistarget, enhancer-link), with the 6th (eRegulon assembly) blocked by the known peak_id-bridge sub-issue. pipeline.run orchestration scaling on raw 10x is the headline gap that ties both metrics together.
 
 ## 5. What changes from v0.3.6 to a publishable release
 
