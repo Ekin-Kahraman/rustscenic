@@ -1,0 +1,75 @@
+{
+  "tfs": {
+    "NR4A2": {
+      "rust_n_edges": 4383,
+      "arboreto_n_edges": 308,
+      "top10_overlap": 0
+    },
+    "FOXA2": {
+      "rust_n_edges": 4265,
+      "arboreto_n_edges": 1907,
+      "top10_overlap": 1
+    },
+    "LMX1A": {
+      "rust_n_edges": 4262,
+      "arboreto_n_edges": 1184,
+      "top10_overlap": 0
+    },
+    "LMX1B": {
+      "rust_n_edges": 4218,
+      "arboreto_n_edges": 1201,
+      "top10_overlap": 2
+    },
+    "PITX3": {
+      "rust_n_edges": 4242,
+      "arboreto_n_edges": 1887,
+      "top10_overlap": 2
+    },
+    "EN1": {
+      "rust_n_edges": 4026,
+      "arboreto_n_edges": 528,
+      "top10_overlap": 0
+    },
+    "OTX2": {
+      "rust_n_edges": 4201,
+      "arboreto_n_edges": 113,
+      "top10_overlap": 0
+    },
+    "ASCL1": {
+      "rust_n_edges": 4122,
+      "arboreto_n_edges": 653,
+      "top10_overlap": 2
+    },
+    "SOX2": {
+      "rust_n_edges": 4161,
+      "arboreto_n_edges": 726,
+      "top10_overlap": 0
+    },
+    "EN2": {
+      "rust_n_edges": 4073,
+      "arboreto_n_edges": 412,
+      "top10_overlap": 0
+    },
+    "MEF2C": {
+      "rust_n_edges": 4075,
+      "arboreto_n_edges": 2423,
+      "top10_overlap": 0
+    },
+    "MSX1": {
+      "rust_n_edges": 4168,
+      "arboreto_n_edges": 2435,
+      "top10_overlap": 1
+    },
+    "NEUROD1": {
+      "rust_n_edges": 0,
+      "arboreto_n_edges": 0,
+      "top10_overlap": 0
+    }
+  },
+  "summary": {
+    "rust_recovered": 12,
+    "arboreto_recovered": 12,
+    "top10_overlap_at_least_one": 5,
+    "total_canonical": 13
+  }
+}

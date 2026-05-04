@@ -1,0 +1,13 @@
+{
+  "rustscenic_version": "0.3.10",
+  "wall_clock_s": 72.41,
+  "peak_rss_gb": 1.54,
+  "n_edges": 6305910,
+  "n_tfs_used": 1476,
+  "n_cells": 10,
+  "n_genes": 21412,
+  "n_estimators": 5000,
+  "seed": 777,
+  "input_h5ad": "/Users/ekin/projects/bio/rustscenic/validation/kamath_da/kamath_da_subtype_pseudobulk.h5ad",
+  "input_tfs": "/Users/ekin/projects/bio/rustscenic/validation/kamath_da/kamath_tfs_in_matrix.txt"
+}

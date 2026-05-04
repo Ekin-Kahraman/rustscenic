@@ -1,0 +1,18 @@
+{
+  "wall_clock_s": 96.85119518300007,
+  "n_edges": 2820060,
+  "n_tfs_used": 1476,
+  "n_cells": 10,
+  "n_genes": 21412,
+  "seed": 777,
+  "dataset_sha256": "5aab48884348ff49fb39f504b03b5e03c34d19e303d05aac529cacd6aec6c0b3",
+  "reference_stack": {
+    "pyscenic": "0.12.1",
+    "arboreto": "0.1.6",
+    "dask": "2024.1.1",
+    "numpy": "1.26.4",
+    "pandas": "2.1.4",
+    "lightgbm": "4.6.0",
+    "scanpy": "1.11.5"
+  }
+}
