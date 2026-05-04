@@ -172,6 +172,36 @@ density output for downstream tools — but truncation does not actually
 "fix parity" in the asymmetric sense. The raw 0.440 is the honest
 single-pipeline-replacement number.
 
+## Bounded cell-level subset (codex's parallel audit)
+
+Codex ran an independent bounded comparison on a 1,000-cell subset of the
+same dataset (gene-filtered to a smaller set for speed) to confirm whether
+sample-size noise is the dominant cause of the n=10 pseudobulk parity
+drop. Identical inputs to both pipelines, seed 777, n_estimators=5000:
+
+| Metric | n=10 pseudobulk | n=1,000 subset (codex) | n=2,700 PBMC (reference) |
+|---|---|---|---|
+| Per-edge Spearman | 0.440 | **0.571** | 0.611 |
+| Within-TF Spearman mean | 0.408 | 0.550 | 0.632 |
+| Top-10k Jaccard | 0.033 | **0.307** | 0.201 |
+| Per-TF top-20 Jaccard mean | 0.046 | 0.256 | 0.288 |
+| rustscenic edges | 6,305,910 | 941,177 | 1,138,108 |
+| arboreto edges | 2,820,060 | 290,889 | 949,452 |
+| rustscenic median edges/TF | 4,236 | 545 | 893 |
+| arboreto median edges/TF | 889 | 120 | 745 |
+| rustscenic wall (s) | 72 | 86.5 | 214 |
+| arboreto wall (s) | 97 | 141.6 | 381 |
+
+Cell-level dynamics are restored even at 1,000 cells: per-edge Spearman
+jumps from 0.44 (pseudobulk) to 0.57 (1k cells), top-10k Jaccard from
+0.033 to 0.307. This confirms **sample size is the main driver** of the
+Kamath parity drop, not an implementation bug.
+
+The rustscenic-emits-more-edges policy difference persists (rustscenic
+median 545 vs arboreto 120 on the 1k subset), but on cell-level data the
+edges that rustscenic emits beyond arboreto are concentrated near the
+importance>0 floor and don't affect downstream cistarget pruning.
+
 ## Cell-level run (codex's recommended path)
 
 Re-ran rustscenic on the full 15,684 non-disease DA-neuron cells (no
