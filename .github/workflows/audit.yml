@@ -84,6 +84,12 @@ jobs:
   install-matrix:
     runs-on: ubuntu-24.04
     needs: python
+    # Reference (pyscenic + arboreto + ctxcore) is informational because pyscenic
+    # itself fails to import on current setuptools (pkg_resources removed; the
+    # README claim 'pyscenic: ModuleNotFoundError pkg_resources in current stacks'
+    # is precisely this). The Docker reference image is the canonical pinned
+    # path for parity work; don't gate CI on the broken pip path.
+    continue-on-error: ${{ matrix.extra == 'reference' }}
     strategy:
       fail-fast: false
       matrix:
