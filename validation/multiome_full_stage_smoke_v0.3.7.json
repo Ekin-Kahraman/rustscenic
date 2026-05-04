@@ -1,0 +1,110 @@
+{
+  "release": "v0.3.7",
+  "smoke_type": "bounded real-data full-stage smoke (RNA-QC subset)",
+  "rustscenic_version": "0.3.7",
+  "rustscenic_sha": "ec6a2e7a194ab593e7b6ae1c3ea7006484ea171c",
+  "install_command": "pip install --quiet --upgrade \"rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.7\"",
+  "dataset": {
+    "name": "10x pbmc_unsorted_3k",
+    "source": "cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_unsorted_3k",
+    "rna_h5_md5": "bd4cc4ff040987e1438f1737be606a27",
+    "atac_fragments_md5_first_8mb": "defe16435368e197839673dc8d671651",
+    "peaks_bed_md5": "81ebb01a7aef0a83ee1ecb084ec78664"
+  },
+  "shapes": {
+    "rna_post_qc": [
+      2767,
+      21335
+    ],
+    "atac_subset_to_rna_cells": [
+      2767,
+      81156
+    ],
+    "n_tfs_in_var_names": 1420
+  },
+  "stages": {
+    "load_qc": {
+      "wall_s": 5.49,
+      "peak_rss_gb": 0.83
+    },
+    "atac_subset": {
+      "wall_s": 10.9,
+      "peak_rss_gb": 2.14
+    },
+    "grn": {
+      "wall_s": 338.28,
+      "peak_rss_gb": 2.14
+    },
+    "aucell": {
+      "wall_s": 0.23,
+      "peak_rss_gb": 2.14
+    },
+    "topics": {
+      "wall_s": 27.04,
+      "peak_rss_gb": 2.89
+    },
+    "download_motifs": {
+      "wall_s": 0.58,
+      "peak_rss_gb": 2.89
+    },
+    "cistarget": {
+      "wall_s": 2.26,
+      "peak_rss_gb": 2.89
+    },
+    "download_gene_coords": {
+      "wall_s": 1.18,
+      "peak_rss_gb": 2.89
+    },
+    "enhancer": {
+      "wall_s": 6.68,
+      "peak_rss_gb": 2.89
+    }
+  },
+  "outputs_non_empty": {
+    "grn": true,
+    "aucell": true,
+    "topics": true,
+    "cistarget": true,
+    "enhancer_links": true,
+    "eregulons": "skipped (see scope_caveats)"
+  },
+  "results": {
+    "n_grn_edges": 2223404,
+    "n_regulons_min10": 1420,
+    "topics_unique_top1_of_K": [
+      3,
+      10
+    ],
+    "n_cistarget_rows": 1307838,
+    "n_enhancer_links": 8621,
+    "n_eregulons": 0,
+    "canonical_tfs_in_regulons": {
+      "SPI1": true,
+      "PAX5": true,
+      "GATA3": true,
+      "TBX21": true,
+      "EBF1": true
+    },
+    "canonical_tfs_in_eregulons": {
+      "SPI1": false,
+      "PAX5": false,
+      "GATA3": false,
+      "TBX21": false,
+      "EBF1": false
+    }
+  },
+  "env": {
+    "python": "3.13.9",
+    "scanpy": "1.12.1",
+    "anndata": "0.12.11",
+    "os": "Darwin 25.4.0 arm64",
+    "cpu": "Apple M5",
+    "n_cpus": 10
+  },
+  "scope_caveats": [
+    "ATAC matrix subset to RNA-QC'd cells (matches user-recommended workflow per the fragments_to_matrix UserWarning).",
+    "Stages called individually (not via pipeline.run). pipeline.run on raw 10x output without subsetting wedged at GRN for >3h on this hardware (450k+ raw barcodes through topics inflated process state for subsequent GRN). v0.4 gate item 'pipeline.run on full raw 10x' remains open.",
+    "GRN n_estimators=100 (smoke speed). README claims are at n_estimators=5000 \u2014 different operating point.",
+    "eRegulon stage SKIPPED: gene-based cistarget output lacks peak_id; eregulon.build_eregulons requires it. Full eRegulon coverage on real data needs either region-based motif rankings + region cistarget, or the pipeline.run _attribute_peaks_to_cistarget bridge. v0.4 gate item 'real-data eRegulon assembly' remains open."
+  ]
+}

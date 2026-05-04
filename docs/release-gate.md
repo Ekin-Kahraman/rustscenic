@@ -61,17 +61,19 @@ The `⚠` and `❌` rows are the publication-threshold bottleneck.
 
 The release is "publishable end-to-end" only when ALL of:
 
-- [x] Fresh install works on the **publicly tested** install paths (core ✓, examples ✓, validation ✓; reference/benchmarks declared but not auto-tested in CI)
+- [x] Fresh install works on the **publicly tested** install paths (core ✓, examples ✓, validation ✓, benchmarks ✓ via the install-matrix CI job added in 5f6379e; reference is informational-only because pyscenic itself fails to import on current setuptools — README documents this; canonical reference path is the pinned Docker image)
 - [x] Synthetic full SCENIC+ end-to-end completes via `pipeline.run` (preproc → grn → cistarget → enhancer → eRegulon → aucell, covered by `test_full_scenicplus_smoke.py` + `test_pipeline_integration.py`, 12 passing)
-- [x] **Real-data PBMC RNA+ATAC partial smoke** in fresh venv (`validation/multiome_pbmc_3k_v0.3.6.json` — 10x pbmc_unsorted_3k. RNA QC + GRN + AUCell + ATAC topics + biology-presence check. 5/5 canonical PBMC TFs in regulon set. 2.3 GB peak RSS. **Does NOT yet exercise cistarget / enhancer / eRegulon on real data — those are synthetic-only at the test level.**)
-- [x] Memory/time table has hardware, dataset, command, version baked in alongside numbers (per-stage wall+RSS in the artefact; tag SHA, MD5 of dataset files, env baked)
-- [ ] **Real-data full SCENIC+ end-to-end** including motif-rankings download, cistarget enrichment, enhancer linking, eRegulon assembly, in fresh venv
-- [ ] SCENIC+/pySCENIC parity numbers regenerated against current pyscenic, not 2026-04-snapshot
-- [x] Docs tell users exactly which install path to use (`docs/tester-quickstart.md` ✓)
+- [x] **Real-data PBMC RNA+ATAC partial smoke** in fresh venv (`validation/multiome_pbmc_3k_v0.3.6.json` — RNA QC + GRN + AUCell + ATAC topics + biology-presence check. 5/5 canonical PBMC TFs in regulon set, 2.3 GB peak RSS. Does NOT yet exercise cistarget / enhancer / eRegulon on real data.)
+- [x] Memory/time table has hardware, dataset, command, version baked in alongside numbers (per-stage wall+RSS, tag SHA, MD5 of dataset files, env, install command)
 - [x] Bit-identical determinism under same seed verified (live + Rust inline tests)
-- [ ] Audit workflow checks each install path's smoke test on every tag push
+- [x] Docs tell users exactly which install path to use (`docs/tester-quickstart.md` ✓)
+- [x] Audit workflow checks each install path's smoke test on every tag push (install-matrix job in `.github/workflows/audit.yml` since 5f6379e + 87edae8)
+- [ ] **Real-data full-stage smoke** that exercises grn + aucell + topics + cistarget + enhancer-link on real PBMC multiome (target: `validation/multiome_full_stage_smoke_v0.3.7.json` — 5 of 6 stages; eRegulon needs region-rankings or pipeline.run bridge, separate item)
+- [ ] **Real-data eRegulon assembly** via either region-based motif rankings or pipeline.run orchestration (open: gene-based cistarget output lacks peak_id; pipeline.run on raw 10x wedged on this hardware)
+- [ ] **Real-data `pipeline.run` on raw 10x output** without subsetting (open: the v0.3.7 attempt wedged at GRN for >3h after topics ran on the unsubsetted 451k-barcode matrix; needs an `adata_atac` parameter or fragments-subset preprocessing; tracked but deprioritised — users following the documented workflow subset first)
+- [ ] SCENIC+/pySCENIC parity numbers regenerated against current pyscenic, not 2026-04-snapshot
 
-v0.3.6 satisfies **6 of 9**. Outstanding: real-data full SCENIC+ E2E (motif download + cistarget + enhancer + eRegulon on real data), parity-number regeneration against current pyscenic, audit-workflow per-extra install matrix. Status: "compute stages individually validated, RNA+ATAC partial smoke proven on real data, full SCENIC+ orchestration proven only on synthetic data".
+v0.3.7 satisfies **7 of 11** items. The 4 open items are the precise remaining surface area for v0.4.0 publishable label. Status: "5/6 user-facing stages individually proven on real data (with the 6th, eRegulon, blocked on a known sub-issue); pipeline.run orchestration scaling on raw 10x is the headline gap".
 
 ## 5. What changes from v0.3.6 to a publishable release
 
