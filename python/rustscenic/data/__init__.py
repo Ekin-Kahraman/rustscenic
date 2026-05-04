@@ -216,7 +216,15 @@ def download_motif_rankings(
             f"https://resources.aertslab.org/cistarget/databases/{species_dir}/{genome}/ "
             f"for valid options."
         )
-    return rankings.set_index(rankings.columns[0])
+    # Aertslab v10_clust feathers store the motifs column at the END, not the
+    # start. Older fixtures put motif IDs first. Detect by name; fall back to
+    # the first non-numeric column; if everything is numeric, assume column 0.
+    if "motifs" in rankings.columns:
+        index_col = "motifs"
+    else:
+        non_numeric = [c for c in rankings.columns if rankings[c].dtype == object]
+        index_col = non_numeric[0] if non_numeric else rankings.columns[0]
+    return rankings.set_index(index_col)
 
 
 _GENCODE_URLS = {
