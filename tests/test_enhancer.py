@@ -322,3 +322,28 @@ def test_spearman_warns_for_dense_atac_fallback(monkeypatch):
     messages = [str(w.message) for w in caught]
     assert any("rna_adata" in m for m in messages), messages
     assert any("atac_adata" in m for m in messages), messages
+
+
+def test_parse_peak_names_handles_alt_contigs():
+    """10x ATAC peak names include alt-contigs like ``KI270721.1:2090-2985`` and
+    ``GL000220.1:100-200``. The period in the contig token must not break parsing.
+    Regression: pre-v0.3.9 the regex restricted chrom to ``[\\dXYMT...]+`` which
+    rejected dotted accessions and caused pipeline.run to fail at the enhancer
+    stage on raw 10x multiome output.
+    """
+    from rustscenic.enhancer import _parse_peak_names
+
+    names = [
+        "chr1:100-200",
+        "1:300-400",
+        "KI270721.1:2090-2985",
+        "GL000220.1:5000-6000",
+        "chrX:7000-8000",
+    ]
+    parsed = _parse_peak_names(names)
+    assert parsed is not None
+    assert list(parsed["chrom"]) == [
+        "chr1", "1", "KI270721.1", "GL000220.1", "chrX",
+    ]
+    assert list(parsed["start"]) == [100, 300, 2090, 5000, 7000]
+    assert list(parsed["end"]) == [200, 400, 2985, 6000, 8000]

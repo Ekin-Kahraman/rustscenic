@@ -274,17 +274,19 @@ def _peak_frame(atac_adata, peak_coords) -> pd.DataFrame:
 def _parse_peak_names(names):
     """Parse peak names like ``chr1:100-200``, ``1:100-200``, ``chr1-100-200``.
 
-    Accepts both UCSC (``chr1``) and Ensembl (``1``) chromosome conventions
-    because real-world peak BEDs use either. The full chrom token is
-    preserved as-is (including any ``chr`` prefix) so downstream callers
-    that joined on ``chr1`` keep working; chromosome-name normalisation
-    for cross-convention joining is done in ``_normalise_chrom`` at join
-    time rather than here.
+    Accepts UCSC (``chr1``), Ensembl (``1``), and alt-contig conventions
+    (e.g. ``KI270721.1:2090-2985`` from 10x ATAC outputs which include
+    decoys + alt-contigs). The full chrom token is preserved as-is so
+    downstream callers that joined on ``chr1`` keep working; chromosome-
+    name normalisation for cross-convention joining is done in
+    ``_normalise_chrom`` at join time rather than here.
     """
     import re
+    # Permissive chrom token: alphanumerics + `.` + `_` (covers alt-contigs
+    # like KI270721.1, GL000220.1). Then `:` or `-` or `_` between chrom and
+    # start, then digits, then `-` or `_`, then digits.
     pat = re.compile(
-        r"^((?:chr)?[\dXYMTIivxmt]+)[:\-_](\d+)[\-_](\d+)$",
-        re.IGNORECASE,
+        r"^([A-Za-z0-9._]+)[:\-_](\d+)[\-_](\d+)$",
     )
     rows = []
     for n in names:
