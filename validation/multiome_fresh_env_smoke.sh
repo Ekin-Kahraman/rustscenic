@@ -5,7 +5,7 @@
 set -euo pipefail
 
 DATA_DIR="$HOME/projects/bio/rustscenic/validation/real_multiome_v036"
-ARTEFACT="$HOME/projects/bio/rustscenic/validation/multiome_pbmc_3k_v0.3.6.json"
+ARTEFACT="$HOME/projects/bio/rustscenic/validation/multiome_pbmc_3k_v0.3.7.json"
 WORK=$(mktemp -d)
 echo "work dir: $WORK"
 
@@ -129,7 +129,7 @@ present = {tf: tf in {r[0].replace("_regulon","") for r in regs} for tf in canon
 n_present = sum(present.values())
 
 artefact = {
-    "release": "v0.3.6",
+    "release": "v0.3.7",
     "rustscenic_version": os.environ["RUSTSCENIC_VER"],
     "rustscenic_sha": os.environ["RUSTSCENIC_SHA"],
     "command": "fresh-venv: pip install rustscenic[validation] @ git+...@v0.3.7 + smoke script",

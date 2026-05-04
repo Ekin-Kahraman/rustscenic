@@ -11,7 +11,7 @@
 set -euo pipefail
 
 DATA_DIR="$HOME/projects/bio/rustscenic/validation/real_multiome_v036"
-ARTEFACT="$HOME/projects/bio/rustscenic/validation/multiome_full_scenicplus_v0.3.6.json"
+ARTEFACT="$HOME/projects/bio/rustscenic/validation/multiome_full_scenicplus_v0.3.7.json"
 WORK=$(mktemp -d)
 echo "work dir: $WORK"
 
@@ -142,7 +142,7 @@ if result.eregulons_path and Path(result.eregulons_path).exists():
     eregulon_rows = len(pd.read_parquet(result.eregulons_path))
 
 artefact = {
-    "release": "v0.3.6",
+    "release": "v0.3.7",
     "rustscenic_version": os.environ["RUSTSCENIC_VER"],
     "rustscenic_sha": os.environ["RUSTSCENIC_SHA"],
     "command": "fresh-venv: pip install rustscenic[validation] @ git+...@v0.3.7 + pipeline.run full SCENIC+ E2E",
