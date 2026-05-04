@@ -6,7 +6,7 @@ Public API:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, Union
+from typing import Iterable, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -28,6 +28,8 @@ def infer(
     subsample: float = 0.9,
     max_depth: int = 3,
     early_stop_window: int = 25,
+    top_targets_per_tf: Optional[int] = None,
+    min_importance: Optional[float] = None,
     seed: int = 777,
     verbose: bool = True,
 ) -> pd.DataFrame:
@@ -41,6 +43,16 @@ def infer(
         ``(n_cells, n_genes)`` float32/float64.
     tf_names
         Iterable of candidate transcription factor gene symbols.
+    top_targets_per_tf
+        If set, keep only the top-K targets per TF by importance,
+        descending. Useful on under-determined inputs (n_samples ≪
+        n_features) where rustscenic's histogram-GBM emits more
+        near-zero-importance edges than sklearn-backed pipelines and
+        downstream regulon construction wants a sparser GRN.
+    min_importance
+        If set, drop edges with ``importance < min_importance`` before
+        returning. Cheap floor filter; combine with ``top_targets_per_tf``
+        for arboreto-like edge-density behaviour.
 
     Returns
     -------
@@ -104,6 +116,28 @@ def infer(
             UserWarning, stacklevel=2,
         )
 
+    # Under-determined-input warning. With n_samples < ~50 (or
+    # n_samples / n_features < 0.01), tree-builder RNG dominates over
+    # signal: edge importances are noisy across both rustscenic and
+    # arboreto, and per-edge rank correlation drops sharply (verified
+    # empirically on Kamath n=10 pseudobulk vs PBMC n=2,700, see
+    # validation/kamath_da/KAMATH_AUDIT.md).
+    n_samples = X.shape[0]
+    if tfs_present and n_samples < 50:
+        import warnings
+        warnings.warn(
+            f"only {n_samples} samples for {X.shape[1]:,} genes and "
+            f"{len(tfs_present)} TFs. GRN edge rankings are unstable in this "
+            f"regime regardless of implementation — a GBM with n_estimators="
+            f"{n_estimators} memorises the training set trivially. Consider "
+            f"running on cell-level (not pseudobulk) input, or apply "
+            f"`top_targets_per_tf=...` / `min_importance=...` to extract a "
+            f"sparser, more comparable edge set. See "
+            f"validation/kamath_da/KAMATH_AUDIT.md for the analysis behind "
+            f"this guidance.",
+            UserWarning, stacklevel=2,
+        )
+
     import sys, time
     if verbose:
         print(
@@ -133,11 +167,35 @@ def infer(
         "target": targets,
         "importance": np.asarray(importances),
     })
-    if verbose:
-        print(
-            f"[rustscenic.grn] done in {wall:.1f}s — {len(df):,} edges.",
-            file=sys.stderr, flush=True,
+
+    # Optional post-fit truncation. The Rust core always emits the full
+    # importance>0 edge set; trimming here preserves the underlying GBM
+    # fit and lets the same run be re-cut at different thresholds.
+    raw_n = len(df)
+    if min_importance is not None:
+        df = df[df["importance"] >= min_importance]
+    if top_targets_per_tf is not None and not df.empty:
+        df = (
+            df.sort_values("importance", ascending=False)
+              .groupby("TF", sort=False, group_keys=False)
+              .head(top_targets_per_tf)
+              .reset_index(drop=True)
         )
+
+    if verbose:
+        if raw_n != len(df):
+            print(
+                f"[rustscenic.grn] done in {wall:.1f}s — fit emitted {raw_n:,} "
+                f"edges, returning {len(df):,} after truncation "
+                f"(top_targets_per_tf={top_targets_per_tf}, "
+                f"min_importance={min_importance}).",
+                file=sys.stderr, flush=True,
+            )
+        else:
+            print(
+                f"[rustscenic.grn] done in {wall:.1f}s — {len(df):,} edges.",
+                file=sys.stderr, flush=True,
+            )
     return df
 
 

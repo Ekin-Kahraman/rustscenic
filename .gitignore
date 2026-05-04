@@ -23,7 +23,8 @@ validation/kamath/*.h5ad
 # Kamath DA neurons audit: keep audit doc + small artefacts; ignore raw ~300MB h5ad
 # and ~70MB GRN parquets (reproducible via build_pseudobulk_fixture.py).
 validation/kamath_da/kamath_da_neurons.h5ad
-validation/kamath_da/*_grn_kamath.parquet
+validation/kamath_da/kamath_da_cells_15k.h5ad
+validation/kamath_da/*_grn_kamath*.parquet
 !python/rustscenic/data/
 examples/out/
 docs/specs/

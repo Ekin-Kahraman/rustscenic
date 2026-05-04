@@ -1,0 +1,12 @@
+{
+  "rust_raw_edges": 6305910,
+  "rust_trunc_edges": 1312164,
+  "arboreto_edges": 2820060,
+  "top_targets_per_tf_used": 889,
+  "raw_per_edge_spearman": 0.44015638409603713,
+  "trunc_per_edge_spearman": 0.3477624179120098,
+  "raw_within_tf_spearman": 0.40758408290458265,
+  "trunc_within_tf_spearman": 0.2795127343314875,
+  "top10k_jaccard_raw": 0.033111214422232554,
+  "top10k_jaccard_trunc": 0.033111214422232554
+}

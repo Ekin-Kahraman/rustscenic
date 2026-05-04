@@ -142,13 +142,45 @@ Coarse biology converges; fine-grained target rank does not. This is the
 expected behaviour for any GBM-class GRN method on under-determined input,
 not a rustscenic-specific issue.
 
+## Truncation experiment (codex's hypothesis)
+
+Codex hypothesised that truncating rustscenic's raw GRN to arboreto-like
+per-TF density would close the parity gap. Exhaustive sweep run on the
+Kamath fixture:
+
+| Strategy | Reaches ρ ≈ 0.52? |
+|---|---|
+| **Asymmetric** rustscenic top-K per TF (any K) | No — ρ stays in 0.14–0.42 range, max 0.42 at K=1500. **Truncation alone makes things slightly worse**, not better. |
+| **Asymmetric** rustscenic min_importance ≥ threshold | No — ρ stays in 0.23–0.44 range. |
+| **Asymmetric** rustscenic top-K per target | No — ρ stays in 0.27–0.43 range. |
+| **Symmetric** top-1500-per-TF on BOTH sides | **Yes — ρ = 0.521** (165k–257k shared edges). |
+
+The 0.52 number is recovered ONLY when truncation is applied **symmetrically** to
+both rustscenic and arboreto. This is a methodologically different
+comparison than "raw rustscenic vs raw arboreto":
+
+- **Raw shared-edge ρ = 0.440** answers "of all edges both pipelines emit, how
+  similar are their importance ranks?"
+- **Symmetric top-K shared-edge ρ = 0.521** answers "of edges that appear in
+  both pipelines' top-K-per-TF picks, how similar are their importance
+  ranks?" — both sides have noise pruned, agreement on what's left is higher.
+
+Both numbers are valid; they answer different questions. The codex
+proposal to add `top_targets_per_tf` and `min_importance` knobs to
+`grn.infer()` is still good engineering — it lets users produce arboreto-
+density output for downstream tools — but truncation does not actually
+"fix parity" in the asymmetric sense. The raw 0.440 is the honest
+single-pipeline-replacement number.
+
 ## Verdict
 
 - **Algorithm parity (Track 1)**: rustscenic vs arboreto on identical
-  pseudobulk input — see numbers in `grn_parity_kamath.json`. Lower per-edge
-  Spearman than PBMC 3k is expected given n=10 sample regime. The
-  pseudo-bulk-by-subtype protocol is fundamentally a small-sample regression
-  problem regardless of GBM implementation.
+  pseudobulk input — see numbers in `grn_parity_kamath.json`. Per-edge
+  Spearman 0.440 on raw shared edges (765k); per-edge Spearman 0.521 on
+  symmetric top-1500-per-TF intersection (165k). Lower than PBMC 3k's
+  0.611 (raw) is expected given n=10 sample regime. The pseudo-bulk-by-
+  subtype protocol is fundamentally a small-sample regression problem
+  regardless of GBM implementation.
 - **Cross-algorithm comparison (Track 2)**: rustscenic ≠ Kamath/SCENIC at the
   edge level by design. GENIE3 vs GRNBoost2 disagreement is published and
   expected. Use coarse-biology metrics (canonical-TF recovery, regulon-set

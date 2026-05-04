@@ -69,6 +69,63 @@ class TestGrnDeterminism:
         assert not a_s.equals(b_s)
 
 
+class TestGrnTruncationKnobs:
+    """`top_targets_per_tf` and `min_importance` give users sparser output
+    on under-determined inputs without rerunning the GBM."""
+
+    def test_top_targets_per_tf_caps_per_tf_count(self, small_expr):
+        full = grn.infer(small_expr, tf_names=["g0", "g1", "g2"],
+                         n_estimators=100, seed=42, verbose=False)
+        trunc = grn.infer(small_expr, tf_names=["g0", "g1", "g2"],
+                          n_estimators=100, seed=42, verbose=False,
+                          top_targets_per_tf=5)
+        # Same fit (deterministic); the trunc result is a strict subset of full.
+        assert (trunc.groupby("TF").size() <= 5).all()
+        # Each TF with edges in the full output keeps its top-K by importance.
+        for tf, sub in trunc.groupby("TF"):
+            full_tf = full[full["TF"] == tf].sort_values(
+                "importance", ascending=False
+            ).head(5)
+            assert set(zip(sub["target"], sub["importance"])) == set(
+                zip(full_tf["target"], full_tf["importance"])
+            )
+
+    def test_min_importance_floor(self, small_expr):
+        full = grn.infer(small_expr, tf_names=["g0", "g1", "g2"],
+                         n_estimators=100, seed=42, verbose=False)
+        threshold = full["importance"].median()
+        out = grn.infer(small_expr, tf_names=["g0", "g1", "g2"],
+                        n_estimators=100, seed=42, verbose=False,
+                        min_importance=threshold)
+        assert (out["importance"] >= threshold).all()
+        assert len(out) <= len(full)
+
+    def test_under_determined_warning_fires(self):
+        """n=10 samples × ~80 genes triggers the under-determined warning."""
+        rng = np.random.default_rng(0)
+        X = rng.poisson(1.0, size=(10, 80)).astype(np.float32)
+        df = pd.DataFrame(X, columns=[f"g{i}" for i in range(80)])
+        import warnings
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            grn.infer(df, tf_names=["g0", "g1", "g2"],
+                      n_estimators=30, verbose=False)
+        msgs = [str(w.message) for w in caught]
+        assert any("samples" in m and "unstable" in m for m in msgs), (
+            f"expected under-determined warning, got {msgs}"
+        )
+
+    def test_no_warning_at_normal_sample_count(self, small_expr):
+        """60 samples (small_expr) is above the n<50 threshold; no warning."""
+        import warnings
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            grn.infer(small_expr, tf_names=["g0", "g1", "g2"],
+                      n_estimators=30, verbose=False)
+        msgs = [str(w.message) for w in caught]
+        assert not any("rankings are unstable" in m for m in msgs)
+
+
 class TestGrnLoadTfs:
     def test_strips_crlf_and_comments(self, tmp_path):
         path = tmp_path / "tfs.txt"
