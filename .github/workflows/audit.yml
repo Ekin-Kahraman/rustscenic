@@ -76,3 +76,56 @@ jobs:
           python validation/compare.py --stage grn \
             --ours validation/baselines/pbmc3k_grn.parquet \
             --reference validation/baselines/pbmc3k_grn.parquet
+
+  # Per-extra install-matrix smoke: every declared optional-dependency extra
+  # must resolve cleanly in a fresh venv on the published install path. Catches
+  # packaging regressions like the v0.3.5 igraph/leidenalg gap before they hit
+  # collaborators.
+  install-matrix:
+    runs-on: ubuntu-24.04
+    needs: python
+    strategy:
+      fail-fast: false
+      matrix:
+        extra: ["", "examples", "validation", "reference", "benchmarks"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build wheel from current commit
+        run: |
+          pip install maturin
+          maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml
+      - name: Install with extra
+        run: |
+          WHL=$(ls target/wheels/rustscenic-*.whl | head -1)
+          if [ -z "${{ matrix.extra }}" ]; then
+            pip install "$WHL"
+          else
+            pip install "$WHL[${{ matrix.extra }}]"
+          fi
+      - name: Smoke imports for the extra
+        run: |
+          python <<'PY'
+          import importlib, importlib.metadata
+          extra = "${{ matrix.extra }}"
+          # Always check core
+          import rustscenic
+          import rustscenic.grn, rustscenic.aucell, rustscenic.topics, rustscenic.cistarget
+          ver = importlib.metadata.version("rustscenic")
+          print(f"core OK (rustscenic {ver})")
+
+          extras_imports = {
+              "examples": ["scanpy", "anndata", "igraph", "leidenalg"],
+              "validation": ["scanpy", "anndata", "igraph", "leidenalg", "sklearn"],
+              "reference": ["scanpy", "anndata", "sklearn", "pyscenic", "arboreto", "ctxcore"],
+              "benchmarks": ["scanpy", "anndata", "sklearn", "tomotopy", "gensim", "psutil"],
+          }
+          if extra and extra in extras_imports:
+              for mod in extras_imports[extra]:
+                  importlib.import_module(mod)
+                  print(f"  {extra}: {mod} OK")
+          PY
