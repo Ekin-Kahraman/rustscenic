@@ -282,18 +282,24 @@ def _parse_peak_names(names):
     ``_normalise_chrom`` at join time rather than here.
     """
     import re
-    # Permissive chrom token: alphanumerics + `.` + `_` (covers alt-contigs
-    # like KI270721.1, GL000220.1). Then `:` or `-` or `_` between chrom and
-    # start, then digits, then `-` or `_`, then digits.
+    # Chrom token must START with alphanumeric, then any of [A-Za-z0-9._].
+    # Covers UCSC (chr1), Ensembl (1), alt-contigs (KI270721.1, GL000220.1),
+    # and UCSC random/alt suffixes (chr1_random). Rejects degenerate cases
+    # like `..._`, `._`, `_` that the unanchored class would accept.
     pat = re.compile(
-        r"^([A-Za-z0-9._]+)[:\-_](\d+)[\-_](\d+)$",
+        r"^([A-Za-z0-9][A-Za-z0-9._]*)[:\-_](\d+)[\-_](\d+)$",
     )
     rows = []
     for n in names:
         m = pat.match(str(n))
         if m is None:
             return None
-        rows.append((m.group(1), int(m.group(2)), int(m.group(3))))
+        start, end = int(m.group(2)), int(m.group(3))
+        if start >= end:
+            # Inverted or zero-width interval — refuse silently to coerce
+            # rather than producing a row with a negative-width window.
+            return None
+        rows.append((m.group(1), start, end))
     return pd.DataFrame(rows, columns=["chrom", "start", "end"])
 
 

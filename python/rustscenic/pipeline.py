@@ -202,8 +202,13 @@ def run(
             elapsed["preproc"] = time.perf_counter() - t0
             log(f"      ATAC shape: {adata_atac.shape}, took {elapsed['preproc']:.1f}s")
 
-        atac_matrix_path = output_dir / "atac_cells_by_peaks.h5ad"
-        adata_atac.write_h5ad(atac_matrix_path)
+        # Persist the artefact first; only mark have_atac=True (via
+        # atac_matrix_path) once the file is on disk. If write fails (disk
+        # full, unserializable obs), downstream stages must skip rather than
+        # raise FileNotFoundError reading a path that was never written.
+        _atac_artefact = output_dir / "atac_cells_by_peaks.h5ad"
+        adata_atac.write_h5ad(_atac_artefact)
+        atac_matrix_path = _atac_artefact
 
         # Topics on the sparse ATAC matrix
         import rustscenic.topics
@@ -297,7 +302,11 @@ def run(
         import rustscenic.enhancer
         log(f"[7/8] enhancer: linking peaks → genes ({len(coords_df):,} TSS records)")
         t0 = time.perf_counter()
-        adata_atac_for_link = ad.read_h5ad(atac_matrix_path)
+        # adata_atac is still in scope from the preproc/topics block above.
+        # Use it directly rather than round-tripping through h5ad — saves the
+        # disk read on big matrices and avoids dropping non-serialisable
+        # obs/varm/uns the caller may have attached.
+        adata_atac_for_link = adata_atac
         common = adata_rna.obs_names.intersection(adata_atac_for_link.obs_names)
         if len(common) == 0:
             log("      skipped — no shared barcodes between RNA and ATAC")

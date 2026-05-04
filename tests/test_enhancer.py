@@ -347,3 +347,28 @@ def test_parse_peak_names_handles_alt_contigs():
     ]
     assert list(parsed["start"]) == [100, 300, 2090, 5000, 7000]
     assert list(parsed["end"]) == [200, 400, 2985, 6000, 8000]
+
+
+def test_parse_peak_names_rejects_malformed():
+    """The error-path: any unparseable name in the batch must return None
+    (not silently produce a coords frame with bogus rows)."""
+    from rustscenic.enhancer import _parse_peak_names
+
+    # Mixed valid + invalid: function rejects the whole batch.
+    assert _parse_peak_names(["chr1:100-200", "completely_invalid"]) is None
+    # Pure garbage.
+    assert _parse_peak_names(["not a peak"]) is None
+    # Empty string.
+    assert _parse_peak_names([""]) is None
+    # Degenerate chrom tokens (regression: pre-tightening these passed).
+    assert _parse_peak_names(["..._:100-200"]) is None
+    assert _parse_peak_names(["._:100-200"]) is None
+    assert _parse_peak_names(["_:100-200"]) is None
+
+
+def test_parse_peak_names_rejects_inverted_coords():
+    """start >= end is a bad coordinate window; refuse rather than coerce."""
+    from rustscenic.enhancer import _parse_peak_names
+
+    assert _parse_peak_names(["chr1:500-200"]) is None  # inverted
+    assert _parse_peak_names(["chr1:100-100"]) is None  # zero width

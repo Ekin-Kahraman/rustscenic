@@ -1,0 +1,116 @@
+{
+  "release": "v0.3.9",
+  "smoke_type": "real-data full SCENIC+ E2E via public pipeline.run",
+  "rustscenic_version": "0.3.9",
+  "rustscenic_sha": "b067f179436f14189759391bb07597eecffdf12a",
+  "install_command": "pip install --quiet --upgrade \"rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.9\"",
+  "api_call": "rustscenic.pipeline.run(rna=adata, output_dir=..., adata_atac=adata_atac, motif_rankings=..., gene_coords=..., grn_n_estimators=100, topics_n_topics=10, topics_n_passes=3, eregulon_min_target_genes=2, eregulon_min_enhancer_links=1, seed=777)",
+  "dataset": {
+    "name": "10x pbmc_unsorted_3k",
+    "source": "cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_unsorted_3k",
+    "rna_h5_md5": "bd4cc4ff040987e1438f1737be606a27",
+    "atac_fragments_md5_first_8mb": "defe16435368e197839673dc8d671651",
+    "peaks_bed_md5": "81ebb01a7aef0a83ee1ecb084ec78664"
+  },
+  "shapes": {
+    "rna_post_qc": [
+      2767,
+      21335
+    ],
+    "atac_subset_to_rna_cells": [
+      2767,
+      81156
+    ]
+  },
+  "wall_s": {
+    "setup": 21.69,
+    "pipeline_run_total": 451.53
+  },
+  "peak_rss_gb": 3.67,
+  "outputs_non_empty": {
+    "grn": true,
+    "regulons": true,
+    "cistarget": true,
+    "enhancer_links": true,
+    "eregulons": true,
+    "integrated_adata": true
+  },
+  "headline_counts": {
+    "n_grn_edges": 2223404,
+    "n_regulons": 1420,
+    "n_cistarget_rows": 1307838,
+    "n_enhancer_links": 8621,
+    "n_eregulons": 1091
+  },
+  "output_inventory": {
+    "atac_matrix_path": {
+      "path": "atac_cells_by_peaks.h5ad",
+      "exists": true,
+      "size_bytes": 129196840
+    },
+    "grn_path": {
+      "path": "grn.parquet",
+      "exists": true,
+      "size_bytes": 13617831
+    },
+    "regulons_path": {
+      "path": "regulons.json",
+      "exists": true,
+      "size_bytes": 1079824
+    },
+    "aucell_path": {
+      "path": "aucell.parquet",
+      "exists": true,
+      "size_bytes": 13497664
+    },
+    "topics_dir": {
+      "path": "topics",
+      "exists": true,
+      "size_bytes": 128
+    },
+    "cistarget_path": {
+      "path": "cistarget_enriched.parquet",
+      "exists": true,
+      "size_bytes": 4746130
+    },
+    "enhancer_links_path": {
+      "path": "enhancer_links.parquet",
+      "exists": true,
+      "size_bytes": 435738
+    },
+    "eregulons_path": {
+      "path": "eregulons.parquet",
+      "exists": true,
+      "size_bytes": 200443
+    },
+    "integrated_adata_path": {
+      "path": "rna_with_regulons.h5ad",
+      "exists": true,
+      "size_bytes": 56983027
+    }
+  },
+  "elapsed_per_stage": {
+    "preproc": 0.0,
+    "topics": 27.934445082995808,
+    "grn": 334.2943199999863,
+    "cistarget": 2.0166702079877723,
+    "enhancer": 6.9643887910060585,
+    "eregulons": 29.36247774999356,
+    "aucell": 0.1753071249986533
+  },
+  "env": {
+    "python": "3.13.9",
+    "scanpy": "1.12.1",
+    "anndata": "0.12.11",
+    "os": "Darwin 25.4.0 arm64",
+    "cpu": "Apple M5",
+    "n_cpus": 10
+  },
+  "scope_notes": [
+    "Pre-pipeline setup (RNA QC, ATAC subset, motif/gene-coords download) is recorded separately from pipeline.run wall time.",
+    "ATAC matrix is pre-subset to RNA-QC'd cells (the v0.3.8 adata_atac path). Raw 10x fragments has ~451k empty-droplet barcodes that must not be carried through topics \u2014 this is what the API change unblocks.",
+    "v0.3.9 ships an enhancer-stage regex fix that allows alt-contig peak names (KI270721.1, GL000220.1, ...) which appear in raw 10x ATAC peaks BED. Without this fix, pipeline.run crashed at link_peaks_to_genes on this dataset.",
+    "GRN n_estimators=100 (smoke speed); README claims at n_estimators=5000 \u2014 different operating point.",
+    "eRegulon thresholds set permissively (min_target_genes=2, min_enhancer_links=1) for this proof-of-orchestration smoke. Production thresholds in test_pipeline_integration use 5/2 defaults."
+  ]
+}
