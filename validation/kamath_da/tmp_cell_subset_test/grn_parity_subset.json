@@ -1,0 +1,43 @@
+{
+  "rustscenic": {
+    "path": "/Users/ekin/projects/bio/rustscenic/validation/kamath_da/tmp_cell_subset_test/rustscenic_subset_grn.parquet",
+    "n_edges": 941177,
+    "n_tfs": 1476
+  },
+  "pyscenic": {
+    "path": "/Users/ekin/projects/bio/rustscenic/validation/kamath_da/tmp_cell_subset_test/arboreto_subset_grn.parquet",
+    "n_edges": 290889,
+    "n_tfs": 1476
+  },
+  "shared_tfs": 1476,
+  "shared_edges": 200193,
+  "topk_jaccard": {
+    "1000": 0.2912,
+    "5000": 0.2977,
+    "10000": 0.3071,
+    "50000": 0.3195
+  },
+  "per_tf_topn_jaccard": {
+    "10": {
+      "mean_jaccard": 0.2386,
+      "median_jaccard": 0.1765,
+      "n_tfs": 1476
+    },
+    "20": {
+      "mean_jaccard": 0.2557,
+      "median_jaccard": 0.2121,
+      "n_tfs": 1476
+    },
+    "50": {
+      "mean_jaccard": 0.2511,
+      "median_jaccard": 0.2346,
+      "n_tfs": 1476
+    }
+  },
+  "spearman_per_edge_on_shared": 0.5708,
+  "spearman_within_tf": {
+    "mean": 0.5502,
+    "median": 0.5364,
+    "n_tfs_compared": 1390
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "tool": "rustscenic-working-tree",
+  "input_h5ad": "/tmp/rustscenic_kamath_cell_subset_test/kamath_cell_subset_1000_tfplushvg.h5ad",
+  "n_cells": 1000,
+  "n_genes": 2876,
+  "n_tfs": 1476,
+  "n_estimators": 5000,
+  "early_stop_window": 25,
+  "seed": 777,
+  "wall_clock_s": 86.53428424999584,
+  "ru_maxrss": 290439168,
+  "rss_delta_raw": 83656704,
+  "n_edges": 941177,
+  "edges_per_tf_median": 544.5,
+  "edges_per_tf_max": 1907,
+  "importance_p25": 0.06130857393145561,
+  "importance_p50": 0.13751666247844696
+}

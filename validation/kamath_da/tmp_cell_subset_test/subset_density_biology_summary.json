@@ -1,0 +1,33 @@
+{
+  "rustscenic": {
+    "n_edges": 941177,
+    "n_tfs": 1476,
+    "edges_per_tf_median": 544.5,
+    "edges_per_tf_max": 1907,
+    "importance_p25": 0.06130857393145561,
+    "importance_p50": 0.13751666247844696,
+    "canonical_top50_hits": [
+      "EN1->SLC18A2",
+      "EN1->TH",
+      "LMX1A->ALDH1A1",
+      "NR4A2->SLC6A3",
+      "PITX3->SLC6A3"
+    ],
+    "canonical_top50_n_hits": 5
+  },
+  "arboreto": {
+    "n_edges": 290889,
+    "n_tfs": 1476,
+    "edges_per_tf_median": 120.0,
+    "edges_per_tf_max": 1463,
+    "importance_p25": 0.06525551970015658,
+    "importance_p50": 0.13392397276379908,
+    "canonical_top50_hits": [
+      "EN1->SLC18A2",
+      "EN1->TH",
+      "LMX1A->ALDH1A1",
+      "PITX3->SLC6A3"
+    ],
+    "canonical_top50_n_hits": 4
+  }
+}

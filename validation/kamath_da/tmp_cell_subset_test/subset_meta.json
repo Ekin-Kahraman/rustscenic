@@ -1,0 +1,27 @@
+{
+  "source": "/Users/ekin/projects/bio/rustscenic/validation/kamath_da/kamath_da_cells_15k.h5ad",
+  "output_h5ad": "/tmp/rustscenic_kamath_cell_subset_test/kamath_cell_subset_1000_tfplushvg.h5ad",
+  "output_tfs": "/tmp/rustscenic_kamath_cell_subset_test/kamath_cell_subset_tfs.txt",
+  "seed": 777,
+  "sampling": "up to 100 cells per author_cell_type, deterministic rng",
+  "n_cells": 1000,
+  "n_genes": 2876,
+  "n_tfs": 1476,
+  "obs_key": "author_cell_type",
+  "canonical_present": [
+    "TH",
+    "SLC6A3",
+    "SLC18A2",
+    "NR4A2",
+    "PITX3",
+    "EN1",
+    "LMX1A",
+    "FOXA2",
+    "ALDH1A1",
+    "FOXA1",
+    "SOX6",
+    "PBX1",
+    "DDC",
+    "KCNJ6"
+  ]
+}
