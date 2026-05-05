@@ -9,13 +9,13 @@ A Rust + PyO3 replacement for the SCENIC / SCENIC+ compute stack: one install, m
 
 ```bash
 # Universal source install while PyPI trusted-publishing is being configured:
-pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.6
+pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.4.0
 
 # Or install a prebuilt wheel from the latest tagged GitHub Release for your platform:
 # macOS Apple Silicon:
-pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.3.6/rustscenic-0.3.6-cp310-abi3-macosx_11_0_arm64.whl
+pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.4.0/rustscenic-0.4.0-cp310-abi3-macosx_11_0_arm64.whl
 # Linux x86_64:
-pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.3.6/rustscenic-0.3.6-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+pip install https://github.com/Ekin-Kahraman/rustscenic/releases/download/v0.4.0/rustscenic-0.4.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 ```
 
 Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64). No dask, no Java, no CUDA.
@@ -26,7 +26,7 @@ rustscenic is being built as the single-install replacement for the practical SC
 
 The project is intentionally not a thin wrapper around the old stack. The target is a simpler architecture that makes regulatory-network analysis easier to install, cheaper to run on CPU, deterministic under a fixed seed, and robust to real atlas conventions such as ENSEMBL `var_names`, duplicate gene symbols, backed AnnData, and UCSC/Ensembl chromosome mismatches.
 
-v0.3.6 replaces the main compute stages used by pySCENIC / arboreto / pycisTopic / pycistarget / scenicplus in common Python pipelines. Region-based cistarget is wired into eRegulon assembly, the atlas-scale GRN cliff is materially improved by target blocking, Mallet-class ATAC topic modelling ships in two paths, and real PBMC multiome now runs through eRegulon assembly with GENCODE TSS coordinates. The remaining replacement proof is concentrated in MACS2 reference cross-checks against ENCODE multi-tissue, full 100k-cell real multiome validation, and head-to-head scenicplus parity numbers on real region-ranking databases.
+v0.4.0 is the first release tagged "publishable end-to-end": a single `rustscenic.pipeline.run(...)` call on real 10x multiome produces every SCENIC+ artefact (GRN → AUCell → topics → cistarget → enhancer-link → eRegulon) on two independent public datasets — PBMC 3k (human, adult immune; 1,091 eRegulons, `validation/multiome_pipeline_run_v0.3.9.json`) and mouse brain E18 5k (mouse, embryonic CNS; 1,125 eRegulons with 9/9 expected cortex marker TFs, `validation/multiome_pipeline_run_v0.3.10_brain_e18.json`). GRN parity vs current pyscenic 0.12.1 + arboreto 0.1.6 has been regenerated against an identical PBMC fixture (`validation/parity_v0310/grn_parity_pbmc3k_full.json` — per-edge Spearman 0.611, within-TF Spearman mean 0.632, 1.78× wall speedup). Outstanding follow-ups for v0.4.x: region-cistarget kernel parity refresh, AUCell wall-time/Pearson refresh, broader public-dataset sweep beyond PBMC + mouse brain. Raw 10x `pipeline.run` without caller-side ATAC pre-subset is deferred to v0.5 (documented workflow caveat, not a correctness gap).
 
 ## What it does
 
@@ -188,7 +188,7 @@ rustscenic cistarget --rankings motifs.feather --regulons grn.parquet --output e
 - `python/rustscenic/` — Python package, CLI entry point, type stubs
 - `examples/pbmc3k_end_to_end.py` — end-to-end script on real PBMC-3k
 - `validation/` — reproducible benchmark scripts + measurement reports for every number above, plus `VALIDATION_SUMMARY.md`
-- `tests/` — pytest suite (144 Python tests) + Rust crate tests (57)
+- `tests/` — pytest suite (152 Python tests, 1 skipped) + Rust crate tests (57)
 - `manuscript/` — preprint source
 - `docs/topic-collapse.md` — known algorithmic caveat
 

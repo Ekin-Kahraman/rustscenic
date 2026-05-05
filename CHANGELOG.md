@@ -1,5 +1,67 @@
 # Changelog
 
+## 0.4.0 — 2026-05-05
+
+First release tagged **publishable end-to-end**. A single
+`rustscenic.pipeline.run(...)` call on real 10x multiome data produces
+every SCENIC+ artefact (GRN → AUCell → topics → cistarget →
+enhancer-link → eRegulon) on two independent public datasets.
+
+### Validated
+
+- **Real PBMC 3k multiome** (human, adult immune): 1,091 eRegulons, 451 s
+  wall, 3.67 GB peak RSS, 4/4 canonical lineage TFs (SPI1, PAX5, GATA3,
+  TBX21). Artefact: `validation/multiome_pipeline_run_v0.3.9.json`.
+- **Real mouse brain E18 5k multiome** (mouse, embryonic CNS): 1,125
+  eRegulons, 826 s wall, 4.01 GB peak RSS, **9/9 expected cortex marker
+  TFs** (Pax6, Neurod2, Sox2, Ascl1, Tbr1, Neurog2, Fezf2, Eomes, Foxg1)
+  recovered as regulons. Artefact:
+  `validation/multiome_pipeline_run_v0.3.10_brain_e18.json`.
+- **GRN parity vs current pyscenic 0.12.1 + arboreto 0.1.6** on identical
+  PBMC 3k fixture: per-edge Spearman 0.611 on 480,680 shared edges,
+  within-TF Spearman mean 0.632, 1.78× wall speedup, 1.14 M vs 0.95 M
+  edges. Artefact: `validation/parity_v0310/grn_parity_pbmc3k_full.json`.
+- **Bit-identical determinism** under fixed seed verified live (live
+  68,565-edge GRN reproducibility check) and in inline Rust tests.
+- **Fresh-install matrix CI** runs each `[extra]` install path on every
+  tag push (`audit.yml` install-matrix job).
+- **Auditable evidence schema** for every release claim: dataset MD5,
+  command, version SHA, hardware, per-stage walls, peak RSS, output
+  inventory, biology checks, caveats.
+
+### Aggregate test status
+
+152 Python tests pass (1 skipped). 57 Rust inline tests pass (grn 12,
+topics 8, preproc 32, aucell 5).
+
+### Known caveats
+
+- `pipeline.run` does not yet pre-subset ATAC fragments based on RNA QC
+  inside the orchestrator. The caller must do this and pass
+  `adata_atac=...`. Without it, an unsubsetted ~450 k-barcode 10x
+  fragments file will stall topics + GRN. Workflow caveat, not a
+  correctness gap. Tracked for v0.5.
+- AUCell wall-time and per-cell Pearson logs in README are still from
+  the 2026-04 stack; refresh planned for a v0.4.x point release.
+- Region-cistarget kernel parity vs ctxcore (separate from the v0.3.10
+  GRN parity refresh) tracked for v0.4.x.
+
+### Scope honesty
+
+Real-data end-to-end is validated on **two public multiome datasets**
+(PBMC 3k and mouse brain E18 5k). Broader public-dataset sweep is
+planned for v0.4.x — see the post-release benchmark plan.
+
+### Includes 0.3.6–0.3.11
+
+This entry consolidates the path to publishable-end-to-end. The
+intermediate GitHub releases (v0.3.6 through v0.3.11) cover individual
+fixes, including: enhancer-link orchestration on real PBMC, alt-contig
+regex fix for raw 10x, region-cistarget into eRegulon assembly,
+GRN truncation knobs (`top_targets_per_tf`, `min_importance`) and
+small-n warning for under-determined inputs (v0.3.11), and the
+per-release CI install-matrix gate.
+
 ## 0.3.5 — 2026-05-01
 
 ### Release Integrity

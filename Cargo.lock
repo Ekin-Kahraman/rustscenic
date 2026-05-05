@@ -663,7 +663,7 @@ dependencies = [
 
 [[package]]
 name = "rustscenic-aucell"
-version = "0.3.8"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "approx 0.5.1",
@@ -674,7 +674,7 @@ dependencies = [
 
 [[package]]
 name = "rustscenic-grn"
-version = "0.3.8"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "approx 0.5.1",
@@ -688,7 +688,7 @@ dependencies = [
 
 [[package]]
 name = "rustscenic-preproc"
-version = "0.3.8"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "flate2",
@@ -699,7 +699,7 @@ dependencies = [
 
 [[package]]
 name = "rustscenic-py"
-version = "0.3.8"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "ndarray 0.16.1",
@@ -713,7 +713,7 @@ dependencies = [
 
 [[package]]
 name = "rustscenic-topics"
-version = "0.3.8"
+version = "0.4.0"
 dependencies = [
  "approx 0.5.1",
  "ndarray 0.16.1",

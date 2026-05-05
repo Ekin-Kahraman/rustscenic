@@ -8,7 +8,7 @@ back if anything is off.
 ## Install
 
 ```bash
-pip install --upgrade git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.6
+pip install --upgrade git+https://github.com/Ekin-Kahraman/rustscenic@v0.4.0
 ```
 
 Wheels are also at the [latest release page](https://github.com/Ekin-Kahraman/rustscenic/releases/latest)
@@ -18,10 +18,10 @@ Requires Python 3.10–3.13. Linux + macOS only (Windows untested).
 Brings five runtime deps: numpy, pandas, pyarrow, scipy, anndata.
 
 If you are running the example or validation scripts, install the
-validation extra in one line (v0.3.6+):
+validation extra in one line (v0.4.0+):
 
 ```bash
-pip install --upgrade "rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.3.6"
+pip install --upgrade "rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.4.0"
 ```
 
 That adds the ecosystem packages used outside rustscenic core: scanpy,
