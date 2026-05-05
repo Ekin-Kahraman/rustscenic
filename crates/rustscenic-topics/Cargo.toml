@@ -9,7 +9,7 @@ authors.workspace = true
 ndarray = { workspace = true }
 rayon = { workspace = true }
 rand = "0.8"
-statrs = "0.17"
+statrs = "0.18"
 thiserror = { workspace = true }
 
 [dev-dependencies]
