@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use rustscenic in published work, software, benchmarks, or reports, please cite this repository or the exact release you used."
+title: "rustscenic: a Rust and Python implementation of SCENIC-style regulatory-network analysis"
+type: software
+authors:
+  - family-names: Kahraman
+    given-names: Ekin
+    email: evk23umu@uea.ac.uk
+repository-code: "https://github.com/Ekin-Kahraman/rustscenic"
+url: "https://github.com/Ekin-Kahraman/rustscenic"
+license: MIT
+version: "0.4.0"
+date-released: "2026-05-05"
+abstract: "rustscenic is a Rust and PyO3 implementation of SCENIC-style gene regulatory network analysis, including GRN inference, AUCell scoring, topic modelling, cistarget enrichment, enhancer linking, eRegulon assembly, and an end-to-end Python pipeline API."
+keywords:
+  - single-cell genomics
+  - gene regulatory networks
+  - SCENIC
+  - SCENIC+
+  - GRN
+  - AUCell
+  - scRNA-seq
+  - scATAC-seq
+  - multiome
+  - Rust
+  - Python

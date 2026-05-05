@@ -1,0 +1,25 @@
+{
+  "title": "rustscenic: a Rust and Python implementation of SCENIC-style regulatory-network analysis",
+  "upload_type": "software",
+  "description": "rustscenic is a Rust and PyO3 implementation of SCENIC-style gene regulatory network analysis, including GRN inference, AUCell scoring, topic modelling, cistarget enrichment, enhancer linking, eRegulon assembly, and an end-to-end Python pipeline API.",
+  "creators": [
+    {
+      "name": "Kahraman, Ekin"
+    }
+  ],
+  "license": "MIT",
+  "access_right": "open",
+  "keywords": [
+    "single-cell genomics",
+    "gene regulatory networks",
+    "SCENIC",
+    "SCENIC+",
+    "GRN",
+    "AUCell",
+    "scRNA-seq",
+    "scATAC-seq",
+    "multiome",
+    "Rust",
+    "Python"
+  ]
+}
