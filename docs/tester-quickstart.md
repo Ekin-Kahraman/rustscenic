@@ -100,13 +100,12 @@ Then I can usually tell you within an hour whether it's a known
 class of bug, a config issue on your side, or something new for me
 to fix.
 
-For performance or biological validation runs, send one row per dataset with:
-
-1. Rustscenic version, command, Python version, OS, CPU, and RAM
-2. Cells, genes, peaks, nonzeros, and whether the matrix is sparse or dense
-3. Wall time and peak RSS for each stage: GRN, AUCell, topics, cistarget, enhancer
-4. Topic method, topic count, seed, and number of unique top-1 topics
-5. Marker consistency, ARI/NMI where available, and top regulons per cluster
+For end-to-end validation runs (real data, all six stages), file a
+**Validation report** issue using the template at
+[`.github/ISSUE_TEMPLATE/validation_report.yml`](../.github/ISSUE_TEMPLATE/validation_report.yml).
+The full schema and worked example are in [`docs/tester-reporting.md`](tester-reporting.md);
+that page also explains how to attach a JSON artefact (gist link or PR
+to `validation/community/<dataset>.json`).
 
 If Online VB gives few unique top-1 topics on small or sparse ATAC data, rerun
 the topic stage with `topics_method="gibbs"` and the same seed before treating

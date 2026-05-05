@@ -1,0 +1,230 @@
+name: Validation report
+description: Reporting a real-data run (datasets we can fold into the v0.4.x sweep)
+title: "validation: <dataset> <species/tissue> <n_cells> cells via v<release>"
+labels: ["validation", "community-evidence"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for running rustscenic on real data. This template mirrors the
+        evidence schema used for our own `validation/multiome_pipeline_run_*.json`
+        artefacts (PBMC 3k v0.3.9, mouse brain E18 v0.3.10). Filling it in lets
+        us fold your run directly into the v0.4.x sweep tracked in
+        [`docs/v0.4.x-benchmark-plan.md`](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/v0.4.x-benchmark-plan.md).
+
+        See [`docs/tester-reporting.md`](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/tester-reporting.md)
+        for the full guide, including how to attach the JSON artefact (gist
+        link or `validation/community/<dataset>.json` PR).
+
+        **Required**: dataset, version, command, headline counts, biological
+        sanity. **Strongly preferred**: input-file MD5s, per-stage walls,
+        peak RSS, JSON artefact link.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One sentence — what dataset, what release, what came out.
+      placeholder: "Ran rustscenic v0.4.0 pipeline.run on the 10x PBMC granulocyte-sorted 10k multiome; produced N eRegulons in M minutes."
+    validations:
+      required: true
+
+  - type: input
+    id: dataset_name
+    attributes:
+      label: Dataset name
+      placeholder: "10x e18_mouse_brain_fresh_5k"
+    validations:
+      required: true
+
+  - type: input
+    id: dataset_source
+    attributes:
+      label: Dataset source / accession
+      description: URL, GEO/SRA accession, CellxGene collection, etc.
+      placeholder: "cf.10xgenomics.com/samples/cell-arc/2.0.0/e18_mouse_brain_fresh_5k"
+    validations:
+      required: true
+
+  - type: input
+    id: species
+    attributes:
+      label: Species + assembly
+      placeholder: "Homo sapiens (hg38) / Mus musculus (mm10)"
+    validations:
+      required: true
+
+  - type: input
+    id: tissue
+    attributes:
+      label: Tissue / state
+      placeholder: "Adult PBMC / E18 brain / breast tumour"
+    validations:
+      required: true
+
+  - type: input
+    id: shapes
+    attributes:
+      label: Shapes after QC
+      description: "RNA: cells x genes; ATAC: cells x peaks (after subset to RNA-QC'd cells)"
+      placeholder: "RNA 4770x21664; ATAC 4770x172193"
+    validations:
+      required: true
+
+  - type: textarea
+    id: input_md5
+    attributes:
+      label: Input file MD5s
+      description: |
+        For reproducibility. `md5sum` (Linux) or `md5` (macOS) of the input files.
+        First-8MB MD5 is acceptable for very large fragments files.
+      render: shell
+      placeholder: |
+        rna_h5_md5: bad86f5a9a537f8a23cf78f221cc5f3a
+        atac_fragments_md5_first_8mb: 83ffec5ceac3378ad9c5f825a6107eaa
+        peaks_bed_md5: b8c398e9e7b4505303768be0cfed01f6
+    validations:
+      required: false
+
+  - type: input
+    id: rustscenic_version
+    attributes:
+      label: rustscenic version
+      description: "`pip show rustscenic | grep Version`. Pin to a release tag, not a commit, where possible."
+      placeholder: "0.4.0"
+    validations:
+      required: true
+
+  - type: input
+    id: install_command
+    attributes:
+      label: Install command
+      placeholder: 'pip install "rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.4.0"'
+    validations:
+      required: true
+
+  - type: textarea
+    id: api_call
+    attributes:
+      label: API call
+      description: The actual Python snippet. Include all kwargs that affect the run.
+      render: python
+      placeholder: |
+        rustscenic.pipeline.run(
+            rna=adata,
+            output_dir=...,
+            adata_atac=adata_atac,
+            motif_rankings=hg_rankings,
+            gene_coords=hg_coords,
+            tfs="hs",
+            grn_n_estimators=5000,
+            topics_n_topics=30,
+            seed=777,
+        )
+    validations:
+      required: true
+
+  - type: textarea
+    id: hardware
+    attributes:
+      label: Hardware + OS + Python
+      description: Output of `uname -a` plus CPU model, RAM, Python version, scanpy/anndata versions.
+      render: shell
+      placeholder: |
+        os: Darwin 25.4.0 arm64
+        cpu: Apple M5 (10 cores)
+        ram_gb: 16
+        python: 3.13.9
+        scanpy: 1.12.1
+        anndata: 0.12.11
+    validations:
+      required: true
+
+  - type: textarea
+    id: per_stage_walls
+    attributes:
+      label: Per-stage wall times (seconds)
+      description: From `elapsed_per_stage` if you used the JSON artefact path; otherwise paste the timing log.
+      render: shell
+      placeholder: |
+        preproc: 0.0
+        topics: 92.5
+        grn: 600.2
+        cistarget: 1.5
+        enhancer: 23.9
+        eregulons: 44.6
+        aucell: 0.3
+    validations:
+      required: false
+
+  - type: input
+    id: peak_rss_gb
+    attributes:
+      label: Peak RSS (GB)
+      description: e.g. from `psutil` or `/usr/bin/time -l`. Optional but valuable for the scaling table.
+      placeholder: "4.01"
+    validations:
+      required: false
+
+  - type: textarea
+    id: headline_counts
+    attributes:
+      label: Headline output counts
+      description: All six SCENIC+ stages must produce non-empty artefacts for a clean run.
+      render: shell
+      placeholder: |
+        n_grn_edges: 2739545
+        n_regulons: 1407
+        n_cistarget_rows: 1216912
+        n_enhancer_links: 7620
+        n_eregulons: 1125
+    validations:
+      required: true
+
+  - type: textarea
+    id: biological_sanity
+    attributes:
+      label: Biological sanity
+      description: |
+        Which canonical TFs were you expecting for this tissue, and how many were recovered as regulons?
+        See `docs/v0.4.x-benchmark-plan.md` for the per-tissue lists we use; if you have your own
+        reference list, name it.
+      placeholder: |
+        expected_tfs: ["Pax6", "Neurod2", "Sox2", "Ascl1", "Tbr1", "Neurog2", "Fezf2", "Eomes", "Foxg1"]
+        recovered_as_regulons: ["Ascl1", "Eomes", "Fezf2", "Foxg1", "Neurod2", "Neurog2", "Pax6", "Sox2", "Tbr1"]
+        fraction_recovered: 9/9
+    validations:
+      required: true
+
+  - type: input
+    id: artefact_link
+    attributes:
+      label: JSON artefact link
+      description: |
+        Gist link to a JSON file matching the schema in `docs/v0.4.x-benchmark-plan.md`,
+        OR a PR adding `validation/community/<dataset>.json`. Optional but strongly preferred.
+      placeholder: "https://gist.github.com/.../validation_<dataset>.json"
+    validations:
+      required: false
+
+  - type: textarea
+    id: caveats
+    attributes:
+      label: Caveats / unexpected behaviour
+      description: |
+        Anything off about the run: warnings, slow stages, biology gaps, log lines that surprised you.
+        Workarounds you applied (caller-side ATAC subset, custom QC threshold, etc.).
+      validations:
+        required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I read [`docs/tester-reporting.md`](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/tester-reporting.md) before filing.
+          required: true
+        - label: I ran rustscenic v0.4.0 or later (not a pre-release commit).
+          required: true
+        - label: I subset ATAC to RNA-QC'd cells before passing `adata_atac=...` (the documented v0.4.0 workflow).
+          required: true

@@ -204,4 +204,4 @@ rustscenic was created and is maintained by Ekin Kahraman. See [`AUTHORS.md`](AU
 
 ## Contact
 
-File issues at [github.com/Ekin-Kahraman/rustscenic/issues](https://github.com/Ekin-Kahraman/rustscenic/issues). Coordinated vulnerability disclosure: see [SECURITY.md](SECURITY.md).
+File issues at [github.com/Ekin-Kahraman/rustscenic/issues](https://github.com/Ekin-Kahraman/rustscenic/issues). Bug, correctness, and validation-report templates pre-fill the fields we need. If you ran the pipeline on real data and want the result folded into the v0.4.x sweep, see [`docs/tester-reporting.md`](docs/tester-reporting.md). Coordinated vulnerability disclosure: see [SECURITY.md](SECURITY.md).
