@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "rustscenic"
-version = "0.3.10"
+version = "0.3.11"
 description = "Rust + PyO3 reimplementation of the full SCENIC+ pipeline — GRN, AUCell, topics, cistarget, peak calling, cell QC, enhancer→gene, eRegulon assembly. Installs and runs where arboreto+pyscenic+pycisTopic no longer do."
 readme = "README.md"
 license = "MIT"
