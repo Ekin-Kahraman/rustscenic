@@ -5,10 +5,8 @@
 ## Install
 
 ```bash
-pip install "rustscenic @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.4.0" anndata scanpy
+pip install rustscenic anndata scanpy
 ```
-
-(PyPI publication is being set up; until then, pip-install from the GitHub release tag.)
 
 Python ≥ 3.10 required. No Java / no CUDA / no Dask. Works on macOS, Linux.
 

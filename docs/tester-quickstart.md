@@ -8,7 +8,7 @@ back if anything is off.
 ## Install
 
 ```bash
-pip install --upgrade git+https://github.com/Ekin-Kahraman/rustscenic@v0.4.0
+pip install --upgrade rustscenic
 ```
 
 Wheels are also at the [latest release page](https://github.com/Ekin-Kahraman/rustscenic/releases/latest)
@@ -21,7 +21,7 @@ If you are running the example or validation scripts, install the
 validation extra in one line (v0.4.0+):
 
 ```bash
-pip install --upgrade "rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.4.0"
+pip install --upgrade "rustscenic[validation]"
 ```
 
 That adds the ecosystem packages used outside rustscenic core: scanpy,
