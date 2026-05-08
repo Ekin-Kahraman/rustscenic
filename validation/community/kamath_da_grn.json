@@ -1,0 +1,115 @@
+{
+  "release": "v0.4.0",
+  "smoke_type": "grn_cistarget_run",
+  "rustscenic_version": "0.4.0",
+  "rustscenic_sha": "86a1c3e4631f0186431c27dd7b2d6b3536cf47f9",
+  "install_command": "pip install git+https://github.com/Ekin-Kahraman/rustscenic@v0.4.0",
+    "api_call": "rustscenic.grn.infer(expression=nd, tf_names=test_tfs, seed=777, n_estimators=100), rustscenic.cistarget.load_aertslab_feather(path=...), rustscenic.cistarget.enrich(rankings=rankings, regulons=regulons, top_frac=0.05, auc_threshold=0.01)",
+  "dataset": {
+    "name": "Kamath et al. (2022) snRNA-seq midbrain DA neurons",
+    "source": "https://doi.org/10.1038/s41593-022-01061-1",
+    "species": "Homo sapiens (hg19)",
+    "tissue": "Midbrain dopaminergic neurons, normal/non-disease",
+    "rna_h5ad_md5": "be20717511900fe34db3ae1cb2ac63a3",
+    "atac_fragments_md5_first_8mb": null,
+    "peaks_bed_md5": null
+  },
+  "shapes": {
+    "rna_post_qc": [15684,33295],
+    "atac_subset_to_rna_cells": null
+  },
+  "wall_s" : {"setup": 47, "pipeline_run_total": 860},
+  "peak_rss_gb": null,
+  "outputs_non_empty": {
+    "grn": true, "regulons": true, "cistarget": true, "aucell": false,
+    "enhancer_links": false, "eregulons": false, "integrated_adata": false
+  },
+  "headline_counts": {
+    "n_grn_edges": 266805,
+    "n_regulons": 9,
+    "n_cistarget_rows": 174019,
+    "n_enhancer_links": null,
+    "n_eregulons" : null
+  },
+  "biological_sanity": {
+    "expected_tfs": ["SOX6", "OTX2", "SMAD1","PBX1",
+      "LMX1B", "NFE2L1", "EN2", "CUX2","ZNF91"],
+
+    "found_in_regulons": ["SOX6", "OTX2", "SMAD1","PBX1",
+      "LMX1B", "NFE2L1", "EN2", "CUX2","ZNF91"],
+
+    "missing_from_regulons": [],
+    "fraction_recovered": 1.0
+  },
+  "output_inventory": {
+    "atac_matrix_path": {
+      "path": null,
+      "exists": false,
+      "size_bytes": null
+    },
+    "grn_path": {
+      "path": "grn.parquet",
+      "exists": true,
+      "size_bytes": 1984353
+    },
+    "regulons_path": {
+      "path": "regulons.json",
+      "exists": true,
+      "size_bytes": 5155
+    },
+    "aucell_path": {
+      "path": null,
+      "exists": false,
+      "size_bytes": null
+    },
+    "topics_dir": {
+      "path": null,
+      "exists": false,
+      "size_bytes": null
+    },
+    "cistarget_path": {
+      "path": "cistarget_enriched.parquet",
+      "exists": true,
+      "size_bytes": 1018514
+    },
+    "enhancer_links_path": {
+      "path": null,
+      "exists": false,
+      "size_bytes": null
+    },
+    "eregulons_path": {
+      "path": null,
+      "exists": false,
+      "size_bytes": null
+    },
+    "integrated_adata_path": {
+      "path": null,
+      "exists": false,
+      "size_bytes": null
+    }
+  },
+  "elapsed_per_stage": {
+    "preproc": 0.0,
+    "topics": null,
+    "grn": 751.43,
+    "cistarget": 109.88,
+    "enhancer": null,
+    "eregulons": null,
+    "aucell": null
+  },
+  "env": {
+    "python": "3.12.13",
+    "scanpy": "1.12.1",
+    "anndata": "0.12.13",
+    "pandas": "2.3.3",
+    "os": "Google Colab (Linux x86_64)",
+    "cpu": "Intel(R) Xeon(R) CPU @ 2.20GHz",
+    "n_cpus": "2xvCPU",
+    "ram_gb": 12
+  },
+  "scope_notes": [
+    "GRN + cisTARGET run",
+    "Rankings DB: hg19-tss-centered-10kb-7species.mc9nr.genes_vs_motifs.rankings.feather (Aerts lab v9).",
+    "3/9 regulons flagged with <50% gene coverage in expression matrix (SMAD1: 7/50, LMX1B: 20/50, EN2: 14/50)"
+  ]
+}
