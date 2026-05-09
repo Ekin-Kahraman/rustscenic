@@ -362,6 +362,9 @@ def run(
                     f"{len(pruned_enriched)} annotation-supported motif rows"
                 )
             else:
+                example_tf = _normalise_regulon_tf(
+                    next(iter(candidate_regulons), "TF_X_regulon")
+                )
                 # All candidate regulons were pruned away. Most common cause
                 # is a TF-symbol convention mismatch between the GRN (regulon
                 # names like ``PAX5_regulon``) and the annotation table
@@ -374,7 +377,7 @@ def run(
                     f"cause: motif_annotations TF symbols don't match the "
                     f"GRN regulon TF symbols (case / convention mismatch). "
                     f"Compare the regulon TF (e.g. "
-                    f"`{next(iter(candidate_regulons), 'TF_X_regulon').split('_regulon')[0]}`) "
+                    f"`{example_tf}`) "
                     f"with the annotation table's TF column. Falling back "
                     f"to candidate GRN top-target regulons for AUCell.",
                     UserWarning,
@@ -650,6 +653,12 @@ def _coerce_motif_annotations(annotations):
     raise ValueError(f"unsupported motif_annotations format: {suffix}")
 
 
+def _normalise_regulon_tf(name: str) -> str:
+    from rustscenic.cistarget import _tf_from_regulon_name
+
+    return _tf_from_regulon_name(name)
+
+
 def _rankings_with_motif_index(df: pd.DataFrame, path: Path) -> pd.DataFrame:
     """Normalise aertslab-style ranking files to motifs as the index.
 
@@ -708,13 +717,7 @@ def _attribute_peaks_to_cistarget(
     if regulons is not None:
         tf_target_rows = []
         for regulon_name, targets in regulons.items():
-            tf = (
-                str(regulon_name)
-                .replace("_regulon", "")
-                .replace("_extended", "")
-                .replace("_activator", "")
-                .replace("_repressor", "")
-            )
+            tf = _normalise_regulon_tf(str(regulon_name))
             for g in targets:
                 tf_target_rows.append((tf, g))
         tf_target = pd.DataFrame(tf_target_rows, columns=["tf", "gene"])
@@ -729,15 +732,10 @@ def _attribute_peaks_to_cistarget(
     tf_peak = tf_target.merge(gene_peak, on="gene", how="inner")[["tf", "peak_id"]]
     tf_peak = tf_peak.drop_duplicates()
 
-    # Strip "_regulon"/"_extended"/"_activator|repressor" from regulon
-    # names so the merge key matches our normalised tf column.
+    # Strip pyscenic / scenicplus regulon-name suffixes so the merge key
+    # matches our normalised tf column.
     ct = enriched.copy()
-    tf_col = ct["regulon"].astype(str)
-    tf_col = tf_col.str.replace(r"_regulon$", "", regex=True)
-    tf_col = tf_col.str.replace(r"_extended$", "", regex=True)
-    tf_col = tf_col.str.replace(r"_(activator|repressor)$", "", regex=True)
-    tf_col = tf_col.str.replace(r"\s*\([+\-]\)\s*$", "", regex=True)
-    ct["tf"] = tf_col
+    ct["tf"] = ct["regulon"].astype(str).map(_normalise_regulon_tf)
     cols = ["regulon", "tf", "auc"]
     if "motif" in ct.columns:
         cols.insert(2, "motif")

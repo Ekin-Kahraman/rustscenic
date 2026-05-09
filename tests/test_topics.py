@@ -46,6 +46,23 @@ class TestTopicsCorrectness:
         assert len(np.unique(b_half)) == 1, f"second group split across {np.unique(b_half)}"
         assert a_half[0] != b_half[0]
 
+    def test_cell_assignment_marks_zero_rows_missing(self):
+        res = topics.TopicsResult(
+            cell_topic=pd.DataFrame(
+                [[0.0, 0.0], [0.2, 0.8]],
+                index=["empty_cell", "active_cell"],
+                columns=["Topic_0", "Topic_1"],
+            ),
+            topic_peak=pd.DataFrame([[0.5], [0.5]], index=["Topic_0", "Topic_1"]),
+            n_topics=2,
+        )
+
+        with pytest.warns(UserWarning, match="zero or non-finite total topic weight"):
+            assignment = res.cell_assignment()
+
+        assert pd.isna(assignment.loc["empty_cell"])
+        assert assignment.loc["active_cell"] == "Topic_1"
+
 
 class TestTopicsEdgeCases:
     def test_n_topics_zero_raises(self, synthetic_atac_2_topics):

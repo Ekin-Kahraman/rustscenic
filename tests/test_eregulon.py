@@ -240,10 +240,10 @@ def test_polarity_suffix_normalised_to_bare_tf():
         ("SPI1", "GENE_D", 0.2), ("SPI1", "GENE_E", 0.1),
     ], columns=["TF", "target", "importance"])
     cistarget = pd.DataFrame([
-        {"regulon": "SPI1(+)", "motif": "m", "peak_id": f"peak_{i}", "auc": 0.2}
+        {"regulon": "SPI1_regulon(+)", "motif": "m", "peak_id": f"peak_{i}", "auc": 0.2}
         for i in range(3)
     ] + [
-        {"regulon": "SPI1_extended", "motif": "m", "peak_id": f"peak_{i}", "auc": 0.2}
+        {"regulon": "SPI1_extended_repressor(-)", "motif": "m", "peak_id": f"peak_{i}", "auc": 0.2}
         for i in range(3, 5)
     ])
     enhancer_links = pd.DataFrame([

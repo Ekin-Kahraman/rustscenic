@@ -510,6 +510,79 @@ def test_pipeline_run_with_motif_annotations_scores_pruned_regulons(tmp_path):
     assert result.n_pruned_regulons == 1
 
 
+def test_pipeline_run_without_motif_annotations_keeps_candidate_regulons(tmp_path):
+    """Adding optional motif-annotation pruning must not change the
+    historical cistarget path when no annotations are supplied."""
+    import json
+    import anndata as ad
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline
+
+    rng = np.random.default_rng(5)
+    genes = ["TF_A", "TF_B"] + [f"G{i:02d}" for i in range(24)]
+    X = rng.lognormal(mean=0.2, sigma=0.4, size=(90, len(genes))).astype("float32")
+    rna = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame(index=[f"cell{i}" for i in range(X.shape[0])]),
+        var=pd.DataFrame(index=genes),
+    )
+    rankings = pd.DataFrame(
+        np.tile(np.arange(len(genes), dtype=np.int32), (2, 1)),
+        index=["M_TF_A", "M_TF_B"],
+        columns=genes,
+    )
+
+    result = rustscenic.pipeline.run(
+        rna,
+        tmp_path,
+        tfs=["TF_A", "TF_B"],
+        motif_rankings=rankings,
+        motif_annotations=None,
+        grn_n_estimators=10,
+        grn_top_targets=10,
+        cistarget_top_frac=1.0,
+        cistarget_auc_threshold=0.0,
+        verbose=False,
+    )
+
+    candidates = json.loads(result.candidate_regulons_path.read_text())
+    active = json.loads(result.regulons_path.read_text())
+    auc = pd.read_parquet(result.aucell_path)
+
+    assert active == candidates
+    assert result.regulon_source == "candidate_grn_top_targets"
+    assert result.pruned_regulons_path is None
+    assert result.n_pruned_regulons is None
+    assert list(auc.columns) == list(active)
+
+
+def test_attribute_peaks_normalises_compound_regulon_names():
+    from rustscenic.pipeline import _attribute_peaks_to_cistarget
+
+    enriched = pd.DataFrame(
+        [{"regulon": "PAX5_regulon(+)", "motif": "m1", "auc": 0.2}]
+    )
+    grn = pd.DataFrame(
+        [{"TF": "PAX5", "target": "GENE_A", "importance": 1.0}]
+    )
+    enhancer_links = pd.DataFrame(
+        [{"peak_id": "peak_1", "gene": "GENE_A"}]
+    )
+    regulons = {"PAX5_regulon(+)": ["GENE_A"]}
+
+    out = _attribute_peaks_to_cistarget(
+        enriched,
+        grn,
+        enhancer_links,
+        regulons=regulons,
+    )
+
+    assert out[["regulon", "motif", "peak_id"]].to_dict("records") == [
+        {"regulon": "PAX5_regulon(+)", "motif": "m1", "peak_id": "peak_1"}
+    ]
+
+
 def test_pipeline_run_warns_when_motif_annotations_supplied_without_rankings(tmp_path):
     """``motif_annotations`` without ``motif_rankings`` is a silent-fail
     trap: pruning needs both, so the annotations would be ignored and the

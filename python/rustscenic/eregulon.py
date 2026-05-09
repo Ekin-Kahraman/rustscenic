@@ -26,6 +26,8 @@ from typing import Iterable, Optional, Sequence
 
 import pandas as pd
 
+from rustscenic.cistarget import _tf_from_regulon_name
+
 
 @dataclass
 class ERegulon:
@@ -132,15 +134,9 @@ def build_eregulons(
     if ct.empty:
         return []
 
-    # Normalise regulon names to bare TF symbols. pyscenic / scenicplus
-    # emit variants: "TF_regulon", "TF(+)", "TF(-)", "TF_activator",
-    # "TF_repressor", "TF_extended", ...
-    tf_col = ct["regulon"].astype(str)
-    tf_col = tf_col.str.replace(r"_regulon$", "", regex=True)
-    tf_col = tf_col.str.replace(r"_extended$", "", regex=True)
-    tf_col = tf_col.str.replace(r"_(activator|repressor)$", "", regex=True)
-    tf_col = tf_col.str.replace(r"\s*\([+\-]\)\s*$", "", regex=True)
-    ct["tf"] = tf_col
+    # Normalise pyscenic / scenicplus regulon-name variants to bare TF
+    # symbols, including compound suffixes such as TF_extended_regulon(+).
+    ct["tf"] = ct["regulon"].astype(str).map(_tf_from_regulon_name)
 
     # GRN TF → {predicted targets}
     grn_targets: dict[str, set[str]] | None = None

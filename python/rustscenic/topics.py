@@ -35,7 +35,21 @@ class TopicsResult:
 
     def cell_assignment(self) -> pd.Series:
         """Argmax topic per cell."""
-        return self.cell_topic.idxmax(axis=1)
+        import warnings
+
+        assignment = self.cell_topic.idxmax(axis=1).astype("object")
+        row_sums = pd.to_numeric(self.cell_topic.sum(axis=1), errors="coerce")
+        empty = (~np.isfinite(row_sums.to_numpy())) | (row_sums.to_numpy() <= 0)
+        if empty.any():
+            n_empty = int(empty.sum())
+            warnings.warn(
+                f"{n_empty} cells have zero or non-finite total topic weight; "
+                "their topic assignment is set to NA instead of Topic_0.",
+                UserWarning,
+                stacklevel=2,
+            )
+            assignment.iloc[np.flatnonzero(empty)] = pd.NA
+        return assignment
 
     def top_peaks_per_topic(self, n: int = 20) -> dict[str, list[str]]:
         return {
