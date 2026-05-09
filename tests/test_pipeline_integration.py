@@ -452,6 +452,156 @@ def test_pipeline_run_with_pre_built_adata_atac_skips_fragments_to_matrix(tmp_pa
     assert result.eregulons_path.exists()
 
 
+def test_pipeline_run_with_motif_annotations_scores_pruned_regulons(tmp_path):
+    """When motif annotations are supplied, active regulons must be the
+    annotation-pruned set rather than the raw GRN top-target candidates.
+    """
+    import json
+    import anndata as ad
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline
+
+    rng = np.random.default_rng(3)
+    genes = ["TF_A", "TF_B"] + [f"G{i:02d}" for i in range(24)]
+    X = rng.lognormal(mean=0.2, sigma=0.4, size=(90, len(genes))).astype("float32")
+    rna = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame(index=[f"cell{i}" for i in range(X.shape[0])]),
+        var=pd.DataFrame(index=genes),
+    )
+
+    rankings = pd.DataFrame(
+        np.tile(np.arange(len(genes), dtype=np.int32), (2, 1)),
+        index=["M_TF_A", "M_TF_B"],
+        columns=genes,
+    )
+    annotations = pd.DataFrame(
+        {
+            "motif": ["M_TF_A"],
+            "TF": ["TF_A"],
+        }
+    )
+
+    result = rustscenic.pipeline.run(
+        rna,
+        tmp_path,
+        tfs=["TF_A", "TF_B"],
+        motif_rankings=rankings,
+        motif_annotations=annotations,
+        grn_n_estimators=10,
+        grn_top_targets=10,
+        cistarget_top_frac=1.0,
+        cistarget_auc_threshold=0.0,
+        verbose=False,
+    )
+
+    candidates = json.loads(result.candidate_regulons_path.read_text())
+    active = json.loads(result.regulons_path.read_text())
+    pruned = json.loads(result.pruned_regulons_path.read_text())
+    auc = pd.read_parquet(result.aucell_path)
+
+    assert set(candidates) == {"TF_A_regulon", "TF_B_regulon"}
+    assert set(active) == {"TF_A_regulon"}
+    assert active == pruned
+    assert list(auc.columns) == ["TF_A_regulon"]
+    assert result.regulon_source == "motif_annotation_pruned"
+    assert result.n_candidate_regulons == 2
+    assert result.n_pruned_regulons == 1
+
+
+def test_pipeline_run_warns_when_motif_annotations_supplied_without_rankings(tmp_path):
+    """``motif_annotations`` without ``motif_rankings`` is a silent-fail
+    trap: pruning needs both, so the annotations would be ignored and the
+    user thinks they got pruned regulons. Pipeline must warn loudly and
+    keep the candidate regulon path."""
+    import warnings as _warnings
+    import anndata as ad
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline
+
+    rng = np.random.default_rng(7)
+    genes = ["TF_A", "TF_B"] + [f"G{i:02d}" for i in range(24)]
+    X = rng.lognormal(0.2, 0.4, size=(90, len(genes))).astype("float32")
+    rna = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(90)]),
+        var=pd.DataFrame(index=genes),
+    )
+    annotations = tmp_path / "ignored_missing_annotations.tsv"
+
+    with _warnings.catch_warnings(record=True) as caught:
+        _warnings.simplefilter("always")
+        result = rustscenic.pipeline.run(
+            rna,
+            tmp_path,
+            tfs=["TF_A", "TF_B"],
+            motif_rankings=None,
+            motif_annotations=annotations,
+            grn_n_estimators=10,
+            grn_top_targets=10,
+            verbose=False,
+        )
+
+    relevant = [w for w in caught if "motif_annotations" in str(w.message)]
+    assert relevant, "expected UserWarning about motif_annotations + missing motif_rankings"
+    assert result.regulon_source == "candidate_grn_top_targets"
+    assert result.pruned_regulons_path is None
+    assert result.n_pruned_regulons is None
+
+
+def test_pipeline_run_warns_and_falls_back_when_pruning_removes_all_regulons(tmp_path):
+    """When motif annotations don't match any candidate TF, pruning removes
+    every regulon. Pipeline must warn loudly and fall back to the candidate
+    regulon set so AUCell isn't silently scored on zero columns."""
+    import warnings as _warnings
+    import anndata as ad
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline
+
+    rng = np.random.default_rng(11)
+    genes = ["TF_A", "TF_B"] + [f"G{i:02d}" for i in range(24)]
+    X = rng.lognormal(0.2, 0.4, size=(90, len(genes))).astype("float32")
+    rna = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(90)]),
+        var=pd.DataFrame(index=genes),
+    )
+    rankings = pd.DataFrame(
+        np.tile(np.arange(len(genes), dtype=np.int32), (1, 1)),
+        index=["M_TF_A"],
+        columns=genes,
+    )
+    # Annotation maps the only motif to a TF that doesn't appear in the GRN
+    # candidate set, so prune_regulons returns {}.
+    bogus_annotations = pd.DataFrame({"motif": ["M_TF_A"], "TF": ["UNKNOWN_TF"]})
+
+    with _warnings.catch_warnings(record=True) as caught:
+        _warnings.simplefilter("always")
+        result = rustscenic.pipeline.run(
+            rna,
+            tmp_path,
+            tfs=["TF_A", "TF_B"],
+            motif_rankings=rankings,
+            motif_annotations=bogus_annotations,
+            grn_n_estimators=10,
+            grn_top_targets=10,
+            cistarget_top_frac=1.0,
+            cistarget_auc_threshold=0.0,
+            verbose=False,
+        )
+
+    relevant = [w for w in caught if "removed all" in str(w.message)]
+    assert relevant, "expected UserWarning that pruning removed all regulons"
+    auc = pd.read_parquet(result.aucell_path)
+    assert auc.shape[1] > 0, "AUCell must not be empty after pruning fallback"
+    assert result.regulon_source == "candidate_grn_top_targets_after_failed_pruning"
+    assert result.n_pruned_regulons == 0
+    assert result.n_regulons == result.n_candidate_regulons
+
+
 def test_pipeline_run_topics_method_gibbs(tmp_path):
     """When ``topics_method='gibbs'`` (with ``topics_n_threads > 1``)
     the orchestrator runs the parallel collapsed-Gibbs sampler instead

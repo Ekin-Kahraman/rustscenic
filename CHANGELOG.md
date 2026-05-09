@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Motif-annotation pruning for cisTarget regulons** —
+  `rustscenic.cistarget.prune_enriched_motifs` and
+  `rustscenic.cistarget.prune_regulons` now filter enriched motif rows
+  through motif-to-TF annotations. When `pipeline.run(...,
+  motif_annotations=...)` is supplied, the active `regulons.json` and
+  AUCell matrix use the pruned regulon set; raw GRN top-target candidates
+  are kept separately as `candidate_regulons.json`.
+
 ## 0.4.1 — 2026-05-07
 
 ### Bug fixes

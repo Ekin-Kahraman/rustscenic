@@ -45,6 +45,8 @@ class PipelineResult:
     atac_matrix_path: Optional[Path] = None
     grn_path: Optional[Path] = None
     regulons_path: Optional[Path] = None
+    candidate_regulons_path: Optional[Path] = None
+    pruned_regulons_path: Optional[Path] = None
     aucell_path: Optional[Path] = None
     topics_dir: Optional[Path] = None
     cistarget_path: Optional[Path] = None
@@ -54,7 +56,10 @@ class PipelineResult:
     elapsed: dict = field(default_factory=dict)
     n_cells: Optional[int] = None
     n_regulons: Optional[int] = None
+    n_candidate_regulons: Optional[int] = None
+    n_pruned_regulons: Optional[int] = None
     n_eregulons: Optional[int] = None
+    regulon_source: str = "candidate_grn_top_targets"
 
     def manifest(self) -> dict:
         d = asdict(self)
@@ -73,6 +78,7 @@ def run(
     peaks: Union[str, Path, None] = None,
     tfs: Union[str, Path, Iterable[str], None] = None,
     motif_rankings: Union[str, Path, pd.DataFrame, None] = None,
+    motif_annotations: Union[str, Path, pd.DataFrame, None] = None,
     region_motif_rankings: Union[str, Path, pd.DataFrame, None] = None,
     gene_coords: Union[str, Path, pd.DataFrame, None] = None,
     grn_n_estimators: int = 500,
@@ -126,7 +132,12 @@ def run(
     motif_rankings
         Motif ranking DataFrame, or a path to a parquet / feather file
         with motifs as rows and genes as columns. If provided, cistarget
-        runs to filter regulons to motif-enriched TFs.
+        runs to score candidate regulons for motif enrichment.
+    motif_annotations
+        Optional motif-to-TF annotation table. When provided alongside
+        ``motif_rankings``, the active regulons are pruned to enriched
+        motifs annotated back to the source TF, and target genes are
+        restricted to the motif ranking recovery window.
     region_motif_rankings
         Optional region-based motif ranking DataFrame, or path, with motifs
         as rows and peak / region IDs as columns. When supplied alongside
@@ -158,6 +169,8 @@ def run(
     -------
     PipelineResult — dataclass with paths to every artifact written.
     """
+    import warnings as _warnings
+
     import anndata as ad
     import rustscenic.aucell
     import rustscenic.grn
@@ -166,6 +179,19 @@ def run(
     output_dir.mkdir(parents=True, exist_ok=True)
     log = _Logger(verbose)
     elapsed: dict = {}
+
+    if motif_annotations is not None and motif_rankings is None:
+        # Pruning needs both. Without rankings we have no enriched motifs to
+        # filter, so the annotations are dead weight; warn instead of silently
+        # routing the user into an un-pruned run they didn't ask for.
+        _warnings.warn(
+            "motif_annotations supplied without motif_rankings; pruning "
+            "requires both, so the annotations will be ignored and the "
+            "active regulon set will be the GRN top-target candidates. "
+            "Pass motif_rankings to enable annotation-based pruning.",
+            UserWarning,
+            stacklevel=2,
+        )
 
     # ---- 1. load / normalise RNA ----
     log("[1/8] loading RNA expression")
@@ -263,20 +289,32 @@ def run(
     grn.to_parquet(grn_path, index=False)
     log(f"      {len(grn):,} edges in {elapsed['grn']:.1f}s → {grn_path.name}")
 
-    # ---- 4. build regulons ----
-    log(f"[5/8] regulons: top-{grn_top_targets} targets per TF")
-    regulons = {}
+    # ---- 4. build candidate regulons ----
+    log(f"[5/8] candidate regulons: top-{grn_top_targets} targets per TF")
+    candidate_regulons = {}
     for tf in grn["TF"].unique():
         top = grn[grn["TF"] == tf].nlargest(grn_top_targets, "importance")["target"].tolist()
         if len(top) >= 10:
-            regulons[f"{tf}_regulon"] = top
-    regulons_path = output_dir / "regulons.json"
-    regulons_path.write_text(json.dumps(regulons, indent=2))
-    log(f"      {len(regulons)} regulons (≥10 targets) → {regulons_path.name}")
+            candidate_regulons[f"{tf}_regulon"] = top
+    candidate_regulons_path = output_dir / "candidate_regulons.json"
+    candidate_regulons_path.write_text(json.dumps(candidate_regulons, indent=2))
+    regulons = dict(candidate_regulons)
+    regulon_source = "candidate_grn_top_targets"
+    pruned_regulons_path = None
+    n_pruned_regulons: Optional[int] = None
+    log(
+        f"      {len(candidate_regulons)} candidate regulons "
+        f"(≥10 targets) → {candidate_regulons_path.name}"
+    )
 
     # ---- 4b. cistarget (optional) ----
     cistarget_path = None
     enriched: Optional[pd.DataFrame] = None
+    enriched_for_eregulons: Optional[pd.DataFrame] = None
+    motif_annotations_df = (
+        _coerce_motif_annotations(motif_annotations)
+        if motif_annotations is not None and motif_rankings is not None else None
+    )
     if motif_rankings is not None:
         import rustscenic.cistarget
         rankings_df = _coerce_rankings(motif_rankings)
@@ -284,14 +322,73 @@ def run(
         t0 = time.perf_counter()
         enriched = rustscenic.cistarget.enrich(
             rankings_df,
-            [(n, g) for n, g in regulons.items()],
+            [(n, g) for n, g in candidate_regulons.items()],
             top_frac=cistarget_top_frac,
             auc_threshold=cistarget_auc_threshold,
         )
+        enriched_for_eregulons = enriched
         elapsed["cistarget"] = time.perf_counter() - t0
         cistarget_path = output_dir / "cistarget_enriched.parquet"
         enriched.to_parquet(cistarget_path, index=False)
         log(f"      {len(enriched):,} enriched pairs in {elapsed['cistarget']:.1f}s")
+
+        if motif_annotations_df is not None:
+            log("      pruning enriched motifs with motif annotations")
+            pruned_enriched = rustscenic.cistarget.prune_enriched_motifs(
+                enriched,
+                motif_annotations_df,
+                auc_threshold=cistarget_auc_threshold,
+            )
+            pruned_regulons = rustscenic.cistarget.prune_regulons(
+                enriched,
+                [(n, g) for n, g in candidate_regulons.items()],
+                motif_annotations_df,
+                rankings=rankings_df,
+                top_frac=cistarget_top_frac,
+                auc_threshold=cistarget_auc_threshold,
+                min_genes=1,
+            )
+            pruned_enriched_path = output_dir / "cistarget_pruned_enriched.parquet"
+            pruned_enriched.to_parquet(pruned_enriched_path, index=False)
+            pruned_regulons_path = output_dir / "pruned_regulons.json"
+            pruned_regulons_path.write_text(json.dumps(pruned_regulons, indent=2))
+            n_pruned_regulons = len(pruned_regulons)
+            if pruned_regulons:
+                regulons = pruned_regulons
+                enriched_for_eregulons = pruned_enriched
+                regulon_source = "motif_annotation_pruned"
+                log(
+                    f"      {len(pruned_regulons)} pruned regulons from "
+                    f"{len(pruned_enriched)} annotation-supported motif rows"
+                )
+            else:
+                # All candidate regulons were pruned away. Most common cause
+                # is a TF-symbol convention mismatch between the GRN (regulon
+                # names like ``PAX5_regulon``) and the annotation table
+                # (column ``TF``). Falling back to candidates so the run
+                # isn't silently empty downstream (AUCell would otherwise
+                # score 0 cells x 0 regulons without complaint).
+                _warnings.warn(
+                    f"motif-annotation pruning removed all "
+                    f"{len(candidate_regulons)} candidate regulons. Likely "
+                    f"cause: motif_annotations TF symbols don't match the "
+                    f"GRN regulon TF symbols (case / convention mismatch). "
+                    f"Compare the regulon TF (e.g. "
+                    f"`{next(iter(candidate_regulons), 'TF_X_regulon').split('_regulon')[0]}`) "
+                    f"with the annotation table's TF column. Falling back "
+                    f"to candidate GRN top-target regulons for AUCell.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                regulon_source = "candidate_grn_top_targets_after_failed_pruning"
+                log(
+                    f"      pruning removed all regulons; falling back to "
+                    f"{len(candidate_regulons)} candidate regulons"
+                )
+
+    regulons_path = output_dir / "regulons.json"
+    regulons_path.write_text(json.dumps(regulons, indent=2))
+    log(f"      active regulons: {len(regulons)} ({regulon_source}) → {regulons_path.name}")
 
     # ---- 4c. enhancer → gene linking (optional, requires multiome + gene_coords) ----
     enhancer_links_path: Optional[Path] = None
@@ -346,7 +443,7 @@ def run(
     # ---- 4d. eRegulon assembly (optional, needs grn + cistarget + enhancer) ----
     eregulons_path: Optional[Path] = None
     n_eregulons: Optional[int] = None
-    if enhancer_links is not None and (enriched is not None or region_motif_rankings is not None):
+    if enhancer_links is not None and (enriched_for_eregulons is not None or region_motif_rankings is not None):
         import rustscenic.eregulon
         log("[7b/8] eRegulons: assembling TF × enhancer × target intersection")
         t0 = time.perf_counter()
@@ -382,6 +479,22 @@ def run(
                     top_frac=cistarget_top_frac,
                     auc_threshold=cistarget_auc_threshold,
                 )
+                if motif_annotations_df is not None and not region_enrich.empty:
+                    region_enrich = rustscenic.cistarget.prune_enriched_motifs(
+                        region_enrich,
+                        motif_annotations_df,
+                        auc_threshold=cistarget_auc_threshold,
+                    )
+                    # Merge on (regulon, motif) only — both DataFrames came from
+                    # the same region_enrich so AUC values are byte-identical
+                    # today, but using a float column as a join key is fragile
+                    # against a future copy-with-cast in either upstream.
+                    keep = region_enrich[["regulon", "motif"]].drop_duplicates()
+                    enriched_with_peaks = enriched_with_peaks.merge(
+                        keep,
+                        on=["regulon", "motif"],
+                        how="inner",
+                    )
                 if cistarget_path is None:
                     cistarget_path = output_dir / "region_cistarget_enriched.parquet"
                     region_enrich.to_parquet(cistarget_path, index=False)
@@ -399,9 +512,9 @@ def run(
                     columns=["regulon", "motif", "peak_id", "auc"]
                 )
         else:
-            log("      gene-only — bridging via top-N regulon targets (approximate)")
+            log("      gene-only — bridging via active regulon targets")
             enriched_with_peaks = _attribute_peaks_to_cistarget(
-                enriched, grn, enhancer_links, regulons=regulons,
+                enriched_for_eregulons, grn, enhancer_links, regulons=regulons,
             )
         eregs = rustscenic.eregulon.build_eregulons(
             grn,
@@ -422,7 +535,7 @@ def run(
         )
     elif gene_coords is not None and motif_rankings is not None and not have_atac:
         log("[7b/8] eRegulons: skipped (need ATAC for enhancer linking)")
-    elif enriched is None or enhancer_links is None:
+    elif enriched_for_eregulons is None or enhancer_links is None:
         log("[7b/8] eRegulons: skipped (need motif rankings + enhancer links)")
 
     # ---- 5. AUCell ----
@@ -453,6 +566,8 @@ def run(
         atac_matrix_path=atac_matrix_path,
         grn_path=grn_path,
         regulons_path=regulons_path,
+        candidate_regulons_path=candidate_regulons_path,
+        pruned_regulons_path=pruned_regulons_path,
         aucell_path=aucell_path,
         topics_dir=topics_dir,
         cistarget_path=cistarget_path,
@@ -462,7 +577,10 @@ def run(
         elapsed=elapsed,
         n_cells=n_cells,
         n_regulons=len(regulons),
+        n_candidate_regulons=len(candidate_regulons),
+        n_pruned_regulons=n_pruned_regulons,
         n_eregulons=n_eregulons,
+        regulon_source=regulon_source,
     )
     # Manifest is the single source of truth for "what did this run produce"
     (output_dir / "manifest.json").write_text(json.dumps(result.manifest(), indent=2))
@@ -516,6 +634,20 @@ def _coerce_rankings(rankings):
     if suffix == ".feather":
         return _rankings_with_motif_index(pd.read_feather(path), path)
     raise ValueError(f"unsupported motif-ranking format: {suffix}")
+
+
+def _coerce_motif_annotations(annotations):
+    if isinstance(annotations, pd.DataFrame):
+        return annotations
+    path = Path(annotations)
+    suffix = path.suffix.lower()
+    if suffix == ".parquet":
+        return pd.read_parquet(path)
+    if suffix == ".feather":
+        return pd.read_feather(path)
+    if suffix in (".csv", ".tsv", ".txt"):
+        return pd.read_csv(path, sep="\t" if suffix in (".tsv", ".txt") else ",")
+    raise ValueError(f"unsupported motif_annotations format: {suffix}")
 
 
 def _rankings_with_motif_index(df: pd.DataFrame, path: Path) -> pd.DataFrame:
