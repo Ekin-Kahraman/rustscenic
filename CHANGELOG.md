@@ -40,12 +40,17 @@ enhancer-link → eRegulon) on two independent public datasets.
 - **Real mouse brain E18 5k multiome** (mouse, embryonic CNS): 1,125
   eRegulons, 826 s wall, 4.01 GB peak RSS, **9/9 expected cortex marker
   TFs** (Pax6, Neurod2, Sox2, Ascl1, Tbr1, Neurog2, Fezf2, Eomes, Foxg1)
-  recovered as regulons. Artefact:
+  present in the regulon set (name-presence; cell-type enrichment is a
+  v0.4.x follow-up). Artefact:
   `validation/multiome_pipeline_run_v0.3.10_brain_e18.json`.
 - **GRN parity vs current pyscenic 0.12.1 + arboreto 0.1.6** on identical
   PBMC 3k fixture: per-edge Spearman 0.611 on 480,680 shared edges,
-  within-TF Spearman mean 0.632, 1.78× wall speedup, 1.14 M vs 0.95 M
-  edges. Artefact: `validation/parity_v0310/grn_parity_pbmc3k_full.json`.
+  within-TF Spearman mean 0.632, 1.78× wall speedup vs pyscenic in
+  dask-sync mode (not apples-to-apples against dask-parallel pyscenic),
+  1.14 M vs 0.95 M edges. Artefact:
+  `validation/parity_v0310/grn_parity_pbmc3k_full.json`. Validation
+  artefacts were generated against v0.3.9/v0.3.10; orchestrator code
+  is unchanged through v0.4.0, so the same artefacts apply.
 - **Bit-identical determinism** under fixed seed verified live (live
   68,565-edge GRN reproducibility check) and in inline Rust tests.
 - **Fresh-install matrix CI** runs each `[extra]` install path on every

@@ -75,7 +75,10 @@ import rustscenic.grn, rustscenic.aucell, rustscenic.topics, rustscenic.cistarge
 grn = rustscenic.grn.infer(rna_adata, tfs, seed=777)
 
 # Stage 2: Regulon activity
-regulons = build_regulons_from_adj(grn)  # top-N targets per TF
+regulons = [
+    (f"{tf}_regulon", grn[grn["TF"] == tf].nlargest(50, "importance")["target"].tolist())
+    for tf in grn["TF"].unique()
+]
 auc = rustscenic.aucell.score(rna_adata, regulons)
 
 # Stage 3: Topic modeling on binarized ATAC peaks

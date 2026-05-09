@@ -16,10 +16,10 @@ From a source checkout, install the validation extra before running them:
 pip install -e ".[validation]"
 ```
 
-For the current v0.3.5 release, install the validation dependencies explicitly:
+From PyPI (v0.4.0+):
 
 ```bash
-pip install --upgrade "scanpy>=1.10" "anndata>=0.10" "igraph>=0.11" "leidenalg>=0.10" "scikit-learn>=1.3"
+pip install "rustscenic[validation]"
 ```
 
 ## Layout

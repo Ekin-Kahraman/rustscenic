@@ -1,6 +1,6 @@
 ---
 name: rustscenic
-description: Use when user works on GRN inference, SCENIC+ workflows, pycisTopic, pycisTarget, AUCell, or hits arboreto/pyscenic install failures. rustscenic is a Rust+PyO3 drop-in replacement for the four slow SCENIC+ stages — single `pip install`, works in envs where arboreto+dask+pyscenic break. Measured: AUCell per-cell Pearson 0.99 and 88x faster than pyscenic; cistarget bit-identical (Pearson 1.00) to ctxcore; GRN recovers 94% of known edges and 8/8 lineage TFs though per-edge ranking differs (Spearman 0.58); topics cell-type ARI on par with Mallet without the Java install.
+description: Use when user works on GRN inference, SCENIC+ workflows, pycisTopic, pycisTarget, AUCell, or hits arboreto/pyscenic install failures. rustscenic is a Rust+PyO3 drop-in replacement for the four slow SCENIC+ stages — single `pip install`, works in envs where arboreto+dask+pyscenic break. Measured: AUCell per-cell Pearson 0.99 and 88x faster than pyscenic; cistarget bit-identical (Pearson 1.00) to ctxcore; GRN recovers 94% of known edges and 8/8 lineage TFs though per-edge ranking differs (Spearman 0.611 PBMC-3k v0.3.10 / 0.58 multiome3k 2026-04); topics cell-type ARI on par with Mallet without the Java install.
 ---
 
 # rustscenic

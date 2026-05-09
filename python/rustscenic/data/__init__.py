@@ -33,6 +33,10 @@ _TF_ALIAS_MAP = {
 }
 _TF_ALIASES = frozenset(_TF_ALIAS_MAP.keys())
 
+# Aertslab cistarget species directory names, keyed by canonical species code.
+# Used by ``download_motif_rankings`` to build the per-species URL path.
+_SPECIES_DIRS = {"hs": "homo_sapiens", "mm": "mus_musculus"}
+
 
 def tfs(species: Literal["hs", "mm"] = "hs") -> list[str]:
     """Return the bundled transcription-factor list for ``species``.
@@ -137,26 +141,16 @@ def download_motif_rankings(
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
 
-    # Normalise the species alias the same way `tfs()` does so users
-    # following the diagnostic hints from `_gene_resolution` don't hit
-    # an inconsistent error here.
-    species_alias = {
-        "hs": ("hs", "homo_sapiens"),
-        "human": ("hs", "homo_sapiens"),
-        "homo_sapiens": ("hs", "homo_sapiens"),
-        "hg38": ("hs", "homo_sapiens"),
-        "mm": ("mm", "mus_musculus"),
-        "mouse": ("mm", "mus_musculus"),
-        "mus_musculus": ("mm", "mus_musculus"),
-        "mm10": ("mm", "mus_musculus"),
-    }
-    norm = species_alias.get(str(species).lower())
-    if norm is None:
+    # Normalise the species alias from the single source of truth in
+    # ``_TF_ALIAS_MAP`` so adding an alias there exposes it through every
+    # data-module entry point automatically.
+    canonical_species = _TF_ALIAS_MAP.get(str(species).lower())
+    if canonical_species is None:
         raise ValueError(
             f"unknown species {species!r}. Use 'hs'/'human'/'hg38' for "
             f"human, 'mm'/'mouse'/'mm10' for mouse."
         )
-    canonical_species, species_dir = norm
+    species_dir = _SPECIES_DIRS[canonical_species]
     if genome is None:
         genome = "hg38" if canonical_species == "hs" else "mm10"
 
@@ -283,11 +277,7 @@ def download_gene_coords(
     import urllib.request
     import pandas as pd
 
-    species_alias = {
-        "hs": "hs", "human": "hs", "hg38": "hs",
-        "mm": "mm", "mouse": "mm", "mm10": "mm",
-    }
-    norm = species_alias.get(str(species).lower())
+    norm = _TF_ALIAS_MAP.get(str(species).lower())
     if norm is None:
         raise ValueError(
             f"unknown species {species!r}. Use 'hs'/'human'/'hg38' "

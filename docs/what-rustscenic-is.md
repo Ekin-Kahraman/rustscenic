@@ -20,9 +20,8 @@ removing entire classes of silent failure that show up in real atlas data.
 ## What it is
 
 A Rust + PyO3 replacement for the slow CPU stages in the **SCENIC /
-SCENIC+** single-cell regulatory-network workflow. One GitHub
-wheel/source install today, no Java, no dask, no CUDA. PyPI is pending
-trusted-publisher setup. Replaces or covers:
+SCENIC+** single-cell regulatory-network workflow. `pip install
+rustscenic` from PyPI, no Java, no dask, no CUDA. Replaces or covers:
 
 - `arboreto` / `pyscenic.grn` (GRNBoost2 inference)
 - `pyscenic.aucell` (per-cell regulon scoring)
@@ -140,9 +139,9 @@ haven't validated yet:
    GRN cliff was fixed by target blocking + worker-local scratch
    (5k→91.8k slope: 1.81 → 1.15).
 6. **Windows build**: untested. macOS + Linux only.
-7. **PyPI publish blocked**: trusted-publisher needs config on the
-   maintainer's PyPI account. Until that resolves, install via
-   GitHub Release wheels or `pip install git+...`.
+7. **PyPI live since v0.4.0** (May 2026): `pip install rustscenic`.
+   Trusted-publisher OIDC from `release.yml`; four platform wheels +
+   sdist per release.
 
 ## Robustness work
 
@@ -186,4 +185,4 @@ scope:
   tested? Send a slice; if it breaks, we want it to break in CI.
 
 Repo: <https://github.com/Ekin-Kahraman/rustscenic>
-Latest prepared release: v0.3.5 (2026-05-01).
+Latest release: v0.4.1 (2026-05-07) on PyPI.

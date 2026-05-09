@@ -71,15 +71,12 @@ only if rustscenic emits a warning when the cut gets catastrophic.
 `len(eregulons) < 0.5 × len(unique_cistarget_tfs)`, and document the
 threshold-tuning path.
 
-## 4. "one install" is from GitHub, not PyPI yet
+## 4. "one install" — PyPI live since v0.4.0
 
-PyPI trusted-publisher config requires the user's PyPI account state.
-The short-term install path is GitHub: either `pip install git+...@v0.3.6`
-or a platform-specific wheel from the latest tagged Release. But:
-- `pip install rustscenic` from PyPI returns nothing yet.
-- Release wheel names are platform-locked. Users need the matching
-  macOS / Linux, x86_64 / aarch64 wheel.
-- The release workflow must keep publishing GitHub Release assets even
+`pip install rustscenic` on PyPI as of v0.4.0 (May 2026), via
+trusted-publisher OIDC from `release.yml`. Four platform wheels
+(macOS / Linux × x86_64 / aarch64) plus sdist published per release.
+The release workflow keeps publishing GitHub Release assets even
   while PyPI remains gated.
 
 **Gap to close:** either (a) resolve PyPI trusted-publishing config
