@@ -35,7 +35,7 @@ Status as of v0.3.10:
 - Real PBMC multiome end-to-end via public orchestrator: ✅ proven on v0.3.9 (`validation/multiome_pipeline_run_v0.3.9.json` — 2,767 cells, 2.22M GRN edges, 1,420 regulons, 8,621 enhancer links, **1,091 eRegulons**, 451 s pipeline.run wall, 3.67 GB peak RSS, Apple M5)
 - Real mouse brain E18 multiome end-to-end via same public orchestrator (generalisation across species, tissue, developmental stage): ✅ proven on v0.3.10 (`validation/multiome_pipeline_run_v0.3.10_brain_e18.json` — 4,770 cells, 2.74M GRN edges, 1,407 regulons, 7,620 enhancer links, **1,125 eRegulons**, 826 s pipeline.run wall, 4.01 GB peak RSS, **9/9 expected E18 cortex marker TFs (Pax6/Neurod2/Sox2/Ascl1/Tbr1/Neurog2/Fezf2/Eomes/Foxg1) recovered as regulons**)
 
-Aggregate as of v0.3.10: **148 Python tests pass (1 skipped) + 57 Rust inline tests pass (grn 12, topics 8, preproc 32, aucell 5). Bit-identical determinism verified live (68,565-edge GRN identical under same seed). Real-data full SCENIC+ E2E via public `pipeline.run` produces non-empty eRegulons on two real datasets across human PBMC and mouse embryonic brain.**
+Aggregate as of v0.4.1: **169 Python tests pass (1 skipped) + 57 Rust inline tests pass (grn 12, topics 8, preproc 32, aucell 5). Bit-identical determinism verified live (68,565-edge GRN identical under same seed). Real-data full SCENIC+ E2E via public `pipeline.run` produces non-empty eRegulons on two real datasets across human PBMC and mouse embryonic brain.**
 
 ## 3. Claim-vs-evidence matrix
 

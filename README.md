@@ -21,12 +21,14 @@ flowchart LR
     atac["ATAC<br/>AnnData/fragments"] --> chrom["topics<br/>cisTarget<br/>enhancer links"]
     grn --> ereg["eRegulons"]
     chrom --> ereg
-    ereg --> auc["AUCell<br/>cells x regulons"]
+    grn --> auc["AUCell<br/>cells x regulons"]
 ```
 
 ## Status
 
 **Current release: v0.4.1** on PyPI. v0.4.0 established publishable real-data end-to-end on PBMC and mouse brain E18 multiome via the public `pipeline.run`; v0.4.1 fixes `pipeline.run(tfs="hs"/"mm")` species shortcuts. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
+
+Open follow-ups tracked for v0.4.x: AUCell wall-time logs from the 2026-04 stack pending a refresh, region-cistarget kernel parity vs ctxcore, and raw 10x `pipeline.run` without caller-side ATAC pre-subset (current docs require the subset).
 
 ## Goal
 
@@ -59,8 +61,10 @@ Bundled with the wheel: HGNC (1,839 human) and MGI (1,721 mouse) TF lists via `r
 import anndata as ad
 import rustscenic.grn, rustscenic.aucell
 
+import rustscenic.data
+
 adata = ad.read_h5ad("rna.h5ad")
-tfs = rustscenic.grn.load_tfs("hs_hgnc_tfs.txt")
+tfs = rustscenic.data.tfs("hs")  # bundled HGNC list (1,839 TFs)
 
 # 1. GRN inference
 grn = rustscenic.grn.infer(adata, tf_names=tfs, n_estimators=5000, seed=777)
@@ -82,11 +86,11 @@ Same input on both sides. Every row has a log file under [`validation/`](validat
 | Axis | pyscenic / arboreto | **rustscenic** |
 |---|---|---|
 | Installs on fresh Python 3.10–3.13 venv | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` in current stacks | PyPI wheels and sdist install; core APIs import |
-| AUCell wall-time, Ziegler 2021 atlas (31,602 × 59) | 6.81 s (pyscenic) | 0.25 s |
-| AUCell wall-time, 10x Multiome (10,290 × 1,457) | 18.6 s (pyscenic) | 0.21 s |
+| AUCell wall-time, Ziegler 2021 atlas (31,602 × 59; measured 2026-04, refresh tracked for v0.4.x) | 6.81 s (pyscenic) | 0.25 s |
+| AUCell wall-time, 10x Multiome (10,290 × 1,457; measured 2026-04, refresh tracked for v0.4.x) | 18.6 s (pyscenic) | 0.21 s |
 | Peak RSS, 4 stages on 100,000 cells × 20,292 genes | > 40 GB (reported) | 6.3 GB |
 | Cistarget kernel vs `ctxcore.recovery.aucs` | reference | Pearson 1.0000, mean abs diff 2.4 × 10⁻⁵ |
-| AUCell per-cell Pearson vs pyscenic (Ziegler, 31,602 cells) | reference | 0.984 mean, 91.7 % of cells > 0.95 |
+| AUCell per-cell Pearson vs pyscenic (Ziegler, 31,602 cells; measured 2026-04, refresh tracked for v0.4.x) | reference | 0.984 mean, 91.7 % of cells > 0.95 |
 | Canonical airway TFs matching literature (Ziegler, n=14) | 8 / 14 (pyscenic, unit weights) | 8 / 14 — same hits, same 5/14 misses |
 | Bit-identical output under same seed across threaded runs | no (dask non-determinism) | yes |
 | Runtime dependencies | 40 + | 5 |
@@ -95,7 +99,7 @@ Tool-to-tool variation (same hits, same misses on the same 14 canonical TFs) is 
 
 ## Per-stage detail
 
-Numbers are **rustscenic**'s values. The measurement context (dataset, `n_cells`, etc.) is in each row.
+Numbers are **rustscenic**'s values. The measurement context (dataset, `n_cells`, version) is in each row. v0.4.x parity refresh against current upstream stacks is tracked in [`docs/v0.4.x-benchmark-plan.md`](docs/v0.4.x-benchmark-plan.md).
 
 ### GRN — `arboreto.grnboost2` replacement
 
@@ -182,6 +186,10 @@ rustscenic does not bundle the aertslab motif ranking feather databases (300 MB 
 ## CLI
 
 ```bash
+# End-to-end orchestrator (recommended):
+rustscenic pipeline  --rna data.h5ad --tfs tfs.txt --output out/
+
+# Per-stage CLI:
 rustscenic grn       --expression data.h5ad --tfs tfs.txt --output grn.parquet
 rustscenic aucell    --expression data.h5ad --regulons grn.parquet --output auc.parquet
 rustscenic topics    --expression atac.h5ad --output topics --n-topics 30
@@ -194,7 +202,7 @@ rustscenic cistarget --rankings motifs.feather --regulons grn.parquet --output e
 - `python/rustscenic/` — Python package, CLI entry point, type stubs
 - `examples/pbmc3k_end_to_end.py` — RNA GRN + AUCell script on real PBMC-3k
 - `validation/` — reproducible benchmark scripts + measurement reports for every number above, plus `VALIDATION_SUMMARY.md`
-- `tests/` — pytest suite (152 Python tests, 1 skipped) + Rust crate tests (57)
+- `tests/` — pytest suite (169 Python tests, 1 skipped) + Rust crate tests (57)
 - `manuscript/` — preprint source
 - `docs/topic-collapse.md` — known algorithmic caveat
 

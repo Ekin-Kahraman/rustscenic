@@ -71,11 +71,6 @@ jobs:
       # Full 4-stage example on real PBMC-3k (downloads 10x tarball)
       - run: pip install scanpy igraph leidenalg
       - run: python examples/pbmc3k_end_to_end.py
-      # Validation baselines committed to repo match our tool
-      - run: |
-          python validation/compare.py --stage grn \
-            --ours validation/baselines/pbmc3k_grn.parquet \
-            --reference validation/baselines/pbmc3k_grn.parquet
 
   # Per-extra install-matrix smoke: every declared optional-dependency extra
   # must resolve cleanly in a fresh venv on the published install path. Catches
