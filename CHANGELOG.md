@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+### Known issues tracked for v0.4.4
+
+- **Stale `pruned_regulons.json` on `output_dir` re-use.** If a run with
+  successful motif-annotation pruning writes `pruned_regulons.json`, and a
+  later run on the same `output_dir` takes the failed-pruning fallback
+  (annotations changed to ones that match no candidate TF), the v0.4.3 fix
+  correctly sets `result.pruned_regulons_path = None` and records the same
+  in `manifest.json`, but the stale `pruned_regulons.json` from the prior
+  run is not removed. Any caller probing the filesystem directly rather
+  than reading the `PipelineResult` will load stale data. One-line fix at
+  `pipeline.py` else branch (unlink the stale file). Tracked as v0.4.4.
+
 ## 0.4.3 — 2026-05-11
 
 ### Real-data validation (third independent dataset)
@@ -13,8 +27,12 @@
   Biology: **10 of 10 canonical PBMC and granulocyte transcription factors
   recovered by name** in the active regulon set (SPI1, CEBPA, CEBPB, CEBPE,
   IRF8 on the myeloid axis; PAX5, EBF1, GATA3, TBX21, FOXP3 on the lymphoid
-  axis). Strongest biology signal of any rustscenic real-data run on record;
-  the v0.3.10 brain E18 5k run recovered 9 of 9 cortex TFs.
+  axis). Numerically more hits than the v0.3.10 brain E18 5k run's 9 of 9
+  cortex TFs, though the v0.4.3 regulon set is larger (1,548 vs 1,407 names),
+  which mechanically raises the baseline probability of any specific TF
+  appearing. Both runs are name-presence checks, not cell-type enrichment
+  tests; the per-cluster AUCell F-test that would actually establish a
+  "stronger signal" claim is tracked as a v0.5 follow-up.
 - **PipelineResult v0.4.3 field contract verified on real data**:
   `pruned_regulons_path is None` when `motif_annotations` not supplied,
   `candidate_regulons_path` set, `regulon_source` non-empty,
