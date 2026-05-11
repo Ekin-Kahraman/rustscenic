@@ -34,8 +34,20 @@ ours = rustscenic.topics.fit(
     alpha=ALPHA, eta=ETA,
 )
 ours_wall = time.monotonic() - t0
-ours_assign = np.asarray([int(s.replace("Topic_", "")) for s in ours.cell_assignment().values])
-print(f"  wall: {ours_wall:.1f}s  unique: {len(set(ours_assign))}")
+# Drop NA assignments before parsing — cells with all-zero topic weight return
+# pd.NA from cell_assignment() since v0.4.2; calling .replace() on NA raises.
+# We track the mask so downstream ARI comparisons restrict both sides to the
+# same cell subset rather than silently misaligning indices.
+_ours_assign_series = ours.cell_assignment()
+_ours_keep_mask = _ours_assign_series.notna().values
+ours_assign = np.asarray(
+    [int(s.replace("Topic_", "")) for s in _ours_assign_series.dropna().values]
+)
+_n_unassigned = (~_ours_keep_mask).sum()
+print(
+    f"  wall: {ours_wall:.1f}s  unique: {len(set(ours_assign))}"
+    + (f"  ({_n_unassigned} cells unassigned)" if _n_unassigned else "")
+)
 
 # --- tomotopy (Gibbs, C++ AVX) ---
 print("\n--- tomotopy (Gibbs, C++ AVX) ---")
@@ -60,7 +72,7 @@ for i, doc in enumerate(mdl.docs):
 print(f"  wall: {tomo_wall:.1f}s  unique: {len(set(tomo_assign))}")
 
 # --- metrics ---
-ari = adjusted_rand_score(ours_assign, tomo_assign)
+ari = adjusted_rand_score(ours_assign, tomo_assign[_ours_keep_mask])
 print(f"\nCross-tool ARI (rustscenic.topics vs tomotopy): {ari:.4f}")
 print(f"Speedup (tomotopy / ours): {tomo_wall/ours_wall:.2f}x")
 
@@ -102,5 +114,5 @@ sc.tl.leiden(atac_norm, resolution=0.5, flavor="igraph", n_iterations=2, directe
 cluster = atac_norm.obs["leiden"].astype(str).values
 print(f"  leiden clusters: {len(set(cluster))}")
 
-print(f"  rustscenic topics ARI vs leiden clusters: {adjusted_rand_score(cluster, ours_assign):.4f}")
+print(f"  rustscenic topics ARI vs leiden clusters: {adjusted_rand_score(cluster[_ours_keep_mask], ours_assign):.4f}")
 print(f"  tomotopy   topics ARI vs leiden clusters: {adjusted_rand_score(cluster, tomo_assign):.4f}")

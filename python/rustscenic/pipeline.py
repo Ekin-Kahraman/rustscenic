@@ -348,12 +348,12 @@ def run(
                 auc_threshold=cistarget_auc_threshold,
                 min_genes=1,
             )
-            pruned_enriched_path = output_dir / "cistarget_pruned_enriched.parquet"
-            pruned_enriched.to_parquet(pruned_enriched_path, index=False)
-            pruned_regulons_path = output_dir / "pruned_regulons.json"
-            pruned_regulons_path.write_text(json.dumps(pruned_regulons, indent=2))
             n_pruned_regulons = len(pruned_regulons)
             if pruned_regulons:
+                pruned_enriched_path = output_dir / "cistarget_pruned_enriched.parquet"
+                pruned_enriched.to_parquet(pruned_enriched_path, index=False)
+                pruned_regulons_path = output_dir / "pruned_regulons.json"
+                pruned_regulons_path.write_text(json.dumps(pruned_regulons, indent=2))
                 regulons = pruned_regulons
                 enriched_for_eregulons = pruned_enriched
                 regulon_source = "motif_annotation_pruned"

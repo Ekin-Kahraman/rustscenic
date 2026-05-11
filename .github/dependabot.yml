@@ -11,6 +11,15 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    # statrs 0.18 (our distribution-sampling dep in rustscenic-topics) still
+    # depends on rand 0.8. A rand 0.10 bump splits the rand graph and breaks
+    # the build. The migration also needs renames (`gen` -> `random`,
+    # `gen_range` -> `random_range`, `Rng` -> `RngExt`) and a
+    # `rand_core::RngCore` import. Resume rand major bumps once statrs is on
+    # rand 0.10. See dependabot PR #67 for the failure modes.
+    ignore:
+      - dependency-name: "rand"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions versions
   - package-ecosystem: "github-actions"

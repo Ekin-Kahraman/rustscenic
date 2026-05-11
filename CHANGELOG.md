@@ -1,17 +1,68 @@
 # Changelog
 
+## 0.4.3 — 2026-05-11
+
+### Bug fixes
+
+- **`PipelineResult.pruned_regulons_path` is now `None` when pruning produced no regulons** —
+  Previously the pipeline wrote an empty-dict `pruned_regulons.json` and set
+  `pruned_regulons_path` to that path even when motif-annotation pruning
+  removed every candidate. Callers using `result.pruned_regulons_path is None`
+  as a sentinel for "pruning did not produce a useful result" silently got the
+  wrong answer. The path is now only written and set when at least one regulon
+  survives pruning; the `regulon_source` field continues to signal
+  `"candidate_grn_top_targets_after_failed_pruning"` in the fallback path.
+- **Validation scripts no longer crash on `pd.NA` topic assignments** —
+  v0.4.2 changed `topics.cell_assignment()` so cells with zero topic mass
+  surface as `pd.NA` rather than being silently routed to `Topic_0`.
+  Validation scripts under `validation/` calling `int(s.replace("Topic_", ""))`
+  on the Series values would `AttributeError` on the NA entries. Six scripts
+  now `.dropna()` first and either restrict downstream ARI comparisons to the
+  same cell subset or report the unassigned count.
+
+### Docs
+
+- **CHANGELOG sentinel-string fix** — the v0.4.2 "Other" entry documented
+  `regulon_source="candidate_fallback"`; the code emits
+  `"candidate_grn_top_targets_after_failed_pruning"`. Entry corrected below.
+- **AUCell wall-time honesty** — README's AUCell-timing rows previously read
+  "refresh tracked for v0.4.x"; v0.4.x has shipped without the refresh. Now
+  read "measured 2026-04 (pre-v0.4.x); refresh deferred to v0.5".
+- **v0.4.x benchmark sweep deferral** — README's Open follow-ups line moves
+  the six-dataset benchmark sweep target from "v0.4.x" to "v0.5+", reflecting
+  the actual release trajectory.
+- **Motif-pruning scope honesty** — v0.4.2's CHANGELOG entry said the feature
+  "closes the regulon-pruning gap surfaced by the Kamath DA-neuron run". The
+  feature is validated on synthetic fixtures only; the Kamath rerun under
+  v0.4.2 + pruning is tracked as a follow-up. Wording softened to match.
+
+### Release infrastructure
+
+- **release.yml** — PyPI publish now gates the GitHub release rather than the
+  other way round. If PyPI fails, the GitHub release is not announced; this
+  avoids the failure mode where a successful tag push produces a GitHub
+  release referencing assets that never reached PyPI.
+- **Dependabot `rand` major-version ignore** — the rand 0.8 → 0.10 bump
+  (Dependabot PR #67) breaks against statrs 0.18, which still depends on
+  rand 0.8. The migration also requires renames (`gen` → `random`,
+  `gen_range` → `random_range`, `Rng` → `RngExt`) and a `rand_core::RngCore`
+  import. Dependabot is now told to skip rand major bumps until statrs catches
+  up.
+
 ## 0.4.2 — 2026-05-10
 
 ### Added
 
-- **Motif-annotation pruning for cisTarget regulons** —
+- **Motif-annotation pruning for cisTarget regulons (synthetic-validated)** —
   `rustscenic.cistarget.prune_enriched_motifs` and
   `rustscenic.cistarget.prune_regulons` now filter enriched motif rows
   through motif-to-TF annotations. When `pipeline.run(...,
   motif_annotations=...)` is supplied, the active `regulons.json` and
   AUCell matrix use the pruned regulon set; raw GRN top-target candidates
-  are kept separately as `candidate_regulons.json`. Closes the
-  regulon-pruning gap surfaced by the Kamath DA-neuron run (#68).
+  are kept separately as `candidate_regulons.json`. Addresses the
+  regulon-pruning gap surfaced by the Kamath DA-neuron run (#68); validated
+  on synthetic fixtures, real-data Kamath rerun under pruning tracked as a
+  v0.4.3+ follow-up.
 - **Evaluation-metrics doc** — `docs/evaluation-metrics.md` now documents
   the comparator-and-caveat policy for ARI and related clustering metrics
   reported on community runs. Linked from the README issues block.
@@ -31,7 +82,7 @@
 - `pipeline.run` now warns when `motif_annotations` is supplied without
   `cistarget_rankings` (silent ignore previously) and when annotation
   pruning removes every regulon (auto-fallback to candidates with a
-  `regulon_source="candidate_fallback"` field).
+  `regulon_source="candidate_grn_top_targets_after_failed_pruning"` field).
 
 ## 0.4.1 — 2026-05-07
 

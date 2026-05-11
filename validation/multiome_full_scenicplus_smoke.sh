@@ -163,8 +163,10 @@ with stage("topics"):
         atac, n_topics=K, n_passes=3, batch_size=256, seed=777,
         alpha=1.0/K, eta=1.0/K,
     )
-n_unique_top1 = len({a for a in tres.cell_assignment().values})
-print(f"  unique top-1 topics: {n_unique_top1}/{K}", flush=True)
+_assign = tres.cell_assignment()
+_n_unassigned = int(_assign.isna().sum())
+n_unique_top1 = len({a for a in _assign.dropna().values})
+print(f"  unique top-1 topics: {n_unique_top1}/{K}" + (f"  ({_n_unassigned} cells unassigned)" if _n_unassigned else ""), flush=True)
 
 # --- Stage 6: cistarget (gene-based) ---
 print("[6/8] cistarget.enrich (gene-based motif rankings)", flush=True)
