@@ -223,7 +223,11 @@ def cmd_cistarget(args: argparse.Namespace) -> int:
           file=sys.stderr, flush=True)
 
     t0 = time.monotonic()
-    out = rs_cistarget.enrich(rankings, regulons, top_frac=args.top_frac, auc_threshold=args.auc_threshold)
+    out = rs_cistarget.enrich(
+        rankings, regulons,
+        top_frac=args.top_frac, auc_threshold=args.auc_threshold,
+        nes_threshold=args.nes_threshold,
+    )
     wall = time.monotonic() - t0
 
     output_path = Path(args.output)
@@ -255,6 +259,7 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
         topics_n_passes=args.topics_n_passes,
         cistarget_top_frac=args.cistarget_top_frac,
         cistarget_auc_threshold=args.cistarget_auc_threshold,
+        cistarget_nes_threshold=args.cistarget_nes_threshold,
         seed=args.seed,
         verbose=True,
     )
@@ -299,6 +304,10 @@ def main(argv: list[str] | None = None) -> int:
     pc.add_argument("--regulons", required=True, help="Regulons TSV (name\\tgene,gene,...)")
     pc.add_argument("--output", required=True); pc.add_argument("--top-frac", type=float, default=0.05)
     pc.add_argument("--auc-threshold", type=float, default=0.05)
+    pc.add_argument(
+        "--nes-threshold", type=float, default=None,
+        help="Optional minimum NES (per-regulon z-score across motifs). 3.0 matches pyscenic / pycistarget canonical cutoff.",
+    )
     pc.set_defaults(func=cmd_cistarget)
 
     pp = sub.add_parser(
@@ -319,6 +328,10 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument("--topics-n-passes", type=int, default=3)
     pp.add_argument("--cistarget-top-frac", type=float, default=0.05)
     pp.add_argument("--cistarget-auc-threshold", type=float, default=0.05)
+    pp.add_argument(
+        "--cistarget-nes-threshold", type=float, default=None,
+        help="Optional minimum NES on enriched motifs (per-regulon z-score across motifs). 3.0 matches pyscenic / pycistarget canonical cutoff.",
+    )
     pp.add_argument("--seed", type=int, default=777)
     pp.set_defaults(func=cmd_pipeline)
 

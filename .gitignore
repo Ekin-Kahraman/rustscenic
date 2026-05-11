@@ -35,4 +35,5 @@ validation/real_multiome/
 validation/multi_dataset/
 validation/real_multiome_v036/
 validation/real_multiome_brain_e18/
+validation/real_multiome_pbmc_granulocyte_10k/
 validation/reference/venv_native/

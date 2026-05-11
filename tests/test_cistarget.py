@@ -40,7 +40,7 @@ class TestCistargetShape:
     def test_returns_df_with_expected_cols(self, tiny_rankings):
         regs = [("R1", ["g0", "g1", "g2", "g3", "g4"])]
         out = cistarget.enrich(tiny_rankings, regs, top_frac=0.3, auc_threshold=0.0)
-        assert set(out.columns) == {"regulon", "motif", "auc"}
+        assert set(out.columns) == {"regulon", "motif", "auc", "nes"}
 
 
 class TestCistargetCorrectness:
@@ -141,7 +141,7 @@ class TestCistargetEdgeCases:
     def test_empty_regulons_returns_empty_df(self, tiny_rankings):
         out = cistarget.enrich(tiny_rankings, [], auc_threshold=0.0)
         assert len(out) == 0
-        assert set(out.columns) == {"regulon", "motif", "auc"}
+        assert set(out.columns) == {"regulon", "motif", "auc", "nes"}
 
     def test_auc_threshold_filters(self, tiny_rankings):
         # Very high threshold should filter out everything
@@ -167,3 +167,154 @@ class TestCistargetDeterminism:
             a.sort_values(["motif", "regulon"]).reset_index(drop=True),
             b.sort_values(["motif", "regulon"]).reset_index(drop=True),
         )
+
+
+class TestCistargetNES:
+    """v0.4.4 NES (normalised enrichment score) tests.
+
+    Lines up with pyscenic transform.py / pycistarget motif_enrichment_cistarget.py:
+    per-regulon population z-score of AUC across the motif universe.
+    """
+
+    @pytest.fixture
+    def big_synthetic_rankings(self):
+        """200 motifs x 500 genes. Motif 0 has g0..g19 at top ranks; all other
+        motifs assign g0..g19 to random ranks. A regulon of g0..g19 should land
+        motif 0 at high NES and every other motif at low NES."""
+        rng = np.random.default_rng(0)
+        n_motifs, n_genes = 200, 500
+        regulon_genes = list(range(20))
+        rankings = np.zeros((n_motifs, n_genes), dtype=np.int32)
+        for i in range(n_motifs):
+            if i == 0:
+                perm = regulon_genes + [g for g in range(n_genes) if g not in regulon_genes]
+            else:
+                perm = list(rng.permutation(n_genes))
+            for rank, gene in enumerate(perm):
+                rankings[i, gene] = rank
+        return pd.DataFrame(
+            rankings,
+            index=[f"m{i}" for i in range(n_motifs)],
+            columns=[f"g{i}" for i in range(n_genes)],
+        )
+
+    def test_nes_separates_true_positive_from_noise(self, big_synthetic_rankings):
+        regs = [("R1", [f"g{i}" for i in range(20)])]
+        out = cistarget.enrich(
+            big_synthetic_rankings, regs, top_frac=0.05, auc_threshold=0.0,
+        )
+        # The true-positive motif m0 must land at the top NES, and the gap to
+        # the noise floor must be wide enough to reflect a real signal.
+        top = out.sort_values("nes", ascending=False).iloc[0]
+        assert top["motif"] == "m0", (
+            f"true-positive motif m0 was not at the top NES; "
+            f"top row instead: {top.to_dict()}"
+        )
+        assert top["nes"] > 5.0, (
+            f"true-positive NES should be high (z >> 3); got {top['nes']:.3f}"
+        )
+        # NES >= 3.0 should isolate the true positive on this synthetic
+        # fixture (noise motifs sit at NES around 0 by construction).
+        n_above_threshold = int((out["nes"] >= 3.0).sum())
+        assert n_above_threshold == 1, (
+            f"NES >= 3.0 should keep exactly 1 motif on this fixture; got "
+            f"{n_above_threshold}"
+        )
+
+    def test_nes_threshold_filter_drops_noise(self, big_synthetic_rankings):
+        regs = [("R1", [f"g{i}" for i in range(20)])]
+        full = cistarget.enrich(
+            big_synthetic_rankings, regs, top_frac=0.05, auc_threshold=0.0,
+        )
+        filtered = cistarget.enrich(
+            big_synthetic_rankings, regs, top_frac=0.05,
+            auc_threshold=0.0, nes_threshold=3.0,
+        )
+        assert len(filtered) == 1
+        assert len(full) >= 1
+        # Filter should not invent rows or change AUC values
+        assert filtered.iloc[0]["motif"] == "m0"
+        assert filtered.iloc[0]["auc"] == full.loc[full["motif"] == "m0", "auc"].iloc[0]
+
+    def test_nes_nan_when_motif_universe_below_floor(self, tiny_rankings):
+        """tiny_rankings has 10 motifs; below the 30-motif floor NES is NaN."""
+        regs = [("R1", ["g0", "g1", "g2", "g3", "g4"])]
+        with pytest.warns(UserWarning, match="30-motif floor"):
+            out = cistarget.enrich(tiny_rankings, regs, top_frac=0.3, auc_threshold=0.0)
+        assert out["nes"].isna().all(), (
+            "NES must be NaN for every row when n_motifs < 30"
+        )
+
+    def test_nes_threshold_drops_nan_rows(self, tiny_rankings):
+        regs = [("R1", ["g0", "g1", "g2", "g3", "g4"])]
+        with pytest.warns(UserWarning, match="30-motif floor"):
+            out = cistarget.enrich(
+                tiny_rankings, regs, top_frac=0.3,
+                auc_threshold=0.0, nes_threshold=3.0,
+            )
+        assert len(out) == 0, (
+            "NaN NES rows must be dropped when nes_threshold is set; "
+            "otherwise NaN comparisons silently slip through"
+        )
+
+    def test_nes_zero_variance_warns_and_emits_nan(self):
+        """A regulon whose AUC is constant across all motifs (because no
+        regulon gene appears in any motif's top window) has zero variance;
+        NES is undefined."""
+        n_motifs, n_genes = 50, 100
+        rankings = pd.DataFrame(
+            np.tile(np.arange(n_genes, dtype=np.int32), (n_motifs, 1)),
+            index=[f"m{i}" for i in range(n_motifs)],
+            columns=[f"g{i}" for i in range(n_genes)],
+        )
+        # All motifs assign identical ranks, so every regulon's AUC is
+        # identical across the motif universe -> std == 0.
+        regs = [("R_CONST", [f"g{i}" for i in range(10)])]
+        with pytest.warns(UserWarning, match="zero AUC variance"):
+            out = cistarget.enrich(rankings, regs, top_frac=0.1, auc_threshold=0.0)
+        assert out["nes"].isna().all(), (
+            "NES must be NaN for zero-variance regulons"
+        )
+        # But AUC rows are still present (we don't drop the regulon entirely)
+        assert len(out) > 0
+
+    def test_backwards_compat_nes_threshold_none_matches_v043_row_count(self, big_synthetic_rankings):
+        """Default behaviour (nes_threshold=None) must keep every row that
+        auc_threshold alone would have kept under v0.4.3. The NES column is
+        additive and does not change the filter logic."""
+        regs = [("R1", [f"g{i}" for i in range(20)])]
+        out_default = cistarget.enrich(
+            big_synthetic_rankings, regs, top_frac=0.05, auc_threshold=0.0,
+        )
+        # Without nes_threshold, NES is computed but does not filter rows.
+        # Row count must equal the number of (motif, regulon) pairs the AUC
+        # filter alone would keep: every pair since auc_threshold=0.0.
+        n_motifs = big_synthetic_rankings.shape[0]
+        assert len(out_default) == n_motifs
+
+    def test_prune_enriched_motifs_with_nes_threshold(self):
+        """prune_enriched_motifs accepts nes_threshold when the enriched
+        DataFrame has an nes column."""
+        enriched = pd.DataFrame(
+            [
+                {"regulon": "G000_regulon", "motif": "M_G000", "auc": 0.30, "nes": 5.2},
+                {"regulon": "G000_regulon", "motif": "M_OTHER", "auc": 0.31, "nes": 2.0},
+            ]
+        )
+        annotations = pd.DataFrame(
+            {"motif": ["M_G000", "M_OTHER"], "TF": ["G000", "G000"]}
+        )
+        out = cistarget.prune_enriched_motifs(enriched, annotations, nes_threshold=3.0)
+        assert len(out) == 1
+        assert out.iloc[0]["motif"] == "M_G000"
+
+    def test_prune_enriched_motifs_rejects_nes_threshold_when_no_column(self):
+        """If the enriched DataFrame is from a v0.4.3 build with no NES column,
+        passing nes_threshold should raise rather than silently filter on a
+        missing column."""
+        enriched = pd.DataFrame(
+            [{"regulon": "G000_regulon", "motif": "M_G000", "auc": 0.30}]
+        )
+        annotations = pd.DataFrame({"motif": ["M_G000"], "TF": ["G000"]})
+        with pytest.raises(ValueError, match="no `nes` column"):
+            cistarget.prune_enriched_motifs(enriched, annotations, nes_threshold=3.0)

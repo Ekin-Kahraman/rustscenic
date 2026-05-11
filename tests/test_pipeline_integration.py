@@ -684,6 +684,156 @@ def test_pipeline_run_warns_and_falls_back_when_pruning_removes_all_regulons(tmp
     )
 
 
+def test_pipeline_run_fallback_removes_stale_pruned_regulons_json(tmp_path):
+    """Re-running ``pipeline.run`` on the same output_dir, first with
+    annotations that produce a non-empty pruned set and then with
+    annotations that fall back, must remove the stale ``pruned_regulons.json``
+    from the first run. The PipelineResult and manifest already report None
+    on the fallback path; leaving the stale file behind misleads any caller
+    that probes the filesystem directly.
+    """
+    import warnings as _warnings
+    import anndata as ad
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline
+
+    rng = np.random.default_rng(13)
+    genes = ["TF_A", "TF_B"] + [f"G{i:02d}" for i in range(24)]
+    X = rng.lognormal(0.2, 0.4, size=(90, len(genes))).astype("float32")
+    rna = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(90)]),
+        var=pd.DataFrame(index=genes),
+    )
+    rankings = pd.DataFrame(
+        np.tile(np.arange(len(genes), dtype=np.int32), (1, 1)),
+        index=["M_TF_A"],
+        columns=genes,
+    )
+    matching_annotations = pd.DataFrame(
+        {"motif": ["M_TF_A"], "TF": ["TF_A"]}
+    )
+    bogus_annotations = pd.DataFrame(
+        {"motif": ["M_TF_A"], "TF": ["UNKNOWN_TF"]}
+    )
+
+    common = dict(
+        rna=rna,
+        output_dir=tmp_path,
+        tfs=["TF_A", "TF_B"],
+        motif_rankings=rankings,
+        grn_n_estimators=10,
+        grn_top_targets=10,
+        cistarget_top_frac=1.0,
+        cistarget_auc_threshold=0.0,
+        verbose=False,
+    )
+
+    # Run 1: matching annotations -> pruned_regulons.json is written
+    result1 = rustscenic.pipeline.run(motif_annotations=matching_annotations, **common)
+    pruned_path = tmp_path / "pruned_regulons.json"
+    assert result1.pruned_regulons_path is not None, (
+        "matching annotations should produce a non-None pruned_regulons_path; "
+        "if this fails the fixture itself is wrong (no pruned regulons survived)"
+    )
+    assert pruned_path.exists(), (
+        "first run should write pruned_regulons.json when annotations match"
+    )
+
+    # Run 2: bogus annotations -> fallback, stale file must be removed
+    with _warnings.catch_warnings(record=True) as caught:
+        _warnings.simplefilter("always")
+        result2 = rustscenic.pipeline.run(motif_annotations=bogus_annotations, **common)
+
+    assert any("removed all" in str(w.message) for w in caught), (
+        "expected the fallback warning on run 2"
+    )
+    assert result2.regulon_source == "candidate_grn_top_targets_after_failed_pruning"
+    assert result2.pruned_regulons_path is None
+    assert not pruned_path.exists(), (
+        "stale pruned_regulons.json from run 1 must be removed when run 2 "
+        "takes the fallback path; otherwise filesystem probes return data "
+        "that contradicts the current run's regulon_source"
+    )
+
+
+def test_pipeline_run_cistarget_nes_threshold_filters_enriched(tmp_path):
+    """Pipeline cistarget_nes_threshold should reach cistarget.enrich and
+    filter enriched rows by NES. Setting an unrealistically high threshold
+    should drop most rows; the run should still complete without errors and
+    the cistarget_enriched.parquet should reflect the filter."""
+    import anndata as ad
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline
+
+    rng = np.random.default_rng(17)
+    genes = ["TF_A", "TF_B"] + [f"G{i:02d}" for i in range(28)]
+    X = rng.lognormal(0.2, 0.4, size=(90, len(genes))).astype("float32")
+    rna = ad.AnnData(
+        X=X,
+        obs=pd.DataFrame(index=[f"c{i}" for i in range(90)]),
+        var=pd.DataFrame(index=genes),
+    )
+    # 60 motifs is comfortably above the 30-motif floor so NES is computed,
+    # not NaN. Motif 0 placed regulon genes (TF_A targets at top) so NES is
+    # high; the other 59 motifs are random permutations.
+    n_motifs = 60
+    rank_rows = []
+    for i in range(n_motifs):
+        if i == 0:
+            perm = ["TF_A", "TF_B"] + [f"G{j:02d}" for j in range(28)]
+        else:
+            perm = list(rng.permutation(genes))
+        rank_rows.append([perm.index(g) for g in genes])
+    rankings = pd.DataFrame(
+        np.asarray(rank_rows, dtype=np.int32),
+        index=[f"m{i}" for i in range(n_motifs)],
+        columns=genes,
+    )
+
+    base_kwargs = dict(
+        rna=rna,
+        output_dir=tmp_path,
+        tfs=["TF_A", "TF_B"],
+        motif_rankings=rankings,
+        grn_n_estimators=10,
+        grn_top_targets=10,
+        cistarget_top_frac=0.2,
+        cistarget_auc_threshold=0.0,
+        verbose=False,
+    )
+
+    # Run with NES filter at 3.0: should keep only motifs where the regulon
+    # has a strong z-score lift.
+    result_filtered = rustscenic.pipeline.run(
+        **base_kwargs, cistarget_nes_threshold=3.0,
+    )
+    enriched_filtered = pd.read_parquet(result_filtered.cistarget_path)
+    assert "nes" in enriched_filtered.columns, (
+        "v0.4.4 cistarget_enriched.parquet must include the NES column"
+    )
+    if len(enriched_filtered) > 0:
+        assert (enriched_filtered["nes"] >= 3.0).all(), (
+            "every enriched row must satisfy the NES filter when "
+            "cistarget_nes_threshold=3.0"
+        )
+
+    # Re-run with no filter; row count must be greater than or equal to
+    # the filtered row count.
+    import shutil
+    shutil.rmtree(tmp_path)
+    tmp_path.mkdir()
+    result_unfiltered = rustscenic.pipeline.run(**base_kwargs)
+    enriched_unfiltered = pd.read_parquet(result_unfiltered.cistarget_path)
+    assert "nes" in enriched_unfiltered.columns
+    assert len(enriched_unfiltered) >= len(enriched_filtered), (
+        "unfiltered cistarget output must contain at least as many rows as "
+        "the NES-filtered output on the same input"
+    )
+
+
 def test_pipeline_run_topics_method_gibbs(tmp_path):
     """When ``topics_method='gibbs'`` (with ``topics_n_threads > 1``)
     the orchestrator runs the parallel collapsed-Gibbs sampler instead
