@@ -1,0 +1,177 @@
+{
+  "release": "0.4.3",
+  "smoke_type": "real-data full SCENIC+ E2E via public pipeline.run \u2014 third independent dataset (PBMC granulocyte-sorted 10k human multiome)",
+  "rustscenic_version": "0.4.3",
+  "rustscenic_sha": "990427e8c08f26cdc987c45d43e842a18b9d6612",
+  "rustscenic_branch": "release/v0.4.3-cleanup",
+  "install_command": "pip install \"/Users/ekin/projects/bio/rustscenic[validation]\"",
+  "api_call": "rustscenic.pipeline.run(rna=adata, output_dir=..., adata_atac=adata_atac, motif_rankings=hs_rankings, gene_coords=hs_coords, tfs='hs', grn_n_estimators=100, topics_n_topics=15, topics_n_passes=3, eregulon_min_target_genes=2, eregulon_min_enhancer_links=1, seed=777)",
+  "dataset": {
+    "name": "10x pbmc_granulocyte_sorted_10k",
+    "source": "cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_10k",
+    "species": "Homo sapiens (hg38)",
+    "tissue": "peripheral blood mononuclear cells + granulocytes (sorted)",
+    "rna_h5_md5": "df86844b99161b9487090d91e644745e",
+    "atac_fragments_md5_first_8mb": "f0385fcdbe6f8a031604014d59f7074f",
+    "peaks_bed_md5": "684cc580758128585c956d63b4b2bd6e"
+  },
+  "shapes": {
+    "rna_post_qc": [
+      11620,
+      26341
+    ],
+    "atac_subset_to_rna_cells": [
+      11620,
+      143887
+    ]
+  },
+  "wall_s": {
+    "setup": 65.32,
+    "pipeline_run_total": 2287.79
+  },
+  "peak_rss_gb": 5.39,
+  "outputs_non_empty": {
+    "grn": true,
+    "regulons": true,
+    "cistarget": true,
+    "enhancer_links": true,
+    "eregulons": true,
+    "integrated_adata": true
+  },
+  "headline_counts": {
+    "n_grn_edges": 2840537,
+    "n_candidate_regulons": 1548,
+    "n_regulons": 1548,
+    "n_pruned_regulons": null,
+    "n_cistarget_rows": 1578204,
+    "n_enhancer_links": 18536,
+    "n_eregulons": 486
+  },
+  "regulon_source": "candidate_grn_top_targets",
+  "biological_sanity": {
+    "expected_pbmc_granulocyte_tfs": [
+      "SPI1",
+      "CEBPA",
+      "CEBPB",
+      "CEBPE",
+      "PAX5",
+      "GATA3",
+      "TBX21",
+      "EBF1",
+      "IRF8",
+      "FOXP3"
+    ],
+    "found_in_regulons": [
+      "CEBPA",
+      "CEBPB",
+      "CEBPE",
+      "EBF1",
+      "FOXP3",
+      "GATA3",
+      "IRF8",
+      "PAX5",
+      "SPI1",
+      "TBX21"
+    ],
+    "missing_from_regulons": [],
+    "fraction_recovered": 1.0
+  },
+  "v043_field_contract_checks": {
+    "pruned_regulons_path_is_none_when_no_pruning": true,
+    "candidate_regulons_path_set": true,
+    "regulon_source_is_a_string": true,
+    "n_regulons_equals_n_candidates_when_no_pruning": true
+  },
+  "output_inventory": {
+    "atac_matrix_path": {
+      "path": "atac_cells_by_peaks.h5ad",
+      "exists": true,
+      "size_bytes": 938754304
+    },
+    "grn_path": {
+      "path": "grn.parquet",
+      "exists": true,
+      "size_bytes": 17452762
+    },
+    "candidate_regulons_path": {
+      "path": "candidate_regulons.json",
+      "exists": true,
+      "size_bytes": 1217101
+    },
+    "regulons_path": {
+      "path": "regulons.json",
+      "exists": true,
+      "size_bytes": 1217101
+    },
+    "pruned_regulons_path": null,
+    "aucell_path": {
+      "path": "aucell.parquet",
+      "exists": true,
+      "size_bytes": 36284687
+    },
+    "topics_dir": {
+      "path": "topics",
+      "exists": true,
+      "size_bytes": 128
+    },
+    "cistarget_path": {
+      "path": "cistarget_enriched.parquet",
+      "exists": true,
+      "size_bytes": 5658247
+    },
+    "enhancer_links_path": {
+      "path": "enhancer_links.parquet",
+      "exists": true,
+      "size_bytes": 850397
+    },
+    "eregulons_path": {
+      "path": "eregulons.parquet",
+      "exists": true,
+      "size_bytes": 279658
+    },
+    "integrated_adata_path": {
+      "path": "rna_with_regulons.h5ad",
+      "exists": true,
+      "size_bytes": 265528593
+    }
+  },
+  "elapsed_per_stage": {
+    "preproc": 0.0,
+    "topics": 315.6274897499825,
+    "grn": 1794.6484918339993,
+    "cistarget": 2.081405500008259,
+    "enhancer": 57.822101125027984,
+    "eregulons": 41.73787008400541,
+    "aucell": 0.9642973340232857
+  },
+  "env": {
+    "python": "3.13.9",
+    "scanpy": "1.12",
+    "anndata": "0.13.0.dev168+ga819bf6a3",
+    "os": "Darwin 25.4.0 arm64",
+    "cpu": "Apple M5",
+    "n_cpus": 10
+  },
+  "supported_claims": [
+    "rustscenic v0.4.3 pipeline.run completes E2E on a third public real-data multiome (PBMC granulocyte-sorted 10k human)",
+    "All 7 SCENIC+ stages produce non-empty output on this dataset",
+    "PipelineResult v0.4.3 field-contract holds on the no-pruning path: pruned_regulons_path is None, n_regulons == n_candidate_regulons, regulon_source is a non-empty string",
+    "Of 10 canonical PBMC+granulocyte TFs (myeloid + lymphoid), 10 are present in the active regulon set by name"
+  ],
+  "scope_notes": [
+    "Third real multiome dataset on record after PBMC 3k (v0.3.9) and mouse brain E18 5k (v0.3.10).",
+    "Different cell composition than the prior PBMC 3k run: granulocyte-sorted, so the myeloid TF axis (SPI1/CEBPA/CEBPB) gets tested in addition to lymphoid TFs (PAX5/GATA3/TBX21).",
+    "Pre-pipeline setup time (RNA QC, ATAC subset, motif/gene-coords download) recorded separately from pipeline.run wall.",
+    "ATAC matrix pre-subset to RNA-QC'd cells (the v0.3.8 adata_atac path).",
+    "GRN n_estimators=100 is the smoke speed; README's quoted parity number uses n_estimators=5000.",
+    "eRegulon thresholds permissive (min_target_genes=2, min_enhancer_links=1) for orchestration proof.",
+    "Topics method=vb (default), n_topics=15 to reflect PBMC+granulocyte diversity.",
+    "Biological sanity is name-presence in the regulon set, NOT cell-type enrichment.",
+    "Motif-annotation pruning (v0.4.2 feature) NOT exercised here \u2014 motif_annotations argument not supplied, so the no-pruning path is tested. v0.4.3 fix verified: pruned_regulons_path is None, not a stale empty-dict file."
+  ],
+  "open_gates": [
+    "Cell-type enrichment of recovered TFs: requires AnnData with cluster labels + AUCell-per-cluster F-test or ARI-vs-RNA-cluster. Tracked for follow-up.",
+    "Cistarget motif-annotation pruning + NES path on this dataset: deferred to v0.4.4 (NES PR).",
+    "Cross-tool parity vs pycistarget on this dataset: blocked on pycistarget's installability."
+  ]
+}

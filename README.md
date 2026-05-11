@@ -167,10 +167,13 @@ Bit-identical to `ctxcore.recovery.aucs` at float32 precision. The 19 % rank-#1 
 |---|---|---|---|
 | Reference (arboreto + pyscenic + tomotopy), 10x Multiome 3k | 11.8 min | n/a | 4 |
 | rustscenic, 10x Multiome 3k | 9.1 min | n/a | 4 |
+| rustscenic, **10x PBMC 3k multiome real-data** (v0.3.9, measured 2026-05-02) | **7.5 min** | **3.67 GB** | **7 (all)** |
+| rustscenic, **10x brain E18 5k multiome real-data** (v0.3.10, measured 2026-05-04) | **13.8 min** | **4.01 GB** | **7 (all)** |
+| rustscenic, **10x PBMC granulocyte 10k multiome real-data** (v0.4.3, measured 2026-05-11) | **38.1 min** | **5.39 GB** | **7 (all)** |
 | rustscenic, **100k synthetic multiome E2E** (measured v0.3.10, 2026-04-27) | **12.7 min** | **7.09 GB** | **7 (all)** |
 | rustscenic, **200k synthetic multiome E2E** (measured v0.3.10, 2026-04-27) | **16.8 min** | **7.44 GB** | **7 (all)** |
 
-Memory: 100k synthetic multiome 7-stage E2E peaks at **7.09 GB RSS** (measured v0.3.10; v0.4.x motif-pruning may shift this, refresh pending), vs scenicplus stack's reported > 40 GB at comparable scale. Bit-identical output under the same seed across threaded runs, verified across three consecutive runs per stage. 10 / 10 robustness edge-case tests pass (foreign genes, NaN input, duplicate gene names, all-zero cells, large regulons, object-dtype rankings, n_topics = 0, very-sparse matrices). Reproduce with `python validation/scaling/bench_e2e_100k_synthetic.py`; reproduce the 200k synthetic run with `python validation/scaling/bench_e2e_200k_synthetic.py`.
+Cross-dataset scaling on real 10x multiomes: 4.2x cell scale-up (2,767 to 11,620 cells) produces 5.1x wall (slope ~1.21x, slight cache-effect superlinearity in the GRN stage) and 1.47x peak RSS (strongly sub-linear in cells). GRN dominates 78% of wall on the 10k run at `n_estimators=100`. Biology check on the latest run: 10 of 10 canonical PBMC and granulocyte transcription factors recovered by name (SPI1, CEBPA, CEBPB, CEBPE, IRF8, PAX5, EBF1, GATA3, TBX21, FOXP3); the brain E18 5k run recovered 9 of 9 cortex TFs. Memory: 100k synthetic multiome 7-stage E2E peaks at **7.09 GB RSS** (measured v0.3.10; v0.4.x motif-pruning may shift this, refresh pending), vs scenicplus stack's reported > 40 GB at comparable scale. Bit-identical output under the same seed across threaded runs, verified across three consecutive runs per stage. 10 / 10 robustness edge-case tests pass (foreign genes, NaN input, duplicate gene names, all-zero cells, large regulons, object-dtype rankings, n_topics = 0, very-sparse matrices). Reproduce the real-data runs with the scripts under `validation/multiome_pipeline_run_*.sh`; reproduce the synthetic runs with `python validation/scaling/bench_e2e_100k_synthetic.py` and the 200k script.
 
 ## Scope and alternatives
 
