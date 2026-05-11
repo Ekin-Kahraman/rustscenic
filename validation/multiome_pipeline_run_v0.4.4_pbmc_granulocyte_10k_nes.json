@@ -1,0 +1,103 @@
+{
+  "release": "0.4.4",
+  "smoke_type": "real-data full SCENIC+ E2E via public pipeline.run with cistarget_nes_threshold=3.0 (v0.4.4 NES first real-data exercise)",
+  "rustscenic_version": "0.4.4",
+  "rustscenic_sha": "2afcab265cdbc336801d7b2e2184acdb0d2f1905",
+  "rustscenic_branch": "feat/v0.4.4-nes-and-stale-file",
+  "install_command": "pip install \"/Users/ekin/projects/bio/rustscenic[validation]\"",
+  "api_call": "rustscenic.pipeline.run(rna=adata, output_dir=..., adata_atac=adata_atac, motif_rankings=hs_rankings, gene_coords=hs_coords, tfs='hs', grn_n_estimators=100, topics_n_topics=15, topics_n_passes=3, cistarget_top_frac=0.05, cistarget_auc_threshold=0.05, cistarget_nes_threshold=3.0, eregulon_min_target_genes=2, eregulon_min_enhancer_links=1, seed=777)",
+  "dataset": {
+    "name": "10x pbmc_granulocyte_sorted_10k",
+    "source": "cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_10k",
+    "species": "Homo sapiens (hg38)",
+    "tissue": "peripheral blood mononuclear cells + granulocytes (sorted)",
+    "rna_h5_md5": "df86844b99161b9487090d91e644745e",
+    "atac_fragments_md5_first_8mb": "f0385fcdbe6f8a031604014d59f7074f",
+    "peaks_bed_md5": "684cc580758128585c956d63b4b2bd6e"
+  },
+  "shapes": {
+    "rna_post_qc": [
+      11620,
+      26341
+    ],
+    "atac_subset_to_rna_cells": [
+      11620,
+      143887
+    ]
+  },
+  "wall_s": {
+    "setup": 61.12,
+    "pipeline_run_total": 2499.96,
+    "no_nes_recheck": 2.57
+  },
+  "peak_rss_gb": 5.14,
+  "headline_counts": {
+    "n_grn_edges": 2840537,
+    "n_candidate_regulons": 1548,
+    "n_regulons": 1548,
+    "n_eregulons": 486,
+    "n_cistarget_rows_pre_nes": 1578204,
+    "n_cistarget_rows_post_nes": 83569,
+    "n_enhancer_links": 18536
+  },
+  "nes_filter_effect": {
+    "auc_threshold": 0.05,
+    "nes_threshold": 3.0,
+    "pre_nes_rows": 1578204,
+    "post_nes_rows": 83569,
+    "selectivity_ratio": 0.053,
+    "nes_min_in_kept_set": 3.0,
+    "nes_max_in_kept_set": 13.161,
+    "nes_median_in_kept_set": 3.412
+  },
+  "biological_sanity_under_nes": {
+    "expected_pbmc_granulocyte_tfs": [
+      "SPI1",
+      "CEBPA",
+      "CEBPB",
+      "CEBPE",
+      "PAX5",
+      "GATA3",
+      "TBX21",
+      "EBF1",
+      "IRF8",
+      "FOXP3"
+    ],
+    "found_in_regulons": [
+      "CEBPA",
+      "CEBPB",
+      "CEBPE",
+      "EBF1",
+      "FOXP3",
+      "GATA3",
+      "IRF8",
+      "PAX5",
+      "SPI1",
+      "TBX21"
+    ],
+    "missing_from_regulons": [],
+    "fraction_recovered": 1.0,
+    "v043_baseline_recovery": 10,
+    "delta_vs_v043": 0
+  },
+  "env": {
+    "python": "3.13.9",
+    "scanpy": "1.12",
+    "anndata": "0.13.0.dev168+ga819bf6a3",
+    "os": "Darwin 25.4.0 arm64",
+    "cpu": "Apple M5",
+    "n_cpus": 10
+  },
+  "supported_claims": [
+    "rustscenic v0.4.4 cistarget_nes_threshold=3.0 reaches the orchestrator and filters the cistarget output on real PBMC granulocyte 10k human multiome data",
+    "NES>=3.0 reduces the post-auc_threshold cistarget set from 1,578,204 to 83,569 rows (selectivity 0.0530)",
+    "Canonical PBMC+granulocyte TFs surviving under NES>=3.0: 10 of 10 (v0.4.3 baseline without NES: 10 of 10)"
+  ],
+  "scope_notes": [
+    "Same dataset, same pre-pipeline setup, same hyperparameters as the v0.4.3 PBMC granulocyte 10k run; only cistarget_nes_threshold=3.0 added.",
+    "Identical data is loaded from the cached download under validation/real_multiome_pbmc_granulocyte_10k/; MD5s recorded in the artefact match the v0.4.3 artefact.",
+    "Pre-NES count is computed by re-running cistarget.enrich without nes_threshold using the same candidate regulons; this exercises the v0.4.4 enrich path with NES column computed but no NES filter applied.",
+    "Biological sanity remains name-presence under NES>=3.0; cell-type enrichment via per-cluster AUCell F-test still tracked as a v0.5 follow-up.",
+    "NES is applied at enrich-time in the pipeline orchestrator (after AUC computation, before any motif-annotation prune). Same mathematical result as filtering inside prune_enriched_motifs."
+  ]
+}

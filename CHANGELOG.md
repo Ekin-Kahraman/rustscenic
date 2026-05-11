@@ -2,6 +2,28 @@
 
 ## 0.4.4 — 2026-05-11
 
+### Real-data validation (NES on the v0.4.3 PBMC granulocyte 10k dataset)
+
+- **NES at the canonical 3.0 threshold reduces cistarget rows from 1,578,204
+  to 83,569 on real data (selectivity 5.3%) while preserving all 10 of 10
+  canonical PBMC and granulocyte transcription factors in the active
+  regulon set.** Apples-to-apples vs the v0.4.3 artefact: same 10x PBMC
+  granulocyte-sorted 10k human multiome (11,620 cells, 26,341 genes,
+  143,887 peaks), same hardware (Apple M5, 10 cores), same hyperparameters,
+  only `cistarget_nes_threshold=3.0` added.
+- **NES distribution under the filter**: minimum 3.00 (the threshold,
+  by definition), median 3.41, maximum 13.16. Median sits close to the
+  threshold and the long right tail reflects the strongly-supported
+  motif and regulon pairs.
+- **Pipeline wall**: 41.7 min (vs 38.1 min for v0.4.3 without NES; the
+  extra time is the topics-stage variance plus a 2.6 s NES recheck pass,
+  not a NES-specific cost). Peak RSS 5.14 GB (vs 5.39 GB v0.4.3, within
+  run-to-run noise).
+- Artefact: `validation/multiome_pipeline_run_v0.4.4_pbmc_granulocyte_10k_nes.json`.
+  Schema-compliant per the evidence policy in
+  `memory/project_rustscenic.md`. Reproduce with the companion
+  `.sh` script.
+
 ### Added
 
 - **Normalised Enrichment Score (NES) on cistarget output.**
