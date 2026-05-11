@@ -62,8 +62,17 @@ tres = rustscenic.topics.fit(
     alpha=1.0/K, eta=1.0/K,
 )
 t_topics = time.monotonic() - t0
-topic_assign = np.asarray([int(s.replace("Topic_", "")) for s in tres.cell_assignment().values])
-print(f"  wall: {t_topics:.1f}s  unique top-1 topic: {len(set(topic_assign))}")
+# Drop NA assignments before parsing — cells with all-zero topic weight return
+# pd.NA from cell_assignment() since v0.4.2; calling .replace() on NA raises.
+_tres_assign_series = tres.cell_assignment()
+_n_unassigned = _tres_assign_series.isna().sum()
+topic_assign = np.asarray(
+    [int(s.replace("Topic_", "")) for s in _tres_assign_series.dropna().values]
+)
+print(
+    f"  wall: {t_topics:.1f}s  unique top-1 topic: {len(set(topic_assign))}"
+    + (f"  ({_n_unassigned} cells unassigned)" if _n_unassigned else "")
+)
 
 # --- cluster cells from ATAC for ground-truth cell type proxy ---
 atac_norm = atac.copy()

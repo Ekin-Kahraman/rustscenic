@@ -120,8 +120,10 @@ print(f"  shared cells: {len(shared)}", flush=True)
 with stage("topics"):
     K = 10
     tres = rustscenic.topics.fit(atac_s, n_topics=K, n_passes=20, batch_size=256, seed=777, alpha=1.0/K, eta=1.0/K)
-n_unique = len({a for a in tres.cell_assignment().values})
-print(f"  unique top-1: {n_unique}/{K}", flush=True)
+_assign = tres.cell_assignment()
+_n_unassigned = int(_assign.isna().sum())
+n_unique = len({a for a in _assign.dropna().values})
+print(f"  unique top-1: {n_unique}/{K}" + (f"  ({_n_unassigned} cells unassigned)" if _n_unassigned else ""), flush=True)
 
 # Biology check: do canonical PBMC regulons appear in the regulon set?
 canonical = {"SPI1": "Mono", "PAX5": "B", "GATA3": "T", "TBX21": "NK", "EBF1": "B"}

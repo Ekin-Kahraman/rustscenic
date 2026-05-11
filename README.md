@@ -26,9 +26,9 @@ flowchart LR
 
 ## Status
 
-**Current release: v0.4.2** on PyPI. v0.4.0 established publishable real-data end-to-end on PBMC and mouse brain E18 multiome via the public `pipeline.run`; v0.4.1 fixes `pipeline.run(tfs="hs"/"mm")` species shortcuts; v0.4.2 adds motif-annotation cisTarget pruning (closing the regulon-pruning gap from the Kamath DA-neuron community run, #68). See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
+**Current release: v0.4.3** on PyPI. v0.4.0 established publishable real-data end-to-end on PBMC and mouse brain E18 multiome via the public `pipeline.run`; v0.4.1 fixes `pipeline.run(tfs="hs"/"mm")` species shortcuts; v0.4.2 adds motif-annotation cisTarget pruning (synthetic-validated; real-data Kamath rerun pending), addressing the regulon-pruning gap surfaced by the Kamath DA-neuron community run (#68); v0.4.3 corrects `PipelineResult.pruned_regulons_path` to be `None` on pruning fallback, makes validation scripts NA-safe, and softens earlier scope claims. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
 
-Open follow-ups tracked for v0.4.x: AUCell wall-time logs from the 2026-04 stack pending a refresh, region-cistarget kernel parity vs ctxcore, and raw 10x `pipeline.run` without caller-side ATAC pre-subset (current docs require the subset).
+Open follow-ups tracked for v0.5+: AUCell wall-time refresh against the current SCENIC+ stack (current numbers measured 2026-04 pre-v0.4.x), region-cistarget kernel parity vs ctxcore, normalised enrichment scores (NES) on top of cistarget AUCs to match pycistarget output scale, the six-dataset v0.4.x benchmark sweep (see [`docs/v0.4.x-benchmark-plan.md`](docs/v0.4.x-benchmark-plan.md)), and raw 10x `pipeline.run` without caller-side ATAC pre-subset (current docs require the subset).
 
 ## Goal
 
@@ -86,11 +86,11 @@ Same input on both sides. Every row has a log file under [`validation/`](validat
 | Axis | pyscenic / arboreto | **rustscenic** |
 |---|---|---|
 | Installs on fresh Python 3.10–3.13 venv | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` in current stacks | PyPI wheels and sdist install; core APIs import |
-| AUCell wall-time, Ziegler 2021 atlas (31,602 × 59; measured 2026-04, refresh tracked for v0.4.x) | 6.81 s (pyscenic) | 0.25 s |
-| AUCell wall-time, 10x Multiome (10,290 × 1,457; measured 2026-04, refresh tracked for v0.4.x) | 18.6 s (pyscenic) | 0.21 s |
+| AUCell wall-time, Ziegler 2021 atlas (31,602 × 59; measured 2026-04 pre-v0.4.x; refresh deferred to v0.5) | 6.81 s (pyscenic) | 0.25 s |
+| AUCell wall-time, 10x Multiome (10,290 × 1,457; measured 2026-04 pre-v0.4.x; refresh deferred to v0.5) | 18.6 s (pyscenic) | 0.21 s |
 | Peak RSS, 4 stages on 100,000 cells × 20,292 genes | > 40 GB (reported) | 6.3 GB |
 | Cistarget kernel vs `ctxcore.recovery.aucs` | reference | Pearson 1.0000, mean abs diff 2.4 × 10⁻⁵ |
-| AUCell per-cell Pearson vs pyscenic (Ziegler, 31,602 cells; measured 2026-04, refresh tracked for v0.4.x) | reference | 0.984 mean, 91.7 % of cells > 0.95 |
+| AUCell per-cell Pearson vs pyscenic (Ziegler, 31,602 cells; measured 2026-04 pre-v0.4.x; refresh deferred to v0.5) | reference | 0.984 mean, 91.7 % of cells > 0.95 |
 | Canonical airway TFs matching literature (Ziegler, n=14) | 8 / 14 (pyscenic, unit weights) | 8 / 14 — same hits, same 5/14 misses |
 | Bit-identical output under same seed across threaded runs | no (dask non-determinism) | yes |
 | Runtime dependencies | 40 + | 5 |
@@ -99,7 +99,7 @@ Tool-to-tool variation (same hits, same misses on the same 14 canonical TFs) is 
 
 ## Per-stage detail
 
-Numbers are **rustscenic**'s values. The measurement context (dataset, `n_cells`, version) is in each row. v0.4.x parity refresh against current upstream stacks is tracked in [`docs/v0.4.x-benchmark-plan.md`](docs/v0.4.x-benchmark-plan.md).
+Numbers are **rustscenic**'s values. The measurement context (dataset, `n_cells`, version) is in each row. The parity refresh against current upstream stacks (six-dataset sweep) is now planned for v0.5+; see [`docs/v0.4.x-benchmark-plan.md`](docs/v0.4.x-benchmark-plan.md) for the dataset list and success criteria.
 
 ### GRN — `arboreto.grnboost2` replacement
 
@@ -167,10 +167,13 @@ Bit-identical to `ctxcore.recovery.aucs` at float32 precision. The 19 % rank-#1 
 |---|---|---|---|
 | Reference (arboreto + pyscenic + tomotopy), 10x Multiome 3k | 11.8 min | n/a | 4 |
 | rustscenic, 10x Multiome 3k | 9.1 min | n/a | 4 |
-| rustscenic, **100k synthetic multiome E2E** | **12.7 min** | **7.09 GB** | **7 (all)** |
-| rustscenic, **200k synthetic multiome E2E** | **16.8 min** | **7.44 GB** | **7 (all)** |
+| rustscenic, **10x PBMC 3k multiome real-data** (v0.3.9, measured 2026-05-02) | **7.5 min** | **3.67 GB** | **7 (all)** |
+| rustscenic, **10x brain E18 5k multiome real-data** (v0.3.10, measured 2026-05-04) | **13.8 min** | **4.01 GB** | **7 (all)** |
+| rustscenic, **10x PBMC granulocyte 10k multiome real-data** (v0.4.3, measured 2026-05-11) | **38.1 min** | **5.39 GB** | **7 (all)** |
+| rustscenic, **100k synthetic multiome E2E** (measured v0.3.10, 2026-04-27) | **12.7 min** | **7.09 GB** | **7 (all)** |
+| rustscenic, **200k synthetic multiome E2E** (measured v0.3.10, 2026-04-27) | **16.8 min** | **7.44 GB** | **7 (all)** |
 
-Memory: 100k synthetic multiome 7-stage E2E peaks at **7.09 GB RSS**, vs scenicplus stack's reported > 40 GB at comparable scale. Bit-identical output under the same seed across threaded runs, verified across three consecutive runs per stage. 10 / 10 robustness edge-case tests pass (foreign genes, NaN input, duplicate gene names, all-zero cells, large regulons, object-dtype rankings, n_topics = 0, very-sparse matrices). Reproduce with `python validation/scaling/bench_e2e_100k_synthetic.py`; reproduce the 200k synthetic run with `python validation/scaling/bench_e2e_200k_synthetic.py`.
+Cross-dataset scaling on real 10x multiomes: 4.2x cell scale-up (2,767 to 11,620 cells) produces 5.1x wall (slope ~1.21x, slight cache-effect superlinearity in the GRN stage) and 1.47x peak RSS (strongly sub-linear in cells). GRN dominates 78% of wall on the 10k run at `n_estimators=100`. Biology check on the latest run: 10 of 10 canonical PBMC and granulocyte transcription factors recovered by name (SPI1, CEBPA, CEBPB, CEBPE, IRF8, PAX5, EBF1, GATA3, TBX21, FOXP3); the brain E18 5k run recovered 9 of 9 cortex TFs. Memory: 100k synthetic multiome 7-stage E2E peaks at **7.09 GB RSS** (measured v0.3.10; v0.4.x motif-pruning may shift this, refresh pending), vs scenicplus stack's reported > 40 GB at comparable scale. Bit-identical output under the same seed across threaded runs, verified across three consecutive runs per stage. 10 / 10 robustness edge-case tests pass (foreign genes, NaN input, duplicate gene names, all-zero cells, large regulons, object-dtype rankings, n_topics = 0, very-sparse matrices). Reproduce the real-data runs with the scripts under `validation/multiome_pipeline_run_*.sh`; reproduce the synthetic runs with `python validation/scaling/bench_e2e_100k_synthetic.py` and the 200k script.
 
 ## Scope and alternatives
 

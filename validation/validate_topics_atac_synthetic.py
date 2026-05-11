@@ -65,9 +65,18 @@ ours = rustscenic.topics.fit(
     alpha=1.0/N_TOPICS_TRUE, eta=1.0/N_TOPICS_TRUE,
 )
 ours_wall = time.monotonic() - t0
-ours_assign = np.asarray([int(s.replace("Topic_", "")) for s in ours.cell_assignment().values])
-print(f"  wall: {ours_wall:.1f}s  unique topics assigned: {len(set(ours_assign))}")
-ours_ari = adjusted_rand_score(planted, ours_assign)
+# Drop NA assignments before parsing — cells with all-zero topic weight return
+# pd.NA from cell_assignment() since v0.4.2; calling .replace() on NA raises.
+_ours_assign_series = ours.cell_assignment()
+_keep_mask = _ours_assign_series.notna().values
+ours_assign = np.asarray(
+    [int(s.replace("Topic_", "")) for s in _ours_assign_series.dropna().values]
+)
+print(
+    f"  wall: {ours_wall:.1f}s  unique topics assigned: {len(set(ours_assign))}"
+    + (f"  ({(~_keep_mask).sum()} cells unassigned)" if (~_keep_mask).any() else "")
+)
+ours_ari = adjusted_rand_score(planted[_keep_mask], ours_assign)
 print(f"  ARI vs planted: {ours_ari:.4f}")
 
 # --- gensim LDA ---
@@ -98,6 +107,6 @@ print(f"\nSummary:")
 print(f"  rustscenic ARI {ours_ari:.3f}  wall {ours_wall:.1f}s")
 print(f"  gensim     ARI {gensim_ari:.3f}  wall {gensim_wall:.1f}s")
 print(f"  speedup ours vs gensim: {gensim_wall/ours_wall:.1f}x")
-# cross-tool ARI
-cross = adjusted_rand_score(ours_assign, gensim_assign)
+# cross-tool ARI — both sides restricted to cells assigned by rustscenic
+cross = adjusted_rand_score(ours_assign, gensim_assign[_keep_mask])
 print(f"  cross-tool ARI (ours vs gensim): {cross:.3f}")

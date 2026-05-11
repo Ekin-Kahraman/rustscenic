@@ -673,6 +673,15 @@ def test_pipeline_run_warns_and_falls_back_when_pruning_removes_all_regulons(tmp
     assert result.regulon_source == "candidate_grn_top_targets_after_failed_pruning"
     assert result.n_pruned_regulons == 0
     assert result.n_regulons == result.n_candidate_regulons
+    assert result.pruned_regulons_path is None, (
+        "pruned_regulons_path must be None on the fallback path; a non-None "
+        "path here would mislead callers into reading an empty-dict JSON as "
+        "a successful pruning result"
+    )
+    assert not (tmp_path / "pruned_regulons.json").exists(), (
+        "no pruned_regulons.json should be written when pruning removed all "
+        "candidates"
+    )
 
 
 def test_pipeline_run_topics_method_gibbs(tmp_path):

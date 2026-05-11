@@ -37,7 +37,11 @@ ours = rustscenic.topics.fit(
 )
 ours_wall = time.monotonic() - t0
 print(f"  wall: {ours_wall:.1f}s")
-ours_assign = ours.cell_assignment().values
+# Cells with all-zero topic weight return pd.NA from cell_assignment() since
+# v0.4.2 — track a keep-mask so ARI compares the same cell subset on both sides.
+_ours_assign_series = ours.cell_assignment()
+_ours_keep_mask = _ours_assign_series.notna().values
+ours_assign = _ours_assign_series.dropna().values
 
 # --- gensim LDA ---
 print("\n--- gensim LDA (reference) ---")
@@ -72,10 +76,14 @@ for i, doc in enumerate(corpus):
     gensim_assign[i] = max(top, key=lambda x: x[1])[0]
 
 # --- compare ---
-ari = adjusted_rand_score(ours_assign.astype(int) if isinstance(ours_assign[0], (np.integer, int)) else
-                          [int(x.replace("Topic_", "")) for x in ours_assign],
-                          gensim_assign)
-print(f"\nARI between rustscenic vs gensim topic assignments: {ari:.4f}")
+ari = adjusted_rand_score(
+    ours_assign.astype(int) if (len(ours_assign) and isinstance(ours_assign[0], (np.integer, int))) else
+    [int(x.replace("Topic_", "")) for x in ours_assign],
+    gensim_assign[_ours_keep_mask],
+)
+_n_unassigned = (~_ours_keep_mask).sum()
+print(f"\nARI between rustscenic vs gensim topic assignments: {ari:.4f}"
+      + (f"  ({_n_unassigned} cells excluded as unassigned)" if _n_unassigned else ""))
 print(f"  ours n-unique topics: {len(set(ours_assign))}")
 print(f"  gensim n-unique topics: {len(set(gensim_assign))}")
 
