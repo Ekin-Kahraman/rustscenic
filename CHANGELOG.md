@@ -9,8 +9,16 @@
   canonical PBMC and granulocyte transcription factors in the active
   regulon set.** Apples-to-apples vs the v0.4.3 artefact: same 10x PBMC
   granulocyte-sorted 10k human multiome (11,620 cells, 26,341 genes,
-  143,887 peaks), same hardware (Apple M5, 10 cores), same hyperparameters,
-  only `cistarget_nes_threshold=3.0` added.
+  143,887 peaks), same hardware (Apple M5, 10 cores), same hyperparameters
+  (`cistarget_top_frac=0.05` and `cistarget_auc_threshold=0.05` unchanged
+  from v0.4.3 defaults), only `cistarget_nes_threshold=3.0` added.
+- **Scope of this run**: motif_annotations not supplied, so the NES filter
+  affects the cistarget enriched rows only, not the active regulon set
+  (which remains the GRN top-target candidates). The 10 of 10 TF
+  preservation therefore reflects that NES did not perturb the candidate
+  regulons, not that NES filter pressure was applied to the regulon set.
+  A combined NES plus annotation-pruning real-data exercise is tracked as
+  a separate follow-up.
 - **NES distribution under the filter**: minimum 3.00 (the threshold,
   by definition), median 3.41, maximum 13.16. Median sits close to the
   threshold and the long right tail reflects the strongly-supported
