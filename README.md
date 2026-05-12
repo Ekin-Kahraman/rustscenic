@@ -17,18 +17,26 @@ The practical SCENIC+ compute path in one package:
 
 ```mermaid
 flowchart LR
-    rna["RNA<br/>AnnData"] --> grn["GRN"]
-    atac["ATAC<br/>AnnData/fragments"] --> chrom["topics<br/>cisTarget<br/>enhancer links"]
-    grn --> ereg["eRegulons"]
-    chrom --> ereg
-    grn --> auc["AUCell<br/>cells x regulons"]
+    rna["RNA data"] --> network["find gene regulation"]
+    network --> regulons["regulons"]
+    regulons --> activity["score each cell"]
+
+    motifs["motif data"] --> supported["filter by motif support"]
+    regulons --> supported
+
+    atac["ATAC data"] --> topics["discover topics"]
+    rna --> enhancers["link enhancers to genes"]
+    atac --> enhancers
+
+    supported --> programs["build enhancer-linked regulons"]
+    enhancers --> programs
 ```
 
 ## Status
 
-**Current release: v0.4.4** on PyPI. v0.4.0 established publishable real-data end-to-end on PBMC and mouse brain E18 multiome via the public `pipeline.run`; v0.4.1 fixes `pipeline.run(tfs="hs"/"mm")` species shortcuts; v0.4.2 adds motif-annotation cisTarget pruning (synthetic-validated; real-data Kamath rerun pending), addressing the regulon-pruning gap surfaced by the Kamath DA-neuron community run (#68); v0.4.3 corrects `PipelineResult.pruned_regulons_path` to be `None` on pruning fallback, makes validation scripts NA-safe, and softens earlier scope claims; v0.4.4 adds Normalised Enrichment Score (NES) on cistarget output to match pyscenic / pycistarget output scale (real-data check on the PBMC granulocyte 10k: NES ≥ 3.0 reduces 1,578,204 enriched rows to 83,569 while preserving all 10 canonical TFs) and removes stale `pruned_regulons.json` on `output_dir` re-use. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
+**Current release: v0.4.4** on PyPI. This release adds Normalised Enrichment Score (NES) filtering for cisTarget output and removes stale `pruned_regulons.json` files when an output directory is re-used. On the PBMC granulocyte 10k validation run, NES ≥ 3.0 reduced cisTarget rows from 1,578,204 to 83,569 while preserving all 10 canonical TFs. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
 
-Open follow-ups tracked for v0.5+: AUCell wall-time refresh against the current SCENIC+ stack (current numbers measured 2026-04 pre-v0.4.x), region-cistarget kernel parity vs ctxcore, the six-dataset v0.4.x benchmark sweep (see [`docs/v0.4.x-benchmark-plan.md`](docs/v0.4.x-benchmark-plan.md)), per-cluster AUCell F-test against RNA clusters to back the "biology signal" claim with cell-type enrichment rather than name-presence, and raw 10x `pipeline.run` without caller-side ATAC pre-subset (current docs require the subset).
+Open follow-ups tracked for v0.5+: refreshed AUCell timings, region-cisTarget parity checks, the six-dataset benchmark sweep, a cell-type enrichment check for the biology claim, and a smoother raw 10x `pipeline.run` path without caller-side ATAC pre-subsetting.
 
 ## Goal
 
