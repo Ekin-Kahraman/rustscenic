@@ -1,18 +1,81 @@
 # Changelog
 
-## Unreleased
+## 0.4.4 — 2026-05-11
 
-### Known issues tracked for v0.4.4
+### Real-data validation (NES on the v0.4.3 PBMC granulocyte 10k dataset)
 
-- **Stale `pruned_regulons.json` on `output_dir` re-use.** If a run with
-  successful motif-annotation pruning writes `pruned_regulons.json`, and a
-  later run on the same `output_dir` takes the failed-pruning fallback
-  (annotations changed to ones that match no candidate TF), the v0.4.3 fix
-  correctly sets `result.pruned_regulons_path = None` and records the same
-  in `manifest.json`, but the stale `pruned_regulons.json` from the prior
-  run is not removed. Any caller probing the filesystem directly rather
-  than reading the `PipelineResult` will load stale data. One-line fix at
-  `pipeline.py` else branch (unlink the stale file). Tracked as v0.4.4.
+- **NES at the canonical 3.0 threshold reduces cistarget rows from 1,578,204
+  to 83,569 on real data (selectivity 5.3%) while preserving all 10 of 10
+  canonical PBMC and granulocyte transcription factors in the active
+  regulon set.** Apples-to-apples vs the v0.4.3 artefact: same 10x PBMC
+  granulocyte-sorted 10k human multiome (11,620 cells, 26,341 genes,
+  143,887 peaks), same hardware (Apple M5, 10 cores), same hyperparameters
+  (`cistarget_top_frac=0.05` and `cistarget_auc_threshold=0.05` unchanged
+  from v0.4.3 defaults), only `cistarget_nes_threshold=3.0` added.
+- **Scope of this run**: motif_annotations not supplied, so the NES filter
+  affects the cistarget enriched rows only, not the active regulon set
+  (which remains the GRN top-target candidates). The 10 of 10 TF
+  preservation therefore reflects that NES did not perturb the candidate
+  regulons, not that NES filter pressure was applied to the regulon set.
+  A combined NES plus annotation-pruning real-data exercise is tracked as
+  a separate follow-up.
+- **NES distribution under the filter**: minimum 3.00 (the threshold,
+  by definition), median 3.41, maximum 13.16. Median sits close to the
+  threshold and the long right tail reflects the strongly-supported
+  motif and regulon pairs.
+- **Pipeline wall**: 41.7 min (vs 38.1 min for v0.4.3 without NES; the
+  extra time is the topics-stage variance plus a 2.6 s NES recheck pass,
+  not a NES-specific cost). Peak RSS 5.14 GB (vs 5.39 GB v0.4.3, within
+  run-to-run noise).
+- Artefact: `validation/multiome_pipeline_run_v0.4.4_pbmc_granulocyte_10k_nes.json`.
+  Schema-compliant per the evidence policy in
+  `memory/project_rustscenic.md`. Reproduce with the companion
+  `.sh` script.
+
+### Added
+
+- **Normalised Enrichment Score (NES) on cistarget output.**
+  `rustscenic.cistarget.enrich` now returns a fourth column, `nes`, in
+  addition to `[regulon, motif, auc]`. NES is the per-regulon population
+  z-score of AUC across the full motif universe, matching pyscenic
+  `transform.py` and pycistarget `motif_enrichment_cistarget.py`
+  (population standard deviation, no recovery-curve null). A new
+  `nes_threshold` parameter on `enrich`, `prune_enriched_motifs`,
+  `prune_regulons`, and `pipeline.run` (as `cistarget_nes_threshold`)
+  filters by NES. Default is `None` for backwards compatibility; pass
+  `3.0` for the canonical pyscenic / pycistarget cutoff. CLI flags
+  `--nes-threshold` and `--cistarget-nes-threshold` added to the
+  `cistarget` and `pipeline` subcommands.
+- **Two NES guards beyond what pyscenic / pycistarget do.**
+  (1) When the motif universe is below 30 motifs, NES is unreliable as
+  a z-score; NES is emitted as `NaN` and a `UserWarning` is raised.
+  (2) When a regulon's AUC variance across motifs is at or below
+  numerical-noise level (`std < 1e-6`, which catches both literal-zero
+  and float32 accumulation noise), NES is emitted as `NaN` with a
+  warning naming the affected regulons. AUC rows are preserved in
+  both cases; only NES is undefined. NaN NES rows are dropped by any
+  `nes_threshold` filter.
+
+### Bug fixes
+
+- **Stale `pruned_regulons.json` removed on `output_dir` re-use.**
+  v0.4.3 correctly set `result.pruned_regulons_path = None` and recorded
+  the same in `manifest.json` when motif-annotation pruning removed every
+  candidate, but a `pruned_regulons.json` from a prior successful run on
+  the same `output_dir` was left on disk. Any caller probing the
+  filesystem directly rather than reading the `PipelineResult` would load
+  stale data that contradicted the current run's `regulon_source`. The
+  fallback branch now unlinks the stale file. Red-green verified: the
+  new regression test fails on the v0.4.3 code path and passes after the
+  unlink is added.
+
+### Docs
+
+- The CHANGELOG `0.4.3` "Real-data validation" section already records
+  the regulon-set-size confound under the "10/10 canonical TFs" framing;
+  no further calibration this release. The per-cluster AUCell F-test that
+  would actually establish a "stronger biology signal" claim remains a
+  v0.5 follow-up.
 
 ## 0.4.3 — 2026-05-11
 

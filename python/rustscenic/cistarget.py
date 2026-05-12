@@ -33,14 +33,18 @@ import pandas as pd
 from rustscenic._rustscenic import aucell_score as _aucell_score
 
 
+_NES_MIN_MOTIFS = 30
+
+
 def enrich(
     rankings: pd.DataFrame,
     regulons: Iterable,
     *,
     top_frac: float = 0.05,
     auc_threshold: float = 0.05,
+    nes_threshold: Optional[float] = None,
 ) -> pd.DataFrame:
-    """Compute motif-regulon enrichment AUCs.
+    """Compute motif-regulon enrichment AUCs and NES.
 
     Parameters
     ----------
@@ -53,15 +57,28 @@ def enrich(
         Iterable of `(name, gene_list)` tuples, or objects with `.name` + `.genes`.
     top_frac
         Fraction of top-ranked genes per motif used as AUC cutoff (default 0.05,
-        matches pycisTopic/pycistarget).
+        matches pyscenic / ctxcore gene-mode). pycistarget region-mode uses
+        ``auc_threshold=0.005`` instead; pass that explicitly for region-mode
+        parity.
     auc_threshold
         Minimum AUC to report a regulon-motif pair as enriched. Set to 0 to
         return all scores.
+    nes_threshold
+        Optional minimum NES to keep. ``None`` (default) returns all rows that
+        pass ``auc_threshold`` and is backwards-compatible with v0.4.3 callers.
+        Set to ``3.0`` to match the canonical pyscenic / pycistarget cutoff.
+        When NES is undefined for a regulon (zero standard deviation across
+        motifs, or fewer than 30 motifs), NES is recorded as ``NaN`` and a
+        warning is emitted; ``NaN`` rows are dropped by any ``nes_threshold``
+        filter but preserved when ``nes_threshold is None``.
 
     Returns
     -------
-    pandas.DataFrame with columns [regulon, motif, auc], sorted descending
-    by AUC. Only rows where auc >= auc_threshold.
+    pandas.DataFrame with columns [regulon, motif, auc, nes], sorted descending
+    by AUC. Only rows where auc >= auc_threshold (and, if set, nes >= nes_threshold).
+    NES is computed as the per-regulon population z-score of AUC across the
+    full motif universe (matching pyscenic ``transform.py`` and pycistarget
+    ``motif_enrichment_cistarget.py``).
     """
     # Expect motifs as rows, genes as columns. Refuse to guess orientation —
     # a wrong guess silently produces an empty result.
@@ -121,18 +138,80 @@ def enrich(
             f"columns: {gene_names[:3]}.",
             UserWarning, stacklevel=2,
         )
-        return pd.DataFrame(columns=["regulon", "motif", "auc"])
+        return pd.DataFrame(columns=["regulon", "motif", "auc", "nes"])
 
     # Run the per-motif (as "cells") AUC scoring
     auc = _aucell_score(np.ascontiguousarray(scores), reg_names, reg_gene_indices, top_frac)
     # auc shape: (n_motifs, n_regulons)
-    auc_df = pd.DataFrame(np.asarray(auc), index=motif_names, columns=reg_names)
+    auc_arr = np.asarray(auc)
+    auc_df = pd.DataFrame(auc_arr, index=motif_names, columns=reg_names)
 
-    # Stack to long form, filter by threshold
-    long = auc_df.stack().reset_index()
-    long.columns = ["motif", "regulon", "auc"]
-    long = long[long["auc"] >= auc_threshold].sort_values("auc", ascending=False).reset_index(drop=True)
-    return long[["regulon", "motif", "auc"]]
+    # Compute per-regulon NES (population z-score across the motif universe).
+    # Matches pyscenic transform.py and pycistarget motif_enrichment_cistarget.py
+    # (per-regulon mean and std, ddof=0). Two guards on top of upstream:
+    #   - n_motifs < _NES_MIN_MOTIFS: z-score is unreliable, emit NaN + warn.
+    #   - std == 0 for a regulon: divide-by-zero, emit NaN + warn.
+    # Both keep the AUC rows visible to the caller; only NES is undefined.
+    nes_arr = _compute_nes(auc_arr, n_motifs=len(motif_names), reg_names=reg_names)
+    nes_df = pd.DataFrame(nes_arr, index=motif_names, columns=reg_names)
+
+    # Stack both AUC and NES to long form before any filtering, so the
+    # two columns stay aligned on (motif, regulon) under the same
+    # MultiIndex order.
+    auc_long = auc_df.stack()
+    nes_long = nes_df.stack().reindex(auc_long.index)
+    long = pd.DataFrame({"auc": auc_long.values, "nes": nes_long.values})
+    long["motif"] = auc_long.index.get_level_values(0)
+    long["regulon"] = auc_long.index.get_level_values(1)
+    long = long.reset_index(drop=True)
+    long = long[long["auc"] >= auc_threshold]
+    if nes_threshold is not None:
+        # NaN NES rows are dropped here by design — NES is undefined for them.
+        long = long[long["nes"].notna() & (long["nes"] >= nes_threshold)]
+    long = long.sort_values("auc", ascending=False).reset_index(drop=True)
+    return long[["regulon", "motif", "auc", "nes"]]
+
+
+def _compute_nes(
+    auc_arr: np.ndarray, *, n_motifs: int, reg_names: list,
+) -> np.ndarray:
+    """Per-regulon population z-score of AUC across the motif axis.
+
+    Returns an array shaped like ``auc_arr`` with NaN entries wherever NES is
+    undefined (small motif universe, or zero-variance regulon column).
+    """
+    import warnings
+    nes = np.full_like(auc_arr, fill_value=np.nan, dtype=np.float32)
+    if n_motifs < _NES_MIN_MOTIFS:
+        warnings.warn(
+            f"NES computed on only {n_motifs} motifs, below the "
+            f"{_NES_MIN_MOTIFS}-motif floor where a z-score is reliable. "
+            f"NES values are returned as NaN. Either pass a larger motif "
+            f"ranking matrix or ignore the `nes` column for this run.",
+            UserWarning, stacklevel=3,
+        )
+        return nes
+    means = auc_arr.mean(axis=0)
+    stds = auc_arr.std(axis=0, ddof=0)
+    # Threshold catches both literal-zero variance and float32 accumulation
+    # noise (~6e-8 for AUC in [0,1]). A real signal in AUC variance sits
+    # several orders of magnitude above this, so 1e-6 is a safe floor.
+    zero_var = stds < 1e-6
+    if zero_var.any():
+        bad = [reg_names[i] for i in np.where(zero_var)[0]]
+        warnings.warn(
+            f"NES undefined for {len(bad)} regulons with zero AUC variance "
+            f"across the motif universe (first few: {bad[:3]}). Such regulons "
+            f"score identically on every motif, which usually means the "
+            f"regulon genes are not present in the rankings (check coverage) "
+            f"or the rankings collapse to a constant value. NES set to NaN; "
+            f"AUC rows are preserved.",
+            UserWarning, stacklevel=3,
+        )
+    safe_stds = np.where(zero_var, 1.0, stds)
+    nes_full = (auc_arr - means) / safe_stds
+    nes_full[:, zero_var] = np.nan
+    return nes_full.astype(np.float32)
 
 
 def prune_enriched_motifs(
@@ -142,6 +221,7 @@ def prune_enriched_motifs(
     motif_col: Optional[str] = None,
     tf_col: Optional[str] = None,
     auc_threshold: Optional[float] = None,
+    nes_threshold: Optional[float] = None,
     case_sensitive: bool = False,
 ) -> pd.DataFrame:
     """Filter enriched motif rows through motif-to-TF annotations.
@@ -153,7 +233,8 @@ def prune_enriched_motifs(
     Parameters
     ----------
     enriched
-        ``enrich`` output with columns ``['regulon', 'motif', 'auc']``.
+        ``enrich`` output with columns ``['regulon', 'motif', 'auc']`` plus
+        an optional ``nes`` column (present when produced by v0.4.4+ enrich).
     motif_annotations
         DataFrame mapping motifs to TF names. Common column names such as
         ``motif``, ``motif_id``, ``features`` and ``TF``, ``gene_name`` are
@@ -161,6 +242,11 @@ def prune_enriched_motifs(
     auc_threshold
         Optional minimum AUC to keep before applying annotations. ``None``
         preserves the rows already returned by ``enrich``.
+    nes_threshold
+        Optional minimum NES to keep before applying annotations. Requires
+        the ``enriched`` DataFrame to contain an ``nes`` column. Rows with
+        NaN NES are dropped by this filter. ``3.0`` matches the canonical
+        pyscenic / pycistarget cutoff.
     case_sensitive
         Match TF names case-sensitively. Default ``False`` tolerates common
         upper/lower-case differences in annotation exports while preserving
@@ -172,6 +258,12 @@ def prune_enriched_motifs(
     plus ``tf`` and ``annotation_tf`` columns.
     """
     _require_columns(enriched, {"regulon", "motif", "auc"}, name="enriched")
+    if nes_threshold is not None and "nes" not in enriched.columns:
+        raise ValueError(
+            "nes_threshold was set but the enriched DataFrame has no `nes` "
+            "column. Re-run rustscenic.cistarget.enrich with v0.4.4+ to "
+            "populate the NES column, or pass nes_threshold=None."
+        )
     if enriched.empty:
         return pd.DataFrame(
             columns=list(enriched.columns) + ["tf", "annotation_tf"]
@@ -180,6 +272,8 @@ def prune_enriched_motifs(
     ct = enriched.copy()
     if auc_threshold is not None:
         ct = ct.loc[ct["auc"] >= auc_threshold].copy()
+    if nes_threshold is not None:
+        ct = ct.loc[ct["nes"].notna() & (ct["nes"] >= nes_threshold)].copy()
     if ct.empty:
         return pd.DataFrame(
             columns=list(enriched.columns) + ["tf", "annotation_tf"]
@@ -216,6 +310,7 @@ def prune_regulons(
     rankings: Optional[pd.DataFrame] = None,
     top_frac: float = 0.05,
     auc_threshold: Optional[float] = None,
+    nes_threshold: Optional[float] = None,
     min_genes: int = 1,
     motif_col: Optional[str] = None,
     tf_col: Optional[str] = None,
@@ -228,6 +323,8 @@ def prune_regulons(
     surviving regulon's targets are further restricted to genes recovered in
     the enriched motif's top-ranked window, matching the usual cistarget
     pruning semantics more closely than keeping the whole GRN top-N list.
+    ``nes_threshold`` adds the canonical pyscenic / pycistarget NES filter
+    on top of motif annotation matching; pass ``3.0`` for the standard cutoff.
     """
     candidate = {
         name: list(dict.fromkeys(genes))
@@ -242,6 +339,7 @@ def prune_regulons(
         motif_col=motif_col,
         tf_col=tf_col,
         auc_threshold=auc_threshold,
+        nes_threshold=nes_threshold,
         case_sensitive=case_sensitive,
     )
     if pruned_motifs.empty:

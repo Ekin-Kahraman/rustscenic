@@ -91,6 +91,7 @@ def run(
     topics_n_threads: int = 1,
     cistarget_top_frac: float = 0.05,
     cistarget_auc_threshold: float = 0.05,
+    cistarget_nes_threshold: Optional[float] = None,
     enhancer_max_distance: int = 500_000,
     enhancer_min_abs_corr: float = 0.1,
     eregulon_min_target_genes: int = 5,
@@ -325,15 +326,22 @@ def run(
             [(n, g) for n, g in candidate_regulons.items()],
             top_frac=cistarget_top_frac,
             auc_threshold=cistarget_auc_threshold,
+            nes_threshold=cistarget_nes_threshold,
         )
         enriched_for_eregulons = enriched
         elapsed["cistarget"] = time.perf_counter() - t0
         cistarget_path = output_dir / "cistarget_enriched.parquet"
         enriched.to_parquet(cistarget_path, index=False)
-        log(f"      {len(enriched):,} enriched pairs in {elapsed['cistarget']:.1f}s")
+        log(
+            f"      {len(enriched):,} enriched pairs in {elapsed['cistarget']:.1f}s"
+            + (f" (nes_threshold={cistarget_nes_threshold})" if cistarget_nes_threshold is not None else "")
+        )
 
         if motif_annotations_df is not None:
             log("      pruning enriched motifs with motif annotations")
+            # nes_threshold is applied inside enrich(), so `enriched` already
+            # reflects it. Avoid passing it again to prune_* to keep the
+            # filter site singular and the data flow auditable.
             pruned_enriched = rustscenic.cistarget.prune_enriched_motifs(
                 enriched,
                 motif_annotations_df,
@@ -384,6 +392,31 @@ def run(
                     stacklevel=2,
                 )
                 regulon_source = "candidate_grn_top_targets_after_failed_pruning"
+                # Remove any pruned_regulons.json left over from a prior
+                # successful-pruning run on the same output_dir. The
+                # PipelineResult and manifest already report None for the
+                # fallback path; if we leave the stale file in place, any
+                # caller probing the filesystem directly would load a
+                # previous run's pruned set and silently mismatch the
+                # current run's regulon_source field. `missing_ok=True`
+                # plus the OSError guard turns the unlikely cases (the
+                # path is a directory, or owned by another user) into a
+                # warning rather than aborting the pipeline after GRN,
+                # topics, and cistarget have already written outputs.
+                _stale = output_dir / "pruned_regulons.json"
+                try:
+                    _stale.unlink(missing_ok=True)
+                except OSError as exc:
+                    _warnings.warn(
+                        f"could not remove stale {_stale}: {exc}. "
+                        f"PipelineResult.pruned_regulons_path is None and "
+                        f"manifest.json records the fallback, but any caller "
+                        f"probing the filesystem directly may load the prior "
+                        f"run's data. Remove the file by hand if downstream "
+                        f"tooling reads it.",
+                        UserWarning,
+                        stacklevel=2,
+                    )
                 log(
                     f"      pruning removed all regulons; falling back to "
                     f"{len(candidate_regulons)} candidate regulons"
