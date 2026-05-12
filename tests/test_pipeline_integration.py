@@ -834,6 +834,72 @@ def test_pipeline_run_cistarget_nes_threshold_filters_enriched(tmp_path):
     )
 
 
+def test_region_cistarget_helper_honors_nes_threshold():
+    """The region-cistarget path inside pipeline.run must honour
+    ``cistarget_nes_threshold`` too. Caught post-merge by codex on PR #76:
+    v0.4.4 wired NES through the gene path but the region helper
+    ``_region_cistarget_with_peak_ids`` only took ``top_frac`` and
+    ``auc_threshold``, so any caller supplying ``cistarget_nes_threshold``
+    plus ``region_motif_rankings`` silently got an unfiltered region
+    enrich frame, contradicting the v0.4.4 release claim. Red-green test.
+    """
+    import numpy as np
+    import pandas as pd
+    from rustscenic.pipeline import _region_cistarget_with_peak_ids
+
+    rng = np.random.default_rng(23)
+    n_motifs = 60
+    n_regions = 100
+    region_names = [f"p{i:03d}" for i in range(n_regions)]
+    motif_names = [f"m{i}" for i in range(n_motifs)]
+    # Motif 0 ranks the regulon's peaks (p000..p019) at the top, so its
+    # AUC is high. Every other motif gets a random permutation.
+    rank_rows = []
+    for i in range(n_motifs):
+        if i == 0:
+            perm = [f"p{j:03d}" for j in range(20)] + [
+                f"p{j:03d}" for j in range(20, n_regions)
+            ]
+        else:
+            perm = [region_names[k] for k in rng.permutation(n_regions)]
+        rank_rows.append([perm.index(r) for r in region_names])
+    region_rankings = pd.DataFrame(
+        np.asarray(rank_rows, dtype=np.int32),
+        index=motif_names,
+        columns=region_names,
+    )
+    peak_regulons = [("TF_A_regulon", [f"p{i:03d}" for i in range(20)])]
+
+    # No NES threshold: all enriched rows survive (60 motifs minus those
+    # below auc_threshold 0.0 which is none).
+    region_enrich_no_nes, _ = _region_cistarget_with_peak_ids(
+        region_rankings, peak_regulons, top_frac=0.2, auc_threshold=0.0,
+    )
+    assert len(region_enrich_no_nes) == n_motifs
+    # NES column must be present even without filtering.
+    assert "nes" in region_enrich_no_nes.columns
+
+    # NES threshold 3.0: motif 0 is the only one with z-score >> 3 on this
+    # synthetic fixture (verified separately by cistarget.enrich tests).
+    region_enrich_with_nes, _ = _region_cistarget_with_peak_ids(
+        region_rankings, peak_regulons,
+        top_frac=0.2, auc_threshold=0.0, nes_threshold=3.0,
+    )
+    assert len(region_enrich_with_nes) < len(region_enrich_no_nes), (
+        f"NES filter must reduce region cistarget rows; got "
+        f"{len(region_enrich_with_nes)} with NES vs "
+        f"{len(region_enrich_no_nes)} without"
+    )
+    assert (region_enrich_with_nes["nes"] >= 3.0).all(), (
+        "every surviving row must satisfy the NES floor"
+    )
+    assert "m0" in set(region_enrich_with_nes["motif"]), (
+        "the true-positive motif m0 should survive the NES filter on this "
+        "fixture; if it does not, the synthetic design or the NES wiring "
+        "has regressed"
+    )
+
+
 def test_pipeline_run_topics_method_gibbs(tmp_path):
     """When ``topics_method='gibbs'`` (with ``topics_n_threads > 1``)
     the orchestrator runs the parallel collapsed-Gibbs sampler instead

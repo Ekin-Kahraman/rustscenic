@@ -514,6 +514,7 @@ def run(
                     peak_regulons,
                     top_frac=cistarget_top_frac,
                     auc_threshold=cistarget_auc_threshold,
+                    nes_threshold=cistarget_nes_threshold,
                 )
                 if motif_annotations_df is not None and not region_enrich.empty:
                     region_enrich = rustscenic.cistarget.prune_enriched_motifs(
@@ -787,6 +788,7 @@ def _region_cistarget_with_peak_ids(
     *,
     top_frac: float,
     auc_threshold: float,
+    nes_threshold: Optional[float] = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run region cistarget and retain the motif-supported peak IDs.
 
@@ -794,7 +796,9 @@ def _region_cistarget_with_peak_ids(
     set, but eRegulon assembly also needs peak identifiers. Keep only
     peaks from the source peak set that lie inside the motif's top-ranked
     region window, instead of attributing every linked peak to every
-    enriched motif.
+    enriched motif. ``nes_threshold`` is passed through to ``enrich`` so
+    the region path honours the same canonical pyscenic / pycistarget
+    cutoff as the gene path.
     """
     import rustscenic.cistarget
 
@@ -803,6 +807,7 @@ def _region_cistarget_with_peak_ids(
         peak_regulons,
         top_frac=top_frac,
         auc_threshold=auc_threshold,
+        nes_threshold=nes_threshold,
     )
     if region_enrich.empty:
         empty = pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])

@@ -58,6 +58,18 @@
 
 ### Bug fixes
 
+- **Region-cistarget path now honours `cistarget_nes_threshold`.**
+  Found post-merge by codex on PR #76. The gene-cistarget path in
+  `pipeline.run` passed `cistarget_nes_threshold` to
+  `rustscenic.cistarget.enrich`, but the region-cistarget helper
+  `_region_cistarget_with_peak_ids` did not, so any caller supplying
+  both `cistarget_nes_threshold` and `region_motif_rankings` silently
+  got an unfiltered region enrich frame, contradicting the v0.4.4
+  release claim that the parameter filters by NES across the pipeline.
+  Reproduced: direct `cistarget.enrich(..., nes_threshold=3.0)` reduced
+  a 40-row fixture to 1, the region helper returned all 40. Fixed by
+  threading `nes_threshold` through the helper. Red-green regression
+  test added.
 - **Stale `pruned_regulons.json` removed on `output_dir` re-use.**
   v0.4.3 correctly set `result.pruned_regulons_path = None` and recorded
   the same in `manifest.json` when motif-annotation pruning removed every
