@@ -40,3 +40,11 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 3
+    # ctxcore 0.2.0 imports pkg_resources, which setuptools removed in 82.0.0.
+    # A setuptools bump past <82 lets 82.x install and breaks the reference
+    # extra at import time (ModuleNotFoundError: No module named 'pkg_resources').
+    # Resume setuptools major bumps once ctxcore drops pkg_resources upstream.
+    # See dependabot PR #73 for the failure mode.
+    ignore:
+      - dependency-name: "setuptools"
+        update-types: ["version-update:semver-major"]
