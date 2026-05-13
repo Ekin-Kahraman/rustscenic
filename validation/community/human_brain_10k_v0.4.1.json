@@ -1,0 +1,96 @@
+{
+  "release": "v0.4.1",
+  "smoke_type": "grn_aucell_topics_run_with_immune_subsetting",
+  "rustscenic_version": "0.4.1",
+  "rustscenic_sha": "9b6966672d73400452b6f3e5fd5c24349ceb90ce",
+  "install_command": "pip install rustscenic==0.4.1",
+  "api_call": "rustscenic.grn.infer(n_estimators=300) + rustscenic.aucell.score + rustscenic.topics.fit(K=10)",
+  "dataset": {
+    "name": "10x Multiome GEM-X 10k human brain",
+    "source": "https://www.10xgenomics.com/datasets/multiome-gemx-10k-human-brain",
+    "species": "Homo sapiens (hg38)",
+    "tissue": "Human brain; top 15% immune-scoring cells removed before regulon scoring",
+    "rna_h5ad_md5": "e36bb3a3a66db6bf0f0773cf88741f9f",
+    "atac_fragments_md5": "15a4f42c2b8841fc9423ae45d81177b0",
+    "peaks_bed_md5": "95fc619db6b6e82e0e2f74a084357278"
+  },
+  "shapes": {
+    "rna_post_qc": [8215, 32317],
+    "atac_subset_to_rna_cells": [8215, 123089]
+  },
+  "peak_rss_gb": 9.081192016601562,
+  "metrics": {
+    "ari": 0.4514128043357203
+  },
+  "outputs_non_empty": {
+    "grn": true,
+    "regulons": true,
+    "aucell": true,
+    "topics": true,
+    "cistarget": false,
+    "enhancer_links": false,
+    "eregulons": false,
+    "integrated_adata": false
+  },
+  "headline_counts": {
+    "n_regulons": 1748,
+    "n_grn_edges": 4293902,
+    "n_cistarget_rows": null,
+    "n_enhancer_links": null,
+    "n_eregulons": null
+  },
+  "headline_results": [
+    {"name": "SRRM3_regulon", "F": 12782.8017578125, "p": 0.0},
+    {"name": "CELF4_regulon", "F": 12251.7001953125, "p": 0.0},
+    {"name": "ZMAT4_regulon", "F": 11341.478515625, "p": 0.0},
+    {"name": "ADARB1_regulon", "F": 10330.66015625, "p": 0.0},
+    {"name": "BCL11A_regulon", "F": 9889.61328125, "p": 0.0},
+    {"name": "ZBTB20_regulon", "F": 9649.9609375, "p": 0.0},
+    {"name": "ZNF483_regulon", "F": 9643.9892578125, "p": 0.0},
+    {"name": "CELF5_regulon", "F": 9555.9501953125, "p": 0.0},
+    {"name": "GLIS1_regulon", "F": 9408.13671875, "p": 0.0},
+    {"name": "ZNF273_regulon", "F": 9357.5400390625, "p": 0.0}
+  ],
+  "biological_sanity": {
+    "method": "Top regulons by F-statistic of AUCell scores across leiden clusters; cell-type discrimination signal, after subsetting the top 15% immune-scoring cells",
+    "expected_tfs": [
+      "NEUROD2", "NEUROD6", "TBR1", "FOXG1", "BCL11A", "BCL11B",
+      "ZBTB20", "SATB2", "POU3F2", "POU3F3", "SOX2", "ASCL1",
+      "EMX2", "PAX6", "LHX2", "MEF2C", "OLIG2"
+    ],
+    "found_in_top10": ["BCL11A", "ZBTB20"],
+    "missing_from_top10": [
+      "NEUROD2", "NEUROD6", "TBR1", "FOXG1", "BCL11B", "SATB2",
+      "POU3F2", "POU3F3", "SOX2", "ASCL1", "EMX2", "PAX6",
+      "LHX2", "MEF2C", "OLIG2"
+    ],
+    "fraction_recovered_in_top10": 0.1176,
+    "additional_neural_regulators_in_top10": ["SRRM3", "CELF4", "CELF5", "ADARB1"],
+    "scope": "Top-10 check only; full 1,748-regulon set name-presence against the canonical list requires the regulons.json output which is not in this PR"
+  },
+  "elapsed_per_stage": {
+    "preproc": 0.0,
+    "topics": 1056.694616769002,
+    "grn": 2144.098254774999,
+    "aucell": 1.915713626998695,
+    "cistarget": null,
+    "enhancer": null,
+    "eregulons": null
+  },
+  "env": {
+    "python": "3.12.13",
+    "scanpy": "1.12.1",
+    "anndata": "0.12.11",
+    "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "cpu": "Intel(R) Core(TM) i7-14650HX",
+    "n_cpus": 16,
+    "ram_gb": 23
+  },
+  "scope_notes": [
+    "Stages exercised: GRN, topics, AUCell. Cistarget, enhancer-link, and eRegulon assembly not run (motif_rankings and gene_coords not supplied).",
+    "Methodology: top 15% immune-scoring cells removed before scoring to surface neuronal signal. PR description notes this shifts top-discriminating regulons from immune (FLI1) toward neuronal (SRRM3, CELF4).",
+    "Before-and-after comparison: artefact records the AFTER-subsetting top-10 only. Before-subsetting top-10 is referenced in the PR body but not in the JSON.",
+    "Pre-subsetting top-10 regulons: FLI1_regulon (F=17275.8, p=0.0), IKZF1_regulon (F=17125.4, p=0.0), RUNX1_regulon (F=16304.4, p=0.0), HCLS1_regulon (F=15883.2, p=0.0), SMAP2_regulon (F=15760.1, p=0.0), TFEC_regulon (F=15138.2, p=0.0), CEBPD_regulon (F=14644.6, p=0.0), NFATC2_regulon (F=14438.6, p=0.0), MEF2A_regulon (F=14345.1, p=0.0), SP140_regulon (F=13588.6, p=0.0)", 
+    "Biology check is name-presence within the top-10 by F-stat only. Full 1,748-regulon set check requires the regulons.json output which is not in this PR."
+  ]
+}
