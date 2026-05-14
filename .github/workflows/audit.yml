@@ -17,6 +17,11 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
+        with:
+          # Do not restore ~/.cargo/bin. On macOS runners this can replay a
+          # stale cargo shim from cache and make `cargo build` invoke
+          # rustup-init instead of cargo.
+          cache-bin: false
       # rustscenic-py is a pyo3 cdylib — linking requires maturin's Python
       # link flags (undefined dynamic_lookup on macOS). It's built separately
       # in the python job via maturin, so exclude it from the raw cargo build.
@@ -47,6 +52,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-bin: false
       - run: pip install maturin numpy pandas pyarrow scipy scanpy anndata certifi pytest
       - run: maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml
       - run: pip install target/wheels/rustscenic-*.whl --force-reinstall --no-deps
@@ -96,6 +103,8 @@ jobs:
           python-version: "3.12"
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-bin: false
       - name: Build wheel from current commit
         run: |
           pip install maturin
