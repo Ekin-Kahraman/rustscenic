@@ -105,6 +105,15 @@ Same input on both sides. Every row has a log file under [`validation/`](validat
 
 Tool-to-tool variation (same hits, same misses on the same 14 canonical TFs) is smaller than the dataset-inherent noise, consistent with rustscenic being numerically equivalent to pyscenic at the per-cell level.
 
+## Community validation reports
+
+External users have run rustscenic on datasets that are not part of the maintainer benchmark set. These reports are useful adoption evidence, but they are treated as directional until the attached JSON artefacts, commands, and biological checks are fully reproducible.
+
+| Reporter | Dataset | Stages | Result | Status |
+|---|---|---|---|---|
+| [@Skycr](https://github.com/Skycr) | Kamath et al. 2022 midbrain dopaminergic neurons, 15,684 cells | GRN + cisTarget | 266,805 GRN edges, 9 regulons, 9/9 expected DA-neuron TFs recovered | [issue #68](https://github.com/Ekin-Kahraman/rustscenic/issues/68), [PR #71](https://github.com/Ekin-Kahraman/rustscenic/pull/71), [`validation/community/kamath_da_grn.json`](validation/community/kamath_da_grn.json) |
+| [@lmVl12](https://github.com/lmVl12) | 10x Multiome GEM-X 10k human brain, immune-subsetted 8,215 cells | GRN + AUCell + topics | 4,293,902 GRN edges, 1,748 regulons, AUCell/topic outputs non-empty; neural signal improved after immune subsetting | [issues #69](https://github.com/Ekin-Kahraman/rustscenic/issues/69), [#70](https://github.com/Ekin-Kahraman/rustscenic/issues/70), [PR #74](https://github.com/Ekin-Kahraman/rustscenic/pull/74), [`validation/community/human_brain_10k_v0.4.1.json`](validation/community/human_brain_10k_v0.4.1.json) |
+
 ## Per-stage detail
 
 Numbers are **rustscenic**'s values. The measurement context (dataset, `n_cells`, version) is in each row. The parity refresh against current upstream stacks (six-dataset sweep) is now planned for v0.5+; see [`docs/v0.4.x-benchmark-plan.md`](docs/v0.4.x-benchmark-plan.md) for the dataset list and success criteria.

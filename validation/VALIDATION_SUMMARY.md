@@ -1,6 +1,6 @@
 # rustscenic validation summary
 
-**Last updated:** 2026-04-25
+**Last updated:** 2026-05-15
 **Scope:** four SCENIC+ compute stages (grn, aucell, topics, cistarget) plus ATAC preprocessing (fragments → cells × peaks matrix) — correctness, reproducibility, robustness, scale.
 
 ## Measured against the pyscenic / arboreto reference
@@ -31,6 +31,7 @@ rustscenic is the single-install replacement track for the practical SCENIC / SC
 - **Topics vs Mallet on 10k PBMC ATAC:** ARI vs leiden 0.27 vs 0.26 (comparable), NPMI 0.12 vs 0.20 (Mallet wins coherence), unique topics 5/30 vs 24/30 (we collapse aggressively). Mallet is 1.5-1.8× faster.
 - **GRN vs arboreto on multiome3k, n_estimators=5000:** per-edge Spearman 0.58, top-100 Jaccard 0.10. Biology agrees at coarse level (94% known edges, 8/8 lineage TFs, 13/13 canonical). Downstream AUCell still agrees per-cell at 0.99.
 - **Real multi-dataset convention audit (2026-04-25):** same GRN→AUCell workflow ran on mouse ovary (1,248 cells), human PBMC multiome RNA (2,711), Kamath OPC (13,691), and Tabula Sapiens large intestine (30,084). All recovered candidate TFs that existed in the matrices and avoided silent-zero failure across cellxgene ENSEMBL var_names. Tabula Sapiens had very sparse AUCell non-zero fraction (0.17%), so this is an input/regulon specificity warning, not a blanket success metric.
+- **Community validation reports (2026-05):** external reporters contributed Kamath DA-neuron GRN + cisTarget evidence ([#68](https://github.com/Ekin-Kahraman/rustscenic/issues/68), [#71](https://github.com/Ekin-Kahraman/rustscenic/pull/71), `validation/community/kamath_da_grn.json`) and 10x GEM-X human brain GRN + AUCell + topics evidence ([#69](https://github.com/Ekin-Kahraman/rustscenic/issues/69), [#70](https://github.com/Ekin-Kahraman/rustscenic/issues/70), [#74](https://github.com/Ekin-Kahraman/rustscenic/pull/74), `validation/community/human_brain_10k_v0.4.1.json`). These are adoption signals and directional validation, not maintainer-controlled parity benchmarks.
 - **All 4 stages bit-deterministic under same seed.**
 - **10/10 robustness edge cases handled** (silent failures fixed: NaN panic, duplicate gene names).
 
