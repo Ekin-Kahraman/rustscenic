@@ -27,6 +27,7 @@ validation/kamath_da/kamath_da_cells_15k.h5ad
 validation/kamath_da/*_grn_kamath*.parquet
 !python/rustscenic/data/
 examples/out/
+site/
 docs/specs/
 # Agent briefings stay local — they reference stakeholders and ops detail
 # that don't belong in a public repo.
@@ -37,3 +38,5 @@ validation/real_multiome_v036/
 validation/real_multiome_brain_e18/
 validation/real_multiome_pbmc_granulocyte_10k/
 validation/reference/venv_native/
+validation/agentic/reports/*.json
+validation/agentic/reports/*.log

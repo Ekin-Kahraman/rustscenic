@@ -1,0 +1,22 @@
+site_name: RustScenic
+site_description: Rust and PyO3 regulatory-network toolkit for SCENIC-style single-cell analysis.
+site_url: https://ekin-kahraman.github.io/rustscenic/
+repo_url: https://github.com/Ekin-Kahraman/rustscenic
+repo_name: Ekin-Kahraman/rustscenic
+docs_dir: site_docs
+site_dir: site
+theme:
+  name: mkdocs
+  navigation_depth: 3
+nav:
+  - Overview: index.md
+  - Installation: installation.md
+  - Quickstart: quickstart.md
+  - API Map: api.md
+  - Validation: validation.md
+  - Lab Adoption: adoption.md
+  - Limitations: limitations.md
+markdown_extensions:
+  - tables
+  - toc:
+      permalink: true

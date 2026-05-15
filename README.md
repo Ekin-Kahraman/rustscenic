@@ -1,6 +1,7 @@
 # rustscenic
 
 [![CI](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg)](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml)
+[![Docs](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml/badge.svg)](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Rust](https://img.shields.io/badge/Rust-stable-orange)](https://www.rust-lang.org/)
@@ -86,6 +87,8 @@ auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
 ```
 
 Full RNA example script: [`examples/pbmc3k_end_to_end.py`](examples/pbmc3k_end_to_end.py). Runs in about 3 minutes on an 8-core laptop with `n_estimators=500`. [`docs/tester-quickstart.md`](docs/tester-quickstart.md) is the collaborator smoke-test path.
+
+Focused external-reader docs are in [`site_docs/`](site_docs/) and are built by the `docs` workflow with MkDocs.
 
 ## Measured against the pyscenic / arboreto reference
 
