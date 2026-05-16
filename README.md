@@ -2,9 +2,11 @@
 
 [![CI](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg)](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml)
 [![Docs](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml/badge.svg)](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml)
+[![PyPI](https://img.shields.io/pypi/v/rustscenic)](https://pypi.org/project/rustscenic/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Rust](https://img.shields.io/badge/Rust-stable-orange)](https://www.rust-lang.org/)
+[![Typing](https://img.shields.io/badge/typing-PEP%20561-blue)](python/rustscenic/py.typed)
 
 A Rust + PyO3 replacement for the SCENIC / SCENIC+ compute stack: one install, modern Python, low-memory CPU execution, and atlas-scale regulatory-network analysis without Java, dask, CUDA, or fragile multi-tool environments.
 
@@ -12,7 +14,13 @@ A Rust + PyO3 replacement for the SCENIC / SCENIC+ compute stack: one install, m
 pip install rustscenic
 ```
 
-Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64); Windows x64 is covered by the CI and release-wheel workflow for the next release. No dask, no Java, no CUDA.
+Run the full pipeline:
+
+```bash
+rustscenic pipeline --rna data.h5ad --tfs tfs.txt --output out/
+```
+
+Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10 to 3.13, Linux + macOS (x86_64 + aarch64); Windows x64 is covered by the CI and release-wheel workflow for the next release. No dask, no Java, no CUDA.
 
 The practical SCENIC+ compute path in one package:
 
@@ -35,9 +43,9 @@ flowchart LR
 
 ## Status
 
-**Current release: v0.4.4** on PyPI. This release adds Normalised Enrichment Score (NES) filtering for cisTarget output and removes stale `pruned_regulons.json` files when an output directory is re-used. On the PBMC granulocyte 10k validation run, NES ≥ 3.0 reduced cisTarget rows from 1,578,204 to 83,569 while preserving all 10 canonical TFs. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
+**Current release: v0.4.4** on PyPI. This release adds Normalised Enrichment Score (NES) filtering for cisTarget output and removes stale `pruned_regulons.json` files when an output directory is re-used. On the PBMC granulocyte 10k validation run, NES >= 3.0 reduced cisTarget rows from 1,578,204 to 83,569 while preserving all 10 canonical TFs. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
 
-Open follow-ups tracked for v0.5+: refreshed AUCell timings, region-cisTarget parity checks, the six-dataset benchmark sweep, a cell-type enrichment check for the biology claim, and a smoother raw 10x `pipeline.run` path without caller-side ATAC pre-subsetting.
+Active limitations are listed under [Scope and alternatives](#scope-and-alternatives), with full detail in [`site_docs/limitations.md`](site_docs/limitations.md).
 
 ## Goal
 
@@ -97,10 +105,6 @@ For the public benchmark matrix with dataset, command, hardware, baseline,
 runtime, memory, parity metric and biological sanity check, see
 [`site_docs/benchmarks.md`](site_docs/benchmarks.md).
 
-The detailed benchmark page includes the generated memory-context figure. The
-100k and 200k rows are synthetic scale proofs; the legacy SCENIC+ >40 GB row is
-a reported baseline, not a controlled head-to-head measurement.
-
 | Axis | pyscenic / arboreto | **rustscenic** |
 |---|---|---|
 | Installs on fresh Python 3.10–3.13 venv | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` in current stacks | PyPI wheels and sdist install; core APIs import |
@@ -117,7 +121,7 @@ Tool-to-tool variation (same hits, same misses on the same 14 canonical TFs) is 
 
 ## Community validation reports
 
-External users have run rustscenic on datasets that are not part of the maintainer benchmark set. These reports are useful adoption evidence, but they are treated as directional until the attached JSON artefacts, commands, and biological checks are fully reproducible.
+External collaborator reports complement the maintainer benchmark set. Each row links the public issue or PR plus committed JSON evidence.
 
 | Reporter | Dataset | Stages | Result | Status |
 |---|---|---|---|---|
@@ -205,7 +209,17 @@ Bit-identical to `ctxcore.recovery.aucs` at float32 precision. The 19 % rank-#1 
 | rustscenic, **100k synthetic multiome E2E** (measured v0.3.10, 2026-04-27) | **12.7 min** | **7.09 GB** | **7 (all)** |
 | rustscenic, **200k synthetic multiome E2E** (measured v0.3.10, 2026-04-27) | **16.8 min** | **7.44 GB** | **7 (all)** |
 
-Cross-dataset scaling on real 10x multiomes: 4.2x cell scale-up (2,767 to 11,620 cells) produces 5.1x wall (slope ~1.21x over the full span; intermediate-pair slopes are 1.06x and 1.14x, so the trajectory is slightly accelerating) and 1.47x peak RSS (sub-linear in cells). GRN dominates 78% of wall on the 10k run at `n_estimators=100`. Biology check on the latest run: 10 of 10 canonical PBMC and granulocyte transcription factors recovered by name (SPI1, CEBPA, CEBPB, CEBPE, IRF8, PAX5, EBF1, GATA3, TBX21, FOXP3); the brain E18 5k run recovered 9 of 9 cortex TFs. Name-presence checks against a regulon set of ~1,500 names from a TF list of ~1,800, not cell-type enrichment; the per-cluster AUCell F-test is tracked as a v0.5 follow-up. Memory: 100k synthetic multiome 7-stage E2E peaks at **7.09 GB RSS** (measured v0.3.10; v0.4.x motif-pruning may shift this, refresh pending), vs scenicplus stack's reported > 40 GB at comparable scale. Bit-identical output under the same seed across threaded runs, verified across three consecutive runs per stage. 10 / 10 robustness edge-case tests pass (foreign genes, NaN input, duplicate gene names, all-zero cells, large regulons, object-dtype rankings, n_topics = 0, very-sparse matrices). Reproduce the real-data runs with the scripts under `validation/multiome_pipeline_run_*.sh`; reproduce the synthetic runs with `python validation/scaling/bench_e2e_100k_synthetic.py` and the 200k script.
+Real 10x multiome scaling from 2,767 to 11,620 cells:
+
+- cell count: 4.2x
+- wall time: 5.1x, slope about 1.21 over the full span
+- peak RSS: 1.47x
+- 10k PBMC granulocyte run recovered 10 of 10 canonical TFs by name
+- brain E18 5k run recovered 9 of 9 cortex TFs by name
+
+Name-presence checks are not cell-type enrichment tests. Synthetic 100k and
+200k runs are scale gates, not biological validation. Full commands, hardware,
+baseline status, and caveats are in [`site_docs/benchmarks.md`](site_docs/benchmarks.md).
 
 ## Scope and alternatives
 
@@ -218,13 +232,17 @@ rustscenic covers the practical SCENIC / SCENIC+ compute path on CPU. Adjacent t
 
 rustscenic does not bundle the aertslab motif ranking feather databases (300 MB – 35 GB). Users fetch them from [`resources.aertslab.org`](https://resources.aertslab.org/) and pass the resulting DataFrame to `cistarget.enrich`.
 
-## CLI
+Current limitations before treating rustscenic as a full SCENIC+ replacement:
+
+- refreshed AUCell timings against current upstream stacks
+- region-cisTarget parity checks on real region-ranking databases
+- six-dataset v0.4.x benchmark sweep
+- cell-type enrichment checks for biology claims, not only TF-name recovery
+- smoother raw 10x `pipeline.run` input without caller-side ATAC subsetting
+
+## Per-stage CLI
 
 ```bash
-# End-to-end orchestrator (recommended):
-rustscenic pipeline  --rna data.h5ad --tfs tfs.txt --output out/
-
-# Per-stage CLI:
 rustscenic grn       --expression data.h5ad --tfs tfs.txt --output grn.parquet
 rustscenic aucell    --expression data.h5ad --regulons grn.parquet --output auc.parquet
 rustscenic topics    --expression atac.h5ad --output topics --n-topics 30
