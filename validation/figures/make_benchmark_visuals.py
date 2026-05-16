@@ -2,7 +2,7 @@
 
 Outputs:
   - site_docs/assets/rustscenic-proof-strip.svg
-  - site_docs/assets/rustscenic-memory-scale.svg
+  - site_docs/assets/rustscenic-memory-context.svg
   - site_docs/assets/rustscenic-opengraph.png
 
 The script intentionally keeps the figures evidence-first: all plotted
@@ -49,6 +49,11 @@ def _font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont | ImageFont.I
     return ImageFont.load_default()
 
 
+def _strip_trailing_whitespace(path: Path) -> None:
+    lines = path.read_text(encoding="utf-8").splitlines()
+    path.write_text("\n".join(line.rstrip() for line in lines) + "\n", encoding="utf-8")
+
+
 def write_proof_strip(rows: list[dict[str, str]]) -> None:
     real_runs = [r for r in rows if r["kind"] == "real"]
     synth_runs = [r for r in rows if r["kind"] == "synthetic"]
@@ -59,7 +64,7 @@ def write_proof_strip(rows: list[dict[str, str]]) -> None:
         ("pip install", "rustscenic", "Single install path"),
         ("5", "runtime deps", "numpy, pandas, scipy +2"),
         ("No", "Java / dask / CUDA", "Modern Python plus CPU"),
-        (f"{max_synth_cells // 1000}k", "synthetic cells", f"Peak RSS {max_synth_rss:.2f} GB"),
+        (f"{max_synth_cells // 1000}k", "synthetic cells", f"Peak memory {max_synth_rss:.2f} GB"),
         (str(len(real_runs)), "real multiome runs", "All 7 stages non-empty"),
     ]
 
@@ -102,73 +107,86 @@ def write_proof_strip(rows: list[dict[str, str]]) -> None:
     (ASSET_DIR / "rustscenic-proof-strip.svg").write_text("\n".join(parts), encoding="utf-8")
 
 
-def write_memory_scale(rows: list[dict[str, str]]) -> None:
-    plotted = [r for r in rows if r["kind"] in {"real", "synthetic"}]
-    labels = ["PBMC\n3k real", "Brain\n5k real", "PBMC\n10k real", "100k\nsynthetic", "200k\nsynthetic"]
-    cells = [int(r["n_cells"]) for r in plotted]
-    rss = [_float(r, "peak_rss_gb") for r in plotted]
-    mins = [_float(r, "runtime_s") / 60.0 for r in plotted]
-    colours = ["#2c5aa0" if r["kind"] == "real" else "#1f7a6d" for r in plotted]
+def write_memory_context(rows: list[dict[str, str]]) -> None:
+    real = [r for r in rows if r["kind"] == "real"]
+    synthetic = [r for r in rows if r["kind"] == "synthetic"]
+    reported = next(r for r in rows if r["kind"] == "reported")
 
-    fig, ax1 = plt.subplots(figsize=(9.6, 4.8), dpi=150)
+    max_real = max(real, key=lambda r: _float(r, "peak_rss_gb"))
+    max_synthetic = max(synthetic, key=lambda r: _float(r, "peak_rss_gb"))
+    labels = [
+        "RustScenic real public E2E\nmax observed",
+        "RustScenic synthetic E2E\n100k to 200k",
+        "Legacy SCENIC+ stack\nreported around 100k",
+    ]
+    values = [
+        _float(max_real, "peak_rss_gb"),
+        _float(max_synthetic, "peak_rss_gb"),
+        _float(reported, "peak_rss_gb"),
+    ]
+    annotations = [
+        f"{values[0]:.2f} GB peak RSS\n{int(max_real['n_cells']):,} cells, all stages",
+        f"{values[1]:.2f} GB peak RSS\n200,000 cells, all stages",
+        ">40 GB peak RSS\nreported baseline only",
+    ]
+    colours = ["#2c5aa0", "#1f7a6d", "#87908a"]
+
+    fig, ax = plt.subplots(figsize=(9.6, 4.8), dpi=150)
     fig.patch.set_facecolor("#f7f8f5")
-    ax1.set_facecolor("#f7f8f5")
+    ax.set_facecolor("#f7f8f5")
 
-    x = range(len(plotted))
-    bars = ax1.bar(x, rss, color=colours, width=0.62)
-    ax1.set_ylim(0, 8.5)
-    ax1.set_ylabel("Peak RSS (GB)")
-    ax1.set_xticks(list(x))
-    ax1.set_xticklabels(labels)
-    ax1.grid(axis="y", color="#d7ddd7", linewidth=0.8)
-    ax1.spines[["top", "right"]].set_visible(False)
-    ax1.spines["left"].set_color("#889188")
-    ax1.spines["bottom"].set_color("#889188")
+    y = range(len(labels))
+    bars = ax.barh(y, values, color=colours, height=0.52)
+    ax.set_xlim(0, 45)
+    ax.invert_yaxis()
+    ax.set_xlabel("Peak resident memory (GB), lower is better")
+    ax.set_yticks(list(y))
+    ax.set_yticklabels(labels)
+    ax.grid(axis="x", color="#d7ddd7", linewidth=0.8)
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.spines["left"].set_color("#889188")
+    ax.spines["bottom"].set_color("#889188")
 
-    for rect, value, minutes in zip(bars, rss, mins):
-        ax1.text(
-            rect.get_x() + rect.get_width() / 2,
-            rect.get_height() + 0.12,
-            f"{value:.2f} GB\n{minutes:.1f} min",
-            ha="center",
-            va="bottom",
-            fontsize=9,
+    for rect, text in zip(bars, annotations):
+        ax.text(
+            rect.get_width() + 0.65,
+            rect.get_y() + rect.get_height() / 2,
+            text,
+            ha="left",
+            va="center",
+            fontsize=9.4,
             color="#202124",
         )
 
-    ax1.set_title(
-        "Full-pipeline evidence: real multiome plus synthetic atlas-scale runs",
+    ax.set_title(
+        "Peak-memory context: measured RustScenic rows stay below 8 GB",
         loc="left",
         fontsize=13,
         fontweight="bold",
         color="#202124",
         pad=14,
     )
-
-    legend_handles = [
-        plt.Line2D([0], [0], color="#2c5aa0", lw=8, label="Real public multiome"),
-        plt.Line2D([0], [0], color="#1f7a6d", lw=8, label="Synthetic scale proof"),
-    ]
-    ax1.legend(handles=legend_handles, loc="upper left", frameon=False, fontsize=8.5)
     fig.text(
         0.08,
         0.060,
-        "Labels show peak RSS and wall time. Source data: validation/figures/benchmark_visuals.csv.",
+        "Source data: validation/figures/benchmark_visuals.csv. RustScenic rows are measured validation artefacts.",
         fontsize=8.2,
         color="#5f6368",
     )
     fig.text(
         0.08,
         0.035,
-        "Reported legacy SCENIC+ memory >40 GB is a reported baseline, not a controlled head-to-head run.",
+        "The legacy SCENIC+ row is reported context, not a controlled head-to-head run.",
         fontsize=8.2,
         color="#5f6368",
     )
     fig.tight_layout(rect=(0, 0.15, 1, 1))
 
-    fig.savefig(ASSET_DIR / "rustscenic-memory-scale.svg", format="svg", metadata={"Date": None})
-    fig.savefig(ASSET_DIR / "rustscenic-memory-scale.png", format="png", metadata={"Date": None})
+    svg_path = ASSET_DIR / "rustscenic-memory-context.svg"
+    fig.savefig(svg_path, format="svg", metadata={"Date": None})
+    fig.savefig(ASSET_DIR / "rustscenic-memory-context.png", format="png", metadata={"Date": None})
     plt.close(fig)
+    _strip_trailing_whitespace(svg_path)
 
 
 def write_opengraph(rows: list[dict[str, str]]) -> None:
@@ -196,7 +214,7 @@ def write_opengraph(rows: list[dict[str, str]]) -> None:
         ("pip install", "one command"),
         ("5 deps", "runtime core"),
         ("No Java", "no dask / CUDA"),
-        (f"{max_cells // 1000}k cells", f"{max_rss:.2f} GB RSS"),
+        (f"{max_cells // 1000}k cells", f"{max_rss:.2f} GB RAM"),
     ]
     x_positions = [96, 356, 616, 876]
     for x, (top, bottom) in zip(x_positions, metrics):
@@ -212,7 +230,7 @@ def main() -> None:
     ASSET_DIR.mkdir(parents=True, exist_ok=True)
     rows = _rows()
     write_proof_strip(rows)
-    write_memory_scale(rows)
+    write_memory_context(rows)
     write_opengraph(rows)
     print(f"wrote assets under {ASSET_DIR}")
 

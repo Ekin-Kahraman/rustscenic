@@ -11,7 +11,7 @@ templates for the most important rows are listed after the matrix.
 
 ![RustScenic evidence summary](assets/rustscenic-proof-strip.svg)
 
-![RustScenic full-pipeline memory and runtime figure](assets/rustscenic-memory-scale.svg)
+![RustScenic peak-memory benchmark context](assets/rustscenic-memory-context.svg)
 
 The visuals are generated from `validation/figures/benchmark_visuals.csv` by
 `validation/figures/make_benchmark_visuals.py`. The 100k and 200k rows are
