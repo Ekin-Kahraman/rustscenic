@@ -1,0 +1,53 @@
+name: Agentic validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: "Scenario to run"
+        required: true
+        default: "fresh_install_core"
+        type: choice
+        options:
+          - fresh_install_core
+          - portable_preproc_smoke
+          - bad_input_guardrails
+          - quickstart_examples
+          - install_extras_matrix
+          - smoke_set
+          - all
+
+jobs:
+  agentic-validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Show scenarios
+        run: python validation/agentic/run_agentic_scenarios.py --list
+      - name: Run selected scenario
+        run: |
+          case "${{ inputs.scenario }}" in
+            smoke_set)
+              python validation/agentic/run_agentic_scenarios.py \
+                --scenario fresh_install_core \
+                --scenario portable_preproc_smoke \
+                --scenario bad_input_guardrails
+              ;;
+            all)
+              python validation/agentic/run_agentic_scenarios.py --all
+              ;;
+            *)
+              python validation/agentic/run_agentic_scenarios.py \
+                --scenario "${{ inputs.scenario }}"
+              ;;
+          esac
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: agentic-validation-reports
+          path: validation/agentic/reports/
+

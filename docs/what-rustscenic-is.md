@@ -32,9 +32,10 @@ rustscenic` from PyPI, no Java, no dask, no CUDA. Replaces or covers:
   iterative consensus peak calling (Corces 2018), per-cell QC (FRiP,
   TSS enrichment, insert-size).
 
-Ships as one abi3 wheel for Python 3.10–3.13, Linux + macOS (x86_64 +
-aarch64), plus source install. Five runtime deps: numpy, pandas,
-pyarrow, scipy, anndata.
+Ships as one abi3 wheel for Python 3.10–3.13, Linux + macOS
+(x86_64 + aarch64), with Windows x64 covered by the release workflow
+for the next release, plus source install. Five runtime
+deps: numpy, pandas, pyarrow, scipy, anndata.
 
 ## Boundary
 
@@ -138,9 +139,9 @@ haven't validated yet:
    E2E (not synthetic) is the next step. The earlier 91k microglia
    GRN cliff was fixed by target blocking + worker-local scratch
    (5k→91.8k slope: 1.81 → 1.15).
-6. **Windows build**: untested. macOS + Linux only.
+6. **Windows build**: covered by CI and release-wheel jobs for x64.
 7. **PyPI live since v0.4.0** (May 2026): `pip install rustscenic`.
-   Trusted-publisher OIDC from `release.yml`; four platform wheels +
+   Trusted-publisher OIDC from `release.yml`; five platform wheels +
    sdist per release.
 
 ## Robustness work

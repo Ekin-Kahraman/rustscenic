@@ -1,0 +1,20 @@
+{
+  "id": "portable_preproc_smoke",
+  "title": "Portable ATAC fragments-to-matrix smoke",
+  "agent_persona": "A collaborator checking whether rustscenic can process a tiny ATAC fragments file without downloading any data.",
+  "goal": "Install the built wheel and run the standalone ATAC preprocessing example that asserts exact cell-by-peak counts and QC metrics.",
+  "base_image": "rust:1.86-bookworm",
+  "timeout_seconds": 1800,
+  "tags": ["smoke", "preproc", "examples", "no-network-after-build-deps"],
+  "commands": [
+    {
+      "name": "Build and install core wheel",
+      "run": "python -m pip install --upgrade maturin\nmaturin build --release --manifest-path crates/rustscenic-py/Cargo.toml\nWHL=$(ls target/wheels/rustscenic-*.whl | head -1)\npython -m pip install \"$WHL\""
+    },
+    {
+      "name": "Run no-network ATAC preprocessing example",
+      "run": "python examples/atac_fragments_to_matrix.py"
+    }
+  ]
+}
+

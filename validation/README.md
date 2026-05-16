@@ -36,6 +36,8 @@ pip install "rustscenic[validation]"
   CI-smoke-test inputs to `compare.py`.
 - `validate_*.py`, `*_pipeline.py`, etc. - the driver scripts.
 - `compare.py` - the CLI tool CI calls.
+- `agentic/` - fresh-container scenario runner for structured install,
+  quickstart, guardrail, and external-tester-style validation reports.
 
 ## ⚠️ Paths are historically hardcoded
 

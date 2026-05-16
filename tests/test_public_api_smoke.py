@@ -147,6 +147,53 @@ def test_real_pbmc_bench_gene_coords_modes_are_interpretable(tmp_path, monkeypat
     assert coords.to_dict("records") == [{"gene": "GENE1", "chrom": "chr1", "tss": 123}]
 
 
+def test_synthetic_grn_scaling_curve_cli_smoke(tmp_path):
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    script = (
+        Path(__file__).parent.parent
+        / "validation"
+        / "scaling"
+        / "bench_synthetic_grn_curve.py"
+    )
+    out = tmp_path / "curve.json"
+    proc = subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--sizes",
+            "120",
+            "240",
+            "--n-genes",
+            "24",
+            "--n-tfs",
+            "4",
+            "--n-estimators",
+            "2",
+            "--target-block-size",
+            "4",
+            "--out",
+            str(out),
+            "--max-slope",
+            "5.0",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    payload = json.loads(out.read_text())
+    assert payload["benchmark"] == "synthetic_grn_scaling_curve"
+    assert [r["n_cells"] for r in payload["results"]] == [120, 240]
+    assert payload["params"]["target_block_size"] == 4
+    assert all(r["target_block_size"] == 4 for r in payload["results"])
+    assert "wall_slope" in payload
+    assert payload["passed"] is True
+
+
 def test_pipeline_run_rna_only_smoke(tmp_path):
     import rustscenic.pipeline
 
@@ -188,6 +235,26 @@ def test_quickstart_synthetic_fallback_runs(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "source=synthetic" in out
     assert "top-10 TF -> target edges" in out
+
+
+def test_quickstart_core_install_without_scanpy_uses_synthetic(monkeypatch, capsys):
+    import builtins
+    import rustscenic.quickstart as quickstart
+
+    real_import = builtins.__import__
+
+    def import_without_scanpy(name, globals=None, locals=None, fromlist=(), level=0):
+        if name == "scanpy":
+            raise ImportError("No module named 'scanpy'", name="scanpy")
+        return real_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", import_without_scanpy)
+
+    assert quickstart.main() == 0
+    captured = capsys.readouterr()
+    assert "source=synthetic" in captured.out
+    assert "top-10 TF -> target edges" in captured.out
+    assert "optional dependency scanpy is not installed" in captured.err
 
 
 def test_download_motif_rankings_accepts_aliases_and_mouse(tmp_path, monkeypatch):

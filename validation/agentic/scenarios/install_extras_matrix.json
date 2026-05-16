@@ -1,0 +1,20 @@
+{
+  "id": "install_extras_matrix",
+  "title": "Fresh install extras import matrix",
+  "agent_persona": "A packaging-focused tester checking whether optional dependency sets resolve in a clean environment.",
+  "goal": "Build one wheel, install core/examples/validation/benchmarks extras in separate virtual environments, and import the expected ecosystem modules. The fragile pyscenic reference extra is intentionally excluded; use validation/reference/Dockerfile for that path.",
+  "base_image": "rust:1.86-bookworm",
+  "timeout_seconds": 3000,
+  "tags": ["install", "packaging", "extras", "network"],
+  "commands": [
+    {
+      "name": "Build wheel once",
+      "run": "python -m pip install --upgrade maturin\nmaturin build --release --manifest-path crates/rustscenic-py/Cargo.toml\nls -lh target/wheels"
+    },
+    {
+      "name": "Install extras in isolated virtual environments",
+      "run": "WHL=$(ls target/wheels/rustscenic-*.whl | head -1)\nfor EXTRA in core examples validation benchmarks; do\n  VENV=\"/tmp/rustscenic-extra-${EXTRA}\"\n  python -m venv \"$VENV\"\n  . \"$VENV/bin/activate\"\n  python -m pip install --upgrade pip\n  if [ \"$EXTRA\" = core ]; then\n    python -m pip install \"$WHL\"\n  else\n    python -m pip install \"$WHL[$EXTRA]\"\n  fi\n  python - <<PY\nimport importlib\nimport rustscenic\nimport rustscenic.grn, rustscenic.aucell, rustscenic.topics, rustscenic.cistarget\nextra = '$EXTRA'\nexpected = {\n    'core': [],\n    'examples': ['scanpy', 'anndata', 'igraph', 'leidenalg'],\n    'validation': ['scanpy', 'anndata', 'igraph', 'leidenalg', 'sklearn'],\n    'benchmarks': ['scanpy', 'anndata', 'sklearn', 'tomotopy', 'gensim', 'psutil'],\n}[extra]\nfor mod in expected:\n    importlib.import_module(mod)\nprint(f'{extra}: imports OK')\nPY\n  deactivate\ndone"
+    }
+  ]
+}
+

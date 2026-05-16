@@ -138,8 +138,8 @@ something.
   RSS number from a single run; no nightly baseline.
 - **Numerical stability across BLAS versions** — we pin numpy >= 1.21
   but haven't tested MKL vs OpenBLAS on the same dataset.
-- **Windows support** — we claim Linux + macOS only; the code likely
-  builds on Windows via maturin but nobody has tried it.
+- **Windows support** — now covered by the CI and release-wheel matrix
+  for x64; still needs real-user smoke reports on native Windows datasets.
 - **Seurat interop path** — `docs/seurat-interop.md` exists but the
   scope is one function; we have not tested a real Seurat → rustscenic
   pipeline.

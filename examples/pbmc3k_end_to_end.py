@@ -93,7 +93,7 @@ def main() -> int:
         top = grn[grn["TF"] == tf].nlargest(50, "importance")["target"].tolist()
         if len(top) >= 10:
             regulons[f"{tf}_regulon"] = top
-    print(f"      regulons: {len(regulons)} (≥10 targets)")
+    print(f"      regulons: {len(regulons)} (>=10 targets)")
     with open(OUT_DIR / "regulons.json", "w") as fh:
         json.dump(regulons, fh, indent=2)
 
@@ -148,7 +148,7 @@ def main() -> int:
         ("GATA3_regulon", "T"),     # GATA3 marks helper-T identity in this demo
         ("TBX21_regulon", "NK"),    # T-bet drives NK / Th1
     ]
-    print(f"\n      regulon -> most-active cluster lineage (✓ = expected):")
+    print("\n      regulon -> most-active cluster lineage (OK = expected):")
     passed = 0
     for reg, expected_lin in checks:
         if reg not in cluster_means.columns: continue
@@ -156,7 +156,7 @@ def main() -> int:
         actual_lin = cluster_lineage.get(top_cluster, "?")
         ok = actual_lin == expected_lin
         passed += ok
-        mark = "✓" if ok else "·"
+        mark = "OK" if ok else "--"
         print(f"        {mark} {reg} top in cluster {top_cluster} ({actual_lin}); expected {expected_lin}")
     print(f"      {passed}/{sum(1 for r,_ in checks if r in cluster_means.columns)} canonical regulons in expected lineage\n")
 

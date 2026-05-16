@@ -26,6 +26,7 @@ use std::path::PathBuf;
     max_depth = 3,
     early_stop_window = 25,
     seed = 777,
+    target_block_size = 0,
 ))]
 #[allow(clippy::too_many_arguments)]
 fn grn_infer<'py>(
@@ -40,6 +41,7 @@ fn grn_infer<'py>(
     max_depth: usize,
     early_stop_window: usize,
     seed: u64,
+    target_block_size: usize,
 ) -> PyResult<(Py<PyList>, Py<PyList>, Py<PyArray1<f32>>)> {
     let arr = expression.as_array();
     let n_cells = arr.shape()[0];
@@ -73,6 +75,7 @@ fn grn_infer<'py>(
         max_depth,
         early_stop_window,
         seed,
+        target_block_size,
     };
 
     let adjacencies: Vec<Adjacency> =

@@ -19,10 +19,37 @@ python validation/scaling/bench_scaling.py \
     --sizes 1000 5000 10000 30000 \
     --n-estimators 300 \
     --out validation/scaling/
+
+# No private input needed: synthetic high-cell-count GRN curve
+python validation/scaling/bench_synthetic_grn_curve.py \
+    --sizes 25000 50000 100000 200000 \
+    --n-genes 500 \
+    --n-tfs 30 \
+    --n-estimators 20 \
+    --max-slope 1.30
+
+# Force a target block size when comparing cache/RSS behaviour.
+# Omit this flag to use rustscenic's adaptive default.
+python validation/scaling/bench_synthetic_grn_curve.py \
+    --sizes 50000 100000 200000 \
+    --n-genes 300 \
+    --n-tfs 30 \
+    --n-estimators 10 \
+    --target-block-size 32 \
+    --max-slope 1.30
 ```
 
 Each cell count runs in a fresh subprocess so `ru_maxrss` reports a clean
 per-size peak rather than the cumulative peak across the whole benchmark.
+
+`bench_synthetic_grn_curve.py` is the portable high-cell-count gate when
+you want a fresh linearity check without a local `.h5ad`. It holds genes,
+TFs and estimators fixed, varies only `n_cells`, writes JSON with the
+overall log-log wall-time slope and segment slopes, and can fail with
+`--max-slope` when scaling becomes too super-linear. `--target-block-size`
+lets atlas runs compare explicit GRN response-block widths against the
+adaptive default, which keeps target blocks smaller once cell counts are
+large enough for memory bandwidth to dominate.
 
 ## Results
 

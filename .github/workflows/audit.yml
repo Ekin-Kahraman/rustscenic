@@ -4,13 +4,17 @@ on:
     branches: [main]
   pull_request:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   rust:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, ubuntu-24.04]
+        os: [macos-14, ubuntu-24.04, windows-2022]
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -43,8 +47,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, ubuntu-24.04]
-        python: ["3.10", "3.11", "3.12"]
+        os: [macos-14, ubuntu-24.04, windows-2022]
+        python: ["3.10", "3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -54,9 +58,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           cache-bin: false
-      - run: pip install maturin numpy pandas pyarrow scipy scanpy anndata certifi pytest
+      - run: python -m pip install maturin numpy pandas pyarrow scipy scanpy anndata certifi pytest
       - run: maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml
-      - run: pip install target/wheels/rustscenic-*.whl --force-reinstall --no-deps
+      - run: python -m pip install target/wheels/rustscenic-*.whl --force-reinstall --no-deps
       # Smoke test the full API surface. Version pulled dynamically from pyproject.toml
       # via a regex (works on Python 3.10+; tomllib is 3.11+ stdlib only) so a
       # release bump can't desync the workflow assertion.
@@ -76,7 +80,7 @@ jobs:
       # End-to-end quickstart runs and produces output
       - run: python -m rustscenic.quickstart
       # Full 4-stage example on real PBMC-3k (downloads 10x tarball)
-      - run: pip install scanpy igraph leidenalg
+      - run: python -m pip install scanpy igraph leidenalg
       - run: python examples/pbmc3k_end_to_end.py
 
   # Per-extra install-matrix smoke: every declared optional-dependency extra
@@ -107,15 +111,22 @@ jobs:
           cache-bin: false
       - name: Build wheel from current commit
         run: |
-          pip install maturin
+          python -m pip install maturin
           maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml
       - name: Install with extra
         run: |
-          WHL=$(ls target/wheels/rustscenic-*.whl | head -1)
+          WHL="$(python - <<'PY'
+          from pathlib import Path
+          wheels = sorted(Path("target/wheels").glob("rustscenic-*.whl"))
+          if not wheels:
+              raise SystemExit("no rustscenic wheel found under target/wheels")
+          print(wheels[-1])
+          PY
+          )"
           if [ -z "${{ matrix.extra }}" ]; then
-            pip install "$WHL"
+            python -m pip install "$WHL"
           else
-            pip install "$WHL[${{ matrix.extra }}]"
+            python -m pip install "${WHL}[${{ matrix.extra }}]"
           fi
       - name: Smoke imports for the extra
         run: |

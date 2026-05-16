@@ -1,9 +1,12 @@
 name: release
 
 # Fires when a semver tag is pushed (e.g. v0.1.0).
-# Builds wheels for Linux x86_64/aarch64 + macOS x86_64/aarch64, sdist,
-# then uploads everything to the GitHub Release. PyPI trusted publishing is
-# optional until the PyPI project is configured with this workflow's claims.
+# Manual dispatch builds artefacts for inspection; publishing and GitHub
+# Release creation remain tag-gated.
+# Builds wheels for Linux x86_64/aarch64 + macOS x86_64/aarch64 +
+# Windows x64, sdist, then uploads everything to the GitHub Release.
+# PyPI trusted publishing is optional until the PyPI project is configured
+# with this workflow's claims.
 #
 # Setup: in PyPI project Settings → Publishing, add a "Trusted Publisher" for
 # this repo/workflow. No API token is stored in GitHub secrets.
@@ -28,6 +31,8 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with: { python-version: '3.12' }
+      - uses: docker/setup-qemu-action@v3
+        if: matrix.target == 'aarch64'
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
@@ -57,6 +62,25 @@ jobs:
           name: wheels-macos-${{ matrix.target }}
           path: target/wheels/*.whl
 
+  wheels-windows:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [x64]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with: { python-version: '3.12' }
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --manifest-path crates/rustscenic-py/Cargo.toml
+      - uses: actions/upload-artifact@v7
+        with:
+          name: wheels-windows-${{ matrix.target }}
+          path: target/wheels/*.whl
+
   sdist:
     runs-on: ubuntu-24.04
     steps:
@@ -73,7 +97,7 @@ jobs:
           path: target/wheels/*.tar.gz
 
   publish-pypi:
-    needs: [wheels-linux, wheels-macos, sdist]
+    needs: [wheels-linux, wheels-macos, wheels-windows, sdist]
     runs-on: ubuntu-24.04
     if: startsWith(github.ref, 'refs/tags/v') && vars.PYPI_TRUSTED_PUBLISHING == 'true'
     permissions:
@@ -89,12 +113,13 @@ jobs:
           skip-existing: true
 
   github-release:
-    needs: [wheels-linux, wheels-macos, sdist, publish-pypi]
+    needs: [wheels-linux, wheels-macos, wheels-windows, sdist, publish-pypi]
     if: |
       always() &&
       startsWith(github.ref, 'refs/tags/v') &&
       needs.wheels-linux.result == 'success' &&
       needs.wheels-macos.result == 'success' &&
+      needs.wheels-windows.result == 'success' &&
       needs.sdist.result == 'success' &&
       (needs.publish-pypi.result == 'success' || needs.publish-pypi.result == 'skipped')
     runs-on: ubuntu-24.04

@@ -25,6 +25,7 @@ def grn_infer(
     max_depth: int = 3,
     early_stop_window: int = 25,
     seed: int = 777,
+    target_block_size: int = 0,
 ) -> tuple[list[str], list[str], npt.NDArray[np.float32]]:
     """Infer (TF, target, importance) edges from an expression matrix.
 

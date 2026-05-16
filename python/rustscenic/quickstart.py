@@ -1,8 +1,8 @@
 """Quickstart: load PBMC-3k, run rustscenic.grn.infer, print top regulators.
 
-Tries scanpy's PBMC-3k (network download to scanpy's cache); if the
-upstream dataset server is unreachable, falls back to a small synthetic
-fixture so the demo still runs. Run with:
+Tries scanpy's PBMC-3k (network download to scanpy's cache); if scanpy
+is not installed or the upstream dataset server is unreachable, falls
+back to a small synthetic fixture so the demo still runs. Run with:
 
     python -m rustscenic.quickstart
 """
@@ -53,7 +53,6 @@ def _synthetic_fixture():
 def main() -> int:
     try:
         import anndata as ad  # noqa: F401
-        import scanpy as sc
         import rustscenic.grn
     except ImportError as e:
         print(
@@ -62,16 +61,33 @@ def main() -> int:
         )
         return 1
 
-    print("rustscenic quickstart: loading PBMC-3k...")
     try:
-        adata, source = _load_pbmc3k_with_retry(sc)
-    except RuntimeError as e:
+        import scanpy as sc
+    except ImportError:
+        sc = None
+
+    print("rustscenic quickstart: loading PBMC-3k...")
+    if sc is None:
         print(
-            f"  upstream unreachable ({e}); falling back to a synthetic fixture "
-            f"so the demo still runs.",
+            "  optional dependency scanpy is not installed; falling back to "
+            "a synthetic fixture so the demo still runs.",
+            file=sys.stderr,
+        )
+        print(
+            "  install rustscenic[examples] to run the PBMC-3k quickstart path.",
             file=sys.stderr,
         )
         adata, source = _synthetic_fixture()
+    else:
+        try:
+            adata, source = _load_pbmc3k_with_retry(sc)
+        except RuntimeError as e:
+            print(
+                f"  upstream unreachable ({e}); falling back to a synthetic fixture "
+                f"so the demo still runs.",
+                file=sys.stderr,
+            )
+            adata, source = _synthetic_fixture()
 
     if source == "pbmc3k":
         sc.pp.filter_cells(adata, min_genes=200)

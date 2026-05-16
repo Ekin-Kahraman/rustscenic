@@ -14,7 +14,9 @@ pip install --upgrade rustscenic
 Wheels are also at the [latest release page](https://github.com/Ekin-Kahraman/rustscenic/releases/latest)
 if your network can't pull from git directly.
 
-Requires Python 3.10–3.13. Linux + macOS only (Windows untested).
+Requires Python 3.10–3.13. Linux and macOS wheels are published today;
+Windows x64 is covered by the CI and release-wheel workflow for the next
+release.
 Brings five runtime deps: numpy, pandas, pyarrow, scipy, anndata.
 
 If you are running the example or validation scripts, install the

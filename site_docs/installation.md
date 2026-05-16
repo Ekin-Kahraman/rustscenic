@@ -14,6 +14,7 @@ Supported platforms in the release workflow:
 | --- | --- |
 | Linux | `x86_64`, `aarch64` |
 | macOS | `x86_64`, `aarch64` |
+| Windows | `x64` |
 
 Core runtime dependencies are intentionally small:
 

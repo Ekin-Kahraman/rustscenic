@@ -1,0 +1,20 @@
+{
+  "id": "quickstart_examples",
+  "title": "Tester quickstart path",
+  "agent_persona": "An impatient first-time tester following the public quickstart and expecting useful output quickly.",
+  "goal": "Install the examples extra from the built wheel and run `python -m rustscenic.quickstart`, including its network fallback path if PBMC-3k is unavailable.",
+  "base_image": "rust:1.86-bookworm",
+  "timeout_seconds": 2400,
+  "tags": ["quickstart", "examples", "network-optional"],
+  "commands": [
+    {
+      "name": "Build and install examples extra",
+      "run": "python -m pip install --upgrade maturin\nmaturin build --release --manifest-path crates/rustscenic-py/Cargo.toml\nWHL=$(ls target/wheels/rustscenic-*.whl | head -1)\npython -m pip install \"$WHL[examples]\""
+    },
+    {
+      "name": "Run public quickstart module",
+      "run": "python -m rustscenic.quickstart"
+    }
+  ]
+}
+
