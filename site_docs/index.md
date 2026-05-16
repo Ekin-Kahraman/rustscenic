@@ -30,4 +30,8 @@ The package has public wheels, CI across macOS and Linux, Windows x64 coverage i
 - Real multiome end-to-end runs on 10x PBMC, mouse brain and PBMC granulocyte datasets.
 - Community reports from external users on Kamath dopaminergic neurons and 10x human brain multiome data.
 
+For the full benchmark matrix, including commands, hardware, baseline,
+runtime, memory, parity metric and biological sanity check, see
+[Benchmarks](benchmarks.md).
+
 Start with [Installation](installation.md), then run the [Quickstart](quickstart.md). If you are evaluating the tool for a lab, use [Lab Adoption](adoption.md).

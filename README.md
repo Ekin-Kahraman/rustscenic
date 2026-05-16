@@ -128,6 +128,9 @@ It runs the PBMC-3k RNA example in about 3 minutes on an 8-core laptop with
 
 Same input on both sides unless stated otherwise. Raw logs and JSON artefacts
 live under [validation/](validation/).
+For the public benchmark matrix with dataset, command, hardware, baseline,
+runtime, memory, parity metric and biological sanity check, see
+[site_docs/benchmarks.md](site_docs/benchmarks.md).
 
 | Axis | Reference stack | rustscenic |
 |---|---|---|

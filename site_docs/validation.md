@@ -35,6 +35,7 @@ These reports are adoption evidence, not a substitute for a fully controlled ben
 
 ## Where To Look
 
+- `site_docs/benchmarks.md`
 - `validation/VALIDATION_SUMMARY.md`
 - `validation/ziegler_headtohead_2026-04-19.md`
 - `validation/community/`
