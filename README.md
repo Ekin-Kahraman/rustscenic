@@ -14,8 +14,6 @@ pip install rustscenic
 
 Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64); Windows x64 is covered by the CI and release-wheel workflow for the next release. No dask, no Java, no CUDA.
 
-![RustScenic evidence summary](site_docs/assets/rustscenic-proof-strip.svg)
-
 The practical SCENIC+ compute path in one package:
 
 ```mermaid
