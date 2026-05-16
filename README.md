@@ -2,83 +2,116 @@
 
 [![CI](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg)](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml)
 [![Docs](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml/badge.svg)](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml)
+[![PyPI](https://img.shields.io/pypi/v/rustscenic)](https://pypi.org/project/rustscenic/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Rust](https://img.shields.io/badge/Rust-stable-orange)](https://www.rust-lang.org/)
+[![Typing](https://img.shields.io/badge/typing-PEP%20561-blue)](python/rustscenic/py.typed)
 
-A Rust + PyO3 replacement for the SCENIC / SCENIC+ compute stack: one install, modern Python, low-memory CPU execution, and atlas-scale regulatory-network analysis without Java, dask, CUDA, or fragile multi-tool environments.
+Rust + PyO3 implementations of the main SCENIC / SCENIC+ compute stages:
+GRN inference, AUCell, topic modelling, cisTarget, ATAC preprocessing,
+enhancer-gene linking, and eRegulon assembly.
 
 ```bash
 pip install rustscenic
 ```
 
-Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64); Windows x64 is covered by the CI and release-wheel workflow for the next release. No dask, no Java, no CUDA.
+The package has five runtime dependencies: `numpy`, `pandas`, `pyarrow`,
+`scipy`, and `anndata`. It supports Python 3.10 to 3.13. Published v0.4.4
+wheels cover Linux and macOS on x86_64/aarch64; current CI and the release
+workflow also cover Windows x64 for the next release. Type stubs ship in the
+wheel via PEP 561.
 
-The practical SCENIC+ compute path in one package:
+## Why this exists
+
+SCENIC and SCENIC+ are useful regulatory-network workflows, but the Python
+stack around `arboreto`, `pyscenic`, `pycisTopic`, Java/Mallet, dask, and large
+conda environments is hard to keep installable on current Python. rustscenic
+keeps the user-facing workflow in Python while moving the core kernels into
+Rust.
+
+The goal is not exact line-by-line cloning. The target is a smaller,
+deterministic, CPU-first implementation with clear failure modes on real atlas
+data: ENSEMBL `var_names`, duplicate symbols, backed AnnData, and
+UCSC/Ensembl chromosome naming are tested explicitly.
+
+## Current status
+
+Current PyPI release: **v0.4.4**.
+
+v0.4.4 adds Normalised Enrichment Score (NES) filtering for cisTarget output
+and removes stale `pruned_regulons.json` files when an output directory is
+reused. On the PBMC granulocyte 10k validation run, NES >= 3.0 reduced
+cisTarget rows from 1,578,204 to 83,569 while preserving all 10 canonical TFs.
+See [CHANGELOG.md](CHANGELOG.md) and [validation/](validation/) for evidence
+and caveats.
+
+Known gaps before calling this a full SCENIC+ replacement:
+
+- refreshed AUCell timings against current upstream stacks
+- region-cisTarget parity checks on real region-ranking databases
+- six-dataset v0.4.x benchmark sweep
+- cell-type enrichment checks for the biology claim, not only TF-name recovery
+- smoother raw 10x `pipeline.run` input without caller-side ATAC subsetting
+
+## Compute path
 
 ```mermaid
 flowchart LR
-    rna["RNA data"] --> network["find gene regulation"]
+    rna["RNA data"] --> network["GRN inference"]
     network --> regulons["regulons"]
-    regulons --> activity["score each cell"]
+    regulons --> activity["AUCell activity"]
 
-    motifs["motif data"] --> supported["filter by motif support"]
+    motifs["motif rankings"] --> supported["motif-supported regulons"]
     regulons --> supported
 
-    atac["ATAC data"] --> topics["discover topics"]
-    rna --> enhancers["link enhancers to genes"]
+    atac["ATAC fragments or peaks"] --> topics["topics"]
+    rna --> enhancers["enhancer-gene links"]
     atac --> enhancers
 
-    supported --> programs["build enhancer-linked regulons"]
+    supported --> programs["eRegulons"]
     enhancers --> programs
 ```
 
-## Status
-
-**Current release: v0.4.4** on PyPI. This release adds Normalised Enrichment Score (NES) filtering for cisTarget output and removes stale `pruned_regulons.json` files when an output directory is re-used. On the PBMC granulocyte 10k validation run, NES ≥ 3.0 reduced cisTarget rows from 1,578,204 to 83,569 while preserving all 10 canonical TFs. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
-
-Open follow-ups tracked for v0.5+: refreshed AUCell timings, region-cisTarget parity checks, the six-dataset benchmark sweep, a cell-type enrichment check for the biology claim, and a smoother raw 10x `pipeline.run` path without caller-side ATAC pre-subsetting.
-
-## Goal
-
-rustscenic is being built as the single-install replacement for the practical SCENIC / SCENIC+ workflow: RNA GRN inference, AUCell regulon activity, motif enrichment, ATAC fragment preprocessing, topic modelling, enhancer-gene linking, and eRegulon assembly in one package.
-
-The project is intentionally not a thin wrapper around the old stack. The target is a simpler architecture that makes regulatory-network analysis easier to install, cheaper to run on CPU, deterministic under a fixed seed, and robust to real atlas conventions such as ENSEMBL `var_names`, duplicate gene symbols, backed AnnData, and UCSC/Ensembl chromosome mismatches.
-
-## What it does
-
-Rust-native replacements for the compute stages plus the glue that scenicplus builds eRegulons from:
-
-| Stage | **rustscenic** | Replaces |
+| Stage | rustscenic API | Reference stage |
 |---|---|---|
 | Gene-regulatory network inference | `rustscenic.grn.infer` | `arboreto.grnboost2` |
-| Per-cell regulon activity scoring | `rustscenic.aucell.score` | `pyscenic.aucell.aucell` |
-| Topic modelling on scATAC peaks (Online VB) | `rustscenic.topics.fit` | `pycisTopic` (gensim VB) |
-| Topic modelling K ≥ 30 (Mallet-class collapsed Gibbs) | `rustscenic.topics.fit_gibbs` | `pycisTopic` (Mallet, Java) |
+| Per-cell regulon activity | `rustscenic.aucell.score` | `pyscenic.aucell.aucell` |
+| Online VB topic modelling | `rustscenic.topics.fit` | `pycisTopic` using gensim VB |
+| Collapsed-Gibbs topic modelling | `rustscenic.topics.fit_gibbs` | `pycisTopic` using Mallet |
 | Motif-regulon enrichment | `rustscenic.cistarget.enrich` | `pycistarget` AUC kernel |
-| ATAC fragments → cells × peaks matrix | `rustscenic.preproc.fragments_to_matrix` | `pycisTopic` fragment loader |
-| Cell QC (TSS enrichment, FRiP, insert size) | `rustscenic.preproc.qc` | `pycisTopic.qc` |
-| Enhancer → gene correlation | `rustscenic.enhancer.link_peaks_to_genes` | `scenicplus` p2g linking |
-| eRegulon assembly (TF × enhancers × target genes) | `rustscenic.eregulon.build_eregulons` | `scenicplus` eRegulon builder |
-| End-to-end pipeline orchestrator | `rustscenic.pipeline.run` | `scenicplus` snakemake |
+| ATAC fragments to cells x peaks | `rustscenic.preproc.fragments_to_matrix` | `pycisTopic` fragment loader |
+| Cell QC | `rustscenic.preproc.qc` | `pycisTopic.qc` |
+| Enhancer-gene correlation | `rustscenic.enhancer.link_peaks_to_genes` | `scenicplus` p2g linking |
+| eRegulon assembly | `rustscenic.eregulon.build_eregulons` | `scenicplus` eRegulon builder |
+| End-to-end orchestrator | `rustscenic.pipeline.run` | `scenicplus` Snakemake |
 
-Bundled with the wheel: HGNC (1,839 human) and MGI (1,721 mouse) TF lists via `rustscenic.data.tfs(species)`. Motif rankings can be fetched and cached via `rustscenic.data.download_motif_rankings`. Cellxgene-curated h5ads (ENSEMBL IDs in `var_names`, gene symbols in `var["feature_name"]`) are auto-detected so atlas data works without manual patching.
+Bundled TF lists:
 
-## Quick example (PBMC-3k, RNA GRN + AUCell)
+- HGNC human TFs: 1,839 entries
+- MGI mouse TFs: 1,721 entries
+
+Use `rustscenic.data.tfs("hs")` or `rustscenic.data.tfs("mm")`. Motif ranking
+databases are not bundled because the aertslab feather files range from
+hundreds of MB to tens of GB; fetch them with
+`rustscenic.data.download_motif_rankings` or pass a loaded rankings DataFrame
+to `cistarget.enrich`.
+
+## Quick example
+
+RNA GRN plus AUCell on an AnnData object:
 
 ```python
 import anndata as ad
-import rustscenic.grn, rustscenic.aucell
-
+import rustscenic.aucell
 import rustscenic.data
+import rustscenic.grn
 
 adata = ad.read_h5ad("rna.h5ad")
-tfs = rustscenic.data.tfs("hs")  # bundled HGNC list (1,839 TFs)
+tfs = rustscenic.data.tfs("hs")
 
-# 1. GRN inference
 grn = rustscenic.grn.infer(adata, tf_names=tfs, n_estimators=5000, seed=777)
 
-# 2. Build top-50-target regulons and score per-cell activity
 regulons = [
     (f"{tf}_regulon", grn[grn["TF"] == tf].nlargest(50, "importance")["target"].tolist())
     for tf in grn["TF"].unique()
@@ -86,164 +119,221 @@ regulons = [
 auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
 ```
 
-Full RNA example script: [`examples/pbmc3k_end_to_end.py`](examples/pbmc3k_end_to_end.py). Runs in about 3 minutes on an 8-core laptop with `n_estimators=500`. [`docs/tester-quickstart.md`](docs/tester-quickstart.md) is the collaborator smoke-test path.
+Full script: [examples/pbmc3k_end_to_end.py](examples/pbmc3k_end_to_end.py).
+It runs the PBMC-3k RNA example in about 3 minutes on an 8-core laptop with
+`n_estimators=500`. Collaborator smoke-test instructions are in
+[docs/tester-quickstart.md](docs/tester-quickstart.md).
 
-Focused external-reader docs are in [`site_docs/`](site_docs/) and are built by the `docs` workflow with MkDocs.
+## Evidence summary
 
-## Measured against the pyscenic / arboreto reference
+Same input on both sides unless stated otherwise. Raw logs and JSON artefacts
+live under [validation/](validation/).
 
-Same input on both sides. Every row has a log file under [`validation/`](validation/).
-
-| Axis | pyscenic / arboreto | **rustscenic** |
+| Axis | Reference stack | rustscenic |
 |---|---|---|
-| Installs on fresh Python 3.10–3.13 venv | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` in current stacks | PyPI wheels and sdist install; core APIs import |
-| AUCell wall-time, Ziegler 2021 atlas (31,602 × 59; measured 2026-04 pre-v0.4.x; refresh deferred to v0.5) | 6.81 s (pyscenic) | 0.25 s |
-| AUCell wall-time, 10x Multiome (10,290 × 1,457; measured 2026-04 pre-v0.4.x; refresh deferred to v0.5) | 18.6 s (pyscenic) | 0.21 s |
-| Peak RSS, 4 stages on 100,000 cells × 20,292 genes | > 40 GB (reported) | 6.3 GB |
-| Cistarget kernel vs `ctxcore.recovery.aucs` | reference | Pearson 1.0000, mean abs diff 2.4 × 10⁻⁵ |
-| AUCell per-cell Pearson vs pyscenic (Ziegler, 31,602 cells; measured 2026-04 pre-v0.4.x; refresh deferred to v0.5) | reference | 0.984 mean, 91.7 % of cells > 0.95 |
-| Canonical airway TFs matching literature (Ziegler, n=14) | 8 / 14 (pyscenic, unit weights) | 8 / 14 - same hits, same 5/14 misses |
-| Bit-identical output under same seed across threaded runs | no (dask non-determinism) | yes |
-| Runtime dependencies | 40 + | 5 |
+| Fresh Python 3.10 to 3.13 install | `arboreto` breaks on current `dask_expr`; `pyscenic` imports can fail on removed `pkg_resources` | PyPI wheels and sdist install; core APIs import |
+| AUCell, Ziegler atlas, 31,602 cells x 59 regulons | 6.81 s using `pyscenic` | 0.25 s |
+| AUCell, 10x Multiome, 10,290 cells x 1,457 regulons | 18.6 s using `pyscenic` | 0.21 s |
+| Peak RSS, 4 stages on 100,000 cells x 20,292 genes | reported above 40 GB | 6.3 GB |
+| cisTarget kernel vs `ctxcore.recovery.aucs` | reference | Pearson 1.0000, mean abs diff 2.4e-5 |
+| AUCell per-cell Pearson vs `pyscenic`, Ziegler atlas | reference | 0.984 mean; 91.7% of cells above 0.95 |
+| Canonical airway TFs, Ziegler n=14 | 8/14 hits using `pyscenic` unit weights | 8/14 hits, same 5/14 misses |
+| Same-seed threaded determinism | no, due to dask non-determinism | bit-identical output |
+| Runtime dependencies | 40+ | 5 |
 
-Tool-to-tool variation (same hits, same misses on the same 14 canonical TFs) is smaller than the dataset-inherent noise, consistent with rustscenic being numerically equivalent to pyscenic at the per-cell level.
+Interpretation:
 
-## Community validation reports
+- AUCell and cisTarget are the strongest parity and performance stories.
+- GRN preserves coarse biological signal, but fine-grained edge ranking differs
+  from `arboreto`. PBMC-3k per-edge Spearman is 0.611, with downstream AUCell
+  still about 0.99 per-cell against `pyscenic`.
+- Topics are not a speed win against Mallet. Collapsed Gibbs improves topic
+  diversity relative to Online VB, but Mallet remains the stronger reference
+  for fine-grained topic coherence.
 
-External users have run rustscenic on datasets that are not part of the maintainer benchmark set. These reports are useful adoption evidence, but they are treated as directional until the attached JSON artefacts, commands, and biological checks are fully reproducible.
+## Kuan-lin Huang Lab validation
 
-| Reporter | Dataset | Stages | Result | Status |
+These are collaborator-controlled validations from Kuan-lin Huang Lab users of
+rustscenic, with linked issues, PRs, and committed JSON artefacts. They are
+separate from the maintainer-run reference parity benchmarks above, but they are
+not generic community anecdotes.
+
+| Reporter | Dataset | Stages | Result | Evidence |
 |---|---|---|---|---|
-| [@Skycr](https://github.com/Skycr) | Kamath et al. 2022 midbrain dopaminergic neurons, 15,684 cells | GRN + cisTarget | 266,805 GRN edges, 9 regulons, 9/9 expected DA-neuron TFs recovered | [issue #68](https://github.com/Ekin-Kahraman/rustscenic/issues/68), [PR #71](https://github.com/Ekin-Kahraman/rustscenic/pull/71), [`validation/community/kamath_da_grn.json`](validation/community/kamath_da_grn.json) |
-| [@lmVl12](https://github.com/lmVl12) | 10x Multiome GEM-X 10k human brain, immune-subsetted 8,215 cells | GRN + AUCell + topics | 4,293,902 GRN edges, 1,748 regulons, AUCell/topic outputs non-empty; neural signal improved after immune subsetting | [issues #69](https://github.com/Ekin-Kahraman/rustscenic/issues/69), [#70](https://github.com/Ekin-Kahraman/rustscenic/issues/70), [PR #74](https://github.com/Ekin-Kahraman/rustscenic/pull/74), [`validation/community/human_brain_10k_v0.4.1.json`](validation/community/human_brain_10k_v0.4.1.json) |
+| [@Skycr](https://github.com/Skycr) | Kamath et al. 2022 midbrain dopaminergic neurons, 15,684 cells | GRN + cisTarget | 266,805 GRN edges, 9 regulons, 9/9 expected DA-neuron TFs recovered | [issue #68](https://github.com/Ekin-Kahraman/rustscenic/issues/68), [PR #71](https://github.com/Ekin-Kahraman/rustscenic/pull/71), [JSON](validation/community/kamath_da_grn.json) |
+| [@lmVl12](https://github.com/lmVl12) | 10x Multiome GEM-X 10k human brain, immune-subsetted 8,215 cells | GRN + AUCell + topics | 4,293,902 GRN edges, 1,748 regulons, non-empty AUCell/topic outputs | [issues #69](https://github.com/Ekin-Kahraman/rustscenic/issues/69), [#70](https://github.com/Ekin-Kahraman/rustscenic/issues/70), [PR #74](https://github.com/Ekin-Kahraman/rustscenic/pull/74), [JSON](validation/community/human_brain_10k_v0.4.1.json) |
 
 ## Per-stage detail
 
-Numbers are **rustscenic**'s values. The measurement context (dataset, `n_cells`, version) is in each row. The parity refresh against current upstream stacks (six-dataset sweep) is now planned for v0.5+; see [`docs/v0.4.x-benchmark-plan.md`](docs/v0.4.x-benchmark-plan.md) for the dataset list and success criteria.
-
-### GRN - `arboreto.grnboost2` replacement
+### GRN
 
 | Measurement | Value |
 |---|---|
-| Per-edge Spearman vs arboreto (PBMC-3k scanpy, n_estimators=5000, 480,680 shared edges, v0.3.10) | 0.611 |
-| Within-TF Spearman, mean across 1,274 TFs (same fixture) | 0.632 (median 0.649) |
-| Per-edge Spearman vs arboreto (multiome3k, n_estimators=5000, 816 k common edges, 2026-04) | 0.58 |
-| Per-target TF-ranking Spearman mean | 0.57 |
-| TRRUST known TF→target edges recovered (PBMC-3k) | 17 / 18 (94 %) |
-| Lineage TFs correctly enriched in expected cell types (PBMC-10k) | 8 / 8 (SPI1, PAX5, EBF1, TCF7, LEF1, TBX21, CEBPD, IRF8) |
-| Cortex marker TFs present in regulon set (E18 multiome, 4,770 cells, v0.3.10; name-presence, not cell-type enrichment) | 9 / 9 (Pax6, Neurod2, Sox2, Ascl1, Tbr1, Neurog2, Fezf2, Eomes, Foxg1) |
-| MITF regulon activity, Tirosh 2016 melanoma - malignant vs TME | 3.48× |
-| Wall vs pyscenic on PBMC-3k (n_estimators=5000, seed 777, Apple M5, v0.3.10; pyscenic in sync mode - not apples-to-apples against dask-parallel) | 214 s vs 381 s (1.78×) |
-| 100k-cell bootstrap, n_estimators=100 | 17 min / 5.0 GB peak RSS |
+| Per-edge Spearman vs `arboreto`, PBMC-3k, n_estimators=5000 | 0.611 on 480,680 shared edges |
+| Within-TF Spearman, PBMC-3k | mean 0.632, median 0.649 across 1,274 TFs |
+| Per-edge Spearman vs `arboreto`, multiome3k | 0.58 on 816k shared edges |
+| TRRUST known TF-target recovery, PBMC-3k | 17/18 |
+| PBMC lineage TF recovery | 8/8 |
+| Cortex marker TFs present, mouse E18 multiome | 9/9 by name, not cell-type enrichment |
+| MITF activity, Tirosh melanoma malignant vs TME | 3.48x |
+| PBMC-3k wall time, n_estimators=5000 | 214 s vs 381 s for sync-mode `pyscenic`; not apples-to-apples against dask-parallel |
+| 100k-cell bootstrap, n_estimators=100 | 17 min, 5.0 GB peak RSS |
 
 At high cell counts, GRN target blocking is adaptive by default. Users can
-force a specific response-block width with
-`rustscenic.grn.infer(..., target_block_size=32)` or
-`rustscenic grn --target-block-size 32` when benchmarking cache/RSS behaviour.
+force a target block size with:
 
-Edge rankings disagree with arboreto at fine grain (per-edge Spearman 0.611 on PBMC-3k v0.3.10 / 0.58 on multiome3k 2026-04, top-10k Jaccard 0.20) - expected consequence of independent histogram-GBM quantisation. Coarse biology converges (per-TF Spearman ≈ 0.65, all canonical lineage TFs recovered on both human PBMC and mouse cortex). Downstream AUCell is 0.99 per-cell with pyscenic, so edge-ranking differences do not propagate.
+```python
+rustscenic.grn.infer(..., target_block_size=32)
+```
 
-### AUCell - `pyscenic.aucell` replacement
+The edge-ranking caveat is real. Histogram GBM quantisation and independent
+implementation details produce moderate edge-level agreement with `arboreto`.
+The downstream AUCell agreement is much higher because the coarse regulon signal
+is preserved.
 
-| Measurement | Value |
-|---|---|
-| Per-cell Pearson vs pyscenic (10x Multiome, 2,588 × 1,457) | 0.988 mean, 99.5 % of cells > 0.95 |
-| Per-cell Pearson vs pyscenic (Ziegler atlas, 31,602 × 59) | 0.984 mean, 91.7 % of cells > 0.95 |
-| Per-regulon Pearson (10x Multiome) | 0.87 mean, 90.5 % > 0.80 |
-| Exact top-regulon-per-cell match (Multiome) | 88.4 % |
-| Wall-time, 10k cells × 1,457 regulons | 0.21 s (vs 18.6 s pyscenic) |
-| 100 k cells × 500 regulons | 10 s, 5.6 GB peak RSS |
-
-### Topics - `pycisTopic` LDA replacement (Online VB + collapsed Gibbs)
-
-Two algorithms ship side-by-side:
-- `rustscenic.topics.fit` - Online VB LDA, fastest at K ≤ 10.
-- `rustscenic.topics.fit_gibbs` - collapsed Gibbs (Mallet's algorithm class). Add `n_threads=N` for parallel AD-LDA.
-
-Real PBMC 3k Multiome ATAC, 1,500 cells × 98,319 peaks, K = 30, intrinsic top-10 NPMI on the training corpus:
-
-| Tool | Wall | Unique topics (of 30) | Top-10 NPMI mean |
-|---|---|---|---|
-| `rustscenic.topics.fit` (Online VB) | 104 s | 2 / 30 (collapsed) | +0.012 |
-| `rustscenic.topics.fit_gibbs` (serial) | 191 s | **22 / 30** | **+0.031** |
-| `rustscenic.topics.fit_gibbs` (8-thread) | **84 s** | 25 / 30 | +0.019 |
-| Mallet (pycisTopic reference) | n/a | 24 / 30 | 0.196 (extrinsic) |
-
-Collapsed Gibbs gives ~11× more distinct topics than Online VB on sparse scATAC at K = 30 and ~2.7× higher intrinsic NPMI; the parallel AD-LDA path adds a 2.56× wall-clock speedup at 8 threads while preserving topic diversity. Mallet's published 0.196 is an extrinsic NPMI (different protocol, not directly comparable in absolute scale). See [`docs/topic-collapse.md`](docs/topic-collapse.md) and [`docs/bench-vs-references.md`](docs/bench-vs-references.md). Reproduce with `python validation/scaling/bench_npmi_head_to_head.py` and `python validation/scaling/bench_gibbs_parallel.py`.
-
-### Cistarget - `pycistarget` AUC kernel replacement
-
-Validated on the aertslab hg38 v10 feather database (5,876 motifs × 27,015 genes):
+### AUCell
 
 | Measurement | Value |
 |---|---|
-| Per-regulon Pearson vs `ctxcore.recovery.aucs` (58 TRRUST regulons) | 1.0000 (all > 0.9999, abs diff 2.4 × 10⁻⁵) |
-| Self-consistency (motif's own top-500 genes → rank #1) | 10 / 10 |
-| TRRUST at scale (166 TFs ≥ 10 targets): TF-annotated motif ranks #1 | 19 % |
-| Same benchmark: any TF-motif in top-100 | 68 – 100 % (rises with regulon size) |
-| Mouse mm10 cross-species (5 TRRUST TFs) | 2 / 5 rank #1, 4 / 5 in top-5 |
-| 100 k-cell workload × 100 regulons | 2.6 s, 6.3 GB peak RSS |
+| Per-cell Pearson vs `pyscenic`, 10x Multiome | 0.988 mean; 99.5% of cells above 0.95 |
+| Per-cell Pearson vs `pyscenic`, Ziegler atlas | 0.984 mean; 91.7% of cells above 0.95 |
+| Per-regulon Pearson, 10x Multiome | 0.87 mean; 90.5% above 0.80 |
+| Exact top-regulon-per-cell match, Multiome | 88.4% |
+| Wall time, 10k cells x 1,457 regulons | 0.21 s vs 18.6 s for `pyscenic` |
+| 100k cells x 500 regulons | 10 s, 5.6 GB peak RSS |
 
-Bit-identical to `ctxcore.recovery.aucs` at float32 precision. The 19 % rank-#1 rate is the scaled-out TRRUST-vs-motif-binding benchmark, a property of the gold-standard mismatch, not the implementation.
+### Topics
 
-### End-to-end + determinism
+Two algorithms ship:
+
+- `rustscenic.topics.fit`: Online VB LDA, fastest at K <= 10
+- `rustscenic.topics.fit_gibbs`: collapsed Gibbs, closer to Mallet's algorithm
+  class; pass `n_threads=N` for parallel AD-LDA
+
+Real PBMC 3k Multiome ATAC, 1,500 cells x 98,319 peaks, K = 30:
+
+| Tool | Wall | Unique topics | Top-10 NPMI mean |
+|---|---:|---:|---:|
+| `rustscenic.topics.fit` | 104 s | 2/30 | +0.012 |
+| `rustscenic.topics.fit_gibbs`, serial | 191 s | 22/30 | +0.031 |
+| `rustscenic.topics.fit_gibbs`, 8 threads | 84 s | 25/30 | +0.019 |
+| Mallet reference | n/a | 24/30 | 0.196, extrinsic protocol |
+
+Collapsed Gibbs gives more distinct topics than Online VB on sparse scATAC at
+K = 30. The Mallet NPMI value uses a different external protocol, so compare
+directionally, not as an absolute same-protocol score. Reproduce with
+`python validation/scaling/bench_npmi_head_to_head.py` and
+`python validation/scaling/bench_gibbs_parallel.py`.
+
+### cisTarget
+
+Validated on the aertslab hg38 v10 feather database, 5,876 motifs x 27,015
+genes.
+
+| Measurement | Value |
+|---|---|
+| Per-regulon Pearson vs `ctxcore.recovery.aucs`, 58 TRRUST regulons | 1.0000 |
+| Mean absolute difference vs `ctxcore` | 2.4e-5 |
+| Self-consistency, motif's own top-500 genes rank #1 | 10/10 |
+| TRRUST at scale, 166 TFs with at least 10 targets | TF-annotated motif ranks #1 for 19% |
+| Same benchmark, any TF motif in top 100 | 68% to 100%, depending on regulon size |
+| Mouse mm10 cross-species, 5 TRRUST TFs | 2/5 rank #1, 4/5 in top 5 |
+| 100k-cell workload x 100 regulons | 2.6 s, 6.3 GB peak RSS |
+
+The 19% rank-1 rate reflects mismatch between TRRUST targets and motif-binding
+rankings. It is not a numerical-kernel issue; the kernel matches `ctxcore` at
+float32 precision.
+
+### End-to-end and scaling
 
 | Pipeline | Wall | Peak RSS | Stages |
-|---|---|---|---|
-| Reference (arboreto + pyscenic + tomotopy), 10x Multiome 3k | 11.8 min | n/a | 4 |
+|---|---:|---:|---|
+| Reference stack, 10x Multiome 3k | 11.8 min | n/a | 4 |
 | rustscenic, 10x Multiome 3k | 9.1 min | n/a | 4 |
-| rustscenic, **10x PBMC 3k multiome real-data** (v0.3.9, measured 2026-05-02) | **7.5 min** | **3.67 GB** | **7 (all)** |
-| rustscenic, **10x brain E18 5k multiome real-data** (v0.3.10, measured 2026-05-04) | **13.8 min** | **4.01 GB** | **7 (all)** |
-| rustscenic, **10x PBMC granulocyte 10k multiome real-data** (v0.4.3, measured 2026-05-11) | **38.1 min** | **5.39 GB** | **7 (all)** |
-| rustscenic, **100k synthetic multiome E2E** (measured v0.3.10, 2026-04-27) | **12.7 min** | **7.09 GB** | **7 (all)** |
-| rustscenic, **200k synthetic multiome E2E** (measured v0.3.10, 2026-04-27) | **16.8 min** | **7.44 GB** | **7 (all)** |
+| rustscenic, 10x PBMC 3k multiome, v0.3.9 | 7.5 min | 3.67 GB | 7 |
+| rustscenic, 10x brain E18 5k multiome, v0.3.10 | 13.8 min | 4.01 GB | 7 |
+| rustscenic, 10x PBMC granulocyte 10k multiome, v0.4.3 | 38.1 min | 5.39 GB | 7 |
+| rustscenic, 100k synthetic multiome E2E, v0.3.10 | 12.7 min | 7.09 GB | 7 |
+| rustscenic, 200k synthetic multiome E2E, v0.3.10 | 16.8 min | 7.44 GB | 7 |
 
-Cross-dataset scaling on real 10x multiomes: 4.2x cell scale-up (2,767 to 11,620 cells) produces 5.1x wall (slope ~1.21x over the full span; intermediate-pair slopes are 1.06x and 1.14x, so the trajectory is slightly accelerating) and 1.47x peak RSS (sub-linear in cells). GRN dominates 78% of wall on the 10k run at `n_estimators=100`. Biology check on the latest run: 10 of 10 canonical PBMC and granulocyte transcription factors recovered by name (SPI1, CEBPA, CEBPB, CEBPE, IRF8, PAX5, EBF1, GATA3, TBX21, FOXP3); the brain E18 5k run recovered 9 of 9 cortex TFs. Name-presence checks against a regulon set of ~1,500 names from a TF list of ~1,800, not cell-type enrichment; the per-cluster AUCell F-test is tracked as a v0.5 follow-up. Memory: 100k synthetic multiome 7-stage E2E peaks at **7.09 GB RSS** (measured v0.3.10; v0.4.x motif-pruning may shift this, refresh pending), vs scenicplus stack's reported > 40 GB at comparable scale. Bit-identical output under the same seed across threaded runs, verified across three consecutive runs per stage. 10 / 10 robustness edge-case tests pass (foreign genes, NaN input, duplicate gene names, all-zero cells, large regulons, object-dtype rankings, n_topics = 0, very-sparse matrices). Reproduce the real-data runs with the scripts under `validation/multiome_pipeline_run_*.sh`; reproduce the synthetic runs with `python validation/scaling/bench_e2e_100k_synthetic.py` and the 200k script.
+Real 10x multiome scaling from 2,767 to 11,620 cells:
+
+- cell count: 4.2x
+- wall time: 5.1x, slope about 1.21 over the full span
+- peak RSS: 1.47x
+- latest 10k run recovered 10/10 canonical PBMC and granulocyte TFs by name
+- brain E18 5k run recovered 9/9 cortex TFs by name
+
+These are name-presence checks against regulon output, not cell-type enrichment
+tests. The per-cluster AUCell F-test is still a v0.5 validation task.
 
 ## Scope and alternatives
 
-rustscenic covers the practical SCENIC / SCENIC+ compute path on CPU. Adjacent tools with different scope:
+rustscenic covers CPU SCENIC / SCENIC+ compute stages. Adjacent tools with
+different scope:
 
-- **GPU, CUDA** - [flashSCENIC](https://github.com/haozhu233/flashscenic) (uses RegDiffusion, a different algorithm from GENIE3 / GRNBoost2, so outputs are not pyscenic-numerical).
-- **Multiomic enhancer-aware GRN** - [scenicplus](https://github.com/aertslab/scenicplus) (joint scRNA + scATAC enhancer inference; superset of this scope).
-- **TF-activity scoring from prebuilt regulons, no GRN inference** - [decoupler-py](https://saezlab.github.io/decoupler-py/) with CollecTRI.
-- **R Bioconductor ecosystem** - the original R-SCENIC or [Epiregulon](https://www.nature.com/articles/s41467-025-62252-5).
-
-rustscenic does not bundle the aertslab motif ranking feather databases (300 MB – 35 GB). Users fetch them from [`resources.aertslab.org`](https://resources.aertslab.org/) and pass the resulting DataFrame to `cistarget.enrich`.
+- GPU workflows: [flashSCENIC](https://github.com/haozhu233/flashscenic)
+- Full enhancer-aware SCENIC+ workflow: [scenicplus](https://github.com/aertslab/scenicplus)
+- TF-activity scoring from prebuilt regulons: [decoupler-py](https://saezlab.github.io/decoupler-py/)
+- R Bioconductor ecosystem: original R-SCENIC and [Epiregulon](https://www.nature.com/articles/s41467-025-62252-5)
 
 ## CLI
 
 ```bash
-# End-to-end orchestrator (recommended):
-rustscenic pipeline  --rna data.h5ad --tfs tfs.txt --output out/
+# End-to-end orchestrator:
+rustscenic pipeline --rna data.h5ad --tfs tfs.txt --output out/
 
-# Per-stage CLI:
-rustscenic grn       --expression data.h5ad --tfs tfs.txt --output grn.parquet
-rustscenic aucell    --expression data.h5ad --regulons grn.parquet --output auc.parquet
-rustscenic topics    --expression atac.h5ad --output topics --n-topics 30
+# Per-stage commands:
+rustscenic grn --expression data.h5ad --tfs tfs.txt --output grn.parquet
+rustscenic aucell --expression data.h5ad --regulons grn.parquet --output auc.parquet
+rustscenic topics --expression atac.h5ad --output topics --n-topics 30
 rustscenic cistarget --rankings motifs.feather --regulons grn.parquet --output enrichment.tsv
 ```
 
-## Repo layout
+## Repository layout
 
-- `crates/` - Rust workspace: `rustscenic-{grn, aucell, topics, preproc, py}`
-- `python/rustscenic/` - Python package, CLI entry point, type stubs
-- `examples/pbmc3k_end_to_end.py` - RNA GRN + AUCell script on real PBMC-3k
-- `validation/` - reproducible benchmark scripts + measurement reports for every number above, plus `VALIDATION_SUMMARY.md`
-- `tests/` - pytest suite (169 Python tests, 1 skipped) + Rust crate tests (57)
-- `manuscript/` - preprint source
-- `docs/topic-collapse.md` - known algorithmic caveat
+- `crates/`: Rust workspace, including `rustscenic-{grn,aucell,topics,preproc,py}`
+- `python/rustscenic/`: Python package, CLI entry point, and type stubs
+- `examples/pbmc3k_end_to_end.py`: RNA GRN + AUCell example on PBMC-3k
+- `validation/`: benchmark scripts, JSON artefacts, and validation summaries
+- `tests/`: pytest suite, 202 collected tests; latest local run was 201 passed and 1 skipped
+- `manuscript/`: preprint source
+- `site_docs/`: MkDocs source for external-reader documentation
 
-## License
+Rust crate tests currently total 60, excluding doctest placeholders.
 
-MIT. Algorithm implementations follow the aertslab Python references - original method credit to Aibar et al. 2017 (SCENIC), Bravo González-Blas et al. 2023 (SCENIC+), Hoffman-Blei-Bach 2010 (Online VB LDA).
+## Development quality
+
+CI covers:
+
+- Rust build, clippy, and unit tests on macOS, Ubuntu, and Windows
+- Python wheel build, install, import smoke, pytest, quickstart, and PBMC
+  end-to-end example across Python 3.10 to 3.13 on macOS, Ubuntu, and Windows
+- optional dependency install matrix for core, examples, validation, reference,
+  and benchmarks extras
+- docs build with MkDocs
+- weekly Kamath real-data validation
+- tag-gated release wheels for Linux x86_64/aarch64, macOS x86_64/aarch64,
+  Windows x64, plus sdist
+
+## Licence
+
+MIT. Algorithm implementations follow the aertslab Python references. Method
+credit belongs to Aibar et al. 2017 for SCENIC, Bravo Gonzalez-Blas et al. 2023
+for SCENIC+, and Hoffman, Blei, and Bach 2010 for Online VB LDA.
 
 ## Citation and attribution
 
-If you use rustscenic in a paper, report, benchmark, derivative package, or lab workflow, cite the exact release used. GitHub citation metadata is in [`CITATION.cff`](CITATION.cff).
+If you use rustscenic in a paper, report, benchmark, derivative package, or lab
+workflow, cite the exact release used. GitHub citation metadata is in
+[CITATION.cff](CITATION.cff).
 
-rustscenic was created and is maintained by Ekin Kahraman. See [`AUTHORS.md`](AUTHORS.md) and [`docs/collaboration-and-authorship.md`](docs/collaboration-and-authorship.md) for contribution and authorship expectations.
+rustscenic is created and maintained by Ekin Kahraman. See [AUTHORS.md](AUTHORS.md)
+and [docs/collaboration-and-authorship.md](docs/collaboration-and-authorship.md)
+for contribution and authorship expectations.
 
 ## Contact
 
-File issues at [github.com/Ekin-Kahraman/rustscenic/issues](https://github.com/Ekin-Kahraman/rustscenic/issues). Bug, correctness, and validation-report templates pre-fill the fields we need. If you ran the pipeline on real data and want the result folded into the v0.4.x sweep, see [`docs/tester-reporting.md`](docs/tester-reporting.md). If reporting ARI or related clustering metrics, include the comparator; see [`docs/evaluation-metrics.md`](docs/evaluation-metrics.md). Coordinated vulnerability disclosure: see [SECURITY.md](SECURITY.md).
+File issues at [github.com/Ekin-Kahraman/rustscenic/issues](https://github.com/Ekin-Kahraman/rustscenic/issues).
+Bug, correctness, and validation-report templates pre-fill the fields needed for
+triage. For coordinated vulnerability disclosure, see [SECURITY.md](SECURITY.md).
