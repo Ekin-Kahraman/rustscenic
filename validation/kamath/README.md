@@ -16,17 +16,17 @@ python validation/kamath/validate_kamath_fix.py
 
 ## What it checks
 
-1. **Convention** — verifies the loaded AnnData has ENSEMBL IDs in
+1. **Convention** - verifies the loaded AnnData has ENSEMBL IDs in
    `var_names` and HGNC symbols in `var["feature_name"]` (the exact
    cellxgene / 10x convention that broke Fuaad).
-2. **Auto-swap fires** — the ENSEMBL-detected warning from PR #18 is
+2. **Auto-swap fires** - the ENSEMBL-detected warning from PR #18 is
    emitted, proving the fix ran (not that it silently matched by
    coincidence).
-3. **AUCell non-zero** — output values > 0 across every regulon; the
+3. **AUCell non-zero** - output values > 0 across every regulon; the
    bug's symptom was all-zero output.
-4. **Regulon coverage** — PR #18's `regulon_coverage` diagnostic
+4. **Regulon coverage** - PR #18's `regulon_coverage` diagnostic
    round-trips via `auc.attrs` and reports the resolved fraction.
-5. **GRN parity** — `rustscenic.grn.infer` also respects the
+5. **GRN parity** - `rustscenic.grn.infer` also respects the
    cellxgene convention and recovers requested HGNC-symbol TFs.
 
 ## Result (2026-04-23)
@@ -54,4 +54,4 @@ Bug fixed and validated on the exact dataset class Fuaad reported.
 
 Downloaded from the CellxGene Discover portal, which normalises all
 datasets to the ENSEMBL-in-var_names / symbols-in-feature_name
-convention — the exact class of data that broke before PR #18.
+convention - the exact class of data that broke before PR #18.

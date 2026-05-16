@@ -102,7 +102,7 @@ Same input on both sides. Every row has a log file under [`validation/`](validat
 | Peak RSS, 4 stages on 100,000 cells × 20,292 genes | > 40 GB (reported) | 6.3 GB |
 | Cistarget kernel vs `ctxcore.recovery.aucs` | reference | Pearson 1.0000, mean abs diff 2.4 × 10⁻⁵ |
 | AUCell per-cell Pearson vs pyscenic (Ziegler, 31,602 cells; measured 2026-04 pre-v0.4.x; refresh deferred to v0.5) | reference | 0.984 mean, 91.7 % of cells > 0.95 |
-| Canonical airway TFs matching literature (Ziegler, n=14) | 8 / 14 (pyscenic, unit weights) | 8 / 14 — same hits, same 5/14 misses |
+| Canonical airway TFs matching literature (Ziegler, n=14) | 8 / 14 (pyscenic, unit weights) | 8 / 14 - same hits, same 5/14 misses |
 | Bit-identical output under same seed across threaded runs | no (dask non-determinism) | yes |
 | Runtime dependencies | 40 + | 5 |
 
@@ -121,7 +121,7 @@ External users have run rustscenic on datasets that are not part of the maintain
 
 Numbers are **rustscenic**'s values. The measurement context (dataset, `n_cells`, version) is in each row. The parity refresh against current upstream stacks (six-dataset sweep) is now planned for v0.5+; see [`docs/v0.4.x-benchmark-plan.md`](docs/v0.4.x-benchmark-plan.md) for the dataset list and success criteria.
 
-### GRN — `arboreto.grnboost2` replacement
+### GRN - `arboreto.grnboost2` replacement
 
 | Measurement | Value |
 |---|---|
@@ -132,13 +132,13 @@ Numbers are **rustscenic**'s values. The measurement context (dataset, `n_cells`
 | TRRUST known TF→target edges recovered (PBMC-3k) | 17 / 18 (94 %) |
 | Lineage TFs correctly enriched in expected cell types (PBMC-10k) | 8 / 8 (SPI1, PAX5, EBF1, TCF7, LEF1, TBX21, CEBPD, IRF8) |
 | Cortex marker TFs present in regulon set (E18 multiome, 4,770 cells, v0.3.10; name-presence, not cell-type enrichment) | 9 / 9 (Pax6, Neurod2, Sox2, Ascl1, Tbr1, Neurog2, Fezf2, Eomes, Foxg1) |
-| MITF regulon activity, Tirosh 2016 melanoma — malignant vs TME | 3.48× |
-| Wall vs pyscenic on PBMC-3k (n_estimators=5000, seed 777, Apple M5, v0.3.10; pyscenic in sync mode — not apples-to-apples against dask-parallel) | 214 s vs 381 s (1.78×) |
+| MITF regulon activity, Tirosh 2016 melanoma - malignant vs TME | 3.48× |
+| Wall vs pyscenic on PBMC-3k (n_estimators=5000, seed 777, Apple M5, v0.3.10; pyscenic in sync mode - not apples-to-apples against dask-parallel) | 214 s vs 381 s (1.78×) |
 | 100k-cell bootstrap, n_estimators=100 | 17 min / 5.0 GB peak RSS |
 
-Edge rankings disagree with arboreto at fine grain (per-edge Spearman 0.611 on PBMC-3k v0.3.10 / 0.58 on multiome3k 2026-04, top-10k Jaccard 0.20) — expected consequence of independent histogram-GBM quantisation. Coarse biology converges (per-TF Spearman ≈ 0.65, all canonical lineage TFs recovered on both human PBMC and mouse cortex). Downstream AUCell is 0.99 per-cell with pyscenic, so edge-ranking differences do not propagate.
+Edge rankings disagree with arboreto at fine grain (per-edge Spearman 0.611 on PBMC-3k v0.3.10 / 0.58 on multiome3k 2026-04, top-10k Jaccard 0.20) - expected consequence of independent histogram-GBM quantisation. Coarse biology converges (per-TF Spearman ≈ 0.65, all canonical lineage TFs recovered on both human PBMC and mouse cortex). Downstream AUCell is 0.99 per-cell with pyscenic, so edge-ranking differences do not propagate.
 
-### AUCell — `pyscenic.aucell` replacement
+### AUCell - `pyscenic.aucell` replacement
 
 | Measurement | Value |
 |---|---|
@@ -149,11 +149,11 @@ Edge rankings disagree with arboreto at fine grain (per-edge Spearman 0.611 on P
 | Wall-time, 10k cells × 1,457 regulons | 0.21 s (vs 18.6 s pyscenic) |
 | 100 k cells × 500 regulons | 10 s, 5.6 GB peak RSS |
 
-### Topics — `pycisTopic` LDA replacement (Online VB + collapsed Gibbs)
+### Topics - `pycisTopic` LDA replacement (Online VB + collapsed Gibbs)
 
 Two algorithms ship side-by-side:
-- `rustscenic.topics.fit` — Online VB LDA, fastest at K ≤ 10.
-- `rustscenic.topics.fit_gibbs` — collapsed Gibbs (Mallet's algorithm class). Add `n_threads=N` for parallel AD-LDA.
+- `rustscenic.topics.fit` - Online VB LDA, fastest at K ≤ 10.
+- `rustscenic.topics.fit_gibbs` - collapsed Gibbs (Mallet's algorithm class). Add `n_threads=N` for parallel AD-LDA.
 
 Real PBMC 3k Multiome ATAC, 1,500 cells × 98,319 peaks, K = 30, intrinsic top-10 NPMI on the training corpus:
 
@@ -166,7 +166,7 @@ Real PBMC 3k Multiome ATAC, 1,500 cells × 98,319 peaks, K = 30, intrinsic top-1
 
 Collapsed Gibbs gives ~11× more distinct topics than Online VB on sparse scATAC at K = 30 and ~2.7× higher intrinsic NPMI; the parallel AD-LDA path adds a 2.56× wall-clock speedup at 8 threads while preserving topic diversity. Mallet's published 0.196 is an extrinsic NPMI (different protocol, not directly comparable in absolute scale). See [`docs/topic-collapse.md`](docs/topic-collapse.md) and [`docs/bench-vs-references.md`](docs/bench-vs-references.md). Reproduce with `python validation/scaling/bench_npmi_head_to_head.py` and `python validation/scaling/bench_gibbs_parallel.py`.
 
-### Cistarget — `pycistarget` AUC kernel replacement
+### Cistarget - `pycistarget` AUC kernel replacement
 
 Validated on the aertslab hg38 v10 feather database (5,876 motifs × 27,015 genes):
 
@@ -199,10 +199,10 @@ Cross-dataset scaling on real 10x multiomes: 4.2x cell scale-up (2,767 to 11,620
 
 rustscenic covers the practical SCENIC / SCENIC+ compute path on CPU. Adjacent tools with different scope:
 
-- **GPU, CUDA** — [flashSCENIC](https://github.com/haozhu233/flashscenic) (uses RegDiffusion, a different algorithm from GENIE3 / GRNBoost2, so outputs are not pyscenic-numerical).
-- **Multiomic enhancer-aware GRN** — [scenicplus](https://github.com/aertslab/scenicplus) (joint scRNA + scATAC enhancer inference; superset of this scope).
-- **TF-activity scoring from prebuilt regulons, no GRN inference** — [decoupler-py](https://saezlab.github.io/decoupler-py/) with CollecTRI.
-- **R Bioconductor ecosystem** — the original R-SCENIC or [Epiregulon](https://www.nature.com/articles/s41467-025-62252-5).
+- **GPU, CUDA** - [flashSCENIC](https://github.com/haozhu233/flashscenic) (uses RegDiffusion, a different algorithm from GENIE3 / GRNBoost2, so outputs are not pyscenic-numerical).
+- **Multiomic enhancer-aware GRN** - [scenicplus](https://github.com/aertslab/scenicplus) (joint scRNA + scATAC enhancer inference; superset of this scope).
+- **TF-activity scoring from prebuilt regulons, no GRN inference** - [decoupler-py](https://saezlab.github.io/decoupler-py/) with CollecTRI.
+- **R Bioconductor ecosystem** - the original R-SCENIC or [Epiregulon](https://www.nature.com/articles/s41467-025-62252-5).
 
 rustscenic does not bundle the aertslab motif ranking feather databases (300 MB – 35 GB). Users fetch them from [`resources.aertslab.org`](https://resources.aertslab.org/) and pass the resulting DataFrame to `cistarget.enrich`.
 
@@ -221,17 +221,17 @@ rustscenic cistarget --rankings motifs.feather --regulons grn.parquet --output e
 
 ## Repo layout
 
-- `crates/` — Rust workspace: `rustscenic-{grn, aucell, topics, preproc, py}`
-- `python/rustscenic/` — Python package, CLI entry point, type stubs
-- `examples/pbmc3k_end_to_end.py` — RNA GRN + AUCell script on real PBMC-3k
-- `validation/` — reproducible benchmark scripts + measurement reports for every number above, plus `VALIDATION_SUMMARY.md`
-- `tests/` — pytest suite (169 Python tests, 1 skipped) + Rust crate tests (57)
-- `manuscript/` — preprint source
-- `docs/topic-collapse.md` — known algorithmic caveat
+- `crates/` - Rust workspace: `rustscenic-{grn, aucell, topics, preproc, py}`
+- `python/rustscenic/` - Python package, CLI entry point, type stubs
+- `examples/pbmc3k_end_to_end.py` - RNA GRN + AUCell script on real PBMC-3k
+- `validation/` - reproducible benchmark scripts + measurement reports for every number above, plus `VALIDATION_SUMMARY.md`
+- `tests/` - pytest suite (169 Python tests, 1 skipped) + Rust crate tests (57)
+- `manuscript/` - preprint source
+- `docs/topic-collapse.md` - known algorithmic caveat
 
 ## License
 
-MIT. Algorithm implementations follow the aertslab Python references — original method credit to Aibar et al. 2017 (SCENIC), Bravo González-Blas et al. 2023 (SCENIC+), Hoffman-Blei-Bach 2010 (Online VB LDA).
+MIT. Algorithm implementations follow the aertslab Python references - original method credit to Aibar et al. 2017 (SCENIC), Bravo González-Blas et al. 2023 (SCENIC+), Hoffman-Blei-Bach 2010 (Online VB LDA).
 
 ## Citation and attribution
 
