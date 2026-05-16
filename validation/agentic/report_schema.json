@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "rustscenic agentic validation report",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "scenario",
+    "repo",
+    "environment",
+    "started_at",
+    "finished_at",
+    "duration_seconds",
+    "passed",
+    "exit_code",
+    "commands",
+    "log_path"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string"
+    },
+    "scenario": {
+      "type": "object",
+      "required": ["id", "title", "agent_persona", "goal", "tags"],
+      "properties": {
+        "id": {"type": "string"},
+        "title": {"type": "string"},
+        "agent_persona": {"type": "string"},
+        "goal": {"type": "string"},
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "repo": {
+      "type": "object",
+      "required": ["head_sha", "remote_url", "dirty", "status"],
+      "properties": {
+        "head_sha": {"type": "string"},
+        "remote_url": {"type": "string"},
+        "dirty": {"type": "boolean"},
+        "status": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": ["host_platform", "base_image", "docker_image"],
+      "properties": {
+        "host_platform": {"type": "string"},
+        "base_image": {"type": "string"},
+        "docker_image": {"type": "string"}
+      }
+    },
+    "started_at": {"type": "string", "format": "date-time"},
+    "finished_at": {"type": "string", "format": "date-time"},
+    "duration_seconds": {"type": "number"},
+    "passed": {"type": "boolean"},
+    "exit_code": {"type": "integer"},
+    "peak_rss_kb": {
+      "anyOf": [
+        {"type": "integer"},
+        {"type": "null"}
+      ]
+    },
+    "commands": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "run"],
+        "properties": {
+          "name": {"type": "string"},
+          "run": {"type": "string"}
+        }
+      }
+    },
+    "log_path": {"type": "string"},
+    "notes": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}
+

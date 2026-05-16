@@ -1,0 +1,19 @@
+{
+  "id": "bad_input_guardrails",
+  "title": "First-time user guardrail checks",
+  "agent_persona": "A new user with mismatched gene identifiers, duplicate symbols, and malformed topic input.",
+  "goal": "Verify common wrong inputs fail loudly or warn with actionable diagnostics instead of returning silent zero outputs.",
+  "base_image": "rust:1.86-bookworm",
+  "timeout_seconds": 1800,
+  "tags": ["smoke", "guardrails", "errors", "no-network-after-build-deps"],
+  "commands": [
+    {
+      "name": "Build and install core wheel",
+      "run": "python -m pip install --upgrade maturin\nmaturin build --release --manifest-path crates/rustscenic-py/Cargo.toml\nWHL=$(ls target/wheels/rustscenic-*.whl | head -1)\npython -m pip install \"$WHL\""
+    },
+    {
+      "name": "Exercise user-facing diagnostics",
+      "run": "python - <<'PY'\nimport warnings\n\nimport anndata as ad\nimport numpy as np\nimport pandas as pd\n\nimport rustscenic.aucell\nimport rustscenic.cistarget\nimport rustscenic.grn\nimport rustscenic.topics\n\nrng = np.random.default_rng(0)\n\n# Duplicate gene symbols should be explicit. GRN intentionally dedupes with a\n# warning because that is safer for cellxgene/ENSEMBL-to-symbol input than\n# failing a recoverable workflow.\ndup = ad.AnnData(\n    X=rng.normal(size=(20, 3)).astype('float32'),\n    obs=pd.DataFrame(index=[f'c{i}' for i in range(20)]),\n    var=pd.DataFrame(index=['SPI1', 'SPI1', 'GENE1']),\n)\nwith warnings.catch_warnings(record=True) as caught:\n    warnings.simplefilter('always')\n    grn = rustscenic.grn.infer(dup, ['SPI1'], n_estimators=5, seed=0)\nassert not grn.empty\nassert any('duplicate gene name' in str(w.message).lower() for w in caught), [str(w.message) for w in caught]\n\n# Mismatched regulon identifiers should emit a coverage warning and an empty\n# regulon-activity matrix, not a plausible-looking zero-filled result.\nadata = ad.AnnData(\n    X=np.ones((10, 5), dtype='float32'),\n    obs=pd.DataFrame(index=[f'c{i}' for i in range(10)]),\n    var=pd.DataFrame(index=['A', 'B', 'C', 'D', 'E']),\n)\nwith warnings.catch_warnings(record=True) as caught:\n    warnings.simplefilter('always')\n    auc = rustscenic.aucell.score(adata, [('bad_regulon', ['X', 'Y', 'Z'])], top_frac=0.4)\nassert auc.shape == (10, 0), auc.shape\nassert auc.attrs['regulon_coverage']['bad_regulon'] == (0, 3)\nassert any('regulons have <' in str(w.message) or 'all 1 regulons dropped' in str(w.message) for w in caught), [str(w.message) for w in caught]\n\nrankings = pd.DataFrame(\n    np.tile(np.arange(5), (2, 1)),\n    index=['M0', 'M1'],\n    columns=['ENSG000001', 'ENSG000002', 'ENSG000003', 'ENSG000004', 'ENSG000005'],\n)\nwith warnings.catch_warnings(record=True) as caught:\n    warnings.simplefilter('always')\n    out = rustscenic.cistarget.enrich(rankings, [('SPI1_regulon', ['SPI1', 'CEBPB'])], auc_threshold=0.0)\nassert out.empty\nassert any('none of their genes' in str(w.message) or 'all 1 regulons dropped' in str(w.message) for w in caught), [str(w.message) for w in caught]\n\nempty = ad.AnnData(\n    X=np.empty((5, 0), dtype='float32'),\n    obs=pd.DataFrame(index=[f'c{i}' for i in range(5)]),\n    var=pd.DataFrame(index=[]),\n)\ntry:\n    rustscenic.topics.fit(empty, n_topics=2)\nexcept ValueError as exc:\n    assert '0 peaks/genes' in str(exc), exc\nelse:\n    raise AssertionError('empty topic input did not raise')\n\nprint('guardrail diagnostics OK')\nPY"
+    }
+  ]
+}
