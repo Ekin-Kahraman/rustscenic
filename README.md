@@ -93,6 +93,9 @@ Focused external-reader docs are in [`site_docs/`](site_docs/) and are built by 
 ## Measured against the pyscenic / arboreto reference
 
 Same input on both sides. Every row has a log file under [`validation/`](validation/).
+For the public benchmark matrix with dataset, command, hardware, baseline,
+runtime, memory, parity metric and biological sanity check, see
+[`site_docs/benchmarks.md`](site_docs/benchmarks.md).
 
 | Axis | pyscenic / arboreto | **rustscenic** |
 |---|---|---|
