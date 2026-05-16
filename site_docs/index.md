@@ -19,7 +19,7 @@ It is built for users who want one install, modern Python, deterministic CPU exe
 
 ## Current Status
 
-Current public release: `v0.4.4`.
+Current public release: `v0.4.5`.
 
 The package has public wheels, CI across macOS and Linux, Windows x64 coverage in the release workflow, unit and integration tests, real-data validation artefacts and community validation reports. It is still alpha research software: the core API works, but the project needs more independent lab adoption and broader multi-dataset parity before it should be treated as a mature community standard.
 
