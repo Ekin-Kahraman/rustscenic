@@ -126,6 +126,39 @@ class TestGrnTruncationKnobs:
         assert not any("rankings are unstable" in m for m in msgs)
 
 
+class TestGrnScalingKnobs:
+    def test_target_block_size_preserves_results(self, small_expr):
+        adaptive = grn.infer(
+            small_expr,
+            tf_names=["g0", "g1", "g2"],
+            n_estimators=80,
+            seed=42,
+            verbose=False,
+        )
+        forced_single = grn.infer(
+            small_expr,
+            tf_names=["g0", "g1", "g2"],
+            n_estimators=80,
+            seed=42,
+            target_block_size=1,
+            verbose=False,
+        )
+
+        adaptive = adaptive.sort_values(["TF", "target"]).reset_index(drop=True)
+        forced_single = forced_single.sort_values(["TF", "target"]).reset_index(drop=True)
+        pd.testing.assert_frame_equal(adaptive, forced_single)
+
+    def test_target_block_size_rejects_non_positive_values(self, small_expr):
+        with pytest.raises(ValueError, match="target_block_size"):
+            grn.infer(
+                small_expr,
+                tf_names=["g0", "g1", "g2"],
+                n_estimators=10,
+                target_block_size=0,
+                verbose=False,
+            )
+
+
 class TestGrnLoadTfs:
     def test_strips_crlf_and_comments(self, tmp_path):
         path = tmp_path / "tfs.txt"

@@ -31,6 +31,7 @@ def infer(
     top_targets_per_tf: Optional[int] = None,
     min_importance: Optional[float] = None,
     seed: int = 777,
+    target_block_size: Optional[int] = None,
     verbose: bool = True,
 ) -> pd.DataFrame:
     """Infer a gene regulatory network.
@@ -53,6 +54,12 @@ def infer(
         If set, drop edges with ``importance < min_importance`` before
         returning. Cheap floor filter; combine with ``top_targets_per_tf``
         for arboreto-like edge-density behaviour.
+    target_block_size
+        Number of target genes to materialise together while fitting.
+        ``None`` uses the adaptive default: 64 targets for small/mid-sized
+        inputs, shrinking automatically at high cell counts to keep the
+        response block cache-friendly. Set an integer to benchmark or force
+        a specific block width.
 
     Returns
     -------
@@ -64,6 +71,13 @@ def infer(
     if X.dtype != np.float32:
         X = X.astype(np.float32, copy=False)
     X = np.ascontiguousarray(X)
+
+    if target_block_size is None:
+        target_block_size_for_rust = 0
+    else:
+        target_block_size_for_rust = int(target_block_size)
+        if target_block_size_for_rust < 1:
+            raise ValueError("target_block_size must be None or a positive integer")
 
     warn_if_likely_unnormalized(X, stacklevel=3)
 
@@ -160,6 +174,7 @@ def infer(
         max_depth,
         early_stop_window,
         seed,
+        target_block_size_for_rust,
     )
     wall = time.monotonic() - t0
     df = pd.DataFrame({

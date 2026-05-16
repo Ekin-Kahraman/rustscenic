@@ -4,6 +4,8 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
+repository.workspace = true
+description = "ATAC fragment preprocessing and QC core for rustscenic"
 
 [dependencies]
 rayon = { workspace = true }

@@ -68,7 +68,7 @@ def cmd_grn(args: argparse.Namespace) -> int:
         n_estimators=args.n_estimators, learning_rate=args.learning_rate,
         max_features=args.max_features, subsample=args.subsample,
         max_depth=args.max_depth, early_stop_window=args.early_stop_window,
-        seed=args.seed,
+        seed=args.seed, target_block_size=args.target_block_size,
     )
     wall = time.monotonic() - t0
     output_path = Path(args.output)
@@ -253,6 +253,7 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
         motif_rankings=Path(args.motif_rankings) if args.motif_rankings else None,
         motif_annotations=Path(args.motif_annotations) if args.motif_annotations else None,
         grn_n_estimators=args.grn_n_estimators,
+        grn_target_block_size=args.grn_target_block_size,
         grn_top_targets=args.grn_top_targets,
         aucell_top_frac=args.aucell_top_frac,
         topics_n_topics=args.topics_n_topics,
@@ -280,6 +281,12 @@ def main(argv: list[str] | None = None) -> int:
     pg.add_argument("--learning-rate", type=float, default=0.01)
     pg.add_argument("--max-features", type=float, default=0.1); pg.add_argument("--subsample", type=float, default=0.9)
     pg.add_argument("--max-depth", type=int, default=3); pg.add_argument("--early-stop-window", type=int, default=25)
+    pg.add_argument(
+        "--target-block-size",
+        type=int,
+        default=None,
+        help="Target genes materialised together for GRN fitting. Default: adaptive.",
+    )
     pg.set_defaults(func=cmd_grn)
 
     pa = sub.add_parser("aucell", help="Regulon activity scoring (AUCell replacement)")
@@ -322,6 +329,12 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument("--motif-rankings", default=None, help="Optional: motif ranking parquet/feather")
     pp.add_argument("--motif-annotations", default=None, help="Optional: motif-to-TF annotation parquet/feather/csv/tsv")
     pp.add_argument("--grn-n-estimators", type=int, default=500)
+    pp.add_argument(
+        "--grn-target-block-size",
+        type=int,
+        default=None,
+        help="Target genes materialised together during GRN. Default: adaptive.",
+    )
     pp.add_argument("--grn-top-targets", type=int, default=50)
     pp.add_argument("--aucell-top-frac", type=float, default=0.05)
     pp.add_argument("--topics-n-topics", type=int, default=30)

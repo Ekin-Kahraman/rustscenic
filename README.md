@@ -12,7 +12,7 @@ A Rust + PyO3 replacement for the SCENIC / SCENIC+ compute stack: one install, m
 pip install rustscenic
 ```
 
-Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64). No dask, no Java, no CUDA.
+Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10–3.13, Linux + macOS (x86_64 + aarch64); Windows x64 is covered by the CI and release-wheel workflow for the next release. No dask, no Java, no CUDA.
 
 The practical SCENIC+ compute path in one package:
 
@@ -135,6 +135,11 @@ Numbers are **rustscenic**'s values. The measurement context (dataset, `n_cells`
 | MITF regulon activity, Tirosh 2016 melanoma — malignant vs TME | 3.48× |
 | Wall vs pyscenic on PBMC-3k (n_estimators=5000, seed 777, Apple M5, v0.3.10; pyscenic in sync mode — not apples-to-apples against dask-parallel) | 214 s vs 381 s (1.78×) |
 | 100k-cell bootstrap, n_estimators=100 | 17 min / 5.0 GB peak RSS |
+
+At high cell counts, GRN target blocking is adaptive by default. Users can
+force a specific response-block width with
+`rustscenic.grn.infer(..., target_block_size=32)` or
+`rustscenic grn --target-block-size 32` when benchmarking cache/RSS behaviour.
 
 Edge rankings disagree with arboreto at fine grain (per-edge Spearman 0.611 on PBMC-3k v0.3.10 / 0.58 on multiome3k 2026-04, top-10k Jaccard 0.20) — expected consequence of independent histogram-GBM quantisation. Coarse biology converges (per-TF Spearman ≈ 0.65, all canonical lineage TFs recovered on both human PBMC and mouse cortex). Downstream AUCell is 0.99 per-cell with pyscenic, so edge-ranking differences do not propagate.
 

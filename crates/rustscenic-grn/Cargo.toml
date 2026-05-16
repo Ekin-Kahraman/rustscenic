@@ -4,6 +4,8 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 authors.workspace = true
+repository.workspace = true
+description = "GRNBoost2-style gene regulatory network inference core for rustscenic"
 
 [dependencies]
 sprs = { workspace = true }

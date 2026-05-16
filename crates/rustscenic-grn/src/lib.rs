@@ -30,14 +30,19 @@ use rayon::prelude::*;
 
 use crate::histogram::BinnedMatrix;
 
-/// Target genes materialised together for GRN fitting.
+/// Default target genes materialised together for GRN fitting.
 ///
 /// The expression matrix arrives row-major (cells × genes). Extracting one
 /// target at a time is a cache-hostile stride of `n_genes` floats for every
 /// target. At atlas shapes, that repeats a TLB/cache miss pattern tens of
 /// thousands of times. Blocking targets scans each row once per target window,
 /// copies contiguous source values, and fits from compact column-major targets.
-const TARGET_BLOCK_SIZE: usize = 64;
+const DEFAULT_TARGET_BLOCK_SIZE: usize = 64;
+
+/// Keep each target window under this budget by default. Fixed 64-wide blocks
+/// are good for small and mid-sized datasets, but become large enough to add
+/// memory-bandwidth pressure once cell counts reach atlas scale.
+const TARGET_BLOCK_BYTE_BUDGET: usize = 32 * 1024 * 1024;
 
 #[derive(Debug, Clone)]
 pub struct Adjacency {
@@ -55,6 +60,9 @@ pub struct GrnConfig {
     pub max_depth: usize,
     pub early_stop_window: usize,
     pub seed: u64,
+    /// Target block width for materialising response vectors. `0` uses the
+    /// adaptive default, capped at `DEFAULT_TARGET_BLOCK_SIZE`.
+    pub target_block_size: usize,
 }
 
 impl Default for GrnConfig {
@@ -67,6 +75,7 @@ impl Default for GrnConfig {
             max_depth: 3,
             early_stop_window: 25,
             seed: 777,
+            target_block_size: 0,
         }
     }
 }
@@ -117,8 +126,9 @@ pub fn infer(
         .collect();
 
     let mut all_edges = Vec::new();
-    for block_start in (0..n_genes).step_by(TARGET_BLOCK_SIZE) {
-        let block_end = (block_start + TARGET_BLOCK_SIZE).min(n_genes);
+    let target_block_size = resolve_target_block_size(cfg, n_cells);
+    for block_start in (0..n_genes).step_by(target_block_size) {
+        let block_end = (block_start + target_block_size).min(n_genes);
         let block_width = block_end - block_start;
         let mut target_block = vec![0.0_f32; block_width * n_cells];
 
@@ -186,10 +196,55 @@ fn build_tf_matrix(
 ) -> Vec<f32> {
     let n_tfs = tf_cols.len();
     let mut out = vec![0.0_f32; n_cells * n_tfs];
-    for (t_i, (_, g_i)) in tf_cols.iter().enumerate() {
-        for c in 0..n_cells {
-            out[c * n_tfs + t_i] = expr[c * n_genes + g_i];
+    for c in 0..n_cells {
+        let expr_row = &expr[c * n_genes..(c + 1) * n_genes];
+        let out_row = &mut out[c * n_tfs..(c + 1) * n_tfs];
+        for (t_i, (_, g_i)) in tf_cols.iter().enumerate() {
+            out_row[t_i] = expr_row[*g_i];
         }
     }
     out
+}
+
+fn resolve_target_block_size(cfg: &GrnConfig, n_cells: usize) -> usize {
+    if cfg.target_block_size > 0 {
+        return cfg.target_block_size;
+    }
+    if n_cells == 0 {
+        return DEFAULT_TARGET_BLOCK_SIZE;
+    }
+
+    let per_target_bytes = n_cells.saturating_mul(std::mem::size_of::<f32>());
+    let mut block_size = DEFAULT_TARGET_BLOCK_SIZE;
+    while block_size > 1 && per_target_bytes.saturating_mul(block_size) > TARGET_BLOCK_BYTE_BUDGET {
+        block_size /= 2;
+    }
+    block_size.max(1)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn adaptive_target_block_size_preserves_default_for_mid_sized_inputs() {
+        let cfg = GrnConfig::default();
+        assert_eq!(resolve_target_block_size(&cfg, 100_000), 64);
+    }
+
+    #[test]
+    fn adaptive_target_block_size_shrinks_for_high_cell_counts() {
+        let cfg = GrnConfig::default();
+        assert_eq!(resolve_target_block_size(&cfg, 200_000), 32);
+        assert_eq!(resolve_target_block_size(&cfg, 500_000), 16);
+    }
+
+    #[test]
+    fn explicit_target_block_size_overrides_adaptive_default() {
+        let cfg = GrnConfig {
+            target_block_size: 7,
+            ..GrnConfig::default()
+        };
+        assert_eq!(resolve_target_block_size(&cfg, 500_000), 7);
+    }
 }

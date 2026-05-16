@@ -9,6 +9,9 @@ rustscenic.grn.infer(adata, tf_names, n_estimators=500, seed=777)
 Returns a `pandas.DataFrame` with transcription factor, target and importance columns.
 
 Use this when you need a GRNBoost2-style TF-target edge table.
+For very high cell counts, `target_block_size=None` uses the adaptive
+target-blocking default; pass a positive integer only when benchmarking a
+specific cache/RSS tradeoff.
 
 ## AUCell
 

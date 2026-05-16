@@ -65,8 +65,7 @@ don't want to assemble stages themselves.
       that collapses aggressively on sparse binary scATAC
       (docs/topic-collapse.md). v0.2 candidate; only ship if we can
       match Mallet NPMI.
-- [ ] **Windows build**: maturin likely already builds there; nobody
-      has confirmed. Would extend reachable-user set meaningfully.
+- [x] **Windows build**: CI and release-wheel coverage for x64.
 - [ ] **Rust `rand 0.8 → 0.9`** migration (workspace-wide). `.gen()`
       renamed to `.random()`. Not urgent but blocks Rust 1.90 edition
       flag day.

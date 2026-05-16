@@ -223,6 +223,7 @@ mod tests {
             max_depth: 3,
             early_stop_window: 25,
             seed: 42,
+            target_block_size: 0,
         };
         let imp = fit_and_importances_binned(&bm, &y, &cfg, None);
         assert!(
@@ -257,6 +258,7 @@ mod tests {
             max_depth: 3,
             early_stop_window: 0,
             seed: 7,
+            target_block_size: 0,
         };
         let imp = fit_and_importances_binned(&bm, &y, &cfg, Some(0));
         assert_eq!(imp[0], 0.0, "excluded feature must have zero importance");

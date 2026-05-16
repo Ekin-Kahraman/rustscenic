@@ -82,6 +82,7 @@ def run(
     region_motif_rankings: Union[str, Path, pd.DataFrame, None] = None,
     gene_coords: Union[str, Path, pd.DataFrame, None] = None,
     grn_n_estimators: int = 500,
+    grn_target_block_size: Optional[int] = None,
     grn_top_targets: int = 50,
     aucell_top_frac: float = 0.05,
     topics_n_topics: int = 30,
@@ -165,6 +166,11 @@ def run(
         Threads for the Gibbs sampler (only used when
         ``topics_method='gibbs'``). 1 = bit-deterministic serial
         path. > 1 = AD-LDA parallel path.
+    grn_target_block_size
+        Optional target block width passed through to
+        ``rustscenic.grn.infer``. ``None`` uses the adaptive default,
+        which shrinks the block at high cell counts to reduce
+        memory-bandwidth pressure.
 
     Returns
     -------
@@ -282,6 +288,7 @@ def run(
         adata_rna,
         tf_names=tf_list,
         n_estimators=grn_n_estimators,
+        target_block_size=grn_target_block_size,
         seed=seed,
         verbose=False,
     )

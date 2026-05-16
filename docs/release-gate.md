@@ -46,7 +46,7 @@ Anchor claims at v0.3.10:
 | Claim | Evidence | Status |
 |---|---|---|
 | "Five runtime dependencies" | `pyproject.toml` core deps | ✓ proven |
-| "Python 3.10–3.13, Linux + macOS x86_64+aarch64" | release wheel matrix | ✓ proven (4 wheels per release) |
+| "Python 3.10–3.13, Linux + macOS x86_64/aarch64 and Windows x64" | release wheel matrix | ✓ configured in release workflow matrix (5 wheels per release once the next tag is cut) |
 | "GitHub Release wheels and source install succeed" | release.yml CI green per tag | ✓ proven on v0.3.6 |
 | AUCell wall-time numbers (Ziegler, Multiome) | `validation/aucell_celltype_pbmc10k.py` log | ⚠ pre-existing logs, not regenerated per release |
 | AUCell per-cell Pearson 0.984 mean | `validation/validate_aucell_pbmc10k.py` log | ⚠ same |
@@ -94,5 +94,4 @@ When all five land, the next tag (v0.4.0) gets called publishable.
 ## Non-goals
 
 - Tests for the SCENIC/scenicplus reference pipelines themselves (those are external; we only test our parity against snapshots)
-- Windows support (out of scope; documented in install matrix)
 - GPU execution (CPU-only by design)
