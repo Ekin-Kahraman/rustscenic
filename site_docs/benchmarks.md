@@ -7,6 +7,17 @@ where the next refresh is still pending.
 Cells that use `...` point to long local artefact paths. Exact command
 templates for the most important rows are listed after the matrix.
 
+## Visual Summary
+
+![RustScenic evidence summary](assets/rustscenic-proof-strip.svg)
+
+![RustScenic full-pipeline memory and runtime figure](assets/rustscenic-memory-scale.svg)
+
+The visuals are generated from `validation/figures/benchmark_visuals.csv` by
+`validation/figures/make_benchmark_visuals.py`. The 100k and 200k rows are
+synthetic scale proofs. The legacy SCENIC+ >40 GB memory row is a reported
+baseline, not a controlled head-to-head run.
+
 ## Benchmark Matrix
 
 | Dataset / workload | Command | Hardware / environment | Baseline | Runtime and memory | Parity metric | Biological sanity check | Evidence and caveat |
