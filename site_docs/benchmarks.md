@@ -116,10 +116,10 @@ python validation/scaling/bench_e2e_200k_synthetic.py
   RNA plus ATAC full pipeline, full-TF atlas GRN at 5,000 estimators, or
   cluster-level enrichment for every biological sanity row.
 
-## HPC Validation Plan
+## Next Scale Validation
 
-The next production-scale validation should run on a shared HPC node before any
-full atlas-scale production claim:
+The next scale validation should run on a shared HPC node before any full
+atlas-scale production claim:
 
 1. Use a real public 100k-cell multiome cohort with matched RNA and ATAC, not an
    up-sampled or synthetic matrix.

@@ -108,7 +108,7 @@ runtime, memory, parity metric and biological sanity check, see
 
 | Axis | pyscenic / arboreto | **rustscenic** |
 |---|---|---|
-| Installs on fresh Python 3.10–3.13 venv | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` in current stacks | PyPI wheels and sdist install; core APIs import |
+| Installs on fresh Python 3.10 to 3.13 venv | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` in current stacks | PyPI wheels and sdist install; core APIs import |
 | AUCell wall-time, Ziegler 2021 atlas (31,602 × 59; measured 2026-04 pre-v0.4.x; refresh deferred to v0.5) | 6.81 s (pyscenic) | 0.25 s |
 | AUCell wall-time, 10x Multiome (10,290 × 1,457; measured 2026-04 pre-v0.4.x; refresh deferred to v0.5) | 18.6 s (pyscenic) | 0.21 s |
 | Peak RSS, 4 stages on 100,000 cells × 20,292 genes | > 40 GB (reported) | 6.3 GB |
@@ -192,7 +192,7 @@ Validated on the aertslab hg38 v10 feather database (5,876 motifs × 27,015 gene
 | Per-regulon Pearson vs `ctxcore.recovery.aucs` (58 TRRUST regulons) | 1.0000 (all > 0.9999, abs diff 2.4 × 10⁻⁵) |
 | Self-consistency (motif's own top-500 genes → rank #1) | 10 / 10 |
 | TRRUST at scale (166 TFs ≥ 10 targets): TF-annotated motif ranks #1 | 19 % |
-| Same benchmark: any TF-motif in top-100 | 68 – 100 % (rises with regulon size) |
+| Same benchmark: any TF-motif in top-100 | 68 to 100 % (rises with regulon size) |
 | Mouse mm10 cross-species (5 TRRUST TFs) | 2 / 5 rank #1, 4 / 5 in top-5 |
 | 100 k-cell workload × 100 regulons | 2.6 s, 6.3 GB peak RSS |
 
@@ -231,7 +231,7 @@ rustscenic covers the practical SCENIC / SCENIC+ compute path on CPU. Adjacent t
 - **TF-activity scoring from prebuilt regulons, no GRN inference** - [decoupler-py](https://saezlab.github.io/decoupler-py/) with CollecTRI.
 - **R Bioconductor ecosystem** - the original R-SCENIC or [Epiregulon](https://www.nature.com/articles/s41467-025-62252-5).
 
-rustscenic does not bundle the aertslab motif ranking feather databases (300 MB – 35 GB). Users fetch them from [`resources.aertslab.org`](https://resources.aertslab.org/) and pass the resulting DataFrame to `cistarget.enrich`.
+rustscenic does not bundle the aertslab motif ranking feather databases (300 MB to 35 GB). Users fetch them from [`resources.aertslab.org`](https://resources.aertslab.org/) and pass the resulting DataFrame to `cistarget.enrich`.
 
 Current limitations before treating rustscenic as a full SCENIC+ replacement:
 
