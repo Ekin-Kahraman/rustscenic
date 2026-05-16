@@ -16,10 +16,6 @@ Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10â
 
 ![RustScenic evidence summary](site_docs/assets/rustscenic-proof-strip.svg)
 
-The summary visual is generated from `validation/figures/benchmark_visuals.csv`.
-Scale rows are synthetic workload proofs, and legacy SCENIC+ memory is a
-reported baseline rather than a controlled head-to-head run.
-
 The practical SCENIC+ compute path in one package:
 
 ```mermaid
