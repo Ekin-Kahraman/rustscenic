@@ -24,8 +24,8 @@ body:
     id: summary
     attributes:
       label: Summary
-      description: One sentence — what dataset, what release, what came out.
-      placeholder: "Ran rustscenic v0.4.4 pipeline.run on the 10x PBMC granulocyte-sorted 10k multiome; produced N eRegulons in M minutes."
+      description: One sentence: what dataset, what release, what came out.
+      placeholder: "Ran rustscenic v0.4.5 pipeline.run on the 10x PBMC granulocyte-sorted 10k multiome; produced N eRegulons in M minutes."
     validations:
       required: true
 
@@ -91,7 +91,7 @@ body:
     attributes:
       label: rustscenic version
       description: "`pip show rustscenic | grep Version`. Pin to a release tag, not a commit, where possible."
-      placeholder: "0.4.4"
+      placeholder: "0.4.5"
     validations:
       required: true
 

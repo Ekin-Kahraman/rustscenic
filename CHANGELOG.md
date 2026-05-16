@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.5 - 2026-05-16
+
+### Release and documentation
+
+- Published the MkDocs site to GitHub Pages:
+  <https://ekin-kahraman.github.io/rustscenic/>.
+- Updated package metadata so the `Documentation` project URL points to the
+  live docs site.
+- Added the `Typing :: Typed` classifier and kept the README typing badge.
+- Made CI assert that built wheels include both `py.typed` and
+  `_rustscenic.pyi`.
+- Updated validation wording for the live PyPI state, the five runtime
+  dependencies, and the Kuan-lin Huang Lab collaborator reports.
+- Closed superseded PR #78 after reconciling the useful metadata and CI checks
+  into `main`.
+
+This release does not change benchmark claims or production claims.
+
 ## 0.4.4 — 2026-05-11
 
 ### Real-data validation (NES on the v0.4.3 PBMC granulocyte 10k dataset)

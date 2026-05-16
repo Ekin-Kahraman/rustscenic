@@ -43,7 +43,7 @@ flowchart LR
 
 ## Status
 
-**Current release: v0.4.4** on PyPI. This release adds Normalised Enrichment Score (NES) filtering for cisTarget output and removes stale `pruned_regulons.json` files when an output directory is re-used. On the PBMC granulocyte 10k validation run, NES >= 3.0 reduced cisTarget rows from 1,578,204 to 83,569 while preserving all 10 canonical TFs. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
+**Current release: v0.4.5** on PyPI. This release publishes the MkDocs site, points package metadata at the live docs, declares PEP 561 typing support, and makes CI assert the wheel contains `py.typed` and `_rustscenic.pyi`. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
 
 Active limitations are listed under [Scope and alternatives](#scope-and-alternatives), with full detail in [`site_docs/limitations.md`](site_docs/limitations.md).
 
