@@ -3,6 +3,7 @@
 [![CI](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg)](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml)
 [![Docs](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml/badge.svg)](https://ekin-kahraman.github.io/rustscenic/)
 [![PyPI](https://img.shields.io/pypi/v/rustscenic)](https://pypi.org/project/rustscenic/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20246040.svg)](https://doi.org/10.5281/zenodo.20246040)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Rust](https://img.shields.io/badge/Rust-stable-orange)](https://www.rust-lang.org/)
@@ -20,7 +21,7 @@ Run the full pipeline:
 rustscenic pipeline --rna data.h5ad --tfs tfs.txt --output out/
 ```
 
-Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10 to 3.13, Linux + macOS (x86_64 + aarch64); Windows x64 is covered by the CI and release-wheel workflow for the next release. No dask, no Java, no CUDA.
+Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10 to 3.13, Linux + macOS (x86_64 + aarch64); Windows x64 is covered by CI and v0.4.5 release wheels. No dask, no Java, no CUDA.
 
 The practical SCENIC+ compute path in one package:
 
@@ -265,7 +266,7 @@ MIT. Algorithm implementations follow the aertslab Python references - original 
 
 ## Citation and attribution
 
-If you use rustscenic in a paper, report, benchmark, derivative package, or lab workflow, cite the exact release used. GitHub citation metadata is in [`CITATION.cff`](CITATION.cff).
+If you use rustscenic in a paper, report, benchmark, derivative package, or lab workflow, cite the exact release used. GitHub citation metadata is in [`CITATION.cff`](CITATION.cff). Zenodo concept DOI: [10.5281/zenodo.20246040](https://doi.org/10.5281/zenodo.20246040). Exact v0.4.5 DOI: [10.5281/zenodo.20246041](https://doi.org/10.5281/zenodo.20246041).
 
 rustscenic was created and is maintained by Ekin Kahraman. See [`AUTHORS.md`](AUTHORS.md) and [`docs/collaboration-and-authorship.md`](docs/collaboration-and-authorship.md) for contribution and authorship expectations.
 
