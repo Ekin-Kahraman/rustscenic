@@ -33,6 +33,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
 ]
 dependencies = [
     "numpy>=1.21",
@@ -86,7 +87,7 @@ rustscenic = "rustscenic.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/Ekin-Kahraman/rustscenic"
-Documentation = "https://github.com/Ekin-Kahraman/rustscenic#readme"
+Documentation = "https://ekin-kahraman.github.io/rustscenic/"
 Repository = "https://github.com/Ekin-Kahraman/rustscenic"
 Issues = "https://github.com/Ekin-Kahraman/rustscenic/issues"
 Changelog = "https://github.com/Ekin-Kahraman/rustscenic/blob/main/CHANGELOG.md"

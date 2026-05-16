@@ -116,6 +116,25 @@ python validation/scaling/bench_e2e_200k_synthetic.py
   RNA plus ATAC full pipeline, full-TF atlas GRN at 5,000 estimators, or
   cluster-level enrichment for every biological sanity row.
 
+## HPC Validation Plan
+
+The next production-scale validation should run on a shared HPC node before any
+full atlas-scale production claim:
+
+1. Use a real public 100k-cell multiome cohort with matched RNA and ATAC, not an
+   up-sampled or synthetic matrix.
+2. Run the full bundled human TF list, not the 50-TF scaling subset.
+3. Increase GRN from smoke-test settings to at least `n_estimators=500`, with a
+   5,000-estimator reference run for the final GRN parity claim if wall time
+   permits.
+4. Compare RustScenic and the pinned reference workflow on the same hardware,
+   same input filters, same TF list, same random seed, and same output cutoffs.
+5. Record wall time, peak RSS, command lines, software versions, node CPU/RAM,
+   storage path, and all intermediate artefact checksums.
+6. Report stage-level outputs separately: GRN edge-rank agreement, AUCell
+   per-cell parity, region-cisTarget parity, enhancer links, eRegulon counts,
+   and cluster-level biology checks.
+
 ## Reproduction Notes
 
 Reference-stack commands require the `[reference]` extra or the pinned Docker

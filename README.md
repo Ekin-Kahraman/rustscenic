@@ -1,7 +1,7 @@
 # rustscenic
 
 [![CI](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg)](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml)
-[![Docs](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml/badge.svg)](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml)
+[![Docs](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml/badge.svg)](https://ekin-kahraman.github.io/rustscenic/)
 [![PyPI](https://img.shields.io/pypi/v/rustscenic)](https://pypi.org/project/rustscenic/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
@@ -236,7 +236,7 @@ Current limitations before treating rustscenic as a full SCENIC+ replacement:
 
 - refreshed AUCell timings against current upstream stacks
 - region-cisTarget parity checks on real region-ranking databases
-- six-dataset v0.4.x benchmark sweep
+- six-dataset benchmark sweep planned for v0.5+
 - cell-type enrichment checks for biology claims, not only TF-name recovery
 - smoother raw 10x `pipeline.run` input without caller-side ATAC subsetting
 

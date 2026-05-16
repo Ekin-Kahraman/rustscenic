@@ -66,14 +66,18 @@ jobs:
       # release bump can't desync the workflow assertion.
       - run: |
           python <<'PY'
-          import re, importlib.metadata, rustscenic
+          import re, importlib.metadata, importlib.resources, rustscenic
           with open('pyproject.toml') as f:
               expected = re.search(r'^version\s*=\s*"([^"]+)"', f.read(), re.MULTILINE).group(1)
           installed = importlib.metadata.version('rustscenic')
           assert installed == expected, f'version mismatch: installed={installed} expected={expected}'
+          package_files = importlib.resources.files('rustscenic')
+          assert package_files.joinpath('py.typed').is_file(), 'missing PEP 561 py.typed marker'
+          assert package_files.joinpath('_rustscenic.pyi').is_file(), 'missing PyO3 extension type stub'
           for stage in ['grn', 'aucell', 'topics', 'cistarget']:
               mod = getattr(rustscenic, stage)
               print(f'{stage}: OK ({installed})')
+          print('typing metadata: OK')
           PY
       # Python unit test suite
       - run: pytest tests/ -v
