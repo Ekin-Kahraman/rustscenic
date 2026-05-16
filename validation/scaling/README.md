@@ -55,7 +55,7 @@ large enough for memory bandwidth to dominate.
 
 ### Ziegler 2021 nasopharyngeal atlas (31,602 distinct cells, 32,871 genes)
 
-This is the reference number — real single-cell atlas data, no up-sampling.
+This is the reference number - real single-cell atlas data, no up-sampling.
 
 #### Pre-fix (2026-04-21)
 
@@ -66,7 +66,7 @@ This is the reference number — real single-cell atlas data, no up-sampling.
 | 30,000 | 301.3 | 6.14 | 3.4 |
 | 50,000 | 697.7 | 27.95 | 5.6 |
 
-10k → 30k showed GRN 2.39× over linear — a real super-linear regime. Diagnosed
+10k → 30k showed GRN 2.39× over linear - a real super-linear regime. Diagnosed
 as per-split `Vec<usize>` allocation churn compounding under rayon contention.
 See `crates/rustscenic-grn/src/tree.rs` history for the fix (PR #12).
 
@@ -85,7 +85,7 @@ With the pooled `TreeScratch::partition_bufs` allocator change:
 
 GRN at 30k: **2.16× faster** (301s → 139s). Super-linearity eliminated.
 
-50k post-fix couldn't complete on this 32 GB laptop — during the re-run the
+50k post-fix couldn't complete on this 32 GB laptop - during the re-run the
 system was already using 12.4 GB of 13.3 GB swap, so any 50k+ cell run thrashed.
 That's a hardware ceiling, not a fix regression. A clean 50k+ run belongs
 on HPC (Hali or Minerva) where RAM headroom removes the swap confound.
@@ -208,7 +208,7 @@ algorithmic work linear for fixed settings, but they do not guarantee
 linear wall-clock on a laptop once per-worker buffers reach multi-MB
 sizes and are churned across tens of thousands of target genes.
 
-AUCell is similarly O(n_cells × n_genes × log n_genes) — argsort
+AUCell is similarly O(n_cells × n_genes × log n_genes) - argsort
 dominates, and the `log n_genes` factor does not depend on `n_cells`.
 Linear in `n_cells` for any fixed gene panel.
 
@@ -269,7 +269,7 @@ Same pooled-partition-buffer build, smaller-memory source (11k cells ×
 | 30,000 | 111.8 | 80.5 | **1.39×** |
 
 Smaller speedup than on Ziegler (2.16×) because pbmc10k pre-fix was
-already close to linear at 30k (slope 1.05) — there was less
+already close to linear at 30k (slope 1.05) - there was less
 super-linearity to fix. On Ziegler (slope 2.39 pre-fix), the fix
 had more to bite into.
 
@@ -293,6 +293,6 @@ allocator/cache optimisation before making atlas-scale speed claims.
 
 Planned: re-run at 10k, 30k, 50k, 100k, 200k, 300k on Hali or Minerva
 once access lands. This is the gating data point for Kuan's proposed
-cellxgene sweep (hundreds of cell types × 30–100k each) — need to
+cellxgene sweep (hundreds of cell types × 30–100k each) - need to
 measure the per-cell-type cost after the worker-local buffer reuse
 patch before committing Minerva time.
