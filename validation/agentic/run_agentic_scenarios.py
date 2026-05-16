@@ -363,7 +363,8 @@ def run_scenario(
     )
 
     status = "PASS" if proc.returncode == 0 else "FAIL"
-    print(f"{status}: {scenario['id']} -> {report.relative_to(repo)}")
+    display_report = report.relative_to(repo) if report.is_relative_to(repo) else report
+    print(f"{status}: {scenario['id']} -> {display_report}")
     if keep_context:
         print(f"kept Docker context at {context_path}")
     else:
