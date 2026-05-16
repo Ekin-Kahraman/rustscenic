@@ -175,9 +175,12 @@ def test_aucell_backed_anndata_materialises_cleanly():
         path = os.path.join(td, "small.h5ad")
         adata.write_h5ad(path)
         backed = ad.read_h5ad(path, backed="r")
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            auc = aucell.score(backed, [("R", ["a", "b"])], top_frac=0.3)
+        try:
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                auc = aucell.score(backed, [("R", ["a", "b"])], top_frac=0.3)
+        finally:
+            backed.file.close()
         assert auc.shape == (30, 1)
         assert any("backed" in str(w.message).lower() for w in caught)
 
