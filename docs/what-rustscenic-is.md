@@ -19,22 +19,22 @@ removing entire classes of silent failure that show up in real atlas data.
 
 ## What it is
 
-A Rust + PyO3 replacement for the slow CPU stages in the **SCENIC /
+A Rust + PyO3 implementation covering slow CPU stages in the **SCENIC /
 SCENIC+** single-cell regulatory-network workflow. `pip install
-rustscenic` from PyPI, no Java, no dask, no CUDA. Replaces or covers:
+rustscenic` from PyPI, no Java, no dask, no CUDA. It covers APIs
+analogous to:
 
 - `arboreto` / `pyscenic.grn` (GRNBoost2 inference)
 - `pyscenic.aucell` (per-cell regulon scoring)
 - `pycisTopic` (LDA topic models on scATAC)
 - `pycistarget` (motif enrichment AUC kernel)
 - `scenicplus` eRegulon assembly mechanics
-- Plus full ATAC preprocessing — fragments → matrix, MACS2-free
+- Plus full ATAC preprocessing: fragments to matrix, MACS2-free
   iterative consensus peak calling (Corces 2018), per-cell QC (FRiP,
   TSS enrichment, insert-size).
 
-Ships as one abi3 wheel for Python 3.10–3.13, Linux + macOS
-(x86_64 + aarch64), with Windows x64 covered by the release workflow
-for the next release, plus source install. Five runtime
+Ships as one abi3 wheel for Python 3.10 to 3.13 across Linux, macOS
+and Windows x64 for v0.4.5, plus source install. Five runtime
 deps: numpy, pandas, pyarrow, scipy, anndata.
 
 ## Boundary
@@ -65,12 +65,14 @@ Measured on the current 0.3.x line. Full numbers in `CHANGELOG.md` /
 | End-to-end (10x Multiome 3k, 4 stages) | 11.8 min ref pipeline | 9.1 min |
 | Peak RSS (100k cells × 20k genes, 4 stages) | > 40 GB reported | 6.3 GB |
 
-Bit-identical output under same seed. 57 Rust tests + 144 Python tests.
+Bit-identical output under the same seed for covered deterministic stages.
+CI runs Rust crate tests and the Python test suite across Linux, macOS,
+Windows and Python 3.10 to 3.13.
 
 ## Intellectual Risk
 
-The ambition is full replacement. The risk is not whether we can make a
-demo pass; that is already done. The hard questions are:
+The long-term target is broader replacement of the practical compute path,
+but the current claim is narrower. The hard questions are:
 
 1. **Can region-level cistarget/cistromes match scenicplus closely enough
    on real region-ranking databases?** The exact region-ranking path is
@@ -87,8 +89,8 @@ demo pass; that is already done. The hard questions are:
    a no-MACS2 path?** The implementation is self-contained and passes
    synthetic/self-consistency tests; reference F1 is the missing proof.
 
-These are engineering and algorithmic risks, not reasons to shrink the
-vision. They define the v0.3/v0.4 work.
+These are engineering and algorithmic risks. They define the next
+validation work before a complete SCENIC+ parity claim.
 
 ## Current Evidence
 
@@ -116,7 +118,7 @@ haven't validated yet:
 3. **GRN per-edge agreement with arboreto** is 0.58 Spearman, not
    1.0. Coarse biology agrees (94% known TF→target edges recovered,
    8/8 lineage TFs correctly enriched), and downstream AUCell is
-   0.99 per-cell Pearson with pyscenic — so fine-edge disagreement
+   0.99 per-cell Pearson with pyscenic, so fine-edge disagreement
    doesn't propagate to regulon activity. But if you're publishing
    per-edge effect sizes against an arboreto baseline, we won't
    match.
@@ -124,7 +126,7 @@ haven't validated yet:
    density-window / iterative-overlap-rejection, validated on
    synthetic recovery. We have not yet benchmarked against MACS2 on
    real ENCODE data. F1 vs MACS2 broadPeak is on the v0.3 list.
-5. **100k–200k-cell atlas end-to-end** is now measured (synthetic).
+5. **100k to 200k-cell end-to-end** is now measured on synthetic data.
    Full 7-stage pipeline (topics → GRN → regulons → cistarget →
    enhancer → eRegulon → AUCell):
    - 100k × 15k RNA + 100k × 50k ATAC: **762 s (12.7 min), 7.09 GB
@@ -132,8 +134,8 @@ haven't validated yet:
    - 200k × 8k RNA + 200k × 30k ATAC: **1009 s (16.8 min), 7.44 GB
      peak RSS** (`bench_e2e_200k_synthetic.py`).
 
-   Reference scenicplus stack reports > 40 GB at comparable scale —
-   memory delta is **~5.4×**. The 200k step required a sparse-aware
+   Reference scenicplus stack reports > 40 GB at comparable scale as
+   reported context, not a controlled head-to-head. The 200k step required a sparse-aware
    rewrite of `enhancer.link_peaks_to_genes` (ATAC stays `csc` instead
    of densifying); shipped in the same commit. Real 100k+ multiome
    E2E (not synthetic) is the next step. The earlier 91k microglia
@@ -146,7 +148,7 @@ haven't validated yet:
 
 ## Robustness work
 
-The class of bug that hits real users is "silent zero" — output
+The class of bug that hits real users is "silent zero": output
 finishes without error but is structurally empty (e.g. AUCell scoring
 to all zeros because regulons reference HGNC symbols but
 cellxgene-curated `var_names` are ENSEMBL IDs). v0.2.0 closed 30+ of
@@ -181,7 +183,7 @@ scope:
   backend behind muon's ATAC functions? We match anndata conventions
   by design.
 - **scenicplus**: would you accept a co-authored note positioning
-  rustscenic as the speed-and-memory drop-in for the slow stages?
+  rustscenic as a speed-and-memory option for the slow stages?
 - **Anyone else**: what dataset shape have you seen that we haven't
   tested? Send a slice; if it breaks, we want it to break in CI.
 

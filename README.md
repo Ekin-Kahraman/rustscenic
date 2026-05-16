@@ -9,7 +9,7 @@
 [![Rust](https://img.shields.io/badge/Rust-stable-orange)](https://www.rust-lang.org/)
 [![Typing](https://img.shields.io/badge/typing-PEP%20561-blue)](python/rustscenic/py.typed)
 
-A Rust + PyO3 replacement for the SCENIC / SCENIC+ compute stack: one install, modern Python, low-memory CPU execution, and atlas-scale regulatory-network analysis without Java, dask, CUDA, or fragile multi-tool environments.
+A Rust + PyO3 implementation of the practical SCENIC and SCENIC+ compute path: one install, modern Python, low-memory CPU execution, and measured validation across GRN, AUCell, cisTarget, topics, and multiome pipeline stages without Java, dask, or CUDA.
 
 ```bash
 pip install rustscenic

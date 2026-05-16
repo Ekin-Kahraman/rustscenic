@@ -1,7 +1,7 @@
-# Independent debate — what rustscenic does NOT yet prove
+# Independent debate: what rustscenic does not yet prove
 
-Honest self-review of the gaps between "the tests pass" and "this is a
-production-ready SCENIC+ replacement." Written after the Apr 22 burst
+Honest self-review of the gaps between "the tests pass" and "this is
+mature SCENIC+ infrastructure." Written after the Apr 22 burst
 that closed the scope gap vs the aertslab stack, to name the validation
 we still owe before a v1.0 claim.
 
@@ -11,18 +11,18 @@ we still owe before a v1.0 claim.
 but on generated data: 120 cells, 3 programmes, fragments dropped by
 cluster membership, expression driven by the same activity vector.
 That isolates interface breakage (peak_id key mismatches between
-modules, column schema drift, chrom-convention drops) — the class of
+modules, column schema drift, chrom-convention drops), the class of
 bug Fuaad hit on Kamath et al. 2022.
 
 What it does **not** catch:
-- **Real 10x Multiome parsing edge cases** — barcode-prefix conventions,
+- **Real 10x Multiome parsing edge cases**: barcode-prefix conventions,
   `+` / `-` strand annotations, doublet-marker cells, cells with < 10
   fragments total.
-- **Real biological noise** — our synthetic correlation is ≈ 0.8; real
-  multiome peak↔gene correlations are typically 0.1–0.3 for true links,
+- **Real biological noise**: our synthetic correlation is about 0.8; real
+  multiome peak-gene correlations are typically 0.1 to 0.3 for true links,
   well inside the `min_abs_corr=0.1` default but below the `0.2` we
   used in the smoke test.
-- **Distribution shifts across chromosomes** — the smoke test uses
+- **Distribution shifts across chromosomes**: the smoke test uses
   chr1 only, so the Rust hashmap indexing and the Python `_normalise_chrom`
   helper are not exercised on chrY, chrM, or the 1..22 + X multi-chrom
   loop that dominates real wall-clock.
@@ -58,7 +58,7 @@ against MACS2-broadPeak. Target: ≥ 70 % F1 at 50 bp IoU tolerance.
 `min_enhancer_links=2`, `use_grn_intersection=True`,
 `cistarget_auc_threshold=0.05`. The smoke test uses
 `min_target_genes=2, min_enhancer_links=1` because synthetic regulons
-are smaller — the defaults have never been validated against scenicplus'
+are smaller; the defaults have never been validated against scenicplus'
 eRegulons on the same input.
 
 **Concrete risk:** if scenicplus produces 150 eRegulons on Kamath et
@@ -71,37 +71,31 @@ only if rustscenic emits a warning when the cut gets catastrophic.
 `len(eregulons) < 0.5 × len(unique_cistarget_tfs)`, and document the
 threshold-tuning path.
 
-## 4. "one install" — PyPI live since v0.4.0
+## 4. One install on PyPI
 
-`pip install rustscenic` on PyPI as of v0.4.0 (May 2026), via
-trusted-publisher OIDC from `release.yml`. Four platform wheels
-(macOS / Linux × x86_64 / aarch64) plus sdist published per release.
-The release workflow keeps publishing GitHub Release assets even
-  while PyPI remains gated.
+`pip install rustscenic` is live on PyPI. As of v0.4.5, trusted
+publishing uploads Linux, macOS and Windows x64 wheels plus sdist.
 
-**Gap to close:** either (a) resolve PyPI trusted-publishing config
-(user action), or (b) keep GitHub Release wheels as the official
-distribution path and keep README examples platform-specific.
+**Remaining gap:** keep checking every release from PyPI in a fresh venv,
+not only from local wheels.
 
-## 5. Scaling proof covers GRN only
+## 5. Scaling proof still needs real large multiome
 
 PR #12 (partition buffer pool) fixed the super-linear scaling we
-observed on GRN specifically, and the CI regression test in `tests/`
-guards only that slope. We have *not* benchmarked scaling for:
+observed on GRN specifically, and later synthetic 100k and 200k
+multiome runs exercised the full pipeline. That still does not replace
+a real 100k to 200k matched RNA plus ATAC validation run. We still need:
 - `fragments_to_matrix` on 100k cells × 500k peaks.
 - `call_peaks` with 10 clusters × 100k cells.
-- `enhancer.link_peaks_to_genes` on 100k peaks × 30 genes × 50k cells.
+- `enhancer.link_peaks_to_genes` on real large, sparse multiome inputs.
 - `build_eregulons` on 100k links (though this is trivial pandas bookkeeping).
 
-**Concrete risk:** the Python-side `link_peaks_to_genes` function
-densifies `atac_X` (`_densify` at `python/rustscenic/enhancer.py:282`)
-— a 100k × 50k float32 matrix is 20 GB. A user doing real multiome
-will hit OOM here, not in the Rust core.
+**Concrete risk:** a synthetic 200k run can pass while real data exposes
+barcode, sparsity, genome-coordinate, or topic-quality failure modes.
 
-**Gap to close:** either (a) port `link_peaks_to_genes` to Rust with
-sparse peak_vec × dense gene_block correlation, or (b) at minimum,
-emit a clear error when the densified block would exceed available
-RAM.
+**Gap to close:** run a real public 100k to 200k multiome cohort with
+full TFs, higher `n_estimators`, same-hardware reference comparison,
+stage-level outputs, and checksums.
 
 ## 6. No test for `data.download_motif_rankings`
 
@@ -112,7 +106,7 @@ or that the fetched rankings join to `rna.var_names` under common
 species conventions.
 
 **Concrete risk:** aertslab moves the file to a new URL; rustscenic
-silently fails with "motif rankings not found" — or worse, a silent
+silently fails with "motif rankings not found", or worse, a silent
 empty DataFrame.
 
 **Gap to close:** add a weekly scheduled CI job that pings the URL
@@ -127,34 +121,34 @@ These live in `python/rustscenic/_gene_resolution.py` and
 `python/rustscenic/enhancer.py`. The **Rust** layer (peak calling,
 fragment parsing, cistarget scoring) has chrom normalisation on the
 `peaks` side via `normalise_chrom` in `rustscenic-preproc/src/peaks.rs`,
-but gene-name resolution is entirely Python — Rust never sees gene
+but gene-name resolution is entirely Python. Rust never sees gene
 symbols directly, so this is correct by construction. Worth stating
 so nobody looks for an equivalent Rust helper and assumes we missed
 something.
 
 ## 8. What "independent debate" is NOT testing
 
-- **Memory regression over time** — we have one 100k-cell Ziegler
+- **Memory regression over time**: we have one 100k-cell Ziegler
   RSS number from a single run; no nightly baseline.
-- **Numerical stability across BLAS versions** — we pin numpy >= 1.21
+- **Numerical stability across BLAS versions**: we pin numpy >= 1.21
   but haven't tested MKL vs OpenBLAS on the same dataset.
-- **Windows support** — now covered by the CI and release-wheel matrix
+- **Windows support**: now covered by the CI and release-wheel matrix
   for x64; still needs real-user smoke reports on native Windows datasets.
-- **Seurat interop path** — `docs/seurat-interop.md` exists but the
+- **Seurat interop path**: `docs/seurat-interop.md` exists but the
   scope is one function; we have not tested a real Seurat → rustscenic
   pipeline.
 
 ## Priority ranking for the next sprint
 
-1. **Real-data multiome integration test** (gap 1) — highest value,
+1. **Real-data multiome integration test** (gap 1): highest value,
    lowest effort, directly addresses the class of bug Fuaad hit.
-2. **Densification OOM guard in enhancer** (gap 5) — prevents a bad
+2. **Densification OOM guard in enhancer** (gap 5): prevents a bad
    first-impression crash on real 100k multiome.
-3. **MACS2 cross-check on ENCODE** (gap 2) — load-bearing for the
+3. **MACS2 cross-check on ENCODE** (gap 2): load-bearing for the
    "MACS2-free" claim in the README.
-4. **eRegulon diagnostic warning** (gap 3) — cheap, prevents silent
+4. **eRegulon diagnostic warning** (gap 3): cheap, prevents silent
    regulon-count regressions.
-5. **Motif rankings URL monitor** (gap 6) — costs one scheduled CI
+5. **Motif rankings URL monitor** (gap 6): costs one scheduled CI
    job, prevents a class of supply-chain failures.
 
 Everything else is nice-to-have until v1.0.
