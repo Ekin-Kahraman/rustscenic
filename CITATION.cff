@@ -9,9 +9,9 @@ authors:
 repository-code: "https://github.com/Ekin-Kahraman/rustscenic"
 url: "https://github.com/Ekin-Kahraman/rustscenic"
 license: MIT
-version: "0.4.5"
-date-released: "2026-05-16"
-doi: 10.5281/zenodo.20246041
+version: "0.4.6"
+date-released: "2026-05-18"
+doi: 10.5281/zenodo.20246040
 abstract: "rustscenic is a Rust and PyO3 implementation of SCENIC-style gene regulatory network analysis, including GRN inference, AUCell scoring, topic modelling, cistarget enrichment, enhancer linking, eRegulon assembly, and an end-to-end Python pipeline API."
 keywords:
   - single-cell genomics

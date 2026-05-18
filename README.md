@@ -21,7 +21,7 @@ Run the full pipeline:
 rustscenic pipeline --rna data.h5ad --tfs tfs.txt --output out/
 ```
 
-Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10 to 3.13, Linux + macOS (x86_64 + aarch64); Windows x64 is covered by CI and v0.4.5 release wheels. No dask, no Java, no CUDA.
+Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10 to 3.13, Linux + macOS (x86_64 + aarch64); Windows x64 is covered by CI and v0.4.6 release wheels. No dask, no Java, no CUDA.
 
 The practical SCENIC+ compute path in one package:
 
@@ -44,7 +44,7 @@ flowchart LR
 
 ## Status
 
-**Current release: v0.4.5** on PyPI. This release publishes the MkDocs site, points package metadata at the live docs, declares PEP 561 typing support, and makes CI assert the wheel contains `py.typed` and `_rustscenic.pyi`. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
+**Current release: v0.4.6** on PyPI. This micro patch fixes the monolithic region-cistarget path so file-backed region motif rankings are projected to the current run's linked peaks before reading. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
 
 Active limitations are listed under [Scope and alternatives](#scope-and-alternatives), with full detail in [`site_docs/limitations.md`](site_docs/limitations.md).
 
@@ -266,7 +266,7 @@ MIT. Algorithm implementations follow the aertslab Python references - original 
 
 ## Citation and attribution
 
-If you use rustscenic in a paper, report, benchmark, derivative package, or lab workflow, cite the exact release used. GitHub citation metadata is in [`CITATION.cff`](CITATION.cff). Zenodo concept DOI: [10.5281/zenodo.20246040](https://doi.org/10.5281/zenodo.20246040). Exact v0.4.5 DOI: [10.5281/zenodo.20246041](https://doi.org/10.5281/zenodo.20246041).
+If you use rustscenic in a paper, report, benchmark, derivative package, or lab workflow, cite the exact release used. GitHub citation metadata is in [`CITATION.cff`](CITATION.cff). Zenodo concept DOI: [10.5281/zenodo.20246040](https://doi.org/10.5281/zenodo.20246040). Zenodo mints release-specific DOIs from the tagged GitHub releases.
 
 rustscenic was created and is maintained by Ekin Kahraman. See [`AUTHORS.md`](AUTHORS.md) and [`docs/collaboration-and-authorship.md`](docs/collaboration-and-authorship.md) for contribution and authorship expectations.
 

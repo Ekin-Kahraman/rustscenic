@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.6 - 2026-05-18
+
+### Bug fixes
+
+- Fixed the monolithic `pipeline.run(..., region_motif_rankings=...)` path for
+  large file-backed region-ranking databases. The pipeline now builds the
+  linked peak set first, then reads only the motif ID column plus those peak
+  columns from parquet or feather rankings instead of materialising the full
+  region-ranking file.
+- Added regression coverage for file-backed region rankings inside
+  `pipeline.run`, including a guard that unused ranking columns are not read.
+- Documented the low-memory region-ranking behaviour in the API docs.
+
 ## 0.4.5 - 2026-05-16
 
 ### Release and documentation

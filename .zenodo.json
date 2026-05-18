@@ -1,7 +1,7 @@
 {
   "title": "rustscenic: a Rust and Python implementation of SCENIC-style regulatory-network analysis",
   "upload_type": "software",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "description": "rustscenic is a Rust and PyO3 implementation of SCENIC-style gene regulatory network analysis, including GRN inference, AUCell scoring, topic modelling, cistarget enrichment, enhancer linking, eRegulon assembly, and an end-to-end Python pipeline API.",
   "creators": [
     {

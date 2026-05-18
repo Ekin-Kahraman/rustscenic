@@ -34,7 +34,7 @@ analogous to:
   TSS enrichment, insert-size).
 
 Ships as one abi3 wheel for Python 3.10 to 3.13 across Linux, macOS
-and Windows x64 for v0.4.5, plus source install. Five runtime
+and Windows x64 for v0.4.6, plus source install. Five runtime
 deps: numpy, pandas, pyarrow, scipy, anndata.
 
 ## Boundary
