@@ -72,7 +72,7 @@ def score(
     if top_frac > 0.3:
         import warnings
         warnings.warn(
-            f"top_frac={top_frac} is unusually high — pyscenic defaults to "
+            f"top_frac={top_frac} is unusually high - pyscenic defaults to "
             f"0.05 and values > 0.3 saturate every regulon near its ceiling. "
             f"Are you sure?",
             UserWarning, stacklevel=3,
@@ -143,12 +143,12 @@ def score(
     if dropped_empty > 0 and not reg_names:
         import warnings
         from rustscenic._gene_resolution import diagnose_zero_tf_overlap
-        # Pool all regulon genes as a stand-in for "TFs" — the diagnostic
+        # Pool all regulon genes as a stand-in for "TFs" - the diagnostic
         # works the same way (convention-mismatch is symmetric).
         all_reg_genes = [g for _, gs in reg_pairs for g in gs]
         hint = diagnose_zero_tf_overlap(all_reg_genes[:50], gene_names)
         warnings.warn(
-            f"all {dropped_empty} regulons dropped — no genes overlap the "
+            f"all {dropped_empty} regulons dropped - no genes overlap the "
             f"expression matrix. {hint}",
             UserWarning, stacklevel=2,
         )
@@ -160,7 +160,7 @@ def score(
             UserWarning, stacklevel=2,
         )
 
-    # Score in chunks if the input is sparse — densifying 100k x 20k is 8 GB
+    # Score in chunks if the input is sparse - densifying 100k x 20k is 8 GB
     # float32, and the peak during conversion is 2x that. Chunking bounds
     # instantaneous RSS to chunk_size × n_genes × 4 bytes.
     import scipy.sparse as sp
@@ -197,7 +197,7 @@ def score(
 
 
 def _coerce(expression):
-    """Return (X, gene_names, cell_names) — X may be dense numpy OR scipy sparse.
+    """Return (X, gene_names, cell_names) - X may be dense numpy OR scipy sparse.
 
     For AnnData inputs, ``gene_names`` comes from
     ``_gene_resolution.resolve_gene_names`` which auto-detects cellxgene /
@@ -215,7 +215,7 @@ def _coerce(expression):
             import warnings
             warnings.warn(
                 "AnnData is backed (disk-resident). Materialising X to a "
-                "sparse matrix in memory — if this OOMs, subset cells or "
+                "sparse matrix in memory - if this OOMs, subset cells or "
                 "genes before passing to rustscenic.",
                 UserWarning, stacklevel=3,
             )

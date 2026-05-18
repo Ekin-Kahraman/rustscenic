@@ -1,4 +1,4 @@
-"""rustscenic CLI entry point — covers all 4 SCENIC+ stages.
+"""rustscenic CLI entry point - covers all 4 SCENIC+ stages.
 
     rustscenic grn       --expression --tfs --output [--seed ...]
     rustscenic aucell    --expression --regulons --output [--top-frac ...]
@@ -99,7 +99,7 @@ def cmd_aucell(args: argparse.Namespace) -> int:
     # Regulons expected as TSV: regulon_name\tgene1,gene2,...  OR  regulon_name\tgene  (long form)
     # Accept either format; auto-detect by checking first line.
     regulons: list[tuple[str, list[str]]] = []
-    # Load by extension — the common workflow is `rustscenic grn --output grn.parquet`
+    # Load by extension - the common workflow is `rustscenic grn --output grn.parquet`
     # followed by `rustscenic aucell --regulons grn.parquet`.
     if reg_path.suffix.lower() == ".parquet":
         df = pd.read_parquet(reg_path)

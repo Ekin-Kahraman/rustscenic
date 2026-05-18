@@ -156,8 +156,8 @@ def run(
         gene- or region-based motif rankings are supplied,
         ``rustscenic.eregulon.build_eregulons``.
     topics_method
-        ``"vb"`` (default) — online VB LDA, fast at small K (≤ 10).
-        ``"gibbs"`` — collapsed-Gibbs LDA (Mallet-class), slower per
+        ``"vb"`` (default) - online VB LDA, fast at small K (≤ 10).
+        ``"gibbs"`` - collapsed-Gibbs LDA (Mallet-class), slower per
         sweep but recovers ~10× more distinct topics on sparse scATAC
         at K ≥ 30. Pair with ``topics_n_threads > 1`` for AD-LDA
         parallel speedup at atlas scale.
@@ -177,7 +177,7 @@ def run(
 
     Returns
     -------
-    PipelineResult — dataclass with paths to every artifact written.
+    PipelineResult - dataclass with paths to every artifact written.
     """
     import warnings as _warnings
 
@@ -211,9 +211,9 @@ def run(
 
     # ---- 2. preproc + topics (only if ATAC inputs provided) ----
     # Two paths into the cells × peaks ATAC matrix:
-    #   (a) `adata_atac` — caller passed an already-built (and typically
+    #   (a) `adata_atac` - caller passed an already-built (and typically
     #       cell-QC-subset) AnnData. Skip preproc entirely.
-    #   (b) `fragments` + `peaks` — read raw 10x outputs and call
+    #   (b) `fragments` + `peaks` - read raw 10x outputs and call
     #       `rustscenic.preproc.fragments_to_matrix`. Note this returns
     #       ALL observed barcodes (including empty droplets); on raw 10x
     #       this can be ~10–100× larger than the QC-passed cell count
@@ -449,19 +449,19 @@ def run(
         log(f"[7/8] enhancer: linking peaks → genes ({len(coords_df):,} TSS records)")
         t0 = time.perf_counter()
         # adata_atac is still in scope from the preproc/topics block above.
-        # Use it directly rather than round-tripping through h5ad — saves the
+        # Use it directly rather than round-tripping through h5ad - saves the
         # disk read on big matrices and avoids dropping non-serialisable
         # obs/varm/uns the caller may have attached.
         adata_atac_for_link = adata_atac
         common = adata_rna.obs_names.intersection(adata_atac_for_link.obs_names)
         if len(common) == 0:
-            log("      skipped — no shared barcodes between RNA and ATAC")
+            log("      skipped - no shared barcodes between RNA and ATAC")
         else:
             # Two paths to peak coords:
-            #   (a) `peaks` BED supplied — read coords from it (handles the
+            #   (a) `peaks` BED supplied - read coords from it (handles the
             #       case where var_names came from the BED name column and
             #       aren't `chr:start-end`-formatted).
-            #   (b) `adata_atac` was passed pre-built — caller is expected
+            #   (b) `adata_atac` was passed pre-built - caller is expected
             #       to have either coord-formatted var_names OR `chrom`/
             #       `start`/`end` columns in `var`. enhancer.link_peaks_to_genes
             #       handles both via `peak_coords=None`.
@@ -498,9 +498,9 @@ def run(
         t0 = time.perf_counter()
         # Two paths to (TF → peaks) associations:
         # 1. EXACT: if region_motif_rankings supplied, run cistarget on
-        #    the linked peaks against region rankings — true motif
+        #    the linked peaks against region rankings - true motif
         #    enrichment per peak per TF (matches scenicplus semantics).
-        # 2. APPROXIMATE: gene-only path — attribute peaks via
+        # 2. APPROXIMATE: gene-only path - attribute peaks via
         #    GRN targets ∩ enhancer links. Used when region rankings
         #    aren't available.
         if region_motif_rankings is not None:
@@ -539,7 +539,7 @@ def run(
                         motif_annotations_df,
                         auc_threshold=cistarget_auc_threshold,
                     )
-                    # Merge on (regulon, motif) only — both DataFrames came from
+                    # Merge on (regulon, motif) only - both DataFrames came from
                     # the same region_enrich so AUC values are byte-identical
                     # today, but using a float column as a join key is fragile
                     # against a future copy-with-cast in either upstream.
@@ -566,7 +566,7 @@ def run(
                     columns=["regulon", "motif", "peak_id", "auc"]
                 )
         else:
-            log("      gene-only — bridging via active regulon targets")
+            log("      gene-only - bridging via active regulon targets")
             enriched_with_peaks = _attribute_peaks_to_cistarget(
                 enriched_for_eregulons, grn, enhancer_links, regulons=regulons,
             )
@@ -844,7 +844,7 @@ def _attribute_peaks_to_cistarget(
     """Bridge gene-based cistarget output to peak-aware eRegulon input.
 
     Cistarget on a gene-based motif ranking emits ``(regulon, motif, auc)``
-    rows but no peak column — the eRegulon assembler requires one. Until
+    rows but no peak column - the eRegulon assembler requires one. Until
     region-based cistarget ships, attribute each enriched TF's peaks via
     the TF's regulon-target list ∩ enhancer-link peak set: a peak is
     associated with TF X if it links to a gene that's in X's regulon.
@@ -853,7 +853,7 @@ def _attribute_peaks_to_cistarget(
     1. Python loop with per-row dict append → vectorised pandas merge.
     2. Using the full 591k-edge ``grn`` blew up the merge to ~3.5 B rows
        (every TF×every target×every peak). Now we restrict to the
-       top-N targets per TF — the same set that was passed to cistarget,
+       top-N targets per TF - the same set that was passed to cistarget,
        supplied via the ``regulons`` dict the orchestrator already built.
        Falls back to the full GRN with a top-N inferred from the
        ``cistarget_top_frac`` / regulon size when ``regulons`` is None.
@@ -863,7 +863,7 @@ def _attribute_peaks_to_cistarget(
 
     # Prefer the orchestrator's pre-built regulon dict (top-N targets per
     # TF, matched to what cistarget scored). Falls back to the full GRN
-    # only when regulons isn't supplied — that path keeps the public
+    # only when regulons isn't supplied - that path keeps the public
     # signature stable but is slow at atlas scale.
     if regulons is not None:
         tf_target_rows = []
@@ -979,7 +979,7 @@ def _peak_coords_from_bed(bed_path, atac_var_names):
     """Build a per-peak chrom/start/end DataFrame indexed by ATAC var_names.
 
     The orchestrator hands `link_peaks_to_genes` an explicit `peak_coords`
-    rather than relying on `chr:start-end` parsing of var_names — that
+    rather than relying on `chr:start-end` parsing of var_names - that
     parser only works when no name column was present in the BED.
     """
     import gzip as _gzip

@@ -1,6 +1,6 @@
 # Tester reporting guide
 
-If you ran rustscenic on real data — your own or a public dataset —
+If you ran rustscenic on real data - your own or a public dataset -
 this page tells you what to send back, how to send it, and where it
 ends up.
 
@@ -33,7 +33,7 @@ needs to clear.
 |---|---|
 | Summary | One-line "what dataset, what release, what came out". |
 | Dataset name + source/accession | So someone else can rerun it. URL or GEO/SRA accession. |
-| Species + assembly | hg38 / mm10 / etc. — affects motif rankings and TF list. |
+| Species + assembly | hg38 / mm10 / etc. - affects motif rankings and TF list. |
 | Tissue / state | Determines which canonical TFs we'd expect. |
 | Shapes after QC | RNA `cells × genes`; ATAC `cells × peaks` after subsetting. |
 | rustscenic version | Pin to a release tag, not a commit. v0.4.0 or later. |
@@ -119,17 +119,17 @@ exactly. The shape:
 ```
 
 `scope_notes` is the place to record what you did differently from
-the reference workflow — caller-side QC thresholds, atypical kwargs,
+the reference workflow - caller-side QC thresholds, atypical kwargs,
 hardware notes, anything that affected the run.
 
 ## How to attach the JSON
 
 Two paths, in order of preference:
 
-1. **PR adding `validation/community/<dataset>.json`** — durable, gets a
+1. **PR adding `validation/community/<dataset>.json`** - durable, gets a
    review, ends up in the repo. Best if your run is high-confidence and
    you're happy for the artefact to live alongside our own.
-2. **Gist link** in the issue body — quickest. We may ask you to
+2. **Gist link** in the issue body - quickest. We may ask you to
    convert it to a PR if the run lands in the v0.4.x sweep.
 
 Either way, the JSON itself is what we cite when we update release
@@ -141,7 +141,7 @@ Look at
 [`validation/multiome_pipeline_run_v0.3.10_brain_e18.json`](../validation/multiome_pipeline_run_v0.3.10_brain_e18.json)
 end to end. Every field in the issue template maps to a field in
 that JSON, in the same order. The shape, the wording, the level of
-detail — that's the bar.
+detail - that's the bar.
 
 If you're unsure whether a field applies, fill in what you have and
 flag the rest in `scope_notes` / the "caveats" textarea.
@@ -174,7 +174,7 @@ flag the rest in `scope_notes` / the "caveats" textarea.
 |---|---|
 | The pipeline crashed, hung, or produced obviously wrong output | [Bug report](https://github.com/Ekin-Kahraman/rustscenic/issues/new?template=bug_report.yml) |
 | Output disagrees with pyscenic / arboreto / pycisTopic / pycistarget | [Correctness issue](https://github.com/Ekin-Kahraman/rustscenic/issues/new?template=correctness.yml) |
-| It ran end-to-end and you want to share results | This template — [Validation report](https://github.com/Ekin-Kahraman/rustscenic/issues/new?template=validation_report.yml) |
+| It ran end-to-end and you want to share results | This template - [Validation report](https://github.com/Ekin-Kahraman/rustscenic/issues/new?template=validation_report.yml) |
 
 A run that finished but recovered 1/9 expected canonical TFs is a
 correctness issue, not a validation report. A run that finished cleanly

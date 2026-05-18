@@ -9,7 +9,7 @@ Output is a `TopicsResult` namedtuple with:
     cell_topic:  (cells x topics) probability matrix (each row sums to 1)
     topic_peak:  (topics x peaks) probability matrix (each row sums to 1)
 
-Both pycisTopic (Mallet Gibbs) and rustscenic (online VB) are probabilistic —
+Both pycisTopic (Mallet Gibbs) and rustscenic (online VB) are probabilistic -
 topic labels are permutation-free. Validation metric is topic assignment ARI.
 """
 from __future__ import annotations
@@ -101,7 +101,7 @@ def fit(
     row_ptr, col_idx, counts, n_words, cell_names, peak_names = _coerce(expression)
 
     if n_words == 0:
-        raise ValueError("expression has 0 peaks/genes — nothing to model")
+        raise ValueError("expression has 0 peaks/genes - nothing to model")
 
     if alpha is None:
         alpha = 1.0 / n_topics
@@ -113,7 +113,7 @@ def fit(
     nnz = len(col_idx)
     if verbose:
         print(
-            f"[rustscenic.topics] online-VB LDA — {n_docs:,} docs × "
+            f"[rustscenic.topics] online-VB LDA - {n_docs:,} docs × "
             f"{n_words:,} vocab (nnz={nnz:,}), K={n_topics}, {n_passes} passes, "
             f"batch_size={batch_size}. Running in parallel...",
             file=sys.stderr, flush=True,
@@ -132,7 +132,7 @@ def fit(
     unique = int(np.unique(cell_topic.values.argmax(axis=1)).size)
     if verbose:
         print(
-            f"[rustscenic.topics] done in {wall:.1f}s — "
+            f"[rustscenic.topics] done in {wall:.1f}s - "
             f"{unique}/{n_topics} topics carry an argmax assignment.",
             file=sys.stderr, flush=True,
         )
@@ -152,7 +152,7 @@ def fit_gibbs(
 ) -> TopicsResult:
     """Fit collapsed-Gibbs LDA on a (cells × peaks) count / binarized matrix.
 
-    The Mallet-class topic model — better topic-coherence (NPMI) on
+    The Mallet-class topic model - better topic-coherence (NPMI) on
     sparse scATAC at K ≥ 30 than the default online-VB
     :func:`fit`, at the cost of thousands of iterations instead of tens
     of passes. Use this when topic quality matters more than wall-clock,
@@ -166,7 +166,7 @@ def fit_gibbs(
     n_topics
         Number of latent topics K. Mallet typical range: 30–100.
     alpha, eta
-        Dirichlet priors. Default 0.1 / 0.01 — Griffiths & Steyvers
+        Dirichlet priors. Default 0.1 / 0.01 - Griffiths & Steyvers
         2004's "good defaults" for LDA, slightly less concentrated than
         the 1/K we use for online VB.
     n_iters
@@ -174,12 +174,12 @@ def fit_gibbs(
         default for convergence on small samples; bump to 500–1000 for
         higher-quality posterior estimates.
     seed
-        Random seed. Topics are stochastic — bit-identical under same
+        Random seed. Topics are stochastic - bit-identical under same
         seed (single-threaded), reproducible across runs at fixed
         ``n_threads`` for the parallel path.
     n_threads
         ``1`` (default): bit-deterministic serial sampler. ``>1``:
-        AD-LDA (Newman et al. 2009) parallel sampler — partitions docs
+        AD-LDA (Newman et al. 2009) parallel sampler - partitions docs
         across threads, near-linear speedup on atlas-scale corpora at
         the cost of small cross-thread staleness within a sweep
         (perplexity gap is well within sampling variance per Newman
@@ -187,7 +187,7 @@ def fit_gibbs(
 
     Returns
     -------
-    TopicsResult — same shape as :func:`fit`, columns are
+    TopicsResult - same shape as :func:`fit`, columns are
     ``Topic_0 .. Topic_{K-1}``.
     """
     if not isinstance(n_topics, int) or n_topics < 1:
@@ -199,7 +199,7 @@ def fit_gibbs(
 
     row_ptr, col_idx, counts, n_words, cell_names, peak_names = _coerce(expression)
     if n_words == 0:
-        raise ValueError("expression has 0 peaks/genes — nothing to model")
+        raise ValueError("expression has 0 peaks/genes - nothing to model")
     if alpha is None:
         alpha = 0.1
     if eta is None:
@@ -212,7 +212,7 @@ def fit_gibbs(
     if verbose:
         thread_label = "serial" if n_threads == 1 else f"{n_threads}-thread AD-LDA"
         print(
-            f"[rustscenic.topics] collapsed-Gibbs LDA ({thread_label}) — "
+            f"[rustscenic.topics] collapsed-Gibbs LDA ({thread_label}) - "
             f"{n_docs:,} docs × {n_words:,} vocab (nnz={nnz:,}), K={n_topics}, "
             f"{n_iters} sweeps, alpha={alpha}, eta={eta}",
             file=sys.stderr, flush=True,
@@ -230,7 +230,7 @@ def fit_gibbs(
     unique = int(np.unique(cell_topic.values.argmax(axis=1)).size)
     if verbose:
         print(
-            f"[rustscenic.topics] Gibbs done in {wall:.1f}s — "
+            f"[rustscenic.topics] Gibbs done in {wall:.1f}s - "
             f"{unique}/{n_topics} topics carry an argmax assignment.",
             file=sys.stderr, flush=True,
         )
@@ -252,7 +252,7 @@ def coherence_npmi(
     corpus
         Corpus to score against (AnnData / DataFrame / sparse-tuple,
         same shape conventions as :func:`fit`). Should have the same
-        peak/word vocabulary as ``result`` — column order must match
+        peak/word vocabulary as ``result`` - column order must match
         ``result.topic_peak.columns``.
     top_n
         Top-N peaks per topic to evaluate pairwise NPMI over. 10 is
@@ -260,7 +260,7 @@ def coherence_npmi(
 
     Returns
     -------
-    np.ndarray of shape (n_topics,) — mean pairwise NPMI per topic.
+    np.ndarray of shape (n_topics,) - mean pairwise NPMI per topic.
     Higher is better; positive values mean top-words co-occur more
     than independence would predict.
     """

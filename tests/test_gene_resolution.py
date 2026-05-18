@@ -191,7 +191,7 @@ def test_aucell_matches_regulons_after_ensembl_swap():
     obs = pd.DataFrame(index=[f"cell{i}" for i in range(n_cells)])
     adata = ad.AnnData(X=X, obs=obs, var=var)
 
-    # Regulon references the SYMBOL space — the swap must happen for it to score.
+    # Regulon references the SYMBOL space - the swap must happen for it to score.
     regulons = [("R_sym", ["SYM0", "SYM1", "SYM2", "SYM3", "SYM4"])]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")

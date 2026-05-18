@@ -11,7 +11,7 @@ All of these are Rust-native and require no extra Python dependencies
 beyond the four rustscenic ships with (numpy, pandas, pyarrow, scipy).
 
 Together they replace pycisTopic's fragment parsing, iterative peak
-calling, and per-cell QC — the MACS2-free, Java-free, Python 3.10–3.13
+calling, and per-cell QC - the MACS2-free, Java-free, Python 3.10–3.13
 path through rustscenic's ATAC preprocessing surface.
 
 See `docs/atac-preprocessing-scope.md` for scope + validation plan.
@@ -62,7 +62,7 @@ def fragments_to_matrix(
     Notes
     -----
     UCSC (`chr1`) and Ensembl (`1`) chrom conventions are matched via
-    `normalise_chrom` — a peak BED in either convention joins to
+    `normalise_chrom` - a peak BED in either convention joins to
     fragments in either convention. Peaks on chroms actually absent
     from the fragments file are silently dropped.
     """
@@ -76,19 +76,19 @@ def fragments_to_matrix(
         fragments_path, peaks_path
     )
 
-    # Guard against the 6-column strand BED parse mode — if > 90% of
+    # Guard against the 6-column strand BED parse mode - if > 90% of
     # "barcodes" are unique (i.e. one per fragment), the barcode column
     # is almost certainly a per-row ID (peak name, gene name), not a
     # cell barcode. Column count in a 10x cellranger fragments.tsv is
     # 5: chrom start end barcode count. A 6-column strand-BED is
-    # chrom start end name score strand — the barcode parse lands on
+    # chrom start end name score strand - the barcode parse lands on
     # `name`, one per line.
     total_frags = int(np.asarray(fpc, dtype=np.uint64).sum())
     if barcodes and total_frags > 100 and len(barcodes) > 0.9 * total_frags:
         import warnings
         warnings.warn(
             f"{len(barcodes)} unique 'barcodes' parsed from {total_frags} "
-            f"fragments — almost one-per-row. This usually means the file "
+            f"fragments - almost one-per-row. This usually means the file "
             f"is a 6-column strand BED (chrom, start, end, name, score, "
             f"strand) rather than a 10x cellranger fragments.tsv "
             f"(chrom, start, end, barcode, count). Convert with e.g. "
@@ -112,7 +112,7 @@ def fragments_to_matrix(
             f"fragments_to_matrix returned {len(barcodes):,} barcodes "
             f"(median {median_frags:.0f} fragments/barcode). 10x raw "
             f"fragments.tsv contains every observed barcode including "
-            f"empty droplets — most downstream analysis wants only the "
+            f"empty droplets - most downstream analysis wants only the "
             f"cell-called barcodes. Subset by the 10x "
             f"filtered_feature_bc_matrix.h5 cell list (or by "
             f"obs['fragments_per_cell'] > some threshold) before "
@@ -158,10 +158,10 @@ def call_peaks(
         10x cellranger `fragments.tsv[.gz]`.
     cluster_per_barcode
         Cluster id per barcode (0-indexed). Same length as the fragments'
-        unique-barcode set — i.e. as what `fragments_to_matrix(...).obs`
+        unique-barcode set - i.e. as what `fragments_to_matrix(...).obs`
         produces. Use ``u32::MAX`` (2**32 - 1) to mark unassigned.
         Accepts a list, numpy array, or a pandas Series (the latter's
-        index is used to align to the fragments' barcode order — the
+        index is used to align to the fragments' barcode order - the
         Rust layer will reject a mismatch loudly).
     n_clusters
         Number of distinct cluster ids. Defaults to
@@ -240,12 +240,12 @@ class qc:
         """Per-barcode insert-size summary.
 
         Returns DataFrame indexed by barcode with columns:
-          - ``mean`` (float) — mean fragment length
-          - ``median`` (float) — median fragment length
-          - ``n_fragments`` (uint32) — count used in the stats
-          - ``sub_nucleosomal`` (uint32) — fragments < 150 bp
-          - ``mono_nucleosomal`` (uint32) — 150–299 bp
-          - ``di_nucleosomal`` (uint32) — 300–449 bp
+          - ``mean`` (float) - mean fragment length
+          - ``median`` (float) - median fragment length
+          - ``n_fragments`` (uint32) - count used in the stats
+          - ``sub_nucleosomal`` (uint32) - fragments < 150 bp
+          - ``mono_nucleosomal`` (uint32) - 150–299 bp
+          - ``di_nucleosomal`` (uint32) - 300–449 bp
         """
         fragments_path = str(Path(fragments_path))
         barcodes, means, medians, counts, sub, mono, di = _insert_size_stats(
@@ -296,7 +296,7 @@ class qc:
         tss
             DataFrame with columns ``['chrom', 'position']`` listing
             transcription-start-site coordinates. Chromosome names in
-            either UCSC (`chr1`) or Ensembl (`1`) convention are fine —
+            either UCSC (`chr1`) or Ensembl (`1`) convention are fine -
             they're normalised to match the fragments' chrom namespace.
 
         Returns

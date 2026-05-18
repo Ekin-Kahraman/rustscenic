@@ -83,7 +83,7 @@ def test_frip_end_to_end():
 
 
 def test_frip_normalises_ucsc_vs_ensembl_chroms():
-    """fragments in chr1 convention, peaks BED in 1 convention — must still
+    """fragments in chr1 convention, peaks BED in 1 convention - must still
     produce non-zero FRiP after PR #24's chrom normalisation."""
     frag_path, td_f = _write_fragments([
         "chr1\t100\t200\tAAA-1\t1",
@@ -243,7 +243,7 @@ def test_call_peaks_series_missing_barcode_raises(tmp_path, monkeypatch):
 
 
 def test_tss_enrichment_chrom_convention_mismatch_no_longer_silent_zero():
-    """Fragments in `chr1` + TSS in `1` (Ensembl) must still register —
+    """Fragments in `chr1` + TSS in `1` (Ensembl) must still register -
     exact same class as the Fuaad cellxgene silent-zero, one layer
     down in the Rust preproc core."""
     # 10 fragments around position 10_000 on chr1 (UCSC-style)
@@ -252,7 +252,7 @@ def test_tss_enrichment_chrom_convention_mismatch_no_longer_silent_zero():
         for i in range(10)
     ]
     frag_path, td = _write_fragments(frag_lines)
-    # TSS in Ensembl chrom convention — should still match
+    # TSS in Ensembl chrom convention - should still match
     tss = pd.DataFrame({"chrom": ["1"], "position": [10_000]})
     with td:
         scores = rustscenic.preproc.qc.tss_enrichment(frag_path, tss)
@@ -270,7 +270,7 @@ def test_fragments_to_matrix_warns_on_6column_strand_bed():
     import warnings
     lines = [f"chr1\t{1000 + i * 100}\t{1080 + i * 100}\tfeature_{i}\t1" for i in range(200)]
     frag_path, td_f = _write_fragments(lines)
-    # Need a peaks file — any one, even empty
+    # Need a peaks file - any one, even empty
     peaks_path, td_p = _write_peaks_bed(["chr1\t1000\t20000\tpeak"])
     with td_f, td_p, warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
@@ -285,7 +285,7 @@ def test_fragments_to_matrix_warns_on_unfiltered_barcodes():
     """Raw 10x fragments.tsv has 100k+ barcodes (every observed). Warn
     so users know to subset to cell-called barcodes before downstream."""
     import warnings
-    # 110_000 barcodes, 1 fragment each — looks like a raw fragments file
+    # 110_000 barcodes, 1 fragment each - looks like a raw fragments file
     lines = [f"chr1\t{i*100}\t{i*100 + 100}\tBC{i:08d}\t1" for i in range(110_000)]
     frag_path, td = _write_fragments(lines)
     peaks_path, td_p = _write_peaks_bed(["chr1\t0\t20000000\tpeak"])

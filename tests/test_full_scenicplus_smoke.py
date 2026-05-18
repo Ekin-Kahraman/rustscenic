@@ -1,4 +1,4 @@
-"""Full SCENIC+ pipeline smoke test — every new module, one run.
+"""Full SCENIC+ pipeline smoke test - every new module, one run.
 
 Walks the complete rustscenic public API shipped today, in sequence,
 on synthetic multiome data with known structure:
@@ -21,7 +21,7 @@ on synthetic multiome data with known structure:
 
 If any one module silently broke under realistic interplay with the
 others, this catches it. The per-module tests we already have can
-pass while the interfaces between modules quietly mismatch — this is
+pass while the interfaces between modules quietly mismatch - this is
 the interface-layer guard.
 """
 from __future__ import annotations
@@ -58,7 +58,7 @@ def _simulate_multiome_with_fragments():
     cluster_per_cell = np.array([i * 3 // n_cells for i in range(n_cells)], dtype=np.uint32)
     cell_names = [f"cell{i}" for i in range(n_cells)]
 
-    # Programme activity vector — binary cluster membership + mild noise.
+    # Programme activity vector - binary cluster membership + mild noise.
     # Peaks and expression both draw from this so their correlation is real.
     activity = np.zeros((3, n_cells), dtype=np.float32)
     for p in range(3):
@@ -108,7 +108,7 @@ def _simulate_multiome_with_fragments():
 
     # ATAC per-cell intensity matrix matching fragment density per programme
     # (used later as the .X for enhancer linking; doesn't have to come from
-    # fragments — real pipelines also use the preproc fragments_to_matrix).
+    # fragments - real pipelines also use the preproc fragments_to_matrix).
     # We'll build the real ATAC AnnData from fragments + called peaks below.
 
     td = tempfile.TemporaryDirectory()
@@ -197,7 +197,7 @@ def test_full_scenicplus_smoke():
         frip_scores = rustscenic.preproc.qc.frip(frag_path, peaks_bed)
         assert isinstance(frip_scores, pd.Series)
         assert (frip_scores > 0.01).any(), (
-            "FRiP is zero everywhere — the peaks we just called don't "
+            "FRiP is zero everywhere - the peaks we just called don't "
             "overlap the fragments they were called from (self-consistency "
             "broken)."
         )
@@ -292,7 +292,7 @@ def test_full_scenicplus_smoke():
             min_target_genes=2, min_enhancer_links=1,
             use_grn_intersection=True,
         )
-        # At least one eRegulon should survive — we built the simulation so
+        # At least one eRegulon should survive - we built the simulation so
         # that programme TFs have both GRN targets and correlated peaks.
         assert len(eregs) >= 1, "eRegulon assembler dropped every TF"
 

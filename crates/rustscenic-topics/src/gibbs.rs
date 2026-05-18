@@ -1,6 +1,6 @@
 //! Collapsed Gibbs sampling for Latent Dirichlet Allocation.
 //!
-//! This is the Mallet-class topic model — sampling from the true posterior
+//! This is the Mallet-class topic model - sampling from the true posterior
 //! over per-token topic assignments rather than the variational
 //! approximation in `lib.rs`. On sparse scATAC at K ≥ 30, collapsed Gibbs
 //! reliably wins on topic-coherence (NPMI) and unique-topic count compared
@@ -26,7 +26,7 @@
 //!
 //! Two paths:
 //! - `fit`: serial, bit-identical under same seed.
-//! - `fit_par`: AD-LDA (Newman et al. 2009) — partition documents
+//! - `fit_par`: AD-LDA (Newman et al. 2009) - partition documents
 //!   across Rayon workers, each thread mutates a per-thread delta on
 //!   `n_kw`/`n_k` while sampling, deltas are merged at sweep
 //!   boundaries. Quality matches serial at typical thread counts;
@@ -305,7 +305,7 @@ fn prime_counts(
     (n_kw, n_k)
 }
 
-/// Hyperparameters held constant across a sweep — bundled to keep
+/// Hyperparameters held constant across a sweep - bundled to keep
 /// `run_thread_sweep` under the clippy `too_many_arguments` limit.
 struct SweepParams {
     n_topics: usize,
@@ -386,10 +386,10 @@ fn run_thread_sweep(
 /// Add per-thread deltas (held in each `ThreadState`) back into the global
 /// `n_kw` / `n_k`. Underflows from a single thread can be negative (if a
 /// topic emptied within a sweep) but are always corrected by the matching
-/// positive delta in another thread — summing across all threads gives a
+/// positive delta in another thread - summing across all threads gives a
 /// non-negative result.
 ///
-/// Parallelised across rows of `n_kw` (i.e. topics) — each topic row of
+/// Parallelised across rows of `n_kw` (i.e. topics) - each topic row of
 /// size `n_words` is independent, so K-way parallelism is safe.
 fn merge_deltas(
     n_kw: &mut [u32],
@@ -463,7 +463,7 @@ fn compute_theta(
 ///
 /// This is bit-identical to `fit` when `n_threads == 1`. For
 /// `n_threads > 1` it diverges very slightly because cross-thread
-/// updates only become visible at sweep boundaries — but Newman et
+/// updates only become visible at sweep boundaries - but Newman et
 /// al. 2009 §4 show the perplexity gap is well within sampling
 /// variance for typical T (4–32 threads). The trade-off is
 /// `O(n_threads × n_topics × n_words × 4 bytes)` memory for the
@@ -553,7 +553,7 @@ pub fn fit_par(
     }
 }
 
-/// SplitMix64 — used to mix (seed, iter, t_idx) into a 64-bit-uniform stream
+/// SplitMix64 - used to mix (seed, iter, t_idx) into a 64-bit-uniform stream
 /// before each parallel sweep. Avoids structured correlation between adjacent
 /// thread RNGs that the previous wrapping_add(0x9E3779B9) construction allowed.
 #[inline]
@@ -630,7 +630,7 @@ mod tests {
 
     #[test]
     fn gibbs_handles_empty_doc() {
-        // Doc with zero tokens — shouldn't panic, theta should be uniform-ish.
+        // Doc with zero tokens - shouldn't panic, theta should be uniform-ish.
         let row_ptr = vec![0, 0, 5];
         let col_idx = vec![0, 1, 2, 3, 4];
         let counts = vec![1.0; 5];

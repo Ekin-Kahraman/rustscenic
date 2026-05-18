@@ -2,10 +2,10 @@
 //!
 //! Two algorithms ship side-by-side:
 //!
-//! - [`online_vb_lda`] — Hoffman-Blei-Bach 2010 online VB. Fast (tens of
+//! - [`online_vb_lda`] - Hoffman-Blei-Bach 2010 online VB. Fast (tens of
 //!   passes), deterministic given seed, low memory bound. The default and
 //!   the right choice when speed matters and topics K ≤ 20.
-//! - [`gibbs::fit`] — collapsed Gibbs sampling (Griffiths-Steyvers 2004),
+//! - [`gibbs::fit`] - collapsed Gibbs sampling (Griffiths-Steyvers 2004),
 //!   the Mallet-class algorithm. Better topic-coherence (NPMI) and unique
 //!   topic count on sparse scATAC at K ≥ 30. Slower per iter (thousands
 //!   of sweeps), but the highest-quality path.
@@ -20,7 +20,7 @@
 //! (row_ptr, col_idx, counts). This lets callers feed both raw counts (scRNA
 //! LDA) and binarized accessibility (scATAC) without modification.
 
-// numerical inner loops read from multiple arrays by index — allow to keep readability.
+// numerical inner loops read from multiple arrays by index - allow to keep readability.
 #![allow(clippy::needless_range_loop)]
 
 pub mod gibbs;
@@ -77,12 +77,12 @@ pub fn online_vb_lda(
     let n_docs = row_ptr.len() - 1;
     assert!(n_topics > 0);
 
-    // Reject NaN/Inf in counts — the VB variational updates use logs and
+    // Reject NaN/Inf in counts - the VB variational updates use logs and
     // digammas that propagate non-finite values silently into garbage topic
     // assignments. Fail fast with a clear message.
     if counts.iter().any(|v| !v.is_finite()) {
         panic!(
-            "input counts contain NaN or Inf values — LDA is undefined on \
+            "input counts contain NaN or Inf values - LDA is undefined on \
             non-finite counts. Cast your (cell, peak) matrix to integer counts \
             or binarize before calling topics.fit()."
         );
@@ -97,7 +97,7 @@ pub fn online_vb_lda(
     let mut lambda = vec![0.0_f64; n_topics * n_words];
     for v in lambda.iter_mut() {
         // gamma(shape=100, scale=1/100) via Marsaglia-Tsang method (statrs has one,
-        // but we inline a simple transformed normal approximation — sufficient for init)
+        // but we inline a simple transformed normal approximation - sufficient for init)
         // Mean 1.0, std 0.1.
         let u1: f64 = rng.gen();
         let u2: f64 = rng.gen();
@@ -105,7 +105,7 @@ pub fn online_vb_lda(
         *v = (1.0 + 0.1 * z).max(0.01);
     }
 
-    // Precomputed E[log beta_kw] — recomputed each batch
+    // Precomputed E[log beta_kw] - recomputed each batch
     let mut elog_beta = vec![0.0_f64; n_topics * n_words];
 
     let mut t = 0usize;
@@ -368,7 +368,7 @@ fn update_elog_beta(lambda: &[f64], out: &mut [f64], n_topics: usize, n_words: u
     }
 }
 
-/// Topic coherence NPMI — higher = better. Useful as an intrinsic quality metric
+/// Topic coherence NPMI - higher = better. Useful as an intrinsic quality metric
 /// without needing a gold-standard label set. Not used in the fit; caller may
 /// invoke this post-hoc on the topic_word matrix.
 pub fn topic_coherence_npmi(

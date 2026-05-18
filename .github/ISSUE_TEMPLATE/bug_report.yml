@@ -6,7 +6,7 @@ body:
     id: summary
     attributes:
       label: Summary
-      description: One sentence — what happened.
+      description: One sentence - what happened.
     validations:
       required: true
   - type: textarea

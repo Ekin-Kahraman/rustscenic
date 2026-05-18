@@ -15,7 +15,7 @@ Each install path must succeed in a clean Python venv with no prior rustscenic d
 | Benchmarks | `pip install "rustscenic[benchmarks] @ git+...@vX.Y.Z"` | + tomotopy, gensim, psutil |
 | Reference Docker | `docker build -t rustscenic-ref validation/reference/` then run | Pinned 2024-stack arboreto/pyscenic for reproducible parity |
 
-Status as of v0.3.10: Core, Examples, Validation, Benchmarks verified via the install-matrix CI job (5f6379e + 87edae8). Reference is pinned but informational-only — pyscenic itself fails to import on current setuptools (>=81) due to its `pkg_resources` use; canonical reference path is the pinned Docker image.
+Status as of v0.3.10: Core, Examples, Validation, Benchmarks verified via the install-matrix CI job (5f6379e + 87edae8). Reference is pinned but informational-only - pyscenic itself fails to import on current setuptools (>=81) due to its `pkg_resources` use; canonical reference path is the pinned Docker image.
 
 ## 2. Script smoke tests
 
@@ -31,9 +31,9 @@ Each must run from a fresh venv after the corresponding extra is installed, with
 Status as of v0.3.10:
 - `examples/pbmc3k_end_to_end.py`: ✅ verified live on v0.3.6 (41,338 edges, 4/4 canonical regulons in expected lineages, 13.5 s wall, fresh tmp dir)
 - `examples/atac_fragments_to_matrix.py`: ✅ covered by `tests/test_preproc_python_api.py` (11 tests pass)
-- Full `pipeline.run` (RNA + ATAC + motifs + enhancer + eRegulon): ✅ covered by `tests/test_full_scenicplus_smoke.py` (2 pass) + `tests/test_pipeline_integration.py` (10 pass — multiome, cellxgene-shaped RNA, gene coords, gibbs topics, region cistarget, rankings parsing)
-- Real PBMC multiome end-to-end via public orchestrator: ✅ proven on v0.3.9 (`validation/multiome_pipeline_run_v0.3.9.json` — 2,767 cells, 2.22M GRN edges, 1,420 regulons, 8,621 enhancer links, **1,091 eRegulons**, 451 s pipeline.run wall, 3.67 GB peak RSS, Apple M5)
-- Real mouse brain E18 multiome end-to-end via same public orchestrator (generalisation across species, tissue, developmental stage): ✅ proven on v0.3.10 (`validation/multiome_pipeline_run_v0.3.10_brain_e18.json` — 4,770 cells, 2.74M GRN edges, 1,407 regulons, 7,620 enhancer links, **1,125 eRegulons**, 826 s pipeline.run wall, 4.01 GB peak RSS, **9/9 expected E18 cortex marker TFs (Pax6/Neurod2/Sox2/Ascl1/Tbr1/Neurog2/Fezf2/Eomes/Foxg1) recovered as regulons**)
+- Full `pipeline.run` (RNA + ATAC + motifs + enhancer + eRegulon): ✅ covered by `tests/test_full_scenicplus_smoke.py` (2 pass) + `tests/test_pipeline_integration.py` (10 pass - multiome, cellxgene-shaped RNA, gene coords, gibbs topics, region cistarget, rankings parsing)
+- Real PBMC multiome end-to-end via public orchestrator: ✅ proven on v0.3.9 (`validation/multiome_pipeline_run_v0.3.9.json` - 2,767 cells, 2.22M GRN edges, 1,420 regulons, 8,621 enhancer links, **1,091 eRegulons**, 451 s pipeline.run wall, 3.67 GB peak RSS, Apple M5)
+- Real mouse brain E18 multiome end-to-end via same public orchestrator (generalisation across species, tissue, developmental stage): ✅ proven on v0.3.10 (`validation/multiome_pipeline_run_v0.3.10_brain_e18.json` - 4,770 cells, 2.74M GRN edges, 1,407 regulons, 7,620 enhancer links, **1,125 eRegulons**, 826 s pipeline.run wall, 4.01 GB peak RSS, **9/9 expected E18 cortex marker TFs (Pax6/Neurod2/Sox2/Ascl1/Tbr1/Neurog2/Fezf2/Eomes/Foxg1) recovered as regulons**)
 
 Aggregate as of v0.4.1: **169 Python tests pass (1 skipped) + 57 Rust inline tests pass (grn 12, topics 8, preproc 32, aucell 5). Bit-identical determinism verified live (68,565-edge GRN identical under same seed). Real-data full SCENIC+ E2E via public `pipeline.run` produces non-empty eRegulons on two real datasets across human PBMC and mouse embryonic brain.**
 
@@ -50,12 +50,12 @@ Anchor claims at v0.3.10:
 | "GitHub Release wheels and source install succeed" | release.yml tag workflow builds wheels + sdist and smoke-installs the sdist in a fresh venv before upload | ✓ configured in release workflow |
 | AUCell wall-time numbers (Ziegler, Multiome) | `validation/aucell_celltype_pbmc10k.py` log | ⚠ pre-existing logs, not regenerated per release |
 | AUCell per-cell Pearson 0.984 mean | `validation/validate_aucell_pbmc10k.py` log | ⚠ same |
-| GRN per-edge Spearman 0.611 vs arboreto (current pyscenic 0.12.1, fresh fixture) | `validation/parity_v0310/grn_parity_pbmc3k_full.json` — rustscenic v0.3.10 + arboreto 0.1.6 + pyscenic 0.12.1 + dask 2024.1.1 inside `rustscenic-ref:0.12.1` Docker image, identical PBMC 3k fixture, seed 777, n_estimators=5000. Within-TF Spearman mean 0.632, 1.78× speedup. | ✅ proven on v0.3.10 |
+| GRN per-edge Spearman 0.611 vs arboreto (current pyscenic 0.12.1, fresh fixture) | `validation/parity_v0310/grn_parity_pbmc3k_full.json` - rustscenic v0.3.10 + arboreto 0.1.6 + pyscenic 0.12.1 + dask 2024.1.1 inside `rustscenic-ref:0.12.1` Docker image, identical PBMC 3k fixture, seed 777, n_estimators=5000. Within-TF Spearman mean 0.632, 1.78× speedup. | ✅ proven on v0.3.10 |
 | Cistarget kernel Pearson 1.0000 vs ctxcore | log file | ⚠ requires `[reference]` |
 | 100k-cell bootstrap 17 min / 5 GB peak RSS | scaling logs | ⚠ requires real data |
 | Bit-identical output under same seed | `crates/rustscenic-grn/src/rng.rs` + `crates/rustscenic-topics/src/gibbs.rs` inline tests + live 68,565-edge GRN reproducibility check | ✅ proven |
-| End-to-end real PBMC multiome runs without hand-holding | `validation/multiome_pipeline_run_v0.3.9.json` — single `pipeline.run` call on real 10x pbmc_unsorted_3k produces 1,091 eRegulons via the public orchestrator | ✅ proven on v0.3.9 (caller pre-subsets ATAC via `adata_atac=…`; raw-fragments-without-subsetting is a separate open item) |
-| End-to-end multiome generalises across species + tissue (not human-PBMC-only) | `validation/multiome_pipeline_run_v0.3.10_brain_e18.json` — same public `pipeline.run` path on 10x e18_mouse_brain_fresh_5k produces 1,125 eRegulons with 9/9 expected cortex marker TFs (Pax6/Neurod2/Sox2/Ascl1/Tbr1/Neurog2/Fezf2/Eomes/Foxg1) recovered as regulons | ✅ proven on v0.3.10 |
+| End-to-end real PBMC multiome runs without hand-holding | `validation/multiome_pipeline_run_v0.3.9.json` - single `pipeline.run` call on real 10x pbmc_unsorted_3k produces 1,091 eRegulons via the public orchestrator | ✅ proven on v0.3.9 (caller pre-subsets ATAC via `adata_atac=…`; raw-fragments-without-subsetting is a separate open item) |
+| End-to-end multiome generalises across species + tissue (not human-PBMC-only) | `validation/multiome_pipeline_run_v0.3.10_brain_e18.json` - same public `pipeline.run` path on 10x e18_mouse_brain_fresh_5k produces 1,125 eRegulons with 9/9 expected cortex marker TFs (Pax6/Neurod2/Sox2/Ascl1/Tbr1/Neurog2/Fezf2/Eomes/Foxg1) recovered as regulons | ✅ proven on v0.3.10 |
 
 The `⚠` and `❌` rows are the publication-threshold bottleneck.
 
@@ -63,21 +63,21 @@ The `⚠` and `❌` rows are the publication-threshold bottleneck.
 
 The release is "publishable end-to-end" only when ALL of:
 
-- [x] Fresh install works on the **publicly tested** install paths (core ✓, examples ✓, validation ✓, benchmarks ✓ via the install-matrix CI job added in 5f6379e; reference is informational-only because pyscenic itself fails to import on current setuptools — README documents this; canonical reference path is the pinned Docker image)
+- [x] Fresh install works on the **publicly tested** install paths (core ✓, examples ✓, validation ✓, benchmarks ✓ via the install-matrix CI job added in 5f6379e; reference is informational-only because pyscenic itself fails to import on current setuptools - README documents this; canonical reference path is the pinned Docker image)
 - [x] Synthetic full SCENIC+ end-to-end completes via `pipeline.run` (preproc → grn → cistarget → enhancer → eRegulon → aucell, covered by `test_full_scenicplus_smoke.py` + `test_pipeline_integration.py`, 12 passing)
-- [x] **Real-data PBMC RNA+ATAC partial smoke** in fresh venv (`validation/multiome_pbmc_3k_v0.3.6.json` — RNA QC + GRN + AUCell + ATAC topics + biology-presence check. 5/5 canonical PBMC TFs in regulon set, 2.3 GB peak RSS. Does NOT yet exercise cistarget / enhancer / eRegulon on real data.)
+- [x] **Real-data PBMC RNA+ATAC partial smoke** in fresh venv (`validation/multiome_pbmc_3k_v0.3.6.json` - RNA QC + GRN + AUCell + ATAC topics + biology-presence check. 5/5 canonical PBMC TFs in regulon set, 2.3 GB peak RSS. Does NOT yet exercise cistarget / enhancer / eRegulon on real data.)
 - [x] Memory/time table has hardware, dataset, command, version baked in alongside numbers (per-stage wall+RSS, tag SHA, MD5 of dataset files, env, install command)
 - [x] Bit-identical determinism under same seed verified (live + Rust inline tests)
 - [x] Docs tell users exactly which install path to use (`docs/tester-quickstart.md` ✓)
 - [x] Release workflow checks wheel/sdist build and smoke-installs the sdist on every tag push; the audit install-matrix continues to cover install paths on main/PR runs
-- [x] **Real-data full-stage smoke** exercising grn + aucell + topics + cistarget + enhancer-link + eRegulon on real PBMC multiome (`validation/multiome_pipeline_run_v0.3.9.json` — all 6 SCENIC+ stages emit non-empty artefacts via a single `pipeline.run` call)
+- [x] **Real-data full-stage smoke** exercising grn + aucell + topics + cistarget + enhancer-link + eRegulon on real PBMC multiome (`validation/multiome_pipeline_run_v0.3.9.json` - all 6 SCENIC+ stages emit non-empty artefacts via a single `pipeline.run` call)
 - [x] **Real-data eRegulon assembly** via the public orchestrator (`pipeline.run` on real PBMC produced 1,091 eRegulons in v0.3.9; closed by `adata_atac` (v0.3.8) + alt-contig regex fix (v0.3.9))
-- [ ] **Real-data `pipeline.run` on raw 10x output** without caller-side ATAC pre-subset (open: v0.3.7 attempt wedged at GRN for >3h with topics running over the unsubsetted 451k-barcode matrix. Workaround: caller subsets ATAC to RNA-QC'd cells and passes `adata_atac=…` (the v0.3.9 path). Real fix requires either an in-orchestrator subset step or fragments-side prefilter — tracked, low priority since the documented workflow subsets first.)
-- [x] **SCENIC+/pySCENIC parity numbers regenerated against current pyscenic** (`validation/parity_v0310/grn_parity_pbmc3k_full.json` — rustscenic v0.3.10 vs pyscenic 0.12.1 + arboreto 0.1.6, identical PBMC 3k fixture from `rustscenic-ref:0.12.1`. Per-edge Spearman 0.611 on 480,680 shared edges, within-TF Spearman mean 0.632, 1.78× wall speedup, n_edges 1.14M vs 0.95M. Cistarget kernel parity remains a separate open item.)
+- [ ] **Real-data `pipeline.run` on raw 10x output** without caller-side ATAC pre-subset (open: v0.3.7 attempt wedged at GRN for >3h with topics running over the unsubsetted 451k-barcode matrix. Workaround: caller subsets ATAC to RNA-QC'd cells and passes `adata_atac=…` (the v0.3.9 path). Real fix requires either an in-orchestrator subset step or fragments-side prefilter - tracked, low priority since the documented workflow subsets first.)
+- [x] **SCENIC+/pySCENIC parity numbers regenerated against current pyscenic** (`validation/parity_v0310/grn_parity_pbmc3k_full.json` - rustscenic v0.3.10 vs pyscenic 0.12.1 + arboreto 0.1.6, identical PBMC 3k fixture from `rustscenic-ref:0.12.1`. Per-edge Spearman 0.611 on 480,680 shared edges, within-TF Spearman mean 0.632, 1.78× wall speedup, n_edges 1.14M vs 0.95M. Cistarget kernel parity remains a separate open item.)
 
-v0.3.10 satisfies **10 of 11** publication-threshold items (count: `[x]` items above). The remaining unchecked item — `pipeline.run` on raw 10x without caller-side subset — is a documented workflow caveat, not a correctness gap.
+v0.3.10 satisfies **10 of 11** publication-threshold items (count: `[x]` items above). The remaining unchecked item - `pipeline.run` on raw 10x without caller-side subset - is a documented workflow caveat, not a correctness gap.
 
-Separately on **stage coverage** on real data (different metric — counts SCENIC+ compute stages, not gate items): 6 of 6 user-facing stages exercised end-to-end on real PBMC multiome (grn, aucell, topics, cistarget, enhancer-link, eRegulon) via a single `pipeline.run` call (v0.3.9 — see `validation/multiome_pipeline_run_v0.3.9.json`). The remaining v0.4 work is regenerated parity numbers vs current pyscenic + closing the raw-10x-without-subsetting orchestrator path.
+Separately on **stage coverage** on real data (different metric - counts SCENIC+ compute stages, not gate items): 6 of 6 user-facing stages exercised end-to-end on real PBMC multiome (grn, aucell, topics, cistarget, enhancer-link, eRegulon) via a single `pipeline.run` call (v0.3.9 - see `validation/multiome_pipeline_run_v0.3.9.json`). The remaining v0.4 work is regenerated parity numbers vs current pyscenic + closing the raw-10x-without-subsetting orchestrator path.
 
 ## 5. What changes from v0.3.6 to a publishable release
 

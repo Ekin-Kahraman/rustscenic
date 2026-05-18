@@ -11,7 +11,7 @@ either:
 
 Both must produce bit-identical per-cell AUC. These tests assert that.
 
-Not testing R or an actual conversion — that requires a full R session
+Not testing R or an actual conversion - that requires a full R session
 and is covered by documentation. These tests guard the Python side of
 the bridge.
 """
@@ -73,7 +73,7 @@ def test_zellkonverter_style_ensembl_in_var_names():
 def test_seurat_default_assay_with_log_normalised_layer_pattern():
     """Seurat+SeuratDisk export sometimes puts the log-normalised
     matrix in a named layer rather than X. Users are instructed to
-    `adata.X = adata.layers["logcounts"]` — this test documents that
+    `adata.X = adata.layers["logcounts"]` - this test documents that
     the resulting AnnData works fine."""
     X_raw = (np.random.default_rng(0).poisson(5, size=(100, 40)) + 1).astype(np.float32)
     X_logcounts = np.log1p(X_raw / X_raw.sum(axis=1, keepdims=True) * 1e4).astype(np.float32)

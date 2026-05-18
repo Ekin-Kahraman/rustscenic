@@ -60,7 +60,7 @@ class TestAucellEdgeCases:
 
     def test_duplicate_gene_names_auto_dedupes_with_warning(self, rng):
         """Duplicate symbols (common after ENSEMBL→HGNC swap) sum rather
-        than raise — losing half the signal to a cryptic error is the
+        than raise - losing half the signal to a cryptic error is the
         silent-regression class we're here to prevent."""
         import warnings
 
@@ -161,7 +161,7 @@ def test_aucell_top_frac_over_one_raises():
 
 
 def test_aucell_top_frac_high_warns():
-    """Unusually high top_frac saturates regulons — warn so users notice."""
+    """Unusually high top_frac saturates regulons - warn so users notice."""
     import warnings
     import numpy as np
     rng = np.random.default_rng(0)
@@ -187,7 +187,7 @@ def test_aucell_accepts_dict_regulons():
 
 def test_aucell_backed_anndata_materialises_cleanly():
     """Backed AnnData (read_h5ad(..., backed='r')) must work without
-    a cryptic IndexError — real users use this for large files."""
+    a cryptic IndexError - real users use this for large files."""
     import anndata as ad
     import numpy as np
     import scipy.sparse as sp

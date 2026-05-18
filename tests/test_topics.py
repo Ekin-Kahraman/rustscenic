@@ -9,7 +9,7 @@ import rustscenic.topics as topics
 
 @pytest.fixture
 def synthetic_atac_2_topics():
-    """Cells with two distinct peak programs — LDA should find both."""
+    """Cells with two distinct peak programs - LDA should find both."""
     n_cells, n_peaks = 200, 40
     # Topic A: peaks 0-9; Topic B: peaks 20-29
     X = np.zeros((n_cells, n_peaks), dtype=np.int32)

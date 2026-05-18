@@ -38,7 +38,7 @@ RNA+ATAC rustscenic at atlas scale is demonstrated, not claimed.
       atlas scale.
 - [ ] **PyO3 buffer borrow**: `grn_infer` and `aucell_score` copy the
       NumPy input into a `Vec<f32>`. Use `PyArray.as_array()` to borrow
-      instead — halves peak RSS on large matrices.
+      instead - halves peak RSS on large matrices.
 - [ ] **Missing tests**: `pipeline.run`, `data.tfs`, `data.download_motif_rankings`,
       `quickstart.main`. Each is advertised, each is untested.
 
@@ -61,7 +61,7 @@ don't want to assemble stages themselves.
 
 ## Longer-term (month+)
 
-- [ ] **Collapsed Gibbs topic model** — replaces the Online VB LDA
+- [ ] **Collapsed Gibbs topic model** - replaces the Online VB LDA
       that collapses aggressively on sparse binary scATAC
       (docs/topic-collapse.md). v0.2 candidate; only ship if we can
       match Mallet NPMI.
@@ -72,7 +72,7 @@ don't want to assemble stages themselves.
 - [ ] **Seurat interop beyond the docs**: actually pipe a Seurat object
       through a 10-line wrapper. `docs/seurat-interop.md` exists but
       no exercised path.
-- [ ] **Manuscript preprint** — `manuscript/rustscenic_preprint.md`
+- [ ] **Manuscript preprint** - `manuscript/rustscenic_preprint.md`
       exists; decide target venue (Bioinformatics? Nature Methods tools?)
       once 100k-scale run is in hand.
 
@@ -91,7 +91,7 @@ don't want to assemble stages themselves.
 ## What NOT to do
 
 - Don't expand API surface before v0.2 ships. Robustness first.
-- Don't re-architect `rustscenic-core` after removing it — we had
+- Don't re-architect `rustscenic-core` after removing it - we had
   zero imports from it, and re-adding pre-emptively is the premature
   abstraction the user explicitly rejected.
 - Don't port `link_peaks_to_genes` to Rust yet. The Python version is

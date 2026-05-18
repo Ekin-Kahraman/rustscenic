@@ -6,7 +6,7 @@ means the motif is enriched for that regulon. The aertslab feather-format
 ranking databases (hg38_10kb_up_and_down_tss.feather etc.) provide the
 per-motif gene rankings.
 
-We reuse rustscenic's aucell core — the algorithm is mathematically identical,
+We reuse rustscenic's aucell core - the algorithm is mathematically identical,
 just applied to motif rankings rather than per-cell expression rankings. This
 module is a thin wrapper that:
 
@@ -80,7 +80,7 @@ def enrich(
     full motif universe (matching pyscenic ``transform.py`` and pycistarget
     ``motif_enrichment_cistarget.py``).
     """
-    # Expect motifs as rows, genes as columns. Refuse to guess orientation —
+    # Expect motifs as rows, genes as columns. Refuse to guess orientation -
     # a wrong guess silently produces an empty result.
     motif_names = list(rankings.index)
     gene_names = list(rankings.columns)
@@ -91,12 +91,12 @@ def enrich(
         )
     if not np.all(np.isfinite(rankings.values)):
         raise ValueError(
-            "rankings contain NaN or Inf values — motif enrichment is "
+            "rankings contain NaN or Inf values - motif enrichment is "
             "undefined on non-finite ranks. Load the feather file cleanly "
             "(aertslab feathers are int16) and check for upstream corruption."
         )
     # Convert rankings (lower = better) into "expression" (higher = better)
-    # by negating — AUCell's recovery AUC expects descending sort by value.
+    # by negating - AUCell's recovery AUC expects descending sort by value.
     # Use -rank so smaller rank maps to larger pseudo-expression.
     scores = -rankings.values.astype(np.float32)
 
@@ -128,7 +128,7 @@ def enrich(
     if dropped_empty > 0 and not reg_names:
         import warnings
         warnings.warn(
-            f"all {dropped_empty} regulons dropped — none of their genes appear "
+            f"all {dropped_empty} regulons dropped - none of their genes appear "
             f"in the rankings DataFrame columns. Common causes: (1) rankings "
             f"indexed by ENSEMBL while regulons use gene symbols; (2) species "
             f"mismatch between rankings (e.g. hg38) and regulons (e.g. mouse "
@@ -166,7 +166,7 @@ def enrich(
     long = long.reset_index(drop=True)
     long = long[long["auc"] >= auc_threshold]
     if nes_threshold is not None:
-        # NaN NES rows are dropped here by design — NES is undefined for them.
+        # NaN NES rows are dropped here by design - NES is undefined for them.
         long = long[long["nes"].notna() & (long["nes"] >= nes_threshold)]
     long = long.sort_values("auc", ascending=False).reset_index(drop=True)
     return long[["regulon", "motif", "auc", "nes"]]

@@ -22,7 +22,7 @@ pub struct Peak {
     pub name: String,
 }
 
-/// Columnar peak table — one Vec per column.
+/// Columnar peak table - one Vec per column.
 ///
 /// `chrom` interned into `chrom_names` so peak–fragment joins can
 /// be done by `u32` equality rather than string compare.
@@ -69,7 +69,7 @@ impl PeakTable {
     /// the `chrM` / `chrMT` / `MT` mitochondrial aliases. Without this
     /// normalisation, a peak BED with Ensembl chrom names against a
     /// fragments file with UCSC chrom names silently drops every peak
-    /// — the same silent-zero failure class as the cellxgene ENSEMBL
+    /// - the same silent-zero failure class as the cellxgene ENSEMBL
     /// var_names bug, just in a different layer.
     ///
     /// Use this before joining peaks to fragments so chromosome

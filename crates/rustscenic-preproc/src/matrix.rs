@@ -208,7 +208,7 @@ chr3\t1\t100\tnowhere
         let f = read_fragments_from(Cursor::new(FRAGS)).unwrap();
         let p = read_peaks_from(Cursor::new(PEAKS)).unwrap();
         let (mtx, _, _) = build_cell_peak_matrix(&f, &p);
-        // peak on chr3 should contribute 0 counts — check no row has a non-zero at col 3 (nowhere)
+        // peak on chr3 should contribute 0 counts - check no row has a non-zero at col 3 (nowhere)
         for row in 0..mtx.n_rows {
             let s = mtx.indptr[row] as usize;
             let e = mtx.indptr[row + 1] as usize;

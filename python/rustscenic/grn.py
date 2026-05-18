@@ -103,10 +103,10 @@ def infer(
     tfs_list = list(tf_names)
     if not tfs_list:
         import warnings
-        warnings.warn("empty TF list — returning empty DataFrame", UserWarning, stacklevel=2)
+        warnings.warn("empty TF list - returning empty DataFrame", UserWarning, stacklevel=2)
 
     # Report TF-list / gene-list overlap. Zero overlap is the specific
-    # failure mode users hit on cellxgene-curated h5ads — the TF list is
+    # failure mode users hit on cellxgene-curated h5ads - the TF list is
     # gene symbols, var_names are ENSEMBL IDs. `_coerce_expression` now
     # auto-resolves the convention, but the user can still pass a
     # mismatched TF list (e.g. mouse TFs against a human dataset).
@@ -118,7 +118,7 @@ def infer(
         hint = diagnose_zero_tf_overlap(tfs_list, gene_names)
         warnings.warn(
             f"none of the {len(tfs_list)} supplied TFs match any gene in the "
-            f"expression matrix — returning empty DataFrame. {hint}",
+            f"expression matrix - returning empty DataFrame. {hint}",
             UserWarning, stacklevel=2,
         )
     elif tfs_list and len(tfs_present) < 0.2 * len(tfs_list):
@@ -142,7 +142,7 @@ def infer(
         warnings.warn(
             f"only {n_samples} samples for {X.shape[1]:,} genes and "
             f"{len(tfs_present)} TFs. GRN edge rankings are unstable in this "
-            f"regime regardless of implementation — a GBM with n_estimators="
+            f"regime regardless of implementation - a GBM with n_estimators="
             f"{n_estimators} memorises the training set trivially. Consider "
             f"running on cell-level (not pseudobulk) input, or apply "
             f"`top_targets_per_tf=...` / `min_importance=...` to extract a "
@@ -155,7 +155,7 @@ def infer(
     import sys, time
     if verbose:
         print(
-            f"[rustscenic.grn] fitting GRNBoost2 — {X.shape[0]:,} cells × "
+            f"[rustscenic.grn] fitting GRNBoost2 - {X.shape[0]:,} cells × "
             f"{X.shape[1]:,} genes × {len(tfs_list)} TFs × "
             f"n_estimators={n_estimators} (early-stop window={early_stop_window}). "
             f"Running in parallel, this can take seconds to tens of minutes "
@@ -200,7 +200,7 @@ def infer(
     if verbose:
         if raw_n != len(df):
             print(
-                f"[rustscenic.grn] done in {wall:.1f}s — fit emitted {raw_n:,} "
+                f"[rustscenic.grn] done in {wall:.1f}s - fit emitted {raw_n:,} "
                 f"edges, returning {len(df):,} after truncation "
                 f"(top_targets_per_tf={top_targets_per_tf}, "
                 f"min_importance={min_importance}).",
@@ -208,7 +208,7 @@ def infer(
             )
         else:
             print(
-                f"[rustscenic.grn] done in {wall:.1f}s — {len(df):,} edges.",
+                f"[rustscenic.grn] done in {wall:.1f}s - {len(df):,} edges.",
                 file=sys.stderr, flush=True,
             )
     return df
@@ -225,14 +225,14 @@ def _coerce_expression(expression):
     """
     from rustscenic._gene_resolution import resolve_gene_names
     if hasattr(expression, "X") and hasattr(expression, "var_names"):
-        # AnnData. Handle backed ('r') mode explicitly — _CSRDataset /
+        # AnnData. Handle backed ('r') mode explicitly - _CSRDataset /
         # _CSCDataset doesn't have .toarray() and np.asarray() on it
         # returns a 0-d array, triggering a cryptic IndexError downstream.
         if getattr(expression, "isbacked", False):
             import warnings
             warnings.warn(
                 "AnnData is backed (disk-resident). Materialising X to "
-                "dense in memory for GRN — if this OOMs, subset cells "
+                "dense in memory for GRN - if this OOMs, subset cells "
                 "or genes before passing to rustscenic.grn.infer.",
                 UserWarning, stacklevel=3,
             )

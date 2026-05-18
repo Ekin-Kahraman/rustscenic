@@ -1,7 +1,7 @@
 """Type stubs for the rustscenic PyO3 extension.
 
 These reflect the real signatures in crates/rustscenic-py/src/lib.rs.
-Kept in sync by convention — CI's import-smoke step will complain loudly
+Kept in sync by convention - CI's import-smoke step will complain loudly
 if these drift.
 """
 from __future__ import annotations

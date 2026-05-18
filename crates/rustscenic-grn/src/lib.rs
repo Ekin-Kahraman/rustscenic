@@ -18,7 +18,7 @@
 //!
 //! Biology still agrees: 94% known edges recovered (PBMC-3k), 8/8 lineage TFs
 //! correctly enriched (PBMC-10k). Downstream AUCell is 0.99 per-cell Pearson
-//! with pyscenic — fine-edge disagreement does not propagate to regulon
+//! with pyscenic - fine-edge disagreement does not propagate to regulon
 //! activity. See `validation/parity_v0310/grn_parity_pbmc3k_full.json`.
 
 pub mod gbm;

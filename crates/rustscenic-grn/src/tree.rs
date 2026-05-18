@@ -1,7 +1,7 @@
 //! Histogram-based regression decision tree.
 //!
 //! Per-split partitioning uses two local `Vec<usize>` buffers (left/right) with
-//! sequential push() — cache-friendly sequential writes. Explicit allocation
+//! sequential push() - cache-friendly sequential writes. Explicit allocation
 //! per split is cheaper than in-place Hoare partition's random swaps at tree
 //! sizes typical of arboreto-style GBM (depth-3 trees on 100-10000 samples).
 //!
@@ -88,7 +88,7 @@ pub fn fit_tree_with_scratch(
     rng: &mut impl RngCore,
 ) {
     // feat_pool reset happens inside choose_feature_subset per call now.
-    // Root samples are passed through as a borrowed slice — the extra
+    // Root samples are passed through as a borrowed slice - the extra
     // `to_vec()` copy was pure allocation overhead per tree.
     build_node_rec(
         binned,
@@ -152,7 +152,7 @@ fn build_node_rec(
 
     if let Some((feature, bin_threshold, gain)) = best {
         gains[feature] += gain;
-        // Pooled partition buffers — see TreeScratch::partition_bufs comment.
+        // Pooled partition buffers - see TreeScratch::partition_bufs comment.
         let mut left_samples = scratch.take_partition_buf(samples.len() / 2);
         let mut right_samples = scratch.take_partition_buf(samples.len() / 2);
         // Column-major bin layout: one feature's column is contiguous,
@@ -203,7 +203,7 @@ fn build_node_rec(
             right,
         };
 
-        // Return buffers AFTER the recursive calls finish — those calls borrow
+        // Return buffers AFTER the recursive calls finish - those calls borrow
         // the slices, so the Vecs must outlive them.
         scratch.return_partition_buf(left_samples);
         scratch.return_partition_buf(right_samples);

@@ -14,7 +14,7 @@ pub const MAX_BINS: usize = 255; // fits in u8 with 0 reserved as "unassigned"
 
 /// Column-major binned features. `bins[f * n_samples + s]` = bin index of
 /// sample s on feature f. Column-major because the dominant op (NodeHist
-/// accumulate, tree partition) reads one feature's column at a time —
+/// accumulate, tree partition) reads one feature's column at a time -
 /// row-major would stride by n_features bytes per access and trash the
 /// cache. Switching to column-major fits each column in L1/L2 for the
 /// typical (3k–100k samples × 30k features) shape.
@@ -27,14 +27,14 @@ pub struct BinnedMatrix {
 
 impl BinnedMatrix {
     /// Build bins using quantile cut points per feature.
-    /// Cells with the same value can end up in the same bin — we dedup cut points.
+    /// Cells with the same value can end up in the same bin - we dedup cut points.
     pub fn from_dense(x: &[f32], n_samples: usize, n_features: usize) -> Self {
         assert_eq!(x.len(), n_samples * n_features);
-        // Reject NaN up front — silent corruption via NaN in partial_cmp + partition_point.
+        // Reject NaN up front - silent corruption via NaN in partial_cmp + partition_point.
         // Fail fast with clear message rather than producing plausible-looking wrong bins.
         if x.iter().any(|v| v.is_nan()) {
             panic!(
-                "input expression matrix contains NaN values — \
+                "input expression matrix contains NaN values - \
                 binarization semantics are undefined. \
                 Clean upstream: scanpy.pp.normalize_total + sc.pp.log1p can produce \
                 NaN from 0-count cells; filter cells with min_genes first."

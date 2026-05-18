@@ -173,7 +173,7 @@ pub fn fit_and_importances_binned_with_scratch(
         }
     }
 
-    // Denormalize per arboreto/core.py:168 — × trained_regressor.estimators_.shape[0]
+    // Denormalize per arboreto/core.py:168 - × trained_regressor.estimators_.shape[0]
     let total: f32 = scratch.importances.iter().sum();
     if total > 0.0 {
         for v in &mut scratch.importances {

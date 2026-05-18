@@ -45,10 +45,10 @@ pub fn aucell(
         "top_frac must be in (0, 1]"
     );
 
-    // Reject NaN in expression — silent corruption via partial_cmp tie-breaks.
+    // Reject NaN in expression - silent corruption via partial_cmp tie-breaks.
     if expression.iter().any(|v| v.is_nan()) {
         panic!(
-            "expression matrix contains NaN values — AUCell ranking is undefined. \
+            "expression matrix contains NaN values - AUCell ranking is undefined. \
             Filter upstream (scanpy.pp.normalize_total + sc.pp.log1p on raw count \
             matrices, or drop rows with all-zero expression first)."
         );
@@ -144,7 +144,7 @@ mod tests {
         // top_frac=0.4 -> rank_cutoff = round(0.4*5)-1 = 1 (ctxcore R-compat).
         // Only gene 0 has rank 0 < 1, auc_sum = (1 - 0) * 1 = 1.
         // max_auc = (rank_cutoff+1) * |G| = 2 * 1 = 2.
-        // Expected: 1 / 2 = 0.5 — verified equal to ctxcore.recovery.aucs output.
+        // Expected: 1 / 2 = 0.5 - verified equal to ctxcore.recovery.aucs output.
         let expr = vec![10.0_f32, 1.0, 1.0, 1.0, 1.0];
         let regs = vec![("R".to_string(), vec![0])];
         let out = aucell(&expr, 1, 5, &regs, 0.4);

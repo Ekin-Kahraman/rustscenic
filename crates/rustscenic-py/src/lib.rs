@@ -78,7 +78,7 @@ fn grn_infer<'py>(
     }
     // Borrow the numpy buffer when it's already C-contiguous (the Python
     // wrapper ensures this via np.ascontiguousarray). Falls back to a copy
-    // only for non-standard-layout inputs — avoids a doubled peak RSS on
+    // only for non-standard-layout inputs - avoids a doubled peak RSS on
     // 100k × 30k matrices, which is ~12 GB at f32.
     let owned_fallback;
     let expr_slice: &[f32] = if let Some(s) = arr.as_slice() {
@@ -249,7 +249,7 @@ fn topics_fit<'py>(
 
 /// Fit collapsed-Gibbs LDA on a sparse (docs x words) matrix.
 ///
-/// The Mallet-class topic model — better topic-coherence (NPMI) on sparse
+/// The Mallet-class topic model - better topic-coherence (NPMI) on sparse
 /// scATAC at K ≥ 30 than online VB, at the cost of thousands of
 /// iterations instead of tens of passes. Returns (theta, beta) as two
 /// numpy arrays of shape (n_docs, n_topics) and (n_topics, n_words).

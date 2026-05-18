@@ -10,7 +10,7 @@ name: Nightly real-data validation
 
 on:
   schedule:
-    # 04:17 UTC Mondays — offset from the hour so we don't compete with
+    # 04:17 UTC Mondays - offset from the hour so we don't compete with
     # every other nightly job in the GitHub-hosted runner queue.
     - cron: "17 4 * * 1"
   workflow_dispatch:
@@ -43,5 +43,5 @@ jobs:
       - name: Report on failure
         if: failure()
         run: |
-          echo "::error::Kamath validation failed — upstream schema change or regression."
+          echo "::error::Kamath validation failed - upstream schema change or regression."
           echo "Rerun locally: python validation/kamath/validate_kamath_fix.py"

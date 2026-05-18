@@ -1,4 +1,4 @@
-"""Enhancer-to-gene linking — the SCENIC+ distinguishing step.
+"""Enhancer-to-gene linking - the SCENIC+ distinguishing step.
 
 pySCENIC scores regulons as "TF → its top-N co-expressed target genes".
 SCENIC+ upgrades this by **grounding regulation in chromatin**:
@@ -10,7 +10,7 @@ SCENIC+ upgrades this by **grounding regulation in chromatin**:
 
 The enhancer-to-gene edge is what this module produces. Combined with
 the motif-to-enhancer and TF-to-target edges rustscenic already
-computes, it's the raw material for eRegulons — the chromatin-aware
+computes, it's the raw material for eRegulons - the chromatin-aware
 regulons that are scenicplus's distinguishing output.
 
 This module requires **matched cells**: every cell in ``rna_adata.obs_names``
@@ -21,7 +21,7 @@ CCA or Harmony-style integration needs to happen upstream.
 Complexity:
   O(n_peaks × max_genes_in_window × n_cells) where max_genes_in_window
   is typically 20–50. On 100k peaks × 30 candidate genes × 50k cells
-  that's ~150 GFLOPs — a few seconds in numpy on a single core.
+  that's ~150 GFLOPs - a few seconds in numpy on a single core.
 """
 from __future__ import annotations
 
@@ -95,7 +95,7 @@ def link_peaks_to_genes(
     genes_in_rna = genes[genes["gene"].isin(gene_rna_idx)].reset_index(drop=True)
     if genes_in_rna.empty:
         raise ValueError(
-            "no gene_coords genes match any gene name in rna_adata — "
+            "no gene_coords genes match any gene name in rna_adata - "
             "check species + symbol convention"
         )
 
@@ -131,7 +131,7 @@ def link_peaks_to_genes(
     # Keep ATAC sparse (CSC for fast column extraction); only RNA is
     # materialised dense. Densifying ATAC at atlas scale (100k+ cells ×
     # 30k+ peaks) causes a 24+ GB blow-up that thrashes laptop swap.
-    # The Pearson loop only ever needs one peak column at a time — see
+    # The Pearson loop only ever needs one peak column at a time - see
     # `_pearson_sparse_x_dense_Y` for the streaming sparse-aware path.
     import scipy.sparse as sp
 
@@ -234,7 +234,7 @@ def _align_cells(rna_adata, atac_adata):
     common = rna_adata.obs_names.intersection(atac_adata.obs_names)
     if len(common) == 0:
         raise ValueError(
-            "rna_adata and atac_adata share no cell barcodes — this function "
+            "rna_adata and atac_adata share no cell barcodes - this function "
             "requires matched multiome data. For separate scRNA + scATAC "
             "samples, integrate via CCA or scVI before calling."
         )
@@ -263,7 +263,7 @@ def _peak_frame(atac_adata, peak_coords) -> pd.DataFrame:
     parsed = _parse_peak_names(list(atac_adata.var_names))
     if parsed is None:
         raise ValueError(
-            "atac_adata has no peak coordinates — either include chrom/start/end "
+            "atac_adata has no peak coordinates - either include chrom/start/end "
             "columns in atac_adata.var, pass peak_coords explicitly, or use "
             "`chr:start-end` formatted var_names."
         )
@@ -296,7 +296,7 @@ def _parse_peak_names(names):
             return None
         start, end = int(m.group(2)), int(m.group(3))
         if start >= end:
-            # Inverted or zero-width interval — refuse silently to coerce
+            # Inverted or zero-width interval - refuse silently to coerce
             # rather than producing a row with a negative-width window.
             return None
         rows.append((m.group(1), start, end))
@@ -322,7 +322,7 @@ def _validate_gene_coords(gene_coords: pd.DataFrame) -> pd.DataFrame:
     if missing:
         raise ValueError(
             f"gene_coords missing columns: {missing}. Expected columns "
-            f"['gene', 'chrom', 'tss'] — use a GTF → DataFrame converter "
+            f"['gene', 'chrom', 'tss'] - use a GTF → DataFrame converter "
             f"like gtfparse, or extract from biomart / GENCODE."
         )
     out = gene_coords[["gene", "chrom", "tss"]].copy()
@@ -347,7 +347,7 @@ def _warn_if_densification_expensive_rna(rna_adata) -> None:
 
     Pearson `link_peaks_to_genes` keeps ATAC sparse (CSC) and only
     densifies RNA, so the bound is `n_cells × n_genes_rna × 4 bytes`.
-    Spearman currently still densifies both — the dense-both
+    Spearman currently still densifies both - the dense-both
     `_warn_if_densification_expensive` function below is kept for
     that path.
     """
@@ -370,7 +370,7 @@ def _warn_if_densification_expensive(rna_adata, atac_adata) -> None:
     """Warn before materialising large float32 matrices from sparse input.
 
     `link_peaks_to_genes` builds dense RNA and ATAC matrices for the
-    correlation loop. On 100k cells × 100k peaks that's 40 GB — a
+    correlation loop. On 100k cells × 100k peaks that's 40 GB - a
     common surprise for users who never saw the sparse-to-dense step.
     Raise a warning so a user can interrupt before their laptop swaps
     itself to death.
@@ -422,7 +422,7 @@ def _pearson_sparse_x_dense_Y(
     ``(n_cells, n_peaks)`` ATAC matrix. Mathematically equivalent to
     ``_pearson_matrix(x_dense, Y)`` to float32 precision.
 
-    Algorithm — for each gene column j:
+    Algorithm - for each gene column j:
         Pearson(x, Y[:, j]) = (E[x·Y_j] − μ_x μ_{Y_j}) / (σ_x σ_{Y_j})
 
     where:
@@ -430,7 +430,7 @@ def _pearson_sparse_x_dense_Y(
       σ_x = sqrt(sum(x_data^2)/n_cells − μ_x^2)
       μ_{Y_j}, σ_{Y_j} computed once over the dense block
       E[x·Y_j] = (x_data @ Y[x_indices, j]) / n_cells
-                       — only nonzeros contribute, so it's O(nnz)
+                       - only nonzeros contribute, so it's O(nnz)
     """
     x_data = x_data.astype(np.float64, copy=False)
     Y = Y.astype(np.float64, copy=False)

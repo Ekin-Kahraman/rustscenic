@@ -21,13 +21,13 @@ def _synthetic_multiome(seed: int = 0, n_cells: int = 500):
     """Build matched RNA + ATAC where:
       peak_0 on chr1:1000-1500 IS correlated with gene GENE_A (TSS at 1_250)
       peak_1 on chr1:60000-60500 IS correlated with gene GENE_C (TSS at 60_200)
-      peak_2 on chr1:200000-200500 (far from any gene) — should not link
+      peak_2 on chr1:200000-200500 (far from any gene) - should not link
     Other gene-peak pairs are independent noise.
     """
     rng = np.random.default_rng(seed)
     n_cells = n_cells
 
-    # Shared latent — drives both peak_0 and GENE_A
+    # Shared latent - drives both peak_0 and GENE_A
     latent_A = rng.normal(size=n_cells)
     latent_B = rng.normal(size=n_cells)
 
@@ -76,7 +76,7 @@ def test_links_correlated_peak_to_correlated_gene():
 
 def test_rejects_noise_peak_with_no_nearby_gene():
     """peak_2 on chr1:200000-200500 is far from every gene (nearest is
-    GENE_A at TSS 1,250, distance ~199kb — within default 500kb but
+    GENE_A at TSS 1,250, distance ~199kb - within default 500kb but
     correlation is ~0). Should fall below threshold, not get linked."""
     rna, atac, genes = _synthetic_multiome(seed=42)
     links = link_peaks_to_genes(rna, atac, genes, min_abs_corr=0.5)
@@ -85,7 +85,7 @@ def test_rejects_noise_peak_with_no_nearby_gene():
 
 def test_distance_filter_excludes_genes_too_far_away():
     rna, atac, genes = _synthetic_multiome(seed=1)
-    # Tight distance cap — GENE_C TSS at 60,200 is too far from peak_0 at ~1,250
+    # Tight distance cap - GENE_C TSS at 60,200 is too far from peak_0 at ~1,250
     links = link_peaks_to_genes(rna, atac, genes, max_distance=10_000, min_abs_corr=0.0)
     assert ("chr1:1000-1500", "GENE_C") not in set(zip(links["peak_id"], links["gene"]))
 
@@ -111,7 +111,7 @@ def test_cell_mismatch_raises():
 
 def test_partial_cell_overlap_warns_and_continues():
     rna, atac, genes = _synthetic_multiome()
-    # Shrink RNA to 80% of cells — ATAC still has full set
+    # Shrink RNA to 80% of cells - ATAC still has full set
     rna2 = rna[:400].copy()
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
@@ -255,7 +255,7 @@ def test_link_peaks_keeps_atac_sparse_at_scale():
 def test_densification_warning_fires_when_matrix_is_huge(monkeypatch):
     """Warn users before the sparse→dense step blows past 8 GiB per matrix.
 
-    We don't actually build a 10 GB matrix — we patch the threshold down
+    We don't actually build a 10 GB matrix - we patch the threshold down
     to 1 KiB and check the warning text includes the dataset shape.
     """
     import warnings

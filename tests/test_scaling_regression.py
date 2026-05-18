@@ -1,10 +1,10 @@
-"""Scaling regression test — catches super-linearity creep.
+"""Scaling regression test - catches super-linearity creep.
 
 Measures GRN wall-time at 1k / 2k / 4k / 8k synthetic cells on every
 CI run and asserts the log-log slope stays below 1.30. A clean linear
 run is slope ≈ 1.0. PR #12's partition-buffer pool measured 1.05–1.17
 on real data. Anything above 1.30 means super-linearity has come back
-in — the test fails and the build stops.
+in - the test fails and the build stops.
 
 Uses synthetic data with 50 target genes + 10 TFs + n_estimators=20
 so the whole test runs quickly on CI. This is not an atlas benchmark;
@@ -13,7 +13,7 @@ will not catch the 40k→80k real-atlas memory-system cliff documented
 in validation/scaling/microglia_91k_grn_scaling.json.
 
 If this test gets flaky on CI runners with wildly varying load, bump
-the threshold to 1.40 and document. But do not disable it — the whole
+the threshold to 1.40 and document. But do not disable it - the whole
 point is that if the slope goes up, we find out immediately.
 """
 from __future__ import annotations
@@ -42,7 +42,7 @@ MAX_SLOPE = 1.30
 def _synthetic_expression(n_cells: int, n_genes: int, n_tfs: int, seed: int = 0):
     """Make a deterministic log-normalised-looking expression matrix + TFs.
 
-    Values are dense and positive — matches what scanpy produces after
+    Values are dense and positive - matches what scanpy produces after
     `normalize_total` + `log1p`. The exact biology is irrelevant; we're
     only measuring how GRN scales in `n_cells`.
     """
@@ -89,7 +89,7 @@ def test_grn_scaling_is_linear():
         edges.append(len(grn))
 
     slope = _log_log_slope(CELL_COUNTS, times)
-    # Print so the actual numbers show up in CI logs — makes regressions
+    # Print so the actual numbers show up in CI logs - makes regressions
     # debuggable without re-running.
     print(
         f"\nscaling regression points:"

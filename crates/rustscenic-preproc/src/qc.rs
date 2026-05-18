@@ -4,17 +4,17 @@
 //! can be used as per-barcode filters before building the cells × peaks
 //! matrix:
 //!
-//! - **Insert-size distribution statistics** — per-barcode mean /
+//! - **Insert-size distribution statistics** - per-barcode mean /
 //!   median insert size, and counts in nucleosome bands. Captures
 //!   library-prep quality (expect a dominant sub-nucleosomal peak plus
 //!   mono- / di-nucleosomal peaks from intact chromatin).
 //!
-//! - **TSS enrichment** — signal-over-background ratio at gene
+//! - **TSS enrichment** - signal-over-background ratio at gene
 //!   transcription start sites. Higher values mean the library is
 //!   enriched for open chromatin at promoters (expected; most labs
 //!   require ≥ 4 before downstream analysis).
 //!
-//! - **FRiP** — fraction of reads in peaks. Measures how much of the
+//! - **FRiP** - fraction of reads in peaks. Measures how much of the
 //!   per-cell signal is concentrated at reproducible regulatory
 //!   elements vs random background. Typical cut-offs ≥ 0.15.
 //!
@@ -200,7 +200,7 @@ pub struct TssSite {
 fn group_tss_by_chrom(table: &FragmentTable, tss_sites: &[TssSite]) -> Vec<(u32, Vec<u32>)> {
     use crate::peaks::normalise_chrom;
     // Pre-normalise the fragment-table chrom names so TSS passed in either
-    // UCSC (`chr1`) or Ensembl (`1`) convention joins — same pattern the
+    // UCSC (`chr1`) or Ensembl (`1`) convention joins - same pattern the
     // peaks module uses. Without this, a TSS BED in the wrong convention
     // produces a silently all-zero enrichment (the exact class of bug that
     // hit the cellxgene integration earlier).
@@ -459,7 +459,7 @@ chr2\t1000\t1100\tBBB-1\t1
 
     #[test]
     fn frip_touching_not_overlapping_excluded() {
-        // Fragment 200-300, peak 100-200 — touching, no overlap.
+        // Fragment 200-300, peak 100-200 - touching, no overlap.
         let frags = "chr1\t200\t300\tX-1\t1\n";
         let peaks_bed = "chr1\t100\t200\tp\n";
         let t = read_fragments_from(Cursor::new(frags)).unwrap();

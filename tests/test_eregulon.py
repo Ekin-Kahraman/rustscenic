@@ -62,9 +62,9 @@ def _fixture_enhancer_links() -> pd.DataFrame:
             ("peak_4", "GENE_G", 0.45),
             ("peak_5", "GENE_H", 0.5),
             ("peak_5", "GENE_I", 0.47),
-            # Negative correlation — should be dropped by default
+            # Negative correlation - should be dropped by default
             ("peak_1", "GENE_NEG", -0.7),
-            # Link to a gene that GRN doesn't predict for SPI1 — gets dropped
+            # Link to a gene that GRN doesn't predict for SPI1 - gets dropped
             # under use_grn_intersection=True
             ("peak_1", "GENE_NOT_IN_GRN", 0.8),
         ],
@@ -123,7 +123,7 @@ def test_min_target_genes_filter():
     """Raising min_target_genes should drop eRegulons that don't meet it."""
     eregs = build_eregulons(
         _fixture_grn(), _fixture_cistarget(), _fixture_enhancer_links(),
-        min_target_genes=10,  # PAX5 has 4, SPI1 has 5 — both drop
+        min_target_genes=10,  # PAX5 has 4, SPI1 has 5 - both drop
     )
     assert eregs == []
 

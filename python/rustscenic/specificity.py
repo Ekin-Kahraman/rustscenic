@@ -8,7 +8,7 @@ Public API
 
 RSS measures how cluster-specific each regulon's activity is. Implemented
 as Jensen-Shannon divergence between (a) the regulon's per-group mean AUC
-distribution and (b) the cluster-membership distribution — the same
+distribution and (b) the cluster-membership distribution - the same
 formula pyscenic ships in `pyscenic.binarization.regulon_specificity_scores`.
 
 Topic candidate enhancers turn the topics-fit output (a topic-peak weight
@@ -57,7 +57,7 @@ def regulon_specificity_scores(
     groups = np.unique(cell_groups[~pd.isna(cell_groups)])
     auc_arr = auc.values.astype(np.float64)
 
-    # Distribution Q: per-regulon column-normalised auc (group-independent —
+    # Distribution Q: per-regulon column-normalised auc (group-independent -
     # hoist the computation outside the loop so we don't realloc per group).
     col_sums = auc_arr.sum(axis=0)
     col_sums[col_sums == 0] = 1.0
@@ -83,7 +83,7 @@ def regulon_specificity_scores(
                 kl_pm = np.where(p > 0, p * np.log2(p / m), 0.0).sum()
                 kl_qm = np.where(q > 0, q * np.log2(q / m), 0.0).sum()
             js = 0.5 * (kl_pm + kl_qm)
-            # RSS = 1 - sqrt(JS) — bounded [0, 1], higher = more specific.
+            # RSS = 1 - sqrt(JS) - bounded [0, 1], higher = more specific.
             rss[gi, r] = 1.0 - float(np.sqrt(max(js, 0.0)))
 
     return pd.DataFrame(rss, index=groups, columns=auc.columns)
@@ -94,10 +94,10 @@ def candidate_enhancers_per_topic(
     peak_names: Sequence[str] | None = None,
     top_n: int = 2_000,
 ) -> dict[str, list[str]]:
-    """Top-ranked peaks per topic — pycisTopic's "candidate enhancers".
+    """Top-ranked peaks per topic - pycisTopic's "candidate enhancers".
 
     Topic models on scATAC give a (topic × peak) weight matrix. Per-topic,
-    the highest-weight peaks are the topic's candidate enhancers — used
+    the highest-weight peaks are the topic's candidate enhancers - used
     downstream to query motif enrichment region-by-region.
 
     Parameters

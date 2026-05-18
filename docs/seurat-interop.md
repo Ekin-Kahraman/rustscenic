@@ -5,11 +5,11 @@ roughly evenly between scanpy / AnnData and Seurat / SingleCellExperiment.
 This page documents two bridges that let Seurat users run rustscenic
 without re-implementing analyses in Python.
 
-The key claim: **rustscenic's algorithms don't depend on scanpy** —
+The key claim: **rustscenic's algorithms don't depend on scanpy** -
 they operate on expression matrices, gene symbol lists, and regulon
 gene sets. Any object that can be converted to those primitives works.
 
-## Option A — Seurat → AnnData via `anndata2ri` (recommended)
+## Option A - Seurat → AnnData via `anndata2ri` (recommended)
 
 `anndata2ri` is a battle-tested R-Python bridge specifically for the
 scverse ecosystem. It converts Seurat objects to AnnData bidirectionally
@@ -40,7 +40,7 @@ regulons = [
     ("PAX5_regulon", ["PAX5", "CD79A", "MS4A1"]),
 ]
 auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
-# auc is a pandas DataFrame of shape (n_cells, n_regulons) — write back
+# auc is a pandas DataFrame of shape (n_cells, n_regulons) - write back
 # to a CSV or h5ad for import into the R session.
 auc.to_csv("per_cell_regulon_activity.csv")
 ```
@@ -53,7 +53,7 @@ seurat_obj <- AddMetaData(seurat_obj, auc)
 # Regulons now available as seurat_obj$SPI1_regulon, seurat_obj$PAX5_regulon, etc.
 ```
 
-## Option B — `reticulate` one-session bridge
+## Option B - `reticulate` one-session bridge
 
 For tighter integration in a single R session:
 
@@ -79,7 +79,7 @@ auc <- rs$aucell$score(adata, regulons, top_frac = 0.05)
 Regardless of which bridge you use, the expression object needs:
 
 - **A dense or sparse `(n_cells, n_genes)` matrix.** Log-normalised is
-  strongly recommended — passing raw UMI counts emits a
+  strongly recommended - passing raw UMI counts emits a
   `UserWarning` from rustscenic because rankings become dominated by
   library size.
 - **Gene-symbol names on the column axis.** If your Seurat object

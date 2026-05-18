@@ -326,7 +326,7 @@ def test_motif_ranking_urls_resolve_live(monkeypatch):
     """Real-network smoke check that the URLs the data module builds
     actually exist on aertslab. Skipped by default (CI offline policy);
     enable locally with `RUSTSCENIC_LIVE_NETWORK=1 pytest`. This is the
-    test that would have caught the v0.1.0 URL regression earlier — the
+    test that would have caught the v0.1.0 URL regression earlier - the
     prior `urlretrieve` mock made every URL look fine.
     """
     import os
@@ -342,7 +342,7 @@ def test_motif_ranking_urls_resolve_live(monkeypatch):
 
     def fake_urlretrieve(url, local_path):
         captured["url"] = url
-        # Don't download — issue a HEAD instead and surface the status.
+        # Don't download - issue a HEAD instead and surface the status.
         req = urllib.request.Request(url, method="HEAD")
         with urllib.request.urlopen(req, timeout=15) as resp:
             captured["status"] = resp.status

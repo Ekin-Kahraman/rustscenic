@@ -30,7 +30,7 @@ pub struct Fragment {
     pub count: u32,
 }
 
-/// Columnar fragment table — one Vec per column.
+/// Columnar fragment table - one Vec per column.
 ///
 /// `chrom` is stored as an interned index into `chrom_names`, so
 /// downstream joins don't re-compare strings per row.
@@ -66,7 +66,7 @@ impl FragmentTable {
     }
 
     fn intern_chrom(&mut self, name: &str) -> u32 {
-        // Linear scan — fine for the ~25 chroms we see in practice.
+        // Linear scan - fine for the ~25 chroms we see in practice.
         for (i, n) in self.chrom_names.iter().enumerate() {
             if n == name {
                 return i as u32;

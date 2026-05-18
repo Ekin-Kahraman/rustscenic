@@ -1,9 +1,9 @@
-"""Full-pipeline integration test — preproc → grn → cistarget → enhancer → eregulon → aucell.
+"""Full-pipeline integration test - preproc → grn → cistarget → enhancer → eregulon → aucell.
 
 Simulates a minimal multiome workflow end-to-end and asserts every
 stage connects to the next without silent breakage. This is the test
 that would have caught the cellxgene ``var_names`` bug before Fuaad
-did — it runs on a shape that includes a cellxgene-style ENSEMBL
+did - it runs on a shape that includes a cellxgene-style ENSEMBL
 AnnData in addition to the scanpy-native one.
 
 The simulated biology:
@@ -15,7 +15,7 @@ The simulated biology:
     ranking matrix
 
 Every stage must survive at least one surviving regulon / eRegulon
-for the test to pass — every downstream stage empties out if the
+for the test to pass - every downstream stage empties out if the
 upstream one broke.
 """
 from __future__ import annotations
@@ -91,7 +91,7 @@ def _simulate_multiome():
         var=pd.DataFrame(index=peak_names),
     )
 
-    # Gene TSS coordinates — programme-0 genes all live within 500 kb of
+    # Gene TSS coordinates - programme-0 genes all live within 500 kb of
     # programme-0 peaks on chr1 so enhancer linking will find them.
     gene_tss = np.zeros(N_GENES, dtype=np.int64)
     for g in range(N_GENES):
@@ -126,7 +126,7 @@ def _simulate_multiome():
 
 def test_end_to_end_multiome_pipeline():
     """Every stage must produce non-empty output on synthetic data where
-    the biology is known — three programmes with matched TFs, genes,
+    the biology is known - three programmes with matched TFs, genes,
     and peaks.
 
     If any stage breaks silently (empties out), the assertion on the
@@ -204,10 +204,10 @@ def test_end_to_end_on_cellxgene_shaped_rna():
         grn = rustscenic.grn.infer(
             rna_cx, tf_names=tf_names, n_estimators=50, seed=SEED, verbose=False,
         )
-    assert not grn.empty, "GRN empty on cellxgene-shape RNA — resolver regressed"
+    assert not grn.empty, "GRN empty on cellxgene-shape RNA - resolver regressed"
     assert set(grn["TF"].unique()) == set(tf_names)
 
-    # AUCell — uses the same resolve path
+    # AUCell - uses the same resolve path
     regulons = [
         (f"{tf}_regulon", grn[grn["TF"] == tf].nlargest(15, "importance")["target"].tolist())
         for tf in tf_names
@@ -275,7 +275,7 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
         var=pd.DataFrame(index=rna_genes),
     )
 
-    # Fragments — dense per programme region, plus noise
+    # Fragments - dense per programme region, plus noise
     frag_lines = []
     for p in range(3):
         for ci in np.where(cluster == p)[0]:
@@ -307,7 +307,7 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
         columns=["gene", "chrom", "tss"],
     )
 
-    # Synthetic motif rankings — each TF ranks its programme's genes high.
+    # Synthetic motif rankings - each TF ranks its programme's genes high.
     motif_names = ["M_G000", "M_G005", "M_G010"]
     n_genes = len(rna_genes)
     rank_matrix = np.full((len(motif_names), n_genes), n_genes - 1, dtype=np.int32)
@@ -923,7 +923,7 @@ def test_pipeline_run_topics_method_gibbs(tmp_path):
         var=pd.DataFrame(index=rna_genes),
     )
 
-    # Sparse fragments file — enough for the topics fit to have signal.
+    # Sparse fragments file - enough for the topics fit to have signal.
     frag_lines = []
     for p in range(3):
         for ci in np.where(cluster == p)[0]:
@@ -1177,7 +1177,7 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
             rank_matrix[tf_idx, gene_idx] = rank
     motif_rankings = pd.DataFrame(rank_matrix, index=motif_names, columns=rna_genes)
 
-    # Synthetic REGION rankings — same kernel, different feature set
+    # Synthetic REGION rankings - same kernel, different feature set
     n_peaks = len(peak_names)
     region_rank = np.full((len(motif_names), n_peaks), n_peaks - 1, dtype=np.int32)
     for tf_idx in range(3):

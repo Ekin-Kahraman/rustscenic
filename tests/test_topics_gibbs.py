@@ -145,7 +145,7 @@ def test_gibbs_alpha_eta_defaults():
 
 def test_coherence_npmi_separates_planted_from_random():
     """Planted-topic NPMI must be measurably higher than a random topic
-    on the same corpus. Backs the published quality comparison —
+    on the same corpus. Backs the published quality comparison -
     if this passes, the metric is at least monotone in topic structure."""
     X, cells, peaks = _two_topic_corpus(80, 20)
 

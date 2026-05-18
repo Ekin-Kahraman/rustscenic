@@ -15,14 +15,14 @@ are better delegated.
 
 Source: `aertslab/pycisTopic/src/pycisTopic/` on GitHub.
 
-1. **Fragment I/O** — `fragments.py`
+1. **Fragment I/O** - `fragments.py`
    - `read_fragments_to_polars_df` / `read_fragments_to_pyranges`:
      parse `fragments.tsv.gz` (10x cellranger output) into a
      polars DataFrame or a PyRanges object.
    - `read_barcodes_file_to_polars_series`: load cellranger
      `barcodes.tsv` for the cells-passing-filter list.
    - Dependencies pulled in: polars, pyarrow, pandas, pyranges.
-2. **Fragment QC** — `fragments.py` + `qc.py`
+2. **Fragment QC** - `fragments.py` + `qc.py`
    - `get_fragments_per_cb`: unique fragment counts per cell barcode.
    - `get_insert_size_distribution`: nucleosome signal (mono-/di-
      nucleosome periodicity) per cell.
@@ -37,7 +37,7 @@ Source: `aertslab/pycisTopic/src/pycisTopic/` on GitHub.
      dependency (macs2 is a Python package).
    - `iterative_peak_calling.get_consensus_peaks`: Corces-2018 style
      consensus merging across pseudobulk peak sets.
-4. **Cell × peak matrix** — `fragments.py`
+4. **Cell × peak matrix** - `fragments.py`
    - `get_fragments_in_peaks`: inner-join fragments against consensus
      peaks, count per (cell, peak) pair. This is what rustscenic's
      Topics stage currently expects as input.
@@ -53,7 +53,7 @@ missing API surface.
 
 ## Proposed rustscenic scope (two tiers)
 
-### Tier 1 — Fragment I/O + QC + matrix construction (Rust-native) — shipped
+### Tier 1 - Fragment I/O + QC + matrix construction (Rust-native) - shipped
 
 Implement in Rust. These are I/O-and-counting workloads that Rust
 flattens:
@@ -68,7 +68,7 @@ flattens:
   over fragments.
 - **FRiP + cell × peak matrix**: interval-intersect fragments against
   a peak BED. Build sparse `cells × peaks` matrix directly. Needs a
-  fast interval tree — `coitrees` (Rust crate, used by rust-bio) fits.
+  fast interval tree - `coitrees` (Rust crate, used by rust-bio) fits.
 - **QC gate**: compute thresholds (Otsu or user-supplied), mark cells
   pass/fail, return filtered fragment table + barcode list.
 
@@ -102,7 +102,7 @@ result = rustscenic.preproc.fragments_to_matrix(
 # QC metrics in .obs, peak info in .var.
 ```
 
-### Tier 2 — Peak calling — shipped, reference cross-check pending
+### Tier 2 - Peak calling - shipped, reference cross-check pending
 
 rustscenic now ships the self-contained Corces-2018-style
 density-window / iterative consensus peak caller. It does not shell out
@@ -115,7 +115,7 @@ MACS2 broadPeak files on real ENCODE / 10x multiome fragments.
   preprocessing *before* fragments. pycisTopic doesn't do it either.
 - BAM I/O. Stick to the 10x fragments.tsv.gz contract, which is the
   standard output of every scATAC tool.
-- Doublet detection for ATAC. Leave to scDblFinder / AMULET — not
+- Doublet detection for ATAC. Leave to scDblFinder / AMULET - not
   rustscenic's lane.
 
 ## Install story after this lands
@@ -144,8 +144,8 @@ pip install rustscenic          # same package, once PyPI is live
 
 | Tier | rustscenic Python deps | New Rust deps | External tools |
 |---|---|---|---|
-| Today | numpy, pandas, pyarrow, scipy | — | — |
-| +T1 preproc | same | `coitrees` | — |
+| Today | numpy, pandas, pyarrow, scipy | - | - |
+| +T1 preproc | same | `coitrees` | - |
 | +T2 peakcall | same | same + peak call | optional macs2 |
 
 ## Validation plan
@@ -167,7 +167,7 @@ dataset (same fragments, same peak set). Targets:
 2. Do you use MACS2 or iterative peak calling today?
 3. Is pyranges the bottleneck in your workflow, or is it fragment
    loading, or peak calling?
-4. Which genome annotations do you want TSS enrichment against —
+4. Which genome annotations do you want TSS enrichment against -
    GENCODE, RefSeq, custom?
 
 Answers to (1) and (2) decide whether Tier 2 is week-4 or month-6 work.

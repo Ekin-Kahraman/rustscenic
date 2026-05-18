@@ -18,22 +18,22 @@ garbage.
 
 The three helpers here close three silent-failure modes:
 
-1. ``resolve_gene_names(adata)`` — auto-detects cellxgene /
+1. ``resolve_gene_names(adata)`` - auto-detects cellxgene /
    ENSEMBL-id-as-varname datasets and returns the best-match
    gene-symbol list, emitting a ``UserWarning`` so the switch is
    visible in logs.
 
-2. ``regulon_coverage(gene_names, regulons)`` — reports per-regulon
+2. ``regulon_coverage(gene_names, regulons)`` - reports per-regulon
    how many of the regulon's genes are actually present in the
    dataset.
 
-3. ``warn_if_poor_coverage(coverage, threshold)`` — emits a warning
+3. ``warn_if_poor_coverage(coverage, threshold)`` - emits a warning
    when ≥ one regulon has lost most of its genes to the lookup. The
    existing ``all regulons dropped`` warning only fires at 0 %
    overlap, so partial losses (which still produce near-zero AUCs)
    were silent.
 
-Plus ``warn_if_likely_unnormalized(X)`` — flags raw-count input that
+Plus ``warn_if_likely_unnormalized(X)`` - flags raw-count input that
 should have gone through ``normalize_total`` + ``log1p`` first.
 """
 from __future__ import annotations
@@ -45,7 +45,7 @@ from typing import Iterable, Mapping, Sequence, Tuple
 import numpy as np
 
 
-# ENSEMBL gene-ID pattern — covers ENSG (human), ENSMUSG (mouse),
+# ENSEMBL gene-ID pattern - covers ENSG (human), ENSMUSG (mouse),
 # ENSRNOG (rat), ENSDARG (zebrafish), etc. Optional version suffix.
 _ENSEMBL_RE = re.compile(r"^ENS[A-Z]*G\d{8,}(\.\d+)?$")
 
@@ -92,13 +92,13 @@ def resolve_gene_names(adata, *, quiet: bool = False) -> list[str]:
 
     Returns
     -------
-    list[str] — gene names suitable for regulon lookup.
+    list[str] - gene names suitable for regulon lookup.
     """
     names = list(adata.var_names)
     if not _looks_like_ensembl(names):
         return names
 
-    # var_names look like ENSEMBL IDs — look for a symbol column.
+    # var_names look like ENSEMBL IDs - look for a symbol column.
     var = getattr(adata, "var", None)
     if var is None or not hasattr(var, "columns"):
         return names
@@ -122,7 +122,7 @@ def resolve_gene_names(adata, *, quiet: bool = False) -> list[str]:
             return swapped
 
     # No symbol column found. If var_names are VERSIONED ENSEMBL, strip
-    # versions — downstream regulons are almost always unversioned, so
+    # versions - downstream regulons are almost always unversioned, so
     # the match rate goes from 0 to ~100%.
     versioned = sum(1 for n in names[:20] if "." in str(n))
     if versioned >= min(10, len(names) // 2):
@@ -237,7 +237,7 @@ def dedupe_by_symbol(X, gene_names: Sequence[str]):
 
     Returns
     -------
-    (X_deduped, unique_gene_names) — X may be sparse (scipy.sparse) or
+    (X_deduped, unique_gene_names) - X may be sparse (scipy.sparse) or
     dense numpy; the return type matches the input.
     """
     names_list = list(gene_names)
@@ -289,9 +289,9 @@ def diagnose_zero_tf_overlap(
 ) -> str:
     """Return an actionable hint when a TF list has zero gene overlap.
 
-    Figures out WHICH convention mismatch is most likely — case
+    Figures out WHICH convention mismatch is most likely - case
     (SPI1 vs Spi1), ENSEMBL vs symbol, or versioned vs unversioned
-    ENSEMBL — and tells the user how to fix it. Far more useful than
+    ENSEMBL - and tells the user how to fix it. Far more useful than
     a generic "check your conventions" message.
     """
     tf_list = list(tf_names)
@@ -331,14 +331,14 @@ def diagnose_zero_tf_overlap(
             f"data var_names are ENSEMBL IDs (e.g. {sample_gene!r}) but TF "
             f"list is gene symbols (e.g. {sample_tf!r}). The auto-swap "
             f"(cellxgene convention) couldn't find a `feature_name` / "
-            f"`gene_symbol` column in `adata.var` — add one, or pass "
+            f"`gene_symbol` column in `adata.var` - add one, or pass "
             f"ENSEMBL-IDed TF names."
         )
     if _ENSEMBL_RE.match(str(sample_tf)) and not _ENSEMBL_RE.match(str(sample_gene)):
         return (
             f"TF list is ENSEMBL IDs (e.g. {sample_tf!r}) but data is "
             f"symbols (e.g. {sample_gene!r}). Convert TFs to symbols before "
-            f"calling — e.g. via biomart or `mygene.MyGeneInfo().getgenes()`."
+            f"calling - e.g. via biomart or `mygene.MyGeneInfo().getgenes()`."
         )
 
     # Versioned-vs-unversioned ENSEMBL IDs
@@ -358,10 +358,10 @@ def diagnose_zero_tf_overlap(
                 f"`adata.var_names = [v.split('.')[0] for v in adata.var_names]`."
             )
 
-    # Fallback — give a concrete example so at least debugging is fast
+    # Fallback - give a concrete example so at least debugging is fast
     return (
         f"TF example: {sample_tf!r}; data example: {sample_gene!r}. "
-        f"No automatic hint available — check symbol convention and species."
+        f"No automatic hint available - check symbol convention and species."
     )
 
 

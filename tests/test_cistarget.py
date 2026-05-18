@@ -16,13 +16,13 @@ def tiny_rankings():
         index=[f"m{i}" for i in range(10)],
         columns=[f"g{i}" for i in range(20)],
     )
-    # Motif 0 — regulon genes (g0-g4) at top ranks (0-4); others shifted
+    # Motif 0 - regulon genes (g0-g4) at top ranks (0-4); others shifted
     for j in range(20):
         if j < 5:
             rankings.loc["m0", f"g{j}"] = j       # regulon genes at ranks 0-4
         else:
             rankings.loc["m0", f"g{j}"] = j       # g5-g19 at ranks 5-19
-    # Motifs 1-9 — regulon genes (g0-g4) at WORST ranks (15-19), others at top
+    # Motifs 1-9 - regulon genes (g0-g4) at WORST ranks (15-19), others at top
     for i in range(1, 10):
         # Cycle so different motifs get different permutations but all place
         # regulon genes at the bottom.

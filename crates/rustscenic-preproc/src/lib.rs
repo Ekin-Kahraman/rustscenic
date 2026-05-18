@@ -1,4 +1,4 @@
-//! rustscenic-preproc — scATAC fragment preprocessing.
+//! rustscenic-preproc - scATAC fragment preprocessing.
 //!
 //! Absorbs the pycisTopic preprocessing surface so the SCENIC+ install
 //! story collapses to one `pip install rustscenic`.

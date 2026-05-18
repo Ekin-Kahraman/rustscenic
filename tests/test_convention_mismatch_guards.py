@@ -1,14 +1,14 @@
-"""Silent-zero regression guards — the Fuaad-class bug catalogue.
+"""Silent-zero regression guards - the Fuaad-class bug catalogue.
 
 Every test in this file corresponds to a real-world data convention
 that produces a *correctly-typed but empty/zero* result if rustscenic
-doesn't handle it. These are the bugs that don't crash — they just
+doesn't handle it. These are the bugs that don't crash - they just
 quietly return garbage. Catching them requires asserting on values,
 not just shapes.
 
 Covers:
-  1. Chromosome naming — UCSC `chr1` vs Ensembl `1`
-  2. Mitochondrial aliases — `chrM` vs `chrMT` vs `MT`
+  1. Chromosome naming - UCSC `chr1` vs Ensembl `1`
+  2. Mitochondrial aliases - `chrM` vs `chrMT` vs `MT`
   3. Cistarget rankings indexed by ENSEMBL while regulons use symbols
   4. Cistarget rankings for the wrong species
 """
@@ -34,7 +34,7 @@ def test_ucsc_vs_ensembl_chrom_names_dont_silently_drop_fragments():
 
     # Exercise the Rust layer via its PyO3 binding when available; for now
     # the pure-Rust path is covered by the cargo tests. This test asserts
-    # the *symptom* — Python-facing behaviour — is correct.
+    # the *symptom* - Python-facing behaviour - is correct.
     # We construct a minimal scenario using the pure-Python preproc shape.
     # Since fragments_to_matrix is the public API, we simulate by calling
     # it on a hand-authored temp fragments + peaks file.
@@ -50,7 +50,7 @@ def test_ucsc_vs_ensembl_chrom_names_dont_silently_drop_fragments():
         "chr2\t1000\t1100\tAAA-1\t1",
     ]
     peak_lines = [
-        # Ensembl-style chroms — no `chr` prefix
+        # Ensembl-style chroms - no `chr` prefix
         "1\t100\t300\tpeak1",
         "1\t500\t1000\tpeak2",
         "2\t900\t1200\tpeak3",
@@ -85,7 +85,7 @@ def test_cistarget_all_regulons_missing_warns_loudly():
     we must at least warn visibly with a diagnostic."""
     import rustscenic.cistarget
 
-    # Ranking matrix indexed by ENSEMBL IDs — typical of aertslab v10 output.
+    # Ranking matrix indexed by ENSEMBL IDs - typical of aertslab v10 output.
     n_motifs = 3
     n_genes = 10
     rankings = pd.DataFrame(
@@ -93,7 +93,7 @@ def test_cistarget_all_regulons_missing_warns_loudly():
         index=[f"MOTIF_{i}" for i in range(n_motifs)],
         columns=[f"ENSG0000011{i:04d}" for i in range(n_genes)],
     )
-    # Regulons use HGNC symbols — NONE overlap with ENSEMBL columns
+    # Regulons use HGNC symbols - NONE overlap with ENSEMBL columns
     regulons = [("SPI1_regulon", ["SPI1", "CEBPB", "IRF8"])]
 
     with warnings.catch_warnings(record=True) as caught:
@@ -198,7 +198,7 @@ def test_full_pipeline_survives_both_chrom_and_var_names_conventions():
         var=pd.DataFrame(index=peak_names),
     )
 
-    # Gene coords use UCSC "chr1" — cross-convention between RNA and peaks
+    # Gene coords use UCSC "chr1" - cross-convention between RNA and peaks
     # is realistic (genome annotations and multiome peaks often come from
     # different providers). Enhancer linker should still connect them.
     gene_coords = pd.DataFrame({
@@ -215,7 +215,7 @@ def test_full_pipeline_survives_both_chrom_and_var_names_conventions():
 
     # Chroms between peaks ("1") and gene_coords ("chr1") are normalised
     # in the enhancer linker (PR #29) so peak↔gene joins still work across
-    # UCSC/Ensembl. Additionally verify AUCell on the cellxgene RNA works —
+    # UCSC/Ensembl. Additionally verify AUCell on the cellxgene RNA works -
     # the original Fuaad scenario.
     auc = rustscenic.aucell.score(
         rna, [("R_latent_A", ["SYM0", "SYM1", "SYM2", "SYM3"])], top_frac=0.3,

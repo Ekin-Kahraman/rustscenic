@@ -1,4 +1,4 @@
-"""eRegulon assembly — the SCENIC+ endpoint.
+"""eRegulon assembly - the SCENIC+ endpoint.
 
 A classical SCENIC regulon is just a TF + its co-expressed target genes.
 An **eRegulon** adds chromatin grounding:
@@ -16,8 +16,8 @@ An eRegulon is therefore a three-way intersection:
     3. The TF -> gene predictions from expression (GRN output, optional)
 
 This module produces eRegulon records from those three rustscenic
-outputs. It is pure Python pandas / dataclass bookkeeping — no
-computation — because every numerical step already ran upstream.
+outputs. It is pure Python pandas / dataclass bookkeeping - no
+computation - because every numerical step already ran upstream.
 """
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ class ERegulon:
         ``use_grn_union=True`` in :func:`build_eregulons`.
     n_enhancer_links
         Number of (peak, gene) edges that survive all filters. A useful
-        sanity signal — eRegulons with only 1-2 supporting links are
+        sanity signal - eRegulons with only 1-2 supporting links are
         weak; ≥ 5 is typical for a real regulon.
     motif_auc
         Mean motif-enrichment AUC across the supporting peaks (from
@@ -88,7 +88,7 @@ def build_eregulons(
         any enhancer-linked gene as a target).
     cistarget
         ``rustscenic.cistarget.enrich`` output with at minimum the
-        columns ``['regulon', 'motif', 'auc']`` and — critically —
+        columns ``['regulon', 'motif', 'auc']`` and - critically -
         ``'peak_id'`` or ``'region_id'`` identifying which peak each
         motif was enriched in. The ``'regulon'`` column should map
         back to the source TF (either a bare TF name or ``TF_regulon``).
@@ -248,14 +248,14 @@ def _warn_if_catastrophic_drop(
     if n_output >= max(1, n_input_tfs // 2):
         return
     reason = (
-        "try use_grn_intersection=False — the GRN ∩ enhancer-link step "
+        "try use_grn_intersection=False - the GRN ∩ enhancer-link step "
         "dropped most TFs, which usually means GRN gene names and "
         "enhancer_links `gene` column use different conventions (symbol "
         "vs ENSEMBL)"
         if use_grn_intersection
         else (
             "check that cistarget `peak_id` values overlap "
-            "enhancer_links `peak_id` values — the two sets appear to "
+            "enhancer_links `peak_id` values - the two sets appear to "
             "be keyed differently"
         )
     )
@@ -276,7 +276,7 @@ def eregulons_to_dataframe(eregulons: Sequence[ERegulon]) -> pd.DataFrame:
     rows = []
     for er in eregulons:
         # Emit one row per actual (peak, target_gene) edge, not the Cartesian
-        # product of (enhancers x target_genes) — n_enhancer_links is the true
+        # product of (enhancers x target_genes) - n_enhancer_links is the true
         # support count and the dataframe should match it.
         if er.target_to_peaks:
             for tgt, peaks in er.target_to_peaks.items():

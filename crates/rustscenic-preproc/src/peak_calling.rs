@@ -2,7 +2,7 @@
 //!
 //! Implements the "MACS2-free" per-pseudobulk peak caller described in
 //! pycisTopic's iterative peak-calling workflow (Corces et al. 2018,
-//! adapted for scATAC). The goal is NOT to reimplement MACS2 — its
+//! adapted for scATAC). The goal is NOT to reimplement MACS2 - its
 //! Poisson-local-lambda statistics are a separate research project.
 //! The goal is to remove the external-MACS2 dependency so rustscenic
 //! ships a runnable ATAC pipeline out of the box, with output peaks
@@ -69,7 +69,7 @@ impl Default for PeakCallingConfig {
 /// Per-cluster candidate peak before consensus merging.
 ///
 /// The `start`/`end` fields are retained so the merging step can log
-/// debug info or be extended to emit merged-region metadata later —
+/// debug info or be extended to emit merged-region metadata later -
 /// leave the `#[allow(dead_code)]` in place when trimming is tempting.
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -440,7 +440,7 @@ mod tests {
                 10_080 + i * 2
             ));
         }
-        // Weak peak at 10_300 (20 fragments) — will overlap via the 250bp half-width
+        // Weak peak at 10_300 (20 fragments) - will overlap via the 250bp half-width
         for i in 0..20 {
             lines.push(format!(
                 "chr1\t{}\t{}\tBBB\t1",

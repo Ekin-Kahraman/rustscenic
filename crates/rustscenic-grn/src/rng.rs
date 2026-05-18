@@ -44,7 +44,7 @@ fn splitmix64(mut x: u64) -> u64 {
 }
 
 /// Sample `k` distinct indices from `0..n` without replacement (Fisher-Yates head).
-/// Uses `gen_range` for bias-free uniform sampling — matches the pattern in
+/// Uses `gen_range` for bias-free uniform sampling - matches the pattern in
 /// `tree::choose_feature_subset`. Plain modulo of `next_u64() % m` is biased
 /// when `m` doesn't divide `2^64`.
 pub fn sample_indices(rng: &mut impl Rng, n: usize, k: usize) -> Vec<usize> {

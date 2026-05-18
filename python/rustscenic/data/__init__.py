@@ -55,7 +55,7 @@ def tfs(species: Literal["hs", "mm"] = "hs") -> list[str]:
     canonical = _TF_ALIAS_MAP.get(str(species).lower())
     if canonical is None:
         raise ValueError(
-            f"unknown species {species!r} — use 'hs' / 'human' / 'hg38' "
+            f"unknown species {species!r} - use 'hs' / 'human' / 'hg38' "
             f"for human, 'mm' / 'mouse' / 'mm10' for mouse"
         )
     filename = {"hs": "allTFs_hg38.txt", "mm": "allTFs_mm.txt"}[canonical]
@@ -117,10 +117,10 @@ def download_motif_rankings(
     cache_dir
         Override the default cache directory.
     filename
-        Escape hatch — pass an aertslab feather filename directly to
+        Escape hatch - pass an aertslab feather filename directly to
         bypass the auto-built name. Combined with the auto-built dir.
     url
-        Full URL escape hatch — bypasses both name and dir construction.
+        Full URL escape hatch - bypasses both name and dir construction.
 
     Returns
     -------
