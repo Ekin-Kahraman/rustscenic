@@ -57,3 +57,9 @@ rustscenic.pipeline.run(rna=adata, tfs=tfs, output_dir="out")
 ```
 
 Use the orchestrator when you want the full staged workflow and a manifest.
+
+When `region_motif_rankings` points to a parquet or feather file, the
+orchestrator reads only the motif ID column plus the peak columns used by the
+current run. This keeps large region-ranking databases from being loaded in
+full. Peak IDs in the BED or ATAC matrix must match the ranking database
+region IDs.

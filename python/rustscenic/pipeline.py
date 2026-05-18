@@ -144,7 +144,10 @@ def run(
         Optional region-based motif ranking DataFrame, or path, with motifs
         as rows and peak / region IDs as columns. When supplied alongside
         ATAC inputs and gene coordinates, eRegulon assembly uses this exact
-        region-cistarget path instead of the gene-cistarget bridge.
+        region-cistarget path instead of the gene-cistarget bridge. File-backed
+        parquet / feather rankings are projected to the peaks used by the
+        current run so large region-ranking databases do not need to be loaded
+        in full.
     gene_coords
         DataFrame with columns ``['gene', 'chrom', 'tss']``, or a path
         to a parquet/csv file with the same shape. When supplied
@@ -500,7 +503,6 @@ def run(
         if region_motif_rankings is not None:
             import rustscenic.cistarget
             log("      using region-based cistarget for exact peak attribution")
-            region_rankings_df = _coerce_rankings(region_motif_rankings)
             # Each TF's regulon is its GRN-predicted targets; we want to
             # ask: which peaks (linked to those targets via enhancer) carry
             # the TF's motif? Build per-TF "regulons" of linked peaks.
@@ -516,6 +518,11 @@ def run(
                 if tf_peaks:
                     peak_regulons.append((f"{tf}_regulon", list(tf_peaks)))
             if peak_regulons:
+                needed_peaks = sorted({p for _, peaks in peak_regulons for p in peaks})
+                region_rankings_df = _coerce_rankings(
+                    region_motif_rankings,
+                    feature_names=needed_peaks,
+                )
                 region_enrich, enriched_with_peaks = _region_cistarget_with_peak_ids(
                     region_rankings_df,
                     peak_regulons,
@@ -668,16 +675,116 @@ def _load_tfs(tfs):
     return list(tfs)
 
 
-def _coerce_rankings(rankings):
+def _coerce_rankings(rankings, *, feature_names: Optional[Iterable[str]] = None):
     if isinstance(rankings, pd.DataFrame):
-        return rankings
+        df = _rankings_with_motif_index(rankings.copy(), Path("rankings"))
+        if feature_names is not None:
+            features = _normalise_feature_names(feature_names)
+            if features:
+                keep = [c for c in df.columns if str(c) in features]
+                if not keep:
+                    raise ValueError(
+                        "none of the requested ranking features were present "
+                        "in the rankings DataFrame. Check that ATAC peak IDs "
+                        "match the motif-ranking column names."
+                    )
+                df = df.loc[:, keep]
+        return df
     path = Path(rankings)
     suffix = path.suffix.lower()
     if suffix == ".parquet":
-        return _rankings_with_motif_index(pd.read_parquet(path), path)
+        return _rankings_with_motif_index(
+            _read_rankings_file(path, feature_names=feature_names),
+            path,
+        )
     if suffix == ".feather":
-        return _rankings_with_motif_index(pd.read_feather(path), path)
+        return _rankings_with_motif_index(
+            _read_rankings_file(path, feature_names=feature_names),
+            path,
+        )
     raise ValueError(f"unsupported motif-ranking format: {suffix}")
+
+
+def _normalise_feature_names(feature_names: Optional[Iterable[str]]) -> set[str]:
+    if feature_names is None:
+        return set()
+    return {str(x) for x in feature_names}
+
+
+def _read_rankings_file(
+    path: Path, *, feature_names: Optional[Iterable[str]] = None,
+) -> pd.DataFrame:
+    """Read a motif ranking file, optionally projecting to needed features.
+
+    Large aertslab region-ranking feathers can be tens of GB wide. When
+    ``feature_names`` is supplied, read only the motif ID column plus columns
+    for peaks used by the current run instead of materialising the full DB.
+    """
+    suffix = path.suffix.lower()
+    if feature_names is None:
+        if suffix == ".parquet":
+            return pd.read_parquet(path)
+        if suffix == ".feather":
+            return pd.read_feather(path)
+
+    features = _normalise_feature_names(feature_names)
+    if not features:
+        if suffix == ".parquet":
+            return pd.read_parquet(path)
+        if suffix == ".feather":
+            return pd.read_feather(path)
+
+    if suffix == ".feather":
+        cols = _projected_ranking_columns(path, features, kind="feather")
+        return pd.read_feather(path, columns=cols)
+    if suffix == ".parquet":
+        cols = _projected_ranking_columns(path, features, kind="parquet")
+        return pd.read_parquet(path, columns=cols)
+    raise ValueError(f"unsupported motif-ranking format: {suffix}")
+
+
+def _projected_ranking_columns(path: Path, features: set[str], *, kind: str) -> list[str]:
+    columns = _ranking_file_columns(path, kind=kind)
+    motif_col = _detect_motif_column(columns, path)
+    feature_cols = [c for c in columns if str(c) in features and c != motif_col]
+    if not feature_cols:
+        examples = sorted(list(features))[:5]
+        raise ValueError(
+            "none of the current run's peak IDs were present in the "
+            f"motif-ranking columns for {path.name}. First requested peaks: "
+            f"{examples}. Check that the BED peak IDs match the ranking DB "
+            "region IDs, or rename/subset the BED to the ranking convention."
+        )
+    if motif_col is not None:
+        return [motif_col, *feature_cols]
+    return feature_cols
+
+
+def _ranking_file_columns(path: Path, *, kind: str) -> list[str]:
+    if kind == "feather":
+        import pyarrow.ipc as ipc
+
+        with ipc.open_file(str(path)) as reader:
+            return list(reader.schema.names)
+    if kind == "parquet":
+        import pyarrow.parquet as pq
+
+        return list(pq.ParquetFile(path).schema.names)
+    raise ValueError(f"unsupported ranking file kind: {kind}")
+
+
+def _detect_motif_column(columns: list[str], path: Path) -> Optional[str]:
+    if "motifs" in columns:
+        return "motifs"
+    if path.stem in columns:
+        return path.stem
+    for candidate in ("motif", "motif_id", "features", "feature"):
+        if candidate in columns:
+            return candidate
+    first_col = columns[0] if columns else None
+    if first_col is not None and str(first_col).lower().startswith("motif"):
+        return first_col
+    return None
 
 
 def _coerce_motif_annotations(annotations):

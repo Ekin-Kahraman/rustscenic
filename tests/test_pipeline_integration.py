@@ -1065,12 +1065,13 @@ def test_pipeline_run_topics_method_invalid(tmp_path):
         )
 
 
-def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path):
+def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch):
     """When `region_motif_rankings` is supplied, pipeline.run runs
     region-based cistarget against the linked peaks (exact path) instead
     of bridging via GRN ∩ enhancer (approximate path). Verifies the
     new region path is taken end-to-end."""
     import gzip, os, anndata as ad, numpy as np, pandas as pd
+    from pathlib import Path
     import rustscenic.pipeline
 
     rng = np.random.default_rng(0)
@@ -1143,6 +1144,21 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path):
         ):
             region_rank[tf_idx, j] = rank
     region_rankings = pd.DataFrame(region_rank, index=motif_names, columns=peak_names)
+    region_export = region_rankings.copy()
+    region_export["unused_peak_not_in_run"] = np.arange(len(region_export), dtype=np.int32)
+    region_export.insert(0, "motifs", region_export.index)
+    region_rankings_path = tmp_path / "regions_vs_motifs.rankings.feather"
+    region_export.reset_index(drop=True).to_feather(region_rankings_path)
+
+    read_feather_calls = []
+    real_read_feather = pd.read_feather
+
+    def recording_read_feather(path, *args, **kwargs):
+        if Path(path) == region_rankings_path:
+            read_feather_calls.append(kwargs.get("columns"))
+        return real_read_feather(path, *args, **kwargs)
+
+    monkeypatch.setattr(pd, "read_feather", recording_read_feather)
 
     out = tmp_path / "pipeline_out"
     result = rustscenic.pipeline.run(
@@ -1152,7 +1168,7 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path):
         peaks=str(peaks_path),
         tfs=["G000", "G005", "G010"],
         motif_rankings=motif_rankings,
-        region_motif_rankings=region_rankings,
+        region_motif_rankings=region_rankings_path,
         gene_coords=gene_coords,
         grn_n_estimators=15,
         grn_top_targets=10,
@@ -1172,6 +1188,10 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path):
     assert result.enhancer_links_path.exists()
     assert result.eregulons_path.exists()
     assert result.n_eregulons is not None
+    assert read_feather_calls
+    assert all(cols is not None for cols in read_feather_calls)
+    assert all("motifs" in cols for cols in read_feather_calls)
+    assert all("unused_peak_not_in_run" not in cols for cols in read_feather_calls)
 
     # Region-only should also work. The exact region-cistarget path must
     # not accidentally depend on gene-based motif rankings having run
@@ -1185,7 +1205,7 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path):
         peaks=str(peaks_path),
         tfs=["G000", "G005", "G010"],
         motif_rankings=None,
-        region_motif_rankings=region_rankings,
+        region_motif_rankings=region_rankings_path,
         gene_coords=gene_coords,
         grn_n_estimators=15,
         grn_top_targets=10,
@@ -1224,6 +1244,48 @@ def test_coerce_rankings_accepts_aertslab_feather_path(tmp_path):
 
     assert list(rankings.index) == ["MOTIF_A", "MOTIF_B"]
     assert list(rankings.columns) == ["GATA1", "SPI1"]
+
+
+def test_coerce_rankings_projects_aertslab_feather_columns(tmp_path):
+    """Large region-ranking feathers must support column projection.
+
+    A full aertslab region DB can be tens of GB. pipeline.run should read
+    only the current run's peaks for region cistarget instead of materialising
+    the full file.
+    """
+    from rustscenic.pipeline import _coerce_rankings
+
+    path = tmp_path / "regions_vs_motifs.rankings.feather"
+    pd.DataFrame({
+        "motifs": ["MOTIF_A", "MOTIF_B"],
+        "chr1:100-200": [1, 3],
+        "chr1:300-400": [2, 1],
+        "chr1:500-600": [3, 2],
+    }).to_feather(path)
+
+    rankings = _coerce_rankings(
+        path,
+        feature_names=["chr1:300-400", "chr1:does-not-exist"],
+    )
+
+    assert list(rankings.index) == ["MOTIF_A", "MOTIF_B"]
+    assert list(rankings.columns) == ["chr1:300-400"]
+
+
+def test_coerce_rankings_projects_dataframe_without_losing_motif_index():
+    from rustscenic.pipeline import _coerce_rankings
+
+    rankings = _coerce_rankings(
+        pd.DataFrame({
+            "motifs": ["MOTIF_A", "MOTIF_B"],
+            "peak_a": [1, 2],
+            "peak_b": [2, 1],
+        }),
+        feature_names=["peak_b"],
+    )
+
+    assert list(rankings.index) == ["MOTIF_A", "MOTIF_B"]
+    assert list(rankings.columns) == ["peak_b"]
 
 
 def test_coerce_rankings_accepts_first_column_motif_export(tmp_path):
