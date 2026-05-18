@@ -21,7 +21,7 @@ Run the full pipeline:
 rustscenic pipeline --rna data.h5ad --tfs tfs.txt --output out/
 ```
 
-Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10 to 3.13, Linux + macOS (x86_64 + aarch64); Windows x64 is covered by CI and v0.4.6 release wheels. No dask, no Java, no CUDA.
+Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10 to 3.13, Linux + macOS (x86_64 + aarch64); Windows x64 is covered by CI and v0.4.7 release wheels. No dask, no Java, no CUDA.
 
 The practical SCENIC+ compute path in one package:
 
@@ -44,7 +44,7 @@ flowchart LR
 
 ## Status
 
-**Current release: v0.4.6** on PyPI. This micro patch fixes the monolithic region-cistarget path so file-backed region motif rankings are projected to the current run's linked peaks before reading. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
+**Current release: v0.4.7** on PyPI. This patch publishes the post-audit scaling fixes on `main`: lower-copy topic fitting, cheaper GRN edge return, lower-memory peak calling, and release smoke coverage. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
 
 Active limitations are listed under [Scope and alternatives](#scope-and-alternatives), with full detail in [`site_docs/limitations.md`](site_docs/limitations.md).
 

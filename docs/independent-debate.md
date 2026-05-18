@@ -73,7 +73,7 @@ threshold-tuning path.
 
 ## 4. One install on PyPI
 
-`pip install rustscenic` is live on PyPI. As of v0.4.6, trusted
+`pip install rustscenic` is live on PyPI. As of v0.4.7, trusted
 publishing uploads Linux, macOS and Windows x64 wheels plus sdist.
 
 **Remaining gap:** keep checking every release from PyPI in a fresh venv,

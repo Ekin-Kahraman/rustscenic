@@ -13,7 +13,7 @@ anchors the April 2026 positioning work. Use the README and
 | [aertslab/pycisTopic](https://github.com/aertslab/pycisTopic) | 79 | v1.0.2 (2023-04-23) | 2026-03-30 |
 | [aertslab/pycistarget](https://github.com/aertslab/pycistarget) | 18 | v1.1 (2025-01-10) | 2026-04-14 |
 | [aertslab/scenicplus](https://github.com/aertslab/scenicplus) | 251 | v1.0a2 alpha (2025-01-13) | 2026-01-16 |
-| [Ekin-Kahraman/rustscenic](https://github.com/Ekin-Kahraman/rustscenic) | n/a | v0.4.6 (2026-05-18) | 2026-05-18 |
+| [Ekin-Kahraman/rustscenic](https://github.com/Ekin-Kahraman/rustscenic) | n/a | v0.4.7 (2026-05-18) | 2026-05-18 |
 
 - pySCENIC's last PyPI release is **3.5 years old**.
 - arboreto's last PyPI release is **5 years old**.
@@ -32,7 +32,7 @@ on `main`.
 | pycisTopic | 84 | 67 | Heavy (polars, pyranges, MACS2, Mallet / Java). Recent v3 rework in PR #226. |
 | pycistarget | 8 | n/a | Installs; depends on pycisTopic + ctxcore upstream. |
 | scenicplus | 51 | **918** | 918-line pinned requirements file. Recent issue #629 confirms `pkg_resources` deprecation is actively biting scenicplus users on Setuptools ≥ 81. |
-| **rustscenic** | **5** | n/a | `pip install rustscenic` (PyPI) on Python 3.10 to 3.13, with Linux, macOS and Windows x64 wheels in the v0.4.6 release. Five runtime deps: numpy, pandas, pyarrow, scipy, anndata. |
+| **rustscenic** | **5** | n/a | `pip install rustscenic` (PyPI) on Python 3.10 to 3.13, with Linux, macOS and Windows x64 wheels in the v0.4.7 release. Five runtime deps: numpy, pandas, pyarrow, scipy, anndata. |
 
 Documented install failures on the reference stack:
 - arboreto issue [#42](https://github.com/aertslab/arboreto/issues/42) (Oct 2024, still open): `grnboost2 TypeError: Must supply at least one delayed object`; the dask API arboreto depends on was removed. Unpatched for 18 months.

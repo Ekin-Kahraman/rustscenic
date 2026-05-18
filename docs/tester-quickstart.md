@@ -15,7 +15,7 @@ Wheels are also at the [latest release page](https://github.com/Ekin-Kahraman/ru
 if your network cannot pull from PyPI directly.
 
 Requires Python 3.10 to 3.13. Linux, macOS and Windows x64 wheels are
-published for v0.4.6.
+published for v0.4.7.
 Brings five runtime deps: numpy, pandas, pyarrow, scipy, anndata.
 
 If you are running the example or validation scripts, install the

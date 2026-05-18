@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.7 - 2026-05-18
+
+### Scaling and release fixes
+
+- Released the post-audit performance fixes that were already on `main`.
+- Reduced `topics.fit()` and `topics.fit_gibbs()` Python overhead by passing
+  CSR buffers into PyO3 directly instead of copying them through Python lists.
+- Reduced GRN memory churn by returning indexed edges from Rust and mapping
+  gene names at the Python boundary.
+- Reduced preprocessing peak-calling memory pressure by avoiding dense window
+  preallocation in the hot path.
+- Added release smoke coverage for source distribution install checks.
+- Cleaned up stale validation and documentation references.
+
 ## 0.4.6 - 2026-05-18
 
 ### Bug fixes
