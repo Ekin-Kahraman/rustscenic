@@ -85,12 +85,28 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
       - uses: actions/setup-python@v6
         with: { python-version: '3.12' }
+      - run: rm -f target/wheels/*.tar.gz
       - uses: PyO3/maturin-action@v1
         with:
           command: sdist
           args: --manifest-path crates/rustscenic-py/Cargo.toml
+      - name: Smoke install sdist
+        run: |
+          python -m venv /tmp/rustscenic-sdist-smoke
+          source /tmp/rustscenic-sdist-smoke/bin/activate
+          python -m pip install --upgrade pip
+          python -m pip install target/wheels/rustscenic-*.tar.gz
+          python - <<'PY'
+          import importlib.metadata
+          import rustscenic
+
+          for stage in ["grn", "aucell", "topics", "preproc"]:
+              getattr(rustscenic, stage)
+          print("sdist smoke OK", importlib.metadata.version("rustscenic"))
+          PY
       - uses: actions/upload-artifact@v7
         with:
           name: sdist

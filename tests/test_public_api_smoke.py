@@ -18,6 +18,20 @@ def test_data_tfs_aliases_are_available():
     assert "Gata1" in mouse
 
 
+def test_pyo3_stub_matches_exposed_topic_and_preproc_surface():
+    from importlib import resources
+    import rustscenic._rustscenic as ext
+
+    stub = resources.files("rustscenic").joinpath("_rustscenic.pyi").read_text()
+
+    assert hasattr(ext, "topics_fit_gibbs")
+    assert hasattr(ext, "topics_npmi")
+    assert "def topics_fit_gibbs" in stub
+    assert "def topics_npmi" in stub
+    assert "npt.NDArray[np.uint64],   # indptr" in stub
+    assert "npt.NDArray[np.uint32], npt.NDArray[np.uint32]" in stub
+
+
 def test_download_motif_rankings_uses_cache_without_real_network(tmp_path, monkeypatch):
     import rustscenic.data as data
     import urllib.request

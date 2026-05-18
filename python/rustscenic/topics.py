@@ -120,7 +120,7 @@ def fit(
         )
     t0 = time.monotonic()
     ct, tw = _topics_fit(
-        list(row_ptr), list(col_idx), list(counts.astype(np.float32)),
+        row_ptr, col_idx, counts,
         int(n_words), int(n_topics),
         float(alpha), float(eta), float(tau0), float(kappa),
         int(batch_size), int(n_passes), int(seed),
@@ -204,6 +204,7 @@ def fit_gibbs(
         alpha = 0.1
     if eta is None:
         eta = 0.01
+    _validate_gibbs_counts(counts)
 
     import sys, time
     n_docs = len(row_ptr) - 1
@@ -218,7 +219,7 @@ def fit_gibbs(
         )
     t0 = time.monotonic()
     theta, beta = _topics_fit_gibbs(
-        list(row_ptr), list(col_idx), list(counts.astype(np.float32)),
+        row_ptr, col_idx, counts,
         int(n_words), int(n_topics),
         float(alpha), float(eta), int(n_iters), int(seed), int(n_threads),
     )
@@ -274,8 +275,8 @@ def coherence_npmi(
         tw,
         int(result.n_topics),
         int(n_words),
-        list(row_ptr),
-        list(col_idx),
+        row_ptr,
+        col_idx,
         int(top_n),
     )
     return np.asarray(out)
@@ -311,11 +312,21 @@ def _coerce(expression):
         )
     if X.shape[1] > np.iinfo(np.uint32).max:
         raise OverflowError(f"too many features/peaks ({X.shape[1]}) for uint32 index")
+    X.sum_duplicates()
     return (
-        np.asarray(X.indptr, dtype=np.int64),
-        np.asarray(X.indices, dtype=np.uint32),
-        np.asarray(X.data, dtype=np.float32),
+        np.ascontiguousarray(X.indptr, dtype=np.uint64),
+        np.ascontiguousarray(X.indices, dtype=np.uint32),
+        np.ascontiguousarray(X.data, dtype=np.float32),
         X.shape[1],
         cell_names,
         peak_names,
     )
+
+
+def _validate_gibbs_counts(counts: np.ndarray) -> None:
+    if not np.all(np.isfinite(counts)):
+        raise ValueError("Gibbs LDA counts must be finite")
+    if np.any(counts < 0):
+        raise ValueError("Gibbs LDA counts must be non-negative")
+    if not np.allclose(counts, np.rint(counts), rtol=0.0, atol=1e-6):
+        raise ValueError("Gibbs LDA counts must be integer fragment/count values")

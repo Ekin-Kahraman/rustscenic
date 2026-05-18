@@ -19,7 +19,7 @@
 //! Biology still agrees: 94% known edges recovered (PBMC-3k), 8/8 lineage TFs
 //! correctly enriched (PBMC-10k). Downstream AUCell is 0.99 per-cell Pearson
 //! with pyscenic — fine-edge disagreement does not propagate to regulon
-//! activity. See `validation/ours/grn_deep_audit_2026-04-18.md`.
+//! activity. See `validation/parity_v0310/grn_parity_pbmc3k_full.json`.
 
 pub mod gbm;
 pub mod histogram;
@@ -27,6 +27,7 @@ pub mod rng;
 pub mod tree;
 
 use rayon::prelude::*;
+use std::collections::{HashMap, HashSet};
 
 use crate::histogram::BinnedMatrix;
 
@@ -48,6 +49,15 @@ const TARGET_BLOCK_BYTE_BUDGET: usize = 32 * 1024 * 1024;
 pub struct Adjacency {
     pub tf: String,
     pub target: String,
+    pub importance: f32,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct IndexedAdjacency {
+    /// Gene-column index of the transcription factor.
+    pub tf_idx: usize,
+    /// Gene-column index of the target gene.
+    pub target_idx: usize,
     pub importance: f32,
 }
 
@@ -91,6 +101,28 @@ pub fn infer(
     tf_names: &[String],
     cfg: &GrnConfig,
 ) -> Vec<Adjacency> {
+    infer_indices(expression, n_cells, gene_names, tf_names, cfg)
+        .into_iter()
+        .map(|edge| Adjacency {
+            tf: gene_names[edge.tf_idx].clone(),
+            target: gene_names[edge.target_idx].clone(),
+            importance: edge.importance,
+        })
+        .collect()
+}
+
+/// Infer a GRN and return gene-column indices instead of cloned edge strings.
+///
+/// This is the preferred path for bindings that already own the gene-name
+/// table. Large GRNs can contain millions of edges, so carrying two cloned
+/// `String`s per edge is a material memory and CPU cost.
+pub fn infer_indices(
+    expression: &[f32],
+    n_cells: usize,
+    gene_names: &[String],
+    tf_names: &[String],
+    cfg: &GrnConfig,
+) -> Vec<IndexedAdjacency> {
     let n_genes = gene_names.len();
     assert_eq!(
         expression.len(),
@@ -98,15 +130,17 @@ pub fn infer(
         "expression size mismatch"
     );
 
-    let gene_ix: std::collections::HashMap<&str, usize> = gene_names
+    let gene_ix: HashMap<&str, usize> = gene_names
         .iter()
         .enumerate()
         .map(|(i, n)| (n.as_str(), i))
         .collect();
 
-    let tf_cols: Vec<(String, usize)> = tf_names
+    let mut seen_tf_cols: HashSet<usize> = HashSet::new();
+    let tf_cols: Vec<usize> = tf_names
         .iter()
-        .filter_map(|t| gene_ix.get(t.as_str()).map(|&i| (t.clone(), i)))
+        .filter_map(|t| gene_ix.get(t.as_str()).copied())
+        .filter(|&i| seen_tf_cols.insert(i))
         .collect();
 
     if tf_cols.is_empty() {
@@ -118,11 +152,10 @@ pub fn infer(
     let tf_matrix = build_tf_matrix(expression, n_cells, n_genes, &tf_cols);
     let binned_all = BinnedMatrix::from_dense(&tf_matrix, n_cells, tf_cols.len());
 
-    let tf_names_vec: Vec<String> = tf_cols.iter().map(|(n, _)| n.clone()).collect();
-    let tf_name_to_idx: std::collections::HashMap<&str, usize> = tf_names_vec
+    let gene_to_tf_col: HashMap<usize, usize> = tf_cols
         .iter()
         .enumerate()
-        .map(|(i, n)| (n.as_str(), i))
+        .map(|(tf_col, &gene_idx)| (gene_idx, tf_col))
         .collect();
 
     let mut all_edges = Vec::new();
@@ -146,20 +179,19 @@ pub fn infer(
             }
         }
 
-        let block_edges: Vec<Adjacency> = (0..block_width)
+        let block_edges: Vec<IndexedAdjacency> = (0..block_width)
             .into_par_iter()
             .map_init(
                 || gbm::GbmScratch::new(n_cells, tf_cols.len(), cfg.n_estimators),
                 |gbm_scratch, local_idx| {
                     let target_idx = block_start + local_idx;
-                    let target_name = &gene_names[target_idx];
                     let target_expr = &target_block[local_idx * n_cells..(local_idx + 1) * n_cells];
 
                     // If this target is itself one of the TFs, drop that column from the
                     // feature subset at fit time (not just after). Otherwise the self
                     // column is a perfect predictor → absorbs all split gain → every
                     // other TF's importance collapses to ~0 for that target.
-                    let exclude_self = tf_name_to_idx.get(target_name.as_str()).copied();
+                    let exclude_self = gene_to_tf_col.get(&target_idx).copied();
 
                     let importances = gbm::fit_and_importances_binned_with_scratch(
                         &binned_all,
@@ -173,9 +205,9 @@ pub fn infer(
                         .into_iter()
                         .enumerate()
                         .filter(|(_, imp)| *imp > 0.0)
-                        .map(|(i, imp)| Adjacency {
-                            tf: tf_names_vec[i].clone(),
-                            target: target_name.clone(),
+                        .map(|(i, imp)| IndexedAdjacency {
+                            tf_idx: tf_cols[i],
+                            target_idx,
                             importance: imp,
                         })
                         .collect::<Vec<_>>()
@@ -188,19 +220,14 @@ pub fn infer(
     all_edges
 }
 
-fn build_tf_matrix(
-    expr: &[f32],
-    n_cells: usize,
-    n_genes: usize,
-    tf_cols: &[(String, usize)],
-) -> Vec<f32> {
+fn build_tf_matrix(expr: &[f32], n_cells: usize, n_genes: usize, tf_cols: &[usize]) -> Vec<f32> {
     let n_tfs = tf_cols.len();
     let mut out = vec![0.0_f32; n_cells * n_tfs];
     for c in 0..n_cells {
         let expr_row = &expr[c * n_genes..(c + 1) * n_genes];
         let out_row = &mut out[c * n_tfs..(c + 1) * n_tfs];
-        for (t_i, (_, g_i)) in tf_cols.iter().enumerate() {
-            out_row[t_i] = expr_row[*g_i];
+        for (t_i, &g_i) in tf_cols.iter().enumerate() {
+            out_row[t_i] = expr_row[g_i];
         }
     }
     out
@@ -246,5 +273,38 @@ mod tests {
             ..GrnConfig::default()
         };
         assert_eq!(resolve_target_block_size(&cfg, 500_000), 7);
+    }
+
+    #[test]
+    fn infer_indices_deduplicates_tf_names_and_excludes_self_edges() {
+        let n_cells = 80;
+        let gene_names = vec!["g0".to_string(), "g1".to_string(), "g2".to_string()];
+        let mut expression = Vec::with_capacity(n_cells * gene_names.len());
+        for i in 0..n_cells {
+            let x = i as f32 / n_cells as f32;
+            expression.push(x);
+            expression.push(2.0 * x + 0.01);
+            expression.push(1.0 - x);
+        }
+        let tf_names = vec!["g0".to_string(), "g0".to_string()];
+        let cfg = GrnConfig {
+            n_estimators: 30,
+            max_features: 1.0,
+            target_block_size: 1,
+            ..GrnConfig::default()
+        };
+
+        let edges = infer_indices(&expression, n_cells, &gene_names, &tf_names, &cfg);
+        assert!(!edges.is_empty());
+        assert!(edges.iter().all(|edge| edge.tf_idx == 0));
+        assert!(edges.iter().all(|edge| edge.target_idx != edge.tf_idx));
+
+        let mut pairs = HashSet::new();
+        for edge in edges {
+            assert!(
+                pairs.insert((edge.tf_idx, edge.target_idx)),
+                "duplicate indexed edge emitted"
+            );
+        }
     }
 }

@@ -31,6 +31,7 @@
 
 use crate::fragments::FragmentTable;
 use crate::peaks::PeakTable;
+use std::collections::BTreeMap;
 
 /// Tuning knobs for `call_peaks_from_pseudobulks`.
 #[derive(Debug, Clone)]
@@ -113,24 +114,13 @@ pub fn call_peaks_from_pseudobulks(
     // tiling correctly without needing an external chrom-sizes BED.
     let chrom_extents = compute_chrom_extents(fragments);
 
-    // Single pass over fragments: bucket each insertion into the
-    // matching (cluster, chrom, bin). Replaces the previous nested loop
-    // `for cluster: for chrom: for fragment` which scaled
-    // O(clusters × chroms × n_fragments). Now O(n_fragments) up front
-    // plus O(clusters × chroms × n_windows) for the merge phase.
-    let mut window_counts_by_pair: Vec<Vec<Vec<u32>>> = (0..n_clusters)
-        .map(|_| {
-            (0..n_chroms)
-                .map(|c| {
-                    let max_pos = chrom_extents[c];
-                    if max_pos == 0 {
-                        Vec::new()
-                    } else {
-                        vec![0u32; ((max_pos / ws) + 1) as usize]
-                    }
-                })
-                .collect()
-        })
+    // Single pass over fragments: bucket each insertion into the matching
+    // (cluster, chrom, bin). Store only occupied windows; atlas chromosomes can
+    // have long sparse coordinate spans, so dense per-pair window vectors make
+    // peak calling's peak RSS depend on max genomic coordinate rather than
+    // observed fragments.
+    let mut window_counts_by_pair: Vec<BTreeMap<u32, u32>> = (0..n_clusters * n_chroms)
+        .map(|_| BTreeMap::new())
         .collect();
 
     for i in 0..fragments.len() {
@@ -140,17 +130,18 @@ pub fn call_peaks_from_pseudobulks(
             continue;
         }
         let chrom_idx = fragments.chrom_idx[i] as usize;
-        let bins = &mut window_counts_by_pair[cluster as usize][chrom_idx];
-        if bins.is_empty() {
+        if chrom_extents[chrom_idx] == 0 {
             continue;
         }
-        let s_bin = (fragments.start[i] / ws) as usize;
-        let e_bin = (fragments.end[i].saturating_sub(1) / ws) as usize;
-        if s_bin < bins.len() {
-            bins[s_bin] = bins[s_bin].saturating_add(1);
-        }
-        if e_bin != s_bin && e_bin < bins.len() {
-            bins[e_bin] = bins[e_bin].saturating_add(1);
+        let pair_idx = cluster as usize * n_chroms + chrom_idx;
+        let bins = &mut window_counts_by_pair[pair_idx];
+        let s_bin = fragments.start[i] / ws;
+        let e_bin = fragments.end[i].saturating_sub(1) / ws;
+        let s_count = bins.entry(s_bin).or_insert(0);
+        *s_count = (*s_count).saturating_add(1);
+        if e_bin != s_bin {
+            let e_count = bins.entry(e_bin).or_insert(0);
+            *e_count = (*e_count).saturating_add(1);
         }
     }
 
@@ -162,62 +153,90 @@ pub fn call_peaks_from_pseudobulks(
             if max_pos == 0 {
                 continue;
             }
-            let window_counts = &window_counts_by_pair[cluster_id as usize][chrom_idx as usize];
+            let pair_idx = cluster_id as usize * n_chroms + chrom_idx as usize;
+            let window_counts = &window_counts_by_pair[pair_idx];
             if window_counts.is_empty() {
                 continue;
             }
 
             // Cluster-specific significance threshold.
             let threshold =
-                quantile_of_nonzero(window_counts, cfg.quantile_threshold).max(min_count);
+                quantile_of_nonzero(window_counts.values().copied(), cfg.quantile_threshold)
+                    .max(min_count);
 
-            // Mark windows above threshold, merge consecutive ones
-            // (with max_gap/ws tolerance) into candidate peaks.
-            let gap_windows = (cfg.max_gap / ws).max(1) as i64;
-            let mut i = 0usize;
-            while i < window_counts.len() {
-                if window_counts[i] >= threshold {
-                    let peak_start_win = i;
-                    let mut peak_end_win = i;
-                    let mut summit_win = i;
-                    let mut summit_count = window_counts[i];
-                    let mut gap = 0i64;
-                    let mut j = i + 1;
-                    while j < window_counts.len() {
-                        if window_counts[j] >= threshold {
-                            peak_end_win = j;
-                            gap = 0;
-                            if window_counts[j] > summit_count {
-                                summit_count = window_counts[j];
-                                summit_win = j;
-                            }
+            // Merge significant occupied windows with `max_gap` measured as
+            // the number of empty windows between adjacent significant bins.
+            let gap_windows = cfg.max_gap / ws;
+            let mut current: Option<(u32, u32, u32, u32)> = None;
+            for (&win, &count) in window_counts
+                .iter()
+                .filter(|(_, &count)| count >= threshold)
+            {
+                if let Some((peak_start_win, peak_end_win, summit_win, summit_count)) = current {
+                    let empty_gap = win.saturating_sub(peak_end_win).saturating_sub(1);
+                    if empty_gap <= gap_windows {
+                        let (summit_win, summit_count) = if count > summit_count {
+                            (win, count)
                         } else {
-                            gap += 1;
-                            if gap > gap_windows {
-                                break;
-                            }
-                        }
-                        j += 1;
+                            (summit_win, summit_count)
+                        };
+                        current = Some((peak_start_win, win, summit_win, summit_count));
+                    } else {
+                        push_candidate(
+                            &mut all_candidates,
+                            chrom_idx,
+                            peak_start_win,
+                            peak_end_win,
+                            summit_win,
+                            summit_count,
+                            max_pos,
+                            ws,
+                        );
+                        current = Some((win, win, win, count));
                     }
-                    let start = peak_start_win as u32 * ws;
-                    let end = ((peak_end_win as u32 + 1) * ws).min(max_pos + 1);
-                    let summit = summit_win as u32 * ws + ws / 2;
-                    all_candidates.push(CandidatePeak {
-                        chrom_idx,
-                        start,
-                        end,
-                        peak_count: summit_count,
-                        summit,
-                    });
-                    i = peak_end_win + 1;
                 } else {
-                    i += 1;
+                    current = Some((win, win, win, count));
                 }
+            }
+            if let Some((peak_start_win, peak_end_win, summit_win, summit_count)) = current {
+                push_candidate(
+                    &mut all_candidates,
+                    chrom_idx,
+                    peak_start_win,
+                    peak_end_win,
+                    summit_win,
+                    summit_count,
+                    max_pos,
+                    ws,
+                );
             }
         }
     }
 
     merge_consensus(all_candidates, fragments, cfg)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn push_candidate(
+    candidates: &mut Vec<CandidatePeak>,
+    chrom_idx: u32,
+    peak_start_win: u32,
+    peak_end_win: u32,
+    summit_win: u32,
+    summit_count: u32,
+    max_pos: u32,
+    ws: u32,
+) {
+    let start = peak_start_win * ws;
+    let end = ((peak_end_win + 1) * ws).min(max_pos + 1);
+    let summit = summit_win * ws + ws / 2;
+    candidates.push(CandidatePeak {
+        chrom_idx,
+        start,
+        end,
+        peak_count: summit_count,
+        summit,
+    });
 }
 
 /// Greedy iterative merging: sort candidates by descending intensity,
@@ -248,13 +267,17 @@ fn merge_consensus(
         let end = cand.summit.saturating_add(half).saturating_add(1);
 
         // Reject if overlaps an already-accepted peak on the same chrom.
-        let overlaps = kept_by_chrom[c]
-            .iter()
-            .any(|&(ks, ke)| start < ke && ks < end);
-        if overlaps {
+        // Kept intervals are non-overlapping and sorted by start, so only the
+        // predecessor and successor around the insertion point can collide.
+        let kept = &mut kept_by_chrom[c];
+        let insert_at = kept.partition_point(|&(ks, _)| ks < start);
+        let overlaps_prev = insert_at > 0 && intervals_overlap(start, end, kept[insert_at - 1]);
+        let overlaps_next =
+            insert_at < kept.len() && intervals_overlap(start, end, kept[insert_at]);
+        if overlaps_prev || overlaps_next {
             continue;
         }
-        kept_by_chrom[c].push((start, end));
+        kept.insert(insert_at, (start, end));
 
         // Add to PeakTable using the same chrom name as the fragments.
         let chrom_name = fragments.chrom_names[c].clone();
@@ -265,6 +288,10 @@ fn merge_consensus(
         out.name.push(format!("{}:{}-{}", chrom_name, start, end));
     }
     out
+}
+
+fn intervals_overlap(start: u32, end: u32, other: (u32, u32)) -> bool {
+    start < other.1 && other.0 < end
 }
 
 fn find_or_intern_chrom(table: &mut PeakTable, name: &str) -> u32 {
@@ -292,8 +319,8 @@ fn compute_chrom_extents(fragments: &FragmentTable) -> Vec<u32> {
 /// Empirical quantile of the non-zero entries in `counts`.
 /// Returns 0 if there are no positive entries, which causes the caller
 /// to fall back to `min_fragments_per_window`.
-fn quantile_of_nonzero(counts: &[u32], q: f32) -> u32 {
-    let mut nz: Vec<u32> = counts.iter().copied().filter(|&c| c > 0).collect();
+fn quantile_of_nonzero(counts: impl IntoIterator<Item = u32>, q: f32) -> u32 {
+    let mut nz: Vec<u32> = counts.into_iter().filter(|&c| c > 0).collect();
     if nz.is_empty() {
         return 0;
     }
@@ -435,6 +462,32 @@ mod tests {
             .filter(|&i| peaks.start[i] < 10_500 && peaks.end[i] > 9_800)
             .count();
         assert!((1..=2).contains(&peak_10k_count));
+    }
+
+    #[test]
+    fn max_gap_zero_does_not_merge_across_empty_window() {
+        let lines = [
+            "chr1\t0\t1\tAAA\t1".to_string(),
+            "chr1\t100\t101\tAAA\t1".to_string(),
+        ];
+        let t = read_fragments_from(Cursor::new(lines.join("\n"))).unwrap();
+        let cluster = vec![0u32; t.n_barcodes()];
+        let cfg = PeakCallingConfig {
+            window_size: 50,
+            min_fragments_per_window: 1,
+            quantile_threshold: 0.0,
+            max_gap: 0,
+            peak_half_width: 1,
+        };
+
+        let peaks = call_peaks_from_pseudobulks(&t, &cluster, 1, &cfg);
+
+        assert_eq!(
+            peaks.len(),
+            2,
+            "expected separate peaks: {:?}",
+            collect_peaks(&peaks)
+        );
     }
 
     fn collect_peaks(p: &PeakTable) -> Vec<(String, u32, u32)> {

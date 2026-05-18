@@ -8,7 +8,7 @@ body:
         Correctness issues are top priority. Known tolerated divergences:
 
         - **GRN per-edge Spearman 0.58** vs arboreto (Rust histogram-GBM ≠ sklearn Cython GBR).
-          Biology agrees at coarse resolution. Log at `validation/ours/grn_deep_audit_2026-04-18.md`.
+          Biology agrees at coarse resolution. Current parity artefact: `validation/parity_v0310/grn_parity_pbmc3k_full.json`.
         - **Topics** collapses at K ≥ 30 on sparse binary scATAC. `docs/topic-collapse.md`.
         - **AUCell tie-break** differs from pyscenic (we use gene-index tie-break; pyscenic shuffles).
           Typical per-regulon Pearson 0.87, per-cell Pearson 0.99.

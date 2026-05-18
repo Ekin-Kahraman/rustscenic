@@ -301,11 +301,14 @@ def run(
     log(f"      {len(grn):,} edges in {elapsed['grn']:.1f}s → {grn_path.name}")
 
     # ---- 4. build candidate regulons ----
+    if grn_top_targets < 1:
+        raise ValueError(f"grn_top_targets must be >= 1, got {grn_top_targets}")
     log(f"[5/8] candidate regulons: top-{grn_top_targets} targets per TF")
     candidate_regulons = {}
+    min_targets_for_candidate = min(10, grn_top_targets)
     for tf in grn["TF"].unique():
         top = grn[grn["TF"] == tf].nlargest(grn_top_targets, "importance")["target"].tolist()
-        if len(top) >= 10:
+        if len(top) >= min_targets_for_candidate:
             candidate_regulons[f"{tf}_regulon"] = top
     candidate_regulons_path = output_dir / "candidate_regulons.json"
     candidate_regulons_path.write_text(json.dumps(candidate_regulons, indent=2))
@@ -315,7 +318,7 @@ def run(
     n_pruned_regulons: Optional[int] = None
     log(
         f"      {len(candidate_regulons)} candidate regulons "
-        f"(≥10 targets) → {candidate_regulons_path.name}"
+        f"(≥{min_targets_for_candidate} targets) → {candidate_regulons_path.name}"
     )
 
     # ---- 4b. cistarget (optional) ----

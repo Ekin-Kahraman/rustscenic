@@ -190,6 +190,55 @@ def test_call_peaks_wrong_cluster_length_raises():
             )
 
 
+def test_call_peaks_aligns_series_by_barcode_index(tmp_path, monkeypatch):
+    captured = {}
+
+    def fake_insert_size_stats(_fragments_path):
+        return (["AAA-1", "BBB-1"],)
+
+    def fake_call_peaks(
+        fragments_path,
+        cluster_per_barcode,
+        n_clusters,
+        window_size,
+        min_fragments_per_window,
+        quantile_threshold,
+        max_gap,
+        peak_half_width,
+    ):
+        captured["clusters"] = cluster_per_barcode
+        captured["n_clusters"] = n_clusters
+        return [], np.array([], dtype=np.uint32), np.array([], dtype=np.uint32), []
+
+    monkeypatch.setattr(rustscenic.preproc, "_insert_size_stats", fake_insert_size_stats)
+    monkeypatch.setattr(rustscenic.preproc, "_call_peaks", fake_call_peaks)
+
+    frag_path = tmp_path / "fragments.tsv.gz"
+    frag_path.write_text("")
+    clusters = pd.Series([1, 0], index=["BBB-1", "AAA-1"])
+
+    out = rustscenic.preproc.call_peaks(frag_path, clusters)
+
+    assert out.empty
+    assert captured["clusters"] == [0, 1]
+    assert captured["n_clusters"] == 2
+
+
+def test_call_peaks_series_missing_barcode_raises(tmp_path, monkeypatch):
+    def fake_insert_size_stats(_fragments_path):
+        return (["AAA-1", "BBB-1"],)
+
+    monkeypatch.setattr(rustscenic.preproc, "_insert_size_stats", fake_insert_size_stats)
+    frag_path = tmp_path / "fragments.tsv.gz"
+    frag_path.write_text("")
+
+    with pytest.raises(ValueError, match="missing fragment barcodes"):
+        rustscenic.preproc.call_peaks(
+            frag_path,
+            pd.Series([0], index=["AAA-1"]),
+        )
+
+
 # ---- TSS chrom-normalisation regression -----------------------------------
 
 

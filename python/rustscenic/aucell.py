@@ -62,6 +62,8 @@ def score(
     Columns: regulon names. Per-regulon gene-coverage counts are stored on
     the DataFrame's ``.attrs["regulon_coverage"]`` dict, keyed by regulon name.
     """
+    if chunk_size is not None and chunk_size < 1:
+        raise ValueError(f"chunk_size must be None or a positive integer, got {chunk_size}")
     if not 0.0 < top_frac <= 1.0:
         raise ValueError(
             f"top_frac must be in (0, 1], got {top_frac}. "
@@ -80,13 +82,15 @@ def score(
     # Warn if the rank-cutoff K = floor(top_frac × n_genes) is so small
     # that no regulon's members can be inside it. Was a silent-all-zero
     # mode at very small top_frac on small gene sets.
-    rank_cutoff = int(top_frac * len(gene_names))
+    rank_cutoff_raw = int(round(top_frac * len(gene_names)))
+    rank_cutoff = max(rank_cutoff_raw - 1, 0)
     if rank_cutoff < 1:
         import warnings
         warnings.warn(
-            f"top_frac × n_genes = {top_frac} × {len(gene_names)} = "
-            f"{rank_cutoff} — the rank cutoff is below 1, so every AUC "
-            f"will score to 0. Increase top_frac or use a wider gene set.",
+            f"effective AUCell rank cutoff is {rank_cutoff}: "
+            f"round(top_frac × n_genes) - 1 = round({top_frac} × "
+            f"{len(gene_names)}) - 1, which is below 1. Every AUC will score to 0. "
+            f"Increase top_frac or use a wider gene set.",
             UserWarning, stacklevel=3,
         )
     warn_if_likely_unnormalized(X_raw, stacklevel=3)

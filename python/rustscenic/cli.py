@@ -54,7 +54,8 @@ def cmd_grn(args: argparse.Namespace) -> int:
 
     expression, gene_names, n_cells = _load_expression(expr_path)
     tfs = rs_grn.load_tfs(Path(args.tfs))
-    tfs_in = [t for t in tfs if t in set(gene_names)]
+    gene_set = set(gene_names)
+    tfs_in = [t for t in tfs if t in gene_set]
     if not tfs_in:
         print(f"error: no TFs in {args.tfs} found in expression data", file=sys.stderr)
         return 2
@@ -64,7 +65,7 @@ def cmd_grn(args: argparse.Namespace) -> int:
 
     t0 = time.monotonic()
     out = rs_grn.infer(
-        expression, tfs_in,
+        expression, tfs,
         n_estimators=args.n_estimators, learning_rate=args.learning_rate,
         max_features=args.max_features, subsample=args.subsample,
         max_depth=args.max_depth, early_stop_window=args.early_stop_window,
@@ -126,12 +127,17 @@ def cmd_aucell(args: argparse.Namespace) -> int:
                     regulons.append((f"{tf}_regulon", top_targets))
         else:
             # Plain regulons TSV: name\tgene,gene,...
+            grouped: dict[str, list[str]] = {}
             for ln in lines:
                 if "\t" in ln:
                     name, genes_str = ln.split("\t", 1)
+                    name = name.strip()
                     genes = [g.strip() for g in genes_str.split(",") if g.strip()]
-                    if len(genes) >= args.min_genes:
-                        regulons.append((name.strip(), genes))
+                    grouped.setdefault(name, []).extend(genes)
+            for name, genes in grouped.items():
+                genes = list(dict.fromkeys(genes))
+                if len(genes) >= args.min_genes:
+                    regulons.append((name, genes))
 
     if not regulons:
         print(f"error: no regulons loaded from {reg_path}", file=sys.stderr)

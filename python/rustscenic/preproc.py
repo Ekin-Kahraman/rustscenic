@@ -182,7 +182,18 @@ def call_peaks(
         ``chrom:start-end``.
     """
     fragments_path = str(Path(fragments_path))
-    clusters = np.asarray(cluster_per_barcode, dtype=np.int64)
+    if isinstance(cluster_per_barcode, pd.Series):
+        barcodes, *_ = _insert_size_stats(fragments_path)
+        barcode_index = pd.Index(list(barcodes), name="barcode")
+        missing = barcode_index.difference(cluster_per_barcode.index)
+        if len(missing):
+            raise ValueError(
+                "cluster_per_barcode Series is missing fragment barcodes: "
+                f"{missing[:5].tolist()}"
+            )
+        clusters = cluster_per_barcode.reindex(barcode_index).to_numpy(dtype=np.int64)
+    else:
+        clusters = np.asarray(cluster_per_barcode, dtype=np.int64)
     # PyO3 receives u32; clamp negative / NaN-likes to u32::MAX.
     clusters_u32 = np.where(clusters < 0, np.uint32(0xFFFF_FFFF), clusters).astype(np.uint32)
     if n_clusters is None:

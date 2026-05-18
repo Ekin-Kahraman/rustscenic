@@ -33,6 +33,32 @@ class TestTopicsShape:
         np.testing.assert_allclose(res.cell_topic.values.sum(axis=1), 1.0, atol=1e-4)
         np.testing.assert_allclose(res.topic_peak.values.sum(axis=1), 1.0, atol=1e-4)
 
+    def test_fit_passes_numpy_csr_buffers_to_extension(self, monkeypatch):
+        X = sp.csr_matrix(np.array([[1, 0, 2], [0, 3, 0]], dtype=np.float32))
+        cells = ["c0", "c1"]
+        peaks = ["p0", "p1", "p2"]
+        seen = {}
+
+        def fake_topics_fit(row_ptr, col_idx, counts, n_words, n_topics, *_args):
+            seen["row_ptr"] = row_ptr
+            seen["col_idx"] = col_idx
+            seen["counts"] = counts
+            return (
+                np.full((len(row_ptr) - 1, n_topics), 1.0 / n_topics, dtype=np.float32),
+                np.full((n_topics, n_words), 1.0 / n_words, dtype=np.float32),
+            )
+
+        monkeypatch.setattr(topics, "_topics_fit", fake_topics_fit)
+        res = topics.fit((X, cells, peaks), n_topics=2, n_passes=1, verbose=False)
+
+        assert res.cell_topic.shape == (2, 2)
+        assert isinstance(seen["row_ptr"], np.ndarray)
+        assert isinstance(seen["col_idx"], np.ndarray)
+        assert isinstance(seen["counts"], np.ndarray)
+        assert seen["row_ptr"].dtype == np.uint64
+        assert seen["col_idx"].dtype == np.uint32
+        assert seen["counts"].dtype == np.float32
+
 
 class TestTopicsCorrectness:
     def test_separates_planted_topics(self, synthetic_atac_2_topics):

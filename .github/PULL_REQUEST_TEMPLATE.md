@@ -10,7 +10,7 @@
 - [ ] `cargo test --workspace --exclude rustscenic-py --release` passes
 - [ ] `cargo clippy --workspace --exclude rustscenic-py --all-targets -- -D warnings` passes
 - [ ] `pytest tests/` passes
-- [ ] If algorithm output changed: new or updated `validation/ours/*_<date>.md` with before/after numbers
+- [ ] If algorithm output changed: new or updated checked-in `validation/<stage>/...` or `validation/*_<date>.json` artefact with before/after numbers
 - [ ] README / CHANGELOG updated if user-facing
 
 ## Notes for reviewers

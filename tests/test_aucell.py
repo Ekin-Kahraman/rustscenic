@@ -44,6 +44,12 @@ class TestAucellCorrectness:
         out = aucell.score(df, [("R", ["g9"])], top_frac=0.1)
         assert out.values[0, 0] == 0.0
 
+    def test_equal_expression_ties_break_by_gene_order(self):
+        df = pd.DataFrame([[1.0, 1.0, 1.0, 1.0, 1.0]], columns=list("abcde"), index=["c0"])
+        out = aucell.score(df, [("first", ["a"]), ("last", ["e"])], top_frac=0.4)
+        assert abs(out.loc["c0", "first"] - 0.5) < 1e-6
+        assert out.loc["c0", "last"] == 0.0
+
 
 class TestAucellEdgeCases:
     def test_regulon_with_no_matching_genes_is_dropped(self, small_expr):
@@ -111,6 +117,28 @@ class TestAucellSparse:
         chunked = aucell.score(adata, canonical_regulons, top_frac=0.1, chunk_size=13)
         np.testing.assert_allclose(whole.values, chunked.values, atol=1e-6)
         assert list(whole.index) == list(chunked.index)
+
+    def test_chunk_size_zero_raises_value_error(self, small_expr, canonical_regulons):
+        import anndata as ad
+        X_sparse = sp.csr_matrix(small_expr.values.astype(np.float32))
+        adata = ad.AnnData(
+            X=X_sparse,
+            obs=pd.DataFrame(index=small_expr.index),
+            var=pd.DataFrame(index=small_expr.columns),
+        )
+        with pytest.raises(ValueError, match="chunk_size"):
+            aucell.score(adata, canonical_regulons, top_frac=0.1, chunk_size=0)
+
+    def test_chunk_size_negative_raises_value_error(self, small_expr, canonical_regulons):
+        import anndata as ad
+        X_sparse = sp.csr_matrix(small_expr.values.astype(np.float32))
+        adata = ad.AnnData(
+            X=X_sparse,
+            obs=pd.DataFrame(index=small_expr.index),
+            var=pd.DataFrame(index=small_expr.columns),
+        )
+        with pytest.raises(ValueError, match="chunk_size"):
+            aucell.score(adata, canonical_regulons, top_frac=0.1, chunk_size=-5)
 
 
 def test_aucell_top_frac_zero_raises():
@@ -198,4 +226,16 @@ def test_aucell_too_small_top_frac_warns():
         aucell.score(df, [("R", ["G0", "G1"])], top_frac=0.05)
     msgs = [str(w.message) for w in caught]
     # 0.05 × 10 = 0.5 → rank cutoff 0
+    assert any("rank cutoff" in m and "below 1" in m for m in msgs), msgs
+
+
+def test_aucell_single_rank_cutoff_warns_and_scores_zero():
+    import warnings
+
+    df = pd.DataFrame([[10.0] + [0.0] * 9], columns=[f"G{i}" for i in range(10)])
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        out = aucell.score(df, [("R", ["G0"])], top_frac=0.1)
+    assert out.iloc[0, 0] == 0.0
+    msgs = [str(w.message) for w in caught]
     assert any("rank cutoff" in m and "below 1" in m for m in msgs), msgs

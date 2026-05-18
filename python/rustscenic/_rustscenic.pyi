@@ -48,9 +48,9 @@ def aucell_score(
 
 
 def topics_fit(
-    row_ptr: list[int],
-    col_idx: list[int],
-    counts: list[float],
+    row_ptr: npt.NDArray[np.uint64],
+    col_idx: npt.NDArray[np.uint32],
+    counts: npt.NDArray[np.float32],
     n_words: int,
     n_topics: int = 50,
     alpha: float = 0.02,
@@ -65,13 +65,41 @@ def topics_fit(
     ...
 
 
+def topics_fit_gibbs(
+    row_ptr: npt.NDArray[np.uint64],
+    col_idx: npt.NDArray[np.uint32],
+    counts: npt.NDArray[np.float32],
+    n_words: int,
+    n_topics: int = 50,
+    alpha: float = 0.1,
+    eta: float = 0.01,
+    n_iters: int = 200,
+    seed: int = 42,
+    n_threads: int = 1,
+) -> tuple[npt.NDArray[np.float32], npt.NDArray[np.float32]]:
+    """Fit collapsed-Gibbs LDA; return (cell_topic, topic_word) matrices."""
+    ...
+
+
+def topics_npmi(
+    topic_word: npt.NDArray[np.float32],
+    n_topics: int,
+    n_words: int,
+    row_ptr: npt.NDArray[np.uint64],
+    col_idx: npt.NDArray[np.uint32],
+    top_n: int = 10,
+) -> npt.NDArray[np.float32]:
+    """Per-topic NPMI coherence over top-ranked words."""
+    ...
+
+
 def preproc_fragments_to_matrix(
     fragments_path: str,
     peaks_path: str,
 ) -> tuple[
     npt.NDArray[np.uint32],   # data
     npt.NDArray[np.uint32],   # indices
-    npt.NDArray[np.uint32],   # indptr
+    npt.NDArray[np.uint64],   # indptr
     tuple[int, int],          # shape
     list[str],                # barcodes
     list[str],                # peak ids
@@ -123,6 +151,6 @@ def preproc_call_peaks(
     quantile_threshold: float = 0.95,
     max_gap: int = 250,
     peak_half_width: int = 250,
-) -> tuple[list[str], list[int], list[int], list[str]]:
+) -> tuple[list[str], npt.NDArray[np.uint32], npt.NDArray[np.uint32], list[str]]:
     """Iterative consensus peak calling. Returns (chroms, starts, ends, names)."""
     ...

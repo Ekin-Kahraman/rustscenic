@@ -47,7 +47,7 @@ Anchor claims at v0.3.10:
 |---|---|---|
 | "Five runtime dependencies" | `pyproject.toml` core deps | ✓ proven |
 | "Python 3.10–3.13, Linux + macOS x86_64/aarch64 and Windows x64" | release wheel matrix | ✓ configured in release workflow matrix (5 wheels per release once the next tag is cut) |
-| "GitHub Release wheels and source install succeed" | release.yml CI green per tag | ✓ proven on v0.3.6 |
+| "GitHub Release wheels and source install succeed" | release.yml tag workflow builds wheels + sdist and smoke-installs the sdist in a fresh venv before upload | ✓ configured in release workflow |
 | AUCell wall-time numbers (Ziegler, Multiome) | `validation/aucell_celltype_pbmc10k.py` log | ⚠ pre-existing logs, not regenerated per release |
 | AUCell per-cell Pearson 0.984 mean | `validation/validate_aucell_pbmc10k.py` log | ⚠ same |
 | GRN per-edge Spearman 0.611 vs arboreto (current pyscenic 0.12.1, fresh fixture) | `validation/parity_v0310/grn_parity_pbmc3k_full.json` — rustscenic v0.3.10 + arboreto 0.1.6 + pyscenic 0.12.1 + dask 2024.1.1 inside `rustscenic-ref:0.12.1` Docker image, identical PBMC 3k fixture, seed 777, n_estimators=5000. Within-TF Spearman mean 0.632, 1.78× speedup. | ✅ proven on v0.3.10 |
@@ -69,7 +69,7 @@ The release is "publishable end-to-end" only when ALL of:
 - [x] Memory/time table has hardware, dataset, command, version baked in alongside numbers (per-stage wall+RSS, tag SHA, MD5 of dataset files, env, install command)
 - [x] Bit-identical determinism under same seed verified (live + Rust inline tests)
 - [x] Docs tell users exactly which install path to use (`docs/tester-quickstart.md` ✓)
-- [x] Audit workflow checks each install path's smoke test on every tag push (install-matrix job in `.github/workflows/audit.yml` since 5f6379e + 87edae8)
+- [x] Release workflow checks wheel/sdist build and smoke-installs the sdist on every tag push; the audit install-matrix continues to cover install paths on main/PR runs
 - [x] **Real-data full-stage smoke** exercising grn + aucell + topics + cistarget + enhancer-link + eRegulon on real PBMC multiome (`validation/multiome_pipeline_run_v0.3.9.json` — all 6 SCENIC+ stages emit non-empty artefacts via a single `pipeline.run` call)
 - [x] **Real-data eRegulon assembly** via the public orchestrator (`pipeline.run` on real PBMC produced 1,091 eRegulons in v0.3.9; closed by `adata_atac` (v0.3.8) + alt-contig regex fix (v0.3.9))
 - [ ] **Real-data `pipeline.run` on raw 10x output** without caller-side ATAC pre-subset (open: v0.3.7 attempt wedged at GRN for >3h with topics running over the unsubsetted 451k-barcode matrix. Workaround: caller subsets ATAC to RNA-QC'd cells and passes `adata_atac=…` (the v0.3.9 path). Real fix requires either an in-orchestrator subset step or fragments-side prefilter — tracked, low priority since the documented workflow subsets first.)

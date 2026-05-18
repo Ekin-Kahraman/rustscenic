@@ -107,9 +107,14 @@ python validation/scaling/bench_macs2_head_to_head.py
 # Topics vs gensim
 python validation/scaling/bench_gensim_lda.py
 
-# AUCell + GRN comparisons under validation/ours/
+# GRN parity against arboreto/pyscenic
+python validation/grn_parity_v0310.py
 ```
 
-Real datasets used live under `validation/real_multiome/` and
-`validation/multi_dataset/` (gitignored; files 50 MB to 1 GB).
-Download URLs are documented in each bench script's docstring.
+Public real-data fixtures used by the current scripts live under versioned
+directories such as `validation/real_multiome_v036/`,
+`validation/real_multiome_pbmc_granulocyte_10k/`, and
+`validation/real_multiome_brain_e18/`. Larger private/local atlas inputs
+referenced by older scaling JSONs are not treated as public reproduction
+paths; each runnable benchmark documents its expected download path in the
+script docstring.

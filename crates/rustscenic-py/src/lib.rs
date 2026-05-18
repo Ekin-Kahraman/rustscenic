@@ -1,10 +1,10 @@
 //! PyO3 bindings for rustscenic. Python package name: `rustscenic`.
-use numpy::{PyArray1, PyArray2, PyReadonlyArray2};
+use numpy::{PyArray1, PyArray2, PyReadonlyArray1, PyReadonlyArray2};
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 
 use rustscenic_aucell::aucell;
-use rustscenic_grn::{infer, Adjacency, GrnConfig};
+use rustscenic_grn::{infer_indices, GrnConfig};
 use rustscenic_preproc::{
     build_cell_peak_matrix, call_peaks_from_pseudobulks,
     fragments::{fragments_per_barcode, total_counts_per_barcode},
@@ -13,6 +13,29 @@ use rustscenic_preproc::{
 };
 use rustscenic_topics::{online_vb_lda, topic_coherence_npmi};
 use std::path::PathBuf;
+
+type GrnInferPyResult = (Py<PyList>, Py<PyList>, Py<PyArray1<f32>>);
+type TopicFitPyResult = (Py<PyArray2<f32>>, Py<PyArray2<f32>>);
+type FragmentsToMatrixPyResult = (
+    Py<PyArray1<u32>>, // data
+    Py<PyArray1<u32>>, // indices
+    Py<PyArray1<u64>>, // indptr
+    (usize, usize),    // shape (n_cells, n_peaks)
+    Py<PyList>,        // barcode names
+    Py<PyList>,        // peak names
+    Py<PyArray1<u32>>, // fragments per barcode
+    Py<PyArray1<u32>>, // total counts per barcode
+);
+type InsertSizeStatsPyResult = (
+    Py<PyList>,        // barcodes
+    Py<PyArray1<f32>>, // mean
+    Py<PyArray1<f32>>, // median
+    Py<PyArray1<u32>>, // n_fragments
+    Py<PyArray1<u32>>, // sub
+    Py<PyArray1<u32>>, // mono
+    Py<PyArray1<u32>>, // di
+);
+type CallPeaksPyResult = (Py<PyList>, Py<PyArray1<u32>>, Py<PyArray1<u32>>, Py<PyList>);
 
 #[pyfunction]
 #[pyo3(signature = (
@@ -42,7 +65,7 @@ fn grn_infer<'py>(
     early_stop_window: usize,
     seed: u64,
     target_block_size: usize,
-) -> PyResult<(Py<PyList>, Py<PyList>, Py<PyArray1<f32>>)> {
+) -> PyResult<GrnInferPyResult> {
     let arr = expression.as_array();
     let n_cells = arr.shape()[0];
     let n_genes = arr.shape()[1];
@@ -78,11 +101,19 @@ fn grn_infer<'py>(
         target_block_size,
     };
 
-    let adjacencies: Vec<Adjacency> =
-        py.allow_threads(|| infer(expr_slice, n_cells, &gene_names, &tf_names, &cfg));
+    let adjacencies =
+        py.allow_threads(|| infer_indices(expr_slice, n_cells, &gene_names, &tf_names, &cfg));
 
-    let tfs = PyList::new(py, adjacencies.iter().map(|a| a.tf.as_str()))?;
-    let targets = PyList::new(py, adjacencies.iter().map(|a| a.target.as_str()))?;
+    let tfs = PyList::new(
+        py,
+        adjacencies.iter().map(|a| gene_names[a.tf_idx].as_str()),
+    )?;
+    let targets = PyList::new(
+        py,
+        adjacencies
+            .iter()
+            .map(|a| gene_names[a.target_idx].as_str()),
+    )?;
     let imp: Vec<f32> = adjacencies.iter().map(|a| a.importance).collect();
     let imp_arr = PyArray1::from_vec(py, imp);
     Ok((tfs.unbind(), targets.unbind(), imp_arr.unbind()))
@@ -176,9 +207,9 @@ fn aucell_score<'py>(
 #[allow(clippy::too_many_arguments)]
 fn topics_fit<'py>(
     py: Python<'py>,
-    row_ptr: Vec<usize>,
-    col_idx: Vec<u32>,
-    counts: Vec<f32>,
+    row_ptr: PyReadonlyArray1<'py, u64>,
+    col_idx: PyReadonlyArray1<'py, u32>,
+    counts: PyReadonlyArray1<'py, f32>,
     n_words: usize,
     n_topics: usize,
     alpha: f32,
@@ -188,10 +219,18 @@ fn topics_fit<'py>(
     batch_size: usize,
     n_passes: usize,
     seed: u64,
-) -> PyResult<(Py<PyArray2<f32>>, Py<PyArray2<f32>>)> {
+) -> PyResult<TopicFitPyResult> {
+    let col_idx = col_idx
+        .as_slice()
+        .map_err(|_| pyo3::exceptions::PyValueError::new_err("col_idx must be contiguous"))?;
+    let counts = counts
+        .as_slice()
+        .map_err(|_| pyo3::exceptions::PyValueError::new_err("counts must be contiguous"))?;
+    let row_ptr = row_ptr_to_usize(row_ptr, col_idx.len(), counts.len())?;
+    validate_topic_csr(&row_ptr, col_idx, counts, n_words, false)?;
     let result = py.allow_threads(|| {
         online_vb_lda(
-            &row_ptr, &col_idx, &counts, n_words, n_topics, alpha, eta, tau0, kappa, batch_size,
+            &row_ptr, col_idx, counts, n_words, n_topics, alpha, eta, tau0, kappa, batch_size,
             n_passes, seed,
         )
     });
@@ -232,9 +271,9 @@ fn topics_fit<'py>(
 #[allow(clippy::too_many_arguments)]
 fn topics_fit_gibbs<'py>(
     py: Python<'py>,
-    row_ptr: Vec<usize>,
-    col_idx: Vec<u32>,
-    counts: Vec<f32>,
+    row_ptr: PyReadonlyArray1<'py, u64>,
+    col_idx: PyReadonlyArray1<'py, u32>,
+    counts: PyReadonlyArray1<'py, f32>,
     n_words: usize,
     n_topics: usize,
     alpha: f32,
@@ -242,16 +281,23 @@ fn topics_fit_gibbs<'py>(
     n_iters: usize,
     seed: u64,
     n_threads: usize,
-) -> PyResult<(Py<PyArray2<f32>>, Py<PyArray2<f32>>)> {
+) -> PyResult<TopicFitPyResult> {
+    let col_idx = col_idx
+        .as_slice()
+        .map_err(|_| pyo3::exceptions::PyValueError::new_err("col_idx must be contiguous"))?;
+    let counts = counts
+        .as_slice()
+        .map_err(|_| pyo3::exceptions::PyValueError::new_err("counts must be contiguous"))?;
+    let row_ptr = row_ptr_to_usize(row_ptr, col_idx.len(), counts.len())?;
+    validate_topic_csr(&row_ptr, col_idx, counts, n_words, true)?;
     let result = py.allow_threads(|| {
         if n_threads <= 1 {
             rustscenic_topics::gibbs::fit(
-                &row_ptr, &col_idx, &counts, n_words, n_topics, alpha, eta, n_iters, seed,
+                &row_ptr, col_idx, counts, n_words, n_topics, alpha, eta, n_iters, seed,
             )
         } else {
             rustscenic_topics::gibbs::fit_par(
-                &row_ptr, &col_idx, &counts, n_words, n_topics, alpha, eta, n_iters, seed,
-                n_threads,
+                &row_ptr, col_idx, counts, n_words, n_topics, alpha, eta, n_iters, seed, n_threads,
             )
         }
     });
@@ -281,8 +327,8 @@ fn topics_npmi<'py>(
     topic_word: PyReadonlyArray2<'py, f32>,
     n_topics: usize,
     n_words: usize,
-    row_ptr: Vec<usize>,
-    col_idx: Vec<u32>,
+    row_ptr: PyReadonlyArray1<'py, u64>,
+    col_idx: PyReadonlyArray1<'py, u32>,
     top_n: usize,
 ) -> PyResult<Py<PyArray1<f32>>> {
     let arr = topic_word.as_array();
@@ -303,10 +349,103 @@ fn topics_npmi<'py>(
             .as_slice()
             .expect("standard_layout guarantees contiguous")
     };
+    let col_idx = col_idx
+        .as_slice()
+        .map_err(|_| pyo3::exceptions::PyValueError::new_err("col_idx must be contiguous"))?;
+    let row_ptr = row_ptr_to_usize(row_ptr, col_idx.len(), col_idx.len())?;
+    validate_topic_csr(&row_ptr, col_idx, &[], n_words, false)?;
     let coh = py.allow_threads(|| {
-        topic_coherence_npmi(tw_slice, n_topics, n_words, top_n, &row_ptr, &col_idx)
+        topic_coherence_npmi(tw_slice, n_topics, n_words, top_n, &row_ptr, col_idx)
     });
     Ok(PyArray1::from_vec(py, coh).unbind())
+}
+
+fn row_ptr_to_usize(
+    row_ptr: PyReadonlyArray1<'_, u64>,
+    col_idx_len: usize,
+    counts_len: usize,
+) -> PyResult<Vec<usize>> {
+    let arr = row_ptr.as_array();
+    if arr.is_empty() {
+        return Err(pyo3::exceptions::PyValueError::new_err(
+            "row_ptr must contain at least one element",
+        ));
+    }
+
+    let mut out = Vec::with_capacity(arr.len());
+    let mut prev = 0usize;
+    for (i, &raw) in arr.iter().enumerate() {
+        let v = usize::try_from(raw).map_err(|_| {
+            pyo3::exceptions::PyOverflowError::new_err(format!(
+                "row_ptr[{i}] = {raw} does not fit in usize"
+            ))
+        })?;
+        if i == 0 && v != 0 {
+            return Err(pyo3::exceptions::PyValueError::new_err(format!(
+                "row_ptr[0] must be 0, got {v}"
+            )));
+        }
+        if i > 0 && v < prev {
+            return Err(pyo3::exceptions::PyValueError::new_err(format!(
+                "row_ptr must be non-decreasing; row_ptr[{i}] = {v} < {prev}"
+            )));
+        }
+        prev = v;
+        out.push(v);
+    }
+
+    let last = *out.last().expect("checked non-empty row_ptr");
+    if last != col_idx_len || last != counts_len {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "row_ptr[-1] = {last} but col_idx has length {col_idx_len} and counts has length {counts_len}"
+        )));
+    }
+    Ok(out)
+}
+
+fn validate_topic_csr(
+    row_ptr: &[usize],
+    col_idx: &[u32],
+    counts: &[f32],
+    n_words: usize,
+    require_integer_counts: bool,
+) -> PyResult<()> {
+    if row_ptr.len() < 2 {
+        return Err(pyo3::exceptions::PyValueError::new_err(
+            "CSR matrix must contain at least one row",
+        ));
+    }
+    if let Some((i, &w)) = col_idx
+        .iter()
+        .enumerate()
+        .find(|(_, &w)| (w as usize) >= n_words)
+    {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "col_idx[{i}] = {w} exceeds n_words = {n_words}"
+        )));
+    }
+    if let Some((i, &v)) = counts.iter().enumerate().find(|(_, &v)| !v.is_finite()) {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "input counts contain NaN or Inf values at position {i}: {v}"
+        )));
+    }
+    if let Some((i, &v)) = counts.iter().enumerate().find(|(_, &v)| v < 0.0) {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "input counts must be non-negative; counts[{i}] = {v}"
+        )));
+    }
+    if require_integer_counts {
+        if let Some((i, &v)) = counts
+            .iter()
+            .enumerate()
+            .find(|(_, &v)| (v - v.round()).abs() > 1e-6)
+        {
+            return Err(pyo3::exceptions::PyValueError::new_err(format!(
+                "Gibbs LDA counts must be integer values; counts[{i}] = {v}"
+            )));
+        }
+    }
+    Ok(())
 }
 
 /// Build a cells x peaks sparse matrix from a 10x fragments file and a peak BED.
@@ -326,16 +465,7 @@ fn preproc_fragments_to_matrix<'py>(
     py: Python<'py>,
     fragments_path: PathBuf,
     peaks_path: PathBuf,
-) -> PyResult<(
-    Py<PyArray1<u32>>, // data
-    Py<PyArray1<u32>>, // indices
-    Py<PyArray1<u64>>, // indptr
-    (usize, usize),    // shape (n_cells, n_peaks)
-    Py<PyList>,        // barcode names
-    Py<PyList>,        // peak names
-    Py<PyArray1<u32>>, // fragments per barcode
-    Py<PyArray1<u32>>, // total counts per barcode
-)> {
+) -> PyResult<FragmentsToMatrixPyResult> {
     let (csr, barcodes, peak_names, fpc, tcc) = py
         .allow_threads(|| -> anyhow::Result<_> {
             let fragments = read_fragments(&fragments_path)?;
@@ -377,15 +507,7 @@ fn preproc_fragments_to_matrix<'py>(
 fn preproc_insert_size_stats<'py>(
     py: Python<'py>,
     fragments_path: PathBuf,
-) -> PyResult<(
-    Py<PyList>,        // barcodes
-    Py<PyArray1<f32>>, // mean
-    Py<PyArray1<f32>>, // median
-    Py<PyArray1<u32>>, // n_fragments
-    Py<PyArray1<u32>>, // sub
-    Py<PyArray1<u32>>, // mono
-    Py<PyArray1<u32>>, // di
-)> {
+) -> PyResult<InsertSizeStatsPyResult> {
     let (barcodes, means, medians, counts, sub, mono, di) = py
         .allow_threads(|| -> anyhow::Result<_> {
             let fragments = read_fragments(&fragments_path)?;
@@ -517,7 +639,7 @@ fn preproc_call_peaks<'py>(
     quantile_threshold: f32,
     max_gap: u32,
     peak_half_width: u32,
-) -> PyResult<(Py<PyList>, Py<PyArray1<u32>>, Py<PyArray1<u32>>, Py<PyList>)> {
+) -> PyResult<CallPeaksPyResult> {
     let cfg = PeakCallingConfig {
         window_size,
         min_fragments_per_window,

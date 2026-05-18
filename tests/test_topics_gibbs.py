@@ -79,12 +79,58 @@ def test_gibbs_anndata_input():
     assert r.cell_topic.shape == (30, 2)
 
 
+def test_gibbs_passes_numpy_csr_buffers_to_extension(monkeypatch):
+    X, cells, peaks = _two_topic_corpus(4, 6)
+    seen = {}
+
+    def fake_topics_fit_gibbs(row_ptr, col_idx, counts, n_words, n_topics, *_args):
+        seen["row_ptr"] = row_ptr
+        seen["col_idx"] = col_idx
+        seen["counts"] = counts
+        return (
+            np.full((len(row_ptr) - 1, n_topics), 1.0 / n_topics, dtype=np.float32),
+            np.full((n_topics, n_words), 1.0 / n_words, dtype=np.float32),
+        )
+
+    monkeypatch.setattr(rustscenic.topics, "_topics_fit_gibbs", fake_topics_fit_gibbs)
+    r = rustscenic.topics.fit_gibbs(
+        (X, cells, peaks), n_topics=2, n_iters=1, seed=0, verbose=False,
+    )
+
+    assert r.cell_topic.shape == (4, 2)
+    assert isinstance(seen["row_ptr"], np.ndarray)
+    assert isinstance(seen["col_idx"], np.ndarray)
+    assert isinstance(seen["counts"], np.ndarray)
+    assert seen["row_ptr"].dtype == np.uint64
+    assert seen["col_idx"].dtype == np.uint32
+    assert seen["counts"].dtype == np.float32
+
+
 def test_gibbs_rejects_invalid_args():
     X, cells, peaks = _two_topic_corpus(20, 10)
     with pytest.raises(ValueError, match="n_topics"):
         rustscenic.topics.fit_gibbs((X, cells, peaks), n_topics=0, verbose=False)
     with pytest.raises(ValueError, match="n_iters"):
         rustscenic.topics.fit_gibbs((X, cells, peaks), n_topics=2, n_iters=0, verbose=False)
+
+
+def test_gibbs_rejects_nonfinite_negative_and_fractional_counts():
+    X, cells, peaks = _two_topic_corpus(4, 4)
+
+    bad = X.copy()
+    bad.data[0] = np.nan
+    with pytest.raises(ValueError, match="finite"):
+        rustscenic.topics.fit_gibbs((bad, cells, peaks), n_topics=2, n_iters=5, verbose=False)
+
+    bad = X.copy()
+    bad.data[0] = -1.0
+    with pytest.raises(ValueError, match="non-negative"):
+        rustscenic.topics.fit_gibbs((bad, cells, peaks), n_topics=2, n_iters=5, verbose=False)
+
+    bad = X.copy()
+    bad.data[0] = 0.5
+    with pytest.raises(ValueError, match="integer"):
+        rustscenic.topics.fit_gibbs((bad, cells, peaks), n_topics=2, n_iters=5, verbose=False)
 
 
 def test_gibbs_alpha_eta_defaults():
@@ -181,3 +227,68 @@ def test_coherence_npmi_rejects_column_mismatch():
     wrong_peaks = list(reversed(peaks))
     with pytest.raises(ValueError, match="column order"):
         rustscenic.topics.coherence_npmi(r, (X, cells, wrong_peaks), top_n=5)
+
+
+def test_coherence_npmi_invariant_to_duplicate_csr_indices():
+    X = sp.csr_matrix(
+        (
+            np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32),
+            np.array([0, 0, 1, 1], dtype=np.int32),
+            np.array([0, 2, 4], dtype=np.int32),
+        ),
+        shape=(2, 2),
+    )
+    cells = ["c0", "c1"]
+    peaks = ["p0", "p1"]
+    topic_peak = pd.DataFrame(
+        np.array([[0.9, 0.1], [0.1, 0.9]], dtype=np.float32),
+        index=["Topic_0", "Topic_1"],
+        columns=peaks,
+    )
+    result = rustscenic.topics.TopicsResult(
+        cell_topic=pd.DataFrame(np.zeros((2, 2), dtype=np.float32), index=cells, columns=topic_peak.index),
+        topic_peak=topic_peak,
+        n_topics=2,
+    )
+
+    canonical = X.copy()
+    canonical.sum_duplicates()
+
+    dup_score = rustscenic.topics.coherence_npmi(result, (X, cells, peaks), top_n=2)
+    canonical_score = rustscenic.topics.coherence_npmi(
+        result, (canonical, cells, peaks), top_n=2
+    )
+
+    np.testing.assert_allclose(dup_score, canonical_score, equal_nan=True)
+
+
+def test_coherence_npmi_passes_numpy_csr_buffers_to_extension(monkeypatch):
+    X, cells, peaks = _two_topic_corpus(4, 6)
+    result = rustscenic.topics.TopicsResult(
+        cell_topic=pd.DataFrame(
+            np.zeros((4, 2), dtype=np.float32),
+            index=cells,
+            columns=["Topic_0", "Topic_1"],
+        ),
+        topic_peak=pd.DataFrame(
+            np.full((2, 6), 1.0 / 6.0, dtype=np.float32),
+            index=["Topic_0", "Topic_1"],
+            columns=peaks,
+        ),
+        n_topics=2,
+    )
+    seen = {}
+
+    def fake_topics_npmi(topic_word, n_topics, n_words, row_ptr, col_idx, top_n):
+        seen["row_ptr"] = row_ptr
+        seen["col_idx"] = col_idx
+        return np.zeros(n_topics, dtype=np.float32)
+
+    monkeypatch.setattr(rustscenic.topics, "_topics_npmi", fake_topics_npmi)
+    score = rustscenic.topics.coherence_npmi(result, (X, cells, peaks), top_n=3)
+
+    assert score.shape == (2,)
+    assert isinstance(seen["row_ptr"], np.ndarray)
+    assert isinstance(seen["col_idx"], np.ndarray)
+    assert seen["row_ptr"].dtype == np.uint64
+    assert seen["col_idx"].dtype == np.uint32

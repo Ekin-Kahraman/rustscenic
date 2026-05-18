@@ -41,7 +41,7 @@ pub fn aucell(
         "expression size mismatch"
     );
     assert!(
-        (0.0..=1.0).contains(&top_frac),
+        top_frac > 0.0 && top_frac <= 1.0,
         "top_frac must be in (0, 1]"
     );
 
@@ -128,6 +128,14 @@ mod tests {
         let expr = vec![1.0_f32; 10 * 5];
         let out = aucell(&expr, 10, 5, &[], 0.2);
         assert!(out.is_empty());
+    }
+
+    #[test]
+    #[should_panic(expected = "top_frac must be in (0, 1]")]
+    fn rejects_zero_top_frac() {
+        let expr = vec![1.0_f32; 5];
+        let regs = vec![("R".to_string(), vec![0])];
+        let _ = aucell(&expr, 1, 5, &regs, 0.0);
     }
 
     #[test]

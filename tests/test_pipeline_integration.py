@@ -958,6 +958,49 @@ def test_pipeline_run_topics_method_gibbs(tmp_path):
     assert (out / "topics" / "topic_peak.npy").exists()
 
 
+def test_pipeline_grn_top_targets_below_ten_still_builds_candidates(tmp_path, monkeypatch):
+    import json
+    import rustscenic.pipeline
+
+    cells = [f"cell{i}" for i in range(8)]
+    genes = ["TF1"] + [f"G{i}" for i in range(5)]
+    rna = ad.AnnData(
+        X=np.ones((len(cells), len(genes)), dtype=np.float32),
+        obs=pd.DataFrame(index=cells),
+        var=pd.DataFrame(index=genes),
+    )
+
+    def fake_infer(*_args, **_kwargs):
+        return pd.DataFrame(
+            {
+                "TF": ["TF1"] * 5,
+                "target": [f"G{i}" for i in range(5)],
+                "importance": [5.0, 4.0, 3.0, 2.0, 1.0],
+            }
+        )
+
+    def fake_score(expression, regulons, *, top_frac):
+        assert regulons == [("TF1_regulon", [f"G{i}" for i in range(5)])]
+        return pd.DataFrame({"TF1_regulon": np.zeros(expression.n_obs)}, index=expression.obs_names)
+
+    monkeypatch.setattr(rustscenic.grn, "infer", fake_infer)
+    monkeypatch.setattr(rustscenic.aucell, "score", fake_score)
+
+    result = rustscenic.pipeline.run(
+        rna,
+        tmp_path,
+        tfs=["TF1"],
+        grn_top_targets=5,
+        grn_n_estimators=2,
+        verbose=False,
+    )
+
+    candidates = json.loads(result.candidate_regulons_path.read_text())
+    assert candidates == {"TF1_regulon": [f"G{i}" for i in range(5)]}
+    assert result.n_candidate_regulons == 1
+    assert result.n_regulons == 1
+
+
 def test_attribute_peaks_to_cistarget_at_scale():
     """The gene-only cistarget→peak bridge stalled at real-PBMC scale
     (35k cistarget × 30 targets × 5 peaks ≈ 5M Python row dicts via
