@@ -286,6 +286,12 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
             for _ in range(3):
                 start = int(rng.integers(0, 2_000_000))
                 frag_lines.append(f"chr1\t{start}\t{start+120}\t{cells[ci]}\t1")
+    # Raw 10x fragments also contain observed non-cell barcodes. The
+    # pipeline must drop these before topics, otherwise a full raw fragments
+    # file can blow up memory and wall time.
+    for j in range(5):
+        start = 1_500_000 + j * 200
+        frag_lines.append(f"chr1\t{start}\t{start+120}\tempty_bc_{j}\t1")
     frag_path = tmp_path / "fragments.tsv.gz"
     with gzip.open(frag_path, "wt") as fh:
         fh.write("\n".join(frag_lines) + "\n")
@@ -343,6 +349,9 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
 
     # Every stage emitted an artifact
     assert result.atac_matrix_path.exists()
+    atac_written = ad.read_h5ad(result.atac_matrix_path)
+    assert atac_written.n_obs == n_cells
+    assert set(atac_written.obs_names) == set(cells)
     assert result.grn_path.exists()
     assert result.aucell_path.exists()
     assert result.cistarget_path.exists()

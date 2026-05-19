@@ -238,6 +238,27 @@ def run(
             elapsed["preproc"] = time.perf_counter() - t0
             log(f"      ATAC shape: {adata_atac.shape}, took {elapsed['preproc']:.1f}s")
 
+        rna_cells = set(map(str, adata_rna.obs_names))
+        shared_atac_cells = [bc for bc in adata_atac.obs_names if str(bc) in rna_cells]
+        if not shared_atac_cells:
+            raise ValueError(
+                "ATAC input shares no cell barcodes with RNA input. Raw 10x "
+                "fragments include many non-cell barcodes, but at least one "
+                "called cell barcode must match rna.obs_names."
+            )
+        if len(shared_atac_cells) < adata_atac.n_obs:
+            _warnings.warn(
+                f"subsetting ATAC from {adata_atac.n_obs:,} barcodes to "
+                f"{len(shared_atac_cells):,} RNA-matched cells before topics. "
+                "This avoids carrying raw 10x empty droplets through the "
+                "pipeline; pass a pre-filtered adata_atac to control this "
+                "step explicitly.",
+                UserWarning,
+                stacklevel=2,
+            )
+            adata_atac = adata_atac[shared_atac_cells].copy()
+            log(f"      ATAC subset to RNA cells: {adata_atac.shape}")
+
         # Persist the artefact first; only mark have_atac=True (via
         # atac_matrix_path) once the file is on disk. If write fails (disk
         # full, unserializable obs), downstream stages must skip rather than
