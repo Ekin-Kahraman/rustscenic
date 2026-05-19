@@ -68,9 +68,9 @@ impl PeakTable {
     /// the same chromosome (UCSC vs Ensembl convention), along with
     /// the `chrM` / `chrMT` / `MT` mitochondrial aliases. Without this
     /// normalisation, a peak BED with Ensembl chrom names against a
-    /// fragments file with UCSC chrom names silently drops every peak
-    /// - the same silent-zero failure class as the cellxgene ENSEMBL
-    /// var_names bug, just in a different layer.
+    /// fragments file with UCSC chrom names silently drops every peak.
+    /// This is the same silent-zero failure class as the cellxgene
+    /// ENSEMBL var_names bug, just in a different layer.
     ///
     /// Use this before joining peaks to fragments so chromosome
     /// comparisons reduce to `u32` equality.
