@@ -49,64 +49,37 @@ Runtime dependencies: numpy, pandas, pyarrow, scipy, anndata.
 
 ## Current evidence
 
-| Run | Cells | Peaks | Wall | Peak RAM | Result |
-|---|---:|---:|---:|---:|---|
-| PBMC 3k real multiome, full pipeline | 2,767 | 81,156 | 75 to 88 s | 3.4 GB | all stages non-empty |
-| Mouse brain E18 real multiome, full pipeline | 4,770 | 172,193 | 201 s | 4.4 GB | all stages non-empty |
-| PBMC granulocyte 10k real multiome, full pipeline | 11,620 | 143,887 | 38.1 min | 5.4 GB | all stages non-empty |
-| 100k synthetic multiome, full pipeline | 100,000 | 50,000 | 12.7 min | 7.1 GB | all stages non-empty |
-| 200k synthetic multiome, full pipeline | 200,000 | 30,000 | 16.8 min | 7.4 GB | all stages non-empty |
-| 500k synthetic GRN only | 500,000 | n/a | 8.7 min | 7.3 GB | 224,966 edges |
+What has been shown so far:
 
-The next evidence gate is real full-pipeline scaling on HPC at 50k, 100k, and
-200k cells, plus a direct SCENIC+ head-to-head on the same data and hardware.
+- real 10x multiome runs complete end to end up to 11,620 cells
+- those real runs stayed under 6 GB peak RAM
+- synthetic scale gates reach 100k and 200k full pipeline runs
+- the next proof is real HPC scaling at 50k, 100k, and 200k cells, plus a same-data SCENIC+ comparison
+
+| Purpose | Dataset | Size | Result |
+|---|---|---:|---|
+| Real-data proof | PBMC 3k multiome | 2,767 cells, 81,156 peaks | full pipeline, 75 to 88 s, 3.4 GB |
+| Real-data proof | Mouse brain E18 multiome | 4,770 cells, 172,193 peaks | full pipeline, 201 s, 4.4 GB |
+| Largest real run so far | PBMC granulocyte 10k multiome | 11,620 cells, 143,887 peaks | full pipeline, 38.1 min, 5.4 GB |
+| Scale stress test | Synthetic multiome | 100,000 cells, 50,000 peaks | full pipeline, 12.7 min, 7.1 GB |
+| Scale stress test | Synthetic multiome | 200,000 cells, 30,000 peaks | full pipeline, 16.8 min, 7.4 GB |
+| GRN stress test | Synthetic RNA | 500,000 cells | 224,966 edges, 8.7 min, 7.3 GB |
 
 ## Pipeline
 
-Everything inside the box ships in `rustscenic`.
+Read left to right. The middle box is the package.
 
 ```mermaid
 flowchart LR
-    install["pip install rustscenic"]
-    rna["RNA cells x genes"]
-    atac["ATAC cells x peaks"]
-    motifs["motif ranking database"]
+    inputs["Inputs<br/>RNA + ATAC<br/>motif rankings"]
+    package["rustscenic<br/>one pip install<br/>GRN, AUCell, cisTarget<br/>topics, peak calling<br/>peak-to-gene links, eRegulons"]
+    outputs["Outputs<br/>TF-target networks<br/>cell regulon activity<br/>enhancer-linked GRNs"]
 
-    subgraph pkg["rustscenic package: one install, all core stages"]
-        direction TB
-        api["CLI + Python API"]
-        grn["GRN inference"]
-        regulons["regulons"]
-        aucell["AUCell activity"]
-        peaks["ATAC matrix + peak calling"]
-        topics["topic modelling"]
-        ct["cisTarget motif support"]
-        p2g["peak-to-gene links"]
-        ereg["eRegulons"]
-
-        api --> grn
-        grn --> regulons
-        regulons --> aucell
-        regulons --> ct
-        api --> peaks
-        peaks --> topics
-        peaks --> p2g
-        ct --> ereg
-        p2g --> ereg
-    end
-
-    install --> api
-    rna --> api
-    atac --> api
-    motifs --> ct
-
-    aucell --> out1["cell regulon activity"]
-    topics --> out2["ATAC topics"]
-    ereg --> out3["enhancer-linked GRNs"]
+    inputs --> package --> outputs
 ```
 
-In one sentence: rustscenic takes RNA and ATAC data and returns TFs, target
-genes, enhancer links, and the cells where each regulatory programme is active.
+In one sentence: rustscenic takes RNA and ATAC data and returns TF-target
+networks, enhancer links, and per-cell regulatory activity.
 
 ## One package, all core stages
 
