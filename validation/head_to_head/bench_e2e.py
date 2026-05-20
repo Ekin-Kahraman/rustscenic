@@ -17,10 +17,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import platform
 import resource
+import subprocess
 import sys
 import tempfile
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -36,6 +39,78 @@ def peak_rss_gb() -> float:
     if sys.platform == "darwin":
         return rss / (1024**3)
     return rss / (1024**2)
+
+
+_PSUTIL_PROCESS: Any | None = None
+_PSUTIL_CHECKED = False
+
+
+def current_rss_gb() -> float:
+    global _PSUTIL_CHECKED, _PSUTIL_PROCESS
+
+    if not _PSUTIL_CHECKED:
+        _PSUTIL_CHECKED = True
+        try:
+            import psutil
+
+            _PSUTIL_PROCESS = psutil.Process()
+        except Exception:
+            _PSUTIL_PROCESS = None
+    if _PSUTIL_PROCESS is not None:
+        return float(_PSUTIL_PROCESS.memory_info().rss) / (1024**3)
+    if sys.platform.startswith("linux"):
+        statm = Path("/proc/self/statm")
+        if statm.exists():
+            pages = int(statm.read_text().split()[1])
+            return float(pages * os.sysconf("SC_PAGE_SIZE")) / (1024**3)
+    if sys.platform == "darwin":
+        try:
+            rss_kb = int(
+                subprocess.check_output(
+                    ["ps", "-o", "rss=", "-p", str(os.getpid())],
+                    text=True,
+                ).strip()
+            )
+            return float(rss_kb) / (1024**2)
+        except Exception:
+            pass
+    return peak_rss_gb()
+
+
+class PeakSampler:
+    def __init__(self, interval_s: float) -> None:
+        self.interval_s = max(0.05, float(interval_s))
+        self.start_rss_gb = 0.0
+        self.peak_rss_gb = 0.0
+        self.end_rss_gb = 0.0
+        self._stop = threading.Event()
+        self._thread: threading.Thread | None = None
+
+    def __enter__(self) -> "PeakSampler":
+        self.start_rss_gb = current_rss_gb()
+        self.peak_rss_gb = self.start_rss_gb
+        self.end_rss_gb = self.start_rss_gb
+        self._thread = threading.Thread(target=self._sample, daemon=True)
+        self._thread.start()
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=self.interval_s * 2)
+        self.end_rss_gb = current_rss_gb()
+        self.peak_rss_gb = max(self.peak_rss_gb, self.end_rss_gb)
+
+    def _sample(self) -> None:
+        while not self._stop.wait(self.interval_s):
+            self.peak_rss_gb = max(self.peak_rss_gb, current_rss_gb())
+
+    def record(self) -> dict[str, float]:
+        return {
+            "start_rss_gb": round(float(self.start_rss_gb), 6),
+            "peak_rss_gb": round(float(self.peak_rss_gb), 6),
+            "end_rss_gb": round(float(self.end_rss_gb), 6),
+        }
 
 
 def synthetic_multiome(
@@ -650,45 +725,52 @@ def main() -> int:
     p.add_argument("--top-frac", type=float, default=0.05)
     p.add_argument("--top-regions-per-gene", type=int, default=5)
     p.add_argument("--gsea-permutations", type=int, default=25)
+    p.add_argument("--rss-poll-interval", type=float, default=0.25)
     p.add_argument("--seed", type=int, default=777)
     p.add_argument("--label", default="")
     p.add_argument("--out", type=Path, required=True)
     args = p.parse_args()
 
-    if args.input_10x_h5 is None:
-        data = synthetic_multiome(
-            n_cells=args.n_cells,
-            n_genes=args.n_genes,
-            n_peaks=args.n_peaks,
-            n_programmes=args.n_programmes,
-            seed=args.seed,
-        )
-    else:
-        data = real_10x_multiome(
-            input_10x_h5=args.input_10x_h5,
-            dataset_name=args.dataset_name or args.input_10x_h5.stem,
-            species=args.species,
-            n_cells=args.n_cells,
-            n_genes=args.n_genes,
-            n_peaks=args.n_peaks,
-            n_tfs=args.n_tfs or args.n_programmes,
-            max_distance=args.max_distance,
-            seed=args.seed,
-        )
-    start_rss = peak_rss_gb()
-    t0 = time.perf_counter()
+    prep_t0 = time.perf_counter()
+    with PeakSampler(args.rss_poll_interval) as prep_mem:
+        if args.input_10x_h5 is None:
+            data = synthetic_multiome(
+                n_cells=args.n_cells,
+                n_genes=args.n_genes,
+                n_peaks=args.n_peaks,
+                n_programmes=args.n_programmes,
+                seed=args.seed,
+            )
+        else:
+            data = real_10x_multiome(
+                input_10x_h5=args.input_10x_h5,
+                dataset_name=args.dataset_name or args.input_10x_h5.stem,
+                species=args.species,
+                n_cells=args.n_cells,
+                n_genes=args.n_genes,
+                n_peaks=args.n_peaks,
+                n_tfs=args.n_tfs or args.n_programmes,
+                max_distance=args.max_distance,
+                seed=args.seed,
+            )
+    prep_wall = time.perf_counter() - prep_t0
+
     status = "ok"
     error = None
-    try:
-        if args.tool == "rustscenic":
-            result = run_rustscenic(data, args)
-        else:
-            result = run_scenicplus(data, args)
-    except Exception as exc:
-        status = "error"
-        error = f"{type(exc).__name__}: {exc}"
-        result = {"stage_times": {}, "output_counts": {}}
-    wall = time.perf_counter() - t0
+    compute_t0 = time.perf_counter()
+    with PeakSampler(args.rss_poll_interval) as compute_mem:
+        try:
+            if args.tool == "rustscenic":
+                result = run_rustscenic(data, args)
+            else:
+                result = run_scenicplus(data, args)
+        except Exception as exc:
+            status = "error"
+            error = f"{type(exc).__name__}: {exc}"
+            result = {"stage_times": {}, "output_counts": {}}
+    wall = time.perf_counter() - compute_t0
+    resource_peak = peak_rss_gb()
+    sampled_peak = max(prep_mem.peak_rss_gb, compute_mem.peak_rss_gb)
 
     record = {
         "label": args.label,
@@ -697,8 +779,17 @@ def main() -> int:
         "status": status,
         "error": error,
         "wall_s": round(float(wall), 6),
-        "peak_rss_gb": round(float(peak_rss_gb()), 6),
-        "start_rss_gb": round(float(start_rss), 6),
+        "data_prep_wall_s": round(float(prep_wall), 6),
+        "total_wall_s": round(float(prep_wall + wall), 6),
+        "peak_rss_gb": round(float(sampled_peak), 6),
+        "start_rss_gb": round(float(compute_mem.start_rss_gb), 6),
+        "resource_peak_rss_gb": round(float(resource_peak), 6),
+        "memory_gb": {
+            "data_prep": prep_mem.record(),
+            "compute": compute_mem.record(),
+            "sampled_process_peak": round(float(sampled_peak), 6),
+            "resource_process_peak": round(float(resource_peak), 6),
+        },
         "stage_times": {
             k: round(float(v), 6) for k, v in result["stage_times"].items()
         },
