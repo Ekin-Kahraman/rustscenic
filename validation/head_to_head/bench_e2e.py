@@ -137,6 +137,7 @@ def real_10x_multiome(
     *,
     input_10x_h5: Path,
     dataset_name: str,
+    species: str,
     n_cells: int,
     n_genes: int,
     n_peaks: int,
@@ -146,7 +147,7 @@ def real_10x_multiome(
 ) -> dict[str, Any]:
     import scanpy as sc
 
-    all_tfs = _load_human_tfs()
+    all_tfs = _load_tfs(species)
     adata = sc.read_10x_h5(input_10x_h5, gex_only=False)
     if "interval" not in adata.var.columns:
         adata.var["interval"] = _read_10x_feature_intervals(input_10x_h5)
@@ -256,6 +257,7 @@ def real_10x_multiome(
         "settings": {
             "dataset": dataset_name,
             "input_10x_h5": str(input_10x_h5),
+            "species": species,
             "n_cells": n_cells,
             "n_genes": len(selected_genes),
             "n_peaks": len(selected_peaks),
@@ -266,8 +268,23 @@ def real_10x_multiome(
     }
 
 
-def _load_human_tfs() -> set[str]:
-    tf_path = Path(__file__).resolve().parents[2] / "python/rustscenic/data/allTFs_hg38.txt"
+def _load_tfs(species: str) -> set[str]:
+    canonical = {
+        "hs": "hs",
+        "human": "hs",
+        "homo_sapiens": "hs",
+        "hg38": "hs",
+        "mm": "mm",
+        "mouse": "mm",
+        "mus_musculus": "mm",
+        "mm10": "mm",
+    }.get(str(species).lower())
+    if canonical is None:
+        raise ValueError(
+            f"unknown species {species!r}; use human/hg38/hs or mouse/mm10/mm"
+        )
+    filename = {"hs": "allTFs_hg38.txt", "mm": "allTFs_mm.txt"}[canonical]
+    tf_path = Path(__file__).resolve().parents[2] / "python/rustscenic/data" / filename
     return {line.strip() for line in tf_path.read_text().splitlines() if line.strip()}
 
 
@@ -618,6 +635,7 @@ def main() -> int:
     p.add_argument("--tool", choices=["rustscenic", "scenicplus"], required=True)
     p.add_argument("--input-10x-h5", type=Path, default=None)
     p.add_argument("--dataset-name", default="")
+    p.add_argument("--species", default="hs")
     p.add_argument("--n-cells", type=int, default=150)
     p.add_argument("--n-genes", type=int, default=80)
     p.add_argument("--n-peaks", type=int, default=30)
@@ -649,6 +667,7 @@ def main() -> int:
         data = real_10x_multiome(
             input_10x_h5=args.input_10x_h5,
             dataset_name=args.dataset_name or args.input_10x_h5.stem,
+            species=args.species,
             n_cells=args.n_cells,
             n_genes=args.n_genes,
             n_peaks=args.n_peaks,
