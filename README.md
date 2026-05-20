@@ -105,20 +105,8 @@ flowchart LR
     ereg --> out3["enhancer-linked GRNs"]
 ```
 
-In one sentence: rustscenic turns RNA plus ATAC into which TFs regulate which
-genes through which enhancers, in which cells.
-
-## Status
-
-**Current PyPI release: v0.4.7.** This release includes lower-copy topic
-fitting, cheaper GRN edge return, lower-memory peak calling, projected
-file-backed motif rankings, and release smoke coverage.
-
-**Current `main`: post-v0.4.7 raw 10x safety fix.** If raw fragments are passed
-directly, `pipeline.run` now subsets ATAC to RNA-matched cells before topics so
-empty droplets are not carried into expensive stages.
-
-Active limitations are listed under [Scope and alternatives](#scope-and-alternatives), with full detail in [`site_docs/limitations.md`](site_docs/limitations.md).
+In one sentence: rustscenic takes RNA and ATAC data and returns TFs, target
+genes, enhancer links, and the cells where each regulatory programme is active.
 
 ## One package, all core stages
 
@@ -288,6 +276,18 @@ Real 10x multiome scaling from 2,767 to 11,620 cells:
 Name-presence checks are not cell-type enrichment tests. Synthetic 100k and
 200k runs are scale gates, not biological validation. Full commands, hardware,
 baseline status, and caveats are in [`site_docs/benchmarks.md`](site_docs/benchmarks.md).
+
+## Status
+
+**Current PyPI release: v0.4.7.** This release includes lower-copy topic
+fitting, cheaper GRN edge return, lower-memory peak calling, projected
+file-backed motif rankings, and release smoke coverage.
+
+**Current `main`: post-v0.4.7 raw 10x safety fix.** If raw fragments are passed
+directly, `pipeline.run` now subsets ATAC to RNA-matched cells before topics so
+empty droplets are not carried into expensive stages.
+
+Active limitations are listed under [Scope and alternatives](#scope-and-alternatives), with full detail in [`site_docs/limitations.md`](site_docs/limitations.md).
 
 ## Scope and alternatives
 
