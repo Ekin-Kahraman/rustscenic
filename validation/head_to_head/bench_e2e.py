@@ -531,6 +531,156 @@ def _rust_cistarget_with_peaks(cistrome: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _safe_float(value: Any, digits: int = 8) -> float | None:
+    try:
+        out = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not np.isfinite(out):
+        return None
+    return round(out, digits)
+
+
+def _top_tf2g_edges(grn: pd.DataFrame, *, top_n: int) -> list[dict[str, Any]]:
+    if grn.empty:
+        return []
+    ordered = grn.sort_values("importance", ascending=False).head(top_n)
+    return [
+        {
+            "key": f"{row.TF}|{row.target}",
+            "tf": str(row.TF),
+            "target": str(row.target),
+            "importance": _safe_float(row.importance),
+        }
+        for row in ordered.itertuples(index=False)
+    ]
+
+
+def _top_r2g_edges(
+    links: pd.DataFrame,
+    *,
+    tool: str,
+    top_n: int,
+) -> list[dict[str, Any]]:
+    if links.empty:
+        return []
+    if tool == "rustscenic":
+        region_col = "peak_id"
+        target_col = "gene"
+        rho_col = "correlation"
+        score_col = "correlation"
+    else:
+        region_col = "region"
+        target_col = "target"
+        rho_col = "rho"
+        score_col = "importance"
+
+    ranked = links.assign(_rank_score=links[rho_col].astype(float).abs())
+    ranked = ranked.sort_values("_rank_score", ascending=False).head(top_n)
+    records = []
+    for row in ranked.itertuples(index=False):
+        region = str(getattr(row, region_col))
+        target = str(getattr(row, target_col))
+        rho = getattr(row, rho_col)
+        score = getattr(row, score_col)
+        records.append(
+            {
+                "key": f"{region}|{target}",
+                "region": region,
+                "target": target,
+                "rho": _safe_float(rho),
+                "score": _safe_float(score),
+            }
+        )
+    return records
+
+
+def _rust_eregulon_edges(eregulons: list[Any]) -> list[dict[str, str]]:
+    rows = []
+    for er in eregulons:
+        for target, peaks in getattr(er, "target_to_peaks", {}).items():
+            for peak in peaks:
+                rows.append(
+                    {
+                        "key": f"{er.tf}|{peak}|{target}",
+                        "tf": str(er.tf),
+                        "region": str(peak),
+                        "target": str(target),
+                    }
+                )
+    return sorted(rows, key=lambda r: r["key"])
+
+
+def _scenicplus_eregulon_edges(eregulons: list[Any]) -> list[dict[str, str]]:
+    rows = []
+    for er in eregulons:
+        tf = str(getattr(er, "transcription_factor"))
+        for r2g in getattr(er, "regions2genes"):
+            region = str(getattr(r2g, "region"))
+            target = str(getattr(r2g, "target"))
+            rows.append(
+                {
+                    "key": f"{tf}|{region}|{target}",
+                    "tf": tf,
+                    "region": region,
+                    "target": target,
+                }
+            )
+    return sorted(rows, key=lambda r: r["key"])
+
+
+def _tf_from_signature_name(name: Any) -> str:
+    text = str(name)
+    if "_eregulon_" in text:
+        return text.split("_eregulon_", 1)[0]
+    return text.rsplit("_", 1)[0]
+
+
+def _auc_by_tf(auc: pd.DataFrame) -> dict[str, list[float | None]]:
+    if auc.empty:
+        return {}
+    grouped: dict[str, list[np.ndarray]] = {}
+    for column in auc.columns:
+        grouped.setdefault(_tf_from_signature_name(column), []).append(
+            auc[column].to_numpy(dtype=np.float64)
+        )
+    out: dict[str, list[float | None]] = {}
+    for tf, arrays in grouped.items():
+        values = np.nanmean(np.vstack(arrays), axis=0)
+        out[tf] = [_safe_float(v) for v in values]
+    return out
+
+
+def _output_signature(
+    *,
+    tool: str,
+    data: dict[str, Any],
+    tf2g: pd.DataFrame,
+    r2g: pd.DataFrame,
+    eregulons: list[Any],
+    gene_auc: pd.DataFrame,
+    region_auc: pd.DataFrame,
+    top_n: int,
+) -> dict[str, Any]:
+    if tool == "rustscenic":
+        eregulon_edges = _rust_eregulon_edges(eregulons)
+        eregulon_tfs = sorted({str(er.tf) for er in eregulons})
+    else:
+        eregulon_edges = _scenicplus_eregulon_edges(eregulons)
+        eregulon_tfs = sorted({str(er.transcription_factor) for er in eregulons})
+
+    return {
+        "top_n": int(top_n),
+        "cells": [str(cell) for cell in data["rna"].obs_names],
+        "tf_to_gene_top_edges": _top_tf2g_edges(tf2g, top_n=top_n),
+        "region_to_gene_top_edges": _top_r2g_edges(r2g, tool=tool, top_n=top_n),
+        "eregulon_tfs": eregulon_tfs,
+        "eregulon_edges": eregulon_edges,
+        "gene_auc_by_tf": _auc_by_tf(gene_auc),
+        "region_auc_by_tf": _auc_by_tf(region_auc),
+    }
+
+
 def run_rustscenic(data: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
     import rustscenic.aucell
     import rustscenic.enhancer
@@ -583,7 +733,7 @@ def run_rustscenic(data: dict[str, Any], args: argparse.Namespace) -> dict[str, 
     )
     stage_times["aucell"] = time.perf_counter() - t0
 
-    return {
+    out = {
         "stage_times": stage_times,
         "output_counts": {
             "tf_to_gene_edges": int(len(grn)),
@@ -593,6 +743,18 @@ def run_rustscenic(data: dict[str, Any], args: argparse.Namespace) -> dict[str, 
             "region_auc_shape": list(region_auc.shape),
         },
     }
+    if args.save_signatures:
+        out["output_signature"] = _output_signature(
+            tool="rustscenic",
+            data=data,
+            tf2g=grn,
+            r2g=links,
+            eregulons=eregs,
+            gene_auc=gene_auc,
+            region_auc=region_auc,
+            top_n=args.signature_top_n,
+        )
+    return out
 
 
 def run_scenicplus(data: dict[str, Any], args: argparse.Namespace) -> dict[str, Any]:
@@ -674,7 +836,7 @@ def run_scenicplus(data: dict[str, Any], args: argparse.Namespace) -> dict[str, 
         )
         stage_times["aucell"] = time.perf_counter() - t0
 
-    return {
+    out = {
         "stage_times": stage_times,
         "output_counts": {
             "tf_to_gene_edges": int(len(tf2g)),
@@ -684,6 +846,18 @@ def run_scenicplus(data: dict[str, Any], args: argparse.Namespace) -> dict[str, 
             "region_auc_shape": list(auc["Region_based"].shape),
         },
     }
+    if args.save_signatures:
+        out["output_signature"] = _output_signature(
+            tool="scenicplus",
+            data=data,
+            tf2g=tf2g,
+            r2g=r2g,
+            eregulons=eregs,
+            gene_auc=auc["Gene_based"],
+            region_auc=auc["Region_based"],
+            top_n=args.signature_top_n,
+        )
+    return out
 
 
 def _scenicplus_eregulon_metadata(eregulons: list[Any]) -> pd.DataFrame:
@@ -726,6 +900,8 @@ def main() -> int:
     p.add_argument("--top-regions-per-gene", type=int, default=5)
     p.add_argument("--gsea-permutations", type=int, default=25)
     p.add_argument("--rss-poll-interval", type=float, default=0.25)
+    p.add_argument("--save-signatures", action="store_true")
+    p.add_argument("--signature-top-n", type=int, default=20_000)
     p.add_argument("--seed", type=int, default=777)
     p.add_argument("--label", default="")
     p.add_argument("--out", type=Path, required=True)
@@ -794,6 +970,7 @@ def main() -> int:
             k: round(float(v), 6) for k, v in result["stage_times"].items()
         },
         "output_counts": result["output_counts"],
+        "output_signature": result.get("output_signature"),
         "settings": {
             **data["settings"],
             "n_cpu": args.n_cpu,
@@ -805,6 +982,8 @@ def main() -> int:
             "top_frac": args.top_frac,
             "top_regions_per_gene": args.top_regions_per_gene,
             "gsea_permutations": args.gsea_permutations,
+            "save_signatures": args.save_signatures,
+            "signature_top_n": args.signature_top_n,
             "seed": args.seed,
         },
         "python": sys.version.split()[0],
@@ -812,7 +991,21 @@ def main() -> int:
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(record, indent=2) + "\n")
-    print(json.dumps(record, indent=2), flush=True)
+    printable = dict(record)
+    if printable.get("output_signature") is not None:
+        signature = printable["output_signature"]
+        printable["output_signature"] = {
+            "saved": True,
+            "top_n": signature["top_n"],
+            "cells": len(signature["cells"]),
+            "tf_to_gene_top_edges": len(signature["tf_to_gene_top_edges"]),
+            "region_to_gene_top_edges": len(signature["region_to_gene_top_edges"]),
+            "eregulon_tfs": len(signature["eregulon_tfs"]),
+            "eregulon_edges": len(signature["eregulon_edges"]),
+            "gene_auc_by_tf": len(signature["gene_auc_by_tf"]),
+            "region_auc_by_tf": len(signature["region_auc_by_tf"]),
+        }
+    print(json.dumps(printable, indent=2), flush=True)
     return 0 if status == "ok" else 1
 
 

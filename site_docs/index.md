@@ -19,19 +19,19 @@ It is built for users who want one install, modern Python, deterministic CPU exe
 
 ## Current Status
 
-Current public release: `v0.4.6`.
+Current public release: `v0.4.7`.
 
 The package has public wheels, CI across macOS and Linux, Windows x64 coverage in the release workflow, unit and integration tests, real-data validation artefacts and community validation reports. It is still alpha research software: the core API works, but the project needs more independent lab adoption and broader multi-dataset parity before it should be treated as a mature community standard.
 
 ## Best Evidence
 
-- AUCell agreement against pySCENIC on the Ziegler airway atlas: mean per-cell Pearson `0.984`; `91.7%` of cells above `0.95`.
+- Core matrix-level RustScenic vs SCENIC+ real-data speedups: `11x` to `60x` on the tested CPU rows.
+- Human brain GEM-X 2k core E2E: RustScenic `11.89s` total vs SCENIC+ `150.36s` total.
+- Human brain GEM-X 2k validation: region-to-gene Jaccard `1.000`; region AUCell mean Pearson `0.823`.
 - Cistarget AUC kernel agreement against `ctxcore.recovery.aucs`: Pearson `1.0000`.
-- Real multiome end-to-end runs on 10x PBMC, mouse brain and PBMC granulocyte datasets.
 - Community reports from external users on Kamath dopaminergic neurons and 10x human brain multiome data.
 
-For the full benchmark matrix, including commands, hardware, baseline,
-runtime, memory, parity metric and biological sanity check, see
-[Benchmarks](benchmarks.md).
+For the current benchmark table, commands, hardware, runtime, memory and
+validation caveats, see [Benchmarks](benchmarks.md).
 
 Start with [Installation](installation.md), then run the [Quickstart](quickstart.md). If you are evaluating the tool for a lab, use [Lab Adoption](adoption.md).

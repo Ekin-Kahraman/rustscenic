@@ -1,0 +1,143 @@
+{
+  "benchmark": "core_e2e_matrix",
+  "scope": "RNA + ATAC + cistromes -> TF-to-gene -> region-to-gene -> eRegulons -> gene and region AUCell",
+  "machine": {
+    "cpu": "Apple M5",
+    "memory_gb": 16,
+    "os": "macOS arm64",
+    "python": "3.13.9",
+    "threads": 4
+  },
+  "settings": {
+    "seed": 777,
+    "grn_estimators": 5000,
+    "rustscenic_build": "release"
+  },
+  "runtime_rows": [
+    {
+      "dataset": "synthetic_micro",
+      "cells": 150,
+      "genes": 80,
+      "peaks": 30,
+      "tfs": 3,
+      "rustscenic_compute_s": 0.035123,
+      "scenicplus_compute_s": 9.445806,
+      "compute_speedup": 268.9,
+      "rustscenic_peak_rss_gb": 0.179169,
+      "scenicplus_peak_rss_gb": 0.404327
+    },
+    {
+      "dataset": "synthetic_scale_1500",
+      "cells": 1500,
+      "genes": 1500,
+      "peaks": 450,
+      "tfs": 12,
+      "rustscenic_compute_s": 1.558715,
+      "scenicplus_compute_s": 146.54276,
+      "compute_speedup": 94.0,
+      "rustscenic_peak_rss_gb": 0.294708,
+      "scenicplus_peak_rss_gb": 0.510986
+    },
+    {
+      "dataset": "pbmc3k",
+      "cells": 1500,
+      "genes": 2000,
+      "peaks": 3000,
+      "tfs": 20,
+      "rustscenic_compute_s": 1.934758,
+      "scenicplus_compute_s": 52.477549,
+      "compute_speedup": 27.1,
+      "rustscenic_peak_rss_gb": 0.839813,
+      "scenicplus_peak_rss_gb": 0.96167
+    },
+    {
+      "dataset": "pbmc3k_dense",
+      "cells": 2000,
+      "genes": 4000,
+      "peaks": 8000,
+      "tfs": 30,
+      "rustscenic_compute_s": 4.983762,
+      "scenicplus_compute_s": 258.853142,
+      "compute_speedup": 51.9,
+      "rustscenic_peak_rss_gb": 1.209366,
+      "scenicplus_peak_rss_gb": 1.259598
+    },
+    {
+      "dataset": "pbmc10k_dense",
+      "cells": 2000,
+      "genes": 4000,
+      "peaks": 8000,
+      "tfs": 30,
+      "rustscenic_compute_s": 21.528261,
+      "scenicplus_compute_s": 241.537957,
+      "compute_speedup": 11.2,
+      "rustscenic_peak_rss_gb": 2.369171,
+      "scenicplus_peak_rss_gb": 2.628021
+    },
+    {
+      "dataset": "mouse_brain_e18",
+      "cells": 1500,
+      "genes": 3000,
+      "peaks": 6000,
+      "tfs": 25,
+      "rustscenic_compute_s": 2.822211,
+      "scenicplus_compute_s": 90.369333,
+      "compute_speedup": 32.0,
+      "rustscenic_peak_rss_gb": 1.6539,
+      "scenicplus_peak_rss_gb": 2.101196
+    },
+    {
+      "dataset": "human_brain_gemx",
+      "cells": 2000,
+      "genes": 4000,
+      "peaks": 8000,
+      "tfs": 30,
+      "rustscenic_compute_s": 7.40908,
+      "scenicplus_compute_s": 145.972224,
+      "compute_speedup": 19.7,
+      "rustscenic_total_s": 11.888124,
+      "scenicplus_total_s": 150.356889,
+      "total_speedup": 12.6,
+      "rustscenic_peak_rss_gb": 2.183823,
+      "scenicplus_peak_rss_gb": 2.187286
+    }
+  ],
+  "validation_rows": [
+    {
+      "dataset": "synthetic_micro",
+      "tf_to_gene_top_edge_jaccard": 0.9875,
+      "region_to_gene_edge_jaccard": 1.0,
+      "eregulon_tf_jaccard": 1.0,
+      "eregulon_edge_jaccard": 0.487179,
+      "gene_auc_mean_pearson": 0.990188,
+      "region_auc_mean_pearson": 0.970382
+    },
+    {
+      "dataset": "human_brain_gemx",
+      "tf_to_gene_top_edge_jaccard": 0.536783,
+      "region_to_gene_edge_jaccard": 1.0,
+      "eregulon_tf_jaccard": 0.84,
+      "eregulon_edge_jaccard": 0.161491,
+      "gene_auc_mean_pearson": 0.385554,
+      "region_auc_mean_pearson": 0.823398
+    }
+  ],
+  "source_result_files": [
+    "validation/head_to_head/results/core_e2e_micro_150_rustscenic_v2.json",
+    "validation/head_to_head/results/core_e2e_micro_150_scenicplus_v2.json",
+    "validation/head_to_head/results/core_e2e_scale3_1500_rustscenic.json",
+    "validation/head_to_head/results/core_e2e_scale3_1500_scenicplus.json",
+    "validation/head_to_head/results/real_pbmc3k_core_e2e_1500_rustscenic.json",
+    "validation/head_to_head/results/real_pbmc3k_core_e2e_1500_scenicplus.json",
+    "validation/head_to_head/results/page_real_pbmc3k_dense_core_e2e_2000_rustscenic.json",
+    "validation/head_to_head/results/page_real_pbmc3k_dense_core_e2e_2000_scenicplus.json",
+    "validation/head_to_head/results/page_real_pbmc10k_dense_core_e2e_2000_rustscenic.json",
+    "validation/head_to_head/results/page_real_pbmc10k_dense_core_e2e_2000_scenicplus.json",
+    "validation/head_to_head/results/page_real_mouse_brain_e18_core_e2e_1500_rustscenic.json",
+    "validation/head_to_head/results/page_real_mouse_brain_e18_core_e2e_1500_scenicplus.json",
+    "validation/head_to_head/results/validation_restore_fast_real_human_brain_gemx10k_core_e2e_2000_rustscenic.json",
+    "validation/head_to_head/results/validation_signature_real_human_brain_gemx10k_core_e2e_2000_scenicplus.json",
+    "validation/head_to_head/results/validation_signature_micro_150_compare.json",
+    "validation/head_to_head/results/validation_signature_real_human_brain_gemx10k_core_e2e_2000_compare.json"
+  ]
+}
