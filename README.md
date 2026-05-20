@@ -63,19 +63,46 @@ The next evidence gate is real full-pipeline scaling on HPC at 50k, 100k, and
 
 ## Pipeline
 
+Everything inside the box ships in `rustscenic`.
+
 ```mermaid
 flowchart LR
-    install["pip install rustscenic"] --> rna["RNA cells x genes"]
-    install --> atac["ATAC cells x peaks"]
-    rna --> grn["GRN: TF to target genes"]
-    grn --> regulons["regulons"]
-    regulons --> aucell["AUCell: activity per cell"]
-    regulons --> ct["cisTarget: motif support"]
-    atac --> topics["topics"]
-    rna --> p2g["peak to gene links"]
-    atac --> p2g
-    ct --> ereg["eRegulons"]
-    p2g --> ereg
+    install["pip install rustscenic"]
+    rna["RNA cells x genes"]
+    atac["ATAC cells x peaks"]
+    motifs["motif ranking database"]
+
+    subgraph pkg["rustscenic package: one install, all core stages"]
+        direction TB
+        api["CLI + Python API"]
+        grn["GRN inference"]
+        regulons["regulons"]
+        aucell["AUCell activity"]
+        peaks["ATAC matrix + peak calling"]
+        topics["topic modelling"]
+        ct["cisTarget motif support"]
+        p2g["peak-to-gene links"]
+        ereg["eRegulons"]
+
+        api --> grn
+        grn --> regulons
+        regulons --> aucell
+        regulons --> ct
+        api --> peaks
+        peaks --> topics
+        peaks --> p2g
+        ct --> ereg
+        p2g --> ereg
+    end
+
+    install --> api
+    rna --> api
+    atac --> api
+    motifs --> ct
+
+    aucell --> out1["cell regulon activity"]
+    topics --> out2["ATAC topics"]
+    ereg --> out3["enhancer-linked GRNs"]
 ```
 
 In one sentence: rustscenic turns RNA plus ATAC into which TFs regulate which
