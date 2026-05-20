@@ -56,14 +56,14 @@ What has been shown so far:
 - synthetic scale gates reach 100k and 200k full pipeline runs
 - the next proof is real HPC scaling at 50k, 100k, and 200k cells, plus a same-data SCENIC+ comparison
 
-| Purpose | Dataset | Size | Result |
-|---|---|---:|---|
-| Real-data proof | PBMC 3k multiome | 2,767 cells, 81,156 peaks | full pipeline, 75 to 88 s, 3.4 GB |
-| Real-data proof | Mouse brain E18 multiome | 4,770 cells, 172,193 peaks | full pipeline, 201 s, 4.4 GB |
-| Largest real run so far | PBMC granulocyte 10k multiome | 11,620 cells, 143,887 peaks | full pipeline, 38.1 min, 5.4 GB |
-| Scale stress test | Synthetic multiome | 100,000 cells, 50,000 peaks | full pipeline, 12.7 min, 7.1 GB |
-| Scale stress test | Synthetic multiome | 200,000 cells, 30,000 peaks | full pipeline, 16.8 min, 7.4 GB |
-| GRN stress test | Synthetic RNA | 500,000 cells | 224,966 edges, 8.7 min, 7.3 GB |
+| Proof | Dataset | Cells | Peaks | Wall | RAM |
+|---|---|---:|---:|---:|---:|
+| real full pipeline | PBMC 3k multiome | 2,767 | 81k | 75 to 88 s | 3.4&nbsp;GB |
+| real full pipeline | Mouse brain E18 multiome | 4,770 | 172k | 201 s | 4.4&nbsp;GB |
+| largest real run | PBMC granulocyte 10k multiome | 11,620 | 144k | 38.1 min | 5.4&nbsp;GB |
+| scale stress test | Synthetic multiome | 100k | 50k | 12.7 min | 7.1&nbsp;GB |
+| scale stress test | Synthetic multiome | 200k | 30k | 16.8 min | 7.4&nbsp;GB |
+| GRN stress test | Synthetic RNA | 500k | - | 8.7 min | 7.3&nbsp;GB |
 
 ## Pipeline
 
