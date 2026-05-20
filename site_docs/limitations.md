@@ -1,9 +1,9 @@
 # Scope
 
-RustScenic focuses on the SCENIC-style compute path that benefits most from a
-small Rust-backed Python package: matrix-level regulatory-network inference,
-per-cell scoring, motif enrichment, topic modelling, enhancer-gene links and
-eRegulon assembly.
+RustScenic focuses on the regulatory-network compute path that benefits most
+from a small Rust-backed Python package: matrix-level inference, per-cell
+scoring, motif enrichment, topic modelling, enhancer-gene links and eRegulon
+assembly.
 
 ## Designed For
 
@@ -29,5 +29,6 @@ eRegulon assembly.
 ## Positioning
 
 The strongest current message is direct: RustScenic gives a fast, deterministic
-SCENIC-style compute path with a much simpler install than the legacy stack, and
-with measured head-to-head speedups on the tested real-data core E2E rows.
+regulatory-network compute path with a much simpler install than the legacy
+stack, and with measured head-to-head speedups on the tested real-data core E2E
+rows.

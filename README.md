@@ -3,50 +3,43 @@
 </p>
 
 <p align="center">
-  <strong>SCENIC analysis without the setup fight.</strong>
+  <strong>Fast, memory-efficient regulatory-network analysis for single-cell and multiome data.</strong>
 </p>
 
 <p align="center">
-  Build regulatory networks, score regulons, link enhancers and assemble eRegulons
-  from Python. One install. CPU-first. No Java, dask, CUDA or Snakemake for the core path.
+  Rust kernels for GRN inference, regulon activity, motif enrichment, topic modelling,
+  enhancer links and eRegulons. Python API. CPU-first. One install.
 </p>
 
 <p align="center">
   <a href="https://pypi.org/project/rustscenic/">PyPI</a> |
   <a href="https://ekin-kahraman.github.io/rustscenic/">Docs</a> |
+  <a href="site_docs/benchmarks.md">Benchmarks</a> |
   <a href="https://doi.org/10.5281/zenodo.20246040">Zenodo DOI</a> |
   <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml">CI</a> |
   <a href="LICENSE">MIT License</a>
 </p>
 
-## Why It Exists
+## Highlights
 
-SCENIC and SCENIC+ are powerful, but the practical workflow often makes users
-fight the stack before they can ask a biology question: old Python constraints,
-dask scheduler failures, Java/Mallet topic modelling, large pinned environments,
-workflow glue and hard-to-reproduce local runs.
+- `pip install rustscenic`
+- Python 3.10 to 3.13 release wheels
+- Rust implementations for the matrix-heavy regulatory-network stages
+- `11x` to `52x` faster in tested real-data core E2E rows
+- Lower peak RSS in every tested real-data row
+- Core path runs without Java, dask, CUDA or Snakemake
+- Benchmark artefacts include commands, hardware, runtime, memory and output checks
 
-RustScenic moves the commonly used compute path into one Rust-backed Python
-package. The goal is simple: keep the biology, remove the infrastructure tax.
+## Installation
 
 ```bash
 pip install rustscenic
 ```
 
-## What It Fixes
+## Benchmark Snapshot
 
-| Legacy workflow pain | RustScenic answer |
-| --- | --- |
-| Fragile multi-package installs | One Python package with release wheels |
-| Local CPU runs feel too slow | Rust kernels for GRN, AUCell, cisTarget, topics and enhancer links |
-| Java, dask, CUDA or Snakemake become blockers | Core path runs without them |
-| Multiome stages live across several tools | GRN, AUCell, motifs, topics, enhancer links and eRegulons share one API |
-| Hard to defend performance claims | Benchmarks include hardware, command path, runtime, memory and output checks |
-
-## Evidence
-
-Head-to-head core E2E comparison against SCENIC+ on the same matrix-level path:
-TF-to-gene, region-to-gene, eRegulons, gene AUCell and region AUCell.
+Core E2E comparison on the same matrix-level path: TF-to-gene, region-to-gene,
+eRegulons, gene AUCell and region AUCell.
 
 Machine: Apple M5 laptop, 16 GB RAM, macOS arm64, Python 3.13.9, 4 CPU threads.
 
@@ -59,31 +52,23 @@ Machine: Apple M5 laptop, 16 GB RAM, macOS arm64, Python 3.13.9, 4 CPU threads.
 Including data preparation, the human brain GEM-X row is `11.89 s` for
 RustScenic versus `150.36 s` for SCENIC+.
 
-The full benchmark table, commands, hardware, validation metrics and output
-signatures are in [site_docs/benchmarks.md](site_docs/benchmarks.md).
+Full commands, hardware, validation metrics and output signatures are in
+[site_docs/benchmarks.md](site_docs/benchmarks.md).
 
-## What Runs
+## API Surface
 
-<p align="center">
-  <img src="site_docs/assets/rustscenic-workflow.svg" alt="RustScenic workflow" width="760">
-</p>
-
-| Stage | RustScenic API | Reference stack |
-| --- | --- | --- |
-| Gene-regulatory network inference | `rustscenic.grn.infer` | `arboreto.grnboost2` |
-| Per-cell regulon activity scoring | `rustscenic.aucell.score` | `pyscenic.aucell` |
-| Motif-regulon enrichment | `rustscenic.cistarget.enrich` | `ctxcore` / `pycistarget` |
-| scATAC topic modelling | `rustscenic.topics.fit`, `fit_gibbs` | `pycisTopic` / Mallet |
-| Fragment preprocessing and QC | `rustscenic.preproc` | `pycisTopic` preprocessing |
-| Enhancer-gene linking | `rustscenic.enhancer.link_peaks_to_genes` | SCENIC+ p2g linking |
-| eRegulon assembly | `rustscenic.eregulon.build_eregulons` | SCENIC+ eRegulon builder |
-| Pipeline orchestration | `rustscenic.pipeline.run` | SCENIC+ workflow glue |
+| Module | Purpose |
+| --- | --- |
+| `rustscenic.grn.infer` | TF-to-gene regulatory network inference |
+| `rustscenic.aucell.score` | Per-cell regulon activity scoring |
+| `rustscenic.cistarget.enrich` | Motif support and enrichment |
+| `rustscenic.topics.fit`, `fit_gibbs` | scATAC topic modelling |
+| `rustscenic.preproc` | Fragment matrix building and QC |
+| `rustscenic.enhancer.link_peaks_to_genes` | Enhancer-gene linking |
+| `rustscenic.eregulon.build_eregulons` | Enhancer-linked regulon assembly |
+| `rustscenic.pipeline.run` | Staged workflow orchestration |
 
 ## Quick Start
-
-```bash
-rustscenic pipeline --rna data.h5ad --tfs tfs.txt --output out/
-```
 
 ```python
 import anndata as ad
@@ -103,6 +88,12 @@ regulons = [
 auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
 ```
 
+Command line:
+
+```bash
+rustscenic pipeline --rna data.h5ad --tfs tfs.txt --output out/
+```
+
 See [examples/pbmc3k_end_to_end.py](examples/pbmc3k_end_to_end.py) for a small
 real-data RNA example.
 
@@ -112,25 +103,14 @@ real-data RNA example.
   `1.0000`, mean absolute difference about `2.4e-5`.
 - AUCell agreement against pySCENIC on the Ziegler 2021 airway atlas: mean
   per-cell Pearson `0.984`, with `91.7%` of cells above `0.95`.
-- Human brain GEM-X SCENIC+ comparison: region-to-gene Jaccard `1.000`, region
-  AUCell mean Pearson `0.823`.
+- Human brain GEM-X comparison: region-to-gene Jaccard `1.000`, region AUCell
+  mean Pearson `0.823`.
 - External-user reports cover Kamath dopaminergic neurons and 10x human brain
   multiome data.
 
 Validation artefacts live under [validation/](validation/). Public interpretation
 lives in [site_docs/benchmarks.md](site_docs/benchmarks.md) and
 [site_docs/validation.md](site_docs/validation.md).
-
-## Scope
-
-RustScenic focuses on the CPU matrix-level SCENIC-style compute path and the
-Python workflow around it. The next evidence tier is larger real multiome inputs,
-repeated runs on a second machine and full workflow coverage from raw fragments
-and external motif-ranking databases.
-
-Motif ranking databases are not bundled because public Aerts Lab databases are
-large. Download them separately and pass the rankings to
-`rustscenic.cistarget.enrich`.
 
 ## Documentation
 
@@ -141,15 +121,6 @@ large. Download them separately and pass the rankings to
 - [Validation](site_docs/validation.md)
 - [Scope](site_docs/limitations.md)
 
-## Repository Layout
-
-- `crates/` - Rust workspace for GRN, AUCell, topics, preprocessing and PyO3 bindings
-- `python/rustscenic/` - Python package, CLI entry point and type stubs
-- `examples/` - runnable examples on small public datasets
-- `validation/` - benchmark scripts, logs and measurement reports
-- `tests/` - Python and Rust test suites
-- `site_docs/` - public documentation built by MkDocs
-
 ## Citation
 
 If you use RustScenic in a paper, report, benchmark, derivative package or lab
@@ -159,8 +130,3 @@ workflow, cite the exact release used. GitHub citation metadata is in
 
 RustScenic is created and maintained by Ekin Kahraman. See [AUTHORS.md](AUTHORS.md)
 for attribution.
-
-## Contact
-
-File issues at
-[github.com/Ekin-Kahraman/rustscenic/issues](https://github.com/Ekin-Kahraman/rustscenic/issues).

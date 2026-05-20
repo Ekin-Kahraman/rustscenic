@@ -88,8 +88,8 @@ The benchmark set supports a direct message:
 - The clearest current strength is fast local execution with a single modern
   Python install.
 
-The strongest public claim today is SCENIC-style multiome analysis with much
-faster tested core E2E runtime and a simpler installation path.
+The strongest public claim today is fast, CPU-first multiome regulatory-network
+analysis with tested core E2E speedups and a simpler installation path.
 
 The next benchmark tier is aimed at larger real multiome inputs, repeated runs
 and full workflow coverage, so the headline can move from core E2E performance
