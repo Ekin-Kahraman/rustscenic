@@ -82,6 +82,7 @@ def run(
     region_motif_rankings: Union[str, Path, pd.DataFrame, None] = None,
     gene_coords: Union[str, Path, pd.DataFrame, None] = None,
     grn_n_estimators: int = 500,
+    grn_max_features: float = 0.1,
     grn_target_block_size: Optional[int] = None,
     grn_top_targets: int = 50,
     aucell_top_frac: float = 0.05,
@@ -169,6 +170,11 @@ def run(
         Threads for the Gibbs sampler (only used when
         ``topics_method='gibbs'``). 1 = bit-deterministic serial
         path. > 1 = AD-LDA parallel path.
+    grn_max_features
+        Fraction of candidate TFs sampled per split in GRN boosting.
+        ``0.1`` matches arboreto/SCENIC defaults. Lower values can be
+        much faster on high-TF datasets, but change edge rankings and
+        should be treated as a speed/quality tradeoff.
     grn_target_block_size
         Optional target block width passed through to
         ``rustscenic.grn.infer``. ``None`` uses the adaptive default,
@@ -312,6 +318,7 @@ def run(
         adata_rna,
         tf_names=tf_list,
         n_estimators=grn_n_estimators,
+        max_features=grn_max_features,
         target_block_size=grn_target_block_size,
         seed=seed,
         verbose=False,
@@ -325,12 +332,12 @@ def run(
     if grn_top_targets < 1:
         raise ValueError(f"grn_top_targets must be >= 1, got {grn_top_targets}")
     log(f"[5/8] candidate regulons: top-{grn_top_targets} targets per TF")
-    candidate_regulons = {}
     min_targets_for_candidate = min(10, grn_top_targets)
-    for tf in grn["TF"].unique():
-        top = grn[grn["TF"] == tf].nlargest(grn_top_targets, "importance")["target"].tolist()
-        if len(top) >= min_targets_for_candidate:
-            candidate_regulons[f"{tf}_regulon"] = top
+    candidate_regulons = _candidate_regulons_from_grn(
+        grn,
+        top_targets=grn_top_targets,
+        min_targets=min_targets_for_candidate,
+    )
     candidate_regulons_path = output_dir / "candidate_regulons.json"
     candidate_regulons_path.write_text(json.dumps(candidate_regulons, indent=2))
     regulons = dict(candidate_regulons)
@@ -661,6 +668,27 @@ def run(
     (output_dir / "manifest.json").write_text(json.dumps(result.manifest(), indent=2))
     log(f"done. total: {sum(elapsed.values()):.1f}s. manifest → manifest.json")
     return result
+
+
+def _candidate_regulons_from_grn(
+    grn: pd.DataFrame,
+    *,
+    top_targets: int,
+    min_targets: int,
+) -> dict[str, list[str]]:
+    """Build top-target candidate regulons without rescanning GRN per TF."""
+    if grn.empty:
+        return {}
+    top = (
+        grn.sort_values("importance", ascending=False, kind="mergesort")
+        .groupby("TF", sort=False, group_keys=False)
+        .head(top_targets)
+    )
+    return {
+        f"{tf}_regulon": group["target"].tolist()
+        for tf, group in top.groupby("TF", sort=False)
+        if len(group) >= min_targets
+    }
 
 
 def _coerce_adata(rna):

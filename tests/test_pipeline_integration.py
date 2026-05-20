@@ -1010,6 +1010,29 @@ def test_pipeline_grn_top_targets_below_ten_still_builds_candidates(tmp_path, mo
     assert result.n_regulons == 1
 
 
+def test_candidate_regulons_from_grn_keeps_top_targets_without_per_tf_scan():
+    import rustscenic.pipeline
+
+    grn = pd.DataFrame(
+        {
+            "TF": ["TF1", "TF1", "TF2", "TF1", "TF2", "TF2", "TF3"],
+            "target": ["G1", "G2", "G3", "G4", "G5", "G6", "G7"],
+            "importance": [0.2, 0.9, 0.1, 0.5, 0.8, 0.7, 1.0],
+        }
+    )
+
+    out = rustscenic.pipeline._candidate_regulons_from_grn(
+        grn,
+        top_targets=2,
+        min_targets=2,
+    )
+
+    assert out == {
+        "TF1_regulon": ["G2", "G4"],
+        "TF2_regulon": ["G5", "G6"],
+    }
+
+
 def test_attribute_peaks_to_cistarget_at_scale():
     """The gene-only cistarget→peak bridge stalled at real-PBMC scale
     (35k cistarget × 30 targets × 5 peaks ≈ 5M Python row dicts via

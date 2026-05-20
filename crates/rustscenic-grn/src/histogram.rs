@@ -140,13 +140,17 @@ impl NodeHist {
     /// Scan thresholds left→right, return best split (bin_edge, gain, left_count).
     /// Gain = parent_var - (left_var + right_var), variances as in sklearn
     /// (sum of squared deviations, NOT divided by n).
-    pub fn best_split(&self) -> Option<(usize, f32, u32)> {
-        let total_n: u32 = self.count.iter().sum();
+    pub fn best_split(&self, n_bins: usize) -> Option<(usize, f32, u32)> {
+        let n_bins = n_bins.min(self.count.len());
+        if n_bins < 2 {
+            return None;
+        }
+        let total_n: u32 = self.count[..n_bins].iter().sum();
         if total_n < 2 {
             return None;
         }
-        let total_s: f32 = self.sum_y.iter().sum();
-        let total_sq: f32 = self.sum_y_sq.iter().sum();
+        let total_s: f32 = self.sum_y[..n_bins].iter().sum();
+        let total_sq: f32 = self.sum_y_sq[..n_bins].iter().sum();
         let parent_var = total_sq - (total_s * total_s) / (total_n as f32);
 
         let mut left_s = 0.0_f32;
@@ -157,7 +161,7 @@ impl NodeHist {
         let mut best_left_n = 0u32;
 
         // Candidate split: between bin k and bin k+1
-        for k in 0..self.count.len() - 1 {
+        for k in 0..n_bins - 1 {
             left_s += self.sum_y[k];
             left_sq += self.sum_y_sq[k];
             left_n += self.count[k];
@@ -217,7 +221,9 @@ mod tests {
         let bm = BinnedMatrix::from_dense(&x, n, nf);
         let mut h = NodeHist::zeros(MAX_BINS);
         h.accumulate(&bm, 0, &y, &(0..n).collect::<Vec<_>>());
-        let (bin, gain, left_n) = h.best_split().expect("split exists");
+        let (bin, gain, left_n) = h
+            .best_split(bm.n_bins_per_feature[0] as usize)
+            .expect("split exists");
         // Gain should be full parent variance (~n for ±1 perfectly split halves)
         assert!(gain > 50.0, "gain={}", gain);
         assert_eq!(left_n, 50);

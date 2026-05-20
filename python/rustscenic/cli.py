@@ -259,6 +259,7 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
         motif_rankings=Path(args.motif_rankings) if args.motif_rankings else None,
         motif_annotations=Path(args.motif_annotations) if args.motif_annotations else None,
         grn_n_estimators=args.grn_n_estimators,
+        grn_max_features=args.grn_max_features,
         grn_target_block_size=args.grn_target_block_size,
         grn_top_targets=args.grn_top_targets,
         aucell_top_frac=args.aucell_top_frac,
@@ -335,6 +336,7 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument("--motif-rankings", default=None, help="Optional: motif ranking parquet/feather")
     pp.add_argument("--motif-annotations", default=None, help="Optional: motif-to-TF annotation parquet/feather/csv/tsv")
     pp.add_argument("--grn-n-estimators", type=int, default=500)
+    pp.add_argument("--grn-max-features", type=float, default=0.1)
     pp.add_argument(
         "--grn-target-block-size",
         type=int,

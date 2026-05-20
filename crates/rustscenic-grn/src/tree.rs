@@ -141,7 +141,7 @@ fn build_node_rec(
     let mut best: Option<(usize, u8, f32)> = None;
     for &f in &scratch.feat_sub {
         hist_buf.accumulate(binned, f, y, samples);
-        if let Some((bin, gain, _)) = hist_buf.best_split() {
+        if let Some((bin, gain, _)) = hist_buf.best_split(binned.n_bins_per_feature[f] as usize) {
             match best {
                 None => best = Some((f, bin as u8, gain)),
                 Some((_, _, g)) if gain > g => best = Some((f, bin as u8, gain)),
