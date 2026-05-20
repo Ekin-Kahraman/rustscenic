@@ -60,7 +60,7 @@ What has been shown so far:
 |---|---|---:|---:|---:|---:|
 | real full pipeline | PBMC 3k multiome | 2,767 | 81k | 75 to 88 s | 3.4&nbsp;GB |
 | real full pipeline | Mouse brain E18 multiome | 4,770 | 172k | 201 s | 4.4&nbsp;GB |
-| largest real run | PBMC granulocyte 10k multiome | 11,620 | 144k | 38.1 min | 5.4&nbsp;GB |
+| largest real run | PBMC granulocyte multiome | 11,620 | 144k | 38.1 min | 5.4&nbsp;GB |
 | scale stress test | Synthetic multiome | 100k | 50k | 12.7 min | 7.1&nbsp;GB |
 | scale stress test | Synthetic multiome | 200k | 30k | 16.8 min | 7.4&nbsp;GB |
 | GRN stress test | Synthetic RNA | 500k | - | 8.7 min | 7.3&nbsp;GB |
