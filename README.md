@@ -1,84 +1,62 @@
-<div align="center">
-
 # rustscenic
-
-**Fast, installable SCENIC and SCENIC+ analysis on CPU.**
-
-Rust-native GRN inference, AUCell, topic modelling, cisTarget, peak calling,
-peak-to-gene links, and eRegulons, packaged as one Python install. Built for
-atlas-scale runs without Java, dask, or CUDA.
 
 [![CI](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg)](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml)
 [![Docs](https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml/badge.svg)](https://ekin-kahraman.github.io/rustscenic/)
 [![PyPI](https://img.shields.io/pypi/v/rustscenic)](https://pypi.org/project/rustscenic/)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20246040-blue)](https://doi.org/10.5281/zenodo.20246040)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20246040.svg)](https://doi.org/10.5281/zenodo.20246040)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Rust](https://img.shields.io/badge/Rust-stable-orange)](https://www.rust-lang.org/)
 [![Typing](https://img.shields.io/badge/typing-PEP%20561-blue)](python/rustscenic/py.typed)
 
-</div>
-
-## Why it exists
-
-SCENIC and SCENIC+ are the right biological target, but the practical workflow
-is often blocked by installs, memory pressure, and real atlas conventions.
-rustscenic reimplements the core compute path in Rust and exposes it through a
-normal Python package, CLI, and Python API:
-
-| Pain point | rustscenic path |
-|---|---|
-| 40 GB to 360 GB memory jobs | sparse, lower-copy Rust kernels and early barcode filtering |
-| Java, Mallet, dask, CUDA setup | one Python package with Rust wheels |
-| Huge motif ranking files | project file-backed rankings to only needed genes or peaks |
-| Raw 10x empty droplets | drop non-cell ATAC barcodes before expensive stages |
-| ENSEMBL vs gene-symbol mismatch | auto-detect common cellxgene and 10x conventions |
-
-## Quick start
+A Rust + PyO3 implementation of the practical SCENIC and SCENIC+ compute path: one install, modern Python, low-memory CPU execution, and measured validation across GRN, AUCell, cisTarget, topics, and multiome pipeline stages without Java, dask, or CUDA.
 
 ```bash
 pip install rustscenic
 ```
 
+Run the full pipeline:
+
 ```bash
 rustscenic pipeline --rna data.h5ad --tfs tfs.txt --output out/
 ```
 
-Python 3.10 to 3.13. Linux, macOS, and Windows wheels are covered by CI.
-Runtime dependencies: numpy, pandas, pyarrow, scipy, anndata.
+Five runtime dependencies (numpy, pandas, pyarrow, scipy, anndata). Python 3.10 to 3.13, Linux + macOS (x86_64 + aarch64); Windows x64 is covered by CI and v0.4.7 release wheels. No dask, no Java, no CUDA.
 
-## Current evidence
-
-The useful summary is simple:
-
-- real 10x multiome runs complete end to end on PBMC, mouse brain, and PBMC granulocyte data
-- the real runs prove pipeline coverage across GRN, AUCell, topics, cisTarget, enhancer links, and eRegulons
-- the current real-run timings are not the final scaling claim
-- the next proof is same-settings HPC scaling at 50k, 100k, and 200k cells, plus a same-data SCENIC+ comparison
-
-Detailed commands, hardware, runtimes, memory, and caveats are in
-[`site_docs/benchmarks.md`](site_docs/benchmarks.md).
-
-## Pipeline
-
-Read left to right. The middle box is the package.
+The practical SCENIC+ compute path in one package:
 
 ```mermaid
 flowchart LR
-    inputs["Inputs<br/>RNA + ATAC<br/>motif rankings"]
-    package["rustscenic<br/>one pip install<br/>GRN, AUCell, cisTarget<br/>topics, peak calling<br/>peak-to-gene links, eRegulons"]
-    outputs["Outputs<br/>TF-target networks<br/>cell regulon activity<br/>enhancer-linked GRNs"]
+    rna["RNA data"] --> network["find gene regulation"]
+    network --> regulons["regulons"]
+    regulons --> activity["score each cell"]
 
-    inputs --> package --> outputs
+    motifs["motif data"] --> supported["filter by motif support"]
+    regulons --> supported
+
+    atac["ATAC data"] --> topics["discover topics"]
+    rna --> enhancers["link enhancers to genes"]
+    atac --> enhancers
+
+    supported --> programs["build enhancer-linked regulons"]
+    enhancers --> programs
 ```
 
-In one sentence: rustscenic takes RNA and ATAC data and returns TF-target
-networks, enhancer links, and per-cell regulatory activity.
+## Status
 
-## One package, all core stages
+**Current release: v0.4.7** on PyPI. This patch publishes the post-audit scaling fixes on `main`: lower-copy topic fitting, cheaper GRN edge return, lower-memory peak calling, and release smoke coverage. See [CHANGELOG](CHANGELOG.md) and [`validation/`](validation/) for evidence and caveats.
 
-Rust-native implementations of the core SCENIC and SCENIC+ compute stages, plus
-the eRegulon assembly glue expected from enhancer-aware GRN analysis:
+Active limitations are listed under [Scope and alternatives](#scope-and-alternatives), with full detail in [`site_docs/limitations.md`](site_docs/limitations.md).
+
+## Goal
+
+rustscenic is being built as the single-install replacement for the practical SCENIC / SCENIC+ workflow: RNA GRN inference, AUCell regulon activity, motif enrichment, ATAC fragment preprocessing, topic modelling, enhancer-gene linking, and eRegulon assembly in one package.
+
+The project is intentionally not a thin wrapper around the old stack. The target is a simpler architecture that makes regulatory-network analysis easier to install, cheaper to run on CPU, deterministic under a fixed seed, and robust to real atlas conventions such as ENSEMBL `var_names`, duplicate gene symbols, backed AnnData, and UCSC/Ensembl chromosome mismatches.
+
+## What it does
+
+Rust-native replacements for the compute stages plus the glue that scenicplus builds eRegulons from:
 
 | Stage | **rustscenic** | Replaces |
 |---|---|---|
@@ -244,36 +222,24 @@ Name-presence checks are not cell-type enrichment tests. Synthetic 100k and
 200k runs are scale gates, not biological validation. Full commands, hardware,
 baseline status, and caveats are in [`site_docs/benchmarks.md`](site_docs/benchmarks.md).
 
-## Status
-
-**Current PyPI release: v0.4.7.** This release includes lower-copy topic
-fitting, cheaper GRN edge return, lower-memory peak calling, projected
-file-backed motif rankings, and release smoke coverage.
-
-**Current `main`: post-v0.4.7 raw 10x safety fix.** If raw fragments are passed
-directly, `pipeline.run` now subsets ATAC to RNA-matched cells before topics so
-empty droplets are not carried into expensive stages.
-
-Active limitations are listed under [Scope and alternatives](#scope-and-alternatives), with full detail in [`site_docs/limitations.md`](site_docs/limitations.md).
-
 ## Scope and alternatives
 
 rustscenic covers the practical SCENIC / SCENIC+ compute path on CPU. Adjacent tools with different scope:
 
 - **GPU, CUDA** - [flashSCENIC](https://github.com/haozhu233/flashscenic) (uses RegDiffusion, a different algorithm from GENIE3 / GRNBoost2, so outputs are not pyscenic-numerical).
-- **Reference enhancer-aware GRN workflow** - [scenicplus](https://github.com/aertslab/scenicplus) (the benchmark target for full SCENIC+ parity; rustscenic is the lighter install and lower-memory implementation path).
+- **Multiomic enhancer-aware GRN** - [scenicplus](https://github.com/aertslab/scenicplus) (joint scRNA + scATAC enhancer inference; superset of this scope).
 - **TF-activity scoring from prebuilt regulons, no GRN inference** - [decoupler-py](https://saezlab.github.io/decoupler-py/) with CollecTRI.
 - **R Bioconductor ecosystem** - the original R-SCENIC or [Epiregulon](https://www.nature.com/articles/s41467-025-62252-5).
 
 rustscenic does not bundle the aertslab motif ranking feather databases (300 MB to 35 GB). Users fetch them from [`resources.aertslab.org`](https://resources.aertslab.org/) and pass the resulting DataFrame to `cistarget.enrich`.
 
-Remaining validation before claiming full SCENIC+ parity:
+Current limitations before treating rustscenic as a full SCENIC+ replacement:
 
 - refreshed AUCell timings against current upstream stacks
 - region-cisTarget parity checks on real region-ranking databases
 - six-dataset benchmark sweep planned for v0.5+
 - cell-type enrichment checks for biology claims, not only TF-name recovery
-- real >50k raw 10x fragments validation of the new barcode-subsetting path
+- smoother raw 10x `pipeline.run` input without caller-side ATAC subsetting
 
 ## Per-stage CLI
 
