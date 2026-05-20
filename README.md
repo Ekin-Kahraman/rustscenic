@@ -49,26 +49,15 @@ Runtime dependencies: numpy, pandas, pyarrow, scipy, anndata.
 
 ## Current evidence
 
-What has been shown so far:
+The useful summary is simple:
 
-- real 10x multiome runs complete end to end up to 11,620 cells
-- those real runs stayed under 6 GB peak RAM
-- real-run wall time is dominated by GRN and roughly tracks cells x genes at the 100-estimator GRN setting
-- synthetic scale gates reach 100k and 200k full pipeline runs
-- the next proof is real HPC scaling at 50k, 100k, and 200k cells, plus a same-data SCENIC+ comparison
+- real 10x multiome runs complete end to end on PBMC, mouse brain, and PBMC granulocyte data
+- the real runs prove pipeline coverage across GRN, AUCell, topics, cisTarget, enhancer links, and eRegulons
+- the current real-run timings are not the final scaling claim
+- the next proof is same-settings HPC scaling at 50k, 100k, and 200k cells, plus a same-data SCENIC+ comparison
 
-| Proof | Dataset | Cells | Genes | Peaks | Wall | RAM |
-|---|---|---:|---:|---:|---:|---:|
-| real full pipeline | PBMC 3k multiome | 2,767 | 21k | 81k | 7.5 min | 3.7&nbsp;GB |
-| real full pipeline | Mouse brain E18 multiome | 4,770 | 22k | 172k | 13.8 min | 4.0&nbsp;GB |
-| largest real run | PBMC granulocyte multiome | 11,620 | 26k | 144k | 38.1 min | 5.4&nbsp;GB |
-| scale stress test | Synthetic multiome | 100k | 15k | 50k | 12.7 min | 7.1&nbsp;GB |
-| scale stress test | Synthetic multiome | 200k | 8k | 30k | 16.8 min | 7.4&nbsp;GB |
-| GRN stress test | Synthetic RNA | 500k | 5k | - | 8.7 min | 7.3&nbsp;GB |
-
-Real full-pipeline rows above use `grn_n_estimators=100`. They prove the
-pipeline completes on real multiome data; they are not yet the final HPC
-scaling benchmark.
+Detailed commands, hardware, runtimes, memory, and caveats are in
+[`site_docs/benchmarks.md`](site_docs/benchmarks.md).
 
 ## Pipeline
 
