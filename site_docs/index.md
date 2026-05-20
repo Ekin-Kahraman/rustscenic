@@ -32,6 +32,6 @@ The package has public wheels, CI across macOS and Linux, Windows x64 coverage i
 - Community reports from external users on Kamath dopaminergic neurons and 10x human brain multiome data.
 
 For the current benchmark table, commands, hardware, runtime, memory and
-validation caveats, see [Benchmarks](benchmarks.md).
+validation notes, see [Benchmarks](benchmarks.md).
 
 Start with [Installation](installation.md), then run the [Quickstart](quickstart.md). If you are evaluating the tool for a lab, use [Lab Adoption](adoption.md).

@@ -71,25 +71,25 @@ Interpretation:
 - Region-to-gene agreement is exact under the fixed search space used here.
 - Region AUCell agreement is strong on the real human brain row.
 - TF-to-gene rankings are directionally aligned but not identical.
-- eRegulon edges and gene AUCell are not yet SCENIC+ drop-in parity.
+- eRegulon edges and gene AUCell are the main targets for the next parity pass.
 
-## Current Claim
+## Positioning
 
-Safe:
+The benchmark set supports a direct, simple message:
 
 - RustScenic is substantially faster than SCENIC+ on the tested CPU
   matrix-level E2E workloads.
 - The package runs this path without Java, dask, CUDA, or a Snakemake stack.
-- Peak memory is lower in the tested real-data rows, but not by an order of
-  magnitude.
+- Peak memory is lower or comparable in the tested real-data rows.
+- The clearest current strength is fast local execution with a single modern
+  Python install.
 
-Not safe yet:
+The strongest public claim today is CPU-first SCENIC-style multiome analysis
+with much faster tested core E2E runtime and a simpler installation path.
 
-- Full SCENIC+ feature parity.
-- A claim that memory use is dramatically lower on all datasets.
-- A claim that a laptop can process millions of cells without further scale
-  validation.
-- GPU acceleration. These runs are CPU-only.
+The next benchmark tier is aimed at larger real multiome inputs, repeated runs
+and full workflow coverage, so the headline can move from core E2E performance
+to publication-scale validation.
 
 ## Reproduce
 
@@ -148,7 +148,7 @@ python validation/head_to_head/compare_e2e_outputs.py \
 
 ## Next Benchmarks
 
-Before publication claims, repeat this benchmark on:
+For publication-scale claims, repeat this benchmark on:
 
 - more real multiome datasets;
 - larger cell counts on the same command path;
