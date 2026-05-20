@@ -1,0 +1,48 @@
+{
+  "dataset_name": "10k Human Brain Nuclei, Chromium GEM-X Epi Multiome with Automated Cell Annotation",
+  "dataset_slug": "multiome-gemx-10k-human-brain",
+  "source": "10x Genomics",
+  "source_url": "https://www.10xgenomics.com/datasets/multiome-gemx-10k-human-brain",
+  "cell_ranger_arc_version": "2.2.0",
+  "published": "2026-04-20",
+  "species": "human",
+  "tissue": "brain",
+  "files": [
+    {
+      "filename": "10k_Human_Brain_MO_gemx_filtered_feature_bc_matrix.h5",
+      "url": "https://cf.10xgenomics.com/samples/cell-arc/2.2.0/10k_Human_Brain_MO_gemx/10k_Human_Brain_MO_gemx_filtered_feature_bc_matrix.h5",
+      "bytes": 158165615,
+      "md5": "7974b9f36f17f560db1aacf1c7196c1d"
+    },
+    {
+      "filename": "10k_Human_Brain_MO_gemx_atac_peaks.bed",
+      "url": "https://cf.10xgenomics.com/samples/cell-arc/2.2.0/10k_Human_Brain_MO_gemx/10k_Human_Brain_MO_gemx_atac_peaks.bed",
+      "bytes": 3110987,
+      "md5": "95fc619db6b6e82e0e2f74a084357278"
+    },
+    {
+      "filename": "10k_Human_Brain_MO_gemx_atac_peak_annotation.tsv",
+      "url": "https://cf.10xgenomics.com/samples/cell-arc/2.2.0/10k_Human_Brain_MO_gemx/10k_Human_Brain_MO_gemx_atac_peak_annotation.tsv",
+      "bytes": 7739099,
+      "md5": "ea668f0fde54c708e163e07914af3f1b"
+    },
+    {
+      "filename": "10k_Human_Brain_MO_gemx_atac_fragments.tsv.gz",
+      "url": "https://cf.10xgenomics.com/samples/cell-arc/2.2.0/10k_Human_Brain_MO_gemx/10k_Human_Brain_MO_gemx_atac_fragments.tsv.gz",
+      "bytes": 2909120238,
+      "md5": "15a4f42c2b8841fc9423ae45d81177b0"
+    },
+    {
+      "filename": "10k_Human_Brain_MO_gemx_atac_fragments.tsv.gz.tbi",
+      "url": "https://cf.10xgenomics.com/samples/cell-arc/2.2.0/10k_Human_Brain_MO_gemx/10k_Human_Brain_MO_gemx_atac_fragments.tsv.gz.tbi",
+      "bytes": 1238985,
+      "md5": "ee68f86b049fc90e7b89fa9f992e2525"
+    },
+    {
+      "filename": "10k_Human_Brain_MO_gemx_summary.csv",
+      "url": "https://cf.10xgenomics.com/samples/cell-arc/2.2.0/10k_Human_Brain_MO_gemx/10k_Human_Brain_MO_gemx_summary.csv",
+      "bytes": 1741,
+      "md5": "4a265435ae1b3905ccdcbd24f50a985f"
+    }
+  ]
+}
