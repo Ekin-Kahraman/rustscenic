@@ -53,17 +53,22 @@ What has been shown so far:
 
 - real 10x multiome runs complete end to end up to 11,620 cells
 - those real runs stayed under 6 GB peak RAM
+- real-run wall time is dominated by GRN and roughly tracks cells x genes at the 100-estimator GRN setting
 - synthetic scale gates reach 100k and 200k full pipeline runs
 - the next proof is real HPC scaling at 50k, 100k, and 200k cells, plus a same-data SCENIC+ comparison
 
-| Proof | Dataset | Cells | Peaks | Wall | RAM |
-|---|---|---:|---:|---:|---:|
-| real full pipeline | PBMC 3k multiome | 2,767 | 81k | 75 to 88 s | 3.4&nbsp;GB |
-| real full pipeline | Mouse brain E18 multiome | 4,770 | 172k | 201 s | 4.4&nbsp;GB |
-| largest real run | PBMC granulocyte multiome | 11,620 | 144k | 38.1 min | 5.4&nbsp;GB |
-| scale stress test | Synthetic multiome | 100k | 50k | 12.7 min | 7.1&nbsp;GB |
-| scale stress test | Synthetic multiome | 200k | 30k | 16.8 min | 7.4&nbsp;GB |
-| GRN stress test | Synthetic RNA | 500k | - | 8.7 min | 7.3&nbsp;GB |
+| Proof | Dataset | Cells | Genes | Peaks | Wall | RAM |
+|---|---|---:|---:|---:|---:|---:|
+| real full pipeline | PBMC 3k multiome | 2,767 | 21k | 81k | 7.5 min | 3.7&nbsp;GB |
+| real full pipeline | Mouse brain E18 multiome | 4,770 | 22k | 172k | 13.8 min | 4.0&nbsp;GB |
+| largest real run | PBMC granulocyte multiome | 11,620 | 26k | 144k | 38.1 min | 5.4&nbsp;GB |
+| scale stress test | Synthetic multiome | 100k | 15k | 50k | 12.7 min | 7.1&nbsp;GB |
+| scale stress test | Synthetic multiome | 200k | 8k | 30k | 16.8 min | 7.4&nbsp;GB |
+| GRN stress test | Synthetic RNA | 500k | 5k | - | 8.7 min | 7.3&nbsp;GB |
+
+Real full-pipeline rows above use `grn_n_estimators=100`. They prove the
+pipeline completes on real multiome data; they are not yet the final HPC
+scaling benchmark.
 
 ## Pipeline
 
