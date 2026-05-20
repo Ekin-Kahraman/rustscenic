@@ -1,15 +1,19 @@
 # Lab Adoption
 
-This page is for collaborators deciding whether RustScenic is worth testing on their own data.
+This page is for collaborators deciding whether RustScenic is worth testing on
+their own data.
 
 ## When To Try It
 
-RustScenic is worth testing if you have one of these problems:
+RustScenic is worth testing if one of these problems is blocking your analysis:
 
-- pySCENIC, arboreto, pycisTopic or pycistarget will not install cleanly on a modern Python stack.
-- AUCell or cisTarget is becoming a runtime or memory bottleneck.
+- pySCENIC, arboreto, pycisTopic or pycistarget will not install cleanly on a
+  modern Python stack.
+- AUCell, cisTarget, enhancer linking or GRN inference is becoming a runtime or
+  memory bottleneck.
 - You need deterministic CPU execution under a fixed seed.
-- You want a single Python package covering GRN, AUCell, motif support, topics, enhancer links and eRegulons.
+- You want a single Python package covering GRN, AUCell, motif support, topics,
+  enhancer links and eRegulons.
 
 ## Minimal Adoption Test
 
@@ -55,3 +59,10 @@ A strong report does not need to prove RustScenic is better than every reference
 - Outputs are non-empty and shape-correct.
 - Known biological controls are recovered or failures are explained.
 - The command is reproducible by another person.
+
+## Best First Dataset
+
+Use a small real dataset before a full atlas. The most useful first adoption
+run has enough cells to show biological signal, but not so many that debugging
+becomes a compute problem. A good first target is 1,000 to 5,000 cells with a
+known set of marker TFs.

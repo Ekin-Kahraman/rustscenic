@@ -1,5 +1,9 @@
 # Benchmarks
 
+This page is the evidence behind the README claim. It keeps the marketing line
+separate from the measurement detail: same inputs, fixed seed, stated hardware,
+runtime, memory and output agreement.
+
 RustScenic is benchmarked against SCENIC+ on the shared matrix-level regulatory
 path:
 
@@ -73,19 +77,19 @@ Interpretation:
 - TF-to-gene rankings are directionally aligned but not identical.
 - eRegulon edges and gene AUCell are the main targets for the next parity pass.
 
-## Positioning
+## Interpretation
 
-The benchmark set supports a direct, simple message:
+The benchmark set supports a direct message:
 
-- RustScenic is substantially faster than SCENIC+ on the tested CPU
-  matrix-level E2E workloads.
+- RustScenic is substantially faster than SCENIC+ on the tested CPU matrix-level
+  E2E workloads.
 - The package runs this path without Java, dask, CUDA, or a Snakemake stack.
 - Peak memory is lower or comparable in the tested real-data rows.
 - The clearest current strength is fast local execution with a single modern
   Python install.
 
-The strongest public claim today is CPU-first SCENIC-style multiome analysis
-with much faster tested core E2E runtime and a simpler installation path.
+The strongest public claim today is SCENIC-style multiome analysis with much
+faster tested core E2E runtime and a simpler installation path.
 
 The next benchmark tier is aimed at larger real multiome inputs, repeated runs
 and full workflow coverage, so the headline can move from core E2E performance

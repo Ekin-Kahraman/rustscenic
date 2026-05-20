@@ -4,6 +4,10 @@ RustScenic validation tracks implementation agreement, runtime, memory and
 real-data usability against established SCENIC ecosystem outputs where a fair
 comparison is possible.
 
+The standard is publication-minded: every serious claim should point to a
+dataset, command, version, hardware context, runtime, memory measurement and
+output sanity check.
+
 ## Headline Results
 
 | Test | Result |

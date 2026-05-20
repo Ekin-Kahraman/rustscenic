@@ -1,6 +1,8 @@
 # Quickstart
 
-This example runs RNA GRN inference and AUCell scoring on an AnnData object.
+This example starts with an AnnData RNA matrix and produces a GRN plus per-cell
+regulon activity scores. It is the shortest path from install to a useful
+RustScenic output.
 
 ```python
 import anndata as ad
@@ -31,6 +33,8 @@ auc.to_parquet("aucell.parquet")
 ```
 
 ## CLI
+
+The same core stages are available from the command line:
 
 ```bash
 rustscenic grn \

@@ -1,14 +1,15 @@
-# What rustscenic is
+# What RustScenic Is
 
 A one-page summary for collaborators and ecosystem maintainers deciding
 whether rustscenic is worth integrating with.
 
 ## Thesis
 
-rustscenic is a bet that the SCENIC / SCENIC+ workflow should not require
-users to stitch together old Python, Java/Mallet, dask, MACS2 wrappers,
-pycisTopic, pycistarget, scenicplus, and fragile environment pins before
-they can ask a regulatory-biology question.
+RustScenic is a bet that regulatory-network analysis should start with biology,
+not environment repair. The SCENIC and SCENIC+ ecosystem is powerful, but the
+practical path often asks users to stitch together old Python constraints,
+Java/Mallet, dask, MACS2 wrappers, pycisTopic, pycistarget, scenicplus and
+fragile environment pins before they can ask a regulatory-biology question.
 
 The intended endpoint is a **single-install CPU package** that covers the
 full practical workflow from AnnData / fragments through GRN, regulon

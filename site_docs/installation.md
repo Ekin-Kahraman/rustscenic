@@ -1,5 +1,8 @@
 # Installation
 
+RustScenic is designed to install like a normal Python package. The point is to
+avoid turning regulatory-network analysis into a dependency-management project.
+
 ## Standard Install
 
 ```bash
@@ -32,7 +35,20 @@ pip install "rustscenic[validation]"
 pip install "rustscenic[benchmarks]"
 ```
 
-The `reference` extra includes pySCENIC ecosystem dependencies and is treated as informational because parts of that stack can fail on current Python packaging combinations. For strict reference comparisons, prefer the pinned Docker path under `validation/reference/`.
+The `reference` extra includes pySCENIC ecosystem dependencies and is treated as
+informational because parts of that stack can fail on current Python packaging
+combinations. For strict reference comparisons, prefer the pinned Docker path
+under `validation/reference/`.
+
+## What This Avoids
+
+The core RustScenic path does not require:
+
+- Java or Mallet for topic modelling.
+- dask or a distributed scheduler for local runs.
+- CUDA or GPU drivers.
+- Snakemake workflow setup.
+- A large pinned environment just to import the package.
 
 ## Check The Install
 

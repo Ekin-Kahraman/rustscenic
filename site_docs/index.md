@@ -1,22 +1,24 @@
 # RustScenic
 
-RustScenic is a Rust-backed Python package for SCENIC-style single-cell
-regulatory-network analysis. It covers GRN inference, AUCell scoring, cisTarget
-enrichment, scATAC topic modelling, enhancer-gene linking and eRegulon assembly
-from one install.
+RustScenic is for researchers who want SCENIC-style regulatory biology without
+spending the first day debugging the stack.
 
-It is built for local CPU execution with modern Python. The core path does not
-require Java, dask, CUDA or Snakemake.
+It builds GRNs, scores regulons, links enhancers and assembles eRegulons from
+Python, with Rust kernels behind the slow stages. The core path is one install
+and runs locally on CPU without Java, dask, CUDA or Snakemake.
 
-## Why Use It
+```bash
+pip install rustscenic
+```
 
-| Need | RustScenic |
+## What It Fixes
+
+| Pain | RustScenic |
 | --- | --- |
-| Simple install | `pip install rustscenic` |
-| Local execution | CPU-first Rust kernels exposed through Python |
-| SCENIC-style stages | GRN, AUCell, cisTarget, topics, enhancer links, eRegulons |
-| Reproducibility | Deterministic threaded runs under a fixed seed |
-| Public evidence | Head-to-head benchmarks and validation artefacts in-repo |
+| Fragile legacy installs | Python 3.10 to 3.13 wheels and five core runtime dependencies |
+| Local CPU runs that take too long | Rust kernels for the matrix-heavy stages |
+| Multiome workflow glue across many packages | One API for GRN, AUCell, motifs, topics, enhancer links and eRegulons |
+| Hard-to-defend performance claims | Benchmarks include commands, hardware, runtime, memory and output checks |
 
 ## Evidence Snapshot
 
@@ -25,7 +27,6 @@ Current public release: `v0.4.7`.
 | Result | Value |
 | --- | ---: |
 | Tested real-data core E2E speedup vs SCENIC+ | `11x` to `52x` |
-| Median real-data core E2E speedup | `27x` |
 | Human brain GEM-X 2k total runtime | RustScenic `11.89 s`; SCENIC+ `150.36 s` |
 | Human brain GEM-X region-to-gene Jaccard | `1.000` |
 | Human brain GEM-X region AUCell mean Pearson | `0.823` |
@@ -34,7 +35,7 @@ Current public release: `v0.4.7`.
 The full benchmark matrix includes dataset shape, command path, hardware,
 runtime, memory and validation metrics. Start with [Benchmarks](benchmarks.md).
 
-## What It Replaces
+## What It Runs
 
 | Stage | RustScenic API | Reference stack |
 | --- | --- | --- |

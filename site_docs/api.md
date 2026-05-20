@@ -1,5 +1,8 @@
 # API Map
 
+RustScenic exposes the workflow as small Python calls. Each stage can be used
+alone, or combined through `rustscenic.pipeline.run`.
+
 ## RNA Regulatory Network
 
 ```python
@@ -8,7 +11,8 @@ rustscenic.grn.infer(adata, tf_names, n_estimators=500, seed=777)
 
 Returns a `pandas.DataFrame` with transcription factor, target and importance columns.
 
-Use this when you need a GRNBoost2-style TF-target edge table.
+Use this when you need a GRNBoost2-style TF-target edge table without depending
+on arboreto and dask at runtime.
 For very high cell counts, `target_block_size=None` uses the adaptive
 target-blocking default; pass a positive integer only when benchmarking a
 specific cache/RSS tradeoff.
@@ -40,7 +44,8 @@ rustscenic.topics.fit(atac_adata, n_topics=30)
 rustscenic.topics.fit_gibbs(atac_adata, n_topics=30, n_threads=8)
 ```
 
-Use Online VB for smaller or faster exploratory runs. Use collapsed Gibbs for higher topic diversity at larger `K`.
+Use Online VB for smaller or faster exploratory runs. Use collapsed Gibbs for
+higher topic diversity at larger `K`.
 
 ## ATAC Preprocessing
 
