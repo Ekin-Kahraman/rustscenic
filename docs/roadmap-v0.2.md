@@ -72,9 +72,8 @@ don't want to assemble stages themselves.
 - [ ] **Seurat interop beyond the docs**: actually pipe a Seurat object
       through a 10-line wrapper. `docs/seurat-interop.md` exists but
       no exercised path.
-- [ ] **Manuscript preprint** - `manuscript/rustscenic_preprint.md`
-      exists; decide target venue (Bioinformatics? Nature Methods tools?)
-      once 100k-scale run is in hand.
+- [ ] **Methods paper plan** - decide target venue once the larger real-data
+      benchmark tier is in hand.
 
 ## Stakeholder-dependent
 

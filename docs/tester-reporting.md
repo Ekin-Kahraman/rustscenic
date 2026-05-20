@@ -144,7 +144,7 @@ that JSON, in the same order. The shape, the wording, the level of
 detail - that's the bar.
 
 If you're unsure whether a field applies, fill in what you have and
-flag the rest in `scope_notes` / the "caveats" textarea.
+flag the rest in `scope_notes` / the "scope notes" textarea.
 
 ## What happens after you file
 

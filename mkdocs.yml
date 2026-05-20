@@ -16,7 +16,7 @@ nav:
   - Benchmarks: benchmarks.md
   - Validation: validation.md
   - Lab Adoption: adoption.md
-  - Limitations: limitations.md
+  - Scope: limitations.md
 markdown_extensions:
   - tables
   - toc:

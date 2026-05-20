@@ -18,9 +18,9 @@ For papers, talks, posters, grants, or lab reports, the software contribution sh
 
 Labs or collaborators who provide datasets, biological interpretation, benchmark runs, or failure reports should be credited for those contributions. These contributions can be substantial and may justify authorship on papers that depend on them.
 
-Validation credit should not overwrite software credit. Software development, benchmark design, data generation, biological interpretation, and manuscript writing should each be named separately.
+Validation credit should not overwrite software credit. Software development, benchmark design, data generation, biological interpretation, and paper writing should each be named separately.
 
-## Manuscripts
+## Papers
 
 Before starting a paper, collaborators should agree in writing on:
 
@@ -35,4 +35,4 @@ For a software paper primarily about rustscenic itself, the default expectation 
 
 ## Practical rule
 
-If a collaborator's role changes from feedback or validation into major writing, analysis, direction, or supervision, authorship and project roles should be revisited immediately rather than after a manuscript is drafted.
+If a collaborator's role changes from feedback or validation into major writing, analysis, direction, or supervision, authorship and project roles should be revisited immediately rather than after a paper is drafted.

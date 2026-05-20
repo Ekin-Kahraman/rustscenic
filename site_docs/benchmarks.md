@@ -40,8 +40,8 @@ database construction, or full workflow scheduling. Those are separate stages.
 | Mouse brain E18 | 1,500 cells, 3,000 genes, 6,000 peaks, 25 TFs | 2.82 s | 90.4 s | 32x | 1.65 / 2.10 GB |
 | Human brain GEM-X | 2,000 cells, 4,000 genes, 8,000 peaks, 30 TFs | 7.41 s | 146.0 s | 19.7x | 2.18 / 2.19 GB |
 
-Real-data speedups in this set range from 11x to 60x. Median real-data speedup
-is 32x. Peak RSS is lower in every real-data row, but the reduction is modest:
+Real-data speedups in this set range from 11x to 52x. Median real-data speedup
+is 27x. Peak RSS is lower in every real-data row, but the reduction is modest:
 median SCENIC+ / RustScenic memory ratio is 1.15x.
 
 For the human brain GEM-X row, including data preparation:
@@ -89,7 +89,7 @@ with much faster tested core E2E runtime and a simpler installation path.
 
 The next benchmark tier is aimed at larger real multiome inputs, repeated runs
 and full workflow coverage, so the headline can move from core E2E performance
-to publication-scale validation.
+to broader external validation.
 
 ## Reproduce
 
@@ -148,7 +148,7 @@ python validation/head_to_head/compare_e2e_outputs.py \
 
 ## Next Benchmarks
 
-For publication-scale claims, repeat this benchmark on:
+For the next evidence tier, repeat this benchmark on:
 
 - more real multiome datasets;
 - larger cell counts on the same command path;

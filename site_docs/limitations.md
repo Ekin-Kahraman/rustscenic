@@ -1,25 +1,34 @@
-# Limitations
+# Scope
 
-RustScenic is alpha research software. Use it deliberately and check outputs.
+RustScenic focuses on the practical SCENIC-style compute path that benefits most
+from a small Rust-backed Python package: matrix-level regulatory-network
+inference, per-cell scoring, motif enrichment, topic modelling, enhancer-gene
+links and eRegulon assembly.
 
-## Current Limitations
+## Designed For
 
-- Adoption is early. The project has external-user reports, but not broad community use.
-- The GRN implementation is not bit-identical to arboreto. Fine-grained edge rankings can differ.
-- Topic modelling has algorithmic tradeoffs. Collapsed Gibbs improves topic diversity, while Mallet remains a strong reference.
-- Full SCENIC+ parity on region-ranking databases still needs more real-data comparison.
-- Some validation claims are currently based on canonical TF recovery, not full biological replication.
-- A formal methods paper or preprint does not exist yet.
+- Local CPU runs on laptops and workstations.
+- Python 3.10 to 3.13 environments.
+- Researchers who want fewer moving parts than the legacy SCENIC stack.
+- Benchmarked, reproducible workflows with commands and artefacts committed in
+  the repository.
 
-## What Not To Claim
+## Current Boundary
 
-Do not claim:
+- Motif ranking databases are external inputs because public databases can be
+  hundreds of megabytes to tens of gigabytes.
+- GRN edge rankings are independently implemented and can differ from arboreto
+  at fine grain; downstream cell-level agreement is stronger.
+- Topic modelling ships both Online VB and collapsed Gibbs paths. The Gibbs path
+  is the stronger sparse scATAC option at larger topic counts.
+- Larger real multiome runs and repeated measurements on a second machine are
+  the next benchmark tier.
+- Full workflow coverage from raw fragments plus external motif databases is in
+  active validation.
 
-- "RustScenic is universally better than pySCENIC."
-- "RustScenic fully replaces every SCENIC+ analysis without caveats."
-- "GRN edge rankings are identical to arboreto."
-- "Community validation is the same as independent publication."
+## Positioning
 
-The accurate claim is narrower and stronger:
-
-RustScenic is an installable, deterministic, CPU-focused implementation of the practical SCENIC compute path, with measured agreement on key downstream outputs and real-data validation evidence.
+The strongest current message is direct: RustScenic gives a fast, deterministic,
+CPU-first SCENIC-style compute path with a much simpler install than the legacy
+stack, and with measured head-to-head speedups on the tested real-data core E2E
+rows.

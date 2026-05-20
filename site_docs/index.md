@@ -1,37 +1,58 @@
 # RustScenic
 
-RustScenic is a Rust plus PyO3 implementation of the practical SCENIC and SCENIC+ compute path for single-cell regulatory-network analysis.
+RustScenic is a Rust-backed Python package for SCENIC-style single-cell
+regulatory-network analysis. It covers GRN inference, AUCell scoring, cisTarget
+enrichment, scATAC topic modelling, enhancer-gene linking and eRegulon assembly
+from one install.
 
-It is built for users who want one install, modern Python, deterministic CPU execution and fewer fragile dependencies than the old SCENIC stack.
+It is built for local CPU execution with modern Python. The core path does not
+require Java, dask, CUDA or Snakemake.
+
+## Why Use It
+
+| Need | RustScenic |
+| --- | --- |
+| Simple install | `pip install rustscenic` |
+| Local execution | CPU-first Rust kernels exposed through Python |
+| SCENIC-style stages | GRN, AUCell, cisTarget, topics, enhancer links, eRegulons |
+| Reproducibility | Deterministic threaded runs under a fixed seed |
+| Public evidence | Head-to-head benchmarks and validation artefacts in-repo |
+
+## Evidence Snapshot
+
+Current public release: `v0.4.7`.
+
+| Result | Value |
+| --- | ---: |
+| Tested real-data core E2E speedup vs SCENIC+ | `11x` to `52x` |
+| Median real-data core E2E speedup | `27x` |
+| Human brain GEM-X 2k total runtime | RustScenic `11.89 s`; SCENIC+ `150.36 s` |
+| Human brain GEM-X region-to-gene Jaccard | `1.000` |
+| Human brain GEM-X region AUCell mean Pearson | `0.823` |
+| cisTarget AUC kernel agreement vs `ctxcore.recovery.aucs` | Pearson `1.0000` |
+
+The full benchmark matrix includes dataset shape, command path, hardware,
+runtime, memory and validation metrics. Start with [Benchmarks](benchmarks.md).
 
 ## What It Replaces
 
 | Stage | RustScenic API | Reference stack |
 | --- | --- | --- |
-| Gene regulatory network inference | `rustscenic.grn.infer` | `arboreto.grnboost2` |
-| Per-cell regulon activity | `rustscenic.aucell.score` | `pyscenic.aucell` |
+| Gene-regulatory network inference | `rustscenic.grn.infer` | `arboreto.grnboost2` |
+| Per-cell regulon activity scoring | `rustscenic.aucell.score` | `pyscenic.aucell` |
 | Motif-regulon enrichment | `rustscenic.cistarget.enrich` | `ctxcore` / `pycistarget` |
 | scATAC topic modelling | `rustscenic.topics.fit`, `fit_gibbs` | `pycisTopic` / Mallet |
-| Fragment preprocessing | `rustscenic.preproc.fragments_to_matrix` | `pycisTopic` fragment loader |
-| Enhancer-gene links | `rustscenic.enhancer.link_peaks_to_genes` | SCENIC+ p2g linking |
+| Fragment preprocessing and QC | `rustscenic.preproc` | `pycisTopic` preprocessing |
+| Enhancer-gene linking | `rustscenic.enhancer.link_peaks_to_genes` | SCENIC+ p2g linking |
 | eRegulon assembly | `rustscenic.eregulon.build_eregulons` | SCENIC+ eRegulon builder |
 | Pipeline orchestration | `rustscenic.pipeline.run` | SCENIC+ workflow glue |
 
-## Current Status
+## Next
 
-Current public release: `v0.4.7`.
-
-The package has public wheels, CI across macOS and Linux, Windows x64 coverage in the release workflow, unit and integration tests, real-data validation artefacts and community validation reports. It is still alpha research software: the core API works, but the project needs more independent lab adoption and broader multi-dataset parity before it should be treated as a mature community standard.
-
-## Best Evidence
-
-- Core matrix-level RustScenic vs SCENIC+ real-data speedups: `11x` to `60x` on the tested CPU rows.
-- Human brain GEM-X 2k core E2E: RustScenic `11.89s` total vs SCENIC+ `150.36s` total.
-- Human brain GEM-X 2k validation: region-to-gene Jaccard `1.000`; region AUCell mean Pearson `0.823`.
-- Cistarget AUC kernel agreement against `ctxcore.recovery.aucs`: Pearson `1.0000`.
-- Community reports from external users on Kamath dopaminergic neurons and 10x human brain multiome data.
-
-For the current benchmark table, commands, hardware, runtime, memory and
-validation notes, see [Benchmarks](benchmarks.md).
-
-Start with [Installation](installation.md), then run the [Quickstart](quickstart.md). If you are evaluating the tool for a lab, use [Lab Adoption](adoption.md).
+- [Installation](installation.md)
+- [Quickstart](quickstart.md)
+- [API map](api.md)
+- [Benchmarks](benchmarks.md)
+- [Validation](validation.md)
+- [Lab adoption](adoption.md)
+- [Scope](limitations.md)
