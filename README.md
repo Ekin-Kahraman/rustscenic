@@ -1,5 +1,13 @@
 <h1 align="center">RustScenic</h1>
 
+```text
+ ____            _   ____                  _
+|  _ \ _   _ ___| |_/ ___|  ___ ___ _ __ (_) ___
+| |_) | | | / __| __\___ \ / __/ _ \ '_ \| |/ __|
+|  _ <| |_| \__ \ |_ ___) | (_|  __/ | | | | (__
+|_| \_\\__,_|___/\__|____/ \___\___|_| |_|_|\___|
+```
+
 <p align="center">
   <strong>Faster, memory-efficient regulatory-network analysis for single-cell and multiome data.</strong>
 </p>
