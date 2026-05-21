@@ -112,8 +112,8 @@ real-data RNA example.
   per-cell Pearson `0.984`, with `91.7%` of cells above `0.95`.
 - Human brain GEM-X comparison: region-to-gene Jaccard `1.000`, region AUCell
   mean Pearson `0.823`.
-- External-user reports cover Kamath dopaminergic neurons and 10x human brain
-  multiome data.
+- External validation reports cover Kamath dopaminergic neurons, 10x human brain
+  multiome and lymphoma 14k data, with controlled benchmark claims kept separate.
 
 Validation artefacts live under [validation/](validation/). Public interpretation
 lives in [site_docs/benchmarks.md](site_docs/benchmarks.md) and
