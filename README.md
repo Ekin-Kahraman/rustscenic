@@ -1,4 +1,6 @@
-<h1 align="center">RustScenic</h1>
+<p align="center">
+  <img src="site_docs/assets/rustscenic-title.svg" alt="RustScenic" width="420">
+</p>
 
 <p align="center">
   <strong>Faster, memory-efficient regulatory-network analysis for single-cell and multiome data.</strong>

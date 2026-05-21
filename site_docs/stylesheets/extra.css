@@ -1,0 +1,32 @@
+:root {
+  --rustscenic-rust: #b7410e;
+  --rustscenic-rust-dark: #7c2d12;
+  --rustscenic-ink: #111827;
+  --rustscenic-muted: #4b5563;
+}
+
+a {
+  color: var(--rustscenic-rust);
+}
+
+a:hover,
+a:focus {
+  color: var(--rustscenic-rust-dark);
+}
+
+.navbar-default {
+  border-top: 4px solid var(--rustscenic-rust);
+}
+
+.navbar-default .navbar-brand {
+  color: var(--rustscenic-rust);
+  font-weight: 700;
+}
+
+h1 {
+  color: var(--rustscenic-rust);
+}
+
+table th {
+  border-bottom: 2px solid var(--rustscenic-rust);
+}

@@ -8,6 +8,8 @@ site_dir: site
 theme:
   name: mkdocs
   navigation_depth: 3
+extra_css:
+  - stylesheets/extra.css
 nav:
   - Overview: index.md
   - Installation: installation.md
