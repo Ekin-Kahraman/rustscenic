@@ -14,19 +14,7 @@ a:focus {
   color: var(--rustscenic-rust-dark);
 }
 
-.navbar-default {
-  border-top: 4px solid var(--rustscenic-rust);
-}
-
 .navbar-default .navbar-brand {
   color: var(--rustscenic-rust);
   font-weight: 700;
-}
-
-h1 {
-  color: var(--rustscenic-rust);
-}
-
-table th {
-  border-bottom: 2px solid var(--rustscenic-rust);
 }
