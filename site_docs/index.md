@@ -17,6 +17,7 @@ pip install rustscenic
 | --- | --- |
 | Tested real-data speedup | `11x` to `52x` vs SCENIC+ in core E2E rows |
 | Peak memory | Lower than SCENIC+ in every tested real-data row |
+| Current release | `v0.4.7` |
 | Python support | 3.10 to 3.13 |
 | Core install | `pip install rustscenic` |
 | Runtime model | CPU-first Rust kernels |
@@ -35,18 +36,18 @@ pip install rustscenic
 The full benchmark matrix includes dataset shape, command path, hardware,
 runtime, memory and validation metrics. Start with [Benchmarks](benchmarks.md).
 
-## API Surface
+## Stage Coverage
 
-| Module | Purpose |
-| --- | --- |
-| `rustscenic.grn.infer` | TF-to-gene regulatory network inference |
-| `rustscenic.aucell.score` | Per-cell regulon activity scoring |
-| `rustscenic.cistarget.enrich` | Motif support and enrichment |
-| `rustscenic.topics.fit`, `fit_gibbs` | scATAC topic modelling |
-| `rustscenic.preproc` | Fragment matrix building and QC |
-| `rustscenic.enhancer.link_peaks_to_genes` | Enhancer-gene linking |
-| `rustscenic.eregulon.build_eregulons` | Enhancer-linked regulon assembly |
-| `rustscenic.pipeline.run` | Staged workflow orchestration |
+| Stage | RustScenic API | SCENIC ecosystem stage covered |
+| --- | --- | --- |
+| TF-to-gene GRN | `rustscenic.grn.infer` | GRNBoost2-style regulatory-network inference |
+| AUCell | `rustscenic.aucell.score` | Per-cell regulon activity scoring |
+| cisTarget | `rustscenic.cistarget.enrich` | Motif enrichment and support filtering |
+| Topics | `rustscenic.topics.fit`, `fit_gibbs` | scATAC topic modelling |
+| ATAC preprocessing | `rustscenic.preproc` | Fragment matrix building and QC |
+| Enhancer links | `rustscenic.enhancer.link_peaks_to_genes` | Peak-to-gene linking |
+| eRegulons | `rustscenic.eregulon.build_eregulons` | Enhancer-linked regulon assembly |
+| Orchestration | `rustscenic.pipeline.run` | Staged workflow across RNA and multiome inputs |
 
 ## Next
 

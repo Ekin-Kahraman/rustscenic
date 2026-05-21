@@ -34,13 +34,15 @@ database construction, or full workflow scheduling. Those are separate stages.
 
 ## Runtime
 
-| Dataset | Shape | RustScenic | SCENIC+ | Speedup | Peak RSS |
+Rows can be sampled subsets; the shape column is the actual benchmark input.
+
+| Dataset | Shape | RustScenic | SCENIC+ | Speedup | Peak RSS (RustScenic / SCENIC+) |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Synthetic micro | 150 cells, 80 genes, 30 peaks, 3 TFs | 0.035 s | 9.45 s | 269x | 0.18 / 0.40 GB |
 | Synthetic scale | 1,500 cells, 1,500 genes, 450 peaks, 12 TFs | 1.56 s | 146.5 s | 94x | 0.30 / 0.51 GB |
 | PBMC3k | 1,500 cells, 2,000 genes, 3,000 peaks, 20 TFs | 1.93 s | 52.5 s | 27x | 0.84 / 0.96 GB |
 | PBMC3k dense | 2,000 cells, 4,000 genes, 8,000 peaks, 30 TFs | 4.98 s | 258.9 s | 52x | 1.21 / 1.26 GB |
-| PBMC10k dense | 2,000 cells, 4,000 genes, 8,000 peaks, 30 TFs | 21.5 s | 241.5 s | 11x | 2.37 / 2.63 GB |
+| PBMC10k dense | 2,000 sampled cells, 4,000 genes, 8,000 peaks, 30 TFs | 21.5 s | 241.5 s | 11x | 2.37 / 2.63 GB |
 | Mouse brain E18 | 1,500 cells, 3,000 genes, 6,000 peaks, 25 TFs | 2.82 s | 90.4 s | 32x | 1.65 / 2.10 GB |
 | Human brain GEM-X | 2,000 cells, 4,000 genes, 8,000 peaks, 30 TFs | 7.41 s | 146.0 s | 19.7x | 2.18 / 2.19 GB |
 

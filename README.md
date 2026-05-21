@@ -31,6 +31,7 @@
 
 - `11x` to `52x` faster than SCENIC+ in tested real-data core E2E rows
 - Lower peak RSS than SCENIC+ in every tested real-data row
+- Current release: `v0.4.7`
 - `pip install rustscenic`, with Python 3.10 to 3.13 release wheels
 - Rust implementations for the matrix-heavy regulatory-network stages
 - Core path runs without Java, dask, CUDA or Snakemake
@@ -48,11 +49,12 @@ Core E2E comparison on the same matrix-level path: TF-to-gene, region-to-gene,
 eRegulons, gene AUCell and region AUCell.
 
 Machine: Apple M5 laptop, 16 GB RAM, macOS arm64, Python 3.13.9, 4 CPU threads.
+Rows can be sampled subsets; the shape column is the actual benchmark input.
 
-| Dataset | Shape | RustScenic | SCENIC+ | Speedup | Peak RSS |
+| Dataset | Shape | RustScenic | SCENIC+ | Speedup | Peak RSS (RustScenic / SCENIC+) |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | PBMC3k dense | 2,000 cells, 4,000 genes, 8,000 peaks, 30 TFs | 4.98 s | 258.9 s | 52x | 1.21 / 1.26 GB |
-| PBMC10k dense | 2,000 cells, 4,000 genes, 8,000 peaks, 30 TFs | 21.5 s | 241.5 s | 11x | 2.37 / 2.63 GB |
+| PBMC10k dense | 2,000 sampled cells, 4,000 genes, 8,000 peaks, 30 TFs | 21.5 s | 241.5 s | 11x | 2.37 / 2.63 GB |
 | Mouse brain E18 | 1,500 cells, 3,000 genes, 6,000 peaks, 25 TFs | 2.82 s | 90.4 s | 32x | 1.65 / 2.10 GB |
 | Human brain GEM-X | 2,000 cells, 4,000 genes, 8,000 peaks, 30 TFs | 7.41 s | 146.0 s | 19.7x | 2.18 / 2.19 GB |
 
@@ -62,18 +64,18 @@ RustScenic versus `150.36 s` for SCENIC+.
 Full commands, hardware, validation metrics and output signatures are in
 [site_docs/benchmarks.md](site_docs/benchmarks.md).
 
-## API Surface
+## Stage Coverage
 
-| Module | Purpose |
-| --- | --- |
-| `rustscenic.grn.infer` | TF-to-gene regulatory network inference |
-| `rustscenic.aucell.score` | Per-cell regulon activity scoring |
-| `rustscenic.cistarget.enrich` | Motif support and enrichment |
-| `rustscenic.topics.fit`, `fit_gibbs` | scATAC topic modelling |
-| `rustscenic.preproc` | Fragment matrix building and QC |
-| `rustscenic.enhancer.link_peaks_to_genes` | Enhancer-gene linking |
-| `rustscenic.eregulon.build_eregulons` | Enhancer-linked regulon assembly |
-| `rustscenic.pipeline.run` | Staged workflow orchestration |
+| Stage | RustScenic API | SCENIC ecosystem stage covered |
+| --- | --- | --- |
+| TF-to-gene GRN | `rustscenic.grn.infer` | GRNBoost2-style regulatory-network inference |
+| AUCell | `rustscenic.aucell.score` | Per-cell regulon activity scoring |
+| cisTarget | `rustscenic.cistarget.enrich` | Motif enrichment and support filtering |
+| Topics | `rustscenic.topics.fit`, `fit_gibbs` | scATAC topic modelling |
+| ATAC preprocessing | `rustscenic.preproc` | Fragment matrix building and QC |
+| Enhancer links | `rustscenic.enhancer.link_peaks_to_genes` | Peak-to-gene linking |
+| eRegulons | `rustscenic.eregulon.build_eregulons` | Enhancer-linked regulon assembly |
+| Orchestration | `rustscenic.pipeline.run` | Staged workflow across RNA and multiome inputs |
 
 ## Quick Start
 
@@ -99,6 +101,10 @@ Command line:
 
 ```bash
 rustscenic pipeline --rna data.h5ad --tfs tfs.txt --output out/
+rustscenic grn --expression rna.h5ad --tfs tfs.txt --output grn.parquet
+rustscenic aucell --expression rna.h5ad --regulons grn.parquet --output aucell.parquet
+rustscenic topics --expression atac.h5ad --output topics.parquet --n-topics 30
+rustscenic cistarget --rankings rankings.feather --regulons regulons.tsv --output motifs.parquet
 ```
 
 See [examples/pbmc3k_end_to_end.py](examples/pbmc3k_end_to_end.py) for a small
@@ -118,6 +124,16 @@ real-data RNA example.
 Validation artefacts live under [validation/](validation/). Public interpretation
 lives in [site_docs/benchmarks.md](site_docs/benchmarks.md) and
 [site_docs/validation.md](site_docs/validation.md).
+
+## Current Boundaries
+
+- The headline benchmark is the core matrix-level E2E path, not every possible
+  raw-fragment and motif-database workflow.
+- GRN, gene AUCell and eRegulon edge agreement are not claimed to be
+  bit-identical to SCENIC+; see [Benchmarks](site_docs/benchmarks.md) for the
+  parity metrics.
+- Larger repeated real-data runs and second-machine measurements are the next
+  benchmark tier.
 
 ## Documentation
 
