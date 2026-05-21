@@ -6,10 +6,10 @@ whether rustscenic is worth integrating with.
 ## Thesis
 
 RustScenic is a bet that regulatory-network analysis should start with biology,
-not environment repair. The SCENIC and SCENIC+ ecosystem is powerful, but the
-practical path often asks users to stitch together old Python constraints,
-Java/Mallet, dask, MACS2 wrappers, pycisTopic, pycistarget, scenicplus and
-fragile environment pins before they can ask a regulatory-biology question.
+not environment repair. The existing ecosystem is powerful, but the practical
+path often asks users to stitch together old Python constraints, Java/Mallet,
+dask, MACS2 wrappers, pycisTopic, pycistarget, scenicplus and fragile
+environment pins before they can ask a regulatory-biology question.
 
 The intended endpoint is a **single-install CPU package** that covers the
 full practical workflow from AnnData / fragments through GRN, regulon
@@ -189,4 +189,4 @@ scope:
   tested? Send a slice; if it breaks, we want it to break in CI.
 
 Repo: <https://github.com/Ekin-Kahraman/rustscenic>
-Latest release: v0.4.4 (2026-05-11) on PyPI.
+Latest release in this document snapshot: v0.4.7 (2026-05-18) on PyPI.

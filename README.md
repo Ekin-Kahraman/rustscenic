@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="site_docs/assets/rustscenic-logo.svg" alt="RustScenic" width="640">
-</p>
+<h1 align="center"><code>rustscenic</code></h1>
 
 <p align="center">
   <strong>Fast, memory-efficient regulatory-network analysis for single-cell and multiome data.</strong>
@@ -12,12 +10,19 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/rustscenic/">PyPI</a> |
-  <a href="https://ekin-kahraman.github.io/rustscenic/">Docs</a> |
+  <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml"><img alt="CI" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg"></a>
+  <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml"><img alt="Docs" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml/badge.svg"></a>
+  <a href="https://pypi.org/project/rustscenic/"><img alt="PyPI" src="https://img.shields.io/pypi/v/rustscenic"></a>
+  <a href="https://doi.org/10.5281/zenodo.20246040"><img alt="DOI" src="https://zenodo.org/badge/DOI/10.5281/zenodo.20246040.svg"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-blue"></a>
+  <a href="https://www.rust-lang.org/"><img alt="Rust" src="https://img.shields.io/badge/Rust-stable-orange"></a>
+</p>
+
+<p align="center">
+  <a href="https://ekin-kahraman.github.io/rustscenic/">Documentation</a> |
   <a href="site_docs/benchmarks.md">Benchmarks</a> |
-  <a href="https://doi.org/10.5281/zenodo.20246040">Zenodo DOI</a> |
-  <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml">CI</a> |
-  <a href="LICENSE">MIT License</a>
+  <a href="CITATION.cff">Citation</a>
 </p>
 
 ## Highlights

@@ -16,8 +16,8 @@ The shortest version:
 
 rustscenic's release notes only claim what's backed by an artefact
 under `validation/`. Two real-data datasets (PBMC 3k v0.3.9 +
-mouse brain E18 v0.3.10) currently anchor every "publishable
-end-to-end" claim. The v0.4.x roadmap (see
+mouse brain E18 v0.3.10) currently anchor release-quality end-to-end
+evidence. The v0.4.x roadmap (see
 [`docs/v0.4.x-benchmark-plan.md`](v0.4.x-benchmark-plan.md))
 expands that to 6 datasets. Reports filed against this template
 become candidate artefacts in that sweep.

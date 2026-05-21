@@ -1,6 +1,6 @@
 # Release gate
 
-The bar a rustscenic release must clear before a tag goes public. Every check must be green on a fresh environment for the release to be considered "publishable end-to-end" rather than "compute stages work in isolation".
+The bar a rustscenic release must clear before a tag goes public. Every check must be green on a fresh environment for the release to be considered release-quality end-to-end rather than compute stages working in isolation.
 
 ## 1. Fresh-environment install matrix
 
@@ -61,7 +61,7 @@ The `⚠` and `❌` rows are the publication-threshold bottleneck.
 
 ## 4. Publication threshold
 
-The release is "publishable end-to-end" only when ALL of:
+The release is release-quality end-to-end only when ALL of:
 
 - [x] Fresh install works on the **publicly tested** install paths (core ✓, examples ✓, validation ✓, benchmarks ✓ via the install-matrix CI job added in 5f6379e; reference is informational-only because pyscenic itself fails to import on current setuptools - README documents this; canonical reference path is the pinned Docker image)
 - [x] Synthetic full SCENIC+ end-to-end completes via `pipeline.run` (preproc → grn → cistarget → enhancer → eRegulon → aucell, covered by `test_full_scenicplus_smoke.py` + `test_pipeline_integration.py`, 12 passing)
@@ -79,7 +79,7 @@ v0.3.10 satisfies **10 of 11** publication-threshold items (count: `[x]` items a
 
 Separately on **stage coverage** on real data (different metric - counts SCENIC+ compute stages, not gate items): 6 of 6 user-facing stages exercised end-to-end on real PBMC multiome (grn, aucell, topics, cistarget, enhancer-link, eRegulon) via a single `pipeline.run` call (v0.3.9 - see `validation/multiome_pipeline_run_v0.3.9.json`). The remaining v0.4 work is regenerated parity numbers vs current pyscenic + closing the raw-10x-without-subsetting orchestrator path.
 
-## 5. What changes from v0.3.6 to a publishable release
+## 5. What changes from v0.3.6 to a release-quality end-to-end release
 
 In rough EV order:
 
@@ -89,7 +89,7 @@ In rough EV order:
 4. **Add an install-matrix CI job** that runs `pip install "rustscenic[<extra>]"` for each extra in a fresh container, validates imports, runs the corresponding smoke script.
 5. **Cut README to claims that have green evidence rows in section 3.** Anything ⚠ or ❌ either gets backed by a regenerated log or moved into "in progress".
 
-When all five land, the next tag (v0.4.0) gets called publishable.
+When all five land, the next tag (v0.4.0) gets called release-quality end-to-end.
 
 ## Non-goals
 
