@@ -1,6 +1,6 @@
 # RustScenic
 
-Fast, memory-efficient regulatory-network analysis for single-cell and multiome
+Faster, memory-efficient regulatory-network analysis for single-cell and multiome
 data.
 
 RustScenic provides Rust kernels for GRN inference, regulon activity, motif
@@ -18,7 +18,7 @@ pip install rustscenic
 | Python support | 3.10 to 3.13 |
 | Core install | `pip install rustscenic` |
 | Runtime model | CPU-first Rust kernels |
-| Tested real-data speedup | `11x` to `52x` in core E2E rows |
+| Tested real-data speedup | `11x` to `52x` vs SCENIC+ in core E2E rows |
 | Core path dependencies avoided | Java, dask, CUDA, Snakemake |
 | Evidence | Commands, hardware, runtime, memory and output checks in-repo |
 

@@ -66,7 +66,7 @@ grid search.
 
 ```python
 import rustscenic.topics
-# Fast, may collapse at K>=30 on sparse scATAC
+# Faster exploratory path, may collapse at K>=30 on sparse scATAC
 result_vb    = rustscenic.topics.fit(adata, n_topics=30)
 # Mallet-class quality, ~1.2× slower at this scale
 result_gibbs = rustscenic.topics.fit_gibbs(adata, n_topics=30, n_iters=200)

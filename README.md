@@ -1,7 +1,7 @@
 <h1 align="center"><code>rustscenic</code></h1>
 
 <p align="center">
-  <strong>Fast, memory-efficient regulatory-network analysis for single-cell and multiome data.</strong>
+  <strong>Faster, memory-efficient regulatory-network analysis for single-cell and multiome data.</strong>
 </p>
 
 <p align="center">
@@ -30,8 +30,8 @@
 - `pip install rustscenic`
 - Python 3.10 to 3.13 release wheels
 - Rust implementations for the matrix-heavy regulatory-network stages
-- `11x` to `52x` faster in tested real-data core E2E rows
-- Lower peak RSS in every tested real-data row
+- `11x` to `52x` faster than SCENIC+ in tested real-data core E2E rows
+- Lower peak RSS than SCENIC+ in every tested real-data row
 - Core path runs without Java, dask, CUDA or Snakemake
 - Benchmark artefacts include commands, hardware, runtime, memory and output checks
 
@@ -41,7 +41,7 @@
 pip install rustscenic
 ```
 
-## Benchmark Snapshot
+## SCENIC+ Benchmark
 
 Core E2E comparison on the same matrix-level path: TF-to-gene, region-to-gene,
 eRegulons, gene AUCell and region AUCell.

@@ -28,7 +28,7 @@ assembly.
 
 ## Positioning
 
-The strongest current message is direct: RustScenic gives a fast, deterministic
+The strongest current message is direct: RustScenic gives a faster, deterministic
 regulatory-network compute path with a much simpler install than the legacy
 stack, and with measured head-to-head speedups on the tested real-data core E2E
 rows.

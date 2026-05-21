@@ -85,10 +85,10 @@ The benchmark set supports a direct message:
   E2E workloads.
 - The package runs this path without Java, dask, CUDA, or a Snakemake stack.
 - Peak memory is lower or comparable in the tested real-data rows.
-- The clearest current strength is fast local execution with a single modern
+- The clearest current strength is faster local execution with a single modern
   Python install.
 
-The strongest public claim today is fast, CPU-first multiome regulatory-network
+The strongest public claim today is faster, CPU-first multiome regulatory-network
 analysis with tested core E2E speedups and a simpler installation path.
 
 The next benchmark tier is aimed at larger real multiome inputs, repeated runs
