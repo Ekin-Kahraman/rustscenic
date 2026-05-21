@@ -25,8 +25,6 @@ pip install rustscenic
 
 ## Benchmark Snapshot
 
-![RustScenic real-data benchmark summary](assets/rustscenic-benchmark-summary.svg)
-
 | Result | Value |
 | --- | ---: |
 | Human brain GEM-X 2k total runtime | RustScenic `11.89 s`; reference `150.36 s` |

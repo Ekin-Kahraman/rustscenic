@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="site_docs/assets/rustscenic-wordmark.svg" alt="RustScenic" width="520">
-</p>
+<h1 align="center">RustScenic</h1>
 
 <p align="center">
   <strong>Faster, memory-efficient regulatory-network analysis for single-cell and multiome data.</strong>
@@ -37,10 +35,6 @@
 - Rust implementations for the matrix-heavy regulatory-network stages
 - Core path runs without Java, dask, CUDA or Snakemake
 - Benchmark artefacts include commands, hardware, runtime, memory and output checks
-
-<p align="center">
-  <img src="site_docs/assets/rustscenic-benchmark-summary.svg" alt="RustScenic real-data benchmark summary" width="860">
-</p>
 
 ## Installation
 
