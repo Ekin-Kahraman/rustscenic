@@ -15,14 +15,17 @@ pip install rustscenic
 
 | Feature | Status |
 | --- | --- |
+| Tested real-data speedup | `11x` to `52x` vs SCENIC+ in core E2E rows |
+| Peak memory | Lower than SCENIC+ in every tested real-data row |
 | Python support | 3.10 to 3.13 |
 | Core install | `pip install rustscenic` |
 | Runtime model | CPU-first Rust kernels |
-| Tested real-data speedup | `11x` to `52x` vs SCENIC+ in core E2E rows |
 | Core path dependencies avoided | Java, dask, CUDA, Snakemake |
 | Evidence | Commands, hardware, runtime, memory and output checks in-repo |
 
 ## Benchmark Snapshot
+
+![RustScenic real-data benchmark summary](assets/rustscenic-benchmark-summary.svg)
 
 | Result | Value |
 | --- | ---: |

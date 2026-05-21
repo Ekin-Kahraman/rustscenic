@@ -1,4 +1,6 @@
-<h1 align="center"><code>rustscenic</code></h1>
+<p align="center">
+  <img src="site_docs/assets/rustscenic-wordmark.svg" alt="RustScenic" width="520">
+</p>
 
 <p align="center">
   <strong>Faster, memory-efficient regulatory-network analysis for single-cell and multiome data.</strong>
@@ -10,30 +12,35 @@
 </p>
 
 <p align="center">
+  <a href="https://ekin-kahraman.github.io/rustscenic/">Documentation</a> |
+  <a href="site_docs/benchmarks.md">Benchmarks</a> |
+  <a href="CITATION.cff">Citation</a> |
+  <a href="https://doi.org/10.5281/zenodo.20246040">Zenodo DOI</a>
+</p>
+
+<p align="center">
   <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml"><img alt="CI" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg"></a>
   <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml"><img alt="Docs" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml/badge.svg"></a>
   <a href="https://pypi.org/project/rustscenic/"><img alt="PyPI" src="https://img.shields.io/pypi/v/rustscenic"></a>
-  <a href="https://doi.org/10.5281/zenodo.20246040"><img alt="DOI" src="https://zenodo.org/badge/DOI/10.5281/zenodo.20246040.svg"></a>
+  <br>
+  <a href="https://doi.org/10.5281/zenodo.20246040"><img alt="Zenodo DOI" src="https://img.shields.io/badge/DOI-Zenodo-1682d4"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
   <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-blue"></a>
   <a href="https://www.rust-lang.org/"><img alt="Rust" src="https://img.shields.io/badge/Rust-stable-orange"></a>
 </p>
 
-<p align="center">
-  <a href="https://ekin-kahraman.github.io/rustscenic/">Documentation</a> |
-  <a href="site_docs/benchmarks.md">Benchmarks</a> |
-  <a href="CITATION.cff">Citation</a>
-</p>
-
 ## Highlights
 
-- `pip install rustscenic`
-- Python 3.10 to 3.13 release wheels
-- Rust implementations for the matrix-heavy regulatory-network stages
 - `11x` to `52x` faster than SCENIC+ in tested real-data core E2E rows
 - Lower peak RSS than SCENIC+ in every tested real-data row
+- `pip install rustscenic`, with Python 3.10 to 3.13 release wheels
+- Rust implementations for the matrix-heavy regulatory-network stages
 - Core path runs without Java, dask, CUDA or Snakemake
 - Benchmark artefacts include commands, hardware, runtime, memory and output checks
+
+<p align="center">
+  <img src="site_docs/assets/rustscenic-benchmark-summary.svg" alt="RustScenic real-data benchmark summary" width="860">
+</p>
 
 ## Installation
 
@@ -51,6 +58,7 @@ Machine: Apple M5 laptop, 16 GB RAM, macOS arm64, Python 3.13.9, 4 CPU threads.
 | Dataset | Shape | RustScenic | SCENIC+ | Speedup | Peak RSS |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | PBMC3k dense | 2,000 cells, 4,000 genes, 8,000 peaks, 30 TFs | 4.98 s | 258.9 s | 52x | 1.21 / 1.26 GB |
+| PBMC10k dense | 2,000 cells, 4,000 genes, 8,000 peaks, 30 TFs | 21.5 s | 241.5 s | 11x | 2.37 / 2.63 GB |
 | Mouse brain E18 | 1,500 cells, 3,000 genes, 6,000 peaks, 25 TFs | 2.82 s | 90.4 s | 32x | 1.65 / 2.10 GB |
 | Human brain GEM-X | 2,000 cells, 4,000 genes, 8,000 peaks, 30 TFs | 7.41 s | 146.0 s | 19.7x | 2.18 / 2.19 GB |
 
