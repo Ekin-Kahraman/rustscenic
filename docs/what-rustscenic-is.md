@@ -1,5 +1,9 @@
 # What RustScenic Is
 
+Archived positioning note. Current public claims live in `README.md` and
+`site_docs/benchmarks.md`; this page preserves the reasoning behind the
+project scope.
+
 A one-page summary for collaborators and ecosystem maintainers deciding
 whether rustscenic is worth integrating with.
 
@@ -55,8 +59,9 @@ compute path, not every surrounding single-cell method.
 
 ## Performance vs the references it replaces
 
-Measured on the current 0.3.x line. Full numbers in `CHANGELOG.md` /
-`validation/`.
+Current release benchmark claims live in `site_docs/benchmarks.md`. Older
+per-stage measurements below are kept as context and should not override the
+current head-to-head table.
 
 | Stage | Reference | rustscenic |
 |---|---|---|
@@ -175,18 +180,18 @@ Validated end-to-end on real Kamath 2022 (cellxgene OPC cells,
 13,691 × 33,295). Nightly CI runs the full validation against the
 live cellxgene dataset URL each Monday.
 
-## What we're asking ecosystem partners
+## Ecosystem Integration Questions
 
-If you maintain a single-cell tool that overlaps with rustscenic's
-scope:
+For single-cell tools that overlap with rustscenic's scope, the open
+integration questions are:
 
-- **muon / SnapATAC-2**: would you accept rustscenic as a Rust perf
+- **muon / SnapATAC-2**: whether rustscenic can act as a Rust performance
   backend behind muon's ATAC functions? We match anndata conventions
   by design.
-- **scenicplus**: would you accept a co-authored note positioning
-  rustscenic as a speed-and-memory option for the slow stages?
-- **Anyone else**: what dataset shape have you seen that we haven't
-  tested? Send a slice; if it breaks, we want it to break in CI.
+- **scenicplus**: whether a co-authored technical note can position
+  rustscenic as a speed-and-memory option for compatible CPU stages.
+- **Other tools**: which dataset shapes are still missing from validation and
+  should be added to CI or release-gate benchmarks.
 
 Repo: <https://github.com/Ekin-Kahraman/rustscenic>
 Latest release in this document snapshot: v0.4.7 (2026-05-18) on PyPI.

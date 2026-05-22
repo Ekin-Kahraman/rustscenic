@@ -50,8 +50,10 @@ def fragments_to_matrix(
     Returns
     -------
     AnnData
-        - `.X` is a `scipy.sparse.csr_matrix` of u32 fragment-in-peak
-          counts with shape (n_cells, n_peaks).
+        - `.X` is a `scipy.sparse.csr_matrix` of u32 fragment-record-in-peak
+          counts with shape (n_cells, n_peaks). The optional fifth 10x
+          fragments column is retained separately as `total_counts`, not used
+          as a matrix multiplier.
         - `.obs_names` are cell barcodes (from the fragments file).
         - `.var_names` are peak IDs (from the peak BED, or
           `chrom:start-end` if no name column).

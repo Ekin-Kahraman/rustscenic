@@ -41,12 +41,30 @@ class TestGrnEdgeCases:
             out = grn.infer(small_expr, tf_names=[], n_estimators=30, verbose=False)
         assert len(out) == 0
 
-    def test_nan_input_panics(self, rng):
+    def test_nan_input_raises_value_error(self, rng):
         X = rng.random((20, 10)).astype(np.float32)
         X[0, 0] = np.nan
         df = pd.DataFrame(X, columns=[f"g{i}" for i in range(10)])
-        with pytest.raises(BaseException, match=r"[Nn]a[Nn]"):
+        with pytest.raises(ValueError, match=r"NaN|Inf"):
             grn.infer(df, tf_names=["g0", "g1"], n_estimators=20, verbose=False)
+
+    def test_sparse_anndata_densification_warning_fires(self, monkeypatch):
+        import anndata as ad
+        import scipy.sparse as sp
+        import warnings
+
+        X = sp.csr_matrix(np.ones((60, 4), dtype=np.float32))
+        adata = ad.AnnData(
+            X=X,
+            obs=pd.DataFrame(index=[f"c{i}" for i in range(60)]),
+            var=pd.DataFrame(index=[f"g{i}" for i in range(4)]),
+        )
+        monkeypatch.setattr(grn, "_DENSIFY_WARN_BYTES", 1)
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            grn.infer(adata, tf_names=["g0", "g1"], n_estimators=5, verbose=False)
+        assert any("densify" in str(w.message) for w in caught)
 
 
 class TestGrnDeterminism:

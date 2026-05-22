@@ -61,7 +61,8 @@ print(auc.head(), auc.attrs["regulon_coverage"])
 
 If `auc.attrs["regulon_coverage"]` shows `0/N` for any regulon,
 that's a coverage warning. Paste the warning text and the regulon
-name back to me and I'll tell you why.
+name into a GitHub issue so it can be diagnosed against the exact input
+convention.
 
 ## What to expect on cellxgene-format AnnData
 
@@ -76,7 +77,7 @@ convention). First three swaps: [(...), (...), (...)]
 That's the auto-swap firing. If it doesn't fire on data you know is
 ENSEMBL, that's a bug. Please report.
 
-## Datasets I've already validated against
+## Datasets Already Validated
 
 - **Kamath et al. 2022** (cellxgene asset
   `f25a8375-1db5-49a0-9c85-b72dbe5e2a92`, OPC cells, 13,691 × 33,295).
@@ -85,8 +86,8 @@ ENSEMBL, that's a bug. Please report.
   script first.
 - **Ziegler 2021** airway atlas (scaling benchmark, 1k → 50k cells).
 
-If you pick a dataset I haven't tested yet, that's exactly what we
-want. The gaps left in our coverage are dataset-shape-specific.
+New dataset shapes are useful validation inputs. Most remaining gaps are
+dataset-shape-specific.
 
 ## What to send back
 
@@ -97,9 +98,8 @@ If the run looks wrong, please paste:
 4. **All warning text** that came out of the rustscenic call
 5. The output of the function: first few rows + `.shape`
 
-Then I can usually tell you within an hour whether it's a known
-class of bug, a config issue on your side, or something new for me
-to fix.
+Then maintainers can usually tell whether it is a known class of bug, a
+configuration issue, or a new case that belongs in validation.
 
 For end-to-end validation runs (real data, all six stages), file a
 **Validation report** issue using the template at
@@ -114,6 +114,6 @@ topic quality as a RustScenic biology failure.
 
 ## Where to ask
 
-Post in our Slack thread. Or open a GitHub issue at
+Open a GitHub issue at
 [Ekin-Kahraman/rustscenic/issues](https://github.com/Ekin-Kahraman/rustscenic/issues)
-if it's a clear repro you want tracked.
+for any clear repro that should be tracked.

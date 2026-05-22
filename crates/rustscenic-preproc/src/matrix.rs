@@ -1,5 +1,9 @@
 //! Build a cells × peaks sparse count matrix from fragments + peaks.
 //!
+//! The matrix counts fragment records, not the optional fifth-column duplicate
+//! count in 10x fragments files. The duplicate count is retained on
+//! `FragmentTable` for QC summaries.
+//!
 //! Algorithm (sorted-sweep, O((F + P) log(F + P))):
 //!
 //! 1. Group fragments and peaks by chromosome.
@@ -234,5 +238,15 @@ chr3\t1\t100\tnowhere
         let p = read_peaks_from(Cursor::new(peaks)).unwrap();
         let (mtx, _, _) = build_cell_peak_matrix(&f, &p);
         assert_eq!(mtx.nnz(), 0);
+    }
+
+    #[test]
+    fn matrix_counts_fragment_records_not_duplicate_count_column() {
+        let frags = "chr1\t100\t150\tA-1\t5\n";
+        let peaks = "chr1\t90\t160\tp\n";
+        let f = read_fragments_from(Cursor::new(frags)).unwrap();
+        let p = read_peaks_from(Cursor::new(peaks)).unwrap();
+        let (mtx, _, _) = build_cell_peak_matrix(&f, &p);
+        assert_eq!(mtx.data, vec![1]);
     }
 }

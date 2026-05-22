@@ -99,6 +99,7 @@ def fit(
         raise ValueError(f"batch_size must be >= 1, got {batch_size}")
 
     row_ptr, col_idx, counts, n_words, cell_names, peak_names = _coerce(expression)
+    _validate_vb_counts(counts)
 
     if n_words == 0:
         raise ValueError("expression has 0 peaks/genes - nothing to model")
@@ -330,3 +331,10 @@ def _validate_gibbs_counts(counts: np.ndarray) -> None:
         raise ValueError("Gibbs LDA counts must be non-negative")
     if not np.allclose(counts, np.rint(counts), rtol=0.0, atol=1e-6):
         raise ValueError("Gibbs LDA counts must be integer fragment/count values")
+
+
+def _validate_vb_counts(counts: np.ndarray) -> None:
+    if not np.all(np.isfinite(counts)):
+        raise ValueError("Online VB LDA counts must be finite")
+    if np.any(counts < 0):
+        raise ValueError("Online VB LDA counts must be non-negative")

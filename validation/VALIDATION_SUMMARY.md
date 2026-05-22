@@ -3,13 +3,17 @@
 **Last updated:** 2026-05-16
 **Scope:** four SCENIC+ compute stages (grn, aucell, topics, cistarget) plus ATAC preprocessing (fragments → cells × peaks matrix) — correctness, reproducibility, robustness, scale.
 
+Archived deep-validation snapshot. Current public benchmark interpretation lives
+in `site_docs/benchmarks.md` and `site_docs/validation.md`; this file preserves
+the broader audit history and stage-by-stage evidence.
+
 ## Measured against the pyscenic / arboreto reference
 
 Every row has a log file in this directory. Numbers are measured on this codebase with identical input on both sides.
 
 | Axis | Reference stack | rustscenic |
 |---|---|---|
-| Installs on fresh Python 3.10–3.13 venv | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` in current stacks | `pip install rustscenic` (PyPI), 4 wheels + sdist published per release |
+| Installs on fresh Python 3.10–3.13 venv | arboreto: `TypeError: Must supply at least one delayed object` (dask_expr); pyscenic: `ModuleNotFoundError: pkg_resources` in current stacks | `pip install rustscenic` (PyPI), release wheels + sdist published per release |
 | AUCell wall-time, 31,602 cells × 59 regulons (Ziegler atlas) | 6.81 s (pyscenic) | 0.25 s |
 | AUCell wall-time, 10,290 cells × 1,457 regulons (10x Multiome) | 18.6 s (pyscenic) | 0.21 s |
 | Peak RSS, 4 stages on 100,000 cells × 20,292 genes | > 40 GB (reported) | 6.3 GB |
@@ -31,7 +35,7 @@ rustscenic is the single-install replacement track for the practical SCENIC / SC
 - **Topics vs Mallet on 10k PBMC ATAC:** ARI vs leiden 0.27 vs 0.26 (comparable), NPMI 0.12 vs 0.20 (Mallet wins coherence), unique topics 5/30 vs 24/30 (we collapse aggressively). Mallet is 1.5-1.8× faster.
 - **GRN vs arboreto on multiome3k, n_estimators=5000:** per-edge Spearman 0.58, top-100 Jaccard 0.10. Biology agrees at coarse level (94% known edges, 8/8 lineage TFs, 13/13 canonical). Downstream AUCell still agrees per-cell at 0.99.
 - **Real multi-dataset convention audit (2026-04-25):** same GRN→AUCell workflow ran on mouse ovary (1,248 cells), human PBMC multiome RNA (2,711), Kamath OPC (13,691), and Tabula Sapiens large intestine (30,084). All recovered candidate TFs that existed in the matrices and avoided silent-zero failure across cellxgene ENSEMBL var_names. Tabula Sapiens had very sparse AUCell non-zero fraction (0.17%), so this is an input/regulon specificity warning, not a blanket success metric.
-- **Kuan-lin Huang Lab collaborator validation reports (2026-05):** lab users contributed controlled Kamath DA-neuron GRN + cisTarget evidence ([#68](https://github.com/Ekin-Kahraman/rustscenic/issues/68), [#71](https://github.com/Ekin-Kahraman/rustscenic/pull/71), `validation/community/kamath_da_grn.json`) and 10x GEM-X human brain GRN + AUCell + topics evidence ([#69](https://github.com/Ekin-Kahraman/rustscenic/issues/69), [#70](https://github.com/Ekin-Kahraman/rustscenic/issues/70), [#74](https://github.com/Ekin-Kahraman/rustscenic/pull/74), `validation/community/human_brain_10k_v0.4.1.json`). These are separate from maintainer-run reference parity benchmarks, but they are controlled collaborator validations rather than generic community anecdotes.
+- **Kuan-lin Huang Lab collaborator validation reports (2026-05):** lab users contributed Kamath DA-neuron GRN + cisTarget evidence ([#68](https://github.com/Ekin-Kahraman/rustscenic/issues/68), [#71](https://github.com/Ekin-Kahraman/rustscenic/pull/71), `validation/community/kamath_da_grn.json`) and 10x GEM-X human brain GRN + AUCell + topics evidence ([#69](https://github.com/Ekin-Kahraman/rustscenic/issues/69), [#70](https://github.com/Ekin-Kahraman/rustscenic/issues/70), [#74](https://github.com/Ekin-Kahraman/rustscenic/pull/74), `validation/community/human_brain_10k_v0.4.1.json`). These are collaborator adoption artefacts, separate from maintainer-run reference parity benchmarks.
 - **All 4 stages bit-deterministic under same seed.**
 - **10/10 robustness edge cases handled** (silent failures fixed: NaN panic, duplicate gene names).
 
@@ -194,7 +198,7 @@ Scope spec: [`../docs/atac-preprocessing-scope.md`](../docs/atac-preprocessing-s
 1. **Topics is not a speed win.** Mallet beats us by 17%. The pitch for topics is "no Java install, drop-in, better cell-type recovery on small datasets", not "faster".
 2. **GRN perf at full biological scale is improved but still the main scaling frontier.** A real 91k microglia run with 50 TFs and 20 estimators originally showed slope 1.81 and a 40k→80k wall-clock cliff. Worker-local scratch plus target blocking reduces the same atlas run to slope 1.15 and 864.1 s at 91,838 cells. Full-TF / 5000-estimator atlas runs still need HPC validation before we claim broad GRN leadership.
 3. **100k-cell integrated real multiome is not done.** Synthetic 100k and real 2.7k multiome pass; the real 100k RNA+ATAC pipeline remains the next credibility gate.
-4. **Distribution caveat.** PyPI is live at v0.4.4 for Linux and macOS wheels plus sdist; Windows x64 is covered by CI and the release-wheel workflow for the next release.
+4. **Distribution state.** PyPI is live at v0.4.7 with Python 3.10 to 3.13 release wheels plus sdist; Windows x64 is covered by CI and the release-wheel workflow.
 5. **Region-based SCENIC+ cistromes are wired into the pipeline.** The exact region-ranking path now feeds eRegulon assembly. The remaining replacement proof is direct scenicplus parity on real region-ranking databases.
 
 ## What the tool claims (post-deep-audit, 2026-04-19)

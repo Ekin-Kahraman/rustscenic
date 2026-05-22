@@ -16,7 +16,7 @@ pip install rustscenic
 | Feature | Status |
 | --- | --- |
 | Tested real-data speedup | `11x` to `52x` vs SCENIC+ in core E2E rows |
-| Peak memory | Lower than SCENIC+ in every tested real-data row |
+| Peak memory | Comparable or lower than SCENIC+ in tested real-data rows |
 | Current release | `v0.4.7` |
 | Python support | 3.10 to 3.13 |
 | Core install | `pip install rustscenic` |
@@ -29,7 +29,7 @@ pip install rustscenic
 | Result | Value |
 | --- | ---: |
 | Human brain GEM-X 2k total runtime | RustScenic `11.89 s`; reference `150.36 s` |
-| Human brain GEM-X region-to-gene Jaccard | `1.000` |
+| Human brain GEM-X region-to-gene edge-set Jaccard | `1.000` |
 | Human brain GEM-X region AUCell mean Pearson | `0.823` |
 | cisTarget AUC kernel agreement vs `ctxcore.recovery.aucs` | Pearson `1.0000` |
 

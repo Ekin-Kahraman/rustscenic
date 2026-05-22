@@ -30,7 +30,7 @@
 ## Highlights
 
 - `11x` to `52x` faster than SCENIC+ in tested real-data core E2E rows
-- Lower peak RSS than SCENIC+ in every tested real-data row
+- Comparable or lower peak RSS in tested real-data rows
 - Current release: `v0.4.7`
 - `pip install rustscenic`, with Python 3.10 to 3.13 release wheels
 - Rust implementations for the matrix-heavy regulatory-network stages
@@ -45,10 +45,17 @@ pip install rustscenic
 
 ## SCENIC+ Benchmark
 
-Core E2E comparison on the same matrix-level path: TF-to-gene, region-to-gene,
-eRegulons, gene AUCell and region AUCell.
+Core E2E comparison on the same matrix-level regulatory path: TF-to-gene,
+region-to-gene, eRegulons, gene AUCell and region AUCell.
 
-Machine: Apple M5 laptop, 16 GB RAM, macOS arm64, Python 3.13.9, 4 CPU threads.
+This is a practical output-path benchmark against SCENIC+. It is not a claim
+that every internal stage uses the same estimator: RustScenic enhancer linking
+uses correlation over the fixed search space, while SCENIC+ uses GBM plus
+Pearson scoring for region-to-gene links.
+
+Machine: Apple M5 laptop, 16 GB RAM, macOS arm64, 4 CPU threads. RustScenic
+rows used Python 3.13.9; SCENIC+ reference rows used Python 3.11.8 for its
+dependency stack.
 Rows can be sampled subsets; the shape column is the actual benchmark input.
 
 | Dataset | Shape | RustScenic | SCENIC+ | Speedup | Peak RSS (RustScenic / SCENIC+) |
@@ -118,6 +125,8 @@ real-data RNA example.
   per-cell Pearson `0.984`, with `91.7%` of cells above `0.95`.
 - Human brain GEM-X comparison: region-to-gene Jaccard `1.000`, region AUCell
   mean Pearson `0.823`.
+- On that same row, gene AUCell Pearson `0.386` and eRegulon edge Jaccard
+  `0.161` remain the main parity targets.
 - External validation reports cover Kamath dopaminergic neurons, 10x human brain
   multiome and lymphoma 14k data, with controlled benchmark claims kept separate.
 

@@ -14,7 +14,7 @@
 //!   enriched for open chromatin at promoters (expected; most labs
 //!   require ≥ 4 before downstream analysis).
 //!
-//! - **FRiP** - fraction of reads in peaks. Measures how much of the
+//! - **FRiP** - fraction of fragment records in peaks. Measures how much of the
 //!   per-cell signal is concentrated at reproducible regulatory
 //!   elements vs random background. Typical cut-offs ≥ 0.15.
 //!
@@ -420,6 +420,24 @@ chr2\t1000\t1100\tBBB-1\t1
         }
     }
 
+    #[test]
+    fn tss_enrichment_counts_fragment_records_not_duplicate_count_column() {
+        let tss = vec![TssSite {
+            chrom: "chr1".to_string(),
+            position: 10_000,
+        }];
+        let base = read_fragments_from(Cursor::new(
+            "chr1\t9980\t10020\tA-1\t1\nchr1\t15000\t15050\tA-1\t1\n",
+        ))
+        .unwrap();
+        let dup_count = read_fragments_from(Cursor::new(
+            "chr1\t9980\t10020\tA-1\t10\nchr1\t15000\t15050\tA-1\t1\n",
+        ))
+        .unwrap();
+
+        assert_eq!(tss_enrichment(&base, &tss), tss_enrichment(&dup_count, &tss));
+    }
+
     // ---- frip ----
 
     #[test]
@@ -466,5 +484,15 @@ chr2\t1000\t1100\tBBB-1\t1
         let p = read_peaks_from(Cursor::new(peaks_bed)).unwrap();
         let scores = frip(&t, &p);
         assert_eq!(scores[0], 0.0);
+    }
+
+    #[test]
+    fn frip_counts_fragment_records_not_duplicate_count_column() {
+        let frags = "chr1\t100\t150\tA-1\t5\nchr1\t500\t550\tA-1\t1\n";
+        let peaks_bed = "chr1\t90\t160\tp\n";
+        let t = read_fragments_from(Cursor::new(frags)).unwrap();
+        let p = read_peaks_from(Cursor::new(peaks_bed)).unwrap();
+        let scores = frip(&t, &p);
+        assert!((scores[0] - 0.5).abs() < 1e-6);
     }
 }

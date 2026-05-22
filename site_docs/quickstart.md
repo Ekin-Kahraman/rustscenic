@@ -57,4 +57,6 @@ pip install "rustscenic[examples]"
 python examples/pbmc3k_end_to_end.py
 ```
 
-For collaborators or external testers, use the tester path in `docs/tester-quickstart.md` in the repository.
+For collaborators or external testers, use the
+[tester quickstart](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/tester-quickstart.md)
+in the repository.

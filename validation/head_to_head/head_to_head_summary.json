@@ -1,11 +1,15 @@
 {
   "benchmark": "core_e2e_matrix",
   "scope": "RNA + ATAC + cistromes -> TF-to-gene -> region-to-gene -> eRegulons -> gene and region AUCell",
+  "claim_scope": "Practical output-path benchmark against SCENIC+. RustScenic enhancer linking uses correlation over the fixed search space; SCENIC+ uses GBM plus Pearson scoring for region-to-gene links. Region-to-gene Jaccard is edge-set agreement, not score-level identity.",
   "machine": {
     "cpu": "Apple M5",
     "memory_gb": 16,
     "os": "macOS arm64",
-    "python": "3.13.9",
+    "python": {
+      "rustscenic": "3.13.9",
+      "scenicplus": "3.11.8"
+    },
     "threads": 4
   },
   "settings": {
@@ -122,6 +126,7 @@
       "region_auc_mean_pearson": 0.823398
     }
   ],
+  "source_result_files_status": "Local raw run files are stored under validation/head_to_head/results/ and are ignored to keep the repository small; this committed summary is the public benchmark record.",
   "source_result_files": [
     "validation/head_to_head/results/core_e2e_micro_150_rustscenic_v2.json",
     "validation/head_to_head/results/core_e2e_micro_150_scenicplus_v2.json",

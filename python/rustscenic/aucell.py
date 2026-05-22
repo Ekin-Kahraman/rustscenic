@@ -79,6 +79,7 @@ def score(
         )
 
     X_raw, gene_names, cell_names = _coerce(expression)
+    _raise_if_nonfinite(X_raw, "expression matrix")
     # Warn if the rank-cutoff K = floor(top_frac × n_genes) is so small
     # that no regulon's members can be inside it. Was a silent-all-zero
     # mode at very small top_frac on small gene sets.
@@ -253,3 +254,14 @@ def _coerce_regulon(reg):
     if name is None:
         raise TypeError(f"regulon {reg!r} has no .name")
     return str(name), genes
+
+
+def _raise_if_nonfinite(X, label: str) -> None:
+    import scipy.sparse as sp
+
+    values = X.data if sp.issparse(X) else np.asarray(X)
+    if not np.all(np.isfinite(values)):
+        raise ValueError(
+            f"{label} contains NaN or Inf values; clean or filter the matrix "
+            f"before calling rustscenic.aucell.score"
+        )

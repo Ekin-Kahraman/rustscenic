@@ -1,5 +1,10 @@
 # Release gate
 
+Archived pre-v0.4 release-gate note. The current public release state lives in
+`README.md`, `CHANGELOG.md`, `site_docs/validation.md` and the GitHub Actions
+workflows. This file remains useful as historical release criteria, but its
+v0.3/v0.4.0 status lines are not current release claims.
+
 The bar a rustscenic release must clear before a tag goes public. Every check must be green on a fresh environment for the release to be considered release-quality end-to-end rather than compute stages working in isolation.
 
 ## 1. Fresh-environment install matrix

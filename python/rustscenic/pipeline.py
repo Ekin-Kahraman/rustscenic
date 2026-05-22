@@ -305,6 +305,8 @@ def run(
         if hasattr(topics_result, "cell_topic"):
             np.save(topics_dir / "cell_topic.npy", topics_result.cell_topic)
             np.save(topics_dir / "topic_peak.npy", topics_result.topic_peak)
+            topics_result.cell_topic.to_parquet(topics_dir / "cell_topic.parquet")
+            topics_result.topic_peak.to_parquet(topics_dir / "topic_peak.parquet")
     else:
         log("[2/8] preproc + topics: skipped (no fragments / peaks)")
         log("[3/8] topics: skipped")

@@ -11,7 +11,7 @@
 //!
 //! Algorithm:
 //!
-//!  1. Per cluster (pseudobulk), accumulate per-position insertion
+//!  1. Per cluster (pseudobulk), accumulate per-fragment-record insertion
 //!     counts into non-overlapping windows of size `window_size`.
 //!  2. Declare a cluster-specific significance threshold at
 //!     `quantile_threshold` of the cluster's per-window count
@@ -488,6 +488,22 @@ mod tests {
             "expected separate peaks: {:?}",
             collect_peaks(&peaks)
         );
+    }
+
+    #[test]
+    fn peak_calling_counts_fragment_records_not_duplicate_count_column() {
+        let t = read_fragments_from(Cursor::new("chr1\t100\t150\tAAA\t10\n")).unwrap();
+        let cluster = vec![0u32; t.n_barcodes()];
+        let cfg = PeakCallingConfig {
+            window_size: 50,
+            min_fragments_per_window: 2,
+            quantile_threshold: 0.0,
+            max_gap: 0,
+            peak_half_width: 1,
+        };
+
+        let peaks = call_peaks_from_pseudobulks(&t, &cluster, 1, &cfg);
+        assert_eq!(peaks.len(), 0);
     }
 
     fn collect_peaks(p: &PeakTable) -> Vec<(String, u32, u32)> {

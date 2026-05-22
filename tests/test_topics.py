@@ -102,9 +102,15 @@ class TestTopicsEdgeCases:
                          n_topics=2, n_passes=2, seed=0, verbose=False)
         assert res.cell_topic.shape == (1, 2)
 
-    def test_nan_input_panics(self):
+    def test_nan_input_raises_value_error(self):
         X = sp.csr_matrix(np.array([[1.0, np.nan, 0, 0]], dtype=np.float32))
-        with pytest.raises(BaseException, match=r"Na[Nn]|[Ii]nf"):
+        with pytest.raises(ValueError, match="finite"):
+            topics.fit((X, ["c0"], ["a", "b", "c", "d"]),
+                       n_topics=2, n_passes=2, seed=0, verbose=False)
+
+    def test_negative_input_raises_value_error(self):
+        X = sp.csr_matrix(np.array([[1.0, -1.0, 0, 0]], dtype=np.float32))
+        with pytest.raises(ValueError, match="non-negative"):
             topics.fit((X, ["c0"], ["a", "b", "c", "d"]),
                        n_topics=2, n_passes=2, seed=0, verbose=False)
 

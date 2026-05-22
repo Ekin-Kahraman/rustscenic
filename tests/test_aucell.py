@@ -75,11 +75,11 @@ class TestAucellEdgeCases:
         ]
         assert dedup_msgs, "auto-dedupe should emit a warning"
 
-    def test_nan_input_panics(self, rng):
+    def test_nan_input_raises_value_error(self, rng):
         X = rng.random((10, 5)).astype(np.float32)
         X[0, 0] = np.nan
         df = pd.DataFrame(X, columns=list("abcde"))
-        with pytest.raises(BaseException, match=r"Na[Nn]"):
+        with pytest.raises(ValueError, match=r"NaN|Inf"):
             aucell.score(df, [("R", ["a", "b"])], top_frac=0.2)
 
     def test_empty_regulons_list_returns_empty_df(self, small_expr):

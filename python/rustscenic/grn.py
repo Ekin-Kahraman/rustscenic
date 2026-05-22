@@ -17,6 +17,8 @@ from rustscenic._gene_resolution import (
     warn_if_likely_unnormalized,
 )
 
+_DENSIFY_WARN_BYTES = 8 * 1024**3  # 8 GiB
+
 
 def infer(
     expression,
@@ -71,6 +73,7 @@ def infer(
     if X.dtype != np.float32:
         X = X.astype(np.float32, copy=False)
     X = np.ascontiguousarray(X)
+    _raise_if_nonfinite(X, "expression matrix")
 
     if target_block_size is None:
         target_block_size_for_rust = 0
@@ -239,6 +242,8 @@ def _coerce_expression(expression):
             X_raw = expression.X[:]
         else:
             X_raw = expression.X
+        if hasattr(X_raw, "toarray"):
+            _warn_if_densification_expensive(expression.n_obs, expression.n_vars)
         X = X_raw.toarray() if hasattr(X_raw, "toarray") else np.asarray(X_raw)
         gene_names = resolve_gene_names(expression)
         return X, gene_names
@@ -250,6 +255,30 @@ def _coerce_expression(expression):
     raise TypeError(
         "expression must be AnnData, pandas.DataFrame, or (matrix, gene_names) tuple"
     )
+
+
+def _warn_if_densification_expensive(n_cells: int, n_genes: int) -> None:
+    bytes_needed = int(n_cells) * int(n_genes) * 4
+    if bytes_needed < _DENSIFY_WARN_BYTES:
+        return
+    import warnings
+
+    gib = bytes_needed / 1024**3
+    warnings.warn(
+        f"grn.infer will densify the expression matrix to "
+        f"{n_cells} × {n_genes} float32 values (~{gib:.1f} GiB). "
+        f"Subset cells or genes before calling GRN if this exceeds local RAM.",
+        UserWarning,
+        stacklevel=3,
+    )
+
+
+def _raise_if_nonfinite(X: np.ndarray, label: str) -> None:
+    if not np.all(np.isfinite(X)):
+        raise ValueError(
+            f"{label} contains NaN or Inf values; clean or filter the matrix "
+            f"before calling rustscenic.grn.infer"
+        )
 
 
 def load_tfs(path: Union[str, Path]) -> list[str]:

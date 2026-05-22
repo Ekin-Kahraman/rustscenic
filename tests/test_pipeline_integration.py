@@ -965,6 +965,8 @@ def test_pipeline_run_topics_method_gibbs(tmp_path):
     assert result.atac_matrix_path.exists()
     assert (out / "topics" / "cell_topic.npy").exists()
     assert (out / "topics" / "topic_peak.npy").exists()
+    assert (out / "topics" / "cell_topic.parquet").exists()
+    assert (out / "topics" / "topic_peak.parquet").exists()
 
 
 def test_pipeline_grn_top_targets_below_ten_still_builds_candidates(tmp_path, monkeypatch):
