@@ -22,7 +22,7 @@ pip install rustscenic
 | Core install | `pip install rustscenic` |
 | Runtime model | CPU-first Rust kernels |
 | Core path dependencies avoided | Java, dask, CUDA, Snakemake |
-| Evidence | Commands, hardware, runtime, memory and output checks in-repo |
+| Evidence | Controlled benchmarks plus committed collaborator real-data artefacts |
 
 ## Benchmark Snapshot
 

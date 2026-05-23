@@ -1,0 +1,119 @@
+{
+  "release": "v0.4.6",
+  "smoke_type": "real_multiome_pipeline_run",
+  "rustscenic_version": "0.4.6",
+  "rustscenic_sha": "9ee67398689812f98bdf6856626ac57faf95be25",
+  "install_command": "pip install \"rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.4.6\"",
+  "api_call": "rustscenic.pipeline.run(rna=..., adata_atac=..., motif_rankings=motif_rankings_obj, ...)",
+  "dataset": {
+    "name": "human_brain_10k",
+    "source": "10x Genomics Public Datasets",
+    "species": "human",
+    "tissue": "brain (microglia-filtered)",
+    "rna_h5_md5": "7beee26c0607270511162f58518309de",
+    "atac_h5ad_md5_first_8mb": "0e7e090e2c76e64c5a330a830b3f93ca",
+    "peaks_bed_md5": "95fc619db6b6e82e0e2f74a084357278"
+  },
+  "shapes": {
+    "rna_post_qc": [
+      8215,
+      32808
+    ],
+    "atac_subset_to_rna_cells": [
+      8215,
+      123089
+    ]
+  },
+  "wall_s": {
+    "setup": 5.42,
+    "pipeline_run_total": 3295.42
+  },
+  "peak_rss_gb": 24.99,
+  "outputs_non_empty": {
+    "grn": true,
+    "regulons": true,
+    "cistarget": true,
+    "enhancer_links": true,
+    "eregulons": true,
+    "integrated_adata": true
+  },
+  "headline_counts": {
+    "n_grn_edges": 4314539,
+    "n_regulons": 1693,
+    "n_cistarget_rows": 108736,
+    "n_enhancer_links": 927002,
+    "n_eregulons": 1693
+  },
+  "biological_sanity": {
+    "expected_tfs": [
+      "NEUROD2",
+      "NEUROD6",
+      "TBR1",
+      "FOXG1",
+      "BCL11A",
+      "BCL11B",
+      "ZBTB20",
+      "SATB2",
+      "POU3F2",
+      "POU3F3",
+      "SOX2",
+      "ASCL1",
+      "EMX2",
+      "PAX6",
+      "LHX2",
+      "MEF2C",
+      "OLIG2"
+    ],
+    "found_in_regulons": [
+      "ASCL1",
+      "BCL11A",
+      "BCL11B",
+      "EMX2",
+      "FOXG1",
+      "LHX2",
+      "MEF2C",
+      "NEUROD2",
+      "OLIG2",
+      "PAX6",
+      "POU3F2",
+      "POU3F3",
+      "SATB2",
+      "SOX2",
+      "TBR1",
+      "ZBTB20"
+    ],
+    "missing_from_regulons": [
+      "NEUROD6"
+    ],
+    "fraction_recovered": 0.9412
+  },
+  "output_inventory": {
+    "grn_path": "out/grn.parquet",
+    "regulons_path": "out/regulons.json",
+    "cistarget_path": "out/cistarget_enriched.parquet",
+    "enhancer_links_path": "out/enhancer_links.parquet",
+    "eregulons_path": "out/eregulons.parquet"
+  },
+  "elapsed_per_stage": {
+    "preproc": 0.0,
+    "topics": 587.3496122500001,
+    "grn": 2071.980409830998,
+    "cistarget": 4.212626237000222,
+    "enhancer": 188.38145273700138,
+    "eregulons": 200.839957436001,
+    "aucell": 2.488173427998845
+  },
+  "env": {
+    "python": "3.12.13",
+    "scanpy": "1.12.1",
+    "anndata": "0.12.16",
+    "os": "Linux 6.6.87.2-microsoft-standard-WSL2 x86_64",
+    "cpu": "x86_64",
+    "n_cpus": 16
+  },
+  "scope_notes": [
+    "Cell Filtering: Microglial cells were removed based on marker gene expression (CX3CR1, TMEM119, P2RY12, AIF1, C1QB, S100A8, CSF1R, S100A9, BIN2) to isolate a pure neuronal population",
+    "Preprocessing: Used a pre-processed atac.h5ad file. The fragments_to_matrix stage was skipped (processing time: 0s)",
+    "Used built-in rustscenic.data functions to retrieve motif_rankings, motif_annotations and gene_coords"
+  ]
+}

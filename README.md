@@ -127,8 +127,10 @@ real-data RNA example.
   mean Pearson `0.823`.
 - On that same row, gene AUCell Pearson `0.386` and eRegulon edge Jaccard
   `0.161` remain the main parity targets.
-- External validation reports cover Kamath dopaminergic neurons, 10x human brain
-  multiome and lymphoma 14k data, with controlled benchmark claims kept separate.
+- External validation reports include a collaborator 10x human brain multiome
+  full monolith run recovering `16/17` expected brain TFs, plus Kamath
+  dopaminergic neurons and lymphoma 14k data. Controlled benchmark claims stay
+  separate.
 
 Validation artefacts live under [validation/](validation/). Public interpretation
 lives in [site_docs/benchmarks.md](site_docs/benchmarks.md) and

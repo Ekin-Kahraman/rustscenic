@@ -30,3 +30,19 @@ def test_public_docs_keep_benchmark_claims_scoped():
     normalised_benchmarks = " ".join(benchmarks.split())
     assert "algorithm-identical kernel benchmark" in normalised_benchmarks
     assert "edge-set agreement" in benchmarks
+
+
+def test_human_brain_external_validation_is_scoped():
+    artefact = json.loads(
+        (ROOT / "validation/community/human_brain_10k_v0.4.6.json").read_text()
+    )
+    validation = (ROOT / "site_docs/validation.md").read_text()
+    readme = (ROOT / "README.md").read_text()
+
+    assert artefact["rustscenic_version"] == "0.4.6"
+    assert artefact["shapes"]["rna_post_qc"][0] == 8215
+    assert artefact["peak_rss_gb"] == 24.99
+    assert artefact["biological_sanity"]["fraction_recovered"] == 0.9412
+    assert "16 of 17 expected brain TFs recovered" in validation
+    assert "not a SCENIC+ head-to-head row" in validation
+    assert "full monolith run recovering `16/17`" in readme
