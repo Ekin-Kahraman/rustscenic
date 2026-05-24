@@ -16,7 +16,7 @@ pip install rustscenic
 | Feature | Status |
 | --- | --- |
 | Tested real-data speedup | `11x` to `52x` vs SCENIC+ in core E2E rows |
-| Peak memory | Comparable or lower than SCENIC+ in tested real-data rows |
+| Memory scaling | `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads |
 | Current release | `v0.4.7` |
 | Python support | 3.10 to 3.13 |
 | Core install | `pip install rustscenic` |

@@ -30,7 +30,7 @@
 ## Highlights
 
 - `11x` to `52x` faster than SCENIC+ in tested real-data core E2E rows
-- Comparable or lower peak RSS in tested real-data rows
+- `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads
 - Current release: `v0.4.7`
 - `pip install rustscenic`, with Python 3.10 to 3.13 release wheels
 - Rust implementations for the matrix-heavy regulatory-network stages

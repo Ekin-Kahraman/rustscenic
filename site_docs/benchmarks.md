@@ -64,6 +64,18 @@ For the human brain GEM-X row, including data preparation:
 | RustScenic | 7.41 s | 4.48 s | 11.89 s | 2.18 GB |
 | SCENIC+ | 145.97 s | 4.38 s | 150.36 s | 2.19 GB |
 
+## Memory Scaling
+
+The core E2E rows above show comparable or lower memory against SCENIC+ on
+small real-data subsets. The stronger memory result comes from the atlas-scale
+stage check archived in `validation/VALIDATION_SUMMARY.md`: a 100k-cell,
+20,292-gene four-stage run peaked at 6.34 GB RSS, while legacy pySCENIC reports
+exceed 40 GB on similar workloads.
+
+| Workload | RustScenic peak RSS | Reference context |
+| --- | ---: | --- |
+| 100k cells x 20,292 genes, GRN + AUCell + topics + cisTarget | 6.34 GB | legacy pySCENIC reports exceed 40 GB on similar workloads |
+
 ## Validation
 
 Output agreement is measured from saved benchmark signatures. Jaccard values

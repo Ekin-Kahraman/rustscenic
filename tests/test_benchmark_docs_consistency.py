@@ -24,8 +24,11 @@ def test_public_docs_keep_benchmark_claims_scoped():
     assert "`11x` to `52x`" in readme
     assert "`11x` to `52x`" in index
     assert "range from 11x to 52x" in benchmarks
-    assert "Comparable or lower peak RSS" in readme
-    assert "Comparable or lower than SCENIC+" in index
+    assert "`6.34 GB` peak RSS on a 100k-cell four-stage scale check" in readme
+    assert "legacy pySCENIC reports exceed `40 GB`" in readme
+    assert "Memory scaling" in index
+    assert "6.34 GB RSS" in benchmarks
+    assert "legacy pySCENIC reports exceed 40 GB" in benchmarks
     assert "Lower peak RSS than SCENIC+" not in readme
     normalised_benchmarks = " ".join(benchmarks.split())
     assert "algorithm-identical kernel benchmark" in normalised_benchmarks
