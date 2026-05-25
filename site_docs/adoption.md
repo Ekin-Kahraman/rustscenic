@@ -15,6 +15,17 @@ RustScenic is worth testing if one of these problems is blocking your analysis:
 - You want a single Python package covering GRN, AUCell, motif support, topics,
   enhancer links and eRegulons.
 
+## Public Proof Points
+
+Use these when introducing the package to a lab or collaborator:
+
+| Proof point | Evidence |
+| --- | --- |
+| Released | `v0.4.7` on PyPI, with Python 3.10 to 3.13 release wheels. |
+| Faster tested path | `11x` to `52x` faster than SCENIC+ in controlled real-data core E2E rows. |
+| Lower atlas-scale memory pressure | `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads. |
+| Lab artefact | Collaborator human brain GEM-X full monolith run recovered 16 of 17 expected brain TFs. |
+
 ## Minimal Adoption Test
 
 Run one small dataset first:

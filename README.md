@@ -12,6 +12,7 @@
 <p align="center">
   <a href="https://ekin-kahraman.github.io/rustscenic/">Documentation</a> |
   <a href="site_docs/benchmarks.md">Benchmarks</a> |
+  <a href="site_docs/validation.md">Validation</a> |
   <a href="CITATION.cff">Citation</a> |
   <a href="https://doi.org/10.5281/zenodo.20246040">Zenodo DOI</a>
 </p>
@@ -19,6 +20,7 @@
 <p align="center">
   <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml"><img alt="CI" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg"></a>
   <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml"><img alt="Docs" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml/badge.svg"></a>
+  <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/nightly-real-data.yml"><img alt="Nightly real-data validation" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/nightly-real-data.yml/badge.svg"></a>
   <a href="https://pypi.org/project/rustscenic/"><img alt="PyPI" src="https://img.shields.io/pypi/v/rustscenic"></a>
   <br>
   <a href="https://doi.org/10.5281/zenodo.20246040"><img alt="Zenodo DOI" src="https://img.shields.io/badge/DOI-Zenodo-1682d4"></a>
@@ -26,6 +28,20 @@
   <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-blue"></a>
   <a href="https://www.rust-lang.org/"><img alt="Rust" src="https://img.shields.io/badge/Rust-stable-orange"></a>
 </p>
+
+<p align="center">
+  <img alt="RustScenic evidence snapshot: built, released, benchmarked and lab-validated" src="site_docs/assets/rustscenic-evidence.svg" width="900">
+</p>
+
+## Evidence Snapshot
+
+| Signal | Evidence |
+| --- | --- |
+| Built | Cross-platform Rust and Python CI, docs build, release smoke checks and nightly real-data validation workflows. |
+| Released | Current release `v0.4.7`; PyPI package with Python 3.10 to 3.13 release wheels plus source distribution. |
+| Benchmarked | `11x` to `52x` faster than SCENIC+ in tested real-data core E2E rows; commands, hardware, runtime, memory and output checks are committed. |
+| Memory-scaled | `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads. |
+| Lab-validated | Huang Lab collaborator artefacts include a 10x human brain GEM-X full monolith run recovering `16/17` expected brain TFs. |
 
 ## Highlights
 
@@ -43,7 +59,7 @@
 pip install rustscenic
 ```
 
-## SCENIC+ Benchmark
+## Benchmark Evidence
 
 Core E2E comparison on the same matrix-level regulatory path: TF-to-gene,
 region-to-gene, eRegulons, gene AUCell and region AUCell.
@@ -119,18 +135,13 @@ real-data RNA example.
 
 ## Validation
 
-- cisTarget AUC kernel agreement against `ctxcore.recovery.aucs`: Pearson
-  `1.0000`, mean absolute difference about `2.4e-5`.
-- AUCell agreement against pySCENIC on the Ziegler 2021 airway atlas: mean
-  per-cell Pearson `0.984`, with `91.7%` of cells above `0.95`.
-- Human brain GEM-X comparison: region-to-gene Jaccard `1.000`, region AUCell
-  mean Pearson `0.823`.
-- On that same row, gene AUCell Pearson `0.386` and eRegulon edge Jaccard
-  `0.161` remain the main parity targets.
-- External validation reports include a collaborator 10x human brain multiome
-  full monolith run recovering `16/17` expected brain TFs, plus Kamath
-  dopaminergic neurons and lymphoma 14k data. Controlled benchmark claims stay
-  separate.
+| Validation axis | Result |
+| --- | --- |
+| cisTarget kernel | Pearson `1.0000` against `ctxcore.recovery.aucs`; mean absolute difference about `2.4e-5`. |
+| AUCell parity | Ziegler 2021 airway atlas mean per-cell Pearson `0.984`; `91.7%` of cells above `0.95`. |
+| Human brain GEM-X benchmark | Region-to-gene Jaccard `1.000`; region AUCell mean Pearson `0.823`. |
+| Collaborator lab artefact | 10x human brain multiome full monolith run recovered `16/17` expected brain TFs. |
+| Open parity targets | Gene AUCell Pearson `0.386` and eRegulon edge Jaccard `0.161` on the human brain GEM-X row. |
 
 Validation artefacts live under [validation/](validation/). Public interpretation
 lives in [site_docs/benchmarks.md](site_docs/benchmarks.md) and

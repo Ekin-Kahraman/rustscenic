@@ -24,6 +24,16 @@ space. The SCENIC+ reference row uses GBM plus Pearson scoring for
 region-to-gene links. Region-to-gene Jaccard below therefore means edge-set
 agreement under the benchmark search space, not score-level identity.
 
+## At a Glance
+
+| Question | Evidence |
+| --- | --- |
+| Is it faster on tested real data? | Yes: `11x` to `52x` faster than SCENIC+ across the real-data core E2E rows below. |
+| Is memory measured? | Yes: every row records peak RSS; the 100k-cell four-stage scale check peaked at `6.34 GB` RSS. |
+| Is the comparison reproducible? | Yes: the benchmark harness, summary JSON, command templates, seed, hardware and Python versions are committed. |
+| Is output agreement checked? | Yes: saved signatures report Jaccard and Pearson checks for TF-to-gene, region-to-gene, eRegulons and AUCell. |
+| Is it full SCENIC+ parity? | Not yet: this is the shared matrix-level output path; gene AUCell and eRegulon-edge parity remain explicit targets. |
+
 ## Setup
 
 | Item | Value |

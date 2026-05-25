@@ -8,6 +8,17 @@ The standard is publication-minded: every serious claim should point to a
 dataset, command, version, hardware context, runtime, memory measurement and
 output sanity check.
 
+## Credibility Snapshot
+
+| Signal | Evidence |
+| --- | --- |
+| Released package | `v0.4.7` is the current GitHub release and PyPI package. |
+| Controlled benchmark path | `validation/head_to_head/head_to_head_summary.json` records machine, seed, Python versions, runtime, peak RSS and output signatures. |
+| Lab validation | Huang Lab collaborator artefacts include Kamath dopaminergic neurons and 10x human brain GEM-X multiome runs. |
+| Full monolith real-data run | Human brain GEM-X `v0.4.6` artefact completed GRN, regulons, cisTarget, enhancer links and eRegulons on 8,215 post-QC cells and 123,089 peaks. |
+| Biological sanity check | The full monolith human brain run recovered 16 of 17 expected brain TFs. |
+| CI coverage | Audit, docs, release and nightly real-data validation workflows keep the public evidence path checked. |
+
 ## Headline Results
 
 | Test | Result |
@@ -17,7 +28,7 @@ output sanity check.
 | cisTarget AUC kernel vs `ctxcore.recovery.aucs` | Pearson `1.0000`; mean absolute difference about `2.4e-5`. |
 | Human brain GEM-X SCENIC+ comparison | Region-to-gene edge-set Jaccard `1.000`; region AUCell mean Pearson `0.823`; gene AUCell and eRegulon-edge parity remain weaker. |
 | Real multiome pipeline runs | PBMC 3k, mouse brain E18 5k, PBMC granulocyte 10k. |
-| Local unit/integration suite | 218 tests passed, 1 skipped in the 2026-05-22 audit. |
+| Local unit/integration suite | 223 tests passed, 1 skipped in the 2026-05-24 audit. |
 
 ## External Validation
 

@@ -11,6 +11,18 @@ It is CPU-first, installable from PyPI and designed for reproducible local runs.
 pip install rustscenic
 ```
 
+![RustScenic evidence snapshot: built, released, benchmarked and lab-validated](assets/rustscenic-evidence.svg)
+
+## Evidence Snapshot
+
+| Signal | Evidence |
+| --- | --- |
+| Built | Cross-platform Rust and Python CI, docs build, release smoke checks and nightly real-data validation workflows. |
+| Released | Current release `v0.4.7`; PyPI package with Python 3.10 to 3.13 release wheels plus source distribution. |
+| Benchmarked | `11x` to `52x` faster than SCENIC+ in tested real-data core E2E rows; commands, hardware, runtime, memory and output checks are committed. |
+| Memory-scaled | `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads. |
+| Lab-validated | Huang Lab collaborator artefacts include a 10x human brain GEM-X full monolith run recovering `16/17` expected brain TFs. |
+
 ## Highlights
 
 | Feature | Status |
