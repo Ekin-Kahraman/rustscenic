@@ -29,22 +29,13 @@
   <a href="https://www.rust-lang.org/"><img alt="Rust" src="https://img.shields.io/badge/Rust-stable-orange"></a>
 </p>
 
-## Evidence Snapshot
-
-| Signal | Evidence |
-| --- | --- |
-| Built | Cross-platform Rust and Python CI, docs build, release smoke checks and nightly real-data validation workflows. |
-| Released | Current release `v0.4.7`; PyPI package with Python 3.10 to 3.13 release wheels plus source distribution. |
-| Benchmarked | `11x` to `52x` faster than SCENIC+ in tested real-data core E2E rows; commands, hardware, runtime, memory and output checks are committed. |
-| Memory-scaled | `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads. |
-| Lab-validated | Huang Lab collaborator artefacts include a 10x human brain GEM-X full monolith run recovering `16/17` expected brain TFs. |
-
 ## Highlights
 
 - `11x` to `52x` faster than SCENIC+ in tested real-data core E2E rows
 - `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads
 - Current release: `v0.4.7`
 - `pip install rustscenic`, with Python 3.10 to 3.13 release wheels
+- Huang Lab collaborator run recovered `16/17` expected brain TFs on 10x human brain GEM-X data
 - Rust implementations for the matrix-heavy regulatory-network stages
 - Core path runs without Java, dask, CUDA or Snakemake
 - Benchmark artefacts include commands, hardware, runtime, memory and output checks

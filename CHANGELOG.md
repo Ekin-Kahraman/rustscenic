@@ -8,7 +8,7 @@
   release status, benchmark speedups, 100k-cell memory scaling, committed
   validation artefacts and collaborator lab validation are now surfaced before
   the longer technical detail.
-- Added a compact evidence snapshot asset for README and documentation pages.
+- Added a compact evidence snapshot asset for the documentation landing page.
 - Added documentation consistency checks so future edits keep the release,
   benchmark and lab-validation proof points visible.
 

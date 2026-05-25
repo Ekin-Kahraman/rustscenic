@@ -24,17 +24,15 @@ def test_public_docs_keep_benchmark_claims_scoped():
 
     assert "rustscenic-evidence.svg" not in readme
     assert "assets/rustscenic-evidence.svg" in index
-    assert "Evidence Snapshot" in readme
-    assert "Built" in readme
-    assert "Released" in readme
-    assert "Benchmarked" in readme
-    assert "Lab-validated" in readme
-    assert "Current release `v0.4.7`" in readme
+    assert "## Evidence Snapshot" not in readme
+    assert "## Highlights" in readme
+    assert "Current release: `v0.4.7`" in readme
     assert "`11x` to `52x`" in readme
     assert "`11x` to `52x`" in index
     assert "range from 11x to 52x" in benchmarks
     assert "`6.34 GB` peak RSS on a 100k-cell four-stage scale check" in readme
     assert "legacy pySCENIC reports exceed `40 GB`" in readme
+    assert "Huang Lab collaborator run recovered `16/17`" in readme
     assert "Memory scaling" in index
     assert "6.34 GB RSS" in benchmarks
     assert "legacy pySCENIC reports exceed 40 GB" in benchmarks
@@ -58,9 +56,9 @@ def test_human_brain_external_validation_is_scoped():
     assert artefact["shapes"]["rna_post_qc"][0] == 8215
     assert artefact["peak_rss_gb"] == 24.99
     assert artefact["biological_sanity"]["fraction_recovered"] == 0.9412
-    assert "Huang Lab collaborator artefacts" in readme
+    assert "Huang Lab collaborator run recovered `16/17`" in readme
     assert "Huang Lab collaborator artefacts" in validation
     assert "16 of 17 expected brain TFs recovered" in validation
     assert "Collaborator human brain GEM-X full monolith run recovered 16 of 17" in adoption
     assert "not a SCENIC+ head-to-head row" in validation
-    assert "full monolith run recovering `16/17`" in readme
+    assert "Huang Lab collaborator run recovered `16/17`" in readme
