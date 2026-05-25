@@ -29,10 +29,6 @@
   <a href="https://www.rust-lang.org/"><img alt="Rust" src="https://img.shields.io/badge/Rust-stable-orange"></a>
 </p>
 
-<p align="center">
-  <img alt="RustScenic evidence snapshot: built, released, benchmarked and lab-validated" src="site_docs/assets/rustscenic-evidence.svg" width="900">
-</p>
-
 ## Evidence Snapshot
 
 | Signal | Evidence |

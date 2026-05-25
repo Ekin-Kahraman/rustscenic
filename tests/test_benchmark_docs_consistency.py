@@ -22,7 +22,7 @@ def test_public_docs_keep_benchmark_claims_scoped():
     benchmarks = (ROOT / "site_docs/benchmarks.md").read_text()
     changelog = (ROOT / "CHANGELOG.md").read_text()
 
-    assert "RustScenic evidence snapshot" in readme
+    assert "rustscenic-evidence.svg" not in readme
     assert "assets/rustscenic-evidence.svg" in index
     assert "Evidence Snapshot" in readme
     assert "Built" in readme
