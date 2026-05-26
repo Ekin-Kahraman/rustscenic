@@ -24,7 +24,7 @@
   <a href="https://pypi.org/project/rustscenic/"><img alt="PyPI" src="https://img.shields.io/pypi/v/rustscenic"></a>
   <br>
   <a href="https://doi.org/10.5281/zenodo.20246040"><img alt="Zenodo DOI" src="https://img.shields.io/badge/DOI-Zenodo-1682d4"></a>
-  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg"></a>
+  <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-blue.svg"></a>
   <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-blue"></a>
   <a href="https://www.rust-lang.org/"><img alt="Rust" src="https://img.shields.io/badge/Rust-stable-orange"></a>
 </p>

@@ -69,4 +69,4 @@ Scientific-correctness bugs (our output disagrees with pyscenic in a way that ca
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the repository's MIT license.
+By contributing, you agree that your contributions are licensed under the Apache License, Version 2.0, including the patent grant and termination terms in that licence.

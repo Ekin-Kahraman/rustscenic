@@ -8,7 +8,7 @@ authors:
     email: evk23umu@uea.ac.uk
 repository-code: "https://github.com/Ekin-Kahraman/rustscenic"
 url: "https://github.com/Ekin-Kahraman/rustscenic"
-license: MIT
+license: Apache-2.0
 version: "0.4.7"
 date-released: "2026-05-18"
 doi: 10.5281/zenodo.20246040

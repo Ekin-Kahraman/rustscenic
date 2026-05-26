@@ -135,7 +135,7 @@ All four stages produce bit-identical output across three runs with the same see
 
 ## Data + code availability
 
-Code: https://github.com/Ekin-Kahraman/rustscenic (MIT).
+Code: https://github.com/Ekin-Kahraman/rustscenic (Apache-2.0).
 PyPI: `pip install rustscenic`.
 Current validation artefacts: see `validation/` and `site_docs/benchmarks.md`.
 Example: `examples/pbmc3k_end_to_end.py`.

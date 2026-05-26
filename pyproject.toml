@@ -7,8 +7,8 @@ name = "rustscenic"
 version = "0.4.7"
 description = "Rust and PyO3 implementation of SCENIC-style regulatory-network analysis. Includes GRN, AUCell, topics, cistarget, peak calling, cell QC, enhancer-gene links, and eRegulon assembly. Installs without dask, Java, or CUDA."
 readme = "README.md"
-license = "MIT"
-license-files = ["LICENSE"]
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Ekin Kahraman", email = "evk23umu@uea.ac.uk" }]
 requires-python = ">=3.10"
 keywords = [
@@ -21,7 +21,7 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: MacOS",
     "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",

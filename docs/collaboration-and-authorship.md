@@ -6,11 +6,11 @@ This document records the default expectations for collaborations around rustsce
 
 rustscenic is an open-source software project created and maintained by Ekin Kahraman.
 
-The code is MIT licensed, so others may use, copy, modify, and redistribute it under the licence terms. The licence does not remove the need for accurate attribution, citation, or authorship when the software is used in scientific work.
+The code is licensed under the Apache License, Version 2.0, so others may use, copy, modify, and redistribute it under the licence terms. The licence does not remove the need for accurate attribution, citation, or authorship when the software is used in scientific work.
 
 ## Software credit
 
-Work that depends on rustscenic should cite the repository or the exact release used. Derivative software should preserve the MIT licence and copyright notice.
+Work that depends on rustscenic should cite the repository or the exact release used. Derivative software should preserve the Apache-2.0 licence, NOTICE file, and copyright notice.
 
 For papers, talks, posters, grants, or lab reports, the software contribution should be described accurately. Creating and maintaining the software is distinct from applying it to a dataset.
 

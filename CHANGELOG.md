@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Licence
+
+- Changed the project licence for future releases from MIT to Apache-2.0 to use
+  a standard permissive software licence with explicit patent grant terms.
+  Earlier published MIT releases remain MIT.
+
 ### Documentation
 
 - Made the public evidence path harder to miss in the README and docs:
