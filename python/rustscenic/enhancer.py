@@ -102,16 +102,19 @@ def link_peaks_to_genes(
         raise ValueError("enhancer linking only supports method='pearson'")
 
     rna_adata, atac_adata = _align_cells(rna_adata, atac_adata)
+    backend_symbols = ["enhancer_align_cell_indices"]
     from rustscenic._gene_resolution import resolve_gene_names
 
     gene_names_rna = resolve_gene_names(rna_adata, quiet=True)
     peaks = _peak_frame(atac_adata, peak_coords)
+    backend_symbols.extend(_rust_backend_symbols(peaks))
     genes = _validate_gene_coords(gene_coords)
 
     matched_gene_rows, source_rna_cols = _match_gene_coords_to_rna(
         [str(gene) for gene in gene_names_rna],
         [str(gene) for gene in genes["gene"].to_numpy(copy=False)],
     )
+    backend_symbols.append("enhancer_match_gene_coords_to_rna")
     matched_gene_rows = np.asarray(matched_gene_rows, dtype=np.intp)
     if matched_gene_rows.size == 0:
         raise ValueError(
@@ -129,6 +132,7 @@ def link_peaks_to_genes(
             [str(chrom) for chrom in peaks["chrom"].to_numpy(copy=False)],
         )
     )
+    backend_symbols.append("enhancer_normalise_chrom_codes")
     gene_chrom_codes = np.asarray(gene_chrom_codes, dtype=np.int32)
     peak_chrom_codes = np.asarray(peak_chrom_codes, dtype=np.int32)
     peak_chroms = np.asarray(peak_chrom_norm, dtype=object)
@@ -166,6 +170,7 @@ def link_peaks_to_genes(
         source_rna_cols,
         max_distance,
         min_abs_corr,
+        backend_symbols,
     )
 
 
@@ -183,6 +188,7 @@ def _link_peaks_to_genes_pearson(
     gene_source_cols_raw: np.ndarray,
     max_distance: int,
     min_abs_corr: float,
+    backend_symbols: list[str],
 ) -> pd.DataFrame:
     gene_tss_raw = genes_in_rna["tss"].to_numpy(dtype=np.int64)
     gene_order, has_chrom_overlap, n_gene_columns = _prepare_gene_order(
@@ -191,6 +197,7 @@ def _link_peaks_to_genes_pearson(
         gene_tss_raw,
         gene_source_cols_raw,
     )
+    backend_symbols = backend_symbols + ["enhancer_prepare_gene_order"]
     gene_order = np.asarray(gene_order, dtype=np.intp)
     gene_chrom_codes = gene_chrom_codes_raw[gene_order]
     gene_source_cols = gene_source_cols_raw[gene_order]
@@ -207,7 +214,9 @@ def _link_peaks_to_genes_pearson(
             f"resulting link DataFrame will be empty.",
             UserWarning, stacklevel=3,
         )
-        return pd.DataFrame(columns=_LINK_COLUMNS)
+        out = pd.DataFrame(columns=_LINK_COLUMNS)
+        out.attrs["rust_backend"] = {"engine": "rust", "symbols": backend_symbols}
+        return out
 
     import scipy.sparse as sp
 
@@ -277,7 +286,10 @@ def _link_peaks_to_genes_pearson(
     gene_ix = np.asarray(gene_ix)
     if peak_ix.size == 0:
         out = pd.DataFrame(columns=_LINK_COLUMNS)
-        out.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
+        out.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": backend_symbols + [backend_symbol],
+        }
         return out
 
     correlations = np.asarray(corr, dtype=np.float32)
@@ -295,8 +307,21 @@ def _link_peaks_to_genes_pearson(
         columns=_LINK_COLUMNS,
     )
     out = out.reset_index(drop=True)
-    out.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
+    out.attrs["rust_backend"] = {
+        "engine": "rust",
+        "symbols": backend_symbols + [backend_symbol],
+    }
     return out
+
+
+def _rust_backend_symbols(obj) -> list[str]:
+    backend = getattr(obj, "attrs", {}).get("rust_backend")
+    if not isinstance(backend, dict):
+        return []
+    symbols = backend.get("symbols")
+    if not isinstance(symbols, list):
+        return []
+    return [symbol for symbol in symbols if isinstance(symbol, str) and symbol]
 
 
 def _chrom_examples(values, limit: int = 5) -> list[str]:
@@ -377,7 +402,12 @@ def _parse_peak_names(names):
     if parsed is None:
         return None
     chroms, starts, ends = parsed
-    return pd.DataFrame({"chrom": chroms, "start": starts, "end": ends})
+    out = pd.DataFrame({"chrom": chroms, "start": starts, "end": ends})
+    out.attrs["rust_backend"] = {
+        "engine": "rust",
+        "symbols": ["enhancer_parse_peak_names"],
+    }
+    return out
 
 
 def _normalise_chrom(name: str) -> str:

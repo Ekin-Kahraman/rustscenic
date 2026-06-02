@@ -381,6 +381,10 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
         "cistarget_enrichment_from_rankings_i32"
     ]
     assert result.backend_execution["enhancer"]["symbols"] == [
+        "enhancer_align_cell_indices",
+        "enhancer_match_gene_coords_to_rna",
+        "enhancer_normalise_chrom_codes",
+        "enhancer_prepare_gene_order",
         "enhancer_link_pearson"
     ]
     assert result.backend_execution["eregulon_peak_attribution"]["symbols"] == [
@@ -393,6 +397,10 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
         "aucell_score",
     ]
     assert manifest["backend_execution"]["enhancer"]["symbols"] == [
+        "enhancer_align_cell_indices",
+        "enhancer_match_gene_coords_to_rna",
+        "enhancer_normalise_chrom_codes",
+        "enhancer_prepare_gene_order",
         "enhancer_link_pearson"
     ]
     assert manifest["n_grn_edges"] == result.n_grn_edges
