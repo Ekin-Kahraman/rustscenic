@@ -405,6 +405,36 @@ def test_attach_aucell_to_obs_avoids_join_for_aligned_cells(monkeypatch):
     np.testing.assert_allclose(adata.obs["TF2_regulon"].to_numpy(), [0.4, 0.5, 0.6])
 
 
+def test_attach_aucell_to_obs_avoids_fragmented_column_inserts():
+    import warnings
+
+    import rustscenic.pipeline
+
+    cells = ["c0", "c1", "c2"]
+    adata = ad.AnnData(
+        X=np.zeros((3, 2), dtype=np.float32),
+        obs=pd.DataFrame({"batch": ["a", "b", "c"]}, index=cells),
+        var=pd.DataFrame(index=["G1", "G2"]),
+    )
+    auc = pd.DataFrame(
+        np.arange(3 * 500, dtype=np.float32).reshape(3, 500),
+        index=cells,
+        columns=[f"TF{i}_regulon" for i in range(500)],
+    )
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always", pd.errors.PerformanceWarning)
+        rustscenic.pipeline._attach_aucell_to_obs(adata, auc)
+
+    assert not [
+        warning for warning in caught
+        if issubclass(warning.category, pd.errors.PerformanceWarning)
+    ]
+    assert adata.obs.shape == (3, 501)
+    assert list(adata.obs.columns[:2]) == ["batch", "TF0_regulon"]
+    np.testing.assert_allclose(adata.obs["TF499_regulon"].to_numpy(), auc["TF499_regulon"].to_numpy())
+
+
 def test_subset_atac_to_rna_cells_uses_rust_indices_and_preserves_atac_order():
     import rustscenic.pipeline
 

@@ -1257,12 +1257,13 @@ def _coerce_gene_coords(coords):
 
 
 def _attach_aucell_to_obs(adata_rna, auc: pd.DataFrame) -> None:
-    """Attach AUCell columns without a full pandas join copy.
+    """Attach AUCell columns without per-regulon pandas inserts.
 
     The AUCell result is produced in RNA cell order in normal pipeline runs.
-    When that invariant holds, assign columns directly. If a caller supplies
-    an externally aligned AUCell frame in future, reindex only the AUCell frame
-    rather than materialising a joined copy of the whole obs table.
+    If a caller supplies an externally aligned AUCell frame in future, reindex
+    only the AUCell frame, then rebuild obs once. Assigning thousands of
+    regulon columns one by one fragments pandas' block manager and inflates the
+    final integrated-output step.
     """
     obs = adata_rna.obs
     overlap = [col for col in auc.columns if col in obs.columns]
@@ -1272,9 +1273,18 @@ def _attach_aucell_to_obs(adata_rna, auc: pd.DataFrame) -> None:
     if not pd.Index(auc.index).equals(pd.Index(adata_rna.obs_names)):
         auc = auc.reindex(adata_rna.obs_names)
 
-    for col in auc.columns:
-        obs[col] = auc[col].to_numpy(copy=False)
-    adata_rna.obs = obs
+    data = {col: obs[col] for col in obs.columns}
+    data.update(
+        {
+            col: pd.Series(
+                auc[col].to_numpy(copy=False),
+                index=obs.index,
+                name=col,
+            )
+            for col in auc.columns
+        }
+    )
+    adata_rna.obs = pd.DataFrame(data, index=obs.index)
 
 
 def _peak_rss_gb() -> float:
