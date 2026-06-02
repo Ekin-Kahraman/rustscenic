@@ -16,6 +16,7 @@ from rustscenic._rustscenic import (
     grn_infer_sparse_csc as _grn_infer_sparse_csc,
 )
 from rustscenic._gene_resolution import (
+    dedupe_backend_symbol_for_matrix,
     dedupe_by_symbol,
     duplicate_gene_summary,
     warn_if_max_likely_unnormalized,
@@ -91,6 +92,7 @@ def infer(
     # resolution (multiple transcripts collapsing). Sum columns so
     # regression sees one row per gene, not silently lose data.
     dup_count, top_dupes = duplicate_gene_summary(gene_names)
+    backend_symbols = ["gene_duplicate_summary"]
     if dup_count > 0:
         import warnings
         warnings.warn(
@@ -101,6 +103,9 @@ def infer(
             f"upstream if you want full control.",
             UserWarning, stacklevel=2,
         )
+        dedupe_symbol = dedupe_backend_symbol_for_matrix(X)
+        if dedupe_symbol is not None:
+            backend_symbols.append(dedupe_symbol)
         X, gene_names = dedupe_by_symbol(X, gene_names)
         if sp.issparse(X):
             X = _sparse_float32_csc(X)
@@ -218,7 +223,10 @@ def infer(
         "target": targets,
         "importance": np.asarray(importances),
     })
-    df.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
+    df.attrs["rust_backend"] = {
+        "engine": "rust",
+        "symbols": backend_symbols + [backend_symbol],
+    }
 
     if verbose:
         if raw_n != len(df):

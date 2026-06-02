@@ -91,7 +91,10 @@ class TestGrnEdgeCases:
         out = grn.infer(adata, tf_names=["g0", "g1"], n_estimators=5, verbose=False)
 
         assert out.empty
-        assert out.attrs["rust_backend"]["symbols"] == ["grn_infer_sparse_csc"]
+        assert out.attrs["rust_backend"]["symbols"] == [
+            "gene_duplicate_summary",
+            "grn_infer_sparse_csc",
+        ]
         assert seen["indptr_dtype"] == X.indptr.dtype
         assert seen["indices_dtype"] == np.dtype(np.int32)
         assert seen["data_dtype"] == np.dtype(np.float32)
@@ -180,6 +183,27 @@ class TestGrnEdgeCases:
         assert np.shares_memory(seen["expression"], values)
         assert seen["expression"].flags.f_contiguous
         assert not seen["expression"].flags.c_contiguous
+
+    def test_duplicate_gene_dedupe_kernel_is_recorded(self, monkeypatch):
+        values = np.ones((60, 3), dtype=np.float32)
+        df = pd.DataFrame(values, columns=["TF1", "g1", "TF1"])
+        seen = {}
+
+        def fake_grn(expression_arg, *_args):
+            seen["shape"] = expression_arg.shape
+            return [], [], np.asarray([], dtype=np.float32), 0, 1, [], 1.0
+
+        monkeypatch.setattr(grn, "_grn_infer", fake_grn)
+
+        with pytest.warns(UserWarning, match="duplicate gene"):
+            out = grn.infer(df, tf_names=["TF1"], n_estimators=5, verbose=False)
+
+        assert seen["shape"] == (60, 2)
+        assert out.attrs["rust_backend"]["symbols"] == [
+            "gene_duplicate_summary",
+            "gene_dedupe_dense_f32",
+            "grn_infer",
+        ]
 
     def test_dense_grn_does_not_allocate_python_isfinite_mask(self, monkeypatch, rng):
         values = rng.random((60, 8)).astype(np.float32)

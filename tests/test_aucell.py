@@ -73,7 +73,11 @@ class TestAucellCorrectness:
         out = aucell.score(df, [("R", ["g0", "g2"])], top_frac=0.2)
 
         assert out.shape == (values.shape[0], 1)
-        assert out.attrs["rust_backend"]["symbols"] == ["aucell_score"]
+        assert out.attrs["rust_backend"]["symbols"] == [
+            "gene_duplicate_summary",
+            "stage_prepare_regulon_indices_with_coverage",
+            "aucell_score",
+        ]
         assert np.shares_memory(seen["expression"], values)
         assert seen["expression"].flags.f_contiguous
         assert not seen["expression"].flags.c_contiguous
@@ -128,6 +132,23 @@ class TestAucellCorrectness:
         )
 
         pd.testing.assert_frame_equal(got, expected)
+
+    def test_duplicate_gene_dedupe_kernel_is_recorded(self):
+        values = np.array(
+            [[4.0, 1.0, 2.0], [0.0, 3.0, 5.0]],
+            dtype=np.float32,
+        )
+        df = pd.DataFrame(values, columns=["g0", "g1", "g0"])
+
+        with pytest.warns(UserWarning, match="duplicate gene"):
+            out = aucell.score(df, [("R", ["g0"])], top_frac=0.5)
+
+        assert out.attrs["rust_backend"]["symbols"] == [
+            "gene_duplicate_summary",
+            "gene_dedupe_dense_f32",
+            "stage_prepare_regulon_indices_with_coverage",
+            "aucell_score",
+        ]
 
 
 class TestAucellEdgeCases:
@@ -339,7 +360,11 @@ class TestAucellSparse:
         out = aucell.score(adata, {"R": ["g0", "g2"]}, top_frac=0.5)
 
         assert out.shape == (2, 1)
-        assert out.attrs["rust_backend"]["symbols"] == ["aucell_score_sparse_csr"]
+        assert out.attrs["rust_backend"]["symbols"] == [
+            "gene_duplicate_summary",
+            "stage_prepare_regulon_indices_with_coverage",
+            "aucell_score_sparse_csr",
+        ]
         assert seen["row_ptr"].dtype == X_sparse.indptr.dtype
         assert seen["col_idx"].dtype == np.int32
         assert seen["data"].dtype == np.float32

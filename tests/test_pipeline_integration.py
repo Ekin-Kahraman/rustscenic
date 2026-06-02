@@ -369,7 +369,10 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     manifest = json.loads((out / "manifest.json").read_text())
     assert "memory" in manifest
     assert "integrated_adata" in manifest["memory"]
-    assert result.backend_execution["grn"]["symbols"] == ["grn_infer"]
+    assert result.backend_execution["grn"]["symbols"] == [
+        "gene_duplicate_summary",
+        "grn_infer",
+    ]
     assert result.backend_execution["preproc"]["symbols"] == [
         "preproc_fragments_to_matrix"
     ]
@@ -384,7 +387,11 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
         "pipeline_attribute_peaks_to_cistarget_rows_f32"
     ]
     assert result.backend_execution["eregulons"]["symbols"] == ["eregulon_assemble_f32"]
-    assert result.backend_execution["aucell"]["symbols"] == ["aucell_score"]
+    assert result.backend_execution["aucell"]["symbols"] == [
+        "gene_duplicate_summary",
+        "stage_prepare_regulon_indices_with_coverage",
+        "aucell_score",
+    ]
     assert manifest["backend_execution"]["enhancer"]["symbols"] == [
         "enhancer_link_pearson"
     ]

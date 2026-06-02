@@ -327,6 +327,26 @@ def duplicate_gene_summary(
     return int(duplicate_count), list(examples)
 
 
+def dedupe_backend_symbol_for_matrix(X) -> str | None:
+    """Return the Rust dedupe kernel symbol that ``dedupe_by_symbol`` will use."""
+    import scipy.sparse as sp
+
+    dtype = np.dtype(X.dtype)
+    suffix = {
+        np.dtype(np.float32): "f32",
+        np.dtype(np.float64): "f64",
+        np.dtype(np.int32): "i32",
+        np.dtype(np.int64): "i64",
+        np.dtype(np.uint32): "u32",
+        np.dtype(np.uint64): "u64",
+    }.get(dtype)
+    if suffix is None:
+        return None
+    if sp.issparse(X):
+        return f"gene_dedupe_sparse_csc_{suffix}"
+    return f"gene_dedupe_dense_{suffix}"
+
+
 def _dedupe_sparse_by_symbol(X, gene_names: list[str]):
     import scipy.sparse as sp
 
@@ -467,6 +487,7 @@ __all__ = [
     "warn_if_likely_unnormalized",
     "warn_if_max_likely_unnormalized",
     "dedupe_by_symbol",
+    "dedupe_backend_symbol_for_matrix",
     "duplicate_gene_summary",
     "diagnose_zero_tf_overlap",
 ]

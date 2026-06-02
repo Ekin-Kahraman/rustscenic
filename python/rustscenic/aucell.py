@@ -21,6 +21,7 @@ from rustscenic._rustscenic import (
     aucell_score_sparse_csr as _aucell_score_sparse_csr,
 )
 from rustscenic._gene_resolution import (
+    dedupe_backend_symbol_for_matrix,
     dedupe_by_symbol,
     duplicate_gene_summary,
     warn_if_max_likely_unnormalized,
@@ -101,6 +102,7 @@ def score(
             UserWarning, stacklevel=3,
         )
     dup_count, top_dupes = duplicate_gene_summary(gene_names)
+    backend_symbols = ["gene_duplicate_summary"]
     if dup_count > 0:
         import warnings
         warnings.warn(
@@ -111,11 +113,15 @@ def score(
             f"dedupe_by_symbol()` upstream if you want full control.",
             UserWarning, stacklevel=3,
         )
+        dedupe_symbol = dedupe_backend_symbol_for_matrix(X_raw)
+        if dedupe_symbol is not None:
+            backend_symbols.append(dedupe_symbol)
         X_raw, gene_names = dedupe_by_symbol(X_raw, gene_names)
 
     reg_names, reg_gene_indices, reg_pairs, coverage, dropped_empty = (
         prepare_regulon_indices_with_coverage(gene_names, regulons)
     )
+    backend_symbols.append("stage_prepare_regulon_indices_with_coverage")
     warn_if_poor_coverage(coverage, stacklevel=3)
 
     if dropped_empty > 0 and not reg_names:
@@ -164,7 +170,10 @@ def score(
     # Store per-regulon coverage as metadata so downstream code can
     # diagnose low-overlap regulons without rerunning.
     df.attrs["regulon_coverage"] = coverage
-    df.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
+    df.attrs["rust_backend"] = {
+        "engine": "rust",
+        "symbols": backend_symbols + [backend_symbol],
+    }
     return df
 
 
