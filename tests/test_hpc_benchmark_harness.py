@@ -2619,6 +2619,10 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "--require-data-hashes" in full
     assert "--require-rust-hot-paths" in full
     assert '--threads "${RAYON_NUM_THREADS}"' in full
+    assert 'MOTIF_RANKINGS="${MOTIF_RANKINGS:-}"' in full
+    assert 'MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"' in full
+    assert 'GENE_COORDS="${GENE_COORDS:-}"' in full
+    assert '"${REFERENCE_TABLE_ARGS[@]}"' in full
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in full_scaling
     assert "validation/scaling/bench_real_multiome_pipeline_scaling.py" in full_scaling
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in full_scaling
@@ -2628,6 +2632,10 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "--require-thread-pins" in full_scaling
     assert "--require-data-hashes" in full_scaling
     assert "--require-rust-hot-paths" in full_scaling
+    assert 'MOTIF_RANKINGS="${MOTIF_RANKINGS:-}"' in full_scaling
+    assert 'MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"' in full_scaling
+    assert 'GENE_COORDS="${GENE_COORDS:-}"' in full_scaling
+    assert '"${REFERENCE_TABLE_ARGS[@]}"' in full_scaling
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in grn
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in grn
     assert "validation/hpc/minerva/collect_benchmark_results.py" in grn

@@ -27,6 +27,19 @@ DATA_DIR="${REPO}/validation/real_multiome_v036"
 RUN_PREFIX="pbmc3k_full_pipeline_scaling_$(date +%Y%m%d_%H%M%S)"
 OUT_ROOT="${PROJECT}/results/real_pbmc3k_full_pipeline_scaling/${RUN_PREFIX}"
 OUT_JSON="${PROJECT}/results/real_pbmc3k_full_pipeline_scaling/${RUN_PREFIX}.json"
+MOTIF_RANKINGS="${MOTIF_RANKINGS:-}"
+MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"
+GENE_COORDS="${GENE_COORDS:-}"
+REFERENCE_TABLE_ARGS=()
+if [[ -n "${MOTIF_RANKINGS}" ]]; then
+  REFERENCE_TABLE_ARGS+=(--motif-rankings "${MOTIF_RANKINGS}")
+fi
+if [[ -n "${MOTIF_ANNOTATIONS}" ]]; then
+  REFERENCE_TABLE_ARGS+=(--motif-annotations "${MOTIF_ANNOTATIONS}")
+fi
+if [[ -n "${GENE_COORDS}" ]]; then
+  REFERENCE_TABLE_ARGS+=(--gene-coords "${GENE_COORDS}")
+fi
 
 mkdir -p "${PROJECT}/logs" "${PROJECT}/results/real_pbmc3k_full_pipeline_scaling" "${TMPDIR}"
 
@@ -43,6 +56,7 @@ echo "python=$(python --version)"
 echo "repo_sha=$(git rev-parse --short HEAD)"
 echo "result_json=${OUT_JSON}"
 echo "RAYON_NUM_THREADS=${RAYON_NUM_THREADS}"
+echo "reference_table_args=${REFERENCE_TABLE_ARGS[*]}"
 
 python validation/hpc/minerva/preflight_minerva.py \
   --repo "${REPO}" \
@@ -63,6 +77,7 @@ python validation/hpc/minerva/preflight_minerva.py \
   --out-root "${OUT_ROOT}" \
   --out-json "${OUT_JSON}" \
   --run-prefix "${RUN_PREFIX}" \
+  "${REFERENCE_TABLE_ARGS[@]}" \
   --cell-counts 500 1000 2000 2767 \
   --threads "${RAYON_NUM_THREADS}" \
   --expected-tfs SPI1 PAX5 GATA3 TBX21 EBF1 IRF8 TCF7 RUNX3 \
