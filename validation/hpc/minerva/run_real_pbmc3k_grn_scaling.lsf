@@ -49,6 +49,7 @@ python validation/hpc/minerva/preflight_minerva.py \
   --out-json "${OUT_JSON%.json}.preflight.json" \
   --require-repo-import \
   --require-thread-pins \
+  --require-data-hashes \
   --require-clean
 
 /usr/bin/time -v python validation/scaling/bench_real_pbmc3k_grn_scaling.py \

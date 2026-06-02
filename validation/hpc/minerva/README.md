@@ -24,11 +24,17 @@ python validation/hpc/minerva/prepare_real_pbmc3k_data.py
 python validation/hpc/minerva/preflight_minerva.py \
   --require-clean \
   --require-repo-import \
-  --require-thread-pins
+  --require-thread-pins \
+  --require-data-hashes
 bsub < validation/hpc/minerva/run_real_pbmc3k_full_pipeline.lsf
 bsub < validation/hpc/minerva/run_real_pbmc3k_full_pipeline_scaling.lsf
 bsub < validation/hpc/minerva/run_real_pbmc3k_grn_scaling.lsf
 ```
+
+Run the data-preparation command on the login node before `bsub`. The LSF
+launchers run it again and skip already-valid files, so the jobs still work if
+the dataset is already present and compute nodes have restricted outbound
+network access.
 
 The full-pipeline job writes one JSON artefact under
 `/sc/arion/projects/DiseaseGeneCell/Huang_lab_projects/rustscenic/results/real_pbmc3k_full_pipeline/`.
@@ -41,10 +47,11 @@ The GRN scaling job writes one JSON artefact under
 Each launcher runs the preflight first and writes a `.preflight.json` file next
 to the benchmark result. Before preflight, the launcher runs
 `prepare_real_pbmc3k_data.py` to download any missing 10x PBMC3k inputs and
-verify their SHA-256 hashes. The preflight records `rustscenic.__file__` and
-the compiled extension path, and the launchers pass `--require-repo-import` so
-jobs fail before benchmarking a stale installed package. It also checks that
-the compiled extension exposes the Rust kernels required by the pipeline.
+verify their SHA-256 hashes. The preflight records `rustscenic.__file__`, the
+compiled extension path, and PBMC3k file hashes, and the launchers pass
+`--require-repo-import` so jobs fail before benchmarking a stale installed
+package. It also checks that the compiled extension exposes the Rust kernels
+required by the pipeline.
 
 The benchmark artefact records the repo commit, tracked source-clean state,
 tracked-diff SHA-256 fingerprint, RustScenic version, backend capabilities,

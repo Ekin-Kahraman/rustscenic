@@ -1043,6 +1043,62 @@ def test_minerva_preflight_rejects_unpinned_thread_env(monkeypatch, tmp_path):
     )
 
 
+def test_minerva_preflight_rejects_data_hash_mismatch(monkeypatch, tmp_path):
+    module = _load_module(
+        "preflight_minerva_data_hashes",
+        ROOT / "validation/hpc/minerva/preflight_minerva.py",
+    )
+    repo, env, data = _write_minerva_preflight_fixture(tmp_path)
+    monkeypatch.setattr(
+        module,
+        "_git_state",
+        lambda _repo: {
+            "commit": "abc123",
+            "commit_error": None,
+            "tracked_status_short": [],
+            "status_error": None,
+            "tracked_dirty": False,
+            "tracked_source_count": 0,
+            "tracked_source_sample": [],
+        },
+    )
+    monkeypatch.setattr(
+        module,
+        "_import_state",
+        lambda _python, _repo: {
+            "ok": True,
+            "python": str(env / "bin" / "python"),
+            "rustscenic_version": "0.4.7",
+            "package_version": "0.4.7",
+            "extension_version": "0.4.7",
+            "package_file": str(repo / "python" / "rustscenic" / "__init__.py"),
+            "package_under_repo": True,
+            "extension_file": str(repo / "python" / "rustscenic" / "_rustscenic.so"),
+            "extension_under_repo": True,
+            "extension_error": None,
+            "parse_error": None,
+            "stderr": "",
+        },
+    )
+    monkeypatch.setattr(module, "_backend_state", lambda _python, _repo: _preflight_backend_state())
+    args = module.parse_args(
+        [
+            "--repo", str(repo),
+            "--env", str(env),
+            "--data-dir", str(data),
+            "--require-data-hashes",
+        ]
+    )
+
+    result = module.preflight(args)
+
+    assert result["ok"] is False
+    assert any(
+        failure.startswith("data file hash mismatch pbmc_3k_filtered_feature_bc_matrix.h5")
+        for failure in result["failures"]
+    )
+
+
 def test_minerva_preflight_rejects_dirty_tracked_checkout(monkeypatch, tmp_path):
     module = _load_module(
         "preflight_minerva_dirty",
@@ -2243,6 +2299,7 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "--check-output-files" in full
     assert "--require-repo-import" in full
     assert "--require-thread-pins" in full
+    assert "--require-data-hashes" in full
     assert '--threads "${RAYON_NUM_THREADS}"' in full
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in full_scaling
     assert "validation/scaling/bench_real_multiome_pipeline_scaling.py" in full_scaling
@@ -2251,11 +2308,13 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "--check-output-files" in full_scaling
     assert "--require-repo-import" in full_scaling
     assert "--require-thread-pins" in full_scaling
+    assert "--require-data-hashes" in full_scaling
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in grn
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in grn
     assert "validation/hpc/minerva/collect_benchmark_results.py" in grn
     assert "--require-repo-import" in grn
     assert "--require-thread-pins" in grn
+    assert "--require-data-hashes" in grn
     assert 'export RAYON_NUM_THREADS="${LSB_DJOB_NUMPROC:-16}"' in grn
 
 

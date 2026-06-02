@@ -21,17 +21,18 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from validation.backend_requirements import REQUIRED_RUST_BACKEND_SYMBOLS
+from validation.hpc.minerva.prepare_real_pbmc3k_data import (
+    PBMC3K_FILES,
+    sha256_file,
+)
 from validation.repo_cleanliness import repo_state_from_git_outputs
 
 
 DEFAULT_PROJECT = Path("/sc/arion/projects/DiseaseGeneCell/Huang_lab_projects/rustscenic")
 DEFAULT_ENV = Path("/sc/arion/work/kahrae01/rustscenic/envs/rustscenic-v047")
 DEFAULT_REPO = DEFAULT_PROJECT / "repo"
-REQUIRED_DATA_FILES = (
-    "pbmc_3k_filtered_feature_bc_matrix.h5",
-    "pbmc_3k_atac_fragments.tsv.gz",
-    "pbmc_3k_atac_peaks.bed",
-)
+REQUIRED_DATA_FILES = tuple(spec.filename for spec in PBMC3K_FILES)
+DATA_FILE_SPECS = {spec.filename: spec for spec in PBMC3K_FILES}
 
 
 def _run(args: list[str], *, cwd: Path | None = None) -> subprocess.CompletedProcess:
@@ -56,6 +57,26 @@ def _path_status(path: Path) -> dict[str, Any]:
         "type": "file",
         "size_bytes": path.stat().st_size,
     }
+
+
+def _data_file_status(path: Path, name: str) -> dict[str, Any]:
+    status = _path_status(path)
+    spec = DATA_FILE_SPECS.get(name)
+    if spec is None:
+        return status
+    status["expected_size_bytes"] = spec.size_bytes
+    status["expected_sha256"] = spec.sha256
+    if status.get("type") != "file":
+        status["size_ok"] = False
+        status["hash_ok"] = False
+        return status
+    status["size_ok"] = status.get("size_bytes") == spec.size_bytes
+    if not status["size_ok"]:
+        status["hash_ok"] = False
+        return status
+    status["sha256"] = sha256_file(path)
+    status["hash_ok"] = status["sha256"] == spec.sha256
+    return status
 
 
 def _git_state(repo: Path) -> dict[str, Any]:
@@ -264,7 +285,7 @@ def preflight(args: argparse.Namespace) -> dict[str, Any]:
         "python": _path_status(python),
         "data_dir": _path_status(data_dir),
         "data_files": {
-            name: _path_status(data_dir / name)
+            name: _data_file_status(data_dir / name, name)
             for name in REQUIRED_DATA_FILES
         },
         "benchmark_scripts": {
@@ -294,6 +315,8 @@ def preflight(args: argparse.Namespace) -> dict[str, Any]:
     for name, status in checks["data_files"].items():
         if not status["exists"]:
             failures.append(f"missing data file {name}: {status['path']}")
+        elif args.require_data_hashes and status.get("hash_ok") is not True:
+            failures.append(f"data file hash mismatch {name}: {status['path']}")
     for group in ("benchmark_scripts", "lsf_scripts", "hpc_tools"):
         for name, status in checks[group].items():
             if not status["exists"]:
@@ -379,6 +402,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Fail unless Rayon is pinned to the LSF core count and BLAS/OpenMP "
             "libraries are single-threaded."
         ),
+    )
+    parser.add_argument(
+        "--require-data-hashes",
+        action="store_true",
+        help="Fail unless PBMC3k data files match the expected SHA-256 hashes.",
     )
     parser.add_argument(
         "--require-repo-import",
