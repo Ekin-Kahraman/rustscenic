@@ -369,6 +369,10 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     manifest = json.loads((out / "manifest.json").read_text())
     assert "memory" in manifest
     assert "integrated_adata" in manifest["memory"]
+    assert result.backend_execution["grn"]["engine"] == "rust"
+    assert result.backend_execution["aucell"]["engine"] == "rust"
+    assert result.backend_execution["eregulons"]["engine"] == "rust"
+    assert manifest["backend_execution"]["enhancer"]["engine"] == "rust"
     assert manifest["n_grn_edges"] == result.n_grn_edges
     assert manifest["aucell_shape"] == result.aucell_shape
 

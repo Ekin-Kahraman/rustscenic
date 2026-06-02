@@ -67,6 +67,17 @@ REQUIRED_FULL_PIPELINE_ARTEFACTS = {
     "eregulons_path": "file",
     "integrated_adata_path": "file",
 }
+REQUIRED_FULL_PIPELINE_RUST_EXECUTION = {
+    "setup_fragments_to_matrix",
+    "pipeline_topics",
+    "pipeline_grn",
+    "pipeline_candidate_regulons",
+    "pipeline_cistarget",
+    "pipeline_enhancer",
+    "pipeline_eregulon_peak_attribution",
+    "pipeline_eregulons",
+    "pipeline_aucell",
+}
 
 
 def _positive_number(value: Any) -> bool:
@@ -228,6 +239,34 @@ def _python_hot_path_failures(record: dict[str, Any], prefix: str) -> list[str]:
         failures.append(f"{prefix}.python_hot_paths.pattern_count must be positive")
     if not _nonempty_str(state.get("package_dir")):
         failures.append(f"{prefix}.python_hot_paths.package_dir must be a non-empty string")
+    return failures
+
+
+def _backend_execution_failures(
+    record: dict[str, Any],
+    prefix: str,
+    required_rust_stages: set[str] | None = None,
+) -> list[str]:
+    execution = record.get("backend_execution")
+    if not isinstance(execution, dict):
+        return [f"{prefix}.backend_execution missing"]
+
+    failures: list[str] = []
+    for stage in sorted(required_rust_stages or set()):
+        state = execution.get(stage)
+        stage_prefix = f"{prefix}.backend_execution.{stage}"
+        if not isinstance(state, dict):
+            failures.append(f"{stage_prefix} must be an object")
+            continue
+        if state.get("engine") != "rust":
+            failures.append(f"{stage_prefix}.engine must be 'rust'")
+        symbols = state.get("symbols")
+        if (
+            not isinstance(symbols, list)
+            or not symbols
+            or not all(_nonempty_str(symbol) for symbol in symbols)
+        ):
+            failures.append(f"{stage_prefix}.symbols must be a non-empty string list")
     return failures
 
 
@@ -491,6 +530,7 @@ def _full_pipeline_scaling_row_child_failures(
         "peak_rss_gb_per_stage": child.get("peak_rss_gb_per_stage"),
         "outputs": child.get("outputs"),
         "expected_tf_recovery": child.get("expected_tf_recovery"),
+        "backend_execution": child.get("backend_execution"),
     }
     for key, expected in checks.items():
         if row.get(key) != expected:
@@ -574,6 +614,13 @@ def _full_pipeline_scaling_row_failures(row: dict[str, Any], prefix: str) -> lis
             failures.append(f"{prefix}.outputs.aucell_shape cells must equal n_cells_actual")
 
     failures.extend(_expected_tf_recovery_failures(row, prefix))
+    failures.extend(
+        _backend_execution_failures(
+            row,
+            prefix,
+            REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
+        )
+    )
     return failures
 
 
@@ -588,6 +635,13 @@ def validate_full_pipeline(
     failures.extend(_backend_failures(record, "full_pipeline"))
     failures.extend(_python_hot_path_failures(record, "full_pipeline"))
     failures.extend(
+        _backend_execution_failures(
+            record,
+            "full_pipeline",
+            REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
+        )
+    )
+    failures.extend(
         _require_keys(
             record,
             {
@@ -596,6 +650,7 @@ def validate_full_pipeline(
                 "runtime_import",
                 "backend_capabilities",
                 "python_hot_paths",
+                "backend_execution",
                 "input_hashes",
                 "reference_fingerprints",
                 "params",

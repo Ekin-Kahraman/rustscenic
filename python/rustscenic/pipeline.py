@@ -94,6 +94,7 @@ class PipelineResult:
     n_eregulons: int | None = None
     aucell_shape: list[int] | None = None
     regulon_source: str = "candidate_grn_top_targets"
+    backend_execution: dict = field(default_factory=dict)
 
     def manifest(self) -> dict:
         d = asdict(self)
@@ -230,6 +231,7 @@ def run(
     log = _Logger(verbose)
     elapsed: dict = {}
     memory: dict = {}
+    backend_execution: dict = {}
     n_cistarget_rows: int | None = None
     n_enhancer_links: int | None = None
     n_eregulon_rows: int | None = None
@@ -277,6 +279,7 @@ def run(
             else:
                 log("[2/8] preproc: using caller-provided ATAC AnnData (skipping fragments_to_matrix)")
             elapsed["preproc"] = 0.0
+            backend_execution["preproc"] = _skipped_execution("caller provided pre-built ATAC AnnData")
             log(f"      ATAC shape: {adata_atac.shape}")
         else:
             import rustscenic.preproc
@@ -284,6 +287,7 @@ def run(
             t0 = time.perf_counter()
             adata_atac = rustscenic.preproc.fragments_to_matrix(fragments, peaks)
             elapsed["preproc"] = time.perf_counter() - t0
+            backend_execution["preproc"] = _rust_execution("preproc_fragments_to_matrix")
             log(f"      ATAC shape: {adata_atac.shape}, took {elapsed['preproc']:.1f}s")
         mark_memory("preproc")
 
@@ -312,6 +316,7 @@ def run(
                 n_passes=topics_n_passes,
                 seed=seed,
             )
+            backend_execution["topics"] = _rust_execution("topics_fit")
         else:
             topics_result = rustscenic.topics.fit_gibbs(
                 adata_atac,
@@ -320,6 +325,7 @@ def run(
                 n_threads=topics_n_threads,
                 seed=seed,
             )
+            backend_execution["topics"] = _rust_execution("topics_fit_gibbs")
         elapsed["topics"] = time.perf_counter() - t0
         log(f"      fit in {elapsed['topics']:.1f}s")
         mark_memory("topics")
@@ -351,6 +357,7 @@ def run(
         verbose=False,
     )
     elapsed["grn"] = time.perf_counter() - t0
+    backend_execution["grn"] = _rust_execution("grn_infer", "grn_infer_sparse_csc")
     n_grn_edges = int(len(grn))
     grn_path = output_dir / "grn.parquet"
     grn.to_parquet(grn_path, index=False)
@@ -366,6 +373,9 @@ def run(
         grn,
         top_targets=grn_top_targets,
         min_targets=min_targets_for_candidate,
+    )
+    backend_execution["candidate_regulons"] = _rust_execution(
+        "pipeline_candidate_regulons_from_grn"
     )
     candidate_regulons_path = output_dir / "candidate_regulons.json"
     candidate_regulons_path.write_text(json.dumps(candidate_regulons, indent=2))
@@ -400,6 +410,11 @@ def run(
             auc_threshold=cistarget_auc_threshold,
             nes_threshold=cistarget_nes_threshold,
         )
+        backend_execution["cistarget"] = _rust_execution(
+            "cistarget_enrichment_from_rankings_i16",
+            "cistarget_enrichment_from_rankings_i32",
+            "cistarget_enrichment_from_rankings_i64",
+        )
         enriched_for_eregulons = enriched
         elapsed["cistarget"] = time.perf_counter() - t0
         n_cistarget_rows = int(len(enriched))
@@ -429,6 +444,15 @@ def run(
                 top_frac=cistarget_top_frac,
                 auc_threshold=cistarget_auc_threshold,
                 min_genes=1,
+            )
+            backend_execution["cistarget_pruning"] = _rust_execution(
+                "cistarget_motif_annotation_prune_standard_rows_f32",
+                "cistarget_motif_annotation_prune_standard_rows_f64",
+                "cistarget_prune_regulon_targets_f32",
+                "cistarget_prune_regulon_targets_f64",
+                "cistarget_prune_regulon_targets_i16",
+                "cistarget_prune_regulon_targets_i32",
+                "cistarget_prune_regulon_targets_i64",
             )
             n_pruned_regulons = len(pruned_regulons)
             if pruned_regulons:
@@ -541,6 +565,10 @@ def run(
                 max_distance=enhancer_max_distance,
                 min_abs_corr=enhancer_min_abs_corr,
             )
+            backend_execution["enhancer"] = _rust_execution(
+                "enhancer_link_pearson",
+                "enhancer_link_pearson_sparse_rna",
+            )
             elapsed["enhancer"] = time.perf_counter() - t0
             n_enhancer_links = int(len(enhancer_links))
             enhancer_links_path = output_dir / "enhancer_links.parquet"
@@ -575,6 +603,9 @@ def run(
             peak_regulons, needed_peaks = _peak_regulons_and_projection_features(
                 grn, enhancer_links
             )
+            backend_execution["eregulon_peak_regulons"] = _rust_execution(
+                "pipeline_peak_regulons_and_features_from_edges"
+            )
             if peak_regulons:
                 region_rankings_df = _coerce_rankings(
                     region_motif_rankings,
@@ -590,6 +621,13 @@ def run(
                     auc_threshold=cistarget_auc_threshold,
                     nes_threshold=cistarget_nes_threshold,
                 )
+                backend_execution["eregulon_peak_attribution"] = _rust_execution(
+                    "cistarget_region_attribution_i16",
+                    "cistarget_region_attribution_i32",
+                    "cistarget_region_attribution_i64",
+                    "pipeline_expand_region_cistarget_rows_f32",
+                    "pipeline_expand_region_cistarget_rows_f64",
+                )
                 if motif_annotations_df is not None and not region_enrich.empty:
                     region_enrich = rustscenic.cistarget.prune_enriched_motifs(
                         region_enrich,
@@ -600,6 +638,10 @@ def run(
                         enriched_with_peaks,
                         region_enrich,
                 )
+                    backend_execution["eregulon_peak_filter"] = _rust_execution(
+                        "pipeline_filter_cistarget_peak_rows_f32",
+                        "pipeline_filter_cistarget_peak_rows_f64",
+                    )
                 if cistarget_path is None:
                     cistarget_path = output_dir / "region_cistarget_enriched.parquet"
                     n_cistarget_rows = int(len(region_enrich))
@@ -622,12 +664,19 @@ def run(
             enriched_with_peaks = _attribute_peaks_to_cistarget(
                 enriched_for_eregulons, enhancer_links, regulons=regulons,
             )
+            backend_execution["eregulon_peak_attribution"] = _rust_execution(
+                "pipeline_attribute_peaks_to_cistarget_rows_f32",
+                "pipeline_attribute_peaks_to_cistarget_rows_f64",
+            )
         eregulons_df = rustscenic.eregulon._build_eregulons_dataframe(
             grn,
             enriched_with_peaks,
             enhancer_links,
             min_target_genes=eregulon_min_target_genes,
             min_enhancer_links=eregulon_min_enhancer_links,
+        )
+        backend_execution["eregulons"] = _rust_execution(
+            "eregulon_assemble", "eregulon_assemble_f32"
         )
         elapsed["eregulons"] = time.perf_counter() - t0
         n_eregulon_rows = int(len(eregulons_df))
@@ -653,6 +702,7 @@ def run(
         active_regulon_pairs,
         top_frac=aucell_top_frac,
     )
+    backend_execution["aucell"] = _rust_execution("aucell_score", "aucell_score_sparse_csr")
     elapsed["aucell"] = time.perf_counter() - t0
     aucell_shape = [int(auc.shape[0]), int(auc.shape[1])]
     aucell_path = output_dir / "aucell.parquet"
@@ -662,6 +712,7 @@ def run(
 
     # ---- 6. integrate into AnnData ----
     _attach_aucell_to_obs(adata_rna, auc)
+    backend_execution["integrated_adata"] = _python_io_execution("AnnData obs attachment and h5ad write")
     integrated_path = output_dir / "rna_with_regulons.h5ad"
     adata_rna.write_h5ad(integrated_path)
     log(f"      integrated → {integrated_path.name}")
@@ -693,11 +744,24 @@ def run(
         n_eregulons=n_eregulons,
         aucell_shape=aucell_shape,
         regulon_source=regulon_source,
+        backend_execution=backend_execution,
     )
     # Manifest is the single source of truth for "what did this run produce"
     (output_dir / "manifest.json").write_text(json.dumps(result.manifest(), indent=2))
     log(f"done. total: {sum(elapsed.values()):.1f}s. manifest → manifest.json")
     return result
+
+
+def _rust_execution(*symbols: str) -> dict:
+    return {"engine": "rust", "symbols": list(symbols)}
+
+
+def _skipped_execution(reason: str) -> dict:
+    return {"engine": "skipped", "reason": reason}
+
+
+def _python_io_execution(reason: str) -> dict:
+    return {"engine": "python_io", "reason": reason}
 
 
 def _candidate_regulons_from_grn(

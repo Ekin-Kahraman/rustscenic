@@ -1518,6 +1518,41 @@ def _python_hot_paths_state():
     }
 
 
+def _backend_execution_state():
+    return {
+        "setup_fragments_to_matrix": {
+            "engine": "rust",
+            "symbols": ["preproc_fragments_to_matrix"],
+        },
+        "pipeline_topics": {"engine": "rust", "symbols": ["topics_fit"]},
+        "pipeline_grn": {"engine": "rust", "symbols": ["grn_infer"]},
+        "pipeline_candidate_regulons": {
+            "engine": "rust",
+            "symbols": ["pipeline_candidate_regulons_from_grn"],
+        },
+        "pipeline_cistarget": {
+            "engine": "rust",
+            "symbols": ["cistarget_enrichment_from_rankings_i32"],
+        },
+        "pipeline_enhancer": {
+            "engine": "rust",
+            "symbols": ["enhancer_link_pearson_sparse_rna"],
+        },
+        "pipeline_eregulon_peak_attribution": {
+            "engine": "rust",
+            "symbols": ["pipeline_attribute_peaks_to_cistarget_rows_f32"],
+        },
+        "pipeline_eregulons": {
+            "engine": "rust",
+            "symbols": ["eregulon_assemble_f32"],
+        },
+        "pipeline_aucell": {
+            "engine": "rust",
+            "symbols": ["aucell_score_sparse_csr"],
+        },
+    }
+
+
 def _full_pipeline_record(tmp_path: Path):
     artefact_names = {
         "atac_matrix_path": "atac_cells_by_peaks.h5ad",
@@ -1556,6 +1591,7 @@ def _full_pipeline_record(tmp_path: Path):
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
         "python_hot_paths": _python_hot_paths_state(),
+        "backend_execution": _backend_execution_state(),
         "rustscenic": "0.4.7",
         "input_hashes": {
             "rna_10x_h5_md5": "a",
@@ -1690,6 +1726,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "setup_peak_rss_gb": child["setup_peak_rss_gb"],
                 "elapsed_per_stage": child["elapsed_per_stage"],
                 "peak_rss_gb_per_stage": child["peak_rss_gb_per_stage"],
+                "backend_execution": child["backend_execution"],
                 "outputs": child["outputs"],
                 "expected_tf_recovery": child.get("expected_tf_recovery"),
             }
@@ -2098,6 +2135,49 @@ def test_benchmark_artifact_validator_rejects_child_grn_python_hot_path_regressi
             "subset_scaling[0].env.python_hot_paths.violations must be empty:"
         )
         for failure in failures
+    )
+
+
+def test_benchmark_artifact_validator_rejects_non_rust_full_pipeline_stage(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_backend_execution_regression",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["backend_execution"]["pipeline_enhancer"] = {
+        "engine": "python",
+        "symbols": [],
+    }
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_enhancer.engine must be 'rust'"
+        in failures
+    )
+    assert (
+        "full_pipeline.backend_execution.pipeline_enhancer.symbols must be a non-empty string list"
+        in failures
+    )
+
+
+def test_benchmark_artifact_validator_rejects_scaling_row_without_backend_execution(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_scaling_backend_execution_regression",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    del record["runs"][0]["backend_execution"]["pipeline_eregulons"]
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "runs[0].backend_execution.pipeline_eregulons must be an object"
+        in failures
     )
 
 

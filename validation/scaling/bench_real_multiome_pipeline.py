@@ -166,6 +166,18 @@ def file_info(path: str | Path | None) -> dict[str, Any] | None:
     }
 
 
+def backend_execution_for_benchmark(result) -> dict[str, Any]:
+    execution = {
+        "setup_fragments_to_matrix": {
+            "engine": "rust",
+            "symbols": ["preproc_fragments_to_matrix"],
+        }
+    }
+    for stage, state in result.backend_execution.items():
+        execution[f"pipeline_{stage}"] = state
+    return execution
+
+
 def _jsonable_value(value: Any) -> Any:
     if pd.isna(value):
         return None
@@ -464,6 +476,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "runtime_import": runtime_import_state(),
         "backend_capabilities": backend_capabilities(),
         "python_hot_paths": hot_path_state(),
+        "backend_execution": backend_execution_for_benchmark(result),
         "rustscenic": version("rustscenic"),
         "input_hashes": {
             "rna_10x_h5_md5": md5(args.rna_10x_h5),

@@ -180,6 +180,7 @@ def run_child(args: argparse.Namespace, *, n_cells: int) -> dict[str, Any]:
         "setup_peak_rss_gb": record["setup_peak_rss_gb"],
         "elapsed_per_stage": record["elapsed_per_stage"],
         "peak_rss_gb_per_stage": record["peak_rss_gb_per_stage"],
+        "backend_execution": record["backend_execution"],
         "outputs": record["outputs"],
         "expected_tf_recovery": record.get("expected_tf_recovery"),
     }
