@@ -1088,6 +1088,14 @@ def test_region_cistarget_with_peak_ids_preserves_float32_auc_dtype():
 
     assert region_enrich["auc"].dtype == np.float32
     assert attributed["auc"].dtype == np.float32
+    assert attributed.attrs["rust_backend"] == {
+        "engine": "rust",
+        "symbols": [
+            "cistarget_enrichment_from_rankings_i32",
+            "cistarget_region_attribution_peak_values_i32",
+            "pipeline_expand_region_cistarget_rows_f32",
+        ],
+    }
 
 
 def test_region_rankings_helper_keeps_strided_integer_buffers():
@@ -1326,6 +1334,11 @@ def test_region_cistarget_uses_rust_row_expander(monkeypatch):
         "peak_id": ["p1", "p0"],
         "auc": [np.float32(0.75), np.float32(0.5)],
     }
+    assert attributed.attrs["rust_backend"]["symbols"] == [
+        "cistarget_enrichment_from_rankings_i32",
+        "cistarget_region_attribution_peak_values_i32",
+        "pipeline_expand_region_cistarget_rows_f32",
+    ]
 
 
 def _reference_region_peak_attribution(
@@ -1385,9 +1398,18 @@ def test_filter_cistarget_peak_rows_matches_pandas_merge_reference():
             "regulon": ["TF1_regulon", "TF2_regulon", "TF1_regulon", "TF3_regulon"],
             "motif": ["m1", "m2", "m3", "m4"],
             "peak_id": ["p1", "p2", "p3", "p4"],
-            "auc": [0.8, 0.7, 0.6, 0.5],
+            "auc": np.asarray([0.8, 0.7, 0.6, 0.5], dtype=np.float32),
         }
     )
+    prior_symbols = [
+        "cistarget_enrichment_from_rankings_i32",
+        "cistarget_region_attribution_peak_values_i32",
+        "pipeline_expand_region_cistarget_rows_f32",
+    ]
+    enriched_with_peaks.attrs["rust_backend"] = {
+        "engine": "rust",
+        "symbols": prior_symbols,
+    }
     keep = pd.DataFrame(
         {
             "regulon": ["TF1_regulon", "TF1_regulon", "TF2_regulon"],
@@ -1403,6 +1425,9 @@ def test_filter_cistarget_peak_rows_matches_pandas_merge_reference():
     got = _filter_cistarget_peak_rows(enriched_with_peaks, keep)
 
     pd.testing.assert_frame_equal(got, expected)
+    assert got.attrs["rust_backend"]["symbols"] == prior_symbols + [
+        "pipeline_filter_cistarget_peak_rows_f32"
+    ]
 
 
 def test_filter_cistarget_peak_rows_uses_rust_row_helper(monkeypatch):
@@ -1447,6 +1472,9 @@ def test_filter_cistarget_peak_rows_uses_rust_row_helper(monkeypatch):
         "auc": [np.float32(0.7)],
     }
     assert got["auc"].dtype == np.float32
+    assert got.attrs["rust_backend"]["symbols"] == [
+        "pipeline_filter_cistarget_peak_rows_f32"
+    ]
 
 
 def test_pipeline_run_topics_method_gibbs(tmp_path):
@@ -1974,7 +2002,7 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
     region-based cistarget against the linked peaks (exact path) instead
     of bridging via GRN ∩ enhancer (approximate path). Verifies the
     new region path is taken end-to-end."""
-    import gzip, anndata as ad, numpy as np, pandas as pd
+    import gzip, json, anndata as ad, numpy as np, pandas as pd
     from pathlib import Path
     import rustscenic.pipeline
 
@@ -2096,6 +2124,17 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
     assert all(cols is not None for cols in read_feather_calls)
     assert all("motifs" in cols for cols in read_feather_calls)
     assert all("unused_peak_not_in_run" not in cols for cols in read_feather_calls)
+    region_symbols = [
+        "cistarget_enrichment_from_rankings_i32",
+        "cistarget_region_attribution_peak_values_i32",
+        "pipeline_expand_region_cistarget_rows_f32",
+    ]
+    assert result.backend_execution["eregulon_peak_attribution"]["symbols"] == region_symbols
+    manifest = json.loads((out / "manifest.json").read_text())
+    assert (
+        manifest["backend_execution"]["eregulon_peak_attribution"]["symbols"]
+        == region_symbols
+    )
 
     # Region-only should also work. The exact region-cistarget path must
     # not accidentally depend on gene-based motif rankings having run
@@ -2128,6 +2167,10 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
     assert region_only.eregulons_path is not None
     assert region_only.eregulons_path.exists()
     assert region_only.n_eregulons is not None
+    assert (
+        region_only.backend_execution["eregulon_peak_attribution"]["symbols"]
+        == region_symbols
+    )
 
 
 def test_coerce_rankings_accepts_aertslab_feather_path(tmp_path):

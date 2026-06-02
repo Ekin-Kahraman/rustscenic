@@ -625,7 +625,8 @@ def run(
                     auc_threshold=cistarget_auc_threshold,
                     nes_threshold=cistarget_nes_threshold,
                 )
-                backend_execution["eregulon_peak_attribution"] = _rust_execution(
+                backend_execution["eregulon_peak_attribution"] = _rust_execution_from_attrs(
+                    enriched_with_peaks,
                     "cistarget_region_attribution_i16",
                     "cistarget_region_attribution_i32",
                     "cistarget_region_attribution_i64",
@@ -642,7 +643,8 @@ def run(
                         enriched_with_peaks,
                         region_enrich,
                 )
-                    backend_execution["eregulon_peak_filter"] = _rust_execution(
+                    backend_execution["eregulon_peak_filter"] = _rust_execution_from_attrs(
+                        enriched_with_peaks,
                         "pipeline_filter_cistarget_peak_rows_f32",
                         "pipeline_filter_cistarget_peak_rows_f64",
                     )
@@ -1160,6 +1162,7 @@ def _region_cistarget_with_peak_ids(
     )
     if region_enrich.empty:
         empty = pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+        empty.attrs["rust_backend"] = _region_attribution_backend(region_enrich)
         return region_enrich, empty
 
     n_regions = region_rankings.shape[1]
@@ -1167,14 +1170,15 @@ def _region_cistarget_with_peak_ids(
     peak_regulon_names = [str(name) for name, _ in peak_regulons]
     peak_regulon_peaks = [[str(p) for p in peaks] for _, peaks in peak_regulons]
     if not any(peak_regulon_peaks):
-        return region_enrich, pd.DataFrame(
-            columns=["regulon", "motif", "peak_id", "auc"]
-        )
+        empty = pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+        empty.attrs["rust_backend"] = _region_attribution_backend(region_enrich)
+        return region_enrich, empty
 
     ranking_values, kernel, rank_cutoff_arg = _region_peak_values_kernel_arg(
         region_rankings,
         rank_cutoff,
     )
+    peak_values_symbol = _region_peak_values_backend_symbol(kernel)
     motif_names = [str(m) for m in region_rankings.index]
     peak_names = [str(p) for p in region_rankings.columns]
     common_args = (
@@ -1191,9 +1195,12 @@ def _region_cistarget_with_peak_ids(
         rank_cutoff_arg,
     )
     if len(row_idx) == 0:
-        return region_enrich, pd.DataFrame(
-            columns=["regulon", "motif", "peak_id", "auc"]
+        empty = pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+        empty.attrs["rust_backend"] = _region_attribution_backend(
+            region_enrich,
+            peak_values_symbol,
         )
+        return region_enrich, empty
     region_regulons = region_enrich["regulon"].astype(str).tolist()
     region_motifs = region_enrich["motif"].astype(str).tolist()
     region_aucs = _auc_column_arg(region_enrich["auc"], name="region_enrich['auc']")
@@ -1201,6 +1208,11 @@ def _region_cistarget_with_peak_ids(
         _pipeline_expand_region_rows_f32
         if region_aucs.dtype == np.float32
         else _pipeline_expand_region_rows_f64
+    )
+    expand_symbol = (
+        "pipeline_expand_region_cistarget_rows_f32"
+        if region_aucs.dtype == np.float32
+        else "pipeline_expand_region_cistarget_rows_f64"
     )
     regulon_values, motif_values, peak_values, auc_values = expand_kernel(
         row_idx,
@@ -1217,6 +1229,11 @@ def _region_cistarget_with_peak_ids(
             "auc": auc_values,
         },
         columns=["regulon", "motif", "peak_id", "auc"],
+    )
+    enriched.attrs["rust_backend"] = _region_attribution_backend(
+        region_enrich,
+        peak_values_symbol,
+        expand_symbol,
     )
     return region_enrich, enriched
 
@@ -1241,17 +1258,45 @@ def _region_peak_values_kernel_arg(rankings: pd.DataFrame, rank_cutoff: int):
     raise RuntimeError("unknown region cistarget attribution kernel")
 
 
+def _region_peak_values_backend_symbol(kernel) -> str:
+    if kernel is _cistarget_region_peak_values_i16:
+        return "cistarget_region_attribution_peak_values_i16"
+    if kernel is _cistarget_region_peak_values_i32:
+        return "cistarget_region_attribution_peak_values_i32"
+    if kernel is _cistarget_region_peak_values_i64:
+        return "cistarget_region_attribution_peak_values_i64"
+    raise RuntimeError("unknown region cistarget peak-value kernel")
+
+
+def _region_attribution_backend(region_enrich: pd.DataFrame, *symbols: str) -> dict:
+    return {
+        "engine": "rust",
+        "symbols": _rust_backend_symbols(region_enrich)
+        + [symbol for symbol in symbols if symbol],
+    }
+
+
 def _filter_cistarget_peak_rows(
     enriched_with_peaks: pd.DataFrame,
     keep: pd.DataFrame,
 ) -> pd.DataFrame:
     if enriched_with_peaks.empty or keep.empty:
-        return enriched_with_peaks.iloc[[]].copy().reset_index(drop=True)
+        out = enriched_with_peaks.iloc[[]].copy().reset_index(drop=True)
+        out.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": _rust_backend_symbols(enriched_with_peaks),
+        }
+        return out
     auc_values = _auc_column_arg(enriched_with_peaks["auc"], name="enriched_with_peaks['auc']")
     kernel = (
         _pipeline_filter_cistarget_peak_rows_f32
         if auc_values.dtype == np.float32
         else _pipeline_filter_cistarget_peak_rows_f64
+    )
+    filter_symbol = (
+        "pipeline_filter_cistarget_peak_rows_f32"
+        if auc_values.dtype == np.float32
+        else "pipeline_filter_cistarget_peak_rows_f64"
     )
     regulon_values, motif_values, peak_values, auc_values = kernel(
         enriched_with_peaks["regulon"].astype(str).tolist(),
@@ -1261,7 +1306,7 @@ def _filter_cistarget_peak_rows(
         keep["regulon"].astype(str).tolist(),
         keep["motif"].astype(str).tolist(),
     )
-    return pd.DataFrame(
+    out = pd.DataFrame(
         {
             "regulon": regulon_values,
             "motif": motif_values,
@@ -1270,6 +1315,22 @@ def _filter_cistarget_peak_rows(
         },
         columns=["regulon", "motif", "peak_id", "auc"],
     ).reset_index(drop=True)
+    out.attrs["rust_backend"] = {
+        "engine": "rust",
+        "symbols": _rust_backend_symbols(enriched_with_peaks) + [filter_symbol],
+    }
+    return out
+
+
+def _rust_backend_symbols(obj) -> list[str]:
+    backend = getattr(obj, "attrs", {}).get("rust_backend")
+    if (
+        isinstance(backend, dict)
+        and backend.get("engine") == "rust"
+        and isinstance(backend.get("symbols"), list)
+    ):
+        return [symbol for symbol in backend["symbols"] if isinstance(symbol, str) and symbol]
+    return []
 
 
 def _region_rankings_kernel_arg(rankings: pd.DataFrame, rank_cutoff: int):
