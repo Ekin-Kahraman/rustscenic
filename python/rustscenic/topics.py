@@ -15,12 +15,14 @@ topic labels are permutation-free. Validation metric is topic assignment ARI.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 import pandas as pd
 
 from rustscenic._rustscenic import (
+    specificity_candidate_top_indices as _candidate_top_indices,
+    specificity_candidate_top_indices_f32 as _candidate_top_indices_f32,
+    topics_cell_assignment as _topics_cell_assignment,
     topics_fit as _topics_fit,
     topics_fit_gibbs as _topics_fit_gibbs,
     topics_npmi as _topics_npmi,
@@ -37,33 +39,50 @@ class TopicsResult:
         """Argmax topic per cell."""
         import warnings
 
-        assignment = self.cell_topic.idxmax(axis=1).astype("object")
-        row_sums = pd.to_numeric(self.cell_topic.sum(axis=1), errors="coerce")
-        empty = (~np.isfinite(row_sums.to_numpy())) | (row_sums.to_numpy() <= 0)
-        if empty.any():
-            n_empty = int(empty.sum())
+        assignment_idx, _, n_empty = _topic_assignment_indices(self.cell_topic)
+        topic_names = np.asarray(self.cell_topic.columns, dtype=object)
+        values = np.empty(len(assignment_idx), dtype=object)
+        valid = assignment_idx >= 0
+        values[valid] = topic_names[assignment_idx[valid]]
+        values[~valid] = pd.NA
+        if n_empty:
             warnings.warn(
                 f"{n_empty} cells have zero or non-finite total topic weight; "
                 "their topic assignment is set to NA instead of Topic_0.",
                 UserWarning,
                 stacklevel=2,
             )
-            assignment.iloc[np.flatnonzero(empty)] = pd.NA
-        return assignment
+        return pd.Series(values, index=self.cell_topic.index, dtype="object")
 
     def top_peaks_per_topic(self, n: int = 20) -> dict[str, list[str]]:
+        weights = self.topic_peak.values
+        if weights.dtype == np.float32:
+            top_indices_raw = _candidate_top_indices_f32(weights, int(n))
+        else:
+            top_indices_raw = _candidate_top_indices(
+                weights.astype(np.float64, copy=False),
+                int(n),
+            )
+        top_indices = np.asarray(top_indices_raw)
+        peak_names = list(self.topic_peak.columns)
         return {
-            k: list(self.topic_peak.loc[k].nlargest(n).index)
-            for k in self.topic_peak.index
+            str(topic): [peak_names[i] for i in top_indices[ti]]
+            for ti, topic in enumerate(self.topic_peak.index)
         }
+
+
+def _topic_assignment_indices(cell_topic: pd.DataFrame) -> tuple[np.ndarray, int, int]:
+    values = cell_topic.values.astype(np.float32, copy=False)
+    assignment_idx, active_topics, empty_cells = _topics_cell_assignment(values)
+    return np.asarray(assignment_idx, dtype=np.int64), int(active_topics), int(empty_cells)
 
 
 def fit(
     expression,
     *,
     n_topics: int = 50,
-    alpha: Optional[float] = None,
-    eta: Optional[float] = None,
+    alpha: float | None = None,
+    eta: float | None = None,
     tau0: float = 64.0,
     kappa: float = 0.7,
     batch_size: int = 256,
@@ -99,7 +118,6 @@ def fit(
         raise ValueError(f"batch_size must be >= 1, got {batch_size}")
 
     row_ptr, col_idx, counts, n_words, cell_names, peak_names = _coerce(expression)
-    _validate_vb_counts(counts)
 
     if n_words == 0:
         raise ValueError("expression has 0 peaks/genes - nothing to model")
@@ -130,7 +148,7 @@ def fit(
     topic_names = [f"Topic_{k}" for k in range(n_topics)]
     cell_topic = pd.DataFrame(np.asarray(ct), index=cell_names, columns=topic_names)
     topic_peak = pd.DataFrame(np.asarray(tw), index=topic_names, columns=peak_names)
-    unique = int(np.unique(cell_topic.values.argmax(axis=1)).size)
+    _, unique, _ = _topic_assignment_indices(cell_topic)
     if verbose:
         print(
             f"[rustscenic.topics] done in {wall:.1f}s - "
@@ -144,8 +162,8 @@ def fit_gibbs(
     expression,
     *,
     n_topics: int = 50,
-    alpha: Optional[float] = None,
-    eta: Optional[float] = None,
+    alpha: float | None = None,
+    eta: float | None = None,
     n_iters: int = 200,
     seed: int = 42,
     n_threads: int = 1,
@@ -205,7 +223,6 @@ def fit_gibbs(
         alpha = 0.1
     if eta is None:
         eta = 0.01
-    _validate_gibbs_counts(counts)
 
     import sys, time
     n_docs = len(row_ptr) - 1
@@ -228,7 +245,7 @@ def fit_gibbs(
     topic_names = [f"Topic_{k}" for k in range(n_topics)]
     cell_topic = pd.DataFrame(np.asarray(theta), index=cell_names, columns=topic_names)
     topic_peak = pd.DataFrame(np.asarray(beta), index=topic_names, columns=peak_names)
-    unique = int(np.unique(cell_topic.values.argmax(axis=1)).size)
+    _, unique, _ = _topic_assignment_indices(cell_topic)
     if verbose:
         print(
             f"[rustscenic.topics] Gibbs done in {wall:.1f}s - "
@@ -271,7 +288,7 @@ def coherence_npmi(
             "corpus column order does not match the fit's topic_peak columns; "
             "supply the same peak/word ordering used at fit time"
         )
-    tw = np.ascontiguousarray(result.topic_peak.values, dtype=np.float32)
+    tw = result.topic_peak.values.astype(np.float32, copy=False)
     out = _topics_npmi(
         tw,
         int(result.n_topics),
@@ -306,35 +323,41 @@ def _coerce(expression):
     else:
         raise TypeError("expression must be AnnData, DataFrame, or (sparse, cells, peaks) tuple")
 
-    if X.nnz > np.iinfo(np.uint32).max:
-        raise OverflowError(
-            f"input matrix has {X.nnz} nonzeros, exceeding uint32 max "
-            f"({np.iinfo(np.uint32).max}). Subset or bin the matrix first."
-        )
-    if X.shape[1] > np.iinfo(np.uint32).max:
-        raise OverflowError(f"too many features/peaks ({X.shape[1]}) for uint32 index")
+    if X.shape[1] > np.iinfo(np.int32).max:
+        raise OverflowError(f"too many features/peaks ({X.shape[1]}) for int32 index")
     X.sum_duplicates()
     return (
-        np.ascontiguousarray(X.indptr, dtype=np.uint64),
-        np.ascontiguousarray(X.indices, dtype=np.uint32),
-        np.ascontiguousarray(X.data, dtype=np.float32),
+        _csr_indptr_arg(X.indptr),
+        _csr_indices_arg(X.indices),
+        _csr_counts_arg(X.data),
         X.shape[1],
         cell_names,
         peak_names,
     )
 
 
-def _validate_gibbs_counts(counts: np.ndarray) -> None:
-    if not np.all(np.isfinite(counts)):
-        raise ValueError("Gibbs LDA counts must be finite")
-    if np.any(counts < 0):
-        raise ValueError("Gibbs LDA counts must be non-negative")
-    if not np.allclose(counts, np.rint(counts), rtol=0.0, atol=1e-6):
-        raise ValueError("Gibbs LDA counts must be integer fragment/count values")
+def _csr_indptr_arg(indptr) -> np.ndarray:
+    arr = np.asarray(indptr)
+    if arr.dtype not in (np.dtype(np.int32), np.dtype(np.int64), np.dtype(np.uint64)):
+        arr = arr.astype(np.int64, copy=False)
+    if not arr.flags.c_contiguous:
+        arr = np.ascontiguousarray(arr)
+    return arr
 
 
-def _validate_vb_counts(counts: np.ndarray) -> None:
-    if not np.all(np.isfinite(counts)):
-        raise ValueError("Online VB LDA counts must be finite")
-    if np.any(counts < 0):
-        raise ValueError("Online VB LDA counts must be non-negative")
+def _csr_indices_arg(indices) -> np.ndarray:
+    arr = np.asarray(indices)
+    if arr.dtype != np.int32:
+        arr = arr.astype(np.int32, copy=False)
+    if not arr.flags.c_contiguous:
+        arr = np.ascontiguousarray(arr)
+    return arr
+
+
+def _csr_counts_arg(data) -> np.ndarray:
+    arr = np.asarray(data)
+    if arr.dtype != np.float32:
+        arr = arr.astype(np.float32, copy=False)
+    if not arr.flags.c_contiguous:
+        arr = np.ascontiguousarray(arr)
+    return arr

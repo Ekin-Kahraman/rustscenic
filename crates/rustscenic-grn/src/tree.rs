@@ -33,6 +33,11 @@ pub enum Node {
 pub struct TreeScratch {
     pub feat_sub: Vec<usize>,
     pub feat_pool: Vec<usize>,
+    pub feature_marks: Vec<u32>,
+    pub feature_mark_epoch: u32,
+    pub gain_touched: Vec<usize>,
+    pub gain_marks: Vec<u32>,
+    pub gain_mark_epoch: u32,
     /// Pool of partition buffers reused across tree splits. `build_node_rec`
     /// needs two temp `Vec<usize>` per split to partition samples into
     /// left / right children. Freshly allocating them scales memory traffic
@@ -48,6 +53,11 @@ impl TreeScratch {
         Self {
             feat_sub: Vec::with_capacity(n_features),
             feat_pool: (0..n_features).collect(),
+            feature_marks: vec![0; n_features],
+            feature_mark_epoch: 1,
+            gain_touched: Vec::with_capacity(8),
+            gain_marks: vec![0; n_features],
+            gain_mark_epoch: 1,
             partition_bufs: Vec::new(),
         }
     }
@@ -71,6 +81,26 @@ impl TreeScratch {
     pub fn return_partition_buf(&mut self, buf: Vec<usize>) {
         self.partition_bufs.push(buf);
     }
+
+    pub fn begin_gain_tracking(&mut self, n_features: usize) {
+        if self.gain_marks.len() < n_features {
+            self.gain_marks.resize(n_features, 0);
+        }
+        self.gain_touched.clear();
+        self.gain_mark_epoch = self.gain_mark_epoch.wrapping_add(1);
+        if self.gain_mark_epoch == 0 {
+            self.gain_marks.fill(0);
+            self.gain_mark_epoch = 1;
+        }
+    }
+
+    fn mark_gain_touched(&mut self, feature: usize) {
+        let mark = self.gain_mark_epoch;
+        if self.gain_marks[feature] != mark {
+            self.gain_marks[feature] = mark;
+            self.gain_touched.push(feature);
+        }
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -87,13 +117,16 @@ pub fn fit_tree_with_scratch(
     scratch: &mut TreeScratch,
     rng: &mut impl RngCore,
 ) {
-    // feat_pool reset happens inside choose_feature_subset per call now.
     // Root samples are passed through as a borrowed slice - the extra
-    // `to_vec()` copy was pure allocation overhead per tree.
+    // `to_vec()` copy was pure allocation overhead per tree. The root target
+    // sum is computed once; child sums are accumulated while partitioning so
+    // recursive nodes do not rescan their samples just to compute leaf means.
+    let root_sum = sum_at(sample_idx, y);
     build_node_rec(
         binned,
         y,
         sample_idx,
+        root_sum,
         0,
         max_depth,
         max_features_per_split,
@@ -111,6 +144,7 @@ fn build_node_rec(
     binned: &BinnedMatrix,
     y: &[f32],
     samples: &[usize],
+    sum_y: f32,
     depth: usize,
     max_depth: usize,
     max_features_per_split: usize,
@@ -121,7 +155,7 @@ fn build_node_rec(
     scratch: &mut TreeScratch,
     rng: &mut impl RngCore,
 ) -> usize {
-    let leaf_value = mean_at(samples, y);
+    let leaf_value = mean_from_sum(samples, sum_y);
     let idx = tree.nodes.len();
     tree.nodes.push(Node::Leaf { value: leaf_value });
 
@@ -131,8 +165,7 @@ fn build_node_rec(
 
     choose_feature_subset(
         rng,
-        &mut scratch.feat_pool,
-        &mut scratch.feat_sub,
+        scratch,
         max_features_per_split,
         exclude_feature,
         binned.n_features,
@@ -152,6 +185,7 @@ fn build_node_rec(
 
     if let Some((feature, bin_threshold, gain)) = best {
         gains[feature] += gain;
+        scratch.mark_gain_touched(feature);
         // Pooled partition buffers - see TreeScratch::partition_bufs comment.
         let mut left_samples = scratch.take_partition_buf(samples.len() / 2);
         let mut right_samples = scratch.take_partition_buf(samples.len() / 2);
@@ -159,10 +193,19 @@ fn build_node_rec(
         // fits in cache for the partition scan.
         let base = feature * binned.n_samples;
         let col = &binned.bins[base..base + binned.n_samples];
+        let mut left_sum = 0.0_f32;
+        let mut right_sum = 0.0_f32;
         for &s in samples {
-            if col[s] <= bin_threshold {
+            // Samples are sorted row indices produced from the original
+            // 0..n_samples range, so release builds can skip duplicate checks.
+            debug_assert!(s < col.len());
+            let bin = unsafe { *col.get_unchecked(s) };
+            let yv = unsafe { *y.get_unchecked(s) };
+            if bin <= bin_threshold {
+                left_sum += yv;
                 left_samples.push(s);
             } else {
+                right_sum += yv;
                 right_samples.push(s);
             }
         }
@@ -171,6 +214,7 @@ fn build_node_rec(
             binned,
             y,
             &left_samples,
+            left_sum,
             depth + 1,
             max_depth,
             max_features_per_split,
@@ -185,6 +229,7 @@ fn build_node_rec(
             binned,
             y,
             &right_samples,
+            right_sum,
             depth + 1,
             max_depth,
             max_features_per_split,
@@ -213,50 +258,88 @@ fn build_node_rec(
 
 fn choose_feature_subset(
     rng: &mut impl RngCore,
-    pool: &mut Vec<usize>,
-    out: &mut Vec<usize>,
+    scratch: &mut TreeScratch,
     k: usize,
     exclude_feature: Option<usize>,
     n_features_total: usize,
 ) {
-    // Reset pool to 0..n_features every call. Fisher-Yates on a scrambled pool
-    // still produces a uniform k-subset statistically, but the reset removes
-    // any doubt and is cheap (small Vec clone-in-place, no allocation).
-    pool.clear();
-    pool.extend(0..n_features_total);
-    if let Some(excl) = exclude_feature {
-        if let Some(pos) = pool.iter().position(|&x| x == excl) {
-            pool.swap_remove(pos);
-        }
+    if scratch.feature_marks.len() < n_features_total {
+        scratch.feature_marks.resize(n_features_total, 0);
     }
-    let n = pool.len();
-    if n == 0 {
-        out.clear();
+
+    let excluded = exclude_feature.filter(|&f| f < n_features_total);
+    let available = n_features_total.saturating_sub(usize::from(excluded.is_some()));
+    scratch.feat_sub.clear();
+    if available == 0 {
         return;
     }
-    let k = k.min(n).max(1);
-    out.clear();
+    let k = k.min(available).max(1);
+
+    // Common GRNBoost2 path: max_features=0.1, so k is much smaller than the
+    // TF count. Rebuilding a full 0..n_features pool at every split costs
+    // O(n_features × trees × targets). Rejection sampling is uniform over
+    // k-subsets and O(k) expected work when k << n.
+    if k * 2 < available {
+        scratch.feature_mark_epoch = scratch.feature_mark_epoch.wrapping_add(1);
+        if scratch.feature_mark_epoch == 0 {
+            scratch.feature_marks.fill(0);
+            scratch.feature_mark_epoch = 1;
+        }
+        let mark = scratch.feature_mark_epoch;
+        use rand::Rng;
+        while scratch.feat_sub.len() < k {
+            let idx = rng.gen_range(0..n_features_total);
+            if Some(idx) == excluded {
+                continue;
+            }
+            if scratch.feature_marks[idx] == mark {
+                continue;
+            }
+            scratch.feature_marks[idx] = mark;
+            scratch.feat_sub.push(idx);
+        }
+        return;
+    }
+
+    // Fallback for dense feature sampling. When k is a large fraction of n,
+    // Fisher-Yates is faster than repeated rejection.
+    scratch.feat_pool.clear();
+    scratch.feat_pool.extend(0..n_features_total);
+    if let Some(excl) = excluded {
+        if let Some(pos) = scratch.feat_pool.iter().position(|&x| x == excl) {
+            scratch.feat_pool.swap_remove(pos);
+        }
+    }
     // Use rand's gen_range for bias-free uniform sampling (though modulo bias
     // for n < 10^6 is ~10^-19 in practice, eliminate it by construction).
     use rand::Rng;
+    let n = scratch.feat_pool.len();
     for i in 0..k {
         let j = i + rng.gen_range(0..(n - i));
-        pool.swap(i, j);
+        scratch.feat_pool.swap(i, j);
     }
-    out.extend_from_slice(&pool[..k]);
+    scratch.feat_sub.extend_from_slice(&scratch.feat_pool[..k]);
 }
 
-fn mean_at(samples: &[usize], y: &[f32]) -> f32 {
+fn sum_at(samples: &[usize], y: &[f32]) -> f32 {
+    let mut s = 0.0_f32;
+    for &i in samples {
+        // Same invariant as the partition loop: sample ids are generated from
+        // the matrix row range and never rewritten.
+        debug_assert!(i < y.len());
+        s += unsafe { *y.get_unchecked(i) };
+    }
+    s
+}
+
+fn mean_from_sum(samples: &[usize], sum_y: f32) -> f32 {
     if samples.is_empty() {
         return 0.0;
     }
-    let mut s = 0.0_f32;
-    for &i in samples {
-        s += y[i];
-    }
-    s / samples.len() as f32
+    sum_y / samples.len() as f32
 }
 
+#[inline]
 pub fn predict_binned(tree: &Tree, binned: &BinnedMatrix, sample: usize) -> f32 {
     let n_samples = binned.n_samples;
     let mut cur = 0;
@@ -270,7 +353,11 @@ pub fn predict_binned(tree: &Tree, binned: &BinnedMatrix, sample: usize) -> f32 
                 right,
                 ..
             } => {
-                let b = binned.bins[*feature * n_samples + sample];
+                let offset = *feature * n_samples + sample;
+                // Tree nodes store feature ids produced by choose_feature_subset;
+                // sample is the caller's 0..n_samples loop index.
+                debug_assert!(offset < binned.bins.len());
+                let b = unsafe { *binned.bins.get_unchecked(offset) };
                 cur = if b <= *bin_threshold { *left } else { *right };
             }
         }
@@ -438,5 +525,37 @@ mod tests {
         );
         assert_eq!(gains[0], 0.0);
         assert!(gains[1] + gains[2] > 0.0);
+    }
+
+    #[test]
+    fn feature_subset_sampling_is_unique_and_excludes_feature() {
+        let nf = 1_420;
+        let mut rng = StdRng::seed_from_u64(11);
+        let mut scratch = TreeScratch::new(nf);
+        choose_feature_subset(&mut rng, &mut scratch, 142, Some(17), nf);
+
+        let mut seen = std::collections::HashSet::new();
+        assert_eq!(scratch.feat_sub.len(), 142);
+        assert!(!scratch.feat_sub.contains(&17));
+        for &feature in &scratch.feat_sub {
+            assert!(feature < nf);
+            assert!(seen.insert(feature), "duplicate feature {feature}");
+        }
+    }
+
+    #[test]
+    fn dense_feature_subset_fallback_is_unique_and_excludes_feature() {
+        let nf = 20;
+        let mut rng = StdRng::seed_from_u64(12);
+        let mut scratch = TreeScratch::new(nf);
+        choose_feature_subset(&mut rng, &mut scratch, 19, Some(3), nf);
+
+        let mut seen = std::collections::HashSet::new();
+        assert_eq!(scratch.feat_sub.len(), 19);
+        assert!(!scratch.feat_sub.contains(&3));
+        for &feature in &scratch.feat_sub {
+            assert!(feature < nf);
+            assert!(seen.insert(feature), "duplicate feature {feature}");
+        }
     }
 }

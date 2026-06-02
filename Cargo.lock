@@ -704,6 +704,7 @@ dependencies = [
  "ndarray 0.16.1",
  "numpy",
  "pyo3",
+ "rayon",
  "rustscenic-aucell",
  "rustscenic-grn",
  "rustscenic-preproc",

@@ -25,6 +25,7 @@
 
 pub mod gibbs;
 
+use ndarray::ArrayView2;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use rayon::prelude::*;
@@ -60,7 +61,7 @@ pub struct LdaResult {
 #[allow(clippy::too_many_arguments)]
 pub fn online_vb_lda(
     row_ptr: &[usize],
-    col_idx: &[u32],
+    col_idx: &[i32],
     counts: &[f32],
     n_words: usize,
     n_topics: usize,
@@ -76,6 +77,10 @@ pub fn online_vb_lda(
     assert_eq!(col_idx.len(), counts.len());
     let n_docs = row_ptr.len() - 1;
     assert!(n_topics > 0);
+    assert!(
+        col_idx.iter().all(|&w| w >= 0 && (w as usize) < n_words),
+        "col_idx contains a negative or out-of-vocabulary word index"
+    );
 
     // Reject NaN/Inf in counts - the VB variational updates use logs and
     // digammas that propagate non-finite values silently into garbage topic
@@ -377,10 +382,31 @@ pub fn topic_coherence_npmi(
     n_words: usize,
     top_n: usize,
     row_ptr: &[usize],
-    col_idx: &[u32],
+    col_idx: &[i32],
 ) -> Vec<f32> {
+    let topic_word = ArrayView2::from_shape((n_topics, n_words), topic_word)
+        .expect("validated topic_word shape must construct row-major view");
+    topic_coherence_npmi_view(topic_word, top_n, row_ptr, col_idx)
+}
+
+/// Topic coherence NPMI over any dense topic-word matrix view.
+///
+/// PyO3 callers use this to avoid materialising a second C-contiguous copy of
+/// a topic-word matrix that is already valid but strided.
+pub fn topic_coherence_npmi_view(
+    topic_word: ArrayView2<'_, f32>,
+    top_n: usize,
+    row_ptr: &[usize],
+    col_idx: &[i32],
+) -> Vec<f32> {
+    let n_topics = topic_word.shape()[0];
+    let n_words = topic_word.shape()[1];
     let n_docs = row_ptr.len() - 1;
     let mut out = vec![0.0_f32; n_topics];
+    assert!(
+        col_idx.iter().all(|&w| w >= 0 && (w as usize) < n_words),
+        "col_idx contains a negative or out-of-vocabulary word index"
+    );
 
     // Precompute doc-containment per word (is word w in doc d?)
     let mut in_doc: Vec<Vec<u32>> = (0..n_words).map(|_| Vec::new()).collect();
@@ -391,9 +417,13 @@ pub fn topic_coherence_npmi(
     }
 
     for k in 0..n_topics {
-        let row = &topic_word[k * n_words..(k + 1) * n_words];
+        let row = topic_word.row(k);
         let mut topn: Vec<(f32, usize)> = row.iter().enumerate().map(|(w, &p)| (p, w)).collect();
-        topn.sort_unstable_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+        topn.sort_unstable_by(|a, b| {
+            b.0.partial_cmp(&a.0)
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| a.1.cmp(&b.1))
+        });
         topn.truncate(top_n);
         let words: Vec<usize> = topn.iter().map(|(_, w)| *w).collect();
 
@@ -403,11 +433,9 @@ pub fn topic_coherence_npmi(
             for j in (i + 1)..words.len() {
                 let wi = words[i];
                 let wj = words[j];
-                let di: std::collections::HashSet<u32> = in_doc[wi].iter().copied().collect();
-                let dj = &in_doc[wj];
-                let joint = dj.iter().filter(|d| di.contains(d)).count();
+                let joint = count_sorted_intersection(&in_doc[wi], &in_doc[wj]);
                 let pi = in_doc[wi].len() as f64 / n_docs as f64;
-                let pj = dj.len() as f64 / n_docs as f64;
+                let pj = in_doc[wj].len() as f64 / n_docs as f64;
                 let pij = joint as f64 / n_docs as f64;
                 if pij > 0.0 && pi > 0.0 && pj > 0.0 {
                     let npmi = (pij / (pi * pj)).ln() / (-pij.ln());
@@ -421,6 +449,24 @@ pub fn topic_coherence_npmi(
         }
     }
     out
+}
+
+fn count_sorted_intersection(left: &[u32], right: &[u32]) -> usize {
+    let mut i = 0;
+    let mut j = 0;
+    let mut count = 0;
+    while i < left.len() && j < right.len() {
+        match left[i].cmp(&right[j]) {
+            std::cmp::Ordering::Less => i += 1,
+            std::cmp::Ordering::Greater => j += 1,
+            std::cmp::Ordering::Equal => {
+                count += 1;
+                i += 1;
+                j += 1;
+            }
+        }
+    }
+    count
 }
 
 // Safety: statrs' ln_gamma is private in some versions, just silence the unused-import check.
@@ -443,14 +489,14 @@ mod tests {
         let n_docs = 400;
         let mut rng = StdRng::seed_from_u64(0);
         let mut row_ptr = vec![0_usize];
-        let mut col_idx: Vec<u32> = Vec::new();
+        let mut col_idx: Vec<i32> = Vec::new();
         let mut counts: Vec<f32> = Vec::new();
         for d in 0..n_docs {
             let topic = if d < 200 { 0 } else { 1 };
             let base = topic * 4;
             // each doc has the 4 words of its topic
             for i in 0..4 {
-                col_idx.push((base + i) as u32);
+                col_idx.push(base + i);
                 counts.push((rng.gen::<f32>() * 5.0 + 1.0).round().max(1.0));
             }
             row_ptr.push(col_idx.len());
@@ -488,7 +534,7 @@ mod tests {
     fn empty_doc_gets_uniform_theta() {
         let n_words = 5;
         let row_ptr = vec![0_usize, 0, 2];
-        let col_idx: Vec<u32> = vec![0, 1];
+        let col_idx: Vec<i32> = vec![0, 1];
         let counts: Vec<f32> = vec![1.0, 1.0];
         let res = online_vb_lda(
             &row_ptr, &col_idx, &counts, n_words, 2, 0.5, 0.5, 64.0, 0.7, 1, 5, 0,

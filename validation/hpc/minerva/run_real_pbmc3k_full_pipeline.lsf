@@ -1,0 +1,79 @@
+#BSUB -J rustscenic_pbmc3k_pipeline
+#BSUB -P acc_DiseaseGeneCell
+#BSUB -q express
+#BSUB -n 4
+#BSUB -R "span[hosts=1] rusage[mem=8000]"
+#BSUB -M 8000
+#BSUB -W 03:00
+#BSUB -o /sc/arion/projects/DiseaseGeneCell/Huang_lab_projects/rustscenic/logs/%J.pbmc3k_pipeline.out
+#BSUB -e /sc/arion/projects/DiseaseGeneCell/Huang_lab_projects/rustscenic/logs/%J.pbmc3k_pipeline.err
+#BSUB -L /bin/bash
+
+set -euo pipefail
+
+module load python/3.12.5
+unset PYTHONPATH PYTHONHOME
+export PYTHONNOUSERSITE=1
+export OMP_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export RAYON_NUM_THREADS="${LSB_DJOB_NUMPROC:-4}"
+export TMPDIR=/sc/arion/work/kahrae01/rustscenic/tmp
+
+PROJECT=/sc/arion/projects/DiseaseGeneCell/Huang_lab_projects/rustscenic
+ENV=/sc/arion/work/kahrae01/rustscenic/envs/rustscenic-v047
+REPO="${PROJECT}/repo"
+DATA_DIR="${REPO}/validation/real_multiome_v036"
+RUN_ID="pbmc3k_full_pipeline_$(date +%Y%m%d_%H%M%S)"
+OUT_DIR="${PROJECT}/results/real_pbmc3k_full_pipeline/${RUN_ID}_outputs"
+OUT_JSON="${PROJECT}/results/real_pbmc3k_full_pipeline/${RUN_ID}.json"
+
+mkdir -p "${PROJECT}/logs" "${PROJECT}/results/real_pbmc3k_full_pipeline" "${TMPDIR}"
+
+. "${ENV}/bin/activate"
+cd "${REPO}"
+
+echo "host=$(hostname)"
+echo "date=$(date -Is)"
+echo "python=$(python --version)"
+echo "repo_sha=$(git rev-parse --short HEAD)"
+echo "result_json=${OUT_JSON}"
+echo "RAYON_NUM_THREADS=${RAYON_NUM_THREADS}"
+
+python validation/hpc/minerva/preflight_minerva.py \
+  --repo "${REPO}" \
+  --env "${ENV}" \
+  --data-dir "${DATA_DIR}" \
+  --out-json "${PROJECT}/results/real_pbmc3k_full_pipeline/${RUN_ID}.preflight.json" \
+  --require-repo-import \
+  --require-thread-pins \
+  --require-clean
+
+/usr/bin/time -v python validation/scaling/bench_real_multiome_pipeline.py \
+  --dataset-name pbmc_unsorted_3k_multiome \
+  --rna-10x-h5 "${DATA_DIR}/pbmc_3k_filtered_feature_bc_matrix.h5" \
+  --fragments "${DATA_DIR}/pbmc_3k_atac_fragments.tsv.gz" \
+  --peaks "${DATA_DIR}/pbmc_3k_atac_peaks.bed" \
+  --out-dir "${OUT_DIR}" \
+  --out-json "${OUT_JSON}" \
+  --run-id "${RUN_ID}" \
+  --expected-tfs SPI1 PAX5 GATA3 TBX21 EBF1 IRF8 TCF7 RUNX3 \
+  --threads "${RAYON_NUM_THREADS}" \
+  --grn-n-estimators 100 \
+  --topics-n-topics 10 \
+  --topics-n-passes 3 \
+  --cistarget-nes-threshold 3.0 \
+  --eregulon-min-target-genes 2 \
+  --eregulon-min-enhancer-links 1 \
+  --seed 777 \
+  --require-clean
+
+python validation/hpc/minerva/validate_benchmark_artifact.py \
+  --check-output-files \
+  "${OUT_JSON}"
+
+python validation/hpc/minerva/collect_benchmark_results.py \
+  --check-output-files \
+  "${OUT_JSON}"
+
+echo "RESULT_JSON=${OUT_JSON}"

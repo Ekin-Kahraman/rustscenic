@@ -45,6 +45,19 @@ pub struct FragmentTable {
     pub count: Vec<u32>,
 }
 
+/// Per-barcode fragment QC arrays and cheap summary metadata.
+///
+/// Arrays are parallel to `FragmentTable::barcode_names`. `total_fragment_records`
+/// is the number of rows in the fragments file after comments and blanks are
+/// removed, not the PCR-duplicate-adjusted count sum.
+#[derive(Debug, Clone, PartialEq)]
+pub struct BarcodeQcCounts {
+    pub fragments_per_barcode: Vec<u32>,
+    pub total_counts_per_barcode: Vec<u32>,
+    pub total_fragment_records: usize,
+    pub median_fragments_per_barcode: Option<f32>,
+}
+
 impl FragmentTable {
     /// Number of fragment records.
     pub fn len(&self) -> usize {
@@ -190,6 +203,41 @@ pub fn total_counts_per_barcode(table: &FragmentTable) -> Vec<u32> {
     out
 }
 
+/// Compute per-barcode fragment QC in one pass over the fragment table.
+///
+/// `compute_median_fragments` is intentionally optional because median requires
+/// sorting the per-barcode counts. The Python wrapper only needs it for the
+/// large raw-barcode warning path.
+pub fn barcode_qc_counts(table: &FragmentTable, compute_median_fragments: bool) -> BarcodeQcCounts {
+    let mut fragments_per = vec![0_u32; table.n_barcodes()];
+    let mut total_counts = vec![0_u32; table.n_barcodes()];
+    for (i, &barcode_idx) in table.barcode_idx.iter().enumerate() {
+        let dst = barcode_idx as usize;
+        fragments_per[dst] += 1;
+        total_counts[dst] += table.count[i];
+    }
+
+    let median_fragments_per_barcode = if compute_median_fragments && !fragments_per.is_empty() {
+        let mut sorted = fragments_per.clone();
+        sorted.sort_unstable();
+        let mid = sorted.len() / 2;
+        if sorted.len() % 2 == 1 {
+            Some(sorted[mid] as f32)
+        } else {
+            Some((sorted[mid - 1] as f32 + sorted[mid] as f32) / 2.0)
+        }
+    } else {
+        None
+    };
+
+    BarcodeQcCounts {
+        fragments_per_barcode: fragments_per,
+        total_counts_per_barcode: total_counts,
+        total_fragment_records: table.len(),
+        median_fragments_per_barcode,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -251,6 +299,16 @@ chr2\t10\t50\tAAA-1\t1
         let totals = total_counts_per_barcode(&t);
         // AAA-1: 1+2+1=4; BBB-1: 1
         assert_eq!(totals, vec![4, 1]);
+    }
+
+    #[test]
+    fn barcode_qc_counts_fuses_fragments_totals_and_median() {
+        let t = read_fragments_from(Cursor::new(SAMPLE)).unwrap();
+        let qc = barcode_qc_counts(&t, true);
+        assert_eq!(qc.fragments_per_barcode, vec![3, 1]);
+        assert_eq!(qc.total_counts_per_barcode, vec![4, 1]);
+        assert_eq!(qc.total_fragment_records, 4);
+        assert_eq!(qc.median_fragments_per_barcode, Some(2.0));
     }
 
     #[test]

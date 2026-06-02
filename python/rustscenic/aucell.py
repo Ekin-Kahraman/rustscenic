@@ -11,17 +11,25 @@ Matches pyscenic.aucell.aucell at the algorithmic level:
 """
 from __future__ import annotations
 
-from typing import Iterable, Union
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
 
-from rustscenic._rustscenic import aucell_score as _aucell_score
+from rustscenic._rustscenic import (
+    aucell_score as _aucell_score,
+    aucell_score_sparse_csr as _aucell_score_sparse_csr,
+)
 from rustscenic._gene_resolution import (
     dedupe_by_symbol,
-    regulon_coverage,
-    warn_if_likely_unnormalized,
+    duplicate_gene_summary,
+    warn_if_max_likely_unnormalized,
     warn_if_poor_coverage,
+)
+from rustscenic._stage_utils import (
+    as_float32_array,
+    as_float32_contiguous,
+    prepare_regulon_indices_with_coverage,
 )
 
 
@@ -51,10 +59,9 @@ def score(
         Fraction of top-ranked genes per cell used as AUC cutoff (default 0.05,
         matches pyscenic).
     chunk_size
-        For sparse input, densify and score at most this many cells at a time
-        (default 10_000). Keeps peak RSS to ~chunk_size × n_genes × 4 bytes
-        during the densification step. Set to None or >= n_cells to densify
-        everything in one go.
+        Kept for API compatibility. Sparse SciPy/AnnData inputs are scored by
+        the Rust CSR kernel without dense materialisation; dense inputs ignore
+        this setting.
 
     Returns
     -------
@@ -79,7 +86,6 @@ def score(
         )
 
     X_raw, gene_names, cell_names = _coerce(expression)
-    _raise_if_nonfinite(X_raw, "expression matrix")
     # Warn if the rank-cutoff K = floor(top_frac × n_genes) is so small
     # that no regulon's members can be inside it. Was a silent-all-zero
     # mode at very small top_frac on small gene sets.
@@ -94,15 +100,9 @@ def score(
             f"Increase top_frac or use a wider gene set.",
             UserWarning, stacklevel=3,
         )
-    warn_if_likely_unnormalized(X_raw, stacklevel=3)
-
-    dup_count = len(gene_names) - len(set(gene_names))
+    dup_count, top_dupes = duplicate_gene_summary(gene_names)
     if dup_count > 0:
         import warnings
-        from collections import Counter
-        top_dupes = [
-            n for n, c in Counter(gene_names).most_common(3) if c > 1
-        ]
         warnings.warn(
             f"{dup_count} duplicate gene name(s) after ENSEMBL→symbol "
             f"resolution (e.g. {top_dupes}). Summing expression across "
@@ -113,32 +113,9 @@ def score(
         )
         X_raw, gene_names = dedupe_by_symbol(X_raw, gene_names)
 
-    gene_to_idx = {g: i for i, g in enumerate(gene_names)}
-    reg_names: list[str] = []
-    reg_gene_indices: list[list[int]] = []
-    # Accumulate (name, genes) pairs once so we can report coverage
-    # alongside the AUC matrix and also warn on poor overlap.
-    reg_pairs: list[tuple[str, list[str]]] = []
-
-    # Accept both forms the docstring advertises:
-    #   - list of (name, genes) tuples / pyscenic Regulon objects
-    #   - dict mapping name -> genes
-    if isinstance(regulons, dict):
-        regulons = list(regulons.items())
-
-    dropped_empty = 0
-    for reg in regulons:
-        name, genes = _coerce_regulon(reg)
-        genes_list = list(genes)
-        reg_pairs.append((name, genes_list))
-        idx = [gene_to_idx[g] for g in genes_list if g in gene_to_idx]
-        if not idx:
-            dropped_empty += 1
-            continue
-        reg_names.append(name)
-        reg_gene_indices.append(idx)
-
-    coverage = regulon_coverage(gene_names, reg_pairs)
+    reg_names, reg_gene_indices, reg_pairs, coverage, dropped_empty = (
+        prepare_regulon_indices_with_coverage(gene_names, regulons)
+    )
     warn_if_poor_coverage(coverage, stacklevel=3)
 
     if dropped_empty > 0 and not reg_names:
@@ -161,35 +138,26 @@ def score(
             UserWarning, stacklevel=2,
         )
 
-    # Score in chunks if the input is sparse - densifying 100k x 20k is 8 GB
-    # float32, and the peak during conversion is 2x that. Chunking bounds
-    # instantaneous RSS to chunk_size × n_genes × 4 bytes.
     import scipy.sparse as sp
-    n_cells = len(cell_names)
     if sp.issparse(X_raw):
-        if chunk_size is None or chunk_size >= n_cells:
-            X = X_raw.toarray()
-            if X.dtype != np.float32:
-                X = X.astype(np.float32, copy=False)
-            X = np.ascontiguousarray(X)
-            auc = _aucell_score(X, reg_names, reg_gene_indices, top_frac)
-        else:
-            # Dense-per-chunk; concat.
-            parts = []
-            for start in range(0, n_cells, chunk_size):
-                end = min(start + chunk_size, n_cells)
-                X_chunk = X_raw[start:end].toarray()
-                if X_chunk.dtype != np.float32:
-                    X_chunk = X_chunk.astype(np.float32, copy=False)
-                X_chunk = np.ascontiguousarray(X_chunk)
-                parts.append(np.asarray(_aucell_score(X_chunk, reg_names, reg_gene_indices, top_frac)))
-            auc = np.concatenate(parts, axis=0) if parts else np.zeros((0, len(reg_names)), dtype=np.float32)
+        X_csr = X_raw.tocsr().astype(np.float32, copy=False)
+        X_csr.sum_duplicates()
+        X_csr.sort_indices()
+        auc, expression_max = _unpack_aucell_result(_aucell_score_sparse_csr(
+            X_csr.indptr,
+            np.asarray(X_csr.indices, dtype=np.int32),
+            np.asarray(X_csr.data, dtype=np.float32),
+            int(X_csr.shape[1]),
+            reg_names,
+            reg_gene_indices,
+            top_frac,
+        ))
     else:
-        X = np.asarray(X_raw)
-        if X.dtype != np.float32:
-            X = X.astype(np.float32, copy=False)
-        X = np.ascontiguousarray(X)
-        auc = _aucell_score(X, reg_names, reg_gene_indices, top_frac)
+        X = as_float32_array(X_raw)
+        auc, expression_max = _unpack_aucell_result(
+            _aucell_score(X, reg_names, reg_gene_indices, top_frac)
+        )
+    warn_if_max_likely_unnormalized(expression_max, stacklevel=3)
     df = pd.DataFrame(np.asarray(auc), index=cell_names, columns=reg_names)
     # Store per-regulon coverage as metadata so downstream code can
     # diagnose low-overlap regulons without rerunning.
@@ -236,32 +204,8 @@ def _coerce(expression):
     raise TypeError("expression must be AnnData, pandas.DataFrame, or (matrix, gene_names) tuple")
 
 
-def _coerce_regulon(reg):
-    if isinstance(reg, tuple) and len(reg) == 2:
-        name, genes = reg
-        return str(name), list(genes)
-    if isinstance(reg, dict):
-        if "name" in reg and "genes" in reg:
-            return str(reg["name"]), list(reg["genes"])
-    # pyscenic Regulon / GeneSignature
-    name = getattr(reg, "name", None) or getattr(reg, "transcription_factor", None)
-    if hasattr(reg, "gene2weight"):
-        genes = list(reg.gene2weight.keys())
-    elif hasattr(reg, "genes"):
-        genes = list(reg.genes)
-    else:
-        raise TypeError(f"cannot extract regulon genes from {type(reg).__name__}")
-    if name is None:
-        raise TypeError(f"regulon {reg!r} has no .name")
-    return str(name), genes
-
-
-def _raise_if_nonfinite(X, label: str) -> None:
-    import scipy.sparse as sp
-
-    values = X.data if sp.issparse(X) else np.asarray(X)
-    if not np.all(np.isfinite(values)):
-        raise ValueError(
-            f"{label} contains NaN or Inf values; clean or filter the matrix "
-            f"before calling rustscenic.aucell.score"
-        )
+def _unpack_aucell_result(result):
+    """Return ``(auc_matrix, expression_max)`` from current or old test doubles."""
+    if isinstance(result, tuple) and len(result) == 2:
+        return result
+    return result, None

@@ -16,17 +16,26 @@ An eRegulon is therefore a three-way intersection:
     3. The TF -> gene predictions from expression (GRN output, optional)
 
 This module produces eRegulon records from those three rustscenic
-outputs. It is pure Python pandas / dataclass bookkeeping - no
-computation - because every numerical step already ran upstream.
+outputs. The scale-sensitive table assembly runs in Rust; Python keeps
+the public dataclass API and pandas/AnnData-facing glue.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Iterable, Optional, Sequence
+from collections.abc import Sequence
 
+import numpy as np
 import pandas as pd
 
-from rustscenic.cistarget import _tf_from_regulon_name
+from rustscenic._rustscenic import (
+    eregulon_assemble as _eregulon_assemble,
+    eregulon_assemble_f32 as _eregulon_assemble_f32,
+    eregulon_assemble_summary as _eregulon_assemble_summary,
+    eregulon_assemble_summary_f32 as _eregulon_assemble_summary_f32,
+)
+from rustscenic._stage_utils import (
+    require_columns as _require_columns,
+)
 
 
 @dataclass
@@ -69,7 +78,7 @@ class ERegulon:
 
 
 def build_eregulons(
-    grn: Optional[pd.DataFrame],
+    grn: pd.DataFrame | None,
     cistarget: pd.DataFrame,
     enhancer_links: pd.DataFrame,
     *,
@@ -117,9 +126,197 @@ def build_eregulons(
     -------
     list[ERegulon] sorted by descending ``n_enhancer_links``.
     """
-    # Validate inputs
-    _require_columns(cistarget, {"regulon", "auc"}, name="cistarget")
+    return _build_eregulon_objects(
+        grn,
+        cistarget,
+        enhancer_links,
+        min_target_genes=min_target_genes,
+        min_enhancer_links=min_enhancer_links,
+        cistarget_auc_threshold=cistarget_auc_threshold,
+        use_grn_intersection=use_grn_intersection,
+    )
+
+
+def _build_eregulon_objects(
+    grn: pd.DataFrame | None,
+    cistarget: pd.DataFrame,
+    enhancer_links: pd.DataFrame,
+    *,
+    min_target_genes: int = 5,
+    min_enhancer_links: int = 2,
+    cistarget_auc_threshold: float = 0.05,
+    use_grn_intersection: bool = True,
+) -> list[ERegulon]:
+    """Rust-backed assembly returning public ERegulon objects."""
+    _validate_build_inputs(
+        grn,
+        cistarget,
+        enhancer_links,
+        use_grn_intersection=use_grn_intersection,
+    )
     peak_col = _find_peak_column(cistarget)
+
+    if use_grn_intersection:
+        grn_tfs = grn["TF"].astype(str).tolist()
+        grn_targets = grn["target"].astype(str).tolist()
+    else:
+        grn_tfs = []
+        grn_targets = []
+
+    cistarget_aucs = _cistarget_auc_arg(cistarget["auc"])
+    (
+        tf,
+        enhancers,
+        target_genes,
+        n_enhancer_links,
+        motif_auc,
+        target_to_peaks,
+        n_input_tfs,
+        n_eregulons,
+    ) = _eregulon_assemble_summary_arg(cistarget_aucs)(
+        grn_tfs,
+        grn_targets,
+        cistarget["regulon"].astype(str).tolist(),
+        cistarget[peak_col].astype(str).tolist(),
+        cistarget_aucs,
+        enhancer_links["peak_id"].astype(str).tolist(),
+        enhancer_links["gene"].astype(str).tolist(),
+        enhancer_links["correlation"].to_numpy(dtype=np.float32, copy=False),
+        int(min_target_genes),
+        int(min_enhancer_links),
+        float(cistarget_auc_threshold),
+        bool(use_grn_intersection),
+    )
+
+    _warn_if_catastrophic_drop_counts(
+        n_output=int(n_eregulons),
+        n_input_tfs=int(n_input_tfs),
+        use_grn_intersection=use_grn_intersection,
+    )
+    return [
+        ERegulon(
+            tf=str(tf_i),
+            enhancers=list(enhancers_i),
+            target_genes=list(targets_i),
+            n_enhancer_links=int(n_links_i),
+            motif_auc=float(auc_i),
+            target_to_peaks={
+                str(target): list(peaks)
+                for target, peaks in dict(target_map).items()
+            },
+        )
+        for tf_i, enhancers_i, targets_i, n_links_i, auc_i, target_map in zip(
+            tf,
+            enhancers,
+            target_genes,
+            np.asarray(n_enhancer_links, dtype=np.uint32),
+            np.asarray(motif_auc, dtype=np.float64),
+            target_to_peaks,
+            strict=True,
+        )
+    ]
+
+
+def _build_eregulons_dataframe(
+    grn: pd.DataFrame | None,
+    cistarget: pd.DataFrame,
+    enhancer_links: pd.DataFrame,
+    *,
+    min_target_genes: int = 5,
+    min_enhancer_links: int = 2,
+    cistarget_auc_threshold: float = 0.05,
+    use_grn_intersection: bool = True,
+) -> pd.DataFrame:
+    """Rust-backed assembly returning the final long eRegulon table."""
+    _validate_build_inputs(
+        grn,
+        cistarget,
+        enhancer_links,
+        use_grn_intersection=use_grn_intersection,
+    )
+    peak_col = _find_peak_column(cistarget)
+
+    if use_grn_intersection:
+        grn_tfs = grn["TF"].astype(str).tolist()
+        grn_targets = grn["target"].astype(str).tolist()
+    else:
+        grn_tfs = []
+        grn_targets = []
+
+    cistarget_aucs = _cistarget_auc_arg(cistarget["auc"])
+    (
+        tf,
+        enhancer,
+        target_gene,
+        n_enhancer_links,
+        motif_auc,
+        n_input_tfs,
+        n_eregulons,
+    ) = _eregulon_assemble_arg(cistarget_aucs)(
+        grn_tfs,
+        grn_targets,
+        cistarget["regulon"].astype(str).tolist(),
+        cistarget[peak_col].astype(str).tolist(),
+        cistarget_aucs,
+        enhancer_links["peak_id"].astype(str).tolist(),
+        enhancer_links["gene"].astype(str).tolist(),
+        enhancer_links["correlation"].to_numpy(dtype=np.float32, copy=False),
+        int(min_target_genes),
+        int(min_enhancer_links),
+        float(cistarget_auc_threshold),
+        bool(use_grn_intersection),
+    )
+
+    table = pd.DataFrame(
+        {
+            "tf": list(tf),
+            "enhancer": list(enhancer),
+            "target_gene": list(target_gene),
+            "n_enhancer_links": np.asarray(n_enhancer_links, dtype=np.uint32),
+            "motif_auc": np.asarray(motif_auc, dtype=np.float64),
+        },
+        columns=["tf", "enhancer", "target_gene", "n_enhancer_links", "motif_auc"],
+    )
+    table.attrs["n_eregulons"] = int(n_eregulons)
+    table.attrs["n_input_tfs"] = int(n_input_tfs)
+    _warn_if_catastrophic_drop_counts(
+        n_output=int(n_eregulons),
+        n_input_tfs=int(n_input_tfs),
+        use_grn_intersection=use_grn_intersection,
+    )
+    return table
+
+
+def _cistarget_auc_arg(values: pd.Series) -> np.ndarray:
+    arr = values.to_numpy(copy=False)
+    if arr.dtype == np.float32 or arr.dtype == np.float64:
+        return arr
+    if not np.issubdtype(arr.dtype, np.number):
+        raise TypeError("cistarget['auc'] must contain numeric values")
+    return arr.astype(np.float64, copy=False)
+
+
+def _eregulon_assemble_arg(values: np.ndarray):
+    return _eregulon_assemble_f32 if values.dtype == np.float32 else _eregulon_assemble
+
+
+def _eregulon_assemble_summary_arg(values: np.ndarray):
+    return (
+        _eregulon_assemble_summary_f32
+        if values.dtype == np.float32
+        else _eregulon_assemble_summary
+    )
+
+
+def _validate_build_inputs(
+    grn: pd.DataFrame | None,
+    cistarget: pd.DataFrame,
+    enhancer_links: pd.DataFrame,
+    *,
+    use_grn_intersection: bool,
+) -> None:
+    _require_columns(cistarget, {"regulon", "auc"}, name="cistarget")
+    _find_peak_column(cistarget)
     _require_columns(enhancer_links, {"peak_id", "gene", "correlation"}, name="enhancer_links")
     if use_grn_intersection:
         if grn is None:
@@ -129,120 +326,15 @@ def build_eregulons(
             )
         _require_columns(grn, {"TF", "target"}, name="grn")
 
-    # Filter cistarget rows to passing motif enrichments.
-    ct = cistarget.loc[cistarget["auc"] >= cistarget_auc_threshold].copy()
-    if ct.empty:
-        return []
 
-    # Normalise pyscenic / scenicplus regulon-name variants to bare TF
-    # symbols, including compound suffixes such as TF_extended_regulon(+).
-    ct["tf"] = ct["regulon"].astype(str).map(_tf_from_regulon_name)
-
-    # GRN TF → {predicted targets}
-    grn_targets: dict[str, set[str]] | None = None
-    if use_grn_intersection and grn is not None:
-        grn_targets = (
-            grn.groupby("TF")["target"].apply(set).to_dict()
-        )
-
-    # Pre-index enhancer_links for fast per-peak lookup. Vectorised: for real
-    # SCENIC+ scale this DataFrame can have 1-2M rows (100k peaks x 10-20 genes
-    # each); iterrows would take 30+ seconds, groupby runs at C speed.
-    el_pos = enhancer_links.loc[enhancer_links["correlation"] > 0, ["peak_id", "gene", "correlation"]]
-    links_by_peak: dict[str, list[tuple[str, float]]] = {
-        str(peak): list(zip(g["gene"].astype(str), g["correlation"].astype(float)))
-        for peak, g in el_pos.groupby("peak_id", sort=False)
-    }
-
-    # Assemble per TF.
-    eregulons: list[ERegulon] = []
-    for tf, tf_group in ct.groupby("tf"):
-        tf_str = str(tf)
-        peaks_for_tf = tf_group[peak_col].astype(str).unique().tolist()
-        if not peaks_for_tf:
-            continue
-
-        # Find enhancer-linked targets for these peaks. links_by_peak is
-        # pre-filtered to correlation > 0 above (negative correlation means
-        # repressive link, treated as out-of-scope by default; users can
-        # rebuild with custom enhancer filtering upstream if they want it).
-        target_to_peaks: dict[str, set[str]] = {}
-        for peak in peaks_for_tf:
-            for gene, _corr in links_by_peak.get(peak, ()):
-                target_to_peaks.setdefault(gene, set()).add(peak)
-
-        if use_grn_intersection and grn_targets is not None:
-            grn_set = grn_targets.get(tf_str, set())
-            target_to_peaks = {
-                g: peaks for g, peaks in target_to_peaks.items() if g in grn_set
-            }
-
-        if len(target_to_peaks) < min_target_genes:
-            continue
-
-        # Count (peak, gene) edges supporting this eRegulon.
-        n_edges = sum(len(v) for v in target_to_peaks.values())
-        if n_edges < min_enhancer_links:
-            continue
-
-        supporting_peaks = set()
-        for peaks in target_to_peaks.values():
-            supporting_peaks.update(peaks)
-        motif_auc_mean = float(
-            tf_group.loc[tf_group[peak_col].astype(str).isin(supporting_peaks), "auc"].mean()
-        )
-        if pd.isna(motif_auc_mean):
-            # NaN here usually means cistarget peak_col uses a different key
-            # format than enhancer_links.peak_id (e.g. 'chr1:1000-2000' vs
-            # 'chr1_1000_2000'). Warning so users can distinguish "genuine
-            # zero motif AUC" from "key mismatch silenced the join".
-            import warnings as _warnings
-            sample_peak_ct = next(iter(tf_group[peak_col].astype(str)), "?")
-            sample_peak_el = next(iter(supporting_peaks), "?")
-            _warnings.warn(
-                f"motif AUC NaN for TF {tf_str!r}: cistarget peak_col format "
-                f"may not match enhancer_links peak_id. Sample cistarget "
-                f"peak={sample_peak_ct!r}, sample enhancer-link peak={sample_peak_el!r}. "
-                f"Falling back to motif_auc=0.0; check your peak ID conventions.",
-                UserWarning,
-                stacklevel=2,
-            )
-            motif_auc_mean = 0.0
-
-        eregulons.append(
-            ERegulon(
-                tf=tf_str,
-                enhancers=sorted(supporting_peaks),
-                target_genes=sorted(target_to_peaks.keys()),
-                n_enhancer_links=n_edges,
-                motif_auc=motif_auc_mean,
-                target_to_peaks={g: sorted(p) for g, p in target_to_peaks.items()},
-            )
-        )
-
-    eregulons.sort(key=lambda e: (-e.n_enhancer_links, -len(e.target_genes)))
-
-    _warn_if_catastrophic_drop(eregulons, ct, use_grn_intersection)
-    return eregulons
-
-
-def _warn_if_catastrophic_drop(
-    eregulons: list[ERegulon],
-    ct: pd.DataFrame,
+def _warn_if_catastrophic_drop_counts(
+    *,
+    n_output: int,
+    n_input_tfs: int,
     use_grn_intersection: bool,
 ) -> None:
-    """Warn when the intersection dropped > 50% of cistarget TFs.
-
-    A common failure mode: a strict `use_grn_intersection=True` wipes
-    out most regulons because GRN and enhancer links name genes under
-    different conventions (ENSEMBL vs symbol), or the peak_id keys
-    didn't actually match across the three inputs. Without this warning
-    the user sees an empty or tiny output and has no clue why.
-    """
     import warnings
 
-    n_input_tfs = ct["tf"].nunique()
-    n_output = len(eregulons)
     if n_input_tfs == 0:
         return
     if n_output >= max(1, n_input_tfs // 2):
@@ -278,35 +370,15 @@ def eregulons_to_dataframe(eregulons: Sequence[ERegulon]) -> pd.DataFrame:
         # Emit one row per actual (peak, target_gene) edge, not the Cartesian
         # product of (enhancers x target_genes) - n_enhancer_links is the true
         # support count and the dataframe should match it.
-        if er.target_to_peaks:
-            for tgt, peaks in er.target_to_peaks.items():
-                for enh in peaks:
-                    rows.append(
-                        (er.tf, enh, tgt, er.n_enhancer_links, er.motif_auc)
-                    )
-        else:
-            # Fallback for ERegulon objects deserialised from older artefacts
-            # without target_to_peaks; preserve old behaviour rather than
-            # dropping rows on legacy data.
-            for enh in er.enhancers:
-                for tgt in er.target_genes:
-                    rows.append(
-                        (er.tf, enh, tgt, er.n_enhancer_links, er.motif_auc)
-                    )
+        for tgt, peaks in er.target_to_peaks.items():
+            rows.extend(
+                (er.tf, enh, tgt, er.n_enhancer_links, er.motif_auc)
+                for enh in peaks
+            )
     return pd.DataFrame(
         rows,
         columns=["tf", "enhancer", "target_gene", "n_enhancer_links", "motif_auc"],
     )
-
-
-def _require_columns(df: pd.DataFrame, required: set[str], *, name: str) -> None:
-    missing = required - set(df.columns)
-    if missing:
-        raise ValueError(
-            f"{name} is missing required columns: {sorted(missing)}. "
-            f"Got columns: {list(df.columns)}"
-        )
-
 
 def _find_peak_column(ct: pd.DataFrame) -> str:
     for candidate in ("peak_id", "region_id", "peak", "region"):

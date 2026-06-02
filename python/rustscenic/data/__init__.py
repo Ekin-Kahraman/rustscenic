@@ -18,7 +18,7 @@ Public API:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal
 
 _DATA_DIR = Path(__file__).parent
 
@@ -38,6 +38,16 @@ _TF_ALIASES = frozenset(_TF_ALIAS_MAP.keys())
 _SPECIES_DIRS = {"hs": "homo_sapiens", "mm": "mus_musculus"}
 
 
+def _species_code(species) -> str:
+    canonical = _TF_ALIAS_MAP.get(str(species).lower())
+    if canonical is None:
+        raise ValueError(
+            f"unknown species {species!r}. Use 'hs'/'human'/'hg38' for "
+            f"human, 'mm'/'mouse'/'mm10' for mouse."
+        )
+    return canonical
+
+
 def tfs(species: Literal["hs", "mm"] = "hs") -> list[str]:
     """Return the bundled transcription-factor list for ``species``.
 
@@ -52,12 +62,7 @@ def tfs(species: Literal["hs", "mm"] = "hs") -> list[str]:
     Plain Python list of TF gene symbols, suitable to pass directly as
     the ``tf_names`` argument to ``rustscenic.grn.infer``.
     """
-    canonical = _TF_ALIAS_MAP.get(str(species).lower())
-    if canonical is None:
-        raise ValueError(
-            f"unknown species {species!r} - use 'hs' / 'human' / 'hg38' "
-            f"for human, 'mm' / 'mouse' / 'mm10' for mouse"
-        )
+    canonical = _species_code(species)
     filename = {"hs": "allTFs_hg38.txt", "mm": "allTFs_mm.txt"}[canonical]
     path = _DATA_DIR / filename
     return [ln.strip() for ln in path.read_text().splitlines() if ln.strip()]
@@ -68,15 +73,15 @@ _AERTSLAB_RANKINGS_BASE = "https://resources.aertslab.org/cistarget/databases"
 
 def download_motif_rankings(
     species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
-    genome: Optional[str] = None,
+    genome: str | None = None,
     motif_collection: str = "mc_v10_clust",
     refseq_release: str = "refseq_r80",
     region: str = "gene_based",
     window: str = "10kbp_up_10kbp_down",
     score_type: str = "rankings",
-    cache_dir: Optional[Path] = None,
-    filename: Optional[str] = None,
-    url: Optional[str] = None,
+    cache_dir: Path | None = None,
+    filename: str | None = None,
+    url: str | None = None,
     verbose: bool = True,
 ):
     """Download (and cache) an aertslab motif-ranking database.
@@ -144,12 +149,7 @@ def download_motif_rankings(
     # Normalise the species alias from the single source of truth in
     # ``_TF_ALIAS_MAP`` so adding an alias there exposes it through every
     # data-module entry point automatically.
-    canonical_species = _TF_ALIAS_MAP.get(str(species).lower())
-    if canonical_species is None:
-        raise ValueError(
-            f"unknown species {species!r}. Use 'hs'/'human'/'hg38' for "
-            f"human, 'mm'/'mouse'/'mm10' for mouse."
-        )
+    canonical_species = _species_code(species)
     species_dir = _SPECIES_DIRS[canonical_species]
     if genome is None:
         genome = "hg38" if canonical_species == "hs" else "mm10"
@@ -240,8 +240,8 @@ _GENCODE_URLS = {
 
 def download_gene_coords(
     species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
-    cache_dir: Optional[Path] = None,
-    url: Optional[str] = None,
+    cache_dir: Path | None = None,
+    url: str | None = None,
     verbose: bool = True,
 ):
     """Download and cache GENCODE gene TSS coordinates as ``(gene, chrom, tss)``.
@@ -277,12 +277,7 @@ def download_gene_coords(
     import urllib.request
     import pandas as pd
 
-    norm = _TF_ALIAS_MAP.get(str(species).lower())
-    if norm is None:
-        raise ValueError(
-            f"unknown species {species!r}. Use 'hs'/'human'/'hg38' "
-            f"for human, 'mm'/'mouse'/'mm10' for mouse."
-        )
+    norm = _species_code(species)
     if url is None:
         url = _GENCODE_URLS[norm]
 

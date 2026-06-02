@@ -287,15 +287,15 @@ def test_download_motif_rankings_accepts_aliases_and_mouse(tmp_path, monkeypatch
     monkeypatch.setattr(urllib.request, "urlretrieve", fake_urlretrieve)
 
     # human alias
-    out = data.download_motif_rankings(species="human", cache_dir=tmp_path / "h", verbose=False)
+    data.download_motif_rankings(species="human", cache_dir=tmp_path / "h", verbose=False)
     assert any("hg38" in u for u in seen_urls)
     # mouse alias resolves to mm10
     seen_urls.clear()
-    out = data.download_motif_rankings(species="mouse", cache_dir=tmp_path / "m", verbose=False)
+    data.download_motif_rankings(species="mouse", cache_dir=tmp_path / "m", verbose=False)
     assert any("mm10" in u for u in seen_urls)
     # mm10 alias works too
     seen_urls.clear()
-    out = data.download_motif_rankings(species="mm10", cache_dir=tmp_path / "mm10", verbose=False)
+    data.download_motif_rankings(species="mm10", cache_dir=tmp_path / "mm10", verbose=False)
     assert any("mm10" in u for u in seen_urls)
 
 

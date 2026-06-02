@@ -19,7 +19,6 @@ See `docs/atac-preprocessing-scope.md` for scope + validation plan.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -34,8 +33,8 @@ from rustscenic._rustscenic import (
 
 
 def fragments_to_matrix(
-    fragments_path: Union[str, Path],
-    peaks_path: Union[str, Path],
+    fragments_path: str | Path,
+    peaks_path: str | Path,
 ):
     """Build a cells × peaks AnnData from fragments + peaks.
 
@@ -74,9 +73,18 @@ def fragments_to_matrix(
     fragments_path = str(Path(fragments_path))
     peaks_path = str(Path(peaks_path))
 
-    data, indices, indptr, shape, barcodes, peaks, fpc, tcc = _fragments_to_matrix(
-        fragments_path, peaks_path
-    )
+    (
+        data,
+        indices,
+        indptr,
+        shape,
+        barcodes,
+        peaks,
+        fpc,
+        tcc,
+        total_frags,
+        median_frags,
+    ) = _fragments_to_matrix(fragments_path, peaks_path)
 
     # Guard against the 6-column strand BED parse mode - if > 90% of
     # "barcodes" are unique (i.e. one per fragment), the barcode column
@@ -85,7 +93,6 @@ def fragments_to_matrix(
     # 5: chrom start end barcode count. A 6-column strand-BED is
     # chrom start end name score strand - the barcode parse lands on
     # `name`, one per line.
-    total_frags = int(np.asarray(fpc, dtype=np.uint64).sum())
     if barcodes and total_frags > 100 and len(barcodes) > 0.9 * total_frags:
         import warnings
         warnings.warn(
@@ -109,7 +116,6 @@ def fragments_to_matrix(
     # often 10x+ that.
     if len(barcodes) > 100_000:
         import warnings
-        median_frags = float(np.median(np.asarray(fpc, dtype=np.uint64)))
         warnings.warn(
             f"fragments_to_matrix returned {len(barcodes):,} barcodes "
             f"(median {median_frags:.0f} fragments/barcode). 10x raw "
@@ -135,16 +141,16 @@ def fragments_to_matrix(
 
 
 def call_peaks(
-    fragments_path: Union[str, Path],
-    cluster_per_barcode: Union[pd.Series, np.ndarray, list[int]],
+    fragments_path: str | Path,
+    cluster_per_barcode: pd.Series | np.ndarray | list[int],
     *,
-    n_clusters: Union[int, None] = None,
+    n_clusters: int | None = None,
     window_size: int = 50,
     min_fragments_per_window: int = 3,
     quantile_threshold: float = 0.95,
     max_gap: int = 250,
     peak_half_width: int = 250,
-    output_bed: Union[str, Path, None] = None,
+    output_bed: str | Path | None = None,
 ) -> pd.DataFrame:
     """Call iterative consensus peaks from pseudobulked fragments.
 
@@ -162,12 +168,13 @@ def call_peaks(
         Cluster id per barcode (0-indexed). Same length as the fragments'
         unique-barcode set - i.e. as what `fragments_to_matrix(...).obs`
         produces. Use ``u32::MAX`` (2**32 - 1) to mark unassigned.
+        Signed arrays may use negative IDs for unassigned barcodes.
         Accepts a list, numpy array, or a pandas Series (the latter's
         index is used to align to the fragments' barcode order - the
         Rust layer will reject a mismatch loudly).
     n_clusters
-        Number of distinct cluster ids. Defaults to
-        ``int(max(cluster_per_barcode)) + 1``.
+        Number of distinct cluster ids. Defaults to deriving
+        ``max(cluster_per_barcode) + 1`` inside the Rust peak caller.
     window_size, min_fragments_per_window, quantile_threshold, max_gap, peak_half_width
         See ``rustscenic-preproc``'s ``PeakCallingConfig``. Defaults
         match the Corces-2018 convention (50 bp windows, top 5 %
@@ -185,33 +192,21 @@ def call_peaks(
     """
     fragments_path = str(Path(fragments_path))
     if isinstance(cluster_per_barcode, pd.Series):
-        barcodes, *_ = _insert_size_stats(fragments_path)
-        barcode_index = pd.Index(list(barcodes), name="barcode")
-        missing = barcode_index.difference(cluster_per_barcode.index)
-        if len(missing):
-            raise ValueError(
-                "cluster_per_barcode Series is missing fragment barcodes: "
-                f"{missing[:5].tolist()}"
-            )
-        clusters = cluster_per_barcode.reindex(barcode_index).to_numpy(dtype=np.int64)
+        cluster_barcodes = [str(barcode) for barcode in cluster_per_barcode.index]
+        clusters = cluster_per_barcode.to_numpy(dtype=np.int64)
     else:
-        clusters = np.asarray(cluster_per_barcode, dtype=np.int64)
-    # PyO3 receives u32; clamp negative / NaN-likes to u32::MAX.
-    clusters_u32 = np.where(clusters < 0, np.uint32(0xFFFF_FFFF), clusters).astype(np.uint32)
-    if n_clusters is None:
-        # Max valid cluster id → n_clusters
-        valid = clusters[clusters >= 0]
-        n_clusters = int(valid.max()) + 1 if valid.size > 0 else 0
-
+        cluster_barcodes = None
+        clusters = np.asarray(cluster_per_barcode)
     chroms, starts, ends, names = _call_peaks(
         fragments_path,
-        clusters_u32.tolist(),
+        np.ascontiguousarray(clusters),
         n_clusters,
         window_size,
         min_fragments_per_window,
         quantile_threshold,
         max_gap,
         peak_half_width,
+        cluster_barcodes=cluster_barcodes,
     )
     df = pd.DataFrame(
         {
@@ -237,7 +232,7 @@ class qc:
 
     @staticmethod
     def insert_size_stats(
-        fragments_path: Union[str, Path],
+        fragments_path: str | Path,
     ) -> pd.DataFrame:
         """Per-barcode insert-size summary.
 
@@ -267,8 +262,8 @@ class qc:
 
     @staticmethod
     def frip(
-        fragments_path: Union[str, Path],
-        peaks_path: Union[str, Path],
+        fragments_path: str | Path,
+        peaks_path: str | Path,
     ) -> pd.Series:
         """Per-barcode fraction of reads in peaks.
 
@@ -286,7 +281,7 @@ class qc:
 
     @staticmethod
     def tss_enrichment(
-        fragments_path: Union[str, Path],
+        fragments_path: str | Path,
         tss: pd.DataFrame,
     ) -> pd.Series:
         """Per-barcode TSS enrichment (signal-over-background).

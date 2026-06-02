@@ -27,10 +27,38 @@ import json
 import time
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Iterable, Optional, Union
+from typing import Any
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
+
+from rustscenic._rustscenic import (
+    cistarget_region_attribution_i16 as _cistarget_region_attribution_i16,
+    cistarget_region_attribution_i32 as _cistarget_region_attribution_i32,
+    cistarget_region_attribution_i64 as _cistarget_region_attribution_i64,
+    cistarget_region_attribution_peak_values_i16 as _cistarget_region_peak_values_i16,
+    cistarget_region_attribution_peak_values_i32 as _cistarget_region_peak_values_i32,
+    cistarget_region_attribution_peak_values_i64 as _cistarget_region_peak_values_i64,
+    cistarget_rankings_to_i32_f32 as _rankings_to_i32_f32,
+    cistarget_rankings_to_i32_f64 as _rankings_to_i32_f64,
+    pipeline_attribute_peaks_to_cistarget_rows_f32 as _pipeline_attribute_peak_rows_f32,
+    pipeline_attribute_peaks_to_cistarget_rows_f64 as _pipeline_attribute_peak_rows_f64,
+    pipeline_candidate_regulons_from_grn as _pipeline_candidate_regulons_from_grn,
+    pipeline_expand_region_cistarget_rows_f32 as _pipeline_expand_region_rows_f32,
+    pipeline_expand_region_cistarget_rows_f64 as _pipeline_expand_region_rows_f64,
+    pipeline_filter_cistarget_peak_rows_f32 as _pipeline_filter_cistarget_peak_rows_f32,
+    pipeline_filter_cistarget_peak_rows_f64 as _pipeline_filter_cistarget_peak_rows_f64,
+    pipeline_match_atac_cell_indices as _pipeline_match_atac_cell_indices,
+    pipeline_peak_regulons_and_features_from_edges as _pipeline_peak_regulons_and_features,
+    pipeline_project_ranking_columns as _pipeline_project_ranking_columns,
+    preproc_peak_coords_for_names as _preproc_peak_coords_for_names,
+)
+from rustscenic._stage_utils import (
+    as_float32_contiguous,
+    iter_regulon_pairs,
+    tf_from_regulon_name,
+)
 
 
 @dataclass
@@ -42,23 +70,29 @@ class PipelineResult:
     """
 
     output_dir: Path
-    atac_matrix_path: Optional[Path] = None
-    grn_path: Optional[Path] = None
-    regulons_path: Optional[Path] = None
-    candidate_regulons_path: Optional[Path] = None
-    pruned_regulons_path: Optional[Path] = None
-    aucell_path: Optional[Path] = None
-    topics_dir: Optional[Path] = None
-    cistarget_path: Optional[Path] = None
-    enhancer_links_path: Optional[Path] = None
-    eregulons_path: Optional[Path] = None
-    integrated_adata_path: Optional[Path] = None
+    atac_matrix_path: Path | None = None
+    grn_path: Path | None = None
+    regulons_path: Path | None = None
+    candidate_regulons_path: Path | None = None
+    pruned_regulons_path: Path | None = None
+    aucell_path: Path | None = None
+    topics_dir: Path | None = None
+    cistarget_path: Path | None = None
+    enhancer_links_path: Path | None = None
+    eregulons_path: Path | None = None
+    integrated_adata_path: Path | None = None
     elapsed: dict = field(default_factory=dict)
-    n_cells: Optional[int] = None
-    n_regulons: Optional[int] = None
-    n_candidate_regulons: Optional[int] = None
-    n_pruned_regulons: Optional[int] = None
-    n_eregulons: Optional[int] = None
+    memory: dict = field(default_factory=dict)
+    n_cells: int | None = None
+    n_grn_edges: int | None = None
+    n_regulons: int | None = None
+    n_candidate_regulons: int | None = None
+    n_pruned_regulons: int | None = None
+    n_cistarget_rows: int | None = None
+    n_enhancer_links: int | None = None
+    n_eregulon_rows: int | None = None
+    n_eregulons: int | None = None
+    aucell_shape: list[int] | None = None
     regulon_source: str = "candidate_grn_top_targets"
 
     def manifest(self) -> dict:
@@ -70,20 +104,20 @@ class PipelineResult:
 
 
 def run(
-    rna: Union[str, Path, Any],
-    output_dir: Union[str, Path],
+    rna: str | Path | Any,
+    output_dir: str | Path,
     *,
-    adata_atac: Optional[Any] = None,
-    fragments: Union[str, Path, None] = None,
-    peaks: Union[str, Path, None] = None,
-    tfs: Union[str, Path, Iterable[str], None] = None,
-    motif_rankings: Union[str, Path, pd.DataFrame, None] = None,
-    motif_annotations: Union[str, Path, pd.DataFrame, None] = None,
-    region_motif_rankings: Union[str, Path, pd.DataFrame, None] = None,
-    gene_coords: Union[str, Path, pd.DataFrame, None] = None,
+    adata_atac: Any | None = None,
+    fragments: str | Path | None = None,
+    peaks: str | Path | None = None,
+    tfs: str | Path | Iterable[str] | None = None,
+    motif_rankings: str | Path | pd.DataFrame | None = None,
+    motif_annotations: str | Path | pd.DataFrame | None = None,
+    region_motif_rankings: str | Path | pd.DataFrame | None = None,
+    gene_coords: str | Path | pd.DataFrame | None = None,
     grn_n_estimators: int = 500,
     grn_max_features: float = 0.1,
-    grn_target_block_size: Optional[int] = None,
+    grn_target_block_size: int | None = None,
     grn_top_targets: int = 50,
     aucell_top_frac: float = 0.05,
     topics_n_topics: int = 30,
@@ -93,7 +127,7 @@ def run(
     topics_n_threads: int = 1,
     cistarget_top_frac: float = 0.05,
     cistarget_auc_threshold: float = 0.05,
-    cistarget_nes_threshold: Optional[float] = None,
+    cistarget_nes_threshold: float | None = None,
     enhancer_max_distance: int = 500_000,
     enhancer_min_abs_corr: float = 0.1,
     eregulon_min_target_genes: int = 5,
@@ -195,6 +229,13 @@ def run(
     output_dir.mkdir(parents=True, exist_ok=True)
     log = _Logger(verbose)
     elapsed: dict = {}
+    memory: dict = {}
+    n_cistarget_rows: int | None = None
+    n_enhancer_links: int | None = None
+    n_eregulon_rows: int | None = None
+
+    def mark_memory(stage: str) -> None:
+        memory[stage] = _peak_rss_gb()
 
     if motif_annotations is not None and motif_rankings is None:
         # Pruning needs both. Without rankings we have no enriched motifs to
@@ -214,6 +255,7 @@ def run(
     adata_rna = _coerce_adata(rna)
     n_cells = adata_rna.n_obs
     log(f"      RNA shape: {adata_rna.shape}")
+    mark_memory("load_rna")
 
     # ---- 2. preproc + topics (only if ATAC inputs provided) ----
     # Two paths into the cells × peaks ATAC matrix:
@@ -243,27 +285,9 @@ def run(
             adata_atac = rustscenic.preproc.fragments_to_matrix(fragments, peaks)
             elapsed["preproc"] = time.perf_counter() - t0
             log(f"      ATAC shape: {adata_atac.shape}, took {elapsed['preproc']:.1f}s")
+        mark_memory("preproc")
 
-        rna_cells = set(map(str, adata_rna.obs_names))
-        shared_atac_cells = [bc for bc in adata_atac.obs_names if str(bc) in rna_cells]
-        if not shared_atac_cells:
-            raise ValueError(
-                "ATAC input shares no cell barcodes with RNA input. Raw 10x "
-                "fragments include many non-cell barcodes, but at least one "
-                "called cell barcode must match rna.obs_names."
-            )
-        if len(shared_atac_cells) < adata_atac.n_obs:
-            _warnings.warn(
-                f"subsetting ATAC from {adata_atac.n_obs:,} barcodes to "
-                f"{len(shared_atac_cells):,} RNA-matched cells before topics. "
-                "This avoids carrying raw 10x empty droplets through the "
-                "pipeline; pass a pre-filtered adata_atac to control this "
-                "step explicitly.",
-                UserWarning,
-                stacklevel=2,
-            )
-            adata_atac = adata_atac[shared_atac_cells].copy()
-            log(f"      ATAC subset to RNA cells: {adata_atac.shape}")
+        adata_atac = _subset_atac_to_rna_cells(adata_rna, adata_atac, log=log)
 
         # Persist the artefact first; only mark have_atac=True (via
         # atac_matrix_path) once the file is on disk. If write fails (disk
@@ -298,6 +322,7 @@ def run(
             )
         elapsed["topics"] = time.perf_counter() - t0
         log(f"      fit in {elapsed['topics']:.1f}s")
+        mark_memory("topics")
 
         topics_dir = output_dir / "topics"
         topics_dir.mkdir(exist_ok=True)
@@ -326,9 +351,11 @@ def run(
         verbose=False,
     )
     elapsed["grn"] = time.perf_counter() - t0
+    n_grn_edges = int(len(grn))
     grn_path = output_dir / "grn.parquet"
     grn.to_parquet(grn_path, index=False)
-    log(f"      {len(grn):,} edges in {elapsed['grn']:.1f}s → {grn_path.name}")
+    log(f"      {n_grn_edges:,} edges in {elapsed['grn']:.1f}s → {grn_path.name}")
+    mark_memory("grn")
 
     # ---- 4. build candidate regulons ----
     if grn_top_targets < 1:
@@ -342,19 +369,21 @@ def run(
     )
     candidate_regulons_path = output_dir / "candidate_regulons.json"
     candidate_regulons_path.write_text(json.dumps(candidate_regulons, indent=2))
+    candidate_regulon_pairs = list(iter_regulon_pairs(candidate_regulons))
     regulons = dict(candidate_regulons)
     regulon_source = "candidate_grn_top_targets"
     pruned_regulons_path = None
-    n_pruned_regulons: Optional[int] = None
+    n_pruned_regulons: int | None = None
     log(
         f"      {len(candidate_regulons)} candidate regulons "
         f"(≥{min_targets_for_candidate} targets) → {candidate_regulons_path.name}"
     )
+    mark_memory("candidate_regulons")
 
     # ---- 4b. cistarget (optional) ----
     cistarget_path = None
-    enriched: Optional[pd.DataFrame] = None
-    enriched_for_eregulons: Optional[pd.DataFrame] = None
+    enriched: pd.DataFrame | None = None
+    enriched_for_eregulons: pd.DataFrame | None = None
     motif_annotations_df = (
         _coerce_motif_annotations(motif_annotations)
         if motif_annotations is not None and motif_rankings is not None else None
@@ -366,19 +395,21 @@ def run(
         t0 = time.perf_counter()
         enriched = rustscenic.cistarget.enrich(
             rankings_df,
-            [(n, g) for n, g in candidate_regulons.items()],
+            candidate_regulon_pairs,
             top_frac=cistarget_top_frac,
             auc_threshold=cistarget_auc_threshold,
             nes_threshold=cistarget_nes_threshold,
         )
         enriched_for_eregulons = enriched
         elapsed["cistarget"] = time.perf_counter() - t0
+        n_cistarget_rows = int(len(enriched))
         cistarget_path = output_dir / "cistarget_enriched.parquet"
         enriched.to_parquet(cistarget_path, index=False)
         log(
             f"      {len(enriched):,} enriched pairs in {elapsed['cistarget']:.1f}s"
             + (f" (nes_threshold={cistarget_nes_threshold})" if cistarget_nes_threshold is not None else "")
         )
+        mark_memory("cistarget")
 
         if motif_annotations_df is not None:
             log("      pruning enriched motifs with motif annotations")
@@ -392,7 +423,7 @@ def run(
             )
             pruned_regulons = rustscenic.cistarget.prune_regulons(
                 enriched,
-                [(n, g) for n, g in candidate_regulons.items()],
+                candidate_regulon_pairs,
                 motif_annotations_df,
                 rankings=rankings_df,
                 top_frac=cistarget_top_frac,
@@ -413,7 +444,7 @@ def run(
                     f"{len(pruned_enriched)} annotation-supported motif rows"
                 )
             else:
-                example_tf = _normalise_regulon_tf(
+                example_tf = tf_from_regulon_name(
                     next(iter(candidate_regulons), "TF_X_regulon")
                 )
                 # All candidate regulons were pruned away. Most common cause
@@ -470,8 +501,8 @@ def run(
     log(f"      active regulons: {len(regulons)} ({regulon_source}) → {regulons_path.name}")
 
     # ---- 4c. enhancer → gene linking (optional, requires multiome + gene_coords) ----
-    enhancer_links_path: Optional[Path] = None
-    enhancer_links: Optional[pd.DataFrame] = None
+    enhancer_links_path: Path | None = None
+    enhancer_links: pd.DataFrame | None = None
     have_atac = atac_matrix_path is not None
     coords_df = _coerce_gene_coords(gene_coords) if gene_coords is not None else None
     if have_atac and coords_df is not None:
@@ -483,8 +514,11 @@ def run(
         # disk read on big matrices and avoids dropping non-serialisable
         # obs/varm/uns the caller may have attached.
         adata_atac_for_link = adata_atac
-        common = adata_rna.obs_names.intersection(adata_atac_for_link.obs_names)
-        if len(common) == 0:
+        shared_atac_idx = _pipeline_match_atac_cell_indices(
+            [str(cell) for cell in adata_rna.obs_names],
+            [str(cell) for cell in adata_atac_for_link.obs_names],
+        )
+        if len(shared_atac_idx) == 0:
             log("      skipped - no shared barcodes between RNA and ATAC")
         else:
             # Two paths to peak coords:
@@ -500,28 +534,30 @@ def run(
             else:
                 peak_coords = None
             enhancer_links = rustscenic.enhancer.link_peaks_to_genes(
-                adata_rna[common].copy(),
-                adata_atac_for_link[common].copy(),
+                adata_rna,
+                adata_atac_for_link,
                 coords_df,
                 peak_coords=peak_coords,
                 max_distance=enhancer_max_distance,
                 min_abs_corr=enhancer_min_abs_corr,
             )
             elapsed["enhancer"] = time.perf_counter() - t0
+            n_enhancer_links = int(len(enhancer_links))
             enhancer_links_path = output_dir / "enhancer_links.parquet"
             enhancer_links.to_parquet(enhancer_links_path, index=False)
             log(
-                f"      {len(enhancer_links):,} peak-gene links in "
+                f"      {n_enhancer_links:,} peak-gene links in "
                 f"{elapsed['enhancer']:.1f}s"
             )
+            mark_memory("enhancer")
     elif have_atac and gene_coords is None:
         log("[7/8] enhancer: skipped (no gene_coords supplied)")
     else:
         log("[7/8] enhancer: skipped (no ATAC inputs)")
 
     # ---- 4d. eRegulon assembly (optional, needs grn + cistarget + enhancer) ----
-    eregulons_path: Optional[Path] = None
-    n_eregulons: Optional[int] = None
+    eregulons_path: Path | None = None
+    n_eregulons: int | None = None
     if enhancer_links is not None and (enriched_for_eregulons is not None or region_motif_rankings is not None):
         import rustscenic.eregulon
         log("[7b/8] eRegulons: assembling TF × enhancer × target intersection")
@@ -536,25 +572,16 @@ def run(
         if region_motif_rankings is not None:
             import rustscenic.cistarget
             log("      using region-based cistarget for exact peak attribution")
-            # Each TF's regulon is its GRN-predicted targets; we want to
-            # ask: which peaks (linked to those targets via enhancer) carry
-            # the TF's motif? Build per-TF "regulons" of linked peaks.
-            grn_targets_by_tf = grn.groupby("TF")["target"].apply(set).to_dict()
-            peaks_by_target = (
-                enhancer_links.groupby("gene")["peak_id"].apply(set).to_dict()
+            peak_regulons, needed_peaks = _peak_regulons_and_projection_features(
+                grn, enhancer_links
             )
-            peak_regulons = []
-            for tf, targets in grn_targets_by_tf.items():
-                tf_peaks: set[str] = set()
-                for tg in targets:
-                    tf_peaks.update(peaks_by_target.get(tg, set()))
-                if tf_peaks:
-                    peak_regulons.append((f"{tf}_regulon", list(tf_peaks)))
             if peak_regulons:
-                needed_peaks = sorted({p for _, peaks in peak_regulons for p in peaks})
                 region_rankings_df = _coerce_rankings(
                     region_motif_rankings,
-                    feature_names=needed_peaks,
+                    feature_names=_ranking_projection_features(
+                        region_motif_rankings,
+                        needed_peaks,
+                    ),
                 )
                 region_enrich, enriched_with_peaks = _region_cistarget_with_peak_ids(
                     region_rankings_df,
@@ -569,18 +596,13 @@ def run(
                         motif_annotations_df,
                         auc_threshold=cistarget_auc_threshold,
                     )
-                    # Merge on (regulon, motif) only - both DataFrames came from
-                    # the same region_enrich so AUC values are byte-identical
-                    # today, but using a float column as a join key is fragile
-                    # against a future copy-with-cast in either upstream.
-                    keep = region_enrich[["regulon", "motif"]].drop_duplicates()
-                    enriched_with_peaks = enriched_with_peaks.merge(
-                        keep,
-                        on=["regulon", "motif"],
-                        how="inner",
-                    )
+                    enriched_with_peaks = _filter_cistarget_peak_rows(
+                        enriched_with_peaks,
+                        region_enrich,
+                )
                 if cistarget_path is None:
                     cistarget_path = output_dir / "region_cistarget_enriched.parquet"
+                    n_cistarget_rows = int(len(region_enrich))
                     region_enrich.to_parquet(cistarget_path, index=False)
                     log(
                         f"      {len(region_enrich):,} region-enriched pairs → "
@@ -598,9 +620,9 @@ def run(
         else:
             log("      gene-only - bridging via active regulon targets")
             enriched_with_peaks = _attribute_peaks_to_cistarget(
-                enriched_for_eregulons, grn, enhancer_links, regulons=regulons,
+                enriched_for_eregulons, enhancer_links, regulons=regulons,
             )
-        eregs = rustscenic.eregulon.build_eregulons(
+        eregulons_df = rustscenic.eregulon._build_eregulons_dataframe(
             grn,
             enriched_with_peaks,
             enhancer_links,
@@ -608,15 +630,15 @@ def run(
             min_enhancer_links=eregulon_min_enhancer_links,
         )
         elapsed["eregulons"] = time.perf_counter() - t0
+        n_eregulon_rows = int(len(eregulons_df))
         eregulons_path = output_dir / "eregulons.parquet"
-        rustscenic.eregulon.eregulons_to_dataframe(eregs).to_parquet(
-            eregulons_path, index=False
-        )
-        n_eregulons = len(eregs)
+        eregulons_df.to_parquet(eregulons_path, index=False)
+        n_eregulons = int(eregulons_df.attrs.get("n_eregulons", 0))
         log(
             f"      {n_eregulons} eRegulons assembled in "
             f"{elapsed['eregulons']:.1f}s"
         )
+        mark_memory("eregulons")
     elif gene_coords is not None and motif_rankings is not None and not have_atac:
         log("[7b/8] eRegulons: skipped (need ATAC for enhancer linking)")
     elif enriched_for_eregulons is None or enhancer_links is None:
@@ -625,25 +647,25 @@ def run(
     # ---- 5. AUCell ----
     log("[8/8] AUCell: per-cell regulon activity")
     t0 = time.perf_counter()
+    active_regulon_pairs = list(iter_regulon_pairs(regulons))
     auc = rustscenic.aucell.score(
         adata_rna,
-        [(n, g) for n, g in regulons.items()],
+        active_regulon_pairs,
         top_frac=aucell_top_frac,
     )
     elapsed["aucell"] = time.perf_counter() - t0
+    aucell_shape = [int(auc.shape[0]), int(auc.shape[1])]
     aucell_path = output_dir / "aucell.parquet"
     auc.to_parquet(aucell_path)
     log(f"      {auc.shape[0]:,} cells × {auc.shape[1]} regulons in {elapsed['aucell']:.1f}s")
+    mark_memory("aucell")
 
     # ---- 6. integrate into AnnData ----
-    # Notebook users often re-run the pipeline on the same AnnData object.
-    # Replace previous regulon columns instead of failing on overlap.
-    adata_rna.obs = adata_rna.obs.drop(
-        columns=list(auc.columns), errors="ignore"
-    ).join(auc, how="left")
+    _attach_aucell_to_obs(adata_rna, auc)
     integrated_path = output_dir / "rna_with_regulons.h5ad"
     adata_rna.write_h5ad(integrated_path)
     log(f"      integrated → {integrated_path.name}")
+    mark_memory("integrated_adata")
 
     result = PipelineResult(
         output_dir=output_dir,
@@ -659,11 +681,17 @@ def run(
         eregulons_path=eregulons_path,
         integrated_adata_path=integrated_path,
         elapsed=elapsed,
+        memory=memory,
         n_cells=n_cells,
+        n_grn_edges=n_grn_edges,
         n_regulons=len(regulons),
         n_candidate_regulons=len(candidate_regulons),
         n_pruned_regulons=n_pruned_regulons,
+        n_cistarget_rows=n_cistarget_rows,
+        n_enhancer_links=n_enhancer_links,
+        n_eregulon_rows=n_eregulon_rows,
         n_eregulons=n_eregulons,
+        aucell_shape=aucell_shape,
         regulon_source=regulon_source,
     )
     # Manifest is the single source of truth for "what did this run produce"
@@ -678,19 +706,38 @@ def _candidate_regulons_from_grn(
     top_targets: int,
     min_targets: int,
 ) -> dict[str, list[str]]:
-    """Build top-target candidate regulons without rescanning GRN per TF."""
+    """Build top-target candidate regulons in Rust."""
     if grn.empty:
         return {}
-    top = (
-        grn.sort_values("importance", ascending=False, kind="mergesort")
-        .groupby("TF", sort=False, group_keys=False)
-        .head(top_targets)
+    names, target_lists = _pipeline_candidate_regulons_from_grn(
+        grn["TF"].astype(str).tolist(),
+        grn["target"].astype(str).tolist(),
+        grn["importance"].to_numpy(dtype=np.float64, copy=False),
+        int(top_targets),
+        int(min_targets),
     )
-    return {
-        f"{tf}_regulon": group["target"].tolist()
-        for tf, group in top.groupby("TF", sort=False)
-        if len(group) >= min_targets
-    }
+    return dict(zip(names, target_lists, strict=True))
+
+
+def _peak_regulons_from_edges(
+    grn: pd.DataFrame,
+    enhancer_links: pd.DataFrame,
+) -> list[tuple[str, list[str]]]:
+    peak_regulons, _ = _peak_regulons_and_projection_features(grn, enhancer_links)
+    return peak_regulons
+
+
+def _peak_regulons_and_projection_features(
+    grn: pd.DataFrame,
+    enhancer_links: pd.DataFrame,
+) -> tuple[list[tuple[str, list[str]]], list[str]]:
+    names, peaks, features = _pipeline_peak_regulons_and_features(
+        grn["TF"].astype(str).tolist(),
+        grn["target"].astype(str).tolist(),
+        enhancer_links["gene"].astype(str).tolist(),
+        enhancer_links["peak_id"].astype(str).tolist(),
+    )
+    return list(zip(names, peaks, strict=True)), list(features)
 
 
 def _coerce_adata(rna):
@@ -702,8 +749,38 @@ def _coerce_adata(rna):
     if isinstance(rna, (str, Path)):
         return ad.read_h5ad(rna)
     if isinstance(rna, pd.DataFrame):
-        return ad.AnnData(X=rna.values.astype(np.float32), obs=pd.DataFrame(index=rna.index), var=pd.DataFrame(index=rna.columns))
+        return ad.AnnData(X=as_float32_contiguous(rna.values), obs=pd.DataFrame(index=rna.index), var=pd.DataFrame(index=rna.columns))
     raise TypeError(f"rna: expected AnnData / path / DataFrame, got {type(rna).__name__}")
+
+
+def _subset_atac_to_rna_cells(adata_rna, adata_atac, *, log):
+    """Keep ATAC barcodes that exist in RNA, preserving ATAC row order."""
+    matched_atac_idx = _pipeline_match_atac_cell_indices(
+        [str(cell) for cell in adata_rna.obs_names],
+        [str(cell) for cell in adata_atac.obs_names],
+    )
+    matched_atac_idx = np.asarray(matched_atac_idx, dtype=np.intp)
+    if matched_atac_idx.size == 0:
+        raise ValueError(
+            "ATAC input shares no cell barcodes with RNA input. Raw 10x "
+            "fragments include many non-cell barcodes, but at least one "
+            "called cell barcode must match rna.obs_names."
+        )
+    if matched_atac_idx.size == adata_atac.n_obs:
+        return adata_atac
+    import warnings as _warnings
+    _warnings.warn(
+        f"subsetting ATAC from {adata_atac.n_obs:,} barcodes to "
+        f"{matched_atac_idx.size:,} RNA-matched cells before topics. "
+        "This avoids carrying raw 10x empty droplets through the "
+        "pipeline; pass a pre-filtered adata_atac to control this "
+        "step explicitly.",
+        UserWarning,
+        stacklevel=2,
+    )
+    adata_atac = adata_atac[matched_atac_idx].copy()
+    log(f"      ATAC subset to RNA cells: {adata_atac.shape}")
+    return adata_atac
 
 
 def _load_tfs(tfs):
@@ -724,18 +801,21 @@ def _load_tfs(tfs):
         if str(tfs).lower() in data._TF_ALIASES:
             return data.tfs(species=str(tfs))
         path = Path(tfs)
-        lines = [ln.strip() for ln in path.read_text().splitlines() if ln.strip()]
-        return lines
+        return [ln.strip() for ln in path.read_text().splitlines() if ln.strip()]
     return list(tfs)
 
 
-def _coerce_rankings(rankings, *, feature_names: Optional[Iterable[str]] = None):
+def _coerce_rankings(rankings, *, feature_names: Iterable[str] | None = None):
     if isinstance(rankings, pd.DataFrame):
-        df = _rankings_with_motif_index(rankings.copy(), Path("rankings"))
+        df = _rankings_with_motif_index(rankings, Path("rankings"))
         if feature_names is not None:
-            features = _normalise_feature_names(feature_names)
+            features = _feature_name_list(feature_names)
             if features:
-                keep = [c for c in df.columns if str(c) in features]
+                keep, _ = _ranking_column_projection(
+                    list(df.columns),
+                    features,
+                    motif_col=None,
+                )
                 if not keep:
                     raise ValueError(
                         "none of the requested ranking features were present "
@@ -746,12 +826,7 @@ def _coerce_rankings(rankings, *, feature_names: Optional[Iterable[str]] = None)
         return df
     path = Path(rankings)
     suffix = path.suffix.lower()
-    if suffix == ".parquet":
-        return _rankings_with_motif_index(
-            _read_rankings_file(path, feature_names=feature_names),
-            path,
-        )
-    if suffix == ".feather":
+    if suffix in (".parquet", ".feather"):
         return _rankings_with_motif_index(
             _read_rankings_file(path, feature_names=feature_names),
             path,
@@ -759,14 +834,22 @@ def _coerce_rankings(rankings, *, feature_names: Optional[Iterable[str]] = None)
     raise ValueError(f"unsupported motif-ranking format: {suffix}")
 
 
-def _normalise_feature_names(feature_names: Optional[Iterable[str]]) -> set[str]:
-    if feature_names is None:
-        return set()
-    return {str(x) for x in feature_names}
+def _ranking_projection_features(
+    rankings,
+    feature_names: Iterable[str],
+) -> Iterable[str] | None:
+    """Project ranking files on read, but avoid copying DataFrame inputs."""
+    if isinstance(rankings, pd.DataFrame):
+        return None
+    return feature_names
+
+
+def _feature_name_list(feature_names: Iterable[str] | None) -> list[str]:
+    return [] if feature_names is None else [str(x) for x in feature_names]
 
 
 def _read_rankings_file(
-    path: Path, *, feature_names: Optional[Iterable[str]] = None,
+    path: Path, *, feature_names: Iterable[str] | None = None,
 ) -> pd.DataFrame:
     """Read a motif ranking file, optionally projecting to needed features.
 
@@ -775,13 +858,7 @@ def _read_rankings_file(
     for peaks used by the current run instead of materialising the full DB.
     """
     suffix = path.suffix.lower()
-    if feature_names is None:
-        if suffix == ".parquet":
-            return pd.read_parquet(path)
-        if suffix == ".feather":
-            return pd.read_feather(path)
-
-    features = _normalise_feature_names(feature_names)
+    features = _feature_name_list(feature_names)
     if not features:
         if suffix == ".parquet":
             return pd.read_parquet(path)
@@ -797,21 +874,33 @@ def _read_rankings_file(
     raise ValueError(f"unsupported motif-ranking format: {suffix}")
 
 
-def _projected_ranking_columns(path: Path, features: set[str], *, kind: str) -> list[str]:
+def _projected_ranking_columns(path: Path, features: list[str], *, kind: str) -> list[str]:
     columns = _ranking_file_columns(path, kind=kind)
     motif_col = _detect_motif_column(columns, path)
-    feature_cols = [c for c in columns if str(c) in features and c != motif_col]
-    if not feature_cols:
-        examples = sorted(list(features))[:5]
+    keep, examples = _ranking_column_projection(columns, features, motif_col=motif_col)
+    feature_count = len(keep) - (1 if motif_col is not None and keep and keep[0] == motif_col else 0)
+    if feature_count == 0:
         raise ValueError(
             "none of the current run's peak IDs were present in the "
             f"motif-ranking columns for {path.name}. First requested peaks: "
             f"{examples}. Check that the BED peak IDs match the ranking DB "
             "region IDs, or rename/subset the BED to the ranking convention."
         )
-    if motif_col is not None:
-        return [motif_col, *feature_cols]
-    return feature_cols
+    return keep
+
+
+def _ranking_column_projection(
+    columns: list,
+    features: list[str],
+    *,
+    motif_col: str | None,
+) -> tuple[list, list[str]]:
+    keep, examples = _pipeline_project_ranking_columns(
+        [str(c) for c in columns],
+        features,
+        motif_col,
+    )
+    return keep, list(examples)
 
 
 def _ranking_file_columns(path: Path, *, kind: str) -> list[str]:
@@ -827,7 +916,7 @@ def _ranking_file_columns(path: Path, *, kind: str) -> list[str]:
     raise ValueError(f"unsupported ranking file kind: {kind}")
 
 
-def _detect_motif_column(columns: list[str], path: Path) -> Optional[str]:
+def _detect_motif_column(columns: list[str], path: Path) -> str | None:
     if "motifs" in columns:
         return "motifs"
     if path.stem in columns:
@@ -855,11 +944,6 @@ def _coerce_motif_annotations(annotations):
     raise ValueError(f"unsupported motif_annotations format: {suffix}")
 
 
-def _normalise_regulon_tf(name: str) -> str:
-    from rustscenic.cistarget import _tf_from_regulon_name
-
-    return _tf_from_regulon_name(name)
-
 
 def _rankings_with_motif_index(df: pd.DataFrame, path: Path) -> pd.DataFrame:
     """Normalise aertslab-style ranking files to motifs as the index.
@@ -880,17 +964,20 @@ def _rankings_with_motif_index(df: pd.DataFrame, path: Path) -> pd.DataFrame:
         pd.api.types.is_string_dtype(df[first_col])
         or pd.api.types.is_object_dtype(df[first_col])
     ):
-        numeric_rest = df.drop(columns=[first_col])
-        if all(pd.api.types.is_numeric_dtype(numeric_rest[c]) for c in numeric_rest.columns):
+        if _all_non_index_columns_numeric(df):
             return df.set_index(first_col)
     return df
 
 
+def _all_non_index_columns_numeric(df: pd.DataFrame) -> bool:
+    """Check rank-value dtypes without materialising a column-dropped frame."""
+    return all(pd.api.types.is_numeric_dtype(dtype) for dtype in df.dtypes.iloc[1:])
+
+
 def _attribute_peaks_to_cistarget(
     enriched: pd.DataFrame,
-    grn: pd.DataFrame,
     enhancer_links: pd.DataFrame,
-    regulons: Optional[dict] = None,
+    regulons: dict,
 ) -> pd.DataFrame:
     """Bridge gene-based cistarget output to peak-aware eRegulon input.
 
@@ -900,54 +987,52 @@ def _attribute_peaks_to_cistarget(
     the TF's regulon-target list ∩ enhancer-link peak set: a peak is
     associated with TF X if it links to a gene that's in X's regulon.
 
-    Two stalls fixed since the original ``iterrows`` implementation:
-    1. Python loop with per-row dict append → vectorised pandas merge.
-    2. Using the full 591k-edge ``grn`` blew up the merge to ~3.5 B rows
-       (every TF×every target×every peak). Now we restrict to the
-       top-N targets per TF - the same set that was passed to cistarget,
-       supplied via the ``regulons`` dict the orchestrator already built.
-       Falls back to the full GRN with a top-N inferred from the
-       ``cistarget_top_frac`` / regulon size when ``regulons`` is None.
+    The Rust helper below replaces the pandas merge bridge and preserves the
+    same first-seen de-duplication/order semantics: gene→peak, then TF→peak,
+    then enriched cistarget row expansion. Passing ``regulons`` keeps this on
+    the same top-N target set that was scored by cistarget.
     """
     if enriched.empty:
         return pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
 
-    # Prefer the orchestrator's pre-built regulon dict (top-N targets per
-    # TF, matched to what cistarget scored). Falls back to the full GRN
-    # only when regulons isn't supplied - that path keeps the public
-    # signature stable but is slow at atlas scale.
-    if regulons is not None:
-        tf_target_rows = []
-        for regulon_name, targets in regulons.items():
-            tf = _normalise_regulon_tf(str(regulon_name))
-            for g in targets:
-                tf_target_rows.append((tf, g))
-        tf_target = pd.DataFrame(tf_target_rows, columns=["tf", "gene"])
-    else:
-        tf_target = (
-            grn[["TF", "target"]]
-            .drop_duplicates()
-            .rename(columns={"TF": "tf", "target": "gene"})
-        )
+    regulon_pairs = [
+        (str(regulon_name), [str(g) for g in targets])
+        for regulon_name, targets in iter_regulon_pairs(regulons)
+    ]
+    enriched_regulons = enriched["regulon"].astype(str).tolist()
+    enriched_motifs = (
+        enriched["motif"].astype(str).tolist()
+        if "motif" in enriched.columns else None
+    )
+    enriched_aucs = _auc_column_arg(enriched["auc"], name="enriched['auc']")
+    enhancer_genes = [str(v) for v in enhancer_links["gene"].to_numpy(copy=False)]
+    enhancer_peaks = [str(v) for v in enhancer_links["peak_id"].to_numpy(copy=False)]
+    kernel = (
+        _pipeline_attribute_peak_rows_f32
+        if enriched_aucs.dtype == np.float32
+        else _pipeline_attribute_peak_rows_f64
+    )
+    regulon_values, motif_values, peak_values, auc_values = kernel(
+        enriched_regulons,
+        enriched_motifs,
+        enriched_aucs,
+        [name for name, _ in regulon_pairs],
+        [targets for _, targets in regulon_pairs],
+        enhancer_genes,
+        enhancer_peaks,
+    )
+    if len(regulon_values) == 0:
+        return pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
 
-    gene_peak = enhancer_links[["gene", "peak_id"]].drop_duplicates()
-    tf_peak = tf_target.merge(gene_peak, on="gene", how="inner")[["tf", "peak_id"]]
-    tf_peak = tf_peak.drop_duplicates()
-
-    # Strip pyscenic / scenicplus regulon-name suffixes so the merge key
-    # matches our normalised tf column.
-    ct = enriched.copy()
-    ct["tf"] = ct["regulon"].astype(str).map(_normalise_regulon_tf)
-    cols = ["regulon", "tf", "auc"]
-    if "motif" in ct.columns:
-        cols.insert(2, "motif")
-    ct = ct[cols]
-
-    out = ct.merge(tf_peak, on="tf", how="inner")
-    out = out.drop(columns=["tf"])
-    if "motif" not in out.columns:
-        out["motif"] = None
-    return out[["regulon", "motif", "peak_id", "auc"]].reset_index(drop=True)
+    return pd.DataFrame(
+        {
+            "regulon": regulon_values,
+            "motif": motif_values,
+            "peak_id": peak_values,
+            "auc": auc_values,
+        },
+        columns=["regulon", "motif", "peak_id", "auc"],
+    ).reset_index(drop=True)
 
 
 def _region_cistarget_with_peak_ids(
@@ -956,7 +1041,7 @@ def _region_cistarget_with_peak_ids(
     *,
     top_frac: float,
     auc_threshold: float,
-    nes_threshold: Optional[float] = None,
+    nes_threshold: float | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Run region cistarget and retain the motif-supported peak IDs.
 
@@ -983,47 +1068,149 @@ def _region_cistarget_with_peak_ids(
 
     n_regions = region_rankings.shape[1]
     rank_cutoff = max(1, int(np.ceil(top_frac * n_regions)))
-
-    # Vectorised path: build a long-form (regulon, peak) frame, join against
-    # filtered (motif, peak) ranks via region_enrich, drop rows whose peak
-    # exceeds the rank cutoff. Replaces an iterrows + per-row pandas index
-    # lookup loop that stalled at real scale (same anti-pattern v0.3.4 fixed
-    # in the gene-only bridge).
-    peak_long = pd.DataFrame(
-        [(name, p) for name, peaks in peak_regulons for p in peaks],
-        columns=["regulon", "peak_id"],
-    )
-    if peak_long.empty:
+    peak_regulon_names = [str(name) for name, _ in peak_regulons]
+    peak_regulon_peaks = [[str(p) for p in peaks] for _, peaks in peak_regulons]
+    if not any(peak_regulon_peaks):
         return region_enrich, pd.DataFrame(
             columns=["regulon", "motif", "peak_id", "auc"]
         )
 
-    # Restrict region_rankings to peaks we actually need, melt to long form.
-    needed_peaks = set(peak_long["peak_id"].astype(str))
-    rank_cols = [p for p in region_rankings.columns if str(p) in needed_peaks]
-    if not rank_cols:
+    ranking_values, kernel, rank_cutoff_arg = _region_peak_values_kernel_arg(
+        region_rankings,
+        rank_cutoff,
+    )
+    motif_names = [str(m) for m in region_rankings.index]
+    peak_names = [str(p) for p in region_rankings.columns]
+    common_args = (
+        motif_names,
+        peak_names,
+        peak_regulon_names,
+        peak_regulon_peaks,
+        region_enrich["regulon"].astype(str).tolist(),
+        region_enrich["motif"].astype(str).tolist(),
+    )
+    row_idx, peak_ids = kernel(
+        ranking_values,
+        *common_args,
+        rank_cutoff_arg,
+    )
+    if len(row_idx) == 0:
         return region_enrich, pd.DataFrame(
             columns=["regulon", "motif", "peak_id", "auc"]
         )
-    rank_long = (
-        region_rankings[rank_cols]
-        .reset_index()
-        .melt(id_vars=region_rankings.index.name or "index", var_name="peak_id", value_name="rank")
+    region_regulons = region_enrich["regulon"].astype(str).tolist()
+    region_motifs = region_enrich["motif"].astype(str).tolist()
+    region_aucs = _auc_column_arg(region_enrich["auc"], name="region_enrich['auc']")
+    expand_kernel = (
+        _pipeline_expand_region_rows_f32
+        if region_aucs.dtype == np.float32
+        else _pipeline_expand_region_rows_f64
     )
-    rank_long.columns = ["motif", "peak_id", "rank"]
-    # Aertslab rankings are lower-is-better. <= cutoff handles 0-based and
-    # 1-based fixtures without dropping the boundary rank.
-    rank_long = rank_long[rank_long["rank"].astype(float) <= rank_cutoff]
+    regulon_values, motif_values, peak_values, auc_values = expand_kernel(
+        row_idx,
+        peak_ids,
+        region_regulons,
+        region_motifs,
+        region_aucs,
+    )
+    enriched = pd.DataFrame(
+        {
+            "regulon": regulon_values,
+            "motif": motif_values,
+            "peak_id": peak_values,
+            "auc": auc_values,
+        },
+        columns=["regulon", "motif", "peak_id", "auc"],
+    )
+    return region_enrich, enriched
 
-    enriched = (
-        region_enrich.merge(peak_long, on="regulon", how="inner")
-        .merge(rank_long[["motif", "peak_id"]], on=["motif", "peak_id"], how="inner")
+
+def _auc_column_arg(values: pd.Series, *, name: str) -> np.ndarray:
+    arr = values.to_numpy(copy=False)
+    if arr.dtype == np.float32 or arr.dtype == np.float64:
+        return arr
+    if not np.issubdtype(arr.dtype, np.number):
+        raise TypeError(f"{name} must contain numeric values")
+    return arr.astype(np.float64, copy=False)
+
+
+def _region_peak_values_kernel_arg(rankings: pd.DataFrame, rank_cutoff: int):
+    values, kernel, rank_cutoff_arg = _region_rankings_kernel_arg(rankings, rank_cutoff)
+    if kernel is _cistarget_region_attribution_i16:
+        return values, _cistarget_region_peak_values_i16, rank_cutoff_arg
+    if kernel is _cistarget_region_attribution_i32:
+        return values, _cistarget_region_peak_values_i32, rank_cutoff_arg
+    if kernel is _cistarget_region_attribution_i64:
+        return values, _cistarget_region_peak_values_i64, rank_cutoff_arg
+    raise RuntimeError("unknown region cistarget attribution kernel")
+
+
+def _filter_cistarget_peak_rows(
+    enriched_with_peaks: pd.DataFrame,
+    keep: pd.DataFrame,
+) -> pd.DataFrame:
+    if enriched_with_peaks.empty or keep.empty:
+        return enriched_with_peaks.iloc[[]].copy().reset_index(drop=True)
+    auc_values = _auc_column_arg(enriched_with_peaks["auc"], name="enriched_with_peaks['auc']")
+    kernel = (
+        _pipeline_filter_cistarget_peak_rows_f32
+        if auc_values.dtype == np.float32
+        else _pipeline_filter_cistarget_peak_rows_f64
     )
-    if enriched.empty:
-        return region_enrich, pd.DataFrame(
-            columns=["regulon", "motif", "peak_id", "auc"]
+    regulon_values, motif_values, peak_values, auc_values = kernel(
+        enriched_with_peaks["regulon"].astype(str).tolist(),
+        enriched_with_peaks["motif"].astype(str).tolist(),
+        enriched_with_peaks["peak_id"].astype(str).tolist(),
+        auc_values,
+        keep["regulon"].astype(str).tolist(),
+        keep["motif"].astype(str).tolist(),
+    )
+    return pd.DataFrame(
+        {
+            "regulon": regulon_values,
+            "motif": motif_values,
+            "peak_id": peak_values,
+            "auc": auc_values,
+        },
+        columns=["regulon", "motif", "peak_id", "auc"],
+    ).reset_index(drop=True)
+
+
+def _region_rankings_kernel_arg(rankings: pd.DataFrame, rank_cutoff: int):
+    values = rankings.to_numpy(copy=False)
+    if values.dtype == object:
+        raise TypeError("region rankings DataFrame has dtype=object")
+    if values.dtype == np.int16:
+        return (
+            values,
+            _cistarget_region_attribution_i16,
+            min(int(rank_cutoff), int(np.iinfo(np.int16).max)),
         )
-    return region_enrich, enriched[["regulon", "motif", "peak_id", "auc"]].copy()
+    if values.dtype == np.int32:
+        return (
+            values,
+            _cistarget_region_attribution_i32,
+            int(rank_cutoff),
+        )
+    if values.dtype == np.int64:
+        return (
+            values,
+            _cistarget_region_attribution_i64,
+            int(rank_cutoff),
+        )
+    if values.dtype == np.float32:
+        return (
+            _rankings_to_i32_f32(values),
+            _cistarget_region_attribution_i32,
+            int(rank_cutoff),
+        )
+    if values.dtype == np.float64:
+        return (
+            _rankings_to_i32_f64(values),
+            _cistarget_region_attribution_i32,
+            int(rank_cutoff),
+        )
+    raise TypeError("region rankings must contain integer rank values")
 
 
 def _peak_coords_from_bed(bed_path, atac_var_names):
@@ -1033,26 +1220,18 @@ def _peak_coords_from_bed(bed_path, atac_var_names):
     rather than relying on `chr:start-end` parsing of var_names - that
     parser only works when no name column was present in the BED.
     """
-    import gzip as _gzip
-    bed_path = Path(bed_path)
-    opener = _gzip.open if str(bed_path).endswith(".gz") else open
-    rows = []
-    with opener(bed_path, "rt") as fh:
-        for line in fh:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            parts = line.split("\t")
-            if len(parts) < 3:
-                continue
-            chrom, start, end = parts[0], int(parts[1]), int(parts[2])
-            name = parts[3] if len(parts) >= 4 else f"{chrom}:{start}-{end}"
-            rows.append((name, chrom, start, end))
-    bed_df = pd.DataFrame(rows, columns=["name", "chrom", "start", "end"]).set_index("name")
-    # Reindex to match the ATAC AnnData var_names; missing rows fall through
-    # silently here, the linker will warn separately if alignment is poor.
-    aligned = bed_df.reindex(list(atac_var_names))
-    return aligned[["chrom", "start", "end"]].dropna()
+    peak_ids, chroms, starts, ends = _preproc_peak_coords_for_names(
+        str(Path(bed_path)),
+        [str(name) for name in atac_var_names],
+    )
+    return pd.DataFrame(
+        {
+            "chrom": list(chroms),
+            "start": np.asarray(starts, dtype=np.uint32),
+            "end": np.asarray(ends, dtype=np.uint32),
+        },
+        index=pd.Index(list(peak_ids), name="name"),
+    )
 
 
 def _coerce_gene_coords(coords):
@@ -1075,6 +1254,37 @@ def _coerce_gene_coords(coords):
             f"Required: gene, chrom, tss."
         )
     return df
+
+
+def _attach_aucell_to_obs(adata_rna, auc: pd.DataFrame) -> None:
+    """Attach AUCell columns without a full pandas join copy.
+
+    The AUCell result is produced in RNA cell order in normal pipeline runs.
+    When that invariant holds, assign columns directly. If a caller supplies
+    an externally aligned AUCell frame in future, reindex only the AUCell frame
+    rather than materialising a joined copy of the whole obs table.
+    """
+    obs = adata_rna.obs
+    overlap = [col for col in auc.columns if col in obs.columns]
+    if overlap:
+        obs = obs.drop(columns=overlap)
+
+    if not pd.Index(auc.index).equals(pd.Index(adata_rna.obs_names)):
+        auc = auc.reindex(adata_rna.obs_names)
+
+    for col in auc.columns:
+        obs[col] = auc[col].to_numpy(copy=False)
+    adata_rna.obs = obs
+
+
+def _peak_rss_gb() -> float:
+    import resource
+    import sys
+
+    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    if sys.platform == "darwin":
+        return round(float(rss) / (1024**3), 6)
+    return round(float(rss) / (1024**2), 6)
 
 
 class _Logger:

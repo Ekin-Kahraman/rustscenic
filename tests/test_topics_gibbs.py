@@ -101,9 +101,11 @@ def test_gibbs_passes_numpy_csr_buffers_to_extension(monkeypatch):
     assert isinstance(seen["row_ptr"], np.ndarray)
     assert isinstance(seen["col_idx"], np.ndarray)
     assert isinstance(seen["counts"], np.ndarray)
-    assert seen["row_ptr"].dtype == np.uint64
-    assert seen["col_idx"].dtype == np.uint32
+    assert seen["row_ptr"].dtype == X.indptr.dtype
+    assert seen["col_idx"].dtype == np.int32
     assert seen["counts"].dtype == np.float32
+    assert np.shares_memory(seen["row_ptr"], X.indptr)
+    assert np.shares_memory(seen["col_idx"], X.indices)
 
 
 def test_gibbs_rejects_invalid_args():
@@ -264,6 +266,7 @@ def test_coherence_npmi_invariant_to_duplicate_csr_indices():
 
 def test_coherence_npmi_passes_numpy_csr_buffers_to_extension(monkeypatch):
     X, cells, peaks = _two_topic_corpus(4, 6)
+    topic_values = np.asfortranarray(np.full((2, 6), 1.0 / 6.0, dtype=np.float32))
     result = rustscenic.topics.TopicsResult(
         cell_topic=pd.DataFrame(
             np.zeros((4, 2), dtype=np.float32),
@@ -271,7 +274,7 @@ def test_coherence_npmi_passes_numpy_csr_buffers_to_extension(monkeypatch):
             columns=["Topic_0", "Topic_1"],
         ),
         topic_peak=pd.DataFrame(
-            np.full((2, 6), 1.0 / 6.0, dtype=np.float32),
+            topic_values,
             index=["Topic_0", "Topic_1"],
             columns=peaks,
         ),
@@ -280,6 +283,7 @@ def test_coherence_npmi_passes_numpy_csr_buffers_to_extension(monkeypatch):
     seen = {}
 
     def fake_topics_npmi(topic_word, n_topics, n_words, row_ptr, col_idx, top_n):
+        seen["topic_word"] = topic_word
         seen["row_ptr"] = row_ptr
         seen["col_idx"] = col_idx
         return np.zeros(n_topics, dtype=np.float32)
@@ -288,7 +292,51 @@ def test_coherence_npmi_passes_numpy_csr_buffers_to_extension(monkeypatch):
     score = rustscenic.topics.coherence_npmi(result, (X, cells, peaks), top_n=3)
 
     assert score.shape == (2,)
+    assert np.shares_memory(seen["topic_word"], topic_values)
+    assert seen["topic_word"].flags.f_contiguous
+    assert not seen["topic_word"].flags.c_contiguous
     assert isinstance(seen["row_ptr"], np.ndarray)
     assert isinstance(seen["col_idx"], np.ndarray)
-    assert seen["row_ptr"].dtype == np.uint64
-    assert seen["col_idx"].dtype == np.uint32
+    assert seen["row_ptr"].dtype == X.indptr.dtype
+    assert seen["col_idx"].dtype == np.int32
+    assert np.shares_memory(seen["row_ptr"], X.indptr)
+    assert np.shares_memory(seen["col_idx"], X.indices)
+
+
+def test_coherence_npmi_strided_topic_word_matches_c_contiguous_result():
+    X, cells, peaks = _two_topic_corpus(20, 10)
+    topic_values = np.array(
+        [
+            [0.18, 0.17, 0.16, 0.15, 0.14, 0.05, 0.04, 0.04, 0.04, 0.03],
+            [0.03, 0.04, 0.04, 0.04, 0.05, 0.14, 0.15, 0.16, 0.17, 0.18],
+        ],
+        dtype=np.float32,
+    )
+    common_cell_topic = pd.DataFrame(
+        np.full((len(cells), 2), 0.5, dtype=np.float32),
+        index=cells,
+        columns=["Topic_0", "Topic_1"],
+    )
+    strided = rustscenic.topics.TopicsResult(
+        cell_topic=common_cell_topic,
+        topic_peak=pd.DataFrame(
+            np.asfortranarray(topic_values),
+            index=["Topic_0", "Topic_1"],
+            columns=peaks,
+        ),
+        n_topics=2,
+    )
+    contiguous = rustscenic.topics.TopicsResult(
+        cell_topic=common_cell_topic,
+        topic_peak=pd.DataFrame(
+            topic_values.copy(order="C"),
+            index=["Topic_0", "Topic_1"],
+            columns=peaks,
+        ),
+        n_topics=2,
+    )
+
+    got = rustscenic.topics.coherence_npmi(strided, (X, cells, peaks), top_n=4)
+    expected = rustscenic.topics.coherence_npmi(contiguous, (X, cells, peaks), top_n=4)
+
+    np.testing.assert_allclose(got, expected, equal_nan=True)

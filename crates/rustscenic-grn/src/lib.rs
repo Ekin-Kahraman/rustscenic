@@ -26,6 +26,7 @@ pub mod histogram;
 pub mod rng;
 pub mod tree;
 
+use ndarray::ArrayView2;
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
 
@@ -38,12 +39,12 @@ use crate::histogram::BinnedMatrix;
 /// target. At atlas shapes, that repeats a TLB/cache miss pattern tens of
 /// thousands of times. Blocking targets scans each row once per target window,
 /// copies contiguous source values, and fits from compact column-major targets.
-const DEFAULT_TARGET_BLOCK_SIZE: usize = 64;
+const DEFAULT_TARGET_BLOCK_SIZE: usize = 256;
 
-/// Keep each target window under this budget by default. Fixed 64-wide blocks
-/// are good for small and mid-sized datasets, but become large enough to add
-/// memory-bandwidth pressure once cell counts reach atlas scale.
-const TARGET_BLOCK_BYTE_BUDGET: usize = 32 * 1024 * 1024;
+/// Keep each target window under this budget by default. Wider blocks expose
+/// enough independent target fits to keep high-core machines busy, then shrink
+/// automatically once cell counts make the response block memory-heavy.
+const TARGET_BLOCK_BYTE_BUDGET: usize = 128 * 1024 * 1024;
 
 #[derive(Debug, Clone)]
 pub struct Adjacency {
@@ -59,6 +60,22 @@ pub struct IndexedAdjacency {
     /// Gene-column index of the target gene.
     pub target_idx: usize,
     pub importance: f32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct TfOverlapSummary {
+    /// Number of supplied TF names present in the expression gene list.
+    ///
+    /// This intentionally counts input names before deduplicating TF columns so
+    /// user-facing warnings match the supplied TF list semantics.
+    pub present_input_count: usize,
+    /// First missing TF names in input order, capped for concise warnings.
+    pub missing_examples: Vec<String>,
+}
+
+struct ResolvedTfCols {
+    cols: Vec<usize>,
+    summary: TfOverlapSummary,
 }
 
 #[derive(Debug, Clone)]
@@ -123,6 +140,18 @@ pub fn infer_indices(
     tf_names: &[String],
     cfg: &GrnConfig,
 ) -> Vec<IndexedAdjacency> {
+    infer_indices_with_overlap(expression, n_cells, gene_names, tf_names, cfg).0
+}
+
+/// Infer a GRN and return TF-list overlap metadata from the same Rust-side
+/// resolution pass used for fitting.
+pub fn infer_indices_with_overlap(
+    expression: &[f32],
+    n_cells: usize,
+    gene_names: &[String],
+    tf_names: &[String],
+    cfg: &GrnConfig,
+) -> (Vec<IndexedAdjacency>, TfOverlapSummary) {
     let n_genes = gene_names.len();
     assert_eq!(
         expression.len(),
@@ -130,27 +159,17 @@ pub fn infer_indices(
         "expression size mismatch"
     );
 
-    let gene_ix: HashMap<&str, usize> = gene_names
-        .iter()
-        .enumerate()
-        .map(|(i, n)| (n.as_str(), i))
-        .collect();
-
-    let mut seen_tf_cols: HashSet<usize> = HashSet::new();
-    let tf_cols: Vec<usize> = tf_names
-        .iter()
-        .filter_map(|t| gene_ix.get(t.as_str()).copied())
-        .filter(|&i| seen_tf_cols.insert(i))
-        .collect();
-
+    let resolved = resolve_tf_cols_with_summary(gene_names, tf_names);
+    let tf_cols = resolved.cols;
+    let summary = resolved.summary;
     if tf_cols.is_empty() {
-        return Vec::new();
+        return (Vec::new(), summary);
     }
 
-    // Build full TF matrix and bin ONCE. Per-target "drop self-TF" is handled by
-    // zeroing the self column in residual view rather than rebuilding the matrix.
-    let tf_matrix = build_tf_matrix(expression, n_cells, n_genes, &tf_cols);
-    let binned_all = BinnedMatrix::from_dense(&tf_matrix, n_cells, tf_cols.len());
+    // Bin selected TF columns directly from the row-major expression matrix.
+    // Per-target "drop self-TF" is handled by excluding that feature at fit
+    // time rather than rebuilding the matrix.
+    let binned_all = BinnedMatrix::from_dense_columns(expression, n_cells, n_genes, &tf_cols);
 
     let gene_to_tf_col: HashMap<usize, usize> = tf_cols
         .iter()
@@ -160,10 +179,11 @@ pub fn infer_indices(
 
     let mut all_edges = Vec::new();
     let target_block_size = resolve_target_block_size(cfg, n_cells);
+    let mut target_block = Vec::with_capacity(target_block_size * n_cells);
     for block_start in (0..n_genes).step_by(target_block_size) {
         let block_end = (block_start + target_block_size).min(n_genes);
         let block_width = block_end - block_start;
-        let mut target_block = vec![0.0_f32; block_width * n_cells];
+        target_block.resize(block_width * n_cells, 0.0_f32);
 
         // Materialise the target window as column-major:
         // target_block[local_target * n_cells + cell].
@@ -179,58 +199,261 @@ pub fn infer_indices(
             }
         }
 
-        let block_edges: Vec<IndexedAdjacency> = (0..block_width)
-            .into_par_iter()
-            .map_init(
-                || gbm::GbmScratch::new(n_cells, tf_cols.len(), cfg.n_estimators),
-                |gbm_scratch, local_idx| {
-                    let target_idx = block_start + local_idx;
-                    let target_expr = &target_block[local_idx * n_cells..(local_idx + 1) * n_cells];
-
-                    // If this target is itself one of the TFs, drop that column from the
-                    // feature subset at fit time (not just after). Otherwise the self
-                    // column is a perfect predictor → absorbs all split gain → every
-                    // other TF's importance collapses to ~0 for that target.
-                    let exclude_self = gene_to_tf_col.get(&target_idx).copied();
-
-                    let importances = gbm::fit_and_importances_binned_with_scratch(
-                        &binned_all,
-                        target_expr,
-                        cfg,
-                        exclude_self,
-                        gbm_scratch,
-                    );
-
-                    importances
-                        .into_iter()
-                        .enumerate()
-                        .filter(|(_, imp)| *imp > 0.0)
-                        .map(|(i, imp)| IndexedAdjacency {
-                            tf_idx: tf_cols[i],
-                            target_idx,
-                            importance: imp,
-                        })
-                        .collect::<Vec<_>>()
-                },
-            )
-            .flatten_iter()
-            .collect();
+        let block_edges = fit_target_block(
+            &binned_all,
+            &target_block,
+            n_cells,
+            block_start,
+            block_width,
+            &tf_cols,
+            &gene_to_tf_col,
+            cfg,
+        );
         all_edges.extend(block_edges);
     }
-    all_edges
+    (all_edges, summary)
 }
 
-fn build_tf_matrix(expr: &[f32], n_cells: usize, n_genes: usize, tf_cols: &[usize]) -> Vec<f32> {
-    let n_tfs = tf_cols.len();
-    let mut out = vec![0.0_f32; n_cells * n_tfs];
-    for c in 0..n_cells {
-        let expr_row = &expr[c * n_genes..(c + 1) * n_genes];
-        let out_row = &mut out[c * n_tfs..(c + 1) * n_tfs];
-        for (t_i, &g_i) in tf_cols.iter().enumerate() {
-            out_row[t_i] = expr_row[g_i];
+/// Infer a GRN from any dense (cells × genes) f32 matrix view.
+///
+/// The row-major `infer_indices` path remains the performance default. This
+/// view path is for strided NumPy/pandas inputs where copying the whole matrix
+/// would dominate peak RSS before Rust can do the useful work.
+pub fn infer_indices_view(
+    expression: ArrayView2<'_, f32>,
+    gene_names: &[String],
+    tf_names: &[String],
+    cfg: &GrnConfig,
+) -> Vec<IndexedAdjacency> {
+    infer_indices_view_with_overlap(expression, gene_names, tf_names, cfg).0
+}
+
+/// Infer a GRN from any dense matrix view and return TF overlap metadata.
+pub fn infer_indices_view_with_overlap(
+    expression: ArrayView2<'_, f32>,
+    gene_names: &[String],
+    tf_names: &[String],
+    cfg: &GrnConfig,
+) -> (Vec<IndexedAdjacency>, TfOverlapSummary) {
+    let n_cells = expression.shape()[0];
+    let n_genes = expression.shape()[1];
+    assert_eq!(gene_names.len(), n_genes, "gene_names size mismatch");
+
+    let resolved = resolve_tf_cols_with_summary(gene_names, tf_names);
+    let tf_cols = resolved.cols;
+    let summary = resolved.summary;
+    if tf_cols.is_empty() {
+        return (Vec::new(), summary);
+    }
+
+    let binned_all = BinnedMatrix::from_dense_columns_view(expression, &tf_cols);
+    let gene_to_tf_col: HashMap<usize, usize> = tf_cols
+        .iter()
+        .enumerate()
+        .map(|(tf_col, &gene_idx)| (gene_idx, tf_col))
+        .collect();
+
+    let mut all_edges = Vec::new();
+    let target_block_size = resolve_target_block_size(cfg, n_cells);
+    let mut target_block = Vec::with_capacity(target_block_size * n_cells);
+    for block_start in (0..n_genes).step_by(target_block_size) {
+        let block_end = (block_start + target_block_size).min(n_genes);
+        let block_width = block_end - block_start;
+        target_block.resize(block_width * n_cells, 0.0_f32);
+
+        for c in 0..n_cells {
+            for local_idx in 0..block_width {
+                target_block[local_idx * n_cells + c] = expression[(c, block_start + local_idx)];
+            }
+        }
+
+        let block_edges = fit_target_block(
+            &binned_all,
+            &target_block,
+            n_cells,
+            block_start,
+            block_width,
+            &tf_cols,
+            &gene_to_tf_col,
+            cfg,
+        );
+        all_edges.extend(block_edges);
+    }
+    (all_edges, summary)
+}
+
+/// Infer a GRN from a sparse CSC (cells × genes) expression matrix.
+///
+/// This avoids dense materialisation of the full RNA matrix. TF bins are built
+/// directly from selected sparse columns, and only the current target block is
+/// expanded to dense column-major response vectors for GBM fitting.
+#[allow(clippy::too_many_arguments)]
+pub fn infer_indices_sparse_csc(
+    indptr: &[usize],
+    indices: &[i32],
+    data: &[f32],
+    n_cells: usize,
+    n_genes: usize,
+    gene_names: &[String],
+    tf_names: &[String],
+    cfg: &GrnConfig,
+) -> Vec<IndexedAdjacency> {
+    infer_indices_sparse_csc_with_overlap(
+        indptr, indices, data, n_cells, n_genes, gene_names, tf_names, cfg,
+    )
+    .0
+}
+
+/// Infer a GRN from sparse CSC expression and return TF overlap metadata.
+#[allow(clippy::too_many_arguments)]
+pub fn infer_indices_sparse_csc_with_overlap(
+    indptr: &[usize],
+    indices: &[i32],
+    data: &[f32],
+    n_cells: usize,
+    n_genes: usize,
+    gene_names: &[String],
+    tf_names: &[String],
+    cfg: &GrnConfig,
+) -> (Vec<IndexedAdjacency>, TfOverlapSummary) {
+    assert_eq!(gene_names.len(), n_genes, "gene_names size mismatch");
+    assert_eq!(indptr.len(), n_genes + 1, "CSC indptr size mismatch");
+    assert_eq!(indices.len(), data.len(), "CSC indices/data size mismatch");
+    assert!(
+        indices
+            .iter()
+            .all(|&row| row >= 0 && (row as usize) < n_cells),
+        "CSC row index contains a negative or out-of-range cell index"
+    );
+
+    let resolved = resolve_tf_cols_with_summary(gene_names, tf_names);
+    let tf_cols = resolved.cols;
+    let summary = resolved.summary;
+    if tf_cols.is_empty() {
+        return (Vec::new(), summary);
+    }
+
+    let binned_all =
+        BinnedMatrix::from_csc_columns(indptr, indices, data, n_cells, n_genes, &tf_cols);
+    let gene_to_tf_col: HashMap<usize, usize> = tf_cols
+        .iter()
+        .enumerate()
+        .map(|(tf_col, &gene_idx)| (gene_idx, tf_col))
+        .collect();
+
+    let mut all_edges = Vec::new();
+    let target_block_size = resolve_target_block_size(cfg, n_cells);
+    let mut target_block = Vec::with_capacity(target_block_size * n_cells);
+    let mut written_offsets = Vec::new();
+    for block_start in (0..n_genes).step_by(target_block_size) {
+        let block_end = (block_start + target_block_size).min(n_genes);
+        let block_width = block_end - block_start;
+        target_block.resize(block_width * n_cells, 0.0_f32);
+        written_offsets.clear();
+
+        for target_idx in block_start..block_end {
+            let local_idx = target_idx - block_start;
+            for p in indptr[target_idx]..indptr[target_idx + 1] {
+                let row = indices[p] as usize;
+                let offset = local_idx * n_cells + row;
+                target_block[offset] += data[p];
+                written_offsets.push(offset);
+            }
+        }
+
+        let block_edges = fit_target_block(
+            &binned_all,
+            &target_block,
+            n_cells,
+            block_start,
+            block_width,
+            &tf_cols,
+            &gene_to_tf_col,
+            cfg,
+        );
+        all_edges.extend(block_edges);
+        for &offset in &written_offsets {
+            target_block[offset] = 0.0;
         }
     }
-    out
+    (all_edges, summary)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn fit_target_block(
+    binned_all: &BinnedMatrix,
+    target_block: &[f32],
+    n_cells: usize,
+    block_start: usize,
+    block_width: usize,
+    tf_cols: &[usize],
+    gene_to_tf_col: &HashMap<usize, usize>,
+    cfg: &GrnConfig,
+) -> Vec<IndexedAdjacency> {
+    (0..block_width)
+        .into_par_iter()
+        .map_init(
+            || gbm::GbmScratch::new(n_cells, tf_cols.len(), cfg.n_estimators),
+            |gbm_scratch, local_idx| {
+                let target_idx = block_start + local_idx;
+                let target_expr = &target_block[local_idx * n_cells..(local_idx + 1) * n_cells];
+
+                // If this target is itself one of the TFs, drop that column at
+                // fit time so the self column cannot absorb the split gain.
+                let exclude_self = gene_to_tf_col.get(&target_idx).copied();
+
+                gbm::fit_and_importances_binned_with_scratch(
+                    binned_all,
+                    target_expr,
+                    cfg,
+                    exclude_self,
+                    gbm_scratch,
+                )
+                .iter()
+                .copied()
+                .enumerate()
+                .filter(|(_, imp)| *imp > 0.0)
+                .map(|(i, imp)| IndexedAdjacency {
+                    tf_idx: tf_cols[i],
+                    target_idx,
+                    importance: imp,
+                })
+                .collect::<Vec<_>>()
+            },
+        )
+        .flatten_iter()
+        .collect()
+}
+
+fn resolve_tf_cols_with_summary(gene_names: &[String], tf_names: &[String]) -> ResolvedTfCols {
+    let gene_ix: HashMap<&str, usize> = gene_names
+        .iter()
+        .enumerate()
+        .map(|(i, n)| (n.as_str(), i))
+        .collect();
+
+    let mut seen_tf_cols: HashSet<usize> = HashSet::new();
+    let mut cols = Vec::new();
+    let mut present_input_count = 0;
+    let mut missing_examples = Vec::new();
+    for tf in tf_names {
+        if let Some(&idx) = gene_ix.get(tf.as_str()) {
+            present_input_count += 1;
+            if seen_tf_cols.insert(idx) {
+                cols.push(idx);
+            }
+        } else if missing_examples.len() < 5 {
+            missing_examples.push(tf.clone());
+        }
+    }
+
+    ResolvedTfCols {
+        cols,
+        summary: TfOverlapSummary {
+            present_input_count,
+            missing_examples,
+        },
+    }
 }
 
 fn resolve_target_block_size(cfg: &GrnConfig, n_cells: usize) -> usize {
@@ -256,14 +479,14 @@ mod tests {
     #[test]
     fn adaptive_target_block_size_preserves_default_for_mid_sized_inputs() {
         let cfg = GrnConfig::default();
-        assert_eq!(resolve_target_block_size(&cfg, 100_000), 64);
+        assert_eq!(resolve_target_block_size(&cfg, 100_000), 256);
     }
 
     #[test]
     fn adaptive_target_block_size_shrinks_for_high_cell_counts() {
         let cfg = GrnConfig::default();
-        assert_eq!(resolve_target_block_size(&cfg, 200_000), 32);
-        assert_eq!(resolve_target_block_size(&cfg, 500_000), 16);
+        assert_eq!(resolve_target_block_size(&cfg, 200_000), 128);
+        assert_eq!(resolve_target_block_size(&cfg, 500_000), 64);
     }
 
     #[test]
@@ -273,6 +496,30 @@ mod tests {
             ..GrnConfig::default()
         };
         assert_eq!(resolve_target_block_size(&cfg, 500_000), 7);
+    }
+
+    #[test]
+    fn tf_overlap_summary_counts_input_names_and_caps_missing_examples() {
+        let gene_names = vec!["g0".to_string(), "g1".to_string()];
+        let tf_names = vec![
+            "g0".to_string(),
+            "missing0".to_string(),
+            "g0".to_string(),
+            "missing1".to_string(),
+            "missing2".to_string(),
+            "missing3".to_string(),
+            "missing4".to_string(),
+            "missing5".to_string(),
+        ];
+
+        let resolved = resolve_tf_cols_with_summary(&gene_names, &tf_names);
+
+        assert_eq!(resolved.cols, vec![0]);
+        assert_eq!(resolved.summary.present_input_count, 2);
+        assert_eq!(
+            resolved.summary.missing_examples,
+            vec!["missing0", "missing1", "missing2", "missing3", "missing4"]
+        );
     }
 
     #[test]
@@ -306,5 +553,147 @@ mod tests {
                 "duplicate indexed edge emitted"
             );
         }
+    }
+
+    #[test]
+    fn sparse_csc_infer_matches_dense_infer() {
+        let n_cells = 48;
+        let gene_names: Vec<String> = (0..6).map(|i| format!("g{i}")).collect();
+        let mut expression = vec![0.0_f32; n_cells * gene_names.len()];
+        for c in 0..n_cells {
+            let x = c as f32 / n_cells as f32;
+            expression[c * 6] = if c % 3 == 0 { x } else { 0.0 };
+            expression[c * 6 + 1] = 2.0 * x + 0.1;
+            expression[c * 6 + 2] = if c % 2 == 0 { 1.0 - x } else { 0.0 };
+            expression[c * 6 + 3] = expression[c * 6] + expression[c * 6 + 2];
+            expression[c * 6 + 4] = if c % 5 == 0 { 3.0 } else { 0.0 };
+            expression[c * 6 + 5] = 0.5 * x;
+        }
+        let (indptr, indices, data) = dense_to_csc(&expression, n_cells, gene_names.len());
+        let tf_names = vec!["g0".to_string(), "g1".to_string(), "g2".to_string()];
+        let cfg = GrnConfig {
+            n_estimators: 40,
+            max_features: 1.0,
+            subsample: 1.0,
+            target_block_size: 2,
+            seed: 11,
+            ..GrnConfig::default()
+        };
+
+        let mut dense = infer_indices(&expression, n_cells, &gene_names, &tf_names, &cfg);
+        let mut sparse = infer_indices_sparse_csc(
+            &indptr,
+            &indices,
+            &data,
+            n_cells,
+            gene_names.len(),
+            &gene_names,
+            &tf_names,
+            &cfg,
+        );
+        dense.sort_by_key(|edge| (edge.tf_idx, edge.target_idx, edge.importance.to_bits()));
+        sparse.sort_by_key(|edge| (edge.tf_idx, edge.target_idx, edge.importance.to_bits()));
+
+        assert_eq!(dense.len(), sparse.len());
+        for (a, b) in dense.iter().zip(&sparse) {
+            assert_eq!(a.tf_idx, b.tf_idx);
+            assert_eq!(a.target_idx, b.target_idx);
+            assert_eq!(a.importance.to_bits(), b.importance.to_bits());
+        }
+    }
+
+    #[test]
+    fn dense_view_infer_matches_row_major_infer() {
+        let n_cells = 48;
+        let n_genes = 6;
+        let gene_names: Vec<String> = (0..n_genes).map(|i| format!("g{i}")).collect();
+        let mut expression = vec![0.0_f32; n_cells * n_genes];
+        for c in 0..n_cells {
+            let x = c as f32 / n_cells as f32;
+            expression[c * n_genes] = x;
+            expression[c * n_genes + 1] = 1.0 - x;
+            expression[c * n_genes + 2] = 2.0 * x + 0.1;
+            expression[c * n_genes + 3] = expression[c * n_genes] + expression[c * n_genes + 1];
+            expression[c * n_genes + 4] = 0.5 * x;
+            expression[c * n_genes + 5] = 0.25;
+        }
+
+        let mut transposed = ndarray::Array2::<f32>::zeros((n_genes, n_cells));
+        for c in 0..n_cells {
+            for g in 0..n_genes {
+                transposed[(g, c)] = expression[c * n_genes + g];
+            }
+        }
+        let view = transposed.t();
+        assert!(!view.is_standard_layout());
+
+        let tf_names = vec!["g0".to_string(), "g1".to_string(), "g2".to_string()];
+        let cfg = GrnConfig {
+            n_estimators: 40,
+            max_features: 1.0,
+            subsample: 1.0,
+            target_block_size: 2,
+            seed: 13,
+            ..GrnConfig::default()
+        };
+
+        let mut row_major = infer_indices(&expression, n_cells, &gene_names, &tf_names, &cfg);
+        let mut strided = infer_indices_view(view, &gene_names, &tf_names, &cfg);
+        row_major.sort_by_key(|edge| (edge.tf_idx, edge.target_idx, edge.importance.to_bits()));
+        strided.sort_by_key(|edge| (edge.tf_idx, edge.target_idx, edge.importance.to_bits()));
+
+        assert_eq!(row_major.len(), strided.len());
+        for (a, b) in row_major.iter().zip(&strided) {
+            assert_eq!(a.tf_idx, b.tf_idx);
+            assert_eq!(a.target_idx, b.target_idx);
+            assert_eq!(a.importance.to_bits(), b.importance.to_bits());
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "CSC row index contains a negative or out-of-range cell index")]
+    fn sparse_csc_rejects_negative_row_indices() {
+        let gene_names: Vec<String> = (0..3).map(|i| format!("g{i}")).collect();
+        let tf_names = vec!["g0".to_string()];
+        let cfg = GrnConfig {
+            n_estimators: 1,
+            max_features: 1.0,
+            subsample: 1.0,
+            target_block_size: 1,
+            ..GrnConfig::default()
+        };
+
+        let _ = infer_indices_sparse_csc(
+            &[0, 1, 1, 1],
+            &[-1],
+            &[1.0],
+            4,
+            gene_names.len(),
+            &gene_names,
+            &tf_names,
+            &cfg,
+        );
+    }
+
+    fn dense_to_csc(
+        expression: &[f32],
+        n_cells: usize,
+        n_genes: usize,
+    ) -> (Vec<usize>, Vec<i32>, Vec<f32>) {
+        let mut indptr = Vec::with_capacity(n_genes + 1);
+        let mut indices = Vec::new();
+        let mut data = Vec::new();
+        indptr.push(0);
+        for gene in 0..n_genes {
+            for cell in 0..n_cells {
+                let value = expression[cell * n_genes + gene];
+                if value != 0.0 {
+                    indices.push(cell as i32);
+                    data.push(value);
+                }
+            }
+            indptr.push(indices.len());
+        }
+        (indptr, indices, data)
     }
 }

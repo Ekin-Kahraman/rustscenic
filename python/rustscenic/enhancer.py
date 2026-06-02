@@ -1,7 +1,7 @@
-"""Enhancer-to-gene linking - the SCENIC+ distinguishing step.
+"""Enhancer-to-gene linking for chromatin-aware regulatory networks.
 
 pySCENIC scores regulons as "TF → its top-N co-expressed target genes".
-SCENIC+ upgrades this by **grounding regulation in chromatin**:
+SCENIC+ adds chromatin context:
 
   TF → enhancer (motif enrichment, from cistarget)
         ↓
@@ -10,8 +10,7 @@ SCENIC+ upgrades this by **grounding regulation in chromatin**:
 
 The enhancer-to-gene edge is what this module produces. Combined with
 the motif-to-enhancer and TF-to-target edges rustscenic already
-computes, it's the raw material for eRegulons - the chromatin-aware
-regulons that are scenicplus's distinguishing output.
+computes, it is the raw material for eRegulons.
 
 This module requires **matched cells**: every cell in ``rna_adata.obs_names``
 must also be in ``atac_adata.obs_names``. Multiome data (10x Multiome
@@ -21,25 +20,41 @@ CCA or Harmony-style integration needs to happen upstream.
 Complexity:
   O(n_peaks × max_genes_in_window × n_cells) where max_genes_in_window
   is typically 20–50. On 100k peaks × 30 candidate genes × 50k cells
-  that's ~150 GFLOPs - a few seconds in numpy on a single core.
+  that is about 150 GFLOPs. The Pearson path keeps the hot loop in Rust
+  and emits only surviving peak-gene links back to pandas.
 """
 from __future__ import annotations
 
-from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
+
+from rustscenic._rustscenic import (
+    enhancer_align_cell_indices as _align_cell_indices,
+    enhancer_link_pearson as _enhancer_link_pearson,
+    enhancer_link_pearson_sparse_rna as _enhancer_link_pearson_sparse_rna,
+    enhancer_match_gene_coords_to_rna as _match_gene_coords_to_rna,
+    enhancer_normalise_chrom_codes as _normalise_chrom_codes,
+    enhancer_parse_peak_names as _parse_peak_names_rust,
+    enhancer_prepare_gene_order as _prepare_gene_order,
+)
+from rustscenic._stage_utils import as_float32_array
+
+_LINK_COLUMNS = [
+    "peak_id", "peak_chrom", "peak_start", "peak_end",
+    "gene", "gene_tss", "distance", "correlation",
+]
 
 
 def link_peaks_to_genes(
     rna_adata,
     atac_adata,
     gene_coords: pd.DataFrame,
-    peak_coords: Optional[pd.DataFrame] = None,
+    peak_coords: pd.DataFrame | None = None,
     *,
     max_distance: int = 500_000,
     min_abs_corr: float = 0.1,
-    method: Literal["pearson", "spearman"] = "pearson",
+    method: str = "pearson",
 ) -> pd.DataFrame:
     """Link ATAC peaks to nearby gene expression.
 
@@ -73,7 +88,7 @@ def link_peaks_to_genes(
         Minimum absolute correlation to emit a link (default 0.1).
         Increase for stricter filtering.
     method
-        ``"pearson"`` (default, matches scenicplus) or ``"spearman"``.
+        Must be ``"pearson"``. This is the Rust-backed correlation path.
 
     Returns
     -------
@@ -83,6 +98,9 @@ def link_peaks_to_genes(
         'gene_tss', 'distance', 'correlation']``. Sorted by
         descending ``|correlation|``.
     """
+    if method != "pearson":
+        raise ValueError("enhancer linking only supports method='pearson'")
+
     rna_adata, atac_adata = _align_cells(rna_adata, atac_adata)
     from rustscenic._gene_resolution import resolve_gene_names
 
@@ -90,49 +108,34 @@ def link_peaks_to_genes(
     peaks = _peak_frame(atac_adata, peak_coords)
     genes = _validate_gene_coords(gene_coords)
 
-    # Build gene_name → row_index lookup in RNA.
-    gene_rna_idx = {g: i for i, g in enumerate(gene_names_rna)}
-    genes_in_rna = genes[genes["gene"].isin(gene_rna_idx)].reset_index(drop=True)
-    if genes_in_rna.empty:
+    matched_gene_rows, source_rna_cols = _match_gene_coords_to_rna(
+        [str(gene) for gene in gene_names_rna],
+        [str(gene) for gene in genes["gene"].to_numpy(copy=False)],
+    )
+    matched_gene_rows = np.asarray(matched_gene_rows, dtype=np.intp)
+    if matched_gene_rows.size == 0:
         raise ValueError(
             "no gene_coords genes match any gene name in rna_adata - "
             "check species + symbol convention"
         )
+    genes_in_rna = genes.iloc[matched_gene_rows].reset_index(drop=True)
+    source_rna_cols = np.asarray(source_rna_cols, dtype=np.int64)
 
-    # Normalise chrom names on both sides so "chr1"/"1" join correctly
-    # regardless of whether peak BED and gene_coords use the same
-    # convention (they often don't).
-    genes_in_rna = genes_in_rna.assign(
-        _chrom_norm=genes_in_rna["chrom"].map(_normalise_chrom)
-    )
-    peaks = peaks.assign(_chrom_norm=peaks["chrom"].map(_normalise_chrom))
-
-    # For fast lookup: group genes by normalised chrom, sort by tss.
-    gene_by_chrom = {
-        chrom: sub.sort_values("tss").reset_index(drop=True)
-        for chrom, sub in genes_in_rna.groupby("_chrom_norm")
-    }
-
-    # Guard against the silent-zero mode: peaks on chroms the gene_coords
-    # never name (or vice versa). After normalisation, the intersection
-    # should be non-empty; if it is, the pipeline will produce zero links.
-    overlap = set(gene_by_chrom) & set(peaks["_chrom_norm"].unique())
-    if not overlap:
-        import warnings
-        warnings.warn(
-            f"no chromosome name overlaps between peaks and gene_coords "
-            f"even after UCSC/Ensembl normalisation. Peak chroms: "
-            f"{sorted(set(peaks['_chrom_norm'].unique()))[:5]}; "
-            f"gene_coords chroms: {sorted(gene_by_chrom)[:5]}. The "
-            f"resulting link DataFrame will be empty.",
-            UserWarning, stacklevel=3,
+    # Normalise chrom names and encode chromosomes once for the Rust Pearson
+    # kernel. The vector loop runs in Rust because peak tables can be large.
+    gene_chrom_norm, peak_chrom_norm, gene_chrom_codes, peak_chrom_codes = (
+        _normalise_chrom_codes(
+            [str(chrom) for chrom in genes_in_rna["chrom"].to_numpy(copy=False)],
+            [str(chrom) for chrom in peaks["chrom"].to_numpy(copy=False)],
         )
+    )
+    gene_chrom_codes = np.asarray(gene_chrom_codes, dtype=np.int32)
+    peak_chrom_codes = np.asarray(peak_chrom_codes, dtype=np.int32)
+    peak_chroms = np.asarray(peak_chrom_norm, dtype=object)
 
-    # Keep ATAC sparse (CSC for fast column extraction); only RNA is
-    # materialised dense. Densifying ATAC at atlas scale (100k+ cells ×
-    # 30k+ peaks) causes a 24+ GB blow-up that thrashes laptop swap.
-    # The Pearson loop only ever needs one peak column at a time - see
-    # `_pearson_sparse_x_dense_Y` for the streaming sparse-aware path.
+    # Keep ATAC sparse (CSC for fast column extraction). Pearson now calls
+    # into Rust for the per-peak sparse x dense correlation loop; Python only
+    # prepares AnnData/pandas metadata and assembles the output DataFrame.
     import scipy.sparse as sp
 
     atac_raw = atac_adata.X
@@ -140,112 +143,195 @@ def link_peaks_to_genes(
         atac_csc = atac_raw.tocsc().astype(np.float32, copy=False)
     else:
         atac_csc = sp.csc_matrix(atac_raw, dtype=np.float32)
+    if hasattr(atac_csc, "sum_duplicates"):
+        atac_csc.sum_duplicates()
+    if hasattr(atac_csc, "sort_indices"):
+        atac_csc.sort_indices()
 
-    if method == "spearman":
-        # Spearman needs rank-transformed inputs; fall back to dense path.
-        # Atlas-scale Spearman remains an open follow-up (sparse rank is
-        # not free). At small/medium scale this matches existing semantics.
-        _warn_if_densification_expensive(rna_adata, atac_adata)
-        rna_X = _densify(rna_adata.X).astype(np.float32, copy=False)
-        atac_X = _densify(atac_raw).astype(np.float32, copy=False)
-        corr_fn = _spearman_matrix
-        sparse_path = False
+    peak_starts = peaks["start"].to_numpy(dtype=np.int64, copy=False)
+    peak_ends = peaks["end"].to_numpy(dtype=np.int64, copy=False)
+    peak_ids = np.asarray(peaks.index, dtype=object)
+
+    return _link_peaks_to_genes_pearson(
+        rna_adata,
+        atac_csc,
+        genes_in_rna,
+        peak_ids,
+        peak_chroms,
+        gene_chrom_norm,
+        peak_chrom_codes,
+        peak_starts,
+        peak_ends,
+        gene_chrom_codes,
+        source_rna_cols,
+        max_distance,
+        min_abs_corr,
+    )
+
+
+def _link_peaks_to_genes_pearson(
+    rna_adata,
+    atac_csc,
+    genes_in_rna: pd.DataFrame,
+    peak_ids: np.ndarray,
+    peak_chroms: np.ndarray,
+    gene_chroms: list[str],
+    peak_chrom_codes: np.ndarray,
+    peak_starts: np.ndarray,
+    peak_ends: np.ndarray,
+    gene_chrom_codes_raw: np.ndarray,
+    gene_source_cols_raw: np.ndarray,
+    max_distance: int,
+    min_abs_corr: float,
+) -> pd.DataFrame:
+    gene_tss_raw = genes_in_rna["tss"].to_numpy(dtype=np.int64)
+    gene_order, has_chrom_overlap, n_gene_columns = _prepare_gene_order(
+        peak_chrom_codes,
+        gene_chrom_codes_raw,
+        gene_tss_raw,
+        gene_source_cols_raw,
+    )
+    gene_order = np.asarray(gene_order, dtype=np.intp)
+    gene_chrom_codes = gene_chrom_codes_raw[gene_order]
+    gene_source_cols = gene_source_cols_raw[gene_order]
+    gene_names = genes_in_rna["gene"].to_numpy(dtype=object)[gene_order]
+    gene_tss = gene_tss_raw[gene_order]
+
+    if not has_chrom_overlap:
+        import warnings
+        warnings.warn(
+            f"no chromosome name overlaps between peaks and gene_coords "
+            f"even after UCSC/Ensembl normalisation. Peak chroms: "
+            f"{_chrom_examples(peak_chroms)}; "
+            f"gene_coords chroms: {_chrom_examples(gene_chroms)}. The "
+            f"resulting link DataFrame will be empty.",
+            UserWarning, stacklevel=3,
+        )
+        return pd.DataFrame(columns=_LINK_COLUMNS)
+
+    import scipy.sparse as sp
+
+    rna_raw = rna_adata.X
+    rna_csc = None
+    if sp.issparse(rna_raw):
+        rna_csc = rna_raw.tocsc().astype(np.float32, copy=False)
+        if hasattr(rna_csc, "sum_duplicates"):
+            rna_csc.sum_duplicates()
+        if hasattr(rna_csc, "sort_indices"):
+            rna_csc.sort_indices()
+        rna_indptr = rna_csc.indptr
+        rna_indices = np.asarray(rna_csc.indices, dtype=np.int32)
+        rna_data = np.asarray(rna_csc.data, dtype=np.float32)
     else:
-        _warn_if_densification_expensive_rna(rna_adata)
-        rna_X = _densify(rna_adata.X).astype(np.float32, copy=False)
-        corr_fn = None  # use sparse path below
-        sparse_path = True
+        _warn_if_dense_rna_memory_expensive(
+            rna_adata,
+            n_gene_columns=int(n_gene_columns),
+        )
+        rna_dense = as_float32_array(rna_raw)
 
-    rows = []
-    # Iterate peaks in chrom-order; batch peaks on the same chromosome
-    # so we amortise the sorted-gene-TSS work and compute the correlation
-    # over the slice of candidate genes in one vectorised call.
-    peak_centers = ((peaks["start"].values + peaks["end"].values) // 2).astype(np.int64)
-    peak_chroms_norm = peaks["_chrom_norm"].values
-    peak_chroms = peaks["chrom"].values
-    peak_starts = peaks["start"].values
-    peak_ends = peaks["end"].values
-    peak_ids = list(peaks.index)
-    for chrom, gg in gene_by_chrom.items():
-        # Match peaks by normalised chrom so "chr1" peaks join to "1" genes
-        peak_positions = np.where(peak_chroms_norm == chrom)[0]
-        if peak_positions.size == 0:
-            continue
-        tss = gg["tss"].values.astype(np.int64)
-        gene_col_idx = np.array(
-            [gene_rna_idx[g] for g in gg["gene"].values], dtype=np.int64
+    atac_indptr = atac_csc.indptr
+    atac_indices = np.asarray(atac_csc.indices, dtype=np.int32)
+    atac_data = np.asarray(atac_csc.data, dtype=np.float32)
+
+    gene_source_cols_u32 = gene_source_cols.astype(np.uint32, copy=False)
+    if rna_csc is None:
+        peak_ix, gene_ix, distances, corr = _enhancer_link_pearson(
+            rna_dense,
+            atac_indptr,
+            atac_indices,
+            atac_data,
+            peak_chrom_codes,
+            peak_starts,
+            peak_ends,
+            gene_chrom_codes,
+            gene_tss,
+            gene_source_cols_u32,
+            int(max_distance),
+            float(min_abs_corr),
+            None,
+        )
+    else:
+        peak_ix, gene_ix, distances, corr = _enhancer_link_pearson_sparse_rna(
+            rna_indptr,
+            rna_indices,
+            rna_data,
+            int(rna_csc.shape[0]),
+            int(rna_csc.shape[1]),
+            atac_indptr,
+            atac_indices,
+            atac_data,
+            peak_chrom_codes,
+            peak_starts,
+            peak_ends,
+            gene_chrom_codes,
+            gene_tss,
+            gene_source_cols_u32,
+            int(max_distance),
+            float(min_abs_corr),
+            None,
         )
 
-        for i in peak_positions:
-            centre = peak_centers[i]
-            lo = np.searchsorted(tss, centre - max_distance)
-            hi = np.searchsorted(tss, centre + max_distance + 1)
-            if lo == hi:
-                continue
-            candidate_rna_cols = gene_col_idx[lo:hi]
-            candidate_tss = tss[lo:hi]
+    peak_ix = np.asarray(peak_ix)
+    gene_ix = np.asarray(gene_ix)
+    if peak_ix.size == 0:
+        return pd.DataFrame(columns=_LINK_COLUMNS)
 
-            rna_block = rna_X[:, candidate_rna_cols]
-
-            if sparse_path:
-                # Slice peak column from CSC sparse: O(nnz_peak) extraction
-                col_start = atac_csc.indptr[i]
-                col_end = atac_csc.indptr[i + 1]
-                peak_indices = atac_csc.indices[col_start:col_end]
-                peak_data = atac_csc.data[col_start:col_end]
-                corr = _pearson_sparse_x_dense_Y(
-                    peak_indices, peak_data, atac_csc.shape[0], rna_block,
-                )
-            else:
-                peak_vec = atac_X[:, i]
-                corr = corr_fn(peak_vec, rna_block)
-            keep = np.abs(corr) >= min_abs_corr
-            if not keep.any():
-                continue
-            kept_genes = gg["gene"].values[lo:hi][keep]
-            kept_tss = candidate_tss[keep]
-            kept_corr = corr[keep]
-            for g, t, c in zip(kept_genes, kept_tss, kept_corr):
-                rows.append(
-                    (
-                        peak_ids[i],
-                        chrom,
-                        int(peak_starts[i]),
-                        int(peak_ends[i]),
-                        g,
-                        int(t),
-                        int(centre - t),
-                        float(c),
-                    )
-                )
-
-    df = pd.DataFrame(
-        rows,
-        columns=[
-            "peak_id", "peak_chrom", "peak_start", "peak_end",
-            "gene", "gene_tss", "distance", "correlation",
-        ],
+    correlations = np.asarray(corr, dtype=np.float32)
+    out = pd.DataFrame(
+        {
+            "peak_id": peak_ids[peak_ix],
+            "peak_chrom": peak_chroms[peak_ix],
+            "peak_start": peak_starts[peak_ix],
+            "peak_end": peak_ends[peak_ix],
+            "gene": gene_names[gene_ix],
+            "gene_tss": gene_tss[gene_ix],
+            "distance": np.asarray(distances),
+            "correlation": correlations,
+        },
+        columns=_LINK_COLUMNS,
     )
-    df = df.sort_values("correlation", key=lambda s: -s.abs()).reset_index(drop=True)
-    return df
+    return out.reset_index(drop=True)
+
+
+def _chrom_examples(values, limit: int = 5) -> list[str]:
+    """Return a tiny first-seen chromosome sample without scanning uniques."""
+    out: list[str] = []
+    for value in values:
+        text = str(value)
+        if text not in out:
+            out.append(text)
+            if len(out) >= limit:
+                break
+    return out
 
 
 def _align_cells(rna_adata, atac_adata):
-    common = rna_adata.obs_names.intersection(atac_adata.obs_names)
-    if len(common) == 0:
+    rna_idx, atac_idx = _align_cell_indices(
+        [str(cell) for cell in rna_adata.obs_names],
+        [str(cell) for cell in atac_adata.obs_names],
+    )
+    rna_idx = np.asarray(rna_idx, dtype=np.intp)
+    atac_idx = np.asarray(atac_idx, dtype=np.intp)
+    if rna_idx.size == 0:
         raise ValueError(
             "rna_adata and atac_adata share no cell barcodes - this function "
             "requires matched multiome data. For separate scRNA + scATAC "
             "samples, integrate via CCA or scVI before calling."
         )
-    if len(common) < len(rna_adata) or len(common) < len(atac_adata):
+    if rna_idx.size < len(rna_adata) or atac_idx.size < len(atac_adata):
         import warnings
         warnings.warn(
-            f"keeping {len(common)} cells with barcodes in both RNA "
+            f"keeping {rna_idx.size} cells with barcodes in both RNA "
             f"({rna_adata.n_obs}) and ATAC ({atac_adata.n_obs}) AnnDatas.",
             UserWarning, stacklevel=3,
         )
-    return rna_adata[list(common)].copy(), atac_adata[list(common)].copy()
+    if (
+        rna_idx.size == len(rna_adata) == len(atac_adata)
+        and np.array_equal(rna_idx, np.arange(len(rna_adata), dtype=np.intp))
+        and np.array_equal(atac_idx, np.arange(len(atac_adata), dtype=np.intp))
+    ):
+        return rna_adata, atac_adata
+    return rna_adata[rna_idx], atac_adata[atac_idx]
 
 
 def _peak_frame(atac_adata, peak_coords) -> pd.DataFrame:
@@ -281,26 +367,11 @@ def _parse_peak_names(names):
     name normalisation for cross-convention joining is done in
     ``_normalise_chrom`` at join time rather than here.
     """
-    import re
-    # Chrom token must START with alphanumeric, then any of [A-Za-z0-9._].
-    # Covers UCSC (chr1), Ensembl (1), alt-contigs (KI270721.1, GL000220.1),
-    # and UCSC random/alt suffixes (chr1_random). Rejects degenerate cases
-    # like `..._`, `._`, `_` that the unanchored class would accept.
-    pat = re.compile(
-        r"^([A-Za-z0-9][A-Za-z0-9._]*)[:\-_](\d+)[\-_](\d+)$",
-    )
-    rows = []
-    for n in names:
-        m = pat.match(str(n))
-        if m is None:
-            return None
-        start, end = int(m.group(2)), int(m.group(3))
-        if start >= end:
-            # Inverted or zero-width interval - refuse silently to coerce
-            # rather than producing a row with a negative-width window.
-            return None
-        rows.append((m.group(1), start, end))
-    return pd.DataFrame(rows, columns=["chrom", "start", "end"])
+    parsed = _parse_peak_names_rust([str(n) for n in names])
+    if parsed is None:
+        return None
+    chroms, starts, ends = parsed
+    return pd.DataFrame({"chrom": chroms, "start": starts, "end": ends})
 
 
 def _normalise_chrom(name: str) -> str:
@@ -330,150 +401,31 @@ def _validate_gene_coords(gene_coords: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def _densify(X):
-    import scipy.sparse as sp
-    if sp.issparse(X):
-        return X.toarray()
-    return np.asarray(X)
-
-
-# Warn the user before `link_peaks_to_genes` densifies a matrix larger
-# than this (bytes, per-matrix). Module-level so tests can patch down.
+# Warn before `link_peaks_to_genes` hands a large dense RNA matrix to Rust.
+# Module-level so tests can patch down.
 _DENSIFY_WARN_BYTES = 8 * 1024**3  # 8 GiB
 
 
-def _warn_if_densification_expensive_rna(rna_adata) -> None:
-    """Warn before materialising the dense RNA matrix.
+def _warn_if_dense_rna_memory_expensive(rna_adata, n_gene_columns: int | None = None) -> None:
+    """Warn before the dense RNA path touches a large matrix.
 
-    Pearson `link_peaks_to_genes` keeps ATAC sparse (CSC) and only
-    densifies RNA, so the bound is `n_cells × n_genes_rna × 4 bytes`.
-    Spearman currently still densifies both - the dense-both
-    `_warn_if_densification_expensive` function below is kept for
-    that path.
+    Pearson `link_peaks_to_genes` keeps ATAC sparse (CSC). Sparse RNA also
+    stays sparse; this warning is only for callers that pass dense RNA.
     """
     import warnings
 
-    bytes_needed = rna_adata.n_obs * rna_adata.n_vars * 4
+    n_cols = rna_adata.n_vars if n_gene_columns is None else int(n_gene_columns)
+    bytes_needed = rna_adata.n_obs * n_cols * 4
     if bytes_needed >= _DENSIFY_WARN_BYTES:
         gib = bytes_needed / 1024**3
         warnings.warn(
-            f"link_peaks_to_genes will densify rna_adata to a "
-            f"{rna_adata.n_obs} × {rna_adata.n_vars} float32 matrix "
-            f"(~{gib:.1f} GiB). Subset to highly variable genes if "
+            f"link_peaks_to_genes will process a dense "
+            f"{rna_adata.n_obs} × {n_cols} float32 RNA matrix "
+            f"(~{gib:.1f} GiB). Keep RNA sparse or subset genes if "
             f"this OOMs.",
             UserWarning,
             stacklevel=3,
         )
-
-
-def _warn_if_densification_expensive(rna_adata, atac_adata) -> None:
-    """Warn before materialising large float32 matrices from sparse input.
-
-    `link_peaks_to_genes` builds dense RNA and ATAC matrices for the
-    correlation loop. On 100k cells × 100k peaks that's 40 GB - a
-    common surprise for users who never saw the sparse-to-dense step.
-    Raise a warning so a user can interrupt before their laptop swaps
-    itself to death.
-    """
-    import warnings
-
-    for name, ad_obj in [("rna_adata", rna_adata), ("atac_adata", atac_adata)]:
-        bytes_needed = ad_obj.n_obs * ad_obj.n_vars * 4  # float32
-        if bytes_needed >= _DENSIFY_WARN_BYTES:
-            gib = bytes_needed / 1024**3
-            warnings.warn(
-                f"link_peaks_to_genes will densify {name} to a "
-                f"{ad_obj.n_obs} × {ad_obj.n_vars} float32 matrix "
-                f"(~{gib:.1f} GiB). If this OOMs, subset to highly "
-                f"variable peaks / genes first, or batch by chromosome.",
-                UserWarning, stacklevel=3,
-            )
-
-
-def _pearson_matrix(x: np.ndarray, Y: np.ndarray) -> np.ndarray:
-    """Pearson correlation of a vector ``x`` against every column of ``Y``.
-
-    Returns a length-``Y.shape[1]`` numpy array.
-    """
-    x = x.astype(np.float64, copy=False)
-    Y = Y.astype(np.float64, copy=False)
-    x_mean = x.mean()
-    Y_mean = Y.mean(axis=0)
-    x_centered = x - x_mean
-    Y_centered = Y - Y_mean
-    x_norm = np.sqrt(np.sum(x_centered * x_centered))
-    Y_norm = np.sqrt(np.sum(Y_centered * Y_centered, axis=0))
-    denom = x_norm * Y_norm
-    num = x_centered @ Y_centered
-    with np.errstate(divide="ignore", invalid="ignore"):
-        return np.where(denom > 0, num / denom, 0.0).astype(np.float32)
-
-
-def _pearson_sparse_x_dense_Y(
-    x_indices: np.ndarray,
-    x_data: np.ndarray,
-    n_cells: int,
-    Y: np.ndarray,
-) -> np.ndarray:
-    """Pearson correlation of a sparse vector x against every column of dense Y.
-
-    Closes the atlas-scale densification gap: streams one peak's
-    nonzeros at a time instead of materialising the full
-    ``(n_cells, n_peaks)`` ATAC matrix. Mathematically equivalent to
-    ``_pearson_matrix(x_dense, Y)`` to float32 precision.
-
-    Algorithm - for each gene column j:
-        Pearson(x, Y[:, j]) = (E[x·Y_j] − μ_x μ_{Y_j}) / (σ_x σ_{Y_j})
-
-    where:
-      μ_x = sum(x_data) / n_cells
-      σ_x = sqrt(sum(x_data^2)/n_cells − μ_x^2)
-      μ_{Y_j}, σ_{Y_j} computed once over the dense block
-      E[x·Y_j] = (x_data @ Y[x_indices, j]) / n_cells
-                       - only nonzeros contribute, so it's O(nnz)
-    """
-    x_data = x_data.astype(np.float64, copy=False)
-    Y = Y.astype(np.float64, copy=False)
-    n = float(n_cells)
-
-    x_sum = float(x_data.sum())
-    x_sumsq = float((x_data * x_data).sum())
-    x_mean = x_sum / n
-    x_var = x_sumsq / n - x_mean * x_mean
-    x_var = max(x_var, 0.0)
-    x_std = np.sqrt(x_var)
-
-    Y_mean = Y.mean(axis=0)
-    Y_centered = Y - Y_mean
-    Y_norm = np.sqrt(np.sum(Y_centered * Y_centered, axis=0))
-    Y_std = Y_norm / np.sqrt(n)
-
-    if x_indices.size == 0:
-        # Vector of zeros: Pearson is undefined. Return zero.
-        return np.zeros(Y.shape[1], dtype=np.float32)
-
-    # Sum over nonzeros: x_data @ Y[indices, :] gives per-column dot products
-    cross_sum = x_data @ Y[x_indices, :]      # shape (n_genes_block,)
-    e_xy = cross_sum / n
-    cov = e_xy - x_mean * Y_mean
-    denom = x_std * Y_std
-    with np.errstate(divide="ignore", invalid="ignore"):
-        out = np.where(denom > 0, cov / denom, 0.0)
-    return out.astype(np.float32)
-
-
-def _spearman_matrix(x: np.ndarray, Y: np.ndarray) -> np.ndarray:
-    """Spearman correlation of ``x`` against every column of ``Y``.
-
-    Implemented as Pearson on rank-transformed inputs (exact at integer
-    rank granularity; the scipy ranker handles ties the same way).
-    """
-    from scipy.stats import rankdata
-    x_r = rankdata(x)
-    Y_r = np.empty_like(Y, dtype=np.float64)
-    for j in range(Y.shape[1]):
-        Y_r[:, j] = rankdata(Y[:, j])
-    return _pearson_matrix(x_r, Y_r)
 
 
 __all__ = ["link_peaks_to_genes"]

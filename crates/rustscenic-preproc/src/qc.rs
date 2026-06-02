@@ -435,7 +435,10 @@ chr2\t1000\t1100\tBBB-1\t1
         ))
         .unwrap();
 
-        assert_eq!(tss_enrichment(&base, &tss), tss_enrichment(&dup_count, &tss));
+        assert_eq!(
+            tss_enrichment(&base, &tss),
+            tss_enrichment(&dup_count, &tss)
+        );
     }
 
     // ---- frip ----

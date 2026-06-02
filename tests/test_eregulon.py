@@ -5,14 +5,17 @@ outputs into TF × enhancers × target_genes records.
 """
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from rustscenic.eregulon import (
     ERegulon,
+    _build_eregulons_dataframe,
     build_eregulons,
     eregulons_to_dataframe,
 )
+from rustscenic._stage_utils import tf_from_regulon_name
 
 
 # ---- fixtures --------------------------------------------------------------
@@ -180,12 +183,129 @@ def test_eregulons_to_dataframe_flattens():
             target_genes=["GENE_A", "GENE_B"],
             n_enhancer_links=2,
             motif_auc=0.2,
+            target_to_peaks={"GENE_A": ["peak_1"], "GENE_B": ["peak_1"]},
         ),
     ]
     df = eregulons_to_dataframe(eregs)
     assert set(df.columns) == {"tf", "enhancer", "target_gene", "n_enhancer_links", "motif_auc"}
     # 1 TF × 1 enhancer × 2 genes = 2 rows
     assert len(df) == 2
+
+
+def test_build_eregulons_uses_rust_summary_not_long_dataframe_loop(monkeypatch):
+    import rustscenic.eregulon as ermod
+
+    def fail_dataframe_build(*_args, **_kwargs):
+        raise AssertionError("build_eregulons should use the Rust summary path")
+
+    monkeypatch.setattr(ermod, "_build_eregulons_dataframe", fail_dataframe_build)
+
+    eregs = build_eregulons(
+        _fixture_grn(), _fixture_cistarget(), _fixture_enhancer_links(),
+        min_target_genes=3, min_enhancer_links=2,
+    )
+
+    spi1 = next(e for e in eregs if e.tf == "SPI1")
+    assert spi1.enhancers == ["peak_1", "peak_2", "peak_3"]
+    assert spi1.target_genes == ["GENE_A", "GENE_B", "GENE_C", "GENE_D", "GENE_E"]
+    assert spi1.target_to_peaks == {
+        "GENE_A": ["peak_1"],
+        "GENE_B": ["peak_1"],
+        "GENE_C": ["peak_1"],
+        "GENE_D": ["peak_2"],
+        "GENE_E": ["peak_3"],
+    }
+
+
+def test_build_eregulons_uses_float32_cistarget_auc_without_upcast(monkeypatch):
+    import rustscenic.eregulon as ermod
+
+    cistarget = _fixture_cistarget()
+    auc_values = cistarget["auc"].to_numpy(dtype=np.float32)
+    cistarget["auc"] = auc_values
+    source_values = cistarget["auc"].to_numpy(copy=False)
+
+    def fake_summary(
+        grn_tfs,
+        grn_targets,
+        cistarget_regulons,
+        cistarget_peaks,
+        cistarget_aucs,
+        enhancer_peaks,
+        enhancer_genes,
+        enhancer_correlations,
+        *_args,
+    ):
+        assert cistarget_aucs.dtype == np.float32
+        assert np.shares_memory(cistarget_aucs, source_values)
+        assert enhancer_correlations.dtype == np.float32
+        return (
+            ["SPI1"],
+            [["peak_1"]],
+            [["GENE_A"]],
+            np.array([1], dtype=np.uint32),
+            np.array([0.2], dtype=np.float64),
+            [{"GENE_A": ["peak_1"]}],
+            1,
+            1,
+        )
+
+    monkeypatch.setattr(ermod, "_eregulon_assemble_summary_f32", fake_summary)
+
+    eregs = build_eregulons(
+        _fixture_grn(),
+        cistarget,
+        _fixture_enhancer_links(),
+        min_target_genes=1,
+        min_enhancer_links=1,
+    )
+
+    assert eregs[0].tf == "SPI1"
+
+
+def test_eregulon_dataframe_uses_float32_cistarget_auc_without_upcast(monkeypatch):
+    import rustscenic.eregulon as ermod
+
+    cistarget = _fixture_cistarget()
+    auc_values = cistarget["auc"].to_numpy(dtype=np.float32)
+    cistarget["auc"] = auc_values
+    source_values = cistarget["auc"].to_numpy(copy=False)
+
+    def fake_assemble(
+        grn_tfs,
+        grn_targets,
+        cistarget_regulons,
+        cistarget_peaks,
+        cistarget_aucs,
+        enhancer_peaks,
+        enhancer_genes,
+        enhancer_correlations,
+        *_args,
+    ):
+        assert cistarget_aucs.dtype == np.float32
+        assert np.shares_memory(cistarget_aucs, source_values)
+        assert enhancer_correlations.dtype == np.float32
+        return (
+            ["SPI1"],
+            ["peak_1"],
+            ["GENE_A"],
+            np.array([1], dtype=np.uint32),
+            np.array([0.2], dtype=np.float64),
+            1,
+            1,
+        )
+
+    monkeypatch.setattr(ermod, "_eregulon_assemble_f32", fake_assemble)
+
+    table = _build_eregulons_dataframe(
+        _fixture_grn(),
+        cistarget,
+        _fixture_enhancer_links(),
+        min_target_genes=1,
+        min_enhancer_links=1,
+    )
+
+    assert table.loc[0, "tf"] == "SPI1"
 
 
 def test_eregulons_sorted_by_edge_count_descending():
@@ -259,4 +379,137 @@ def test_polarity_suffix_normalised_to_bare_tf():
     assert len(eregs) >= 1
     assert any(e.tf == "SPI1" for e in eregs), (
         f"polarity suffix stripping failed; TFs seen: {[e.tf for e in eregs]}"
+    )
+
+
+def test_rust_eregulon_table_matches_reference_pandas_semantics():
+    grn = pd.DataFrame(
+        [
+            ("SPI1", "GENE_A", 1.0),
+            ("SPI1", "GENE_B", 0.9),
+            ("SPI1", "GENE_C", 0.8),
+            ("PAX5", "GENE_D", 0.7),
+            ("PAX5", "GENE_E", 0.6),
+        ],
+        columns=["TF", "target", "importance"],
+    )
+    cistarget = pd.DataFrame(
+        [
+            ("SPI1_regulon(+)", "m1", "peak_1", 0.20),
+            ("SPI1_extended_repressor(-)", "m2", "peak_1", 0.30),
+            ("SPI1_regulon", "m1", "peak_2", 0.10),
+            ("SPI1_regulon", "m1", "peak_low", 0.01),
+            ("PAX5_regulon", "m3", "peak_3", 0.40),
+            ("PAX5_regulon", "m3", "peak_4", 0.50),
+        ],
+        columns=["regulon", "motif", "peak_id", "auc"],
+    )
+    enhancer_links = pd.DataFrame(
+        [
+            ("peak_1", "GENE_A", 0.5),
+            ("peak_1", "GENE_B", 0.4),
+            ("peak_1", "GENE_B", 0.4),  # duplicate edge collapses
+            ("peak_2", "GENE_C", 0.3),
+            ("peak_2", "GENE_NEG", -0.7),
+            ("peak_low", "GENE_A", 0.8),  # filtered by cistarget AUC
+            ("peak_3", "GENE_D", 0.6),
+            ("peak_4", "GENE_E", 0.6),
+            ("peak_4", "GENE_X", 0.6),  # dropped by GRN intersection
+        ],
+        columns=["peak_id", "gene", "correlation"],
+    )
+
+    got = _normalised_table(
+        _build_eregulons_dataframe(
+            grn,
+            cistarget,
+            enhancer_links,
+            min_target_genes=2,
+            min_enhancer_links=2,
+            cistarget_auc_threshold=0.05,
+        )
+    )
+    expected = _normalised_table(
+        _reference_eregulon_table(
+            grn,
+            cistarget,
+            enhancer_links,
+            min_target_genes=2,
+            min_enhancer_links=2,
+            cistarget_auc_threshold=0.05,
+        )
+    )
+    pd.testing.assert_frame_equal(got, expected, check_dtype=False, atol=1e-12)
+
+
+def _reference_eregulon_table(
+    grn: pd.DataFrame | None,
+    cistarget: pd.DataFrame,
+    enhancer_links: pd.DataFrame,
+    *,
+    min_target_genes: int,
+    min_enhancer_links: int,
+    cistarget_auc_threshold: float,
+    use_grn_intersection: bool = True,
+) -> pd.DataFrame:
+    ct = cistarget.loc[cistarget["auc"] >= cistarget_auc_threshold].copy()
+    if ct.empty:
+        return pd.DataFrame(
+            columns=["tf", "enhancer", "target_gene", "n_enhancer_links", "motif_auc"]
+        )
+    ct["tf"] = ct["regulon"].astype(str).map(tf_from_regulon_name)
+    grn_targets = (
+        grn.groupby("TF")["target"].apply(set).to_dict()
+        if use_grn_intersection and grn is not None else None
+    )
+    el_pos = enhancer_links.loc[
+        enhancer_links["correlation"] > 0, ["peak_id", "gene", "correlation"]
+    ]
+    links_by_peak = {
+        str(peak): list(zip(g["gene"].astype(str), g["correlation"].astype(float)))
+        for peak, g in el_pos.groupby("peak_id", sort=False)
+    }
+
+    eregulons = []
+    for tf, tf_group in ct.groupby("tf"):
+        tf = str(tf)
+        target_to_peaks: dict[str, set[str]] = {}
+        for peak in tf_group["peak_id"].astype(str).unique().tolist():
+            for gene, _corr in links_by_peak.get(peak, ()):
+                target_to_peaks.setdefault(gene, set()).add(peak)
+        if use_grn_intersection and grn_targets is not None:
+            supported = grn_targets.get(tf, set())
+            target_to_peaks = {
+                gene: peaks for gene, peaks in target_to_peaks.items()
+                if gene in supported
+            }
+        if len(target_to_peaks) < min_target_genes:
+            continue
+        n_edges = sum(len(peaks) for peaks in target_to_peaks.values())
+        if n_edges < min_enhancer_links:
+            continue
+        supporting_peaks = {p for peaks in target_to_peaks.values() for p in peaks}
+        motif_auc = float(
+            tf_group.loc[
+                tf_group["peak_id"].astype(str).isin(supporting_peaks), "auc"
+            ].mean()
+        )
+        eregulons.append((tf, target_to_peaks, n_edges, motif_auc))
+
+    eregulons.sort(key=lambda e: (-e[2], -len(e[1])))
+    rows = []
+    for tf, target_to_peaks, n_edges, motif_auc in eregulons:
+        for target, peaks in target_to_peaks.items():
+            for peak in sorted(peaks):
+                rows.append((tf, peak, target, n_edges, motif_auc))
+    return pd.DataFrame(
+        rows,
+        columns=["tf", "enhancer", "target_gene", "n_enhancer_links", "motif_auc"],
+    )
+
+
+def _normalised_table(df: pd.DataFrame) -> pd.DataFrame:
+    return (
+        df.sort_values(["tf", "target_gene", "enhancer"])
+        .reset_index(drop=True)
     )

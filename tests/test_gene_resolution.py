@@ -11,12 +11,14 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import pytest
-
+import rustscenic._gene_resolution as gene_resolution
 from rustscenic._gene_resolution import (
+    dedupe_by_symbol,
+    duplicate_gene_summary,
     regulon_coverage,
     resolve_gene_names,
     warn_if_likely_unnormalized,
+    warn_if_max_likely_unnormalized,
     warn_if_poor_coverage,
 )
 
@@ -119,6 +121,34 @@ def test_regulon_coverage_counts_matches_and_totals():
     assert cov == {"R1": (2, 3), "R2": (3, 3), "R3": (0, 3)}
 
 
+def test_regulon_coverage_uses_rust_counter(monkeypatch):
+    import rustscenic._gene_resolution as gene_resolution
+
+    seen = {}
+
+    def fake_counter(gene_names, regulon_genes):
+        seen["gene_names"] = gene_names
+        seen["regulon_genes"] = regulon_genes
+        return np.asarray([1, 0], dtype=np.uint64), np.asarray([2, 1], dtype=np.uint64)
+
+    monkeypatch.setattr(
+        gene_resolution,
+        "_stage_regulon_coverage_counts",
+        fake_counter,
+    )
+
+    cov = gene_resolution.regulon_coverage(
+        ["A", "B"],
+        [("R1", ["A", "X"]), ("R2", ["Y"])],
+    )
+
+    assert seen == {
+        "gene_names": ["A", "B"],
+        "regulon_genes": [["A", "X"], ["Y"]],
+    }
+    assert cov == {"R1": (1, 2), "R2": (0, 1)}
+
+
 def test_warn_if_poor_coverage_fires_on_low_match():
     cov = {"R1": (2, 10), "R2": (9, 10)}  # R1 at 20%
     with warnings.catch_warnings(record=True) as caught:
@@ -133,6 +163,188 @@ def test_warn_if_poor_coverage_silent_when_all_good():
         warnings.simplefilter("always")
         warn_if_poor_coverage(cov, threshold=0.5)
     assert not caught
+
+
+# ---- duplicate gene-symbol aggregation ------------------------------------
+
+
+def test_duplicate_gene_summary_uses_rust_helper():
+    count, examples = duplicate_gene_summary(
+        ["A", "B", "A", "C", "B", "B"],
+        max_examples=2,
+    )
+    assert count == 3
+    assert examples == ["B", "A"]
+
+
+def test_dedupe_by_symbol_dense_float32_uses_rust_helper(monkeypatch):
+    X = np.asfortranarray(
+        np.array(
+            [
+                [1.0, 2.0, 3.0],
+                [4.0, 5.0, 6.0],
+            ],
+            dtype=np.float32,
+        )
+    )
+    seen = {}
+
+    def fake_dedupe(values, gene_names):
+        seen["values"] = values
+        seen["gene_names"] = gene_names
+        return np.array([[4.0, 2.0], [10.0, 5.0]], dtype=np.float32), ["A", "B"]
+
+    monkeypatch.setattr(gene_resolution, "_gene_dedupe_dense_f32", fake_dedupe)
+
+    out, names = dedupe_by_symbol(X, ["A", "B", "A"])
+
+    assert names == ["A", "B"]
+    np.testing.assert_array_equal(out, np.array([[4.0, 2.0], [10.0, 5.0]], dtype=np.float32))
+    assert np.shares_memory(seen["values"], X)
+    assert seen["gene_names"] == ["A", "B", "A"]
+
+
+def test_dedupe_by_symbol_dense_float32_strided_correctness():
+    base = np.array(
+        [
+            [1.0, 2.0, 3.0],
+            [4.0, 5.0, 6.0],
+        ],
+        dtype=np.float32,
+    )
+    X = np.asfortranarray(base)
+    assert X.flags.f_contiguous
+    assert not X.flags.c_contiguous
+
+    out, names = dedupe_by_symbol(X, ["A", "B", "A"])
+
+    assert names == ["A", "B"]
+    np.testing.assert_array_equal(out, np.array([[4.0, 2.0], [10.0, 5.0]], dtype=np.float32))
+
+
+def test_dedupe_by_symbol_dense_int64_uses_rust_helper(monkeypatch):
+    X = np.array(
+        [
+            [1, 2, 3],
+            [4, 5, 6],
+        ],
+        dtype=np.int64,
+    )
+    seen = {}
+
+    def fake_dedupe(values, gene_names):
+        seen["values"] = values
+        seen["gene_names"] = gene_names
+        return np.array([[4, 2], [10, 5]], dtype=np.int64), ["A", "B"]
+
+    monkeypatch.setattr(gene_resolution, "_gene_dedupe_dense_i64", fake_dedupe)
+
+    out, names = dedupe_by_symbol(X, ["A", "B", "A"])
+
+    assert names == ["A", "B"]
+    np.testing.assert_array_equal(out, np.array([[4, 2], [10, 5]], dtype=np.int64))
+    assert np.shares_memory(seen["values"], X)
+    assert seen["gene_names"] == ["A", "B", "A"]
+
+
+def test_dedupe_by_symbol_sparse_float32_uses_rust_helper_and_preserves_format(monkeypatch):
+    import scipy.sparse as sp
+
+    X = sp.csr_matrix(
+        np.array(
+            [
+                [1.0, 2.0, 3.0],
+                [4.0, 5.0, 6.0],
+            ],
+            dtype=np.float32,
+        )
+    )
+    seen = {}
+
+    def fake_dedupe(indptr, indices, data, n_rows, gene_names):
+        seen["indptr"] = indptr
+        seen["indices"] = indices
+        seen["data"] = data
+        seen["n_rows"] = n_rows
+        seen["gene_names"] = gene_names
+        return (
+            np.array([4.0, 10.0, 2.0, 5.0], dtype=np.float32),
+            np.array([0, 1, 0, 1], dtype=np.int32),
+            np.array([0, 2, 4], dtype=np.int64),
+            ["A", "B"],
+        )
+
+    monkeypatch.setattr(gene_resolution, "_gene_dedupe_sparse_csc_f32", fake_dedupe)
+
+    out, names = dedupe_by_symbol(X, ["A", "B", "A"])
+
+    assert names == ["A", "B"]
+    assert sp.isspmatrix_csr(out)
+    np.testing.assert_array_equal(out.toarray(), np.array([[4.0, 2.0], [10.0, 5.0]], dtype=np.float32))
+    assert seen["n_rows"] == 2
+    assert seen["gene_names"] == ["A", "B", "A"]
+    assert seen["indices"].dtype == np.int32
+    assert seen["data"].dtype == np.float32
+
+
+def test_dedupe_by_symbol_sparse_float32_correctness():
+    import scipy.sparse as sp
+
+    X = sp.csc_matrix(
+        np.array(
+            [
+                [0.0, 2.0, 3.0],
+                [4.0, 0.0, 6.0],
+            ],
+            dtype=np.float32,
+        )
+    )
+
+    out, names = dedupe_by_symbol(X, ["A", "B", "A"])
+
+    assert names == ["A", "B"]
+    assert sp.isspmatrix_csc(out)
+    np.testing.assert_array_equal(out.toarray(), np.array([[3.0, 2.0], [10.0, 0.0]], dtype=np.float32))
+
+
+def test_dedupe_by_symbol_sparse_int64_uses_rust_helper_and_preserves_format(monkeypatch):
+    import scipy.sparse as sp
+
+    X = sp.csr_matrix(
+        np.array(
+            [
+                [1, 2, 3],
+                [4, 5, 6],
+            ],
+            dtype=np.int64,
+        )
+    )
+    seen = {}
+
+    def fake_dedupe(indptr, indices, data, n_rows, gene_names):
+        seen["indptr"] = indptr
+        seen["indices"] = indices
+        seen["data"] = data
+        seen["n_rows"] = n_rows
+        seen["gene_names"] = gene_names
+        return (
+            np.array([4, 10, 2, 5], dtype=np.int64),
+            np.array([0, 1, 0, 1], dtype=np.int32),
+            np.array([0, 2, 4], dtype=np.int64),
+            ["A", "B"],
+        )
+
+    monkeypatch.setattr(gene_resolution, "_gene_dedupe_sparse_csc_i64", fake_dedupe)
+
+    out, names = dedupe_by_symbol(X, ["A", "B", "A"])
+
+    assert names == ["A", "B"]
+    assert sp.isspmatrix_csr(out)
+    np.testing.assert_array_equal(out.toarray(), np.array([[4, 2], [10, 5]], dtype=np.int64))
+    assert seen["n_rows"] == 2
+    assert seen["gene_names"] == ["A", "B", "A"]
+    assert seen["indices"].dtype == np.int32
+    assert seen["data"].dtype == np.int64
 
 
 # ---- unnormalised-input guard ---------------------------------------------
@@ -170,6 +382,14 @@ def test_warn_if_likely_unnormalized_handles_empty_sparse():
     import scipy.sparse as sp
     X = sp.csr_matrix((0, 0))
     warn_if_likely_unnormalized(X)  # just not crashing is enough
+
+
+def test_warn_if_max_likely_unnormalized_uses_rust_collected_max():
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        warn_if_max_likely_unnormalized(1000.0)
+
+    assert any("log-normalised" in str(w.message) for w in caught)
 
 
 # ---- integration: aucell on a cellxgene-like AnnData ----------------------

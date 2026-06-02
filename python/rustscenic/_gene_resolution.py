@@ -40,9 +40,26 @@ from __future__ import annotations
 
 import re
 import warnings
-from typing import Iterable, Mapping, Sequence, Tuple
+from collections.abc import Iterable, Mapping, Sequence
 
 import numpy as np
+
+from rustscenic._rustscenic import (
+    gene_duplicate_summary as _gene_duplicate_summary,
+    gene_dedupe_dense_f32 as _gene_dedupe_dense_f32,
+    gene_dedupe_dense_f64 as _gene_dedupe_dense_f64,
+    gene_dedupe_dense_i32 as _gene_dedupe_dense_i32,
+    gene_dedupe_dense_i64 as _gene_dedupe_dense_i64,
+    gene_dedupe_dense_u32 as _gene_dedupe_dense_u32,
+    gene_dedupe_dense_u64 as _gene_dedupe_dense_u64,
+    gene_dedupe_sparse_csc_f32 as _gene_dedupe_sparse_csc_f32,
+    gene_dedupe_sparse_csc_f64 as _gene_dedupe_sparse_csc_f64,
+    gene_dedupe_sparse_csc_i32 as _gene_dedupe_sparse_csc_i32,
+    gene_dedupe_sparse_csc_i64 as _gene_dedupe_sparse_csc_i64,
+    gene_dedupe_sparse_csc_u32 as _gene_dedupe_sparse_csc_u32,
+    gene_dedupe_sparse_csc_u64 as _gene_dedupe_sparse_csc_u64,
+    stage_regulon_coverage_counts as _stage_regulon_coverage_counts,
+)
 
 
 # ENSEMBL gene-ID pattern - covers ENSG (human), ENSMUSG (mouse),
@@ -141,24 +158,31 @@ def resolve_gene_names(adata, *, quiet: bool = False) -> list[str]:
 
 def regulon_coverage(
     gene_names: Sequence[str],
-    regulons: Iterable[Tuple[str, Iterable[str]]],
-) -> dict[str, Tuple[int, int]]:
+    regulons: Iterable[tuple[str, Iterable[str]]],
+) -> dict[str, tuple[int, int]]:
     """Count per-regulon how many genes are found in ``gene_names``.
 
     Returns ``{regulon_name: (n_matched, n_total)}``. Useful both for
     emitting coverage warnings and for returning a diagnostic alongside
     the AUC matrix.
     """
-    gene_set = set(gene_names)
-    out: dict[str, Tuple[int, int]] = {}
+    names: list[str] = []
+    regulon_genes: list[list[str]] = []
     for name, genes in regulons:
-        g = list(genes)
-        out[name] = (sum(1 for x in g if x in gene_set), len(g))
-    return out
+        names.append(str(name))
+        regulon_genes.append([str(g) for g in genes])
+    matched, total = _stage_regulon_coverage_counts(
+        [str(g) for g in gene_names],
+        regulon_genes,
+    )
+    return {
+        name: (int(n_matched), int(n_total))
+        for name, n_matched, n_total in zip(names, matched, total, strict=True)
+    }
 
 
 def warn_if_poor_coverage(
-    coverage: Mapping[str, Tuple[int, int]],
+    coverage: Mapping[str, tuple[int, int]],
     *,
     threshold: float = 0.5,
     stacklevel: int = 2,
@@ -214,14 +238,36 @@ def warn_if_likely_unnormalized(X, *, max_threshold: float = 50.0, stacklevel: i
     except Exception:
         return  # don't fail the user's pipeline on a diagnostic
 
-    if max_val > max_threshold:
-        warnings.warn(
-            f"expression matrix max value is {max_val:.1f}; rustscenic expects "
-            f"log-normalised input. If this is raw UMI counts, run "
-            f"`scanpy.pp.normalize_total(adata, target_sum=1e4)` followed by "
-            f"`scanpy.pp.log1p(adata)` before calling rustscenic.",
-            UserWarning, stacklevel=stacklevel,
-        )
+    warn_if_max_likely_unnormalized(
+        max_val,
+        max_threshold=max_threshold,
+        stacklevel=stacklevel,
+    )
+
+
+def warn_if_max_likely_unnormalized(
+    max_val: float | None,
+    *,
+    max_threshold: float = 50.0,
+    stacklevel: int = 2,
+) -> None:
+    """Warn from a Rust-collected expression maximum without rescanning in Python."""
+    if max_val is None:
+        return
+    try:
+        max_val = float(max_val)
+    except Exception:
+        return
+    import math
+    if not math.isfinite(max_val) or max_val <= max_threshold:
+        return
+    warnings.warn(
+        f"expression matrix max value is {max_val:.1f}; rustscenic expects "
+        f"log-normalised input. If this is raw UMI counts, run "
+        f"`scanpy.pp.normalize_total(adata, target_sum=1e4)` followed by "
+        f"`scanpy.pp.log1p(adata)` before calling rustscenic.",
+        UserWarning, stacklevel=stacklevel,
+    )
 
 
 def dedupe_by_symbol(X, gene_names: Sequence[str]):
@@ -241,47 +287,96 @@ def dedupe_by_symbol(X, gene_names: Sequence[str]):
     dense numpy; the return type matches the input.
     """
     names_list = list(gene_names)
-    from collections import defaultdict
-
-    index_of: dict[str, int] = {}
-    groups: list[list[int]] = []
-    for i, g in enumerate(names_list):
-        if g in index_of:
-            groups[index_of[g]].append(i)
-        else:
-            index_of[g] = len(groups)
-            groups.append([i])
-
-    if len(groups) == len(names_list):
+    dup_count, _ = duplicate_gene_summary(names_list)
+    if dup_count == 0:
         return X, names_list
 
-    unique_names = [names_list[g[0]] for g in groups]
-
     import scipy.sparse as sp
-    if sp.issparse(X):
-        # Build a gene × unique_gene aggregation matrix and right-multiply.
-        n_genes = len(names_list)
-        n_unique = len(groups)
-        rows = []
-        cols = []
-        for dst, src_indices in enumerate(groups):
-            for src in src_indices:
-                rows.append(src)
-                cols.append(dst)
-        data = np.ones(len(rows), dtype=X.dtype)
-        agg = sp.csr_matrix(
-            (data, (rows, cols)), shape=(n_genes, n_unique), dtype=X.dtype
+    if not sp.issparse(X):
+        arr = np.asarray(X)
+        dense_kernel = _dense_dedupe_kernel(arr.dtype)
+        if dense_kernel is not None:
+            out, unique_names = dense_kernel(arr, names_list)
+            return np.asarray(out), list(unique_names)
+        raise TypeError(
+            "dedupe_by_symbol only supports numeric float32/float64/int32/int64/"
+            "uint32/uint64 dense arrays on the Rust-backed path"
         )
-        return X @ agg, unique_names
 
-    arr = np.asarray(X)
-    out = np.zeros((arr.shape[0], len(groups)), dtype=arr.dtype)
-    for dst, src_indices in enumerate(groups):
-        if len(src_indices) == 1:
-            out[:, dst] = arr[:, src_indices[0]]
-        else:
-            out[:, dst] = arr[:, src_indices].sum(axis=1)
-    return out, unique_names
+    if sp.issparse(X):
+        out, rust_names = _dedupe_sparse_by_symbol(X, names_list)
+        if out is not None:
+            return out, rust_names
+        raise TypeError(
+            "dedupe_by_symbol only supports numeric float32/float64/int32/int64/"
+            "uint32/uint64 sparse arrays on the Rust-backed path"
+        )
+
+    raise TypeError(
+        "dedupe_by_symbol expects a dense numpy array or scipy sparse matrix"
+    )
+
+
+def duplicate_gene_summary(
+    gene_names: Sequence[str],
+    *,
+    max_examples: int = 3,
+) -> tuple[int, list[str]]:
+    """Return duplicate gene count and example names from the Rust stage helper."""
+    duplicate_count, examples = _gene_duplicate_summary(list(gene_names), int(max_examples))
+    return int(duplicate_count), list(examples)
+
+
+def _dedupe_sparse_by_symbol(X, gene_names: list[str]):
+    import scipy.sparse as sp
+
+    sparse_kernel = _sparse_dedupe_kernel(X.dtype)
+    if sparse_kernel is None:
+        return None, None
+
+    original_format = X.getformat()
+    X_csc = X.tocsc(copy=False)
+    X_csc.sum_duplicates()
+    X_csc.sort_indices()
+    data, indices, indptr, unique_names = sparse_kernel(
+        X_csc.indptr,
+        X_csc.indices,
+        X_csc.data,
+        int(X_csc.shape[0]),
+        gene_names,
+    )
+    out = sp.csc_matrix(
+        (data, indices, indptr),
+        shape=(X_csc.shape[0], len(unique_names)),
+        dtype=X_csc.dtype,
+    )
+    if original_format != "csc":
+        out = out.asformat(original_format)
+    return out, list(unique_names)
+
+
+def _dense_dedupe_kernel(dtype):
+    dtype = np.dtype(dtype)
+    return {
+        np.dtype(np.float32): _gene_dedupe_dense_f32,
+        np.dtype(np.float64): _gene_dedupe_dense_f64,
+        np.dtype(np.int32): _gene_dedupe_dense_i32,
+        np.dtype(np.int64): _gene_dedupe_dense_i64,
+        np.dtype(np.uint32): _gene_dedupe_dense_u32,
+        np.dtype(np.uint64): _gene_dedupe_dense_u64,
+    }.get(dtype)
+
+
+def _sparse_dedupe_kernel(dtype):
+    dtype = np.dtype(dtype)
+    return {
+        np.dtype(np.float32): _gene_dedupe_sparse_csc_f32,
+        np.dtype(np.float64): _gene_dedupe_sparse_csc_f64,
+        np.dtype(np.int32): _gene_dedupe_sparse_csc_i32,
+        np.dtype(np.int64): _gene_dedupe_sparse_csc_i64,
+        np.dtype(np.uint32): _gene_dedupe_sparse_csc_u32,
+        np.dtype(np.uint64): _gene_dedupe_sparse_csc_u64,
+    }.get(dtype)
 
 
 def diagnose_zero_tf_overlap(
@@ -370,6 +465,8 @@ __all__ = [
     "regulon_coverage",
     "warn_if_poor_coverage",
     "warn_if_likely_unnormalized",
+    "warn_if_max_likely_unnormalized",
     "dedupe_by_symbol",
+    "duplicate_gene_summary",
     "diagnose_zero_tf_overlap",
 ]

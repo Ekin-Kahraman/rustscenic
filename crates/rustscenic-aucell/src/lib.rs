@@ -19,6 +19,7 @@
 //!
 //! Rayon-parallelized over cells.
 
+use ndarray::ArrayView2;
 use rayon::prelude::*;
 
 /// Compute per-cell AUC matrix. Caller supplies gene-index regulons (post gene-name lookup).
@@ -40,6 +41,22 @@ pub fn aucell(
         n_cells * n_genes,
         "expression size mismatch"
     );
+    let expression = ArrayView2::from_shape((n_cells, n_genes), expression)
+        .expect("validated expression shape must construct row-major view");
+    aucell_view(expression, regulons, top_frac)
+}
+
+/// Compute per-cell AUC matrix from any dense 2D view.
+///
+/// This keeps PyO3 callers from materialising a second C-contiguous copy when
+/// pandas/AnnData already expose a valid strided float32 matrix.
+pub fn aucell_view(
+    expression: ArrayView2<'_, f32>,
+    regulons: &[(String, Vec<usize>)],
+    top_frac: f32,
+) -> Vec<f32> {
+    let n_cells = expression.shape()[0];
+    let n_genes = expression.shape()[1];
     assert!(
         top_frac > 0.0 && top_frac <= 1.0,
         "top_frac must be in (0, 1]"
@@ -70,7 +87,7 @@ pub fn aucell(
     out.par_chunks_mut(n_regulons)
         .enumerate()
         .for_each(|(cell_idx, cell_out)| {
-            let row = &expression[cell_idx * n_genes..(cell_idx + 1) * n_genes];
+            let row = expression.row(cell_idx);
             // Argsort descending by expression. Tie-break: lower gene index first
             // (deterministic across runs).
             let mut order: Vec<u32> = (0..n_genes as u32).collect();
@@ -116,6 +133,180 @@ pub fn aucell(
         });
 
     out
+}
+
+/// Sparse CSR AUCell for non-negative scRNA matrices without densifying.
+///
+/// This preserves the dense rank semantics, including gene-index tie breaks
+/// for implicit zeros. It only ranks the genes that can contribute below the
+/// recovery cutoff, avoiding an O(n_genes log n_genes) dense argsort per cell
+/// on atlas-scale sparse matrices.
+pub fn aucell_sparse_csr(
+    row_ptr: &[usize],
+    col_idx: &[i32],
+    data: &[f32],
+    n_cells: usize,
+    n_genes: usize,
+    regulons: &[(String, Vec<usize>)],
+    top_frac: f32,
+) -> Vec<f32> {
+    assert_eq!(row_ptr.len(), n_cells + 1, "row_ptr size mismatch");
+    assert_eq!(col_idx.len(), data.len(), "CSR index/data size mismatch");
+    assert!(
+        col_idx.iter().all(|&g| g >= 0 && (g as usize) < n_genes),
+        "CSR column index contains a negative or out-of-range gene index"
+    );
+    assert!(
+        top_frac > 0.0 && top_frac <= 1.0,
+        "top_frac must be in (0, 1]"
+    );
+    if data.iter().any(|v| v.is_nan()) {
+        panic!("expression matrix contains NaN values - AUCell ranking is undefined.");
+    }
+
+    let rank_cutoff_raw = (top_frac * n_genes as f32).round() as i64;
+    let rank_cutoff = (rank_cutoff_raw - 1).max(0) as usize;
+    let n_regulons = regulons.len();
+    if n_regulons == 0 {
+        return Vec::new();
+    }
+    let mut out = vec![0.0_f32; n_cells * n_regulons];
+    if rank_cutoff == 0 {
+        return out;
+    }
+
+    let memberships = gene_regulon_memberships(n_genes, regulons);
+    let regulon_lens: Vec<u64> = regulons
+        .iter()
+        .map(|(_, genes)| genes.len() as u64)
+        .collect();
+    let rank_cutoff_u32 = rank_cutoff as u32;
+    let max_aucs: Vec<u64> = regulon_lens
+        .iter()
+        .map(|&len| (rank_cutoff as u64 + 1) * len)
+        .collect();
+
+    out.par_chunks_mut(n_regulons)
+        .enumerate()
+        .for_each(|(cell_idx, cell_out)| {
+            let start = row_ptr[cell_idx];
+            let end = row_ptr[cell_idx + 1];
+            let mut positives: Vec<(u32, f32)> = Vec::new();
+            let mut negatives: Vec<(u32, f32)> = Vec::new();
+            let mut nonzero_genes: Vec<u32> = Vec::new();
+
+            for k in start..end {
+                let gene = col_idx[k] as u32;
+                let value = data[k];
+                if value > 0.0 {
+                    positives.push((gene, value));
+                    nonzero_genes.push(gene);
+                } else if value < 0.0 {
+                    negatives.push((gene, value));
+                    nonzero_genes.push(gene);
+                }
+            }
+            positives.sort_unstable_by(compare_sparse_entry_desc);
+
+            let mut auc_sums = vec![0_u64; n_regulons];
+            let mut rank = 0_u32;
+
+            for &(gene, _) in positives.iter().take(rank_cutoff) {
+                add_sparse_auc_contribution(
+                    gene as usize,
+                    rank,
+                    rank_cutoff_u32,
+                    &memberships,
+                    &mut auc_sums,
+                );
+                rank += 1;
+            }
+
+            if rank < rank_cutoff_u32 {
+                nonzero_genes.sort_unstable();
+                nonzero_genes.dedup();
+                let mut nz_pos = 0usize;
+                for gene in 0..n_genes as u32 {
+                    while nz_pos < nonzero_genes.len() && nonzero_genes[nz_pos] < gene {
+                        nz_pos += 1;
+                    }
+                    if nz_pos < nonzero_genes.len() && nonzero_genes[nz_pos] == gene {
+                        continue;
+                    }
+                    add_sparse_auc_contribution(
+                        gene as usize,
+                        rank,
+                        rank_cutoff_u32,
+                        &memberships,
+                        &mut auc_sums,
+                    );
+                    rank += 1;
+                    if rank >= rank_cutoff_u32 {
+                        break;
+                    }
+                }
+            }
+
+            if rank < rank_cutoff_u32 {
+                negatives.sort_unstable_by(compare_sparse_entry_desc);
+                for &(gene, _) in negatives.iter().take((rank_cutoff_u32 - rank) as usize) {
+                    add_sparse_auc_contribution(
+                        gene as usize,
+                        rank,
+                        rank_cutoff_u32,
+                        &memberships,
+                        &mut auc_sums,
+                    );
+                    rank += 1;
+                    if rank >= rank_cutoff_u32 {
+                        break;
+                    }
+                }
+            }
+
+            for r_idx in 0..n_regulons {
+                let max_auc = max_aucs[r_idx];
+                if max_auc == 0 {
+                    cell_out[r_idx] = 0.0;
+                } else {
+                    let norm = (auc_sums[r_idx] as f64) / (max_auc as f64);
+                    cell_out[r_idx] = norm.clamp(0.0, 1.0) as f32;
+                }
+            }
+        });
+
+    out
+}
+
+fn gene_regulon_memberships(n_genes: usize, regulons: &[(String, Vec<usize>)]) -> Vec<Vec<usize>> {
+    let mut memberships = vec![Vec::new(); n_genes];
+    for (regulon_idx, (_, genes)) in regulons.iter().enumerate() {
+        for &gene in genes {
+            if gene < n_genes {
+                memberships[gene].push(regulon_idx);
+            }
+        }
+    }
+    memberships
+}
+
+fn compare_sparse_entry_desc(a: &(u32, f32), b: &(u32, f32)) -> std::cmp::Ordering {
+    match b.1.partial_cmp(&a.1) {
+        Some(std::cmp::Ordering::Equal) | None => a.0.cmp(&b.0),
+        Some(ord) => ord,
+    }
+}
+
+fn add_sparse_auc_contribution(
+    gene: usize,
+    rank: u32,
+    rank_cutoff: u32,
+    memberships: &[Vec<usize>],
+    auc_sums: &mut [u64],
+) {
+    for &regulon_idx in &memberships[gene] {
+        auc_sums[regulon_idx] += (rank_cutoff - rank) as u64;
+    }
 }
 
 #[cfg(test)]
@@ -188,5 +379,50 @@ mod tests {
         let o1 = aucell(&expr, 100, 20, &regs, 0.25);
         let o2 = aucell(&expr, 100, 20, &regs, 0.25);
         assert_eq!(o1, o2);
+    }
+
+    #[test]
+    fn sparse_csr_matches_dense_with_implicit_zero_ties() {
+        let expr = vec![
+            5.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, //
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, //
+            3.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+        ];
+        let regs = vec![
+            ("early_zero".to_string(), vec![1, 2]),
+            ("late_zero".to_string(), vec![8, 9]),
+            ("positive".to_string(), vec![0, 2]),
+        ];
+        let dense = aucell(&expr, 3, 10, &regs, 0.5);
+        let sparse = aucell_sparse_csr(
+            &[0, 1, 1, 3],
+            &[0, 0, 2],
+            &[5.0, 3.0, 2.0],
+            3,
+            10,
+            &regs,
+            0.5,
+        );
+        assert_eq!(sparse, dense);
+    }
+
+    #[test]
+    fn sparse_csr_matches_dense_with_negative_values() {
+        let expr = vec![0.0, -1.0, 0.0, 2.0, -0.5, 0.0];
+        let regs = vec![
+            ("zeros".to_string(), vec![0, 2, 5]),
+            ("negative".to_string(), vec![1, 4]),
+            ("positive".to_string(), vec![3]),
+        ];
+        let dense = aucell(&expr, 1, 6, &regs, 1.0);
+        let sparse = aucell_sparse_csr(&[0, 3], &[1, 3, 4], &[-1.0, 2.0, -0.5], 1, 6, &regs, 1.0);
+        assert_eq!(sparse, dense);
+    }
+
+    #[test]
+    #[should_panic(expected = "CSR column index contains a negative or out-of-range gene index")]
+    fn sparse_csr_rejects_negative_col_idx() {
+        let regs = vec![("R".to_string(), vec![0])];
+        let _ = aucell_sparse_csr(&[0, 1], &[-1], &[1.0], 1, 3, &regs, 0.5);
     }
 }

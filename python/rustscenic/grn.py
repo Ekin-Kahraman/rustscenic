@@ -6,18 +6,21 @@ Public API:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable, Optional, Union
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
 
-from rustscenic._rustscenic import grn_infer as _grn_infer
+from rustscenic._rustscenic import (
+    grn_infer as _grn_infer,
+    grn_infer_sparse_csc as _grn_infer_sparse_csc,
+)
 from rustscenic._gene_resolution import (
     dedupe_by_symbol,
-    warn_if_likely_unnormalized,
+    duplicate_gene_summary,
+    warn_if_max_likely_unnormalized,
 )
-
-_DENSIFY_WARN_BYTES = 8 * 1024**3  # 8 GiB
+from rustscenic._stage_utils import as_float32_array, as_float32_contiguous
 
 
 def infer(
@@ -30,10 +33,10 @@ def infer(
     subsample: float = 0.9,
     max_depth: int = 3,
     early_stop_window: int = 25,
-    top_targets_per_tf: Optional[int] = None,
-    min_importance: Optional[float] = None,
+    top_targets_per_tf: int | None = None,
+    min_importance: float | None = None,
     seed: int = 777,
-    target_block_size: Optional[int] = None,
+    target_block_size: int | None = None,
     verbose: bool = True,
 ) -> pd.DataFrame:
     """Infer a gene regulatory network.
@@ -69,11 +72,13 @@ def infer(
     filtered to ``importance > 0``, sorted descending per target.
     Matches the schema produced by ``arboreto.algo.grnboost2``.
     """
+    import scipy.sparse as sp
+
     X, gene_names = _coerce_expression(expression)
-    if X.dtype != np.float32:
-        X = X.astype(np.float32, copy=False)
-    X = np.ascontiguousarray(X)
-    _raise_if_nonfinite(X, "expression matrix")
+    if sp.issparse(X):
+        X = _sparse_float32_csc(X)
+    else:
+        X = as_float32_array(X)
 
     if target_block_size is None:
         target_block_size_for_rust = 0
@@ -82,16 +87,12 @@ def infer(
         if target_block_size_for_rust < 1:
             raise ValueError("target_block_size must be None or a positive integer")
 
-    warn_if_likely_unnormalized(X, stacklevel=3)
-
     # Duplicate gene symbols typically come from ENSEMBL → symbol
     # resolution (multiple transcripts collapsing). Sum columns so
     # regression sees one row per gene, not silently lose data.
-    dup_count = len(gene_names) - len(set(gene_names))
+    dup_count, top_dupes = duplicate_gene_summary(gene_names)
     if dup_count > 0:
         import warnings
-        from collections import Counter
-        top_dupes = [n for n, c in Counter(gene_names).most_common(3) if c > 1]
         warnings.warn(
             f"{dup_count} duplicate gene name(s) after ENSEMBL→symbol "
             f"resolution (e.g. {top_dupes}). Summing expression across "
@@ -101,59 +102,15 @@ def infer(
             UserWarning, stacklevel=2,
         )
         X, gene_names = dedupe_by_symbol(X, gene_names)
-        X = np.ascontiguousarray(X.astype(np.float32, copy=False))
+        if sp.issparse(X):
+            X = _sparse_float32_csc(X)
+        else:
+            X = as_float32_contiguous(X)
 
     tfs_list = list(tf_names)
     if not tfs_list:
         import warnings
         warnings.warn("empty TF list - returning empty DataFrame", UserWarning, stacklevel=2)
-
-    # Report TF-list / gene-list overlap. Zero overlap is the specific
-    # failure mode users hit on cellxgene-curated h5ads - the TF list is
-    # gene symbols, var_names are ENSEMBL IDs. `_coerce_expression` now
-    # auto-resolves the convention, but the user can still pass a
-    # mismatched TF list (e.g. mouse TFs against a human dataset).
-    gene_set = set(gene_names)
-    tfs_present = [t for t in tfs_list if t in gene_set]
-    if tfs_list and not tfs_present:
-        import warnings
-        from rustscenic._gene_resolution import diagnose_zero_tf_overlap
-        hint = diagnose_zero_tf_overlap(tfs_list, gene_names)
-        warnings.warn(
-            f"none of the {len(tfs_list)} supplied TFs match any gene in the "
-            f"expression matrix - returning empty DataFrame. {hint}",
-            UserWarning, stacklevel=2,
-        )
-    elif tfs_list and len(tfs_present) < 0.2 * len(tfs_list):
-        import warnings
-        warnings.warn(
-            f"only {len(tfs_present)} of {len(tfs_list)} supplied TFs are present "
-            f"in the expression matrix. GRN will fit a very narrow regulator set. "
-            f"Example missing TFs: {[t for t in tfs_list if t not in gene_set][:5]}.",
-            UserWarning, stacklevel=2,
-        )
-
-    # Under-determined-input warning. With n_samples < ~50 (or
-    # n_samples / n_features < 0.01), tree-builder RNG dominates over
-    # signal: edge importances are noisy across both rustscenic and
-    # arboreto, and per-edge rank correlation drops sharply (verified
-    # empirically on Kamath n=10 pseudobulk vs PBMC n=2,700, see
-    # validation/kamath_da/KAMATH_AUDIT.md).
-    n_samples = X.shape[0]
-    if tfs_present and n_samples < 50:
-        import warnings
-        warnings.warn(
-            f"only {n_samples} samples for {X.shape[1]:,} genes and "
-            f"{len(tfs_present)} TFs. GRN edge rankings are unstable in this "
-            f"regime regardless of implementation - a GBM with n_estimators="
-            f"{n_estimators} memorises the training set trivially. Consider "
-            f"running on cell-level (not pseudobulk) input, or apply "
-            f"`top_targets_per_tf=...` / `min_importance=...` to extract a "
-            f"sparser, more comparable edge set. See "
-            f"validation/kamath_da/KAMATH_AUDIT.md for the analysis behind "
-            f"this guidance.",
-            UserWarning, stacklevel=2,
-        )
 
     import sys, time
     if verbose:
@@ -166,8 +123,10 @@ def infer(
             file=sys.stderr, flush=True,
         )
     t0 = time.monotonic()
-    tfs, targets, importances = _grn_infer(
-        X,
+    top_targets_for_rust = (
+        None if top_targets_per_tf is None else int(top_targets_per_tf)
+    )
+    common_args = (
         list(gene_names),
         tfs_list,
         n_estimators,
@@ -178,27 +137,85 @@ def infer(
         early_stop_window,
         seed,
         target_block_size_for_rust,
+        top_targets_for_rust,
+        None if min_importance is None else float(min_importance),
     )
+    if sp.issparse(X):
+        (
+            tfs,
+            targets,
+            importances,
+            raw_n,
+            tf_present_count,
+            missing_tfs,
+            expression_max,
+        ) = _grn_infer_sparse_csc(
+            X.indptr,
+            np.asarray(X.indices, dtype=np.int32),
+            np.asarray(X.data, dtype=np.float32),
+            int(X.shape[0]),
+            int(X.shape[1]),
+            *common_args,
+        )
+    else:
+        (
+            tfs,
+            targets,
+            importances,
+            raw_n,
+            tf_present_count,
+            missing_tfs,
+            expression_max,
+        ) = _grn_infer(X, *common_args)
     wall = time.monotonic() - t0
+    warn_if_max_likely_unnormalized(expression_max, stacklevel=3)
+
+    # Rust resolves TF-list / gene-list overlap in the same pass used for GRN
+    # fitting, avoiding a duplicate Python set scan over large gene tables.
+    if tfs_list and tf_present_count == 0:
+        import warnings
+        from rustscenic._gene_resolution import diagnose_zero_tf_overlap
+        hint = diagnose_zero_tf_overlap(tfs_list, gene_names)
+        warnings.warn(
+            f"none of the {len(tfs_list)} supplied TFs match any gene in the "
+            f"expression matrix - returning empty DataFrame. {hint}",
+            UserWarning, stacklevel=2,
+        )
+    elif tfs_list and tf_present_count < 0.2 * len(tfs_list):
+        import warnings
+        warnings.warn(
+            f"only {tf_present_count} of {len(tfs_list)} supplied TFs are present "
+            f"in the expression matrix. GRN will fit a very narrow regulator set. "
+            f"Example missing TFs: {missing_tfs}.",
+            UserWarning, stacklevel=2,
+        )
+
+    # Under-determined-input warning. With n_samples < ~50 (or
+    # n_samples / n_features < 0.01), tree-builder RNG dominates over
+    # signal: edge importances are noisy across both rustscenic and
+    # arboreto, and per-edge rank correlation drops sharply (verified
+    # empirically on Kamath n=10 pseudobulk vs PBMC n=2,700, see
+    # validation/kamath_da/KAMATH_AUDIT.md).
+    n_samples = X.shape[0]
+    if tf_present_count and n_samples < 50:
+        import warnings
+        warnings.warn(
+            f"only {n_samples} samples for {X.shape[1]:,} genes and "
+            f"{tf_present_count} TFs. GRN edge rankings are unstable in this "
+            f"regime regardless of implementation - a GBM with n_estimators="
+            f"{n_estimators} memorises the training set trivially. Consider "
+            f"running on cell-level (not pseudobulk) input, or apply "
+            f"`top_targets_per_tf=...` / `min_importance=...` to extract a "
+            f"sparser, more comparable edge set. See "
+            f"validation/kamath_da/KAMATH_AUDIT.md for the analysis behind "
+            f"this guidance.",
+            UserWarning, stacklevel=2,
+        )
     df = pd.DataFrame({
         "TF": tfs,
         "target": targets,
         "importance": np.asarray(importances),
     })
-
-    # Optional post-fit truncation. The Rust core always emits the full
-    # importance>0 edge set; trimming here preserves the underlying GBM
-    # fit and lets the same run be re-cut at different thresholds.
-    raw_n = len(df)
-    if min_importance is not None:
-        df = df[df["importance"] >= min_importance]
-    if top_targets_per_tf is not None and not df.empty:
-        df = (
-            df.sort_values("importance", ascending=False)
-              .groupby("TF", sort=False, group_keys=False)
-              .head(top_targets_per_tf)
-              .reset_index(drop=True)
-        )
 
     if verbose:
         if raw_n != len(df):
@@ -218,7 +235,7 @@ def infer(
 
 
 def _coerce_expression(expression):
-    """Return ``(X_dense, gene_names)`` from AnnData / DataFrame / tuple input.
+    """Return ``(X, gene_names)`` from AnnData / DataFrame / tuple input.
 
     For AnnData, gene names come from
     :func:`rustscenic._gene_resolution.resolve_gene_names`, which
@@ -227,6 +244,8 @@ def _coerce_expression(expression):
     column so user-supplied TF lists match.
     """
     from rustscenic._gene_resolution import resolve_gene_names
+    import scipy.sparse as sp
+
     if hasattr(expression, "X") and hasattr(expression, "var_names"):
         # AnnData. Handle backed ('r') mode explicitly - _CSRDataset /
         # _CSCDataset doesn't have .toarray() and np.asarray() on it
@@ -234,54 +253,40 @@ def _coerce_expression(expression):
         if getattr(expression, "isbacked", False):
             import warnings
             warnings.warn(
-                "AnnData is backed (disk-resident). Materialising X to "
-                "dense in memory for GRN - if this OOMs, subset cells "
-                "or genes before passing to rustscenic.grn.infer.",
+                "AnnData is backed (disk-resident). Loading X into memory "
+                "for GRN; sparse inputs remain sparse, but backed arrays "
+                "must still be read before fitting.",
                 UserWarning, stacklevel=3,
             )
             X_raw = expression.X[:]
         else:
             X_raw = expression.X
-        if hasattr(X_raw, "toarray"):
-            _warn_if_densification_expensive(expression.n_obs, expression.n_vars)
-        X = X_raw.toarray() if hasattr(X_raw, "toarray") else np.asarray(X_raw)
+        X = X_raw if sp.issparse(X_raw) else np.asarray(X_raw)
         gene_names = resolve_gene_names(expression)
         return X, gene_names
     if isinstance(expression, pd.DataFrame):
         return np.asarray(expression.values), list(expression.columns)
     if isinstance(expression, tuple) and len(expression) == 2:
         X, gene_names = expression
+        if sp.issparse(X):
+            return X, list(gene_names)
         return np.asarray(X), list(gene_names)
     raise TypeError(
         "expression must be AnnData, pandas.DataFrame, or (matrix, gene_names) tuple"
     )
 
 
-def _warn_if_densification_expensive(n_cells: int, n_genes: int) -> None:
-    bytes_needed = int(n_cells) * int(n_genes) * 4
-    if bytes_needed < _DENSIFY_WARN_BYTES:
-        return
-    import warnings
-
-    gib = bytes_needed / 1024**3
-    warnings.warn(
-        f"grn.infer will densify the expression matrix to "
-        f"{n_cells} × {n_genes} float32 values (~{gib:.1f} GiB). "
-        f"Subset cells or genes before calling GRN if this exceeds local RAM.",
-        UserWarning,
-        stacklevel=3,
-    )
+def _sparse_float32_csc(X):
+    """Return a CSC float32 matrix with duplicate entries summed."""
+    X = X.tocsc(copy=False).astype(np.float32, copy=False)
+    if hasattr(X, "sum_duplicates"):
+        X.sum_duplicates()
+    if hasattr(X, "sort_indices"):
+        X.sort_indices()
+    return X
 
 
-def _raise_if_nonfinite(X: np.ndarray, label: str) -> None:
-    if not np.all(np.isfinite(X)):
-        raise ValueError(
-            f"{label} contains NaN or Inf values; clean or filter the matrix "
-            f"before calling rustscenic.grn.infer"
-        )
-
-
-def load_tfs(path: Union[str, Path]) -> list[str]:
+def load_tfs(path: str | Path) -> list[str]:
     """Load a TF list (one gene symbol per line) from a text file.
 
     Strips whitespace (including \\r from Windows line endings) and skips

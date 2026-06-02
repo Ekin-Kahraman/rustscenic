@@ -25,8 +25,6 @@ import warnings
 import anndata as ad
 import numpy as np
 import pandas as pd
-import pytest
-
 import rustscenic.aucell
 import rustscenic.cistarget
 import rustscenic.enhancer
@@ -247,7 +245,7 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     """The orchestrator must run all 8 stages when fragments + peaks +
     gene_coords + motif_rankings are all supplied. Closes the audit gap
     that pipeline.run stopped at AUCell."""
-    import gzip, os, anndata as ad, numpy as np, pandas as pd
+    import gzip, anndata as ad, numpy as np, pandas as pd
     import rustscenic.pipeline
 
     rng = np.random.default_rng(0)
@@ -360,6 +358,80 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     assert result.eregulons_path is not None
     assert result.eregulons_path.exists()
     assert result.n_eregulons is not None
+    assert result.n_grn_edges is not None and result.n_grn_edges > 0
+    assert result.n_cistarget_rows is not None and result.n_cistarget_rows > 0
+    assert result.n_enhancer_links is not None and result.n_enhancer_links > 0
+    assert result.n_eregulon_rows is not None
+    assert result.aucell_shape == [n_cells, result.n_regulons]
+    assert "grn" in result.memory
+    assert "aucell" in result.memory
+    import json
+    manifest = json.loads((out / "manifest.json").read_text())
+    assert "memory" in manifest
+    assert "integrated_adata" in manifest["memory"]
+    assert manifest["n_grn_edges"] == result.n_grn_edges
+    assert manifest["aucell_shape"] == result.aucell_shape
+
+
+def test_attach_aucell_to_obs_avoids_join_for_aligned_cells(monkeypatch):
+    import rustscenic.pipeline
+
+    cells = ["c0", "c1", "c2"]
+    adata = ad.AnnData(
+        X=np.zeros((3, 2), dtype=np.float32),
+        obs=pd.DataFrame(
+            {"batch": ["a", "b", "c"], "TF1_regulon": [9.0, 9.0, 9.0]},
+            index=cells,
+        ),
+        var=pd.DataFrame(index=["G1", "G2"]),
+    )
+    auc = pd.DataFrame(
+        {
+            "TF1_regulon": [0.1, 0.2, 0.3],
+            "TF2_regulon": [0.4, 0.5, 0.6],
+        },
+        index=cells,
+    )
+
+    def fail_join(*_args, **_kwargs):
+        raise AssertionError("AUCell integration should not materialise obs.join")
+
+    monkeypatch.setattr(pd.DataFrame, "join", fail_join)
+
+    rustscenic.pipeline._attach_aucell_to_obs(adata, auc)
+
+    assert list(adata.obs.columns) == ["batch", "TF1_regulon", "TF2_regulon"]
+    np.testing.assert_allclose(adata.obs["TF1_regulon"].to_numpy(), [0.1, 0.2, 0.3])
+    np.testing.assert_allclose(adata.obs["TF2_regulon"].to_numpy(), [0.4, 0.5, 0.6])
+
+
+def test_subset_atac_to_rna_cells_uses_rust_indices_and_preserves_atac_order():
+    import rustscenic.pipeline
+
+    rna = ad.AnnData(
+        X=np.zeros((2, 3), dtype=np.float32),
+        obs=pd.DataFrame(index=["c0", "c2"]),
+        var=pd.DataFrame(index=["g0", "g1", "g2"]),
+    )
+    atac = ad.AnnData(
+        X=np.arange(12, dtype=np.float32).reshape(4, 3),
+        obs=pd.DataFrame(index=["empty", "c2", "c0", "other"]),
+        var=pd.DataFrame(index=["p0", "p1", "p2"]),
+    )
+    log_lines: list[str] = []
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        subset = rustscenic.pipeline._subset_atac_to_rna_cells(
+            rna,
+            atac,
+            log=log_lines.append,
+        )
+
+    assert list(subset.obs_names) == ["c2", "c0"]
+    np.testing.assert_array_equal(subset.X, atac.X[[1, 2]])
+    assert any("subsetting ATAC from 4 barcodes to 2" in str(w.message) for w in caught)
+    assert log_lines == ["      ATAC subset to RNA cells: (2, 3)"]
 
 
 def test_pipeline_run_with_pre_built_adata_atac_skips_fragments_to_matrix(tmp_path):
@@ -572,9 +644,6 @@ def test_attribute_peaks_normalises_compound_regulon_names():
     enriched = pd.DataFrame(
         [{"regulon": "PAX5_regulon(+)", "motif": "m1", "auc": 0.2}]
     )
-    grn = pd.DataFrame(
-        [{"TF": "PAX5", "target": "GENE_A", "importance": 1.0}]
-    )
     enhancer_links = pd.DataFrame(
         [{"peak_id": "peak_1", "gene": "GENE_A"}]
     )
@@ -582,7 +651,6 @@ def test_attribute_peaks_normalises_compound_regulon_names():
 
     out = _attribute_peaks_to_cistarget(
         enriched,
-        grn,
         enhancer_links,
         regulons=regulons,
     )
@@ -727,17 +795,17 @@ def test_pipeline_run_fallback_removes_stale_pruned_regulons_json(tmp_path):
         {"motif": ["M_TF_A"], "TF": ["UNKNOWN_TF"]}
     )
 
-    common = dict(
-        rna=rna,
-        output_dir=tmp_path,
-        tfs=["TF_A", "TF_B"],
-        motif_rankings=rankings,
-        grn_n_estimators=10,
-        grn_top_targets=10,
-        cistarget_top_frac=1.0,
-        cistarget_auc_threshold=0.0,
-        verbose=False,
-    )
+    common = {
+        "rna": rna,
+        "output_dir": tmp_path,
+        "tfs": ["TF_A", "TF_B"],
+        "motif_rankings": rankings,
+        "grn_n_estimators": 10,
+        "grn_top_targets": 10,
+        "cistarget_top_frac": 1.0,
+        "cistarget_auc_threshold": 0.0,
+        "verbose": False,
+    }
 
     # Run 1: matching annotations -> pruned_regulons.json is written
     result1 = rustscenic.pipeline.run(motif_annotations=matching_annotations, **common)
@@ -802,17 +870,17 @@ def test_pipeline_run_cistarget_nes_threshold_filters_enriched(tmp_path):
         columns=genes,
     )
 
-    base_kwargs = dict(
-        rna=rna,
-        output_dir=tmp_path,
-        tfs=["TF_A", "TF_B"],
-        motif_rankings=rankings,
-        grn_n_estimators=10,
-        grn_top_targets=10,
-        cistarget_top_frac=0.2,
-        cistarget_auc_threshold=0.0,
-        verbose=False,
-    )
+    base_kwargs = {
+        "rna": rna,
+        "output_dir": tmp_path,
+        "tfs": ["TF_A", "TF_B"],
+        "motif_rankings": rankings,
+        "grn_n_estimators": 10,
+        "grn_top_targets": 10,
+        "cistarget_top_frac": 0.2,
+        "cistarget_auc_threshold": 0.0,
+        "verbose": False,
+    }
 
     # Run with NES filter at 3.0: should keep only motifs where the regulon
     # has a strong z-score lift.
@@ -907,6 +975,433 @@ def test_region_cistarget_helper_honors_nes_threshold():
         "fixture; if it does not, the synthetic design or the NES wiring "
         "has regressed"
     )
+
+
+def test_region_cistarget_peak_attribution_matches_pandas_reference():
+    """Rust region attribution must match the previous pandas melt/merge path."""
+    import numpy as np
+    import pandas as pd
+    from rustscenic.pipeline import _region_cistarget_with_peak_ids
+
+    base = np.array(
+        [
+            [0, 1, 4, 5, 7],
+            [4, 0, 1, 6, 7],
+            [5, 6, 0, 1, 7],
+            [7, 6, 5, 4, 0],
+        ],
+        dtype=np.int32,
+    )
+    peak_regulons = [
+        ("TF_A_regulon", ["p0", "p1", "missing_peak"]),
+        ("TF_B_regulon", ["p2", "p3"]),
+    ]
+
+    for values in (base, base.astype(np.int16), base.astype(np.float64)):
+        region_rankings = pd.DataFrame(
+            values,
+            index=["motif_a", "motif_b", "motif_c", "motif_noise"],
+            columns=["p0", "p1", "p2", "p3", "unused"],
+        )
+        region_enrich, got = _region_cistarget_with_peak_ids(
+            region_rankings,
+            peak_regulons,
+            top_frac=0.4,
+            auc_threshold=0.0,
+        )
+        expected = _reference_region_peak_attribution(
+            region_rankings,
+            peak_regulons,
+            region_enrich,
+            top_frac=0.4,
+        )
+        pd.testing.assert_frame_equal(
+            _normalise_region_attribution(got),
+            _normalise_region_attribution(expected),
+            check_dtype=False,
+        )
+
+
+def test_region_cistarget_with_peak_ids_preserves_float32_auc_dtype():
+    import numpy as np
+    import pandas as pd
+    from rustscenic.pipeline import _region_cistarget_with_peak_ids
+
+    region_rankings = pd.DataFrame(
+        np.array([[0, 1, 2], [2, 1, 0]], dtype=np.int32),
+        index=["motif_a", "motif_b"],
+        columns=["p0", "p1", "p2"],
+    )
+    peak_regulons = [("TF_A_regulon", ["p0", "p1"])]
+
+    region_enrich, attributed = _region_cistarget_with_peak_ids(
+        region_rankings,
+        peak_regulons,
+        top_frac=0.67,
+        auc_threshold=0.0,
+    )
+
+    assert region_enrich["auc"].dtype == np.float32
+    assert attributed["auc"].dtype == np.float32
+
+
+def test_region_rankings_helper_keeps_strided_integer_buffers():
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline as pipeline
+    from rustscenic.pipeline import _region_rankings_kernel_arg
+
+    values = np.asfortranarray(
+        np.array(
+            [
+                [0, 1, 4, 5],
+                [4, 0, 1, 5],
+                [5, 4, 0, 1],
+            ],
+            dtype=np.int16,
+        )
+    )
+    rankings = pd.DataFrame(
+        values,
+        index=["motif_a", "motif_b", "motif_c"],
+        columns=["p0", "p1", "p2", "p3"],
+    )
+    rankings_arg, kernel, cutoff = _region_rankings_kernel_arg(rankings, rank_cutoff=2)
+
+    assert np.shares_memory(rankings_arg, values)
+    assert rankings_arg.flags.f_contiguous
+    assert not rankings_arg.flags.c_contiguous
+    assert kernel is pipeline._cistarget_region_attribution_i16
+    assert cutoff == 2
+
+    rankings_arg, kernel, cutoff = _region_rankings_kernel_arg(rankings, rank_cutoff=50_000)
+
+    assert np.shares_memory(rankings_arg, values)
+    assert kernel is pipeline._cistarget_region_attribution_i16
+    assert cutoff == np.iinfo(np.int16).max
+
+
+def test_region_rankings_helper_keeps_int32_buffers_without_downcast():
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline as pipeline
+    from rustscenic.pipeline import _region_rankings_kernel_arg
+
+    values = np.asfortranarray(
+        np.array(
+            [
+                [0, 1, 4, 5],
+                [4, 0, 1, 5],
+                [5, 4, 0, 1],
+            ],
+            dtype=np.int32,
+        )
+    )
+    rankings = pd.DataFrame(
+        values,
+        index=["motif_a", "motif_b", "motif_c"],
+        columns=["p0", "p1", "p2", "p3"],
+    )
+    rankings_arg, kernel, cutoff = _region_rankings_kernel_arg(rankings, rank_cutoff=2)
+
+    assert np.shares_memory(rankings_arg, values)
+    assert rankings_arg.flags.f_contiguous
+    assert not rankings_arg.flags.c_contiguous
+    assert kernel is pipeline._cistarget_region_attribution_i32
+    assert cutoff == 2
+
+
+def test_region_rankings_helper_keeps_int64_buffers_without_downcast():
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline as pipeline
+    from rustscenic.pipeline import _region_rankings_kernel_arg
+
+    values = np.asfortranarray(
+        np.array(
+            [
+                [0, 1, 4, 5],
+                [4, 0, 1, 5],
+                [5, 4, 0, 1],
+            ],
+            dtype=np.int64,
+        )
+    )
+    rankings = pd.DataFrame(
+        values,
+        index=["motif_a", "motif_b", "motif_c"],
+        columns=["p0", "p1", "p2", "p3"],
+    )
+    rankings_arg, kernel, cutoff = _region_rankings_kernel_arg(rankings, rank_cutoff=2)
+
+    assert np.shares_memory(rankings_arg, values)
+    assert rankings_arg.flags.f_contiguous
+    assert not rankings_arg.flags.c_contiguous
+    assert kernel is pipeline._cistarget_region_attribution_i64
+    assert cutoff == 2
+
+
+def test_region_rankings_helper_converts_float_rankings_in_rust(monkeypatch):
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline as pipeline
+    from rustscenic.pipeline import _region_rankings_kernel_arg
+
+    values = np.asfortranarray(
+        np.array(
+            [
+                [0, 1, 4, 5],
+                [4, 0, 1, 5],
+                [5, 4, 0, 1],
+            ],
+            dtype=np.float64,
+        )
+    )
+    rankings = pd.DataFrame(
+        values,
+        index=["motif_a", "motif_b", "motif_c"],
+        columns=["p0", "p1", "p2", "p3"],
+    )
+
+    def fake_to_i32(values_arg):
+        assert np.shares_memory(values_arg, values)
+        assert values_arg.flags.f_contiguous
+        assert not values_arg.flags.c_contiguous
+        return values.astype(np.int32)
+
+    monkeypatch.setattr(pipeline, "_rankings_to_i32_f64", fake_to_i32)
+
+    rankings_arg, kernel, cutoff = _region_rankings_kernel_arg(rankings, rank_cutoff=2)
+
+    assert rankings_arg.dtype == np.int32
+    assert kernel is pipeline._cistarget_region_attribution_i32
+    assert cutoff == 2
+
+
+def test_region_cistarget_attribution_passes_full_rankings_to_rust(monkeypatch):
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline as pipeline
+
+    values = np.array(
+        [
+            [0, 4, 1],
+            [3, 0, 2],
+        ],
+        dtype=np.int32,
+    )
+    region_rankings = pd.DataFrame(
+        values,
+        index=["motif_a", "motif_b"],
+        columns=["p0", "unused_peak", "p1"],
+    )
+    captured = {}
+
+    def fake_region_kernel(
+        rankings,
+        motif_names,
+        peak_names,
+        peak_regulon_names,
+        peak_regulon_peaks,
+        enriched_regulons,
+        enriched_motifs,
+        rank_cutoff,
+    ):
+        captured["shape"] = rankings.shape
+        captured["shares_memory"] = np.shares_memory(rankings, values)
+        captured["peak_names"] = peak_names
+        return np.array([], dtype=np.uint64), []
+
+    monkeypatch.setattr(
+        pipeline,
+        "_cistarget_region_peak_values_i32",
+        fake_region_kernel,
+    )
+
+    region_enrich, attributed = pipeline._region_cistarget_with_peak_ids(
+        region_rankings,
+        [("TF_A_regulon", ["p0"])],
+        top_frac=0.5,
+        auc_threshold=0.0,
+    )
+
+    assert not region_enrich.empty
+    assert attributed.empty
+    assert captured["shape"] == values.shape
+    assert captured["shares_memory"]
+    assert captured["peak_names"] == ["p0", "unused_peak", "p1"]
+
+
+def test_region_cistarget_uses_rust_row_expander(monkeypatch):
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline as pipeline
+
+    region_rankings = pd.DataFrame(
+        np.array([[0, 1], [1, 0]], dtype=np.int32),
+        index=["motif_a", "motif_b"],
+        columns=["p0", "p1"],
+    )
+    captured = {}
+
+    def fake_region_kernel(*args):
+        return np.array([1, 0], dtype=np.uint64), ["p1", "p0"]
+
+    def fake_expand_rows(row_indices, peak_ids, enriched_regulons, enriched_motifs, enriched_aucs):
+        captured["row_indices"] = row_indices
+        captured["peak_ids"] = peak_ids
+        captured["regulons"] = enriched_regulons
+        captured["motifs"] = enriched_motifs
+        captured["auc_dtype"] = enriched_aucs.dtype
+        return (
+            ["TF_A_regulon", "TF_A_regulon"],
+            ["motif_b", "motif_a"],
+            ["p1", "p0"],
+            np.array([0.75, 0.5], dtype=np.float32),
+        )
+
+    monkeypatch.setattr(pipeline, "_cistarget_region_peak_values_i32", fake_region_kernel)
+    monkeypatch.setattr(pipeline, "_pipeline_expand_region_rows_f32", fake_expand_rows)
+
+    _, attributed = pipeline._region_cistarget_with_peak_ids(
+        region_rankings,
+        [("TF_A_regulon", ["p0", "p1"])],
+        top_frac=1.0,
+        auc_threshold=0.0,
+    )
+
+    np.testing.assert_array_equal(captured["row_indices"], np.array([1, 0], dtype=np.uint64))
+    assert captured["peak_ids"] == ["p1", "p0"]
+    assert captured["regulons"] == ["TF_A_regulon", "TF_A_regulon"]
+    assert captured["motifs"] == ["motif_a", "motif_b"]
+    assert captured["auc_dtype"] == np.float32
+    assert attributed.to_dict("list") == {
+        "regulon": ["TF_A_regulon", "TF_A_regulon"],
+        "motif": ["motif_b", "motif_a"],
+        "peak_id": ["p1", "p0"],
+        "auc": [np.float32(0.75), np.float32(0.5)],
+    }
+
+
+def _reference_region_peak_attribution(
+    region_rankings: pd.DataFrame,
+    peak_regulons: list[tuple[str, list[str]]],
+    region_enrich: pd.DataFrame,
+    *,
+    top_frac: float,
+) -> pd.DataFrame:
+    n_regions = region_rankings.shape[1]
+    rank_cutoff = max(1, int(np.ceil(top_frac * n_regions)))
+    peak_long = pd.DataFrame(
+        [(name, p) for name, peaks in peak_regulons for p in peaks],
+        columns=["regulon", "peak_id"],
+    )
+    if peak_long.empty:
+        return pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+
+    needed_peaks = set(peak_long["peak_id"].astype(str))
+    rank_cols = [p for p in region_rankings.columns if str(p) in needed_peaks]
+    if not rank_cols:
+        return pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+
+    rank_long = (
+        region_rankings[rank_cols]
+        .reset_index()
+        .melt(
+            id_vars=region_rankings.index.name or "index",
+            var_name="peak_id",
+            value_name="rank",
+        )
+    )
+    rank_long.columns = ["motif", "peak_id", "rank"]
+    rank_long = rank_long[rank_long["rank"].astype(float) <= rank_cutoff]
+
+    enriched = (
+        region_enrich.merge(peak_long, on="regulon", how="inner")
+        .merge(rank_long[["motif", "peak_id"]], on=["motif", "peak_id"], how="inner")
+    )
+    if enriched.empty:
+        return pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+    return enriched[["regulon", "motif", "peak_id", "auc"]].copy()
+
+
+def _normalise_region_attribution(df: pd.DataFrame) -> pd.DataFrame:
+    return (
+        df.sort_values(["regulon", "motif", "peak_id", "auc"])
+        .reset_index(drop=True)
+    )
+
+
+def test_filter_cistarget_peak_rows_matches_pandas_merge_reference():
+    from rustscenic.pipeline import _filter_cistarget_peak_rows
+
+    enriched_with_peaks = pd.DataFrame(
+        {
+            "regulon": ["TF1_regulon", "TF2_regulon", "TF1_regulon", "TF3_regulon"],
+            "motif": ["m1", "m2", "m3", "m4"],
+            "peak_id": ["p1", "p2", "p3", "p4"],
+            "auc": [0.8, 0.7, 0.6, 0.5],
+        }
+    )
+    keep = pd.DataFrame(
+        {
+            "regulon": ["TF1_regulon", "TF1_regulon", "TF2_regulon"],
+            "motif": ["m3", "m3", "m2"],
+        }
+    )
+
+    expected = enriched_with_peaks.merge(
+        keep.drop_duplicates(),
+        on=["regulon", "motif"],
+        how="inner",
+    )
+    got = _filter_cistarget_peak_rows(enriched_with_peaks, keep)
+
+    pd.testing.assert_frame_equal(got, expected)
+
+
+def test_filter_cistarget_peak_rows_uses_rust_row_helper(monkeypatch):
+    import rustscenic.pipeline as pipeline
+
+    enriched_with_peaks = pd.DataFrame(
+        {
+            "regulon": ["TF1_regulon", "TF2_regulon"],
+            "motif": ["m1", "m2"],
+            "peak_id": ["p1", "p2"],
+            "auc": np.asarray([0.8, 0.7], dtype=np.float32),
+        }
+    )
+    keep = pd.DataFrame({"regulon": ["TF2_regulon"], "motif": ["m2"]})
+
+    def fake_filter_rows(row_regulons, row_motifs, row_peaks, row_aucs, keep_regulons, keep_motifs):
+        assert row_regulons == ["TF1_regulon", "TF2_regulon"]
+        assert row_motifs == ["m1", "m2"]
+        assert row_peaks == ["p1", "p2"]
+        assert row_aucs.dtype == np.float32
+        assert keep_regulons == ["TF2_regulon"]
+        assert keep_motifs == ["m2"]
+        return (
+            ["TF2_regulon"],
+            ["m2"],
+            ["p2"],
+            np.asarray([0.7], dtype=np.float32),
+        )
+
+    monkeypatch.setattr(
+        pipeline,
+        "_pipeline_filter_cistarget_peak_rows_f32",
+        fake_filter_rows,
+    )
+
+    got = pipeline._filter_cistarget_peak_rows(enriched_with_peaks, keep)
+
+    assert got.to_dict("list") == {
+        "regulon": ["TF2_regulon"],
+        "motif": ["m2"],
+        "peak_id": ["p2"],
+        "auc": [np.float32(0.7)],
+    }
+    assert got["auc"].dtype == np.float32
 
 
 def test_pipeline_run_topics_method_gibbs(tmp_path):
@@ -1035,6 +1530,102 @@ def test_candidate_regulons_from_grn_keeps_top_targets_without_per_tf_scan():
     }
 
 
+def _reference_candidate_regulons_from_grn_pandas(
+    grn: pd.DataFrame,
+    *,
+    top_targets: int,
+    min_targets: int,
+) -> dict[str, list[str]]:
+    if grn.empty:
+        return {}
+    top = (
+        grn.sort_values("importance", ascending=False, kind="mergesort")
+        .groupby("TF", sort=False, group_keys=False)
+        .head(top_targets)
+    )
+    return {
+        f"{tf}_regulon": group["target"].tolist()
+        for tf, group in top.groupby("TF", sort=False)
+        if len(group) >= min_targets
+    }
+
+
+def test_candidate_regulons_from_grn_matches_pandas_reference_ties_and_nan():
+    import rustscenic.pipeline
+
+    grn = pd.DataFrame(
+        {
+            "TF": ["TF1", "TF2", "TF1", "TF1", "TF2", "TF3", "TF3"],
+            "target": ["G1", "G2", "G3", "G4", "G5", "G6", "G7"],
+            "importance": [0.5, 0.9, 0.5, np.nan, 0.2, np.nan, 0.1],
+        }
+    )
+
+    got = rustscenic.pipeline._candidate_regulons_from_grn(
+        grn,
+        top_targets=2,
+        min_targets=2,
+    )
+    expected = _reference_candidate_regulons_from_grn_pandas(
+        grn,
+        top_targets=2,
+        min_targets=2,
+    )
+
+    assert got == expected
+
+
+def test_peak_regulons_from_edges_uses_rust_bridge_without_groupby_sets():
+    import rustscenic.pipeline
+
+    grn = pd.DataFrame(
+        {
+            "TF": ["TF1", "TF1", "TF2", "TF1", "TF3"],
+            "target": ["G1", "G2", "G2", "G1", "missing"],
+            "importance": [1.0, 0.9, 0.8, 0.7, 0.1],
+        }
+    )
+    enhancer_links = pd.DataFrame(
+        {
+            "gene": ["G1", "G1", "G2", "G2", "other"],
+            "peak_id": ["p1", "p1", "p2", "p3", "p4"],
+        }
+    )
+
+    assert rustscenic.pipeline._peak_regulons_from_edges(grn, enhancer_links) == [
+        ("TF1_regulon", ["p1", "p2", "p3"]),
+        ("TF2_regulon", ["p2", "p3"]),
+    ]
+
+
+def test_peak_regulons_and_projection_features_uses_rust_unique_sort():
+    import rustscenic.pipeline
+
+    grn = pd.DataFrame(
+        {
+            "TF": ["TF1", "TF1", "TF2", "TF2"],
+            "target": ["G1", "G2", "G2", "G3"],
+            "importance": [1.0, 0.9, 0.8, 0.7],
+        }
+    )
+    enhancer_links = pd.DataFrame(
+        {
+            "gene": ["G1", "G2", "G2", "G3"],
+            "peak_id": ["pB", "pA", "pC", "pB"],
+        }
+    )
+
+    peak_regulons, features = rustscenic.pipeline._peak_regulons_and_projection_features(
+        grn, enhancer_links
+    )
+
+    assert peak_regulons == [
+        ("TF1_regulon", ["pB", "pA", "pC"]),
+        ("TF2_regulon", ["pA", "pC", "pB"]),
+    ]
+    assert features == ["pA", "pB", "pC"]
+
+
 def test_attribute_peaks_to_cistarget_at_scale():
     """The gene-only cistarget→peak bridge stalled at real-PBMC scale
     (35k cistarget × 30 targets × 5 peaks ≈ 5M Python row dicts via
@@ -1048,21 +1639,9 @@ def test_attribute_peaks_to_cistarget_at_scale():
     import pandas as pd
     from rustscenic.pipeline import _attribute_peaks_to_cistarget
 
-    rng = np.random.default_rng(0)
-
     # 30 TFs × 50 targets each
     n_tfs = 30
     n_targets_per_tf = 50
-    grn_rows = []
-    for t in range(n_tfs):
-        for tg in range(n_targets_per_tf):
-            grn_rows.append({
-                "TF": f"TF{t}",
-                "target": f"GENE_{t}_{tg}",
-                "importance": float(rng.uniform()),
-            })
-    grn = pd.DataFrame(grn_rows)
-
     # ~10 enhancer links per gene
     link_rows = []
     for t in range(n_tfs):
@@ -1085,9 +1664,13 @@ def test_attribute_peaks_to_cistarget_at_scale():
                 "auc": 0.5,
             })
     enriched = pd.DataFrame(enriched_rows)
+    regulons = {
+        f"TF{t}_regulon": [f"GENE_{t}_{tg}" for tg in range(n_targets_per_tf)]
+        for t in range(n_tfs)
+    }
 
     t0 = time.monotonic()
-    out = _attribute_peaks_to_cistarget(enriched, grn, enhancer_links)
+    out = _attribute_peaks_to_cistarget(enriched, enhancer_links, regulons)
     elapsed = time.monotonic() - t0
 
     # Pre-fix this stalled indefinitely on real PBMC; lock the regression
@@ -1101,15 +1684,193 @@ def test_attribute_peaks_to_cistarget_at_scale():
     assert set(out["regulon"].unique()) == set(enriched["regulon"].unique())
 
 
+def _reference_attribute_peaks_to_cistarget_pandas(
+    enriched: pd.DataFrame,
+    enhancer_links: pd.DataFrame,
+    regulons,
+) -> pd.DataFrame:
+    from rustscenic._stage_utils import iter_regulon_pairs, tf_from_regulon_name
+
+    if enriched.empty:
+        return pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+    tf_target_rows = []
+    for regulon_name, targets in iter_regulon_pairs(regulons):
+        tf = tf_from_regulon_name(str(regulon_name))
+        for g in targets:
+            tf_target_rows.append((tf, str(g)))
+    tf_target = pd.DataFrame(tf_target_rows, columns=["tf", "gene"])
+
+    gene_peak = pd.DataFrame({
+        "gene": [str(v) for v in enhancer_links["gene"].to_numpy(copy=False)],
+        "peak_id": [str(v) for v in enhancer_links["peak_id"].to_numpy(copy=False)],
+    }).drop_duplicates()
+    tf_peak = tf_target.merge(gene_peak, on="gene", how="inner")[["tf", "peak_id"]]
+    tf_peak = tf_peak.drop_duplicates()
+
+    ct_cols = {
+        "regulon": enriched["regulon"].to_numpy(copy=False),
+        "tf": [tf_from_regulon_name(str(v)) for v in enriched["regulon"].to_numpy(copy=False)],
+        "auc": enriched["auc"].to_numpy(copy=False),
+    }
+    cols = ["regulon", "tf", "auc"]
+    if "motif" in enriched.columns:
+        ct_cols["motif"] = enriched["motif"].to_numpy(copy=False)
+        cols.insert(2, "motif")
+    ct = pd.DataFrame(ct_cols, columns=cols)
+
+    out = ct.merge(tf_peak, on="tf", how="inner").drop(columns=["tf"])
+    if "motif" not in out.columns:
+        out["motif"] = None
+    return out[["regulon", "motif", "peak_id", "auc"]].reset_index(drop=True)
+
+
+def test_attribute_peaks_to_cistarget_matches_pandas_reference_with_regulons():
+    from rustscenic.pipeline import _attribute_peaks_to_cistarget
+
+    enriched = pd.DataFrame(
+        {
+            "regulon": [
+                "TF_A_extended_regulon",
+                "TF_B_regulon",
+                "TF_A_extended_regulon",
+                "TF_C_regulon",
+            ],
+            "motif": ["m_a1", "m_b", "m_a2", "m_c"],
+            "auc": [0.8, 0.5, 0.9, 0.1],
+        }
+    )
+    regulons = {
+        "TF_A_extended_regulon": ["G2", "G1", "G1"],
+        "TF_B_regulon": ["G3"],
+        "TF_D_regulon": ["G9"],
+    }
+    enhancer_links = pd.DataFrame(
+        {
+            "gene": ["G1", "G1", "G2", "G1", "G3", "G9"],
+            "peak_id": ["p1", "p1", "p2", "p3", "p4", "p9"],
+            "correlation": [0.7, 0.7, 0.6, 0.5, 0.8, 0.2],
+        }
+    )
+
+    got = _attribute_peaks_to_cistarget(enriched, enhancer_links, regulons=regulons)
+    expected = _reference_attribute_peaks_to_cistarget_pandas(
+        enriched, enhancer_links, regulons=regulons,
+    )
+    pd.testing.assert_frame_equal(got, expected, check_dtype=False)
+
+
+def test_attribute_peaks_to_cistarget_preserves_float32_auc_dtype():
+    from rustscenic.pipeline import _attribute_peaks_to_cistarget
+
+    auc_values = np.array([0.8, 0.5], dtype=np.float32)
+    enriched = pd.DataFrame(
+        {
+            "regulon": ["TF_A_regulon", "TF_B_regulon"],
+            "motif": ["m_a", "m_b"],
+            "auc": auc_values,
+        }
+    )
+    enhancer_links = pd.DataFrame(
+        {
+            "gene": ["G1", "G2"],
+            "peak_id": ["p1", "p2"],
+            "correlation": [0.7, 0.6],
+        }
+    )
+    regulons = {"TF_A_regulon": ["G1"], "TF_B_regulon": ["G2"]}
+
+    got = _attribute_peaks_to_cistarget(enriched, enhancer_links, regulons)
+
+    assert got["auc"].dtype == np.float32
+
+
+def test_attribute_peaks_to_cistarget_uses_rust_row_helper(monkeypatch):
+    import rustscenic.pipeline as pipeline
+
+    enriched = pd.DataFrame(
+        {
+            "regulon": ["TF_A_regulon", "TF_B_regulon"],
+            "motif": ["m_a", "m_b"],
+            "auc": np.array([0.8, 0.5], dtype=np.float32),
+        }
+    )
+    enhancer_links = pd.DataFrame(
+        {
+            "gene": ["G1", "G2"],
+            "peak_id": ["p1", "p2"],
+            "correlation": [0.7, 0.6],
+        }
+    )
+    regulons = {"TF_A_regulon": ["G1"], "TF_B_regulon": ["G2"]}
+
+    def fake_attribute_peak_rows(
+        enriched_regulons,
+        enriched_motifs,
+        enriched_aucs,
+        regulon_names,
+        regulon_targets,
+        enhancer_genes,
+        enhancer_peaks,
+    ):
+        assert enriched_regulons == ["TF_A_regulon", "TF_B_regulon"]
+        assert enriched_motifs == ["m_a", "m_b"]
+        assert enriched_aucs.dtype == np.float32
+        np.testing.assert_array_equal(enriched_aucs, np.array([0.8, 0.5], dtype=np.float32))
+        assert regulon_names == ["TF_A_regulon", "TF_B_regulon"]
+        assert regulon_targets == [["G1"], ["G2"]]
+        assert enhancer_genes == ["G1", "G2"]
+        assert enhancer_peaks == ["p1", "p2"]
+        return (
+            ["TF_B_regulon", "TF_A_regulon"],
+            ["m_b", "m_a"],
+            ["p2", "p1"],
+            np.array([0.5, 0.8], dtype=np.float32),
+        )
+
+    monkeypatch.setattr(
+        pipeline,
+        "_pipeline_attribute_peak_rows_f32",
+        fake_attribute_peak_rows,
+    )
+
+    got = pipeline._attribute_peaks_to_cistarget(enriched, enhancer_links, regulons)
+
+    assert got.to_dict("list") == {
+        "regulon": ["TF_B_regulon", "TF_A_regulon"],
+        "motif": ["m_b", "m_a"],
+        "peak_id": ["p2", "p1"],
+        "auc": [np.float32(0.5), np.float32(0.8)],
+    }
+
+
+def test_attribute_peaks_to_cistarget_matches_pandas_reference_without_motif():
+    from rustscenic.pipeline import _attribute_peaks_to_cistarget
+
+    enriched = pd.DataFrame({"regulon": ["TF1_regulon", "TF2_regulon"], "auc": [0.4, 0.9]})
+    enhancer_links = pd.DataFrame(
+        {
+            "gene": ["G1", "G2", "G1", "other"],
+            "peak_id": ["p1", "p2", "p1", "p3"],
+            "correlation": [0.5, 0.6, 0.5, 0.1],
+        }
+    )
+    regulons = {"TF1_regulon": ["G1", "G1", "G2"], "TF2_regulon": ["missing"]}
+
+    got = _attribute_peaks_to_cistarget(enriched, enhancer_links, regulons)
+    expected = _reference_attribute_peaks_to_cistarget_pandas(
+        enriched, enhancer_links, regulons
+    )
+    pd.testing.assert_frame_equal(got, expected, check_dtype=False)
+
+
 def test_attribute_peaks_to_cistarget_handles_empty():
     """Empty cistarget → empty output frame with the right schema."""
     import pandas as pd
     from rustscenic.pipeline import _attribute_peaks_to_cistarget
 
     enriched = pd.DataFrame(columns=["regulon", "motif", "auc"])
-    grn = pd.DataFrame({"TF": [], "target": [], "importance": []})
     links = pd.DataFrame(columns=["peak_id", "gene", "correlation"])
-    out = _attribute_peaks_to_cistarget(enriched, grn, links)
+    out = _attribute_peaks_to_cistarget(enriched, links, {})
     assert list(out.columns) == ["regulon", "motif", "peak_id", "auc"]
     assert out.empty
 
@@ -1142,12 +1903,30 @@ def test_pipeline_run_topics_method_invalid(tmp_path):
         )
 
 
+def test_peak_coords_from_bed_uses_rust_parser_and_preserves_atac_order(tmp_path):
+    from rustscenic.pipeline import _peak_coords_from_bed
+
+    peaks_path = tmp_path / "peaks.bed"
+    peaks_path.write_text(
+        "chr1\t100\t200\tp1\n"
+        "chr2\t300\t450\tp2\n"
+        "chr3\t500\t700\tp3\n"
+    )
+
+    got = _peak_coords_from_bed(peaks_path, ["p3", "missing", "p1"])
+
+    assert got.index.tolist() == ["p3", "p1"]
+    assert got["chrom"].tolist() == ["chr3", "chr1"]
+    assert got["start"].tolist() == [500, 100]
+    assert got["end"].tolist() == [700, 200]
+
+
 def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch):
     """When `region_motif_rankings` is supplied, pipeline.run runs
     region-based cistarget against the linked peaks (exact path) instead
     of bridging via GRN ∩ enhancer (approximate path). Verifies the
     new region path is taken end-to-end."""
-    import gzip, os, anndata as ad, numpy as np, pandas as pd
+    import gzip, anndata as ad, numpy as np, pandas as pd
     from pathlib import Path
     import rustscenic.pipeline
 
@@ -1365,6 +2144,79 @@ def test_coerce_rankings_projects_dataframe_without_losing_motif_index():
     assert list(rankings.columns) == ["peak_b"]
 
 
+def test_ranking_column_projection_preserves_schema_order_and_duplicates():
+    from rustscenic.pipeline import _ranking_column_projection
+
+    keep, examples = _ranking_column_projection(
+        ["motifs", "peak_b", "peak_a", "peak_b", "other"],
+        ["peak_a", "missing", "peak_b"],
+        motif_col="motifs",
+    )
+
+    assert keep == ["motifs", "peak_b", "peak_a", "peak_b"]
+    assert examples == ["missing", "peak_a", "peak_b"]
+
+
+def test_ranking_column_projection_uses_rust_name_projection(monkeypatch):
+    import rustscenic.pipeline as pipeline
+
+    seen = {}
+
+    def fake_projection(columns, requested_features, motif_col):
+        seen["columns"] = columns
+        seen["requested_features"] = requested_features
+        seen["motif_col"] = motif_col
+        return ["motifs", "peak_a"], ["missing", "peak_a"]
+
+    monkeypatch.setattr(
+        pipeline,
+        "_pipeline_project_ranking_columns",
+        fake_projection,
+    )
+
+    keep, examples = pipeline._ranking_column_projection(
+        ["motifs", "peak_a", "other"],
+        ["peak_a", "missing"],
+        motif_col="motifs",
+    )
+
+    assert seen == {
+        "columns": ["motifs", "peak_a", "other"],
+        "requested_features": ["peak_a", "missing"],
+        "motif_col": "motifs",
+    }
+    assert keep == ["motifs", "peak_a"]
+    assert examples == ["missing", "peak_a"]
+
+
+def test_projected_ranking_columns_reports_sorted_requested_examples(tmp_path):
+    import pytest
+
+    from rustscenic.pipeline import _projected_ranking_columns
+
+    path = tmp_path / "regions_vs_motifs.rankings.feather"
+    pd.DataFrame({
+        "motifs": ["MOTIF_A"],
+        "peak_present": [1],
+    }).to_feather(path)
+
+    with pytest.raises(ValueError, match="First requested peaks"):
+        _projected_ranking_columns(
+            path,
+            ["z_peak", "a_peak", "m_peak"],
+            kind="feather",
+        )
+
+
+def test_region_ranking_projection_keeps_dataframe_inputs_unsliced():
+    from rustscenic.pipeline import _ranking_projection_features
+
+    df = pd.DataFrame({"motifs": ["MOTIF_A"], "peak_a": [1], "peak_b": [2]})
+
+    assert _ranking_projection_features(df, ["peak_a"]) is None
+    assert list(_ranking_projection_features("rankings.feather", ["peak_a"])) == ["peak_a"]
+
+
 def test_coerce_rankings_accepts_first_column_motif_export(tmp_path):
     """Ad hoc parquet/CSV conversions often name the motif column
     something other than `motifs`. If the first column is strings and
@@ -1380,6 +2232,29 @@ def test_coerce_rankings_accepts_first_column_motif_export(tmp_path):
     }).to_parquet(path, index=False)
 
     rankings = _coerce_rankings(path)
+
+    assert list(rankings.index) == ["M1", "M2"]
+    assert list(rankings.columns) == ["GENE1", "GENE2"]
+
+
+def test_rankings_with_motif_index_checks_dtypes_without_drop(monkeypatch):
+    """Large ranking frames must not clone/drop value columns for dtype checks."""
+    from pathlib import Path
+
+    from rustscenic.pipeline import _rankings_with_motif_index
+
+    df = pd.DataFrame({
+        "motif_id": ["M1", "M2"],
+        "GENE1": [1, 2],
+        "GENE2": [2, 1],
+    })
+
+    def fail_drop(*_args, **_kwargs):
+        raise AssertionError("dtype detection should not call DataFrame.drop")
+
+    monkeypatch.setattr(df, "drop", fail_drop)
+
+    rankings = _rankings_with_motif_index(df, Path("rankings.parquet"))
 
     assert list(rankings.index) == ["M1", "M2"]
     assert list(rankings.columns) == ["GENE1", "GENE2"]

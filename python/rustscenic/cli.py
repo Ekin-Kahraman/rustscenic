@@ -23,12 +23,11 @@ def _load_expression(path: Path):
     if suffix == ".h5ad":
         adata = ad.read_h5ad(path)
         return adata, list(adata.var_names), adata.n_obs
-    elif suffix in (".tsv", ".csv"):
+    if suffix in (".tsv", ".csv"):
         sep = "\t" if suffix == ".tsv" else ","
         df = pd.read_csv(path, sep=sep, index_col=0)
         return df, list(df.columns), len(df)
-    else:
-        raise SystemExit(f"error: unsupported format {suffix}. Use .h5ad, .tsv, or .csv")
+    raise SystemExit(f"error: unsupported format {suffix}. Use .h5ad, .tsv, or .csv")
 
 
 def _save(df, path: Path) -> None:
@@ -88,6 +87,7 @@ def cmd_grn(args: argparse.Namespace) -> int:
 def cmd_aucell(args: argparse.Namespace) -> int:
     from . import __version__
     from . import aucell as rs_aucell
+    from .pipeline import _candidate_regulons_from_grn
     import pandas as pd
 
     expr_path = Path(args.expression)
@@ -108,10 +108,13 @@ def cmd_aucell(args: argparse.Namespace) -> int:
                   f"(missing TF/target/importance columns). Got: {df.columns.tolist()}",
                   file=sys.stderr)
             return 2
-        for tf, group in df.groupby("TF"):
-            top_targets = group.nlargest(args.top_n_targets, "importance")["target"].tolist()
-            if len(top_targets) >= args.min_genes:
-                regulons.append((f"{tf}_regulon", top_targets))
+        regulons.extend(
+            _candidate_regulons_from_grn(
+                df,
+                top_targets=args.top_n_targets,
+                min_targets=args.min_genes,
+            ).items()
+        )
     else:
         lines = reg_path.read_text().splitlines()
         if not lines:
@@ -121,10 +124,13 @@ def cmd_aucell(args: argparse.Namespace) -> int:
         if "TF" in header and "target" in header and "importance" in header:
             # GRN-adjacencies TSV/CSV
             df = pd.read_csv(reg_path, sep="\t" if reg_path.suffix == ".tsv" else ",")
-            for tf, group in df.groupby("TF"):
-                top_targets = group.nlargest(args.top_n_targets, "importance")["target"].tolist()
-                if len(top_targets) >= args.min_genes:
-                    regulons.append((f"{tf}_regulon", top_targets))
+            regulons.extend(
+                _candidate_regulons_from_grn(
+                    df,
+                    top_targets=args.top_n_targets,
+                    min_targets=args.min_genes,
+                ).items()
+            )
         else:
             # Plain regulons TSV: name\tgene,gene,...
             grouped: dict[str, list[str]] = {}

@@ -25,15 +25,39 @@ pycistarget-style motif-annotation pruning rather than candidate GRN regulons.
 """
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
 
-from rustscenic._rustscenic import aucell_score as _aucell_score
+from rustscenic._rustscenic import (
+    cistarget_enrichment_from_rankings_i16 as _cistarget_enrichment_from_rankings_i16,
+    cistarget_enrichment_from_rankings_i32 as _cistarget_enrichment_from_rankings_i32,
+    cistarget_enrichment_from_rankings_i64 as _cistarget_enrichment_from_rankings_i64,
+    cistarget_motif_annotation_prune_rows_filtered_f32 as _motif_annotation_prune_rows_filtered_f32,
+    cistarget_motif_annotation_prune_rows_filtered_f64 as _motif_annotation_prune_rows_filtered_f64,
+    cistarget_motif_annotation_prune_standard_rows_f32 as _motif_annotation_prune_standard_rows_f32,
+    cistarget_motif_annotation_prune_standard_rows_f64 as _motif_annotation_prune_standard_rows_f64,
+    cistarget_prune_regulon_targets_f32 as _prune_regulon_targets_f32,
+    cistarget_prune_regulon_targets_f64 as _prune_regulon_targets_f64,
+    cistarget_prune_regulon_targets_i16 as _prune_regulon_targets_i16,
+    cistarget_prune_regulon_targets_i32 as _prune_regulon_targets_i32,
+    cistarget_prune_regulon_targets_i64 as _prune_regulon_targets_i64,
+    cistarget_prune_regulon_targets_unranked as _prune_regulon_targets_unranked,
+    cistarget_rankings_to_i32_f32 as _rankings_to_i32_f32,
+    cistarget_rankings_to_i32_f64 as _rankings_to_i32_f64,
+)
+from rustscenic._stage_utils import (
+    iter_regulon_pairs,
+    prepare_regulon_indices,
+    prepare_regulon_indices_with_coverage,
+    require_columns as _require_columns,
+    tf_from_regulon_name,
+)
 
 
 _NES_MIN_MOTIFS = 30
+_tf_from_regulon_name = tf_from_regulon_name
 
 
 def enrich(
@@ -42,7 +66,7 @@ def enrich(
     *,
     top_frac: float = 0.05,
     auc_threshold: float = 0.05,
-    nes_threshold: Optional[float] = None,
+    nes_threshold: float | None = None,
 ) -> pd.DataFrame:
     """Compute motif-regulon enrichment AUCs and NES.
 
@@ -84,37 +108,16 @@ def enrich(
     # a wrong guess silently produces an empty result.
     motif_names = list(rankings.index)
     gene_names = list(rankings.columns)
-    if rankings.values.dtype == object:
+    ranking_values = rankings.to_numpy(copy=False)
+    if ranking_values.dtype == object:
         raise TypeError(
             "rankings DataFrame has dtype=object (likely non-numeric or "
             "wrong columns). Ensure rank values are numeric before passing."
         )
-    if not np.all(np.isfinite(rankings.values)):
-        raise ValueError(
-            "rankings contain NaN or Inf values - motif enrichment is "
-            "undefined on non-finite ranks. Load the feather file cleanly "
-            "(aertslab feathers are int16) and check for upstream corruption."
-        )
-    # Convert rankings (lower = better) into "expression" (higher = better)
-    # by negating - AUCell's recovery AUC expects descending sort by value.
-    # Use -rank so smaller rank maps to larger pseudo-expression.
-    scores = -rankings.values.astype(np.float32)
 
-    gene_to_idx = {g: i for i, g in enumerate(gene_names)}
-    reg_names: list[str] = []
-    reg_gene_indices: list[list[int]] = []
-    reg_pairs: list[tuple[str, list[str]]] = []
-    dropped_empty = 0
-    for reg in regulons:
-        name, genes = _coerce_regulon(reg)
-        genes_list = list(genes)
-        reg_pairs.append((name, genes_list))
-        idx = [gene_to_idx[g] for g in genes_list if g in gene_to_idx]
-        if not idx:
-            dropped_empty += 1
-            continue
-        reg_names.append(name)
-        reg_gene_indices.append(idx)
+    reg_names, reg_gene_indices, reg_pairs, coverage, dropped_empty = (
+        prepare_regulon_indices_with_coverage(gene_names, regulons)
+    )
 
     # Silent-zero guardrails: this is the cistarget mirror of the cellxgene
     # bug Fuaad hit on aucell. If regulon genes don't match the rankings'
@@ -122,8 +125,7 @@ def enrich(
     # aertslab v10 feather indexed by ENSEMBL; or mouse regulons passed
     # against an hg38 ranking), every lookup misses and the output is
     # silently empty. Warn loudly with a diagnostic the user can act on.
-    from rustscenic._gene_resolution import regulon_coverage, warn_if_poor_coverage
-    coverage = regulon_coverage(gene_names, reg_pairs)
+    from rustscenic._gene_resolution import warn_if_poor_coverage
     warn_if_poor_coverage(coverage, stacklevel=3)
     if dropped_empty > 0 and not reg_names:
         import warnings
@@ -140,49 +142,93 @@ def enrich(
         )
         return pd.DataFrame(columns=["regulon", "motif", "auc", "nes"])
 
-    # Run the per-motif (as "cells") AUC scoring
-    auc = _aucell_score(np.ascontiguousarray(scores), reg_names, reg_gene_indices, top_frac)
-    # auc shape: (n_motifs, n_regulons)
-    auc_arr = np.asarray(auc)
-    auc_df = pd.DataFrame(auc_arr, index=motif_names, columns=reg_names)
-
-    # Compute per-regulon NES (population z-score across the motif universe).
-    # Matches pyscenic transform.py and pycistarget motif_enrichment_cistarget.py
-    # (per-regulon mean and std, ddof=0). Two guards on top of upstream:
-    #   - n_motifs < _NES_MIN_MOTIFS: z-score is unreliable, emit NaN + warn.
-    #   - std == 0 for a regulon: divide-by-zero, emit NaN + warn.
-    # Both keep the AUC rows visible to the caller; only NES is undefined.
-    nes_arr = _compute_nes(auc_arr, n_motifs=len(motif_names), reg_names=reg_names)
-    nes_df = pd.DataFrame(nes_arr, index=motif_names, columns=reg_names)
-
-    # Stack both AUC and NES to long form before any filtering, so the
-    # two columns stay aligned on (motif, regulon) under the same
-    # MultiIndex order.
-    auc_long = auc_df.stack()
-    nes_long = nes_df.stack().reindex(auc_long.index)
-    long = pd.DataFrame({"auc": auc_long.values, "nes": nes_long.values})
-    long["motif"] = auc_long.index.get_level_values(0)
-    long["regulon"] = auc_long.index.get_level_values(1)
-    long = long.reset_index(drop=True)
-    long = long[long["auc"] >= auc_threshold]
-    if nes_threshold is not None:
-        # NaN NES rows are dropped here by design - NES is undefined for them.
-        long = long[long["nes"].notna() & (long["nes"] >= nes_threshold)]
-    long = long.sort_values("auc", ascending=False).reset_index(drop=True)
-    return long[["regulon", "motif", "auc", "nes"]]
+    return _enrichment_rows_from_rankings(
+        ranking_values,
+        motif_names,
+        reg_names,
+        reg_gene_indices,
+        top_frac=top_frac,
+        auc_threshold=auc_threshold,
+        nes_threshold=nes_threshold,
+    )
 
 
-def _compute_nes(
-    auc_arr: np.ndarray, *, n_motifs: int, reg_names: list,
-) -> np.ndarray:
-    """Per-regulon population z-score of AUC across the motif axis.
+def _enrichment_rows_from_rankings(
+    ranking_values: np.ndarray,
+    motif_names: list[str],
+    reg_names: list[str],
+    reg_gene_indices: list[list[int]],
+    *,
+    top_frac: float,
+    auc_threshold: float,
+    nes_threshold: float | None,
+) -> pd.DataFrame:
+    """Score cistarget directly from lower-is-better rankings in Rust."""
+    rankings_arg, kernel = _rankings_kernel_arg(ranking_values)
+    result = kernel(
+        rankings_arg,
+        motif_names,
+        reg_names,
+        reg_gene_indices,
+        float(top_frac),
+        float(auc_threshold),
+        None if nes_threshold is None else float(nes_threshold),
+        _NES_MIN_MOTIFS,
+    )
+    return _enrichment_result_to_dataframe(result, motif_names, reg_names)
 
-    Returns an array shaped like ``auc_arr`` with NaN entries wherever NES is
-    undefined (small motif universe, or zero-variance regulon column).
-    """
+
+def _rankings_kernel_arg(ranking_values: np.ndarray):
+    """Choose the Rust ranking kernel for integer cistarget databases."""
+    values = np.asarray(ranking_values)
+    if values.dtype == np.int16:
+        return values, _cistarget_enrichment_from_rankings_i16
+    if values.dtype == np.int32:
+        return values, _cistarget_enrichment_from_rankings_i32
+    if values.dtype == np.int64:
+        return values, _cistarget_enrichment_from_rankings_i64
+    if values.dtype == np.float32:
+        return _rankings_to_i32_f32(values), _cistarget_enrichment_from_rankings_i32
+    if values.dtype == np.float64:
+        return _rankings_to_i32_f64(values), _cistarget_enrichment_from_rankings_i32
+    raise TypeError(
+        "rankings must contain integer rank values for cistarget enrichment"
+    )
+
+
+def _enrichment_result_to_dataframe(
+    result,
+    motif_names: list[str],
+    reg_names: list[str],
+) -> pd.DataFrame:
+    regulon, motif, auc, nes, zero_var_indices, too_few_motifs = result
+    _warn_about_nes_issues(
+        reg_names,
+        zero_var_indices=np.asarray(zero_var_indices, dtype=np.uint32),
+        too_few_motifs=bool(too_few_motifs),
+        n_motifs=len(motif_names),
+    )
+    if len(regulon) == 0:
+        return pd.DataFrame(columns=["regulon", "motif", "auc", "nes"])
+
+    return pd.DataFrame({
+        "regulon": list(regulon),
+        "motif": list(motif),
+        "auc": np.asarray(auc, dtype=np.float32),
+        "nes": np.asarray(nes, dtype=np.float32),
+    })
+
+
+def _warn_about_nes_issues(
+    reg_names: list[str],
+    *,
+    zero_var_indices: np.ndarray,
+    too_few_motifs: bool,
+    n_motifs: int,
+) -> None:
     import warnings
-    nes = np.full_like(auc_arr, fill_value=np.nan, dtype=np.float32)
-    if n_motifs < _NES_MIN_MOTIFS:
+
+    if too_few_motifs:
         warnings.warn(
             f"NES computed on only {n_motifs} motifs, below the "
             f"{_NES_MIN_MOTIFS}-motif floor where a z-score is reliable. "
@@ -190,17 +236,11 @@ def _compute_nes(
             f"ranking matrix or ignore the `nes` column for this run.",
             UserWarning, stacklevel=3,
         )
-        return nes
-    means = auc_arr.mean(axis=0)
-    stds = auc_arr.std(axis=0, ddof=0)
-    # Threshold catches both literal-zero variance and float32 accumulation
-    # noise (~6e-8 for AUC in [0,1]). A real signal in AUC variance sits
-    # several orders of magnitude above this, so 1e-6 is a safe floor.
-    zero_var = stds < 1e-6
-    if zero_var.any():
-        bad = [reg_names[i] for i in np.where(zero_var)[0]]
+        return
+    if zero_var_indices.size:
+        bad = [reg_names[int(i)] for i in zero_var_indices[: len(reg_names)]]
         warnings.warn(
-            f"NES undefined for {len(bad)} regulons with zero AUC variance "
+            f"NES undefined for {len(zero_var_indices)} regulons with zero AUC variance "
             f"across the motif universe (first few: {bad[:3]}). Such regulons "
             f"score identically on every motif, which usually means the "
             f"regulon genes are not present in the rankings (check coverage) "
@@ -208,20 +248,16 @@ def _compute_nes(
             f"AUC rows are preserved.",
             UserWarning, stacklevel=3,
         )
-    safe_stds = np.where(zero_var, 1.0, stds)
-    nes_full = (auc_arr - means) / safe_stds
-    nes_full[:, zero_var] = np.nan
-    return nes_full.astype(np.float32)
 
 
 def prune_enriched_motifs(
     enriched: pd.DataFrame,
     motif_annotations: pd.DataFrame,
     *,
-    motif_col: Optional[str] = None,
-    tf_col: Optional[str] = None,
-    auc_threshold: Optional[float] = None,
-    nes_threshold: Optional[float] = None,
+    motif_col: str | None = None,
+    tf_col: str | None = None,
+    auc_threshold: float | None = None,
+    nes_threshold: float | None = None,
     case_sensitive: bool = False,
 ) -> pd.DataFrame:
     """Filter enriched motif rows through motif-to-TF annotations.
@@ -269,37 +305,103 @@ def prune_enriched_motifs(
             columns=list(enriched.columns) + ["tf", "annotation_tf"]
         )
 
-    ct = enriched.copy()
-    if auc_threshold is not None:
-        ct = ct.loc[ct["auc"] >= auc_threshold].copy()
-    if nes_threshold is not None:
-        ct = ct.loc[ct["nes"].notna() & (ct["nes"] >= nes_threshold)].copy()
-    if ct.empty:
+    if not isinstance(motif_annotations, pd.DataFrame):
+        raise TypeError("motif_annotations must be a pandas DataFrame")
+    if motif_annotations.empty:
+        return pd.DataFrame(
+            columns=list(enriched.columns) + ["tf", "annotation_tf"]
+        )
+    motif_col = motif_col or _find_annotation_column(
+        motif_annotations,
+        ["motif", "motifs", "motif_id", "motifid", "features", "#motif_id"],
+        role="motif",
+    )
+    tf_col = tf_col or _find_annotation_column(
+        motif_annotations,
+        [
+            "tf", "TF", "transcription_factor", "gene_name", "gene",
+            "symbol", "tf_name", "factor",
+        ],
+        role="TF",
+    )
+    annotation_tfs = motif_annotations[tf_col].where(
+        motif_annotations[tf_col].notna(),
+        "",
+    )
+
+    standard_columns = {"regulon", "motif", "auc", "nes"}
+    if all(col in standard_columns for col in enriched.columns):
+        auc_values, nes_values, standard_kernel = _motif_annotation_standard_kernel_arg(
+            enriched["auc"],
+            enriched["nes"] if "nes" in enriched.columns else None,
+        )
+        (
+            regulon_values,
+            motif_values,
+            auc_out,
+            nes_out,
+            tf_values,
+            annotation_tf,
+        ) = standard_kernel(
+            enriched["regulon"].astype(str).tolist(),
+            enriched["motif"].astype(str).tolist(),
+            auc_values,
+            nes_values,
+            motif_annotations[motif_col].astype(str).tolist(),
+            annotation_tfs.astype(str).tolist(),
+            auc_threshold,
+            nes_threshold,
+            bool(case_sensitive),
+        )
+        if len(regulon_values) == 0:
+            return pd.DataFrame(
+                columns=list(enriched.columns) + ["tf", "annotation_tf"]
+            )
+        out_cols = {
+            "regulon": regulon_values,
+            "motif": motif_values,
+            "auc": auc_out,
+            "tf": list(tf_values),
+            "annotation_tf": list(annotation_tf),
+        }
+        if nes_out is not None:
+            out_cols["nes"] = nes_out
+        return pd.DataFrame(
+            out_cols,
+            columns=list(enriched.columns) + ["tf", "annotation_tf"],
+        ).reset_index(drop=True)
+
+    auc_values, nes_values, kernel = _motif_annotation_prune_kernel_arg(
+        enriched["auc"],
+        enriched["nes"] if nes_threshold is not None else None,
+    )
+    row_ix, tf_values, annotation_tf = kernel(
+        enriched["regulon"].astype(str).tolist(),
+        enriched["motif"].astype(str).tolist(),
+        auc_values,
+        nes_values,
+        motif_annotations[motif_col].astype(str).tolist(),
+        annotation_tfs.astype(str).tolist(),
+        auc_threshold,
+        nes_threshold,
+        bool(case_sensitive),
+    )
+    if len(row_ix) == 0:
         return pd.DataFrame(
             columns=list(enriched.columns) + ["tf", "annotation_tf"]
         )
 
-    ann = _normalise_motif_annotations(
-        motif_annotations,
-        motif_col=motif_col,
-        tf_col=tf_col,
-        case_sensitive=case_sensitive,
-    )
-
-    ct["tf"] = ct["regulon"].map(_tf_from_regulon_name)
-    ct["_motif_key"] = ct["motif"].astype(str)
-    ct["_tf_key"] = ct["tf"].astype(str)
-    if not case_sensitive:
-        ct["_tf_key"] = ct["_tf_key"].str.lower()
-
-    out = ct.merge(
-        ann,
-        on=["_motif_key", "_tf_key"],
-        how="inner",
-        sort=False,
-    )
-    out = out.drop(columns=["_motif_key", "_tf_key"])
-    return out.reset_index(drop=True)
+    idx = np.asarray(row_ix)
+    out_cols = {
+        col: enriched[col].to_numpy(copy=False)[idx]
+        for col in enriched.columns
+    }
+    out_cols["tf"] = list(tf_values)
+    out_cols["annotation_tf"] = list(annotation_tf)
+    return pd.DataFrame(
+        out_cols,
+        columns=list(enriched.columns) + ["tf", "annotation_tf"],
+    ).reset_index(drop=True)
 
 
 def prune_regulons(
@@ -307,13 +409,13 @@ def prune_regulons(
     regulons: Iterable,
     motif_annotations: pd.DataFrame,
     *,
-    rankings: Optional[pd.DataFrame] = None,
+    rankings: pd.DataFrame | None = None,
     top_frac: float = 0.05,
-    auc_threshold: Optional[float] = None,
-    nes_threshold: Optional[float] = None,
+    auc_threshold: float | None = None,
+    nes_threshold: float | None = None,
     min_genes: int = 1,
-    motif_col: Optional[str] = None,
-    tf_col: Optional[str] = None,
+    motif_col: str | None = None,
+    tf_col: str | None = None,
     case_sensitive: bool = False,
 ) -> dict[str, list[str]]:
     """Create final motif-annotation-pruned regulons.
@@ -326,12 +428,11 @@ def prune_regulons(
     ``nes_threshold`` adds the canonical pyscenic / pycistarget NES filter
     on top of motif annotation matching; pass ``3.0`` for the standard cutoff.
     """
-    candidate = {
-        name: list(dict.fromkeys(genes))
-        for name, genes in (_coerce_regulon(reg) for reg in regulons)
-    }
-    if not candidate:
+    candidate_pairs = list(iter_regulon_pairs(regulons))
+    if not candidate_pairs:
         return {}
+    candidate_names = [name for name, _ in candidate_pairs]
+    candidate_genes = [genes for _, genes in candidate_pairs]
 
     pruned_motifs = prune_enriched_motifs(
         enriched,
@@ -346,127 +447,102 @@ def prune_regulons(
         return {}
 
     if rankings is not None:
-        _validate_rankings_for_pruning(rankings)
         rank_cutoff = max(1, int(np.ceil(top_frac * rankings.shape[1])))
-    else:
-        rank_cutoff = None
-
-    kept: dict[str, set[str]] = {}
-    for row in pruned_motifs.itertuples(index=False):
-        regulon_name = str(getattr(row, "regulon"))
-        genes = candidate.get(regulon_name)
-        if not genes:
-            continue
-        if rankings is None:
-            kept.setdefault(regulon_name, set()).update(genes)
-            continue
-        motif = str(getattr(row, "motif"))
-        if motif not in rankings.index:
-            continue
-        ranks = rankings.loc[motif]
-        top_genes = set(ranks.nsmallest(rank_cutoff).index)
-        recovered = [
-            g for g in genes
-            if g in top_genes
-        ]
-        kept.setdefault(regulon_name, set()).update(recovered)
-
-    out = {
-        name: [g for g in candidate[name] if g in genes]
-        for name, genes in kept.items()
-        if len(genes) >= min_genes
-    }
-    return out
-
-
-def _coerce_regulon(reg):
-    if isinstance(reg, tuple) and len(reg) == 2:
-        name, genes = reg
-        return str(name), list(genes)
-    if isinstance(reg, dict):
-        if "name" in reg and "genes" in reg:
-            return str(reg["name"]), list(reg["genes"])
-    name = getattr(reg, "name", None) or getattr(reg, "transcription_factor", None)
-    if hasattr(reg, "gene2weight"):
-        genes = list(reg.gene2weight.keys())
-    elif hasattr(reg, "genes"):
-        genes = list(reg.genes)
-    else:
-        raise TypeError(f"cannot extract regulon genes from {type(reg).__name__}")
-    if name is None:
-        raise TypeError(f"regulon has no .name")
-    return str(name), genes
-
-
-def _require_columns(df: pd.DataFrame, required: set[str], *, name: str) -> None:
-    missing = required - set(df.columns)
-    if missing:
-        raise ValueError(
-            f"{name} missing columns: {sorted(missing)}. "
-            f"Got columns: {list(df.columns)}"
+        ranking_values, kernel = _prune_rankings_kernel_arg(rankings)
+        names, genes = kernel(
+            ranking_values,
+            [str(v) for v in rankings.index],
+            [str(v) for v in rankings.columns],
+            candidate_names,
+            candidate_genes,
+            pruned_motifs["regulon"].astype(str).tolist(),
+            pruned_motifs["motif"].astype(str).tolist(),
+            rank_cutoff,
+            int(min_genes),
         )
+        return dict(zip(names, genes, strict=True))
 
-
-_REGULON_NAME_SUFFIXES = ("_regulon", "_extended", "_activator", "_repressor")
-_REGULON_NAME_PARENS = ("(+)", "(-)")
-
-
-def _tf_from_regulon_name(name: str) -> str:
-    """Strip every recognised regulon-name suffix and polarity marker until
-    the result is stable, so canonical scenicplus names (e.g.
-    ``FOXP3_extended_regulon``, ``PAX5_extended(+)``) reduce to the bare TF
-    symbol. The original implementation broke on the first match and left
-    compound suffixes intact."""
-    tf = str(name).strip()
-    while True:
-        prev = tf
-        for suffix in _REGULON_NAME_SUFFIXES:
-            if tf.endswith(suffix):
-                tf = tf[: -len(suffix)].strip()
-        for paren in _REGULON_NAME_PARENS:
-            if tf.endswith(paren):
-                tf = tf[:-3].strip()
-        if tf == prev:
-            return tf
-
-
-def _normalise_motif_annotations(
-    motif_annotations: pd.DataFrame,
-    *,
-    motif_col: Optional[str],
-    tf_col: Optional[str],
-    case_sensitive: bool,
-) -> pd.DataFrame:
-    if not isinstance(motif_annotations, pd.DataFrame):
-        raise TypeError("motif_annotations must be a pandas DataFrame")
-    if motif_annotations.empty:
-        return pd.DataFrame(columns=["_motif_key", "_tf_key", "annotation_tf"])
-
-    motif_col = motif_col or _find_annotation_column(
-        motif_annotations,
-        ["motif", "motifs", "motif_id", "motifid", "features", "#motif_id"],
-        role="motif",
+    names, genes = _prune_regulon_targets_unranked(
+        candidate_names,
+        candidate_genes,
+        pruned_motifs["regulon"].astype(str).tolist(),
+        int(min_genes),
     )
-    tf_col = tf_col or _find_annotation_column(
-        motif_annotations,
-        [
-            "tf", "TF", "transcription_factor", "gene_name", "gene",
-            "symbol", "tf_name", "factor",
-        ],
-        role="TF",
-    )
+    return dict(zip(names, genes, strict=True))
 
-    rows = []
-    for rec in motif_annotations[[motif_col, tf_col]].itertuples(index=False):
-        motif = str(rec[0])
-        for tf in _split_annotation_tfs(rec[1]):
-            key = tf if case_sensitive else tf.lower()
-            rows.append((motif, key, tf))
+
+def _motif_annotation_prune_kernel_arg(
+    auc: pd.Series,
+    nes: pd.Series | None,
+):
+    auc_values = auc.to_numpy(copy=False)
+    nes_values = None if nes is None else nes.to_numpy(copy=False)
+    if not np.issubdtype(auc_values.dtype, np.number):
+        raise TypeError("enriched['auc'] must contain numeric values")
+    if nes_values is not None and not np.issubdtype(nes_values.dtype, np.number):
+        raise TypeError("enriched['nes'] must contain numeric values")
+    if auc_values.dtype == np.float32 and (
+        nes_values is None or nes_values.dtype == np.float32
+    ):
+        return auc_values, nes_values, _motif_annotation_prune_rows_filtered_f32
+    if auc_values.dtype == np.float64 and (
+        nes_values is None or nes_values.dtype == np.float64
+    ):
+        return auc_values, nes_values, _motif_annotation_prune_rows_filtered_f64
     return (
-        pd.DataFrame(rows, columns=["_motif_key", "_tf_key", "annotation_tf"])
-        .drop_duplicates()
-        .reset_index(drop=True)
+        auc_values.astype(np.float64, copy=False),
+        None if nes_values is None else nes_values.astype(np.float64, copy=False),
+        _motif_annotation_prune_rows_filtered_f64,
     )
+
+
+def _motif_annotation_standard_kernel_arg(
+    auc: pd.Series,
+    nes: pd.Series | None,
+):
+    auc_values = auc.to_numpy(copy=False)
+    nes_values = None if nes is None else nes.to_numpy(copy=False)
+    if auc_values.dtype == np.float32 and (
+        nes_values is None or nes_values.dtype == np.float32
+    ):
+        return auc_values, nes_values, _motif_annotation_prune_standard_rows_f32
+    return (
+        auc_values.astype(np.float64, copy=False),
+        None if nes_values is None else nes_values.astype(np.float64, copy=False),
+        _motif_annotation_prune_standard_rows_f64,
+    )
+
+
+def _prune_rankings_kernel_arg(rankings: pd.DataFrame):
+    if not isinstance(rankings, pd.DataFrame):
+        raise TypeError("rankings must be a pandas DataFrame")
+    values = rankings.to_numpy(copy=False)
+    if values.dtype == object:
+        raise TypeError("rankings DataFrame has dtype=object")
+    if values.dtype == np.int16:
+        return values, _prune_regulon_targets_i16
+    if values.dtype == np.int32:
+        return values, _prune_regulon_targets_i32
+    if values.dtype == np.int64:
+        return values, _prune_regulon_targets_i64
+    if np.issubdtype(values.dtype, np.integer):
+        if values.dtype.itemsize <= np.dtype(np.int32).itemsize and not np.issubdtype(
+            values.dtype, np.unsignedinteger
+        ):
+            return values.astype(np.int32, copy=False), _prune_regulon_targets_i32
+        if values.dtype.itemsize < np.dtype(np.int64).itemsize:
+            return values.astype(np.int64, copy=False), _prune_regulon_targets_i64
+        raise TypeError(
+            "rankings integer dtype is wider than the supported signed int64 "
+            "path; cast rankings to int64 before pruning"
+        )
+    if not np.issubdtype(values.dtype, np.floating):
+        raise TypeError("rankings must contain numeric rank values")
+    if values.dtype == np.float32:
+        return values, _prune_regulon_targets_f32
+    if values.dtype == np.float64:
+        return values, _prune_regulon_targets_f64
+    return values.astype(np.float64, copy=False), _prune_regulon_targets_f64
 
 
 def _find_annotation_column(
@@ -484,24 +560,6 @@ def _find_annotation_column(
         f"could not infer {role} column in motif_annotations. "
         f"Pass the column explicitly. Got columns: {list(df.columns)}"
     )
-
-
-def _split_annotation_tfs(value) -> list[str]:
-    if pd.isna(value):
-        return []
-    text = str(value)
-    for sep in (";", ",", "|"):
-        text = text.replace(sep, "/")
-    return [part.strip() for part in text.split("/") if part.strip()]
-
-
-def _validate_rankings_for_pruning(rankings: pd.DataFrame) -> None:
-    if not isinstance(rankings, pd.DataFrame):
-        raise TypeError("rankings must be a pandas DataFrame")
-    if rankings.values.dtype == object:
-        raise TypeError("rankings DataFrame has dtype=object")
-    if not np.all(np.isfinite(rankings.values)):
-        raise ValueError("rankings contain NaN or Inf values")
 
 
 def load_aertslab_feather(path) -> pd.DataFrame:

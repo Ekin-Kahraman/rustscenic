@@ -23,13 +23,6 @@ impl TargetRng {
         }
     }
 
-    /// Fresh RNG for a specific tree within a target's boosting loop.
-    pub fn for_tree(&mut self, tree_idx: usize) -> StdRng {
-        let mixed =
-            splitmix64(self.inner.next_u64() ^ (tree_idx as u64).wrapping_mul(0xBF58476D1CE4E5B9));
-        StdRng::seed_from_u64(mixed)
-    }
-
     pub fn inner_mut(&mut self) -> &mut StdRng {
         &mut self.inner
     }

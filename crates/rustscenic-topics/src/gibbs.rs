@@ -60,7 +60,7 @@ pub struct GibbsResult {
 #[allow(clippy::too_many_arguments)]
 pub fn fit(
     row_ptr: &[usize],
-    col_idx: &[u32],
+    col_idx: &[i32],
     counts: &[f32],
     n_words: usize,
     n_topics: usize,
@@ -72,6 +72,10 @@ pub fn fit(
     let n_docs = row_ptr.len().saturating_sub(1);
     assert!(n_topics > 0, "n_topics must be > 0");
     assert!(n_iters > 0, "n_iters must be > 0");
+    assert!(
+        col_idx.iter().all(|&w| w >= 0 && (w as usize) < n_words),
+        "col_idx contains a negative or out-of-vocabulary word index"
+    );
 
     // Materialise the per-token assignment array. Each non-zero (d, w_i, c_i)
     // expands to c_i tokens, each with an independent topic assignment.
@@ -82,7 +86,7 @@ pub fn fit(
         let s = row_ptr[d];
         let e = row_ptr[d + 1];
         for i in s..e {
-            let w = col_idx[i];
+            let w = col_idx[i] as u32;
             let c = counts[i] as usize;
             for _ in 0..c {
                 tokens.push((d as u32, w));
@@ -244,7 +248,7 @@ fn partition_docs_by_load(row_ptr: &[usize], counts: &[f32], n_threads: usize) -
 fn init_thread_states(
     partition: Vec<Vec<usize>>,
     row_ptr: &[usize],
-    col_idx: &[u32],
+    col_idx: &[i32],
     counts: &[f32],
     n_topics: usize,
     n_words: usize,
@@ -258,7 +262,7 @@ fn init_thread_states(
             let s = row_ptr[gd];
             let e = row_ptr[gd + 1];
             for i in s..e {
-                let w = col_idx[i];
+                let w = col_idx[i] as u32;
                 let c = counts[i] as usize;
                 for _ in 0..c {
                     tokens.push((local_d as u32, w));
@@ -471,7 +475,7 @@ fn compute_theta(
 #[allow(clippy::too_many_arguments)]
 pub fn fit_par(
     row_ptr: &[usize],
-    col_idx: &[u32],
+    col_idx: &[i32],
     counts: &[f32],
     n_words: usize,
     n_topics: usize,
@@ -489,6 +493,10 @@ pub fn fit_par(
     let n_docs = row_ptr.len().saturating_sub(1);
     assert!(n_topics > 0, "n_topics must be > 0");
     assert!(n_iters > 0, "n_iters must be > 0");
+    assert!(
+        col_idx.iter().all(|&w| w >= 0 && (w as usize) < n_words),
+        "col_idx contains a negative or out-of-vocabulary word index"
+    );
 
     let partition = partition_docs_by_load(row_ptr, counts, n_threads);
     let mut threads =
@@ -569,7 +577,7 @@ fn splitmix64(mut x: u64) -> u64 {
 mod tests {
     use super::*;
 
-    fn synthetic_two_topic_corpus() -> (Vec<usize>, Vec<u32>, Vec<f32>) {
+    fn synthetic_two_topic_corpus() -> (Vec<usize>, Vec<i32>, Vec<f32>) {
         // 60 docs, 20 words. Words 0–9 belong to topic A, 10–19 to topic B.
         // Half the docs only sample topic-A words, half only topic-B words.
         let n_docs = 60;
@@ -577,7 +585,7 @@ mod tests {
         let mut col_idx = Vec::new();
         let mut counts = Vec::new();
         for d in 0..n_docs {
-            let words: Vec<u32> = if d < n_docs / 2 {
+            let words: Vec<i32> = if d < n_docs / 2 {
                 (0..10).collect()
             } else {
                 (10..20).collect()

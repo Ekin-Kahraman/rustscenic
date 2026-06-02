@@ -10,8 +10,6 @@
 //! `exclude_feature` is passed through to the tree builder so targets that are
 //! themselves TFs don't include their own expression column as a predictor.
 
-use rand::rngs::StdRng;
-
 use crate::histogram::{BinnedMatrix, NodeHist, MAX_BINS};
 use crate::rng::{subsample_rows_into, TargetRng};
 use crate::tree::{fit_tree_with_scratch, predict_binned, Tree, TreeScratch};
@@ -67,7 +65,6 @@ impl GbmScratch {
                 .reserve(n_samples - self.sample_idx.capacity());
         }
         self.tree.nodes.clear();
-        self.gains_buf.fill(0.0);
         self.mse_history.clear();
         if self.mse_history.capacity() < n_estimators {
             self.mse_history
@@ -84,23 +81,26 @@ pub fn fit_and_importances_binned(
     exclude_feature: Option<usize>,
 ) -> Vec<f32> {
     let mut scratch = GbmScratch::new(binned.n_samples, binned.n_features, cfg.n_estimators);
-    fit_and_importances_binned_with_scratch(binned, y, cfg, exclude_feature, &mut scratch)
+    fit_and_importances_binned_with_scratch(binned, y, cfg, exclude_feature, &mut scratch).to_vec()
 }
 
 /// Same as [`fit_and_importances_binned`], but reuses caller-owned buffers.
-pub fn fit_and_importances_binned_with_scratch(
+pub fn fit_and_importances_binned_with_scratch<'a>(
     binned: &BinnedMatrix,
     y: &[f32],
     cfg: &GrnConfig,
     exclude_feature: Option<usize>,
-    scratch: &mut GbmScratch,
-) -> Vec<f32> {
+    scratch: &'a mut GbmScratch,
+) -> &'a [f32] {
     let n_samples = binned.n_samples;
     let n_features = binned.n_features;
     scratch.prepare(n_samples, n_features, cfg.n_estimators);
 
     let init: f32 = y.iter().sum::<f32>() / (n_samples as f32);
     scratch.predictions.fill(init);
+    for (k, yv) in y.iter().enumerate().take(n_samples) {
+        scratch.residuals[k] = *yv - init;
+    }
 
     let max_features_per_split = ((cfg.max_features * n_features as f32) as usize).max(1);
 
@@ -112,28 +112,19 @@ pub fn fit_and_importances_binned_with_scratch(
     let mut n_fit = 0usize;
 
     for i in 0..cfg.n_estimators {
-        for (k, yv) in y.iter().enumerate().take(n_samples) {
-            scratch.residuals[k] = *yv - scratch.predictions[k];
-        }
-
-        let mut tree_rng: StdRng = rng_state.for_tree(i);
         scratch.sample_idx.clear();
         if (cfg.subsample - 1.0).abs() < 1e-6 {
             scratch.sample_idx.extend(0..n_samples);
         } else {
-            subsample_rows_into(
-                &mut tree_rng,
-                n_samples,
-                cfg.subsample,
-                &mut scratch.sample_idx,
-            );
+            let tree_rng = rng_state.inner_mut();
+            subsample_rows_into(tree_rng, n_samples, cfg.subsample, &mut scratch.sample_idx);
         }
         if scratch.sample_idx.is_empty() {
             continue;
         }
 
         scratch.tree.nodes.clear();
-        scratch.gains_buf.fill(0.0);
+        scratch.tree_scratch.begin_gain_tracking(n_features);
         fit_tree_with_scratch(
             binned,
             &scratch.residuals,
@@ -145,22 +136,28 @@ pub fn fit_and_importances_binned_with_scratch(
             &mut scratch.gains_buf,
             &mut scratch.hist_buf,
             &mut scratch.tree_scratch,
-            &mut tree_rng,
+            rng_state.inner_mut(),
         );
 
+        let mut mse_inbag = 0.0_f32;
+        let mut inbag_pos = 0usize;
         for (k, p) in scratch.predictions.iter_mut().enumerate().take(n_samples) {
             *p += cfg.learning_rate * predict_binned(&scratch.tree, binned, k);
+            scratch.residuals[k] = y[k] - *p;
+            if inbag_pos < scratch.sample_idx.len() && scratch.sample_idx[inbag_pos] == k {
+                let d = scratch.residuals[k];
+                mse_inbag += d * d;
+                inbag_pos += 1;
+            }
         }
+        debug_assert_eq!(inbag_pos, scratch.sample_idx.len());
 
-        for f in 0..n_features {
+        scratch.tree_scratch.gain_touched.sort_unstable();
+        for &f in &scratch.tree_scratch.gain_touched {
             scratch.importances[f] += scratch.gains_buf[f];
+            scratch.gains_buf[f] = 0.0;
         }
 
-        let mut mse_inbag = 0.0_f32;
-        for &k in &scratch.sample_idx {
-            let d = y[k] - scratch.predictions[k];
-            mse_inbag += d * d;
-        }
         mse_inbag /= scratch.sample_idx.len() as f32;
         scratch.mse_history.push(mse_inbag);
         n_fit = i + 1;
@@ -183,7 +180,7 @@ pub fn fit_and_importances_binned_with_scratch(
     for v in &mut scratch.importances {
         *v *= n_fit as f32;
     }
-    scratch.importances.clone()
+    &scratch.importances
 }
 
 fn hash_y(y: &[f32]) -> usize {

@@ -29,12 +29,10 @@ from __future__ import annotations
 import gzip
 import os
 import tempfile
-import warnings
 
 import anndata as ad
 import numpy as np
 import pandas as pd
-import pytest
 
 
 N_CELLS = 120
@@ -317,6 +315,7 @@ def test_eregulon_output_matches_expected_schema():
             target_genes=["G1", "G2"],
             n_enhancer_links=3,
             motif_auc=0.2,
+            target_to_peaks={"G1": ["peak1", "peak2"], "G2": ["peak1", "peak2"]},
         )
     ]
     df = eregulons_to_dataframe(eregs)

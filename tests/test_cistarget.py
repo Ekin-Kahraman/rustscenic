@@ -52,6 +52,149 @@ class TestCistargetCorrectness:
         top_motif = out.sort_values("auc", ascending=False).iloc[0]["motif"]
         assert top_motif == "m0"
 
+    def test_enrich_accepts_strided_rankings_without_python_contiguity_copy(self):
+        base = np.array(
+            [
+                [0, 1, 2, 5, 6, 7],
+                [5, 4, 3, 2, 1, 0],
+                [2, 3, 4, 0, 1, 5],
+            ],
+            dtype=np.int32,
+        )
+        values = np.asfortranarray(base)
+        assert values.flags.f_contiguous
+        assert not values.flags.c_contiguous
+
+        rankings = pd.DataFrame(
+            values,
+            index=["m0", "m1", "m2"],
+            columns=[f"g{i}" for i in range(base.shape[1])],
+        )
+        rankings_arg, kernel = cistarget._rankings_kernel_arg(rankings.to_numpy(copy=False))
+
+        assert np.shares_memory(rankings_arg, values)
+        assert rankings_arg.flags.f_contiguous
+        assert not rankings_arg.flags.c_contiguous
+        assert kernel is cistarget._cistarget_enrichment_from_rankings_i32
+
+        regs = [("R1", ["g0", "g1", "g2"]), ("R2", ["g3", "g4"])]
+        got = cistarget.enrich(rankings, regs, top_frac=0.5, auc_threshold=0.0)
+        expected = cistarget.enrich(
+            pd.DataFrame(
+                base,
+                index=rankings.index,
+                columns=rankings.columns,
+            ),
+            regs,
+            top_frac=0.5,
+            auc_threshold=0.0,
+        )
+        pd.testing.assert_frame_equal(got, expected)
+
+    def test_enrich_does_not_allocate_isfinite_mask_for_integer_rankings(
+        self,
+        tiny_rankings,
+        monkeypatch,
+    ):
+        def fail_isfinite(_values):
+            raise AssertionError("integer rankings do not need np.isfinite")
+
+        monkeypatch.setattr(cistarget.np, "isfinite", fail_isfinite)
+
+        out = cistarget.enrich(
+            tiny_rankings.astype(np.int16),
+            [("R1", ["g0", "g1", "g2", "g3", "g4"])],
+            top_frac=0.3,
+            auc_threshold=0.0,
+        )
+
+        assert not out.empty
+
+    def test_enrich_uses_int64_rankings_without_upcast_copy(self):
+        base = np.array(
+            [
+                [0, 1, 2, 5, 6, 7],
+                [5, 4, 3, 2, 1, 0],
+                [2, 3, 4, 0, 1, 5],
+            ],
+            dtype=np.int64,
+        )
+        values = np.asfortranarray(base)
+        rankings = pd.DataFrame(
+            values,
+            index=["m0", "m1", "m2"],
+            columns=[f"g{i}" for i in range(base.shape[1])],
+        )
+        rankings_arg, kernel = cistarget._rankings_kernel_arg(rankings.to_numpy(copy=False))
+
+        assert rankings_arg.dtype == np.int64
+        assert kernel is cistarget._cistarget_enrichment_from_rankings_i64
+        assert np.shares_memory(rankings_arg, values)
+        assert rankings_arg.flags.f_contiguous
+        assert not rankings_arg.flags.c_contiguous
+
+        regs = [("R1", ["g0", "g1", "g2"]), ("R2", ["g3", "g4"])]
+        got = cistarget.enrich(rankings, regs, top_frac=0.5, auc_threshold=0.0)
+        expected = cistarget.enrich(
+            pd.DataFrame(
+                base.astype(np.int32),
+                index=rankings.index,
+                columns=rankings.columns,
+            ),
+            regs,
+            top_frac=0.5,
+            auc_threshold=0.0,
+        )
+        pd.testing.assert_frame_equal(got, expected)
+
+    def test_enrich_float_rankings_validate_and_convert_in_rust(self, monkeypatch):
+        base = np.array(
+            [
+                [0, 1, 2, 5, 6, 7],
+                [5, 4, 3, 2, 1, 0],
+                [2, 3, 4, 0, 1, 5],
+            ],
+            dtype=np.float64,
+        )
+        values = np.asfortranarray(base)
+        rankings = pd.DataFrame(
+            values,
+            index=["m0", "m1", "m2"],
+            columns=[f"g{i}" for i in range(base.shape[1])],
+        )
+        seen = {}
+
+        def fake_to_i32(values_arg):
+            seen["called"] = True
+            assert np.shares_memory(values_arg, values)
+            assert values_arg.flags.f_contiguous
+            assert not values_arg.flags.c_contiguous
+            return base.astype(np.int32)
+
+        monkeypatch.setattr(cistarget, "_rankings_to_i32_f64", fake_to_i32)
+
+        rankings_arg, kernel = cistarget._rankings_kernel_arg(rankings.to_numpy(copy=False))
+
+        assert seen["called"] is True
+        assert rankings_arg.dtype == np.int32
+        assert kernel is cistarget._cistarget_enrichment_from_rankings_i32
+
+    def test_float_nan_rankings_do_not_allocate_python_isfinite_mask(
+        self,
+        tiny_rankings,
+        monkeypatch,
+    ):
+        bad = tiny_rankings.astype(np.float32)
+        bad.iloc[0, 0] = np.nan
+
+        def fail_isfinite(_values):
+            raise AssertionError("float ranking finite validation should run in Rust")
+
+        monkeypatch.setattr(cistarget.np, "isfinite", fail_isfinite)
+
+        with pytest.raises(ValueError, match=r"NaN|Inf|finite"):
+            cistarget.enrich(bad, [("R", ["g0", "g1"])])
+
     def test_prune_enriched_motifs_requires_motif_annotation_support(self):
         enriched = pd.DataFrame(
             [
@@ -78,6 +221,131 @@ class TestCistargetCorrectness:
             }
         ]
 
+    def test_prune_enriched_motifs_matches_previous_pandas_merge_reference(self):
+        enriched = pd.DataFrame(
+            [
+                {
+                    "regulon": "TF1_regulon",
+                    "motif": "M1",
+                    "auc": 0.50,
+                    "nes": 3.5,
+                    "source": "keep_twice",
+                },
+                {
+                    "regulon": "TF2_regulon",
+                    "motif": "M2",
+                    "auc": 0.60,
+                    "nes": 4.0,
+                    "source": "split_tf",
+                },
+                {
+                    "regulon": "TF3_regulon",
+                    "motif": "M3",
+                    "auc": 0.10,
+                    "nes": 5.0,
+                    "source": "low_auc",
+                },
+                {
+                    "regulon": "TFLOW_regulon",
+                    "motif": "M4",
+                    "auc": 0.70,
+                    "nes": np.nan,
+                    "source": "nan_nes",
+                },
+            ]
+        )
+        annotations = pd.DataFrame(
+            {
+                "motif_id": ["M1", "M1", "M2", "M3", "M4"],
+                "gene_name": ["TF1", "tf1", "TFX;TF2", "TF3", "TFLOW"],
+            }
+        )
+
+        got = cistarget.prune_enriched_motifs(
+            enriched,
+            annotations,
+            motif_col="motif_id",
+            tf_col="gene_name",
+            auc_threshold=0.2,
+            nes_threshold=1.0,
+        )
+        expected = _reference_prune_enriched_motifs_with_pandas_merge(
+            enriched,
+            annotations,
+            motif_col="motif_id",
+            tf_col="gene_name",
+            auc_threshold=0.2,
+            nes_threshold=1.0,
+        )
+        pd.testing.assert_frame_equal(got, expected, check_dtype=False)
+
+    def test_prune_enriched_motifs_threshold_filter_runs_in_rust_without_float32_upcast(
+        self,
+        monkeypatch,
+    ):
+        enriched = pd.DataFrame(
+            {
+                "regulon": ["TF1_regulon", "TF2_regulon"],
+                "motif": ["M1", "M2"],
+                "auc": np.asarray([0.5, 0.1], dtype=np.float32),
+                "nes": np.asarray([3.5, 0.5], dtype=np.float32),
+            }
+        )
+        annotations = pd.DataFrame({"motif": ["M1", "M2"], "TF": ["TF1", "TF2"]})
+        auc_source = enriched["auc"].to_numpy(copy=False)
+        nes_source = enriched["nes"].to_numpy(copy=False)
+
+        def fake_standard_rows(
+            enriched_regulons,
+            enriched_motifs,
+            enriched_auc,
+            enriched_nes,
+            annotation_motifs,
+            annotation_tfs,
+            auc_threshold,
+            nes_threshold,
+            case_sensitive,
+        ):
+            assert enriched_regulons == ["TF1_regulon", "TF2_regulon"]
+            assert enriched_motifs == ["M1", "M2"]
+            assert np.shares_memory(enriched_auc, auc_source)
+            assert np.shares_memory(enriched_nes, nes_source)
+            assert enriched_auc.dtype == np.float32
+            assert enriched_nes.dtype == np.float32
+            assert auc_threshold == 0.2
+            assert nes_threshold == 1.0
+            assert case_sensitive is False
+            return (
+                ["TF1_regulon"],
+                ["M1"],
+                np.asarray([0.5], dtype=np.float32),
+                np.asarray([3.5], dtype=np.float32),
+                ["TF1"],
+                ["TF1"],
+            )
+
+        monkeypatch.setattr(
+            cistarget,
+            "_motif_annotation_prune_standard_rows_f32",
+            fake_standard_rows,
+        )
+
+        out = cistarget.prune_enriched_motifs(
+            enriched,
+            annotations,
+            auc_threshold=0.2,
+            nes_threshold=1.0,
+        )
+
+        assert out[["regulon", "motif", "tf", "annotation_tf"]].to_dict("records") == [
+            {
+                "regulon": "TF1_regulon",
+                "motif": "M1",
+                "tf": "TF1",
+                "annotation_tf": "TF1",
+            }
+        ]
+
     def test_prune_regulons_keeps_only_recovered_targets(self):
         enriched = pd.DataFrame(
             [{"regulon": "G000_regulon", "motif": "M_G000", "auc": 0.30}]
@@ -99,6 +367,446 @@ class TestCistargetCorrectness:
         )
 
         assert pruned == {"G000_regulon": ["g0", "g1"]}
+
+    def test_prune_regulons_rank_recovery_uses_rust_kernel(self):
+        enriched = pd.DataFrame(
+            [
+                {"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30},
+                {"regulon": "TF1_regulon", "motif": "M2", "auc": 0.31},
+                {"regulon": "TF2_regulon", "motif": "M3", "auc": 0.32},
+            ]
+        )
+        annotations = pd.DataFrame(
+            {"motif": ["M1", "M2", "M3"], "TF": ["TF1", "TF1", "TF2"]}
+        )
+        base_rankings = pd.DataFrame(
+            [
+                [0, 4, 1, 5, 2],
+                [5, 0, 4, 1, 2],
+                [3, 4, 0, 1, 2],
+            ],
+            index=["M1", "M2", "M3"],
+            columns=["g0", "g1", "g2", "g3", "x"],
+        )
+        candidates = [
+            ("TF1_regulon", ["g0", "g1", "g2", "g3"]),
+            ("TF2_regulon", ["g2", "missing"]),
+        ]
+
+        for rankings in (base_rankings, base_rankings.astype(float) + 0.25):
+            pruned = cistarget.prune_regulons(
+                enriched,
+                candidates,
+                annotations,
+                rankings=rankings,
+                top_frac=0.4,
+                min_genes=1,
+            )
+            assert pruned == {
+                "TF1_regulon": ["g0", "g1", "g2", "g3"],
+                "TF2_regulon": ["g2"],
+            }
+
+    def test_prune_regulons_without_rankings_keeps_supported_candidates_in_rust(self):
+        enriched = pd.DataFrame(
+            [
+                {"regulon": "TF2_regulon", "motif": "M2", "auc": 0.31},
+                {"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30},
+                {"regulon": "TF1_regulon", "motif": "M1b", "auc": 0.32},
+                {"regulon": "TF3_regulon", "motif": "M3", "auc": 0.33},
+            ]
+        )
+        annotations = pd.DataFrame(
+            {
+                "motif": ["M1", "M1b", "M2", "M3"],
+                "TF": ["TF1", "TF1", "TF2", "TF3"],
+            }
+        )
+        candidates = [
+            ("TF1_regulon", ["g0", "g1", "g2"]),
+            ("TF2_regulon", ["g3", "g4"]),
+            ("TF3_regulon", ["drop_me"]),
+        ]
+
+        pruned = cistarget.prune_regulons(
+            enriched,
+            candidates,
+            annotations,
+            rankings=None,
+            min_genes=2,
+        )
+
+        assert list(pruned) == ["TF2_regulon", "TF1_regulon"]
+        assert pruned == {
+            "TF2_regulon": ["g3", "g4"],
+            "TF1_regulon": ["g0", "g1", "g2"],
+        }
+
+    def test_prune_regulons_deduplicates_candidate_targets_in_rust(self):
+        enriched = pd.DataFrame(
+            [{"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30}]
+        )
+        annotations = pd.DataFrame({"motif": ["M1"], "TF": ["TF1"]})
+        candidates = [("TF1_regulon", ["g0", "g0", "g1", "g1"])]
+
+        unranked = cistarget.prune_regulons(
+            enriched,
+            candidates,
+            annotations,
+            rankings=None,
+            min_genes=2,
+        )
+
+        rankings = pd.DataFrame(
+            [[0, 1, 2]],
+            index=["M1"],
+            columns=["g0", "g1", "g2"],
+        )
+        ranked = cistarget.prune_regulons(
+            enriched,
+            candidates,
+            annotations,
+            rankings=rankings,
+            top_frac=1.0,
+            min_genes=2,
+        )
+
+        assert unranked == {"TF1_regulon": ["g0", "g1"]}
+        assert ranked == {"TF1_regulon": ["g0", "g1"]}
+
+    def test_prune_regulons_duplicate_candidate_names_keep_last_value(self):
+        enriched = pd.DataFrame(
+            [{"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30}]
+        )
+        annotations = pd.DataFrame({"motif": ["M1"], "TF": ["TF1"]})
+        candidates = [
+            ("TF1_regulon", ["old"]),
+            ("TF1_regulon", ["g0", "g1"]),
+        ]
+
+        pruned = cistarget.prune_regulons(
+            enriched,
+            candidates,
+            annotations,
+            rankings=None,
+            min_genes=2,
+        )
+
+        assert pruned == {"TF1_regulon": ["g0", "g1"]}
+
+    def test_prune_regulons_without_rankings_uses_rust_helper(self, monkeypatch):
+        enriched = pd.DataFrame(
+            [{"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30}]
+        )
+        annotations = pd.DataFrame({"motif": ["M1"], "TF": ["TF1"]})
+        calls = []
+
+        def fake_unranked(candidate_names, candidate_genes, pruned_regulons, min_genes):
+            calls.append((candidate_names, candidate_genes, pruned_regulons, min_genes))
+            return ["TF1_regulon"], [["g0", "g1"]]
+
+        monkeypatch.setattr(cistarget, "_prune_regulon_targets_unranked", fake_unranked)
+
+        pruned = cistarget.prune_regulons(
+            enriched,
+            [("TF1_regulon", ["g0", "g0", "g1"])],
+            annotations,
+            rankings=None,
+            min_genes=2,
+        )
+
+        assert pruned == {"TF1_regulon": ["g0", "g1"]}
+        assert calls == [
+            (
+                ["TF1_regulon"],
+                [["g0", "g0", "g1"]],
+                ["TF1_regulon"],
+                2,
+            )
+        ]
+
+    def test_prune_regulons_accepts_strided_rankings_without_python_contiguity_copy(self):
+        enriched = pd.DataFrame(
+            [
+                {"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30},
+                {"regulon": "TF2_regulon", "motif": "M2", "auc": 0.31},
+            ]
+        )
+        annotations = pd.DataFrame({"motif": ["M1", "M2"], "TF": ["TF1", "TF2"]})
+        base = np.array(
+            [
+                [0.0, 1.0, 4.0, 5.0],
+                [4.0, 5.0, 0.0, 1.0],
+            ],
+            dtype=np.float64,
+        )
+        values = np.asfortranarray(base)
+        rankings = pd.DataFrame(
+            values,
+            index=["M1", "M2"],
+            columns=["g0", "g1", "g2", "g3"],
+        )
+        rankings_arg, _ = cistarget._prune_rankings_kernel_arg(rankings)
+
+        assert np.shares_memory(rankings_arg, values)
+        assert rankings_arg.flags.f_contiguous
+        assert not rankings_arg.flags.c_contiguous
+
+        candidates = [
+            ("TF1_regulon", ["g0", "g1", "g2"]),
+            ("TF2_regulon", ["g1", "g2", "g3"]),
+        ]
+        got = cistarget.prune_regulons(
+            enriched,
+            candidates,
+            annotations,
+            rankings=rankings,
+            top_frac=0.5,
+            min_genes=1,
+        )
+        assert got == {
+            "TF1_regulon": ["g0", "g1"],
+            "TF2_regulon": ["g2", "g3"],
+        }
+
+    def test_prune_regulons_uses_float32_rankings_without_upcast_copy(self):
+        enriched = pd.DataFrame(
+            [
+                {"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30},
+                {"regulon": "TF2_regulon", "motif": "M2", "auc": 0.31},
+            ]
+        )
+        annotations = pd.DataFrame({"motif": ["M1", "M2"], "TF": ["TF1", "TF2"]})
+        base = np.array(
+            [
+                [0.0, 1.0, 4.0, 5.0],
+                [4.0, 5.0, 0.0, 1.0],
+            ],
+            dtype=np.float32,
+        )
+        values = np.asfortranarray(base)
+        rankings = pd.DataFrame(
+            values,
+            index=["M1", "M2"],
+            columns=["g0", "g1", "g2", "g3"],
+        )
+        rankings_arg, kernel = cistarget._prune_rankings_kernel_arg(rankings)
+
+        assert rankings_arg.dtype == np.float32
+        assert kernel is cistarget._prune_regulon_targets_f32
+        assert np.shares_memory(rankings_arg, values)
+        assert rankings_arg.flags.f_contiguous
+        assert not rankings_arg.flags.c_contiguous
+
+        candidates = [
+            ("TF1_regulon", ["g0", "g1", "g2"]),
+            ("TF2_regulon", ["g1", "g2", "g3"]),
+        ]
+        got = cistarget.prune_regulons(
+            enriched,
+            candidates,
+            annotations,
+            rankings=rankings,
+            top_frac=0.5,
+            min_genes=1,
+        )
+        assert got == {
+            "TF1_regulon": ["g0", "g1"],
+            "TF2_regulon": ["g2", "g3"],
+        }
+
+    def test_prune_regulons_uses_int16_rankings_without_upcast_copy(self):
+        enriched = pd.DataFrame(
+            [
+                {"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30},
+                {"regulon": "TF2_regulon", "motif": "M2", "auc": 0.31},
+            ]
+        )
+        annotations = pd.DataFrame({"motif": ["M1", "M2"], "TF": ["TF1", "TF2"]})
+        base = np.array(
+            [
+                [0, 1, 4, 5],
+                [4, 5, 0, 1],
+            ],
+            dtype=np.int16,
+        )
+        values = np.asfortranarray(base)
+        rankings = pd.DataFrame(
+            values,
+            index=["M1", "M2"],
+            columns=["g0", "g1", "g2", "g3"],
+        )
+        rankings_arg, kernel = cistarget._prune_rankings_kernel_arg(rankings)
+
+        assert rankings_arg.dtype == np.int16
+        assert kernel is cistarget._prune_regulon_targets_i16
+        assert np.shares_memory(rankings_arg, values)
+        assert rankings_arg.flags.f_contiguous
+        assert not rankings_arg.flags.c_contiguous
+
+        candidates = [
+            ("TF1_regulon", ["g0", "g1", "g2"]),
+            ("TF2_regulon", ["g1", "g2", "g3"]),
+        ]
+        got = cistarget.prune_regulons(
+            enriched,
+            candidates,
+            annotations,
+            rankings=rankings,
+            top_frac=0.5,
+            min_genes=1,
+        )
+        assert got == {
+            "TF1_regulon": ["g0", "g1"],
+            "TF2_regulon": ["g2", "g3"],
+        }
+
+    def test_prune_regulons_uses_int64_rankings_without_upcast_copy(self):
+        enriched = pd.DataFrame(
+            [
+                {"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30},
+                {"regulon": "TF2_regulon", "motif": "M2", "auc": 0.31},
+            ]
+        )
+        annotations = pd.DataFrame({"motif": ["M1", "M2"], "TF": ["TF1", "TF2"]})
+        base = np.array(
+            [
+                [0, 1, 4, 5],
+                [4, 5, 0, 1],
+            ],
+            dtype=np.int64,
+        )
+        values = np.asfortranarray(base)
+        rankings = pd.DataFrame(
+            values,
+            index=["M1", "M2"],
+            columns=["g0", "g1", "g2", "g3"],
+        )
+        rankings_arg, kernel = cistarget._prune_rankings_kernel_arg(rankings)
+
+        assert rankings_arg.dtype == np.int64
+        assert kernel is cistarget._prune_regulon_targets_i64
+        assert np.shares_memory(rankings_arg, values)
+        assert rankings_arg.flags.f_contiguous
+        assert not rankings_arg.flags.c_contiguous
+
+        candidates = [
+            ("TF1_regulon", ["g0", "g1", "g2"]),
+            ("TF2_regulon", ["g1", "g2", "g3"]),
+        ]
+        got = cistarget.prune_regulons(
+            enriched,
+            candidates,
+            annotations,
+            rankings=rankings,
+            top_frac=0.5,
+            min_genes=1,
+        )
+        assert got == {
+            "TF1_regulon": ["g0", "g1"],
+            "TF2_regulon": ["g2", "g3"],
+        }
+
+    def test_prune_rankings_arg_does_not_allocate_isfinite_mask_for_integer_rankings(
+        self,
+        monkeypatch,
+    ):
+        rankings = pd.DataFrame(
+            np.arange(12, dtype=np.int32).reshape(2, 6),
+            index=["m0", "m1"],
+            columns=[f"g{i}" for i in range(6)],
+        )
+
+        def fail_isfinite(_values):
+            raise AssertionError("integer rankings do not need np.isfinite")
+
+        monkeypatch.setattr(cistarget.np, "isfinite", fail_isfinite)
+
+        rankings_arg, kernel = cistarget._prune_rankings_kernel_arg(rankings)
+
+        assert rankings_arg.dtype == np.int32
+        assert kernel is cistarget._prune_regulon_targets_i32
+
+    def test_prune_rankings_arg_unsigned_small_int_promotes_without_python_range_scan(self):
+        rankings = pd.DataFrame(
+            np.arange(12, dtype=np.uint32).reshape(2, 6),
+            index=["m0", "m1"],
+            columns=[f"g{i}" for i in range(6)],
+        )
+
+        rankings_arg, kernel = cistarget._prune_rankings_kernel_arg(rankings)
+
+        assert rankings_arg.dtype == np.int64
+        assert kernel is cistarget._prune_regulon_targets_i64
+
+    def test_prune_rankings_arg_rejects_uint64_without_python_range_scan(self):
+        rankings = pd.DataFrame(
+            np.arange(12, dtype=np.uint64).reshape(2, 6),
+            index=["m0", "m1"],
+            columns=[f"g{i}" for i in range(6)],
+        )
+
+        with pytest.raises(TypeError, match="signed int64"):
+            cistarget._prune_rankings_kernel_arg(rankings)
+
+    def test_prune_rankings_float_nan_validation_runs_in_rust(
+        self,
+        monkeypatch,
+    ):
+        enriched = pd.DataFrame(
+            [{"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30}]
+        )
+        annotations = pd.DataFrame({"motif": ["M1"], "TF": ["TF1"]})
+        rankings = pd.DataFrame(
+            [[0.0, np.nan]],
+            index=["M1"],
+            columns=["g0", "g1"],
+            dtype=np.float64,
+        )
+
+        def fail_isfinite(_values):
+            raise AssertionError("float64 pruning should validate in Rust")
+
+        monkeypatch.setattr(cistarget.np, "isfinite", fail_isfinite)
+
+        with pytest.raises(ValueError, match="NaN or Inf"):
+            cistarget.prune_regulons(
+                enriched,
+                [("TF1_regulon", ["g0", "g1"])],
+                annotations,
+                rankings=rankings,
+                top_frac=1.0,
+                min_genes=1,
+            )
+
+    def test_prune_rankings_float16_nan_validation_runs_in_rust(
+        self,
+        monkeypatch,
+    ):
+        enriched = pd.DataFrame(
+            [{"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30}]
+        )
+        annotations = pd.DataFrame({"motif": ["M1"], "TF": ["TF1"]})
+        rankings = pd.DataFrame(
+            np.array([[0.0, np.nan]], dtype=np.float16),
+            index=["M1"],
+            columns=["g0", "g1"],
+        )
+
+        def fail_isfinite(_values):
+            raise AssertionError("float16 pruning should validate after Rust dispatch")
+
+        monkeypatch.setattr(cistarget.np, "isfinite", fail_isfinite)
+
+        with pytest.raises(ValueError, match="NaN or Inf"):
+            cistarget.prune_regulons(
+                enriched,
+                [("TF1_regulon", ["g0", "g1"])],
+                annotations,
+                rankings=rankings,
+                top_frac=1.0,
+                min_genes=1,
+            )
 
     @pytest.mark.parametrize(
         "regulon_name, expected_tf",
@@ -167,6 +875,204 @@ class TestCistargetDeterminism:
             a.sort_values(["motif", "regulon"]).reset_index(drop=True),
             b.sort_values(["motif", "regulon"]).reset_index(drop=True),
         )
+
+
+def _reference_enrich_with_pandas_stack(
+    rankings,
+    regulons,
+    *,
+    top_frac,
+    auc_threshold,
+    nes_threshold,
+):
+    from rustscenic._stage_utils import prepare_regulon_indices
+    from rustscenic._rustscenic import aucell_score as _aucell_score
+
+    motif_names = list(rankings.index)
+    gene_names = list(rankings.columns)
+    scores = -rankings.values.astype(np.float32)
+    reg_names, reg_gene_indices, _, _ = prepare_regulon_indices(gene_names, regulons)
+    auc, _expression_max = _aucell_score(
+        np.ascontiguousarray(scores),
+        reg_names,
+        reg_gene_indices,
+        top_frac,
+    )
+    auc_arr = np.asarray(auc)
+    auc_df = pd.DataFrame(auc_arr, index=motif_names, columns=reg_names)
+    nes_arr = _reference_compute_nes(
+        auc_arr,
+        n_motifs=len(motif_names),
+    )
+    nes_df = pd.DataFrame(nes_arr, index=motif_names, columns=reg_names)
+    auc_long = auc_df.stack()
+    nes_long = nes_df.stack().reindex(auc_long.index)
+    long = pd.DataFrame({"auc": auc_long.values, "nes": nes_long.values})
+    long["motif"] = auc_long.index.get_level_values(0)
+    long["regulon"] = auc_long.index.get_level_values(1)
+    long = long.reset_index(drop=True)
+    long = long[long["auc"] >= auc_threshold]
+    if nes_threshold is not None:
+        long = long[long["nes"].notna() & (long["nes"] >= nes_threshold)]
+    long = long.sort_values("auc", ascending=False).reset_index(drop=True)
+    return long[["regulon", "motif", "auc", "nes"]]
+
+
+def _reference_compute_nes(auc_arr, *, n_motifs):
+    nes = np.full_like(auc_arr, fill_value=np.nan, dtype=np.float32)
+    if n_motifs < cistarget._NES_MIN_MOTIFS:
+        return nes
+    means = auc_arr.mean(axis=0)
+    stds = auc_arr.std(axis=0, ddof=0)
+    zero_var = stds < 1e-6
+    safe_stds = np.where(zero_var, 1.0, stds)
+    nes_full = (auc_arr - means) / safe_stds
+    nes_full[:, zero_var] = np.nan
+    return nes_full.astype(np.float32)
+
+
+def _sort_enrichment_for_compare(df):
+    return (
+        df.sort_values(["regulon", "motif", "auc", "nes"], kind="mergesort")
+        .reset_index(drop=True)
+    )
+
+
+def _reference_prune_enriched_motifs_with_pandas_merge(
+    enriched,
+    motif_annotations,
+    *,
+    motif_col=None,
+    tf_col=None,
+    auc_threshold=None,
+    nes_threshold=None,
+    case_sensitive=False,
+):
+    cistarget._require_columns(enriched, {"regulon", "motif", "auc"}, name="enriched")
+    if enriched.empty:
+        return pd.DataFrame(columns=list(enriched.columns) + ["tf", "annotation_tf"])
+
+    ct = enriched.copy()
+    if auc_threshold is not None:
+        ct = ct.loc[ct["auc"] >= auc_threshold].copy()
+    if nes_threshold is not None:
+        ct = ct.loc[ct["nes"].notna() & (ct["nes"] >= nes_threshold)].copy()
+    if ct.empty:
+        return pd.DataFrame(columns=list(enriched.columns) + ["tf", "annotation_tf"])
+
+    ann = _reference_normalise_motif_annotations(
+        motif_annotations,
+        motif_col=motif_col,
+        tf_col=tf_col,
+        case_sensitive=case_sensitive,
+    )
+
+    ct["tf"] = ct["regulon"].map(cistarget._tf_from_regulon_name)
+    ct["_motif_key"] = ct["motif"].astype(str)
+    ct["_tf_key"] = ct["tf"].astype(str)
+    if not case_sensitive:
+        ct["_tf_key"] = ct["_tf_key"].str.lower()
+
+    out = ct.merge(
+        ann,
+        on=["_motif_key", "_tf_key"],
+        how="inner",
+        sort=False,
+    )
+    out = out.drop(columns=["_motif_key", "_tf_key"])
+    return out.reset_index(drop=True)
+
+
+def _reference_normalise_motif_annotations(
+    motif_annotations,
+    *,
+    motif_col,
+    tf_col,
+    case_sensitive,
+):
+    motif_col = motif_col or cistarget._find_annotation_column(
+        motif_annotations,
+        ["motif", "motifs", "motif_id", "motifid", "features", "#motif_id"],
+        role="motif",
+    )
+    tf_col = tf_col or cistarget._find_annotation_column(
+        motif_annotations,
+        [
+            "tf", "TF", "transcription_factor", "gene_name", "gene",
+            "symbol", "tf_name", "factor",
+        ],
+        role="TF",
+    )
+    rows = []
+    for rec in motif_annotations[[motif_col, tf_col]].itertuples(index=False):
+        if pd.isna(rec[1]):
+            continue
+        motif = str(rec[0])
+        text = str(rec[1])
+        for sep in (";", ",", "|"):
+            text = text.replace(sep, "/")
+        for tf in (part.strip() for part in text.split("/") if part.strip()):
+            key = tf if case_sensitive else tf.lower()
+            rows.append((motif, key, tf))
+    return (
+        pd.DataFrame(rows, columns=["_motif_key", "_tf_key", "annotation_tf"])
+        .drop_duplicates()
+        .reset_index(drop=True)
+    )
+
+
+@pytest.mark.parametrize("nes_threshold", [None, 0.25])
+def test_enrich_matches_previous_pandas_stack_reference(nes_threshold):
+    """The memory-lean long-form assembly must preserve cistarget rows."""
+    rng = np.random.default_rng(41)
+    n_motifs, n_genes = 80, 140
+    rankings = np.empty((n_motifs, n_genes), dtype=np.int32)
+    for motif_i in range(n_motifs):
+        perm = rng.permutation(n_genes)
+        rankings[motif_i, perm] = np.arange(n_genes, dtype=np.int32)
+    rankings = pd.DataFrame(
+        rankings,
+        index=[f"m{i}" for i in range(n_motifs)],
+        columns=[f"g{i}" for i in range(n_genes)],
+    )
+    regulons = [
+        ("R_A", [f"g{i}" for i in range(30)]),
+        ("R_B", [f"g{i}" for i in range(20, 70, 2)]),
+        ("R_C", [f"g{i}" for i in range(75, 120)]),
+    ]
+
+    got = cistarget.enrich(
+        rankings,
+        regulons,
+        top_frac=0.08,
+        auc_threshold=0.01,
+        nes_threshold=nes_threshold,
+    )
+    expected = _reference_enrich_with_pandas_stack(
+        rankings,
+        regulons,
+        top_frac=0.08,
+        auc_threshold=0.01,
+        nes_threshold=nes_threshold,
+    )
+
+    pd.testing.assert_frame_equal(
+        _sort_enrichment_for_compare(got),
+        _sort_enrichment_for_compare(expected),
+        check_dtype=False,
+        atol=1e-7,
+        rtol=1e-7,
+    )
+
+
+def test_enrich_rejects_float_rankings():
+    rankings = pd.DataFrame(
+        np.arange(12, dtype=np.float32).reshape(2, 6) + 0.5,
+        index=["m0", "m1"],
+        columns=[f"g{i}" for i in range(6)],
+    )
+    with pytest.raises(TypeError, match="integer rank"):
+        cistarget.enrich(rankings, [("R_A", ["g0", "g1"])], auc_threshold=0.0)
 
 
 class TestCistargetNES:

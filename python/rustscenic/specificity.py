@@ -17,15 +17,24 @@ between topic modelling and motif enrichment.
 """
 from __future__ import annotations
 
-from typing import Iterable, Sequence, Union
+from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
 
+from rustscenic._rustscenic import (
+    specificity_candidate_top_indices as _candidate_top_indices,
+    specificity_candidate_top_indices_f32 as _candidate_top_indices_f32,
+    specificity_group_codes_with_numeric_order as _specificity_group_codes_with_numeric_order,
+    specificity_group_codes_with_order as _specificity_group_codes_with_order,
+    specificity_rss as _specificity_rss,
+    specificity_rss_f32 as _specificity_rss_f32,
+)
+
 
 def regulon_specificity_scores(
     auc: pd.DataFrame,
-    cell_groups: Union[pd.Series, Sequence],
+    cell_groups: pd.Series | Sequence,
 ) -> pd.DataFrame:
     """Per-(group, regulon) Jensen-Shannon-based specificity score.
 
@@ -54,43 +63,47 @@ def regulon_specificity_scores(
             f"{auc.shape[0]}"
         )
 
-    groups = np.unique(cell_groups[~pd.isna(cell_groups)])
-    auc_arr = auc.values.astype(np.float64)
+    missing = np.asarray(pd.isna(cell_groups), dtype=bool)
+    group_labels = [
+        "" if is_missing else str(group)
+        for group, is_missing in zip(cell_groups, missing, strict=True)
+    ]
+    if np.issubdtype(cell_groups.dtype, np.number):
+        group_codes, group_first_indices = _specificity_group_codes_with_numeric_order(
+            group_labels,
+            missing,
+            np.asarray(cell_groups, dtype=np.float64),
+        )
+    else:
+        group_codes, group_first_indices = _specificity_group_codes_with_order(
+            group_labels,
+            missing,
+        )
+    group_first_indices = np.asarray(group_first_indices)
+    groups = cell_groups[group_first_indices]
 
-    # Distribution Q: per-regulon column-normalised auc (group-independent -
-    # hoist the computation outside the loop so we don't realloc per group).
-    col_sums = auc_arr.sum(axis=0)
-    col_sums[col_sums == 0] = 1.0
-    Q = auc_arr / col_sums  # (n_cells, n_regulons), columns sum to 1
+    auc_values, rss_kernel = _rss_kernel_arg(auc.values)
+    rss = rss_kernel(
+        auc_values,
+        group_codes,
+        len(groups),
+    )
+    return pd.DataFrame(np.asarray(rss), index=groups, columns=auc.columns)
 
-    # Distribution P: per-group cell-count fraction (uniform over cells in that
-    # group), broadcasting against regulons.
-    rss = np.zeros((len(groups), auc.shape[1]), dtype=np.float64)
-    for gi, g in enumerate(groups):
-        mask = cell_groups == g
-        n_in = mask.sum()
-        if n_in == 0:
-            continue
-        # P[c, r] = 1/n_in if cell c in group g else 0  (column-constant)
-        P = mask.astype(np.float64) / max(n_in, 1)
-        # JS divergence per regulon: 0.5 * (KL(P || M) + KL(Q || M))
-        # where M = 0.5 * (P + Q). Compute per-regulon (column-wise).
-        for r in range(auc.shape[1]):
-            p = P
-            q = Q[:, r]
-            m = 0.5 * (p + q)
-            with np.errstate(divide="ignore", invalid="ignore"):
-                kl_pm = np.where(p > 0, p * np.log2(p / m), 0.0).sum()
-                kl_qm = np.where(q > 0, q * np.log2(q / m), 0.0).sum()
-            js = 0.5 * (kl_pm + kl_qm)
-            # RSS = 1 - sqrt(JS) - bounded [0, 1], higher = more specific.
-            rss[gi, r] = 1.0 - float(np.sqrt(max(js, 0.0)))
 
-    return pd.DataFrame(rss, index=groups, columns=auc.columns)
+def _rss_kernel_arg(values: np.ndarray):
+    values = np.asarray(values)
+    if values.dtype == np.float32:
+        return values, _specificity_rss_f32
+    if values.dtype == np.float64:
+        return values, _specificity_rss
+    if not np.issubdtype(values.dtype, np.number):
+        raise TypeError("auc must contain numeric values")
+    return values.astype(np.float64, copy=False), _specificity_rss
 
 
 def candidate_enhancers_per_topic(
-    topic_peak: Union[np.ndarray, pd.DataFrame],
+    topic_peak: np.ndarray | pd.DataFrame,
     peak_names: Sequence[str] | None = None,
     top_n: int = 2_000,
 ) -> dict[str, list[str]]:
@@ -127,11 +140,23 @@ def candidate_enhancers_per_topic(
             peak_names = list(peak_names)
         topic_names = [f"topic_{i}" for i in range(weights.shape[0])]
 
-    out: dict[str, list[str]] = {}
-    for ti, tname in enumerate(topic_names):
-        order = np.argsort(weights[ti])[::-1][:top_n]
-        out[tname] = [peak_names[i] for i in order]
-    return out
+    weights_arg, top_indices_kernel = _candidate_top_indices_kernel_arg(weights)
+    top_indices = np.asarray(top_indices_kernel(weights_arg, int(top_n)))
+    return {
+        tname: [peak_names[i] for i in top_indices[ti]]
+        for ti, tname in enumerate(topic_names)
+    }
+
+
+def _candidate_top_indices_kernel_arg(weights: np.ndarray):
+    weights = np.asarray(weights)
+    if weights.dtype == np.float32:
+        return weights, _candidate_top_indices_f32
+    if weights.dtype == np.float64:
+        return weights, _candidate_top_indices
+    if not np.issubdtype(weights.dtype, np.number):
+        raise TypeError("topic_peak must contain numeric values")
+    return weights.astype(np.float64, copy=False), _candidate_top_indices
 
 
 __all__ = [

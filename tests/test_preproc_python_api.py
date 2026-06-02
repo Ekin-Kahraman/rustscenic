@@ -159,6 +159,17 @@ def test_call_peaks_recovers_synthetic_peaks():
     assert hits_50k, f"peak near 50_000 not recovered: {peaks}"
 
 
+def test_call_peaks_derives_n_clusters_in_rust_when_omitted():
+    lines = [f"chr1\t{1000 + i * 5}\t{1080 + i * 5}\tAAA-1\t1" for i in range(30)]
+    frag_path, td = _write_fragments(lines)
+    with td:
+        peaks = rustscenic.preproc.call_peaks(
+            frag_path,
+            cluster_per_barcode=np.array([1], dtype=np.uint32),
+        )
+    assert not peaks.empty
+
+
 def test_call_peaks_writes_bed_when_requested():
     lines = [f"chr1\t{1000 + i * 5}\t{1080 + i * 5}\tAAA-1\t1" for i in range(30)]
     frag_path, td_f = _write_fragments(lines)
@@ -170,7 +181,8 @@ def test_call_peaks_writes_bed_when_requested():
             output_bed=out_path,
         )
         assert os.path.exists(out_path)
-        content = open(out_path).read().strip().splitlines()
+        with open(out_path) as fh:
+            content = fh.read().strip().splitlines()
         assert len(content) == len(peaks)
         # Each BED line is 4 tab-separated fields
         assert all(len(line.split("\t")) == 4 for line in content)
@@ -181,20 +193,16 @@ def test_call_peaks_wrong_cluster_length_raises():
         "chr1\t100\t200\tAAA-1\t1",
         "chr1\t200\t300\tBBB-1\t1",
     ])
-    with td:
-        with pytest.raises(RuntimeError, match="cluster_per_barcode has length"):
-            rustscenic.preproc.call_peaks(
-                frag_path,
-                cluster_per_barcode=[0, 0, 0],  # 3, but only 2 barcodes
-                n_clusters=1,
-            )
+    with td, pytest.raises(RuntimeError, match="cluster_per_barcode has length"):
+        rustscenic.preproc.call_peaks(
+            frag_path,
+            cluster_per_barcode=[0, 0, 0],  # 3, but only 2 barcodes
+            n_clusters=1,
+        )
 
 
 def test_call_peaks_aligns_series_by_barcode_index(tmp_path, monkeypatch):
     captured = {}
-
-    def fake_insert_size_stats(_fragments_path):
-        return (["AAA-1", "BBB-1"],)
 
     def fake_call_peaks(
         fragments_path,
@@ -205,13 +213,21 @@ def test_call_peaks_aligns_series_by_barcode_index(tmp_path, monkeypatch):
         quantile_threshold,
         max_gap,
         peak_half_width,
+        cluster_barcodes=None,
     ):
         captured["clusters"] = cluster_per_barcode
+        captured["cluster_barcodes"] = cluster_barcodes
         captured["n_clusters"] = n_clusters
         return [], np.array([], dtype=np.uint32), np.array([], dtype=np.uint32), []
 
-    monkeypatch.setattr(rustscenic.preproc, "_insert_size_stats", fake_insert_size_stats)
     monkeypatch.setattr(rustscenic.preproc, "_call_peaks", fake_call_peaks)
+    monkeypatch.setattr(
+        rustscenic.preproc,
+        "_insert_size_stats",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("Series alignment should happen inside preproc_call_peaks")
+        ),
+    )
 
     frag_path = tmp_path / "fragments.tsv.gz"
     frag_path.write_text("")
@@ -220,23 +236,104 @@ def test_call_peaks_aligns_series_by_barcode_index(tmp_path, monkeypatch):
     out = rustscenic.preproc.call_peaks(frag_path, clusters)
 
     assert out.empty
-    assert captured["clusters"] == [0, 1]
-    assert captured["n_clusters"] == 2
+    assert isinstance(captured["clusters"], np.ndarray)
+    assert captured["clusters"].dtype == np.int64
+    assert captured["clusters"].tolist() == [1, 0]
+    assert captured["cluster_barcodes"] == ["BBB-1", "AAA-1"]
+    assert captured["n_clusters"] is None
 
 
-def test_call_peaks_series_missing_barcode_raises(tmp_path, monkeypatch):
-    def fake_insert_size_stats(_fragments_path):
-        return (["AAA-1", "BBB-1"],)
+def test_call_peaks_passes_uint32_array_without_list_expansion_or_python_cluster_scan(
+    tmp_path,
+    monkeypatch,
+):
+    captured = {}
 
-    monkeypatch.setattr(rustscenic.preproc, "_insert_size_stats", fake_insert_size_stats)
+    def fake_call_peaks(
+        fragments_path,
+        cluster_per_barcode,
+        n_clusters,
+        window_size,
+        min_fragments_per_window,
+        quantile_threshold,
+        max_gap,
+        peak_half_width,
+        cluster_barcodes=None,
+    ):
+        captured["clusters"] = cluster_per_barcode
+        captured["cluster_barcodes"] = cluster_barcodes
+        captured["n_clusters"] = n_clusters
+        return [], np.array([], dtype=np.uint32), np.array([], dtype=np.uint32), []
+
+    monkeypatch.setattr(rustscenic.preproc, "_call_peaks", fake_call_peaks)
+
+    def fail_max(*_args, **_kwargs):
+        raise AssertionError("n_clusters derivation should happen in Rust")
+
+    monkeypatch.setattr(rustscenic.preproc.np, "max", fail_max)
+
     frag_path = tmp_path / "fragments.tsv.gz"
     frag_path.write_text("")
+    clusters = np.array([0, 1], dtype=np.uint32)
 
-    with pytest.raises(ValueError, match="missing fragment barcodes"):
-        rustscenic.preproc.call_peaks(
+    out = rustscenic.preproc.call_peaks(frag_path, clusters)
+
+    assert out.empty
+    assert captured["clusters"].dtype == np.uint32
+    assert np.shares_memory(captured["clusters"], clusters)
+    assert captured["clusters"].tolist() == [0, 1]
+    assert captured["cluster_barcodes"] is None
+    assert captured["n_clusters"] is None
+
+
+def test_call_peaks_normalises_negative_cluster_labels_in_rust():
+    lines = [
+        "chr1\t100\t200\tAAA-1\t1",
+        "chr1\t200\t300\tBBB-1\t1",
+    ]
+    frag_path, td = _write_fragments(lines)
+    with td:
+        peaks = rustscenic.preproc.call_peaks(
             frag_path,
-            pd.Series([0], index=["AAA-1"]),
+            cluster_per_barcode=np.array([0, -1], dtype=np.int64),
+            n_clusters=1,
         )
+    assert isinstance(peaks, pd.DataFrame)
+
+
+def test_call_peaks_series_aligns_by_barcode_index_inside_rust():
+    lines = []
+    for i in range(40):
+        lines.append(f"chr1\t{10_000 + i * 2}\t{10_080 + i * 2}\tAAA-1\t1")
+    for i in range(40):
+        lines.append(f"chr1\t{50_000 + i * 2}\t{50_080 + i * 2}\tBBB-1\t1")
+
+    frag_path, td = _write_fragments(lines)
+    clusters = pd.Series([0, -1], index=["BBB-1", "AAA-1"])
+    with td:
+        peaks = rustscenic.preproc.call_peaks(
+            frag_path,
+            clusters,
+            n_clusters=1,
+        )
+
+    hits_10k = ((peaks["start"] < 10_500) & (peaks["end"] > 9_500)).any()
+    hits_50k = ((peaks["start"] < 50_500) & (peaks["end"] > 49_500)).any()
+    assert hits_50k, f"reversed Series index was not aligned in Rust: {peaks}"
+    assert not hits_10k, f"unassigned AAA-1 fragments should not produce a peak: {peaks}"
+
+
+def test_call_peaks_series_missing_barcode_raises():
+    frag_path, td = _write_fragments([
+        "chr1\t100\t200\tAAA-1\t1",
+        "chr1\t200\t300\tBBB-1\t1",
+    ])
+    with pytest.raises(ValueError, match="missing fragment barcodes"):
+        with td:
+            rustscenic.preproc.call_peaks(
+                frag_path,
+                pd.Series([0], index=["AAA-1"]),
+            )
 
 
 # ---- TSS chrom-normalisation regression -----------------------------------

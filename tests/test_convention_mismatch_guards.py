@@ -19,7 +19,6 @@ import warnings
 import anndata as ad
 import numpy as np
 import pandas as pd
-import pytest
 
 
 # ---- chromosome naming ----------------------------------------------------
@@ -29,9 +28,6 @@ def test_ucsc_vs_ensembl_chrom_names_dont_silently_drop_fragments():
     """Fragments in `chr1` notation, peaks in `1` notation.
     `build_cell_peak_matrix` must still produce a non-empty matrix.
     Before the normalise_chrom helper, every overlap was silently dropped."""
-    import io
-    from rustscenic._rustscenic import __version__  # ensure module built
-
     # Exercise the Rust layer via its PyO3 binding when available; for now
     # the pure-Rust path is covered by the cargo tests. This test asserts
     # the *symptom* - Python-facing behaviour - is correct.
@@ -209,7 +205,7 @@ def test_full_pipeline_survives_both_chrom_and_var_names_conventions():
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        links = rustscenic.enhancer.link_peaks_to_genes(
+        rustscenic.enhancer.link_peaks_to_genes(
             rna, atac, gene_coords, max_distance=1_000_000, min_abs_corr=0.3,
         )
 

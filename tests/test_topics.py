@@ -15,7 +15,7 @@ def synthetic_atac_2_topics():
     X = np.zeros((n_cells, n_peaks), dtype=np.int32)
     rng = np.random.default_rng(0)
     for i in range(100):
-        active = rng.choice(range(0, 10), size=6, replace=False)
+        active = rng.choice(range(10), size=6, replace=False)
         X[i, active] = 1
     for i in range(100, 200):
         active = rng.choice(range(20, 30), size=6, replace=False)
@@ -55,9 +55,11 @@ class TestTopicsShape:
         assert isinstance(seen["row_ptr"], np.ndarray)
         assert isinstance(seen["col_idx"], np.ndarray)
         assert isinstance(seen["counts"], np.ndarray)
-        assert seen["row_ptr"].dtype == np.uint64
-        assert seen["col_idx"].dtype == np.uint32
+        assert seen["row_ptr"].dtype == X.indptr.dtype
+        assert seen["col_idx"].dtype == np.int32
         assert seen["counts"].dtype == np.float32
+        assert np.shares_memory(seen["row_ptr"], X.indptr)
+        assert np.shares_memory(seen["col_idx"], X.indices)
 
 
 class TestTopicsCorrectness:
@@ -88,6 +90,117 @@ class TestTopicsCorrectness:
 
         assert pd.isna(assignment.loc["empty_cell"])
         assert assignment.loc["active_cell"] == "Topic_1"
+
+    def test_cell_assignment_uses_rust_row_scanner_without_float32_copy(self, monkeypatch):
+        values = np.asfortranarray(
+            np.array(
+                [[0.1, 0.9], [0.0, 0.0], [0.8, 0.2]],
+                dtype=np.float32,
+            )
+        )
+        res = topics.TopicsResult(
+            cell_topic=pd.DataFrame(
+                values,
+                index=["c0", "c1", "c2"],
+                columns=["Topic_0", "Topic_1"],
+            ),
+            topic_peak=pd.DataFrame([[0.5], [0.5]], index=["Topic_0", "Topic_1"]),
+            n_topics=2,
+        )
+
+        def fake_assignment(arg):
+            assert np.shares_memory(arg, values)
+            assert arg.flags.f_contiguous
+            assert not arg.flags.c_contiguous
+            return np.array([1, -1, 0], dtype=np.int64), 2, 1
+
+        monkeypatch.setattr(topics, "_topics_cell_assignment", fake_assignment)
+
+        with pytest.warns(UserWarning, match="zero or non-finite total topic weight"):
+            assignment = res.cell_assignment()
+
+        assert assignment.loc["c0"] == "Topic_1"
+        assert pd.isna(assignment.loc["c1"])
+        assert assignment.loc["c2"] == "Topic_0"
+
+    def test_top_peaks_per_topic_uses_descending_topic_weights(self):
+        res = topics.TopicsResult(
+            cell_topic=pd.DataFrame([[0.5, 0.5]], columns=["Topic_0", "Topic_1"]),
+            topic_peak=pd.DataFrame(
+                [[0.1, 0.9, 0.2, 0.8], [0.6, 0.2, 0.7, 0.1]],
+                index=["Topic_0", "Topic_1"],
+                columns=["p0", "p1", "p2", "p3"],
+            ),
+            n_topics=2,
+        )
+
+        assert res.top_peaks_per_topic(n=2) == {
+            "Topic_0": ["p1", "p3"],
+            "Topic_1": ["p2", "p0"],
+        }
+
+    def test_top_peaks_per_topic_passes_strided_weights_without_copy(self, monkeypatch):
+        values = np.asfortranarray(
+            np.array(
+                [[0.1, 0.9, 0.2, 0.8], [0.6, 0.2, 0.7, 0.1]],
+                dtype=np.float64,
+            )
+        )
+        res = topics.TopicsResult(
+            cell_topic=pd.DataFrame([[0.5, 0.5]], columns=["Topic_0", "Topic_1"]),
+            topic_peak=pd.DataFrame(
+                values,
+                index=["Topic_0", "Topic_1"],
+                columns=["p0", "p1", "p2", "p3"],
+            ),
+            n_topics=2,
+        )
+
+        def fake_top_indices(weights, top_n):
+            assert np.shares_memory(weights, values)
+            assert weights.flags.f_contiguous
+            assert not weights.flags.c_contiguous
+            assert top_n == 2
+            return np.array([[1, 3], [2, 0]], dtype=np.uint64)
+
+        monkeypatch.setattr(topics, "_candidate_top_indices", fake_top_indices)
+
+        assert res.top_peaks_per_topic(n=2) == {
+            "Topic_0": ["p1", "p3"],
+            "Topic_1": ["p2", "p0"],
+        }
+
+    def test_top_peaks_per_topic_passes_float32_weights_without_upcast(self, monkeypatch):
+        values = np.asfortranarray(
+            np.array(
+                [[0.1, 0.9, 0.2, 0.8], [0.6, 0.2, 0.7, 0.1]],
+                dtype=np.float32,
+            )
+        )
+        res = topics.TopicsResult(
+            cell_topic=pd.DataFrame([[0.5, 0.5]], columns=["Topic_0", "Topic_1"]),
+            topic_peak=pd.DataFrame(
+                values,
+                index=["Topic_0", "Topic_1"],
+                columns=["p0", "p1", "p2", "p3"],
+            ),
+            n_topics=2,
+        )
+
+        def fake_top_indices(weights, top_n):
+            assert np.shares_memory(weights, values)
+            assert weights.dtype == np.float32
+            assert weights.flags.f_contiguous
+            assert not weights.flags.c_contiguous
+            assert top_n == 2
+            return np.array([[1, 3], [2, 0]], dtype=np.uint64)
+
+        monkeypatch.setattr(topics, "_candidate_top_indices_f32", fake_top_indices)
+
+        assert res.top_peaks_per_topic(n=2) == {
+            "Topic_0": ["p1", "p3"],
+            "Topic_1": ["p2", "p0"],
+        }
 
 
 class TestTopicsEdgeCases:
