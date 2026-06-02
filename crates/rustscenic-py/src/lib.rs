@@ -3061,8 +3061,8 @@ fn eregulon_assemble_from_slices<'py, T: Copy + Into<f64> + Sync>(
         enhancer_correlations.len(),
     )?;
 
-    let (rows, n_input_tfs, n_eregulons) = py.allow_threads(|| {
-        assemble_eregulon_rows(
+    let (mut eregulons, n_input_tfs) = py.allow_threads(|| {
+        assemble_eregulon_groups(
             grn_tfs,
             grn_targets,
             cistarget_regulons,
@@ -3077,24 +3077,31 @@ fn eregulon_assemble_from_slices<'py, T: Copy + Into<f64> + Sync>(
             use_grn_intersection,
         )
     });
+    let n_eregulons = eregulons.len();
 
-    let mut tf_col = Vec::with_capacity(rows.len());
-    let mut enhancer_col = Vec::with_capacity(rows.len());
-    let mut target_col = Vec::with_capacity(rows.len());
-    let mut n_links_col = Vec::with_capacity(rows.len());
-    let mut auc_col = Vec::with_capacity(rows.len());
-    for (tf, enhancer, target, n_links, auc) in rows {
-        tf_col.push(tf);
-        enhancer_col.push(enhancer);
-        target_col.push(target);
-        n_links_col.push(n_links);
-        auc_col.push(auc);
+    let n_rows = eregulons.iter().map(|er| er.n_edges).sum();
+    let mut tf_col = Vec::with_capacity(n_rows);
+    let mut enhancer_col = Vec::with_capacity(n_rows);
+    let mut target_col = Vec::with_capacity(n_rows);
+    let mut n_links_col = Vec::with_capacity(n_rows);
+    let mut auc_col = Vec::with_capacity(n_rows);
+    for er in &mut eregulons {
+        for target in &mut er.targets {
+            target.peaks.sort();
+            for &peak in &target.peaks {
+                tf_col.push(er.tf.as_str());
+                enhancer_col.push(peak);
+                target_col.push(target.gene);
+                n_links_col.push(er.n_edges as u32);
+                auc_col.push(er.motif_auc);
+            }
+        }
     }
 
     Ok((
-        PyList::new(py, tf_col.iter().map(|s| s.as_str()))?.unbind(),
-        PyList::new(py, enhancer_col.iter().map(|s| s.as_str()))?.unbind(),
-        PyList::new(py, target_col.iter().map(|s| s.as_str()))?.unbind(),
+        PyList::new(py, tf_col.iter().copied())?.unbind(),
+        PyList::new(py, enhancer_col.iter().copied())?.unbind(),
+        PyList::new(py, target_col.iter().copied())?.unbind(),
         PyArray1::from_vec(py, n_links_col).unbind(),
         PyArray1::from_vec(py, auc_col).unbind(),
         n_input_tfs,
@@ -3348,56 +3355,6 @@ fn validate_eregulon_assemble_lengths(
         )));
     }
     Ok(())
-}
-
-#[allow(clippy::type_complexity, clippy::too_many_arguments)]
-fn assemble_eregulon_rows<T: Copy + Into<f64>>(
-    grn_tfs: &[String],
-    grn_targets: &[String],
-    cistarget_regulons: &[String],
-    cistarget_peaks: &[String],
-    cistarget_aucs: &[T],
-    enhancer_peaks: &[String],
-    enhancer_genes: &[String],
-    enhancer_correlations: &[f32],
-    min_target_genes: usize,
-    min_enhancer_links: usize,
-    cistarget_auc_threshold: f64,
-    use_grn_intersection: bool,
-) -> (Vec<(String, String, String, u32, f64)>, usize, usize) {
-    let (eregulons, n_input_tfs) = assemble_eregulon_groups(
-        grn_tfs,
-        grn_targets,
-        cistarget_regulons,
-        cistarget_peaks,
-        cistarget_aucs,
-        enhancer_peaks,
-        enhancer_genes,
-        enhancer_correlations,
-        min_target_genes,
-        min_enhancer_links,
-        cistarget_auc_threshold,
-        use_grn_intersection,
-    );
-    let n_eregulons = eregulons.len();
-    let n_rows = eregulons.iter().map(|er| er.n_edges).sum();
-    let mut rows = Vec::with_capacity(n_rows);
-    for er in eregulons {
-        for mut target in er.targets {
-            target.peaks.sort();
-            for peak in target.peaks {
-                rows.push((
-                    er.tf.clone(),
-                    peak.to_string(),
-                    target.gene.to_string(),
-                    er.n_edges as u32,
-                    er.motif_auc,
-                ));
-            }
-        }
-    }
-
-    (rows, n_input_tfs, n_eregulons)
 }
 
 #[allow(clippy::too_many_arguments)]
