@@ -20,6 +20,7 @@ export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export RAYON_NUM_THREADS="${LSB_DJOB_NUMPROC:-4}"
+python validation/hpc/minerva/prepare_real_pbmc3k_data.py
 python validation/hpc/minerva/preflight_minerva.py \
   --require-clean \
   --require-repo-import \
@@ -38,10 +39,12 @@ The GRN scaling job writes one JSON artefact under
 `/sc/arion/projects/DiseaseGeneCell/Huang_lab_projects/rustscenic/results/`.
 
 Each launcher runs the preflight first and writes a `.preflight.json` file next
-to the benchmark result. The preflight records `rustscenic.__file__` and the
-compiled extension path, and the launchers pass `--require-repo-import` so jobs
-fail before benchmarking a stale installed package. It also checks that the
-compiled extension exposes the Rust kernels required by the pipeline.
+to the benchmark result. Before preflight, the launcher runs
+`prepare_real_pbmc3k_data.py` to download any missing 10x PBMC3k inputs and
+verify their SHA-256 hashes. The preflight records `rustscenic.__file__` and
+the compiled extension path, and the launchers pass `--require-repo-import` so
+jobs fail before benchmarking a stale installed package. It also checks that
+the compiled extension exposes the Rust kernels required by the pipeline.
 
 The benchmark artefact records the repo commit, tracked source-clean state,
 tracked-diff SHA-256 fingerprint, RustScenic version, backend capabilities,

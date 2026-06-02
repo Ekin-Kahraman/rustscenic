@@ -33,6 +33,10 @@ mkdir -p "${PROJECT}/logs" "${PROJECT}/results/real_pbmc3k_full_pipeline" "${TMP
 . "${ENV}/bin/activate"
 cd "${REPO}"
 
+python validation/hpc/minerva/prepare_real_pbmc3k_data.py \
+  --data-dir "${DATA_DIR}" \
+  --json-out "${PROJECT}/results/real_pbmc3k_full_pipeline/${RUN_ID}.data.json"
+
 echo "host=$(hostname)"
 echo "date=$(date -Is)"
 echo "python=$(python --version)"

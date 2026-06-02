@@ -278,6 +278,7 @@ def preflight(args: argparse.Namespace) -> dict[str, Any]:
             "grn_scaling": _path_status(repo / "validation/hpc/minerva/run_real_pbmc3k_grn_scaling.lsf"),
         },
         "hpc_tools": {
+            "prepare_data": _path_status(repo / "validation/hpc/minerva/prepare_real_pbmc3k_data.py"),
             "collector": _path_status(repo / "validation/hpc/minerva/collect_benchmark_results.py"),
             "validator": _path_status(repo / "validation/hpc/minerva/validate_benchmark_artifact.py"),
         },

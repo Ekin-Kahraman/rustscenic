@@ -860,6 +860,7 @@ def _write_minerva_preflight_fixture(tmp_path: Path):
     (hpc / "run_real_pbmc3k_full_pipeline.lsf").write_text("# fixture\n")
     (hpc / "run_real_pbmc3k_full_pipeline_scaling.lsf").write_text("# fixture\n")
     (hpc / "run_real_pbmc3k_grn_scaling.lsf").write_text("# fixture\n")
+    (hpc / "prepare_real_pbmc3k_data.py").write_text("# fixture\n")
     (hpc / "collect_benchmark_results.py").write_text("# fixture\n")
     (hpc / "validate_benchmark_artifact.py").write_text("# fixture\n")
     (env / "bin" / "python").write_text("# fixture\n")
@@ -875,6 +876,47 @@ def _preflight_backend_state():
         "parse_error": None,
         "stderr": "",
     }
+
+
+def test_prepare_real_pbmc3k_data_skips_valid_existing_file(tmp_path):
+    from validation.hpc.minerva import prepare_real_pbmc3k_data as module
+
+    dest = tmp_path / "tiny.txt"
+    dest.write_text("fixture\n")
+    spec = module.DataFile(
+        filename=dest.name,
+        url="https://example.invalid/tiny.txt",
+        size_bytes=dest.stat().st_size,
+        sha256=module.sha256_file(dest),
+    )
+
+    result = module.download_file(spec, dest, force=False, timeout=0.01)
+
+    assert result == {
+        "filename": "tiny.txt",
+        "status": "present",
+        "path": str(dest),
+    }
+
+
+def test_prepare_real_pbmc3k_data_rejects_existing_hash_mismatch(tmp_path):
+    from validation.hpc.minerva import prepare_real_pbmc3k_data as module
+
+    dest = tmp_path / "tiny.txt"
+    dest.write_text("wrong\n")
+    spec = module.DataFile(
+        filename=dest.name,
+        url="https://example.invalid/tiny.txt",
+        size_bytes=999,
+        sha256="0" * 64,
+    )
+
+    try:
+        module.download_file(spec, dest, force=False, timeout=0.01)
+    except RuntimeError as exc:
+        assert "does not match expected PBMC3k hash" in str(exc)
+    else:
+        raise AssertionError("mismatched existing file should fail")
 
 
 def test_minerva_preflight_accepts_ready_clean_checkout(monkeypatch, tmp_path):
@@ -932,6 +974,7 @@ def test_minerva_preflight_accepts_ready_clean_checkout(monkeypatch, tmp_path):
     assert result["git"]["commit"] == "abc123"
     assert result["import"]["rustscenic_version"] == "0.4.7"
     assert result["backend"]["ok"] is True
+    assert result["hpc_tools"]["prepare_data"]["exists"] is True
     assert result["hpc_tools"]["collector"]["exists"] is True
     assert result["hpc_tools"]["validator"]["exists"] is True
 
@@ -2194,18 +2237,21 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     ).read_text()
     grn = (ROOT / "validation/hpc/minerva/run_real_pbmc3k_grn_scaling.lsf").read_text()
 
+    assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in full
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in full
     assert "validation/hpc/minerva/collect_benchmark_results.py" in full
     assert "--check-output-files" in full
     assert "--require-repo-import" in full
     assert "--require-thread-pins" in full
     assert '--threads "${RAYON_NUM_THREADS}"' in full
+    assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in full_scaling
     assert "validation/scaling/bench_real_multiome_pipeline_scaling.py" in full_scaling
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in full_scaling
     assert "validation/hpc/minerva/collect_benchmark_results.py" in full_scaling
     assert "--check-output-files" in full_scaling
     assert "--require-repo-import" in full_scaling
     assert "--require-thread-pins" in full_scaling
+    assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in grn
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in grn
     assert "validation/hpc/minerva/collect_benchmark_results.py" in grn
     assert "--require-repo-import" in grn
