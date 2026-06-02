@@ -308,6 +308,49 @@ def test_eregulon_dataframe_uses_float32_cistarget_auc_without_upcast(monkeypatc
     assert table.loc[0, "tf"] == "SPI1"
 
 
+def test_eregulon_dataframe_reuses_rust_string_lists(monkeypatch):
+    import rustscenic.eregulon as ermod
+
+    tf_values = ["SPI1"]
+    enhancer_values = ["peak_1"]
+    target_values = ["GENE_A"]
+
+    def fake_assemble(*_args):
+        return (
+            tf_values,
+            enhancer_values,
+            target_values,
+            np.array([1], dtype=np.uint32),
+            np.array([0.2], dtype=np.float64),
+            1,
+            1,
+        )
+
+    real_dataframe = ermod.pd.DataFrame
+    seen: dict[str, object] = {}
+
+    def capturing_dataframe(data=None, *args, **kwargs):
+        if isinstance(data, dict) and "tf" in data:
+            seen.update(data)
+        return real_dataframe(data, *args, **kwargs)
+
+    monkeypatch.setattr(ermod, "_eregulon_assemble", fake_assemble)
+    monkeypatch.setattr(ermod.pd, "DataFrame", capturing_dataframe)
+
+    table = _build_eregulons_dataframe(
+        _fixture_grn(),
+        _fixture_cistarget(),
+        _fixture_enhancer_links(),
+        min_target_genes=1,
+        min_enhancer_links=1,
+    )
+
+    assert seen["tf"] is tf_values
+    assert seen["enhancer"] is enhancer_values
+    assert seen["target_gene"] is target_values
+    assert table.loc[0, "target_gene"] == "GENE_A"
+
+
 def test_eregulons_sorted_by_edge_count_descending():
     eregs = build_eregulons(
         _fixture_grn(), _fixture_cistarget(), _fixture_enhancer_links(),

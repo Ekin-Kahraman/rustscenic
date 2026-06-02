@@ -269,9 +269,9 @@ def _build_eregulons_dataframe(
 
     table = pd.DataFrame(
         {
-            "tf": list(tf),
-            "enhancer": list(enhancer),
-            "target_gene": list(target_gene),
+            "tf": tf,
+            "enhancer": enhancer,
+            "target_gene": target_gene,
             "n_enhancer_links": np.asarray(n_enhancer_links, dtype=np.uint32),
             "motif_auc": np.asarray(motif_auc, dtype=np.float64),
         },
