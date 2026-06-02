@@ -28,6 +28,10 @@ def test_rss_returns_groups_x_regulons_in_unit_interval():
     )
     groups = ["A"] * 30 + ["B"] * 40 + ["C"] * 30
     rss = regulon_specificity_scores(auc, groups)
+    assert rss.attrs["rust_backend"]["symbols"] == [
+        "specificity_group_codes_with_order",
+        "specificity_rss",
+    ]
     assert rss.shape == (3, 4)
     assert set(rss.index) == {"A", "B", "C"}
     assert list(rss.columns) == ["TF1", "TF2", "TF3", "TF4"]
@@ -74,6 +78,10 @@ def test_rss_accepts_strided_auc_without_python_contiguity_copy(monkeypatch):
     out = specificity.regulon_specificity_scores(auc, ["A", "A", "A", "B", "B", "B"])
 
     assert out.shape == (2, 4)
+    assert out.attrs["rust_backend"]["symbols"] == [
+        "specificity_group_codes_with_order",
+        "specificity_rss",
+    ]
 
 
 def test_rss_uses_float32_auc_without_upcast_copy(monkeypatch):
@@ -97,6 +105,10 @@ def test_rss_uses_float32_auc_without_upcast_copy(monkeypatch):
     out = specificity.regulon_specificity_scores(auc, ["A", "A", "A", "B", "B", "B"])
 
     assert out.shape == (2, 4)
+    assert out.attrs["rust_backend"]["symbols"] == [
+        "specificity_group_codes_with_order",
+        "specificity_rss_f32",
+    ]
 
 
 def test_rss_group_encoding_discovers_groups_in_rust(monkeypatch):
@@ -237,6 +249,8 @@ def test_candidate_enhancers_returns_top_n_per_topic_dataframe_input():
         weights, index=[f"topic_{i}" for i in range(n_topics)], columns=peak_names
     )
     out = candidate_enhancers_per_topic(topic_peak, top_n=10)
+    assert isinstance(out, dict)
+    assert out.rust_backend["symbols"] == ["specificity_candidate_top_indices"]
     assert set(out.keys()) == {f"topic_{i}" for i in range(n_topics)}
     for topic, peaks in out.items():
         assert len(peaks) == 10
@@ -301,6 +315,7 @@ def test_candidate_enhancers_uses_float32_weights_without_upcast_copy(monkeypatc
     monkeypatch.setattr(specificity, "_candidate_top_indices_f32", fake_top_indices)
     out = specificity.candidate_enhancers_per_topic(topic_peak, top_n=4)
 
+    assert out.rust_backend["symbols"] == ["specificity_candidate_top_indices_f32"]
     assert out == {
         "topic_0": ["peak_0", "peak_1", "peak_2", "peak_3"],
         "topic_1": ["peak_0", "peak_1", "peak_2", "peak_3"],

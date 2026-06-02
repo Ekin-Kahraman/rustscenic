@@ -34,6 +34,7 @@ class TopicsResult:
     cell_topic: pd.DataFrame   # (cells x topics)
     topic_peak: pd.DataFrame   # (topics x peaks)
     n_topics: int
+    backend_execution: dict | None = None
 
     def cell_assignment(self) -> pd.Series:
         """Argmax topic per cell."""
@@ -148,6 +149,9 @@ def fit(
     topic_names = [f"Topic_{k}" for k in range(n_topics)]
     cell_topic = pd.DataFrame(np.asarray(ct), index=cell_names, columns=topic_names)
     topic_peak = pd.DataFrame(np.asarray(tw), index=topic_names, columns=peak_names)
+    backend_execution = {"engine": "rust", "symbols": ["topics_fit"]}
+    cell_topic.attrs["rust_backend"] = backend_execution
+    topic_peak.attrs["rust_backend"] = backend_execution
     _, unique, _ = _topic_assignment_indices(cell_topic)
     if verbose:
         print(
@@ -155,7 +159,12 @@ def fit(
             f"{unique}/{n_topics} topics carry an argmax assignment.",
             file=sys.stderr, flush=True,
         )
-    return TopicsResult(cell_topic=cell_topic, topic_peak=topic_peak, n_topics=n_topics)
+    return TopicsResult(
+        cell_topic=cell_topic,
+        topic_peak=topic_peak,
+        n_topics=n_topics,
+        backend_execution=backend_execution,
+    )
 
 
 def fit_gibbs(
@@ -245,6 +254,9 @@ def fit_gibbs(
     topic_names = [f"Topic_{k}" for k in range(n_topics)]
     cell_topic = pd.DataFrame(np.asarray(theta), index=cell_names, columns=topic_names)
     topic_peak = pd.DataFrame(np.asarray(beta), index=topic_names, columns=peak_names)
+    backend_execution = {"engine": "rust", "symbols": ["topics_fit_gibbs"]}
+    cell_topic.attrs["rust_backend"] = backend_execution
+    topic_peak.attrs["rust_backend"] = backend_execution
     _, unique, _ = _topic_assignment_indices(cell_topic)
     if verbose:
         print(
@@ -252,7 +264,12 @@ def fit_gibbs(
             f"{unique}/{n_topics} topics carry an argmax assignment.",
             file=sys.stderr, flush=True,
         )
-    return TopicsResult(cell_topic=cell_topic, topic_peak=topic_peak, n_topics=n_topics)
+    return TopicsResult(
+        cell_topic=cell_topic,
+        topic_peak=topic_peak,
+        n_topics=n_topics,
+        backend_execution=backend_execution,
+    )
 
 
 def coherence_npmi(

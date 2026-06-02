@@ -287,7 +287,10 @@ def run(
             t0 = time.perf_counter()
             adata_atac = rustscenic.preproc.fragments_to_matrix(fragments, peaks)
             elapsed["preproc"] = time.perf_counter() - t0
-            backend_execution["preproc"] = _rust_execution("preproc_fragments_to_matrix")
+            backend_execution["preproc"] = _rust_execution_from_attrs(
+                adata_atac,
+                "preproc_fragments_to_matrix",
+            )
             log(f"      ATAC shape: {adata_atac.shape}, took {elapsed['preproc']:.1f}s")
         mark_memory("preproc")
 
@@ -316,7 +319,10 @@ def run(
                 n_passes=topics_n_passes,
                 seed=seed,
             )
-            backend_execution["topics"] = _rust_execution("topics_fit")
+            backend_execution["topics"] = _rust_execution_from_attrs(
+                topics_result.cell_topic,
+                "topics_fit",
+            )
         else:
             topics_result = rustscenic.topics.fit_gibbs(
                 adata_atac,
@@ -325,7 +331,10 @@ def run(
                 n_threads=topics_n_threads,
                 seed=seed,
             )
-            backend_execution["topics"] = _rust_execution("topics_fit_gibbs")
+            backend_execution["topics"] = _rust_execution_from_attrs(
+                topics_result.cell_topic,
+                "topics_fit_gibbs",
+            )
         elapsed["topics"] = time.perf_counter() - t0
         log(f"      fit in {elapsed['topics']:.1f}s")
         mark_memory("topics")
@@ -772,6 +781,8 @@ def _rust_execution(*symbols: str) -> dict:
 
 def _rust_execution_from_attrs(obj, *fallback_symbols: str) -> dict:
     backend = getattr(obj, "attrs", {}).get("rust_backend")
+    if not isinstance(backend, dict):
+        backend = getattr(obj, "uns", {}).get("rust_backend")
     if (
         isinstance(backend, dict)
         and backend.get("engine") == "rust"

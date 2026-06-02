@@ -48,6 +48,7 @@ def test_insert_size_stats_end_to_end():
     with td:
         stats = rustscenic.preproc.qc.insert_size_stats(frag_path)
     assert isinstance(stats, pd.DataFrame)
+    assert stats.attrs["rust_backend"]["symbols"] == ["preproc_insert_size_stats"]
     assert set(stats.columns) == {
         "mean", "median", "n_fragments",
         "sub_nucleosomal", "mono_nucleosomal", "di_nucleosomal",
@@ -76,6 +77,7 @@ def test_frip_end_to_end():
     with td_f, td_p:
         scores = rustscenic.preproc.qc.frip(frag_path, peaks_path)
     assert isinstance(scores, pd.Series)
+    assert scores.attrs["rust_backend"]["symbols"] == ["preproc_frip"]
     # AAA-1: all 3 fragments hit a peak
     assert abs(scores["AAA-1"] - 1.0) < 1e-4
     # BBB-1: 1 of 2 hits
@@ -114,6 +116,7 @@ def test_tss_enrichment_end_to_end():
     tss = pd.DataFrame({"chrom": ["chr1"], "position": [10_000]})
     with td:
         scores = rustscenic.preproc.qc.tss_enrichment(frag_path, tss)
+    assert scores.attrs["rust_backend"]["symbols"] == ["preproc_tss_enrichment"]
     assert scores["AAA-1"] > 5.0
     assert scores["BBB-1"] < 1.0
 
@@ -150,6 +153,7 @@ def test_call_peaks_recovers_synthetic_peaks():
             frag_path, cluster_per_barcode=[0], n_clusters=1,
         )
     assert isinstance(peaks, pd.DataFrame)
+    assert peaks.attrs["rust_backend"]["symbols"] == ["preproc_call_peaks"]
     assert set(peaks.columns) >= {"chrom", "start", "end", "name"}
     assert not peaks.empty
     # Recovery tolerance: peak_half_width=250 by default → peaks 501 bp wide
@@ -371,7 +375,8 @@ def test_fragments_to_matrix_warns_on_6column_strand_bed():
     peaks_path, td_p = _write_peaks_bed(["chr1\t1000\t20000\tpeak"])
     with td_f, td_p, warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        _ = rustscenic.preproc.fragments_to_matrix(frag_path, peaks_path)
+        adata = rustscenic.preproc.fragments_to_matrix(frag_path, peaks_path)
+    assert adata.uns["rust_backend"]["symbols"] == ["preproc_fragments_to_matrix"]
     msgs = [str(w.message) for w in caught]
     assert any("one-per-row" in m or "strand BED" in m for m in msgs), (
         f"one-per-row barcode pattern should have warned, got: {msgs}"

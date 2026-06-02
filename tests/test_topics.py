@@ -29,6 +29,9 @@ class TestTopicsShape:
         res = topics.fit((X, cells, peaks), n_topics=4, n_passes=3, seed=0, verbose=False)
         assert res.cell_topic.shape == (len(cells), 4)
         assert res.topic_peak.shape == (4, len(peaks))
+        assert res.backend_execution == {"engine": "rust", "symbols": ["topics_fit"]}
+        assert res.cell_topic.attrs["rust_backend"] == res.backend_execution
+        assert res.topic_peak.attrs["rust_backend"] == res.backend_execution
         # Rows sum to 1 (probabilities)
         np.testing.assert_allclose(res.cell_topic.values.sum(axis=1), 1.0, atol=1e-4)
         np.testing.assert_allclose(res.topic_peak.values.sum(axis=1), 1.0, atol=1e-4)

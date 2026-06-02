@@ -137,7 +137,12 @@ def fragments_to_matrix(
     )
     var = pd.DataFrame(index=pd.Index(list(peaks), name="peak"))
 
-    return ad.AnnData(X=X, obs=obs, var=var)
+    adata = ad.AnnData(X=X, obs=obs, var=var)
+    adata.uns["rust_backend"] = {
+        "engine": "rust",
+        "symbols": ["preproc_fragments_to_matrix"],
+    }
+    return adata
 
 
 def call_peaks(
@@ -216,6 +221,10 @@ def call_peaks(
             "name": list(names),
         }
     )
+    df.attrs["rust_backend"] = {
+        "engine": "rust",
+        "symbols": ["preproc_call_peaks"],
+    }
     if output_bed is not None:
         df.to_csv(output_bed, sep="\t", header=False, index=False)
     return df
@@ -248,7 +257,7 @@ class qc:
         barcodes, means, medians, counts, sub, mono, di = _insert_size_stats(
             fragments_path
         )
-        return pd.DataFrame(
+        out = pd.DataFrame(
             {
                 "mean": np.asarray(means, dtype=np.float32),
                 "median": np.asarray(medians, dtype=np.float32),
@@ -259,6 +268,11 @@ class qc:
             },
             index=pd.Index(list(barcodes), name="barcode"),
         )
+        out.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": ["preproc_insert_size_stats"],
+        }
+        return out
 
     @staticmethod
     def frip(
@@ -273,11 +287,16 @@ class qc:
         fragments_path = str(Path(fragments_path))
         peaks_path = str(Path(peaks_path))
         barcodes, scores = _frip(fragments_path, peaks_path)
-        return pd.Series(
+        out = pd.Series(
             np.asarray(scores, dtype=np.float32),
             index=pd.Index(list(barcodes), name="barcode"),
             name="frip",
         )
+        out.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": ["preproc_frip"],
+        }
+        return out
 
     @staticmethod
     def tss_enrichment(
@@ -310,11 +329,16 @@ class qc:
         chroms = [str(c) for c in tss["chrom"].tolist()]
         positions = [int(p) for p in tss["position"].tolist()]
         barcodes, scores = _tss_enrichment(fragments_path, chroms, positions)
-        return pd.Series(
+        out = pd.Series(
             np.asarray(scores, dtype=np.float32),
             index=pd.Index(list(barcodes), name="barcode"),
             name="tss_enrichment",
         )
+        out.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": ["preproc_tss_enrichment"],
+        }
+        return out
 
 
 __all__ = ["fragments_to_matrix", "call_peaks", "qc"]

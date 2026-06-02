@@ -32,6 +32,12 @@ from rustscenic._rustscenic import (
 )
 
 
+class CandidateEnhancers(dict):
+    """dict subclass carrying backend provenance for ranked topic peaks."""
+
+    rust_backend: dict
+
+
 def regulon_specificity_scores(
     auc: pd.DataFrame,
     cell_groups: pd.Series | Sequence,
@@ -74,32 +80,39 @@ def regulon_specificity_scores(
             missing,
             np.asarray(cell_groups, dtype=np.float64),
         )
+        group_backend_symbol = "specificity_group_codes_with_numeric_order"
     else:
         group_codes, group_first_indices = _specificity_group_codes_with_order(
             group_labels,
             missing,
         )
+        group_backend_symbol = "specificity_group_codes_with_order"
     group_first_indices = np.asarray(group_first_indices)
     groups = cell_groups[group_first_indices]
 
-    auc_values, rss_kernel = _rss_kernel_arg(auc.values)
+    auc_values, rss_kernel, rss_backend_symbol = _rss_kernel_arg(auc.values)
     rss = rss_kernel(
         auc_values,
         group_codes,
         len(groups),
     )
-    return pd.DataFrame(np.asarray(rss), index=groups, columns=auc.columns)
+    out = pd.DataFrame(np.asarray(rss), index=groups, columns=auc.columns)
+    out.attrs["rust_backend"] = {
+        "engine": "rust",
+        "symbols": [group_backend_symbol, rss_backend_symbol],
+    }
+    return out
 
 
 def _rss_kernel_arg(values: np.ndarray):
     values = np.asarray(values)
     if values.dtype == np.float32:
-        return values, _specificity_rss_f32
+        return values, _specificity_rss_f32, "specificity_rss_f32"
     if values.dtype == np.float64:
-        return values, _specificity_rss
+        return values, _specificity_rss, "specificity_rss"
     if not np.issubdtype(values.dtype, np.number):
         raise TypeError("auc must contain numeric values")
-    return values.astype(np.float64, copy=False), _specificity_rss
+    return values.astype(np.float64, copy=False), _specificity_rss, "specificity_rss"
 
 
 def candidate_enhancers_per_topic(
@@ -140,26 +153,35 @@ def candidate_enhancers_per_topic(
             peak_names = list(peak_names)
         topic_names = [f"topic_{i}" for i in range(weights.shape[0])]
 
-    weights_arg, top_indices_kernel = _candidate_top_indices_kernel_arg(weights)
+    weights_arg, top_indices_kernel, backend_symbol = _candidate_top_indices_kernel_arg(
+        weights
+    )
     top_indices = np.asarray(top_indices_kernel(weights_arg, int(top_n)))
-    return {
+    out = CandidateEnhancers({
         tname: [peak_names[i] for i in top_indices[ti]]
         for ti, tname in enumerate(topic_names)
-    }
+    })
+    out.rust_backend = {"engine": "rust", "symbols": [backend_symbol]}
+    return out
 
 
 def _candidate_top_indices_kernel_arg(weights: np.ndarray):
     weights = np.asarray(weights)
     if weights.dtype == np.float32:
-        return weights, _candidate_top_indices_f32
+        return weights, _candidate_top_indices_f32, "specificity_candidate_top_indices_f32"
     if weights.dtype == np.float64:
-        return weights, _candidate_top_indices
+        return weights, _candidate_top_indices, "specificity_candidate_top_indices"
     if not np.issubdtype(weights.dtype, np.number):
         raise TypeError("topic_peak must contain numeric values")
-    return weights.astype(np.float64, copy=False), _candidate_top_indices
+    return (
+        weights.astype(np.float64, copy=False),
+        _candidate_top_indices,
+        "specificity_candidate_top_indices",
+    )
 
 
 __all__ = [
+    "CandidateEnhancers",
     "regulon_specificity_scores",
     "candidate_enhancers_per_topic",
 ]

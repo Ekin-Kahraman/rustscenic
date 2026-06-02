@@ -38,6 +38,9 @@ def test_gibbs_recovers_planted_two_topics():
     )
     assert r.cell_topic.shape == (60, 2)
     assert r.topic_peak.shape == (2, 20)
+    assert r.backend_execution == {"engine": "rust", "symbols": ["topics_fit_gibbs"]}
+    assert r.cell_topic.attrs["rust_backend"] == r.backend_execution
+    assert r.topic_peak.attrs["rust_backend"] == r.backend_execution
 
     # Each row of cell_topic sums to ~1 (probability)
     assert np.allclose(r.cell_topic.sum(axis=1), 1.0, atol=1e-3)

@@ -370,6 +370,10 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     assert "memory" in manifest
     assert "integrated_adata" in manifest["memory"]
     assert result.backend_execution["grn"]["symbols"] == ["grn_infer"]
+    assert result.backend_execution["preproc"]["symbols"] == [
+        "preproc_fragments_to_matrix"
+    ]
+    assert result.backend_execution["topics"]["symbols"] == ["topics_fit"]
     assert result.backend_execution["cistarget"]["symbols"] == [
         "cistarget_enrichment_from_rankings_i32"
     ]
