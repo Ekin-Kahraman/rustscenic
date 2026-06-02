@@ -448,14 +448,15 @@ def run(
                 auc_threshold=cistarget_auc_threshold,
                 min_genes=1,
             )
-            backend_execution["cistarget_pruning"] = _rust_execution(
-                "cistarget_motif_annotation_prune_standard_rows_f32",
-                "cistarget_motif_annotation_prune_standard_rows_f64",
-                "cistarget_prune_regulon_targets_f32",
-                "cistarget_prune_regulon_targets_f64",
-                "cistarget_prune_regulon_targets_i16",
-                "cistarget_prune_regulon_targets_i32",
-                "cistarget_prune_regulon_targets_i64",
+            pruning_symbols = _rust_backend_symbols(pruned_enriched)
+            if not pruned_enriched.empty:
+                pruning_symbols.extend(
+                    rustscenic.cistarget._prune_regulons_backend_symbols(rankings_df)
+                )
+            backend_execution["cistarget_pruning"] = (
+                _rust_execution(*pruning_symbols)
+                if pruning_symbols
+                else _skipped_execution("no enriched cistarget rows to prune")
             )
             n_pruned_regulons = len(pruned_regulons)
             if pruned_regulons:

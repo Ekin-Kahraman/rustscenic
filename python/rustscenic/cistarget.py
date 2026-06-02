@@ -361,6 +361,7 @@ def prune_enriched_motifs(
             enriched["auc"],
             enriched["nes"] if "nes" in enriched.columns else None,
         )
+        backend_symbol = _motif_annotation_standard_backend_symbol(standard_kernel)
         (
             regulon_values,
             motif_values,
@@ -380,9 +381,14 @@ def prune_enriched_motifs(
             bool(case_sensitive),
         )
         if len(regulon_values) == 0:
-            return pd.DataFrame(
+            out = pd.DataFrame(
                 columns=list(enriched.columns) + ["tf", "annotation_tf"]
             )
+            out.attrs["rust_backend"] = {
+                "engine": "rust",
+                "symbols": [backend_symbol],
+            }
+            return out
         out_cols = {
             "regulon": regulon_values,
             "motif": motif_values,
@@ -392,15 +398,21 @@ def prune_enriched_motifs(
         }
         if nes_out is not None:
             out_cols["nes"] = nes_out
-        return pd.DataFrame(
+        out = pd.DataFrame(
             out_cols,
             columns=list(enriched.columns) + ["tf", "annotation_tf"],
         ).reset_index(drop=True)
+        out.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": [backend_symbol],
+        }
+        return out
 
     auc_values, nes_values, kernel = _motif_annotation_prune_kernel_arg(
         enriched["auc"],
         enriched["nes"] if nes_threshold is not None else None,
     )
+    backend_symbol = _motif_annotation_prune_backend_symbol(kernel)
     row_ix, tf_values, annotation_tf = kernel(
         enriched["regulon"].astype(str).tolist(),
         enriched["motif"].astype(str).tolist(),
@@ -413,9 +425,14 @@ def prune_enriched_motifs(
         bool(case_sensitive),
     )
     if len(row_ix) == 0:
-        return pd.DataFrame(
+        out = pd.DataFrame(
             columns=list(enriched.columns) + ["tf", "annotation_tf"]
         )
+        out.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": [backend_symbol],
+        }
+        return out
 
     idx = np.asarray(row_ix)
     out_cols = {
@@ -424,10 +441,15 @@ def prune_enriched_motifs(
     }
     out_cols["tf"] = list(tf_values)
     out_cols["annotation_tf"] = list(annotation_tf)
-    return pd.DataFrame(
+    out = pd.DataFrame(
         out_cols,
         columns=list(enriched.columns) + ["tf", "annotation_tf"],
     ).reset_index(drop=True)
+    out.attrs["rust_backend"] = {
+        "engine": "rust",
+        "symbols": [backend_symbol],
+    }
+    return out
 
 
 def prune_regulons(
@@ -522,6 +544,14 @@ def _motif_annotation_prune_kernel_arg(
     )
 
 
+def _motif_annotation_prune_backend_symbol(kernel) -> str:
+    if kernel is _motif_annotation_prune_rows_filtered_f32:
+        return "cistarget_motif_annotation_prune_rows_filtered_f32"
+    if kernel is _motif_annotation_prune_rows_filtered_f64:
+        return "cistarget_motif_annotation_prune_rows_filtered_f64"
+    raise RuntimeError("unknown motif annotation pruning kernel")
+
+
 def _motif_annotation_standard_kernel_arg(
     auc: pd.Series,
     nes: pd.Series | None,
@@ -537,6 +567,22 @@ def _motif_annotation_standard_kernel_arg(
         None if nes_values is None else nes_values.astype(np.float64, copy=False),
         _motif_annotation_prune_standard_rows_f64,
     )
+
+
+def _motif_annotation_standard_backend_symbol(kernel) -> str:
+    if kernel is _motif_annotation_prune_standard_rows_f32:
+        return "cistarget_motif_annotation_prune_standard_rows_f32"
+    if kernel is _motif_annotation_prune_standard_rows_f64:
+        return "cistarget_motif_annotation_prune_standard_rows_f64"
+    raise RuntimeError("unknown standard motif annotation pruning kernel")
+
+
+def _prune_regulons_backend_symbols(rankings: pd.DataFrame | None) -> list[str]:
+    if rankings is None:
+        return ["cistarget_prune_regulon_targets_unranked"]
+    if not isinstance(rankings, pd.DataFrame):
+        raise TypeError("rankings must be a pandas DataFrame")
+    return [_prune_rankings_backend_symbol_for_values(rankings.to_numpy(copy=False))]
 
 
 def _prune_rankings_kernel_arg(rankings: pd.DataFrame):
@@ -569,6 +615,47 @@ def _prune_rankings_kernel_arg(rankings: pd.DataFrame):
     if values.dtype == np.float64:
         return values, _prune_regulon_targets_f64
     return values.astype(np.float64, copy=False), _prune_regulon_targets_f64
+
+
+def _prune_rankings_backend_symbol(kernel) -> str:
+    if kernel is _prune_regulon_targets_i16:
+        return "cistarget_prune_regulon_targets_i16"
+    if kernel is _prune_regulon_targets_i32:
+        return "cistarget_prune_regulon_targets_i32"
+    if kernel is _prune_regulon_targets_i64:
+        return "cistarget_prune_regulon_targets_i64"
+    if kernel is _prune_regulon_targets_f32:
+        return "cistarget_prune_regulon_targets_f32"
+    if kernel is _prune_regulon_targets_f64:
+        return "cistarget_prune_regulon_targets_f64"
+    raise RuntimeError("unknown regulon target pruning kernel")
+
+
+def _prune_rankings_backend_symbol_for_values(values: np.ndarray) -> str:
+    if values.dtype == object:
+        raise TypeError("rankings DataFrame has dtype=object")
+    if values.dtype == np.int16:
+        return "cistarget_prune_regulon_targets_i16"
+    if values.dtype == np.int32:
+        return "cistarget_prune_regulon_targets_i32"
+    if values.dtype == np.int64:
+        return "cistarget_prune_regulon_targets_i64"
+    if np.issubdtype(values.dtype, np.integer):
+        if values.dtype.itemsize <= np.dtype(np.int32).itemsize and not np.issubdtype(
+            values.dtype, np.unsignedinteger
+        ):
+            return "cistarget_prune_regulon_targets_i32"
+        if values.dtype.itemsize < np.dtype(np.int64).itemsize:
+            return "cistarget_prune_regulon_targets_i64"
+        raise TypeError(
+            "rankings integer dtype is wider than the supported signed int64 "
+            "path; cast rankings to int64 before pruning"
+        )
+    if not np.issubdtype(values.dtype, np.floating):
+        raise TypeError("rankings must contain numeric rank values")
+    if values.dtype == np.float32:
+        return "cistarget_prune_regulon_targets_f32"
+    return "cistarget_prune_regulon_targets_f64"
 
 
 def _find_annotation_column(

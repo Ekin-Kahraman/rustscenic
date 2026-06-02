@@ -224,6 +224,9 @@ class TestCistargetCorrectness:
                 "annotation_tf": "G000",
             }
         ]
+        assert out.attrs["rust_backend"]["symbols"] == [
+            "cistarget_motif_annotation_prune_standard_rows_f64"
+        ]
 
     def test_prune_enriched_motifs_matches_previous_pandas_merge_reference(self):
         enriched = pd.DataFrame(
@@ -282,6 +285,9 @@ class TestCistargetCorrectness:
             nes_threshold=1.0,
         )
         pd.testing.assert_frame_equal(got, expected, check_dtype=False)
+        assert got.attrs["rust_backend"]["symbols"] == [
+            "cistarget_motif_annotation_prune_rows_filtered_f64"
+        ]
 
     def test_prune_enriched_motifs_threshold_filter_runs_in_rust_without_float32_upcast(
         self,
@@ -349,6 +355,9 @@ class TestCistargetCorrectness:
                 "annotation_tf": "TF1",
             }
         ]
+        assert out.attrs["rust_backend"]["symbols"] == [
+            "cistarget_motif_annotation_prune_standard_rows_f32"
+        ]
 
     def test_prune_regulons_keeps_only_recovered_targets(self):
         enriched = pd.DataFrame(
@@ -397,7 +406,14 @@ class TestCistargetCorrectness:
             ("TF2_regulon", ["g2", "missing"]),
         ]
 
-        for rankings in (base_rankings, base_rankings.astype(float) + 0.25):
+        cases = (
+            (base_rankings, "cistarget_prune_regulon_targets_i64"),
+            (base_rankings.astype(float) + 0.25, "cistarget_prune_regulon_targets_f64"),
+        )
+        for rankings, backend_symbol in cases:
+            assert cistarget._prune_regulons_backend_symbols(rankings) == [
+                backend_symbol
+            ]
             pruned = cistarget.prune_regulons(
                 enriched,
                 candidates,
@@ -445,6 +461,9 @@ class TestCistargetCorrectness:
             "TF2_regulon": ["g3", "g4"],
             "TF1_regulon": ["g0", "g1", "g2"],
         }
+        assert cistarget._prune_regulons_backend_symbols(None) == [
+            "cistarget_prune_regulon_targets_unranked"
+        ]
 
     def test_prune_regulons_deduplicates_candidate_targets_in_rust(self):
         enriched = pd.DataFrame(

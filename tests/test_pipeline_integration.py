@@ -634,6 +634,10 @@ def test_pipeline_run_with_motif_annotations_scores_pruned_regulons(tmp_path):
     assert result.regulon_source == "motif_annotation_pruned"
     assert result.n_candidate_regulons == 2
     assert result.n_pruned_regulons == 1
+    assert result.backend_execution["cistarget_pruning"]["symbols"] == [
+        "cistarget_motif_annotation_prune_standard_rows_f32",
+        "cistarget_prune_regulon_targets_i32",
+    ]
 
 
 def test_pipeline_run_without_motif_annotations_keeps_candidate_regulons(tmp_path):
