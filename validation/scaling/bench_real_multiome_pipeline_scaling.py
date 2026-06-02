@@ -115,6 +115,8 @@ def child_cmd(
         cmd.extend(["--grn-target-block-size", str(args.grn_target_block_size)])
     if args.motif_rankings is not None:
         cmd.extend(["--motif-rankings", str(args.motif_rankings)])
+    if args.motif_annotations is not None:
+        cmd.extend(["--motif-annotations", str(args.motif_annotations)])
     if args.gene_coords is not None:
         cmd.extend(["--gene-coords", str(args.gene_coords)])
     if args.expected_tfs:
@@ -246,6 +248,7 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
             "topics_n_iters": args.topics_n_iters,
             "topics_n_threads": args.topics_n_threads,
             "cistarget_nes_threshold": args.cistarget_nes_threshold,
+            "motif_annotations": str(args.motif_annotations) if args.motif_annotations else None,
             "enhancer_max_distance": args.enhancer_max_distance,
             "enhancer_min_abs_corr": args.enhancer_min_abs_corr,
             "eregulon_min_target_genes": args.eregulon_min_target_genes,
@@ -375,6 +378,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--cell-counts", type=int, nargs="+", default=[500, 1000, 2000])
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--motif-rankings", type=Path, default=None)
+    parser.add_argument("--motif-annotations", type=Path, default=None)
     parser.add_argument("--gene-coords", type=Path, default=None)
     parser.add_argument("--expected-tfs", nargs="*", default=[])
     parser.add_argument("--grn-n-estimators", type=int, default=100)

@@ -99,6 +99,24 @@ REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
             {"cistarget_enrichment_from_rankings_i64"},
         ),
     },
+    "pipeline_cistarget_pruning": {
+        "one_from_each": (
+            {
+                "cistarget_motif_annotation_prune_standard_rows_f32",
+                "cistarget_motif_annotation_prune_standard_rows_f64",
+                "cistarget_motif_annotation_prune_rows_filtered_f32",
+                "cistarget_motif_annotation_prune_rows_filtered_f64",
+            },
+            {
+                "cistarget_prune_regulon_targets_f32",
+                "cistarget_prune_regulon_targets_f64",
+                "cistarget_prune_regulon_targets_i16",
+                "cistarget_prune_regulon_targets_i32",
+                "cistarget_prune_regulon_targets_i64",
+                "cistarget_prune_regulon_targets_unranked",
+            },
+        ),
+    },
     "pipeline_enhancer": {
         "all_of": {
             "enhancer_align_cell_indices",
@@ -321,6 +339,23 @@ def _backend_execution_failures(
             failures.append(f"{stage_prefix}.symbols must be a non-empty string list")
             continue
         failures.extend(_backend_execution_symbol_failures(stage, symbols, stage_prefix))
+    for stage, state in sorted(execution.items()):
+        if stage in (required_rust_stages or set()):
+            continue
+        if stage not in REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS:
+            continue
+        if not isinstance(state, dict) or state.get("engine") != "rust":
+            continue
+        symbols = state.get("symbols")
+        stage_prefix = f"{prefix}.backend_execution.{stage}"
+        if (
+            not isinstance(symbols, list)
+            or not symbols
+            or not all(_nonempty_str(symbol) for symbol in symbols)
+        ):
+            failures.append(f"{stage_prefix}.symbols must be a non-empty string list")
+            continue
+        failures.extend(_backend_execution_symbol_failures(stage, symbols, stage_prefix))
     return failures
 
 
@@ -351,6 +386,14 @@ def _backend_execution_symbol_failures(
             f"{stage_prefix}.symbols must include at least one Rust symbol set "
             f"from {options}"
         )
+    for group in requirements.get("one_from_each", ()):
+        group = set(group)
+        if not group & symbol_set:
+            options = ", ".join(sorted(repr(symbol) for symbol in group))
+            failures.append(
+                f"{stage_prefix}.symbols must include at least one Rust symbol "
+                f"from {{{options}}}"
+            )
     return failures
 
 
@@ -364,7 +407,10 @@ def _reference_fingerprint_failures(record: dict[str, Any]) -> list[str]:
     shapes = record.get("shapes", {})
     if not isinstance(fingerprints, dict):
         return ["reference_fingerprints must be an object"]
-    for key in ("motif_rankings", "gene_coords"):
+    keys = ["motif_rankings", "gene_coords"]
+    if "motif_annotations" in fingerprints:
+        keys.append("motif_annotations")
+    for key in keys:
         fp = fingerprints.get(key)
         if not isinstance(fp, dict):
             failures.append(f"reference_fingerprints.{key} must be an object")
@@ -385,6 +431,16 @@ def _reference_fingerprint_failures(record: dict[str, Any]) -> list[str]:
         motif_fp = fingerprints.get("motif_rankings")
         if isinstance(motif_fp, dict) and _shape2(motif_shape) and motif_fp.get("shape") != motif_shape:
             failures.append("reference_fingerprints.motif_rankings.shape must match shapes.motif_rankings")
+        annotations_shape = shapes.get("motif_annotations")
+        annotations_fp = fingerprints.get("motif_annotations")
+        if (
+            isinstance(annotations_fp, dict)
+            and _shape2(annotations_shape)
+            and annotations_fp.get("shape") != annotations_shape
+        ):
+            failures.append(
+                "reference_fingerprints.motif_annotations.shape must match shapes.motif_annotations"
+            )
         gene_rows = shapes.get("gene_coords_rows")
         gene_fp = fingerprints.get("gene_coords")
         if isinstance(gene_fp, dict) and _positive_int(gene_rows) and _shape2(gene_fp.get("shape")):
@@ -789,6 +845,10 @@ def validate_full_pipeline(
         for stage in sorted(REQUIRED_FULL_PIPELINE_SETUP_STAGES & set(setup_elapsed)):
             if not _nonnegative_number(setup_elapsed.get(stage)):
                 failures.append(f"setup_elapsed_s.{stage} must be non-negative")
+        if "motif_annotations" in setup_elapsed and not _nonnegative_number(
+            setup_elapsed.get("motif_annotations")
+        ):
+            failures.append("setup_elapsed_s.motif_annotations must be non-negative")
     if not isinstance(elapsed, dict):
         failures.append("elapsed_per_stage must be an object")
     if not isinstance(memory, dict):
@@ -816,6 +876,8 @@ def validate_full_pipeline(
         for key in ("rna_post_qc", "atac_shared_cells", "motif_rankings"):
             if not _shape2(shapes.get(key)):
                 failures.append(f"shapes.{key} must be [positive_rows, positive_cols]")
+        if "motif_annotations" in shapes and not _shape2(shapes.get("motif_annotations")):
+            failures.append("shapes.motif_annotations must be [positive_rows, positive_cols]")
         for key in ("gene_coords_rows", "tfs_supplied"):
             if not _positive_int(shapes.get(key)):
                 failures.append(f"shapes.{key} must be positive")

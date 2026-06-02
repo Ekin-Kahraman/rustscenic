@@ -274,6 +274,12 @@ def test_real_multiome_scaling_child_cmd_runs_full_pipeline_in_child(tmp_path):
             "200",
             "--threads",
             "4",
+            "--motif-rankings",
+            str(tmp_path / "motifs.parquet"),
+            "--motif-annotations",
+            str(tmp_path / "annotations.tsv"),
+            "--gene-coords",
+            str(tmp_path / "genes.parquet"),
             "--expected-tfs",
             "SPI1",
             "PAX5",
@@ -293,6 +299,12 @@ def test_real_multiome_scaling_child_cmd_runs_full_pipeline_in_child(tmp_path):
     assert cmd[1].endswith("bench_real_multiome_pipeline.py")
     assert "--n-cells" in cmd
     assert cmd[cmd.index("--n-cells") + 1] == "100"
+    assert "--motif-rankings" in cmd
+    assert cmd[cmd.index("--motif-rankings") + 1].endswith("motifs.parquet")
+    assert "--motif-annotations" in cmd
+    assert cmd[cmd.index("--motif-annotations") + 1].endswith("annotations.tsv")
+    assert "--gene-coords" in cmd
+    assert cmd[cmd.index("--gene-coords") + 1].endswith("genes.parquet")
     assert "--expected-tfs" in cmd
     assert "SPI1" in cmd
     assert "--require-clean" in cmd
@@ -2199,6 +2211,47 @@ def test_benchmark_artifact_validator_rejects_incomplete_rust_stage_symbols(tmp_
         "full_pipeline.backend_execution.pipeline_aucell.symbols missing "
         "required Rust symbol 'stage_prepare_regulon_indices_with_coverage'"
     ) in failures
+
+
+def test_benchmark_artifact_validator_accepts_annotation_pruning_metadata(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_annotation_pruning",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["setup_elapsed_s"]["motif_annotations"] = 0.05
+    record["reference_fingerprints"]["motif_annotations"] = {
+        "shape": [4, 2],
+        "index_name": None,
+        "index_sample": ["0"],
+        "column_sample": ["motif"],
+        "dtype_counts": {"object": 2},
+        "corner_sample_sha256": "c" * 64,
+    }
+    record["shapes"]["motif_annotations"] = [4, 2]
+    record["outputs"]["pruned_regulons"] = 1
+    record["backend_execution"]["pipeline_cistarget_pruning"] = {
+        "engine": "rust",
+        "symbols": [
+            "cistarget_motif_annotation_prune_standard_rows_f32",
+            "cistarget_prune_regulon_targets_i32",
+        ],
+    }
+
+    assert module.validate_record(record, require_clean=True) == []
+
+    record["backend_execution"]["pipeline_cistarget_pruning"]["symbols"] = [
+        "cistarget_motif_annotation_prune_standard_rows_f32"
+    ]
+    failures = module.validate_record(record, require_clean=True)
+
+    assert any(
+        failure.startswith(
+            "full_pipeline.backend_execution.pipeline_cistarget_pruning.symbols "
+            "must include at least one Rust symbol from"
+        )
+        for failure in failures
+    )
 
 
 def test_benchmark_artifact_validator_rejects_scaling_row_without_backend_execution(tmp_path):

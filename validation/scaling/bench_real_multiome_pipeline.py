@@ -397,6 +397,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     setup_elapsed["motif_rankings"] = time.perf_counter() - t_step
 
     t_step = time.perf_counter()
+    motif_annotations = load_optional_table(args.motif_annotations)
+    if args.motif_annotations is not None:
+        setup_elapsed["motif_annotations"] = time.perf_counter() - t_step
+
+    t_step = time.perf_counter()
     gene_coords = load_optional_table(args.gene_coords)
     if gene_coords is None:
         print("[setup] downloading or loading cached gene coordinates", flush=True)
@@ -423,6 +428,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         output_dir=args.out_dir,
         adata_atac=atac,
         motif_rankings=motif_rankings,
+        motif_annotations=motif_annotations,
         gene_coords=gene_coords,
         tfs=tfs,
         grn_n_estimators=args.grn_n_estimators,
@@ -467,6 +473,38 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "integrated_adata_path": result.integrated_adata_path,
     }
 
+    reference_fingerprints = {
+        "motif_rankings": dataframe_fingerprint(motif_rankings),
+        "gene_coords": dataframe_fingerprint(gene_coords),
+    }
+    if motif_annotations is not None:
+        reference_fingerprints["motif_annotations"] = dataframe_fingerprint(
+            motif_annotations
+        )
+
+    shapes = {
+        "rna_post_qc": [int(rna.n_obs), int(rna.n_vars)],
+        "atac_shared_cells": [int(atac.n_obs), int(atac.n_vars)],
+        "motif_rankings": list(motif_rankings.shape),
+        "gene_coords_rows": int(len(gene_coords)),
+        "tfs_supplied": int(len(tfs)),
+    }
+    if motif_annotations is not None:
+        shapes["motif_annotations"] = list(motif_annotations.shape)
+
+    outputs = {
+        "grn_edges": int(result.n_grn_edges or 0),
+        "candidate_regulons": int(result.n_candidate_regulons or 0),
+        "regulons": int(result.n_regulons or 0),
+        "cistarget_rows": int(result.n_cistarget_rows or 0),
+        "enhancer_links": int(result.n_enhancer_links or 0),
+        "eregulon_rows": int(result.n_eregulon_rows or 0),
+        "eregulons": int(result.n_eregulons or 0),
+        "aucell_shape": list(result.aucell_shape or [0, 0]),
+    }
+    if result.n_pruned_regulons is not None:
+        outputs["pruned_regulons"] = int(result.n_pruned_regulons)
+
     record = {
         "benchmark": "real_multiome_full_pipeline",
         "dataset_name": args.dataset_name,
@@ -483,10 +521,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "fragments_first_8mb_md5": md5_first(args.fragments),
             "peaks_bed_md5": md5(args.peaks),
         },
-        "reference_fingerprints": {
-            "motif_rankings": dataframe_fingerprint(motif_rankings),
-            "gene_coords": dataframe_fingerprint(gene_coords),
-        },
+        "reference_fingerprints": reference_fingerprints,
         "params": {
             "n_cells_requested": args.n_cells,
             "grn_n_estimators": args.grn_n_estimators,
@@ -499,6 +534,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "topics_n_threads": args.topics_n_threads,
             "threads": args.threads,
             "rayon_num_threads": env_positive_int("RAYON_NUM_THREADS"),
+            "motif_annotations": str(args.motif_annotations) if args.motif_annotations else None,
             "cistarget_nes_threshold": args.cistarget_nes_threshold,
             "enhancer_max_distance": args.enhancer_max_distance,
             "enhancer_min_abs_corr": args.enhancer_min_abs_corr,
@@ -506,13 +542,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "eregulon_min_enhancer_links": args.eregulon_min_enhancer_links,
             "seed": args.seed,
         },
-        "shapes": {
-            "rna_post_qc": [int(rna.n_obs), int(rna.n_vars)],
-            "atac_shared_cells": [int(atac.n_obs), int(atac.n_vars)],
-            "motif_rankings": list(motif_rankings.shape),
-            "gene_coords_rows": int(len(gene_coords)),
-            "tfs_supplied": int(len(tfs)),
-        },
+        "shapes": shapes,
         "wall_s": {
             "setup": round(setup_wall, 3),
             "pipeline": round(pipeline_wall, 3),
@@ -527,16 +557,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "peak_rss_gb_per_stage": {
             k: round(float(v), 6) for k, v in result.memory.items()
         },
-        "outputs": {
-            "grn_edges": int(result.n_grn_edges or 0),
-            "candidate_regulons": int(result.n_candidate_regulons or 0),
-            "regulons": int(result.n_regulons or 0),
-            "cistarget_rows": int(result.n_cistarget_rows or 0),
-            "enhancer_links": int(result.n_enhancer_links or 0),
-            "eregulon_rows": int(result.n_eregulon_rows or 0),
-            "eregulons": int(result.n_eregulons or 0),
-            "aucell_shape": list(result.aucell_shape or [0, 0]),
-        },
+        "outputs": outputs,
         "expected_tf_recovery": {
             "expected_tfs": expected,
             "found": found,
@@ -610,6 +631,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--run-id", default=datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ"))
     parser.add_argument("--n-cells", type=int, default=None)
     parser.add_argument("--motif-rankings", type=Path, default=None)
+    parser.add_argument("--motif-annotations", type=Path, default=None)
     parser.add_argument("--gene-coords", type=Path, default=None)
     parser.add_argument("--motif-species", default="human")
     parser.add_argument("--gene-species", default="hs")
