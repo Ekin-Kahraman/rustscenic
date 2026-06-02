@@ -73,6 +73,7 @@ class TestAucellCorrectness:
         out = aucell.score(df, [("R", ["g0", "g2"])], top_frac=0.2)
 
         assert out.shape == (values.shape[0], 1)
+        assert out.attrs["rust_backend"]["symbols"] == ["aucell_score"]
         assert np.shares_memory(seen["expression"], values)
         assert seen["expression"].flags.f_contiguous
         assert not seen["expression"].flags.c_contiguous
@@ -338,6 +339,7 @@ class TestAucellSparse:
         out = aucell.score(adata, {"R": ["g0", "g2"]}, top_frac=0.5)
 
         assert out.shape == (2, 1)
+        assert out.attrs["rust_backend"]["symbols"] == ["aucell_score_sparse_csr"]
         assert seen["row_ptr"].dtype == X_sparse.indptr.dtype
         assert seen["col_idx"].dtype == np.int32
         assert seen["data"].dtype == np.float32

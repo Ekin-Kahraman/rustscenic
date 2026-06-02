@@ -143,6 +143,7 @@ def score(
         X_csr = X_raw.tocsr().astype(np.float32, copy=False)
         X_csr.sum_duplicates()
         X_csr.sort_indices()
+        backend_symbol = "aucell_score_sparse_csr"
         auc, expression_max = _unpack_aucell_result(_aucell_score_sparse_csr(
             X_csr.indptr,
             np.asarray(X_csr.indices, dtype=np.int32),
@@ -154,6 +155,7 @@ def score(
         ))
     else:
         X = as_float32_array(X_raw)
+        backend_symbol = "aucell_score"
         auc, expression_max = _unpack_aucell_result(
             _aucell_score(X, reg_names, reg_gene_indices, top_frac)
         )
@@ -162,6 +164,7 @@ def score(
     # Store per-regulon coverage as metadata so downstream code can
     # diagnose low-overlap regulons without rerunning.
     df.attrs["regulon_coverage"] = coverage
+    df.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
     return df
 
 

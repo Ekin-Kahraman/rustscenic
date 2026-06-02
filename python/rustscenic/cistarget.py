@@ -142,7 +142,7 @@ def enrich(
         )
         return pd.DataFrame(columns=["regulon", "motif", "auc", "nes"])
 
-    return _enrichment_rows_from_rankings(
+    out = _enrichment_rows_from_rankings(
         ranking_values,
         motif_names,
         reg_names,
@@ -151,6 +151,11 @@ def enrich(
         auc_threshold=auc_threshold,
         nes_threshold=nes_threshold,
     )
+    out.attrs["rust_backend"] = {
+        "engine": "rust",
+        "symbols": _rankings_backend_symbols(ranking_values),
+    }
+    return out
 
 
 def _enrichment_rows_from_rankings(
@@ -194,6 +199,27 @@ def _rankings_kernel_arg(ranking_values: np.ndarray):
     raise TypeError(
         "rankings must contain integer rank values for cistarget enrichment"
     )
+
+
+def _rankings_backend_symbols(ranking_values: np.ndarray) -> list[str]:
+    values = np.asarray(ranking_values)
+    if values.dtype == np.int16:
+        return ["cistarget_enrichment_from_rankings_i16"]
+    if values.dtype == np.int32:
+        return ["cistarget_enrichment_from_rankings_i32"]
+    if values.dtype == np.int64:
+        return ["cistarget_enrichment_from_rankings_i64"]
+    if values.dtype == np.float32:
+        return [
+            "cistarget_rankings_to_i32_f32",
+            "cistarget_enrichment_from_rankings_i32",
+        ]
+    if values.dtype == np.float64:
+        return [
+            "cistarget_rankings_to_i32_f64",
+            "cistarget_enrichment_from_rankings_i32",
+        ]
+    return []
 
 
 def _enrichment_result_to_dataframe(

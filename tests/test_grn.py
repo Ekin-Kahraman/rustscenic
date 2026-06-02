@@ -91,6 +91,7 @@ class TestGrnEdgeCases:
         out = grn.infer(adata, tf_names=["g0", "g1"], n_estimators=5, verbose=False)
 
         assert out.empty
+        assert out.attrs["rust_backend"]["symbols"] == ["grn_infer_sparse_csc"]
         assert seen["indptr_dtype"] == X.indptr.dtype
         assert seen["indices_dtype"] == np.dtype(np.int32)
         assert seen["data_dtype"] == np.dtype(np.float32)

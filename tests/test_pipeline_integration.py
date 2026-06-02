@@ -369,10 +369,21 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     manifest = json.loads((out / "manifest.json").read_text())
     assert "memory" in manifest
     assert "integrated_adata" in manifest["memory"]
-    assert result.backend_execution["grn"]["engine"] == "rust"
-    assert result.backend_execution["aucell"]["engine"] == "rust"
-    assert result.backend_execution["eregulons"]["engine"] == "rust"
-    assert manifest["backend_execution"]["enhancer"]["engine"] == "rust"
+    assert result.backend_execution["grn"]["symbols"] == ["grn_infer"]
+    assert result.backend_execution["cistarget"]["symbols"] == [
+        "cistarget_enrichment_from_rankings_i32"
+    ]
+    assert result.backend_execution["enhancer"]["symbols"] == [
+        "enhancer_link_pearson"
+    ]
+    assert result.backend_execution["eregulon_peak_attribution"]["symbols"] == [
+        "pipeline_attribute_peaks_to_cistarget_rows_f32"
+    ]
+    assert result.backend_execution["eregulons"]["symbols"] == ["eregulon_assemble_f32"]
+    assert result.backend_execution["aucell"]["symbols"] == ["aucell_score"]
+    assert manifest["backend_execution"]["enhancer"]["symbols"] == [
+        "enhancer_link_pearson"
+    ]
     assert manifest["n_grn_edges"] == result.n_grn_edges
     assert manifest["aucell_shape"] == result.aucell_shape
 
@@ -1816,6 +1827,9 @@ def test_attribute_peaks_to_cistarget_preserves_float32_auc_dtype():
     got = _attribute_peaks_to_cistarget(enriched, enhancer_links, regulons)
 
     assert got["auc"].dtype == np.float32
+    assert got.attrs["rust_backend"]["symbols"] == [
+        "pipeline_attribute_peaks_to_cistarget_rows_f32"
+    ]
 
 
 def test_attribute_peaks_to_cistarget_uses_rust_row_helper(monkeypatch):

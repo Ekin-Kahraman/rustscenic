@@ -306,6 +306,7 @@ def test_eregulon_dataframe_uses_float32_cistarget_auc_without_upcast(monkeypatc
     )
 
     assert table.loc[0, "tf"] == "SPI1"
+    assert table.attrs["rust_backend"]["symbols"] == ["eregulon_assemble_f32"]
 
 
 def test_eregulon_dataframe_reuses_rust_string_lists(monkeypatch):

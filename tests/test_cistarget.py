@@ -41,6 +41,10 @@ class TestCistargetShape:
         regs = [("R1", ["g0", "g1", "g2", "g3", "g4"])]
         out = cistarget.enrich(tiny_rankings, regs, top_frac=0.3, auc_threshold=0.0)
         assert set(out.columns) == {"regulon", "motif", "auc", "nes"}
+        assert out.attrs["rust_backend"] == {
+            "engine": "rust",
+            "symbols": ["cistarget_enrichment_from_rankings_i32"],
+        }
 
 
 class TestCistargetCorrectness:

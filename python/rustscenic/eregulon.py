@@ -244,6 +244,11 @@ def _build_eregulons_dataframe(
         grn_targets = []
 
     cistarget_aucs = _cistarget_auc_arg(cistarget["auc"])
+    backend_symbol = (
+        "eregulon_assemble_f32"
+        if cistarget_aucs.dtype == np.float32
+        else "eregulon_assemble"
+    )
     (
         tf,
         enhancer,
@@ -279,6 +284,7 @@ def _build_eregulons_dataframe(
     )
     table.attrs["n_eregulons"] = int(n_eregulons)
     table.attrs["n_input_tfs"] = int(n_input_tfs)
+    table.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
     _warn_if_catastrophic_drop_counts(
         n_output=int(n_eregulons),
         n_input_tfs=int(n_input_tfs),

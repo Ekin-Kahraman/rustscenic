@@ -357,7 +357,11 @@ def run(
         verbose=False,
     )
     elapsed["grn"] = time.perf_counter() - t0
-    backend_execution["grn"] = _rust_execution("grn_infer", "grn_infer_sparse_csc")
+    backend_execution["grn"] = _rust_execution_from_attrs(
+        grn,
+        "grn_infer",
+        "grn_infer_sparse_csc",
+    )
     n_grn_edges = int(len(grn))
     grn_path = output_dir / "grn.parquet"
     grn.to_parquet(grn_path, index=False)
@@ -410,10 +414,9 @@ def run(
             auc_threshold=cistarget_auc_threshold,
             nes_threshold=cistarget_nes_threshold,
         )
-        backend_execution["cistarget"] = _rust_execution(
-            "cistarget_enrichment_from_rankings_i16",
+        backend_execution["cistarget"] = _rust_execution_from_attrs(
+            enriched,
             "cistarget_enrichment_from_rankings_i32",
-            "cistarget_enrichment_from_rankings_i64",
         )
         enriched_for_eregulons = enriched
         elapsed["cistarget"] = time.perf_counter() - t0
@@ -565,7 +568,8 @@ def run(
                 max_distance=enhancer_max_distance,
                 min_abs_corr=enhancer_min_abs_corr,
             )
-            backend_execution["enhancer"] = _rust_execution(
+            backend_execution["enhancer"] = _rust_execution_from_attrs(
+                enhancer_links,
                 "enhancer_link_pearson",
                 "enhancer_link_pearson_sparse_rna",
             )
@@ -664,7 +668,8 @@ def run(
             enriched_with_peaks = _attribute_peaks_to_cistarget(
                 enriched_for_eregulons, enhancer_links, regulons=regulons,
             )
-            backend_execution["eregulon_peak_attribution"] = _rust_execution(
+            backend_execution["eregulon_peak_attribution"] = _rust_execution_from_attrs(
+                enriched_with_peaks,
                 "pipeline_attribute_peaks_to_cistarget_rows_f32",
                 "pipeline_attribute_peaks_to_cistarget_rows_f64",
             )
@@ -675,8 +680,10 @@ def run(
             min_target_genes=eregulon_min_target_genes,
             min_enhancer_links=eregulon_min_enhancer_links,
         )
-        backend_execution["eregulons"] = _rust_execution(
-            "eregulon_assemble", "eregulon_assemble_f32"
+        backend_execution["eregulons"] = _rust_execution_from_attrs(
+            eregulons_df,
+            "eregulon_assemble",
+            "eregulon_assemble_f32",
         )
         elapsed["eregulons"] = time.perf_counter() - t0
         n_eregulon_rows = int(len(eregulons_df))
@@ -702,7 +709,11 @@ def run(
         active_regulon_pairs,
         top_frac=aucell_top_frac,
     )
-    backend_execution["aucell"] = _rust_execution("aucell_score", "aucell_score_sparse_csr")
+    backend_execution["aucell"] = _rust_execution_from_attrs(
+        auc,
+        "aucell_score",
+        "aucell_score_sparse_csr",
+    )
     elapsed["aucell"] = time.perf_counter() - t0
     aucell_shape = [int(auc.shape[0]), int(auc.shape[1])]
     aucell_path = output_dir / "aucell.parquet"
@@ -754,6 +765,18 @@ def run(
 
 def _rust_execution(*symbols: str) -> dict:
     return {"engine": "rust", "symbols": list(symbols)}
+
+
+def _rust_execution_from_attrs(obj, *fallback_symbols: str) -> dict:
+    backend = getattr(obj, "attrs", {}).get("rust_backend")
+    if (
+        isinstance(backend, dict)
+        and backend.get("engine") == "rust"
+        and isinstance(backend.get("symbols"), list)
+        and all(isinstance(symbol, str) and symbol for symbol in backend["symbols"])
+    ):
+        return {"engine": "rust", "symbols": list(backend["symbols"])}
+    return _rust_execution(*fallback_symbols)
 
 
 def _skipped_execution(reason: str) -> dict:
@@ -1076,6 +1099,11 @@ def _attribute_peaks_to_cistarget(
         if enriched_aucs.dtype == np.float32
         else _pipeline_attribute_peak_rows_f64
     )
+    backend_symbol = (
+        "pipeline_attribute_peaks_to_cistarget_rows_f32"
+        if enriched_aucs.dtype == np.float32
+        else "pipeline_attribute_peaks_to_cistarget_rows_f64"
+    )
     regulon_values, motif_values, peak_values, auc_values = kernel(
         enriched_regulons,
         enriched_motifs,
@@ -1086,9 +1114,11 @@ def _attribute_peaks_to_cistarget(
         enhancer_peaks,
     )
     if len(regulon_values) == 0:
-        return pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+        out = pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+        out.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
+        return out
 
-    return pd.DataFrame(
+    out = pd.DataFrame(
         {
             "regulon": regulon_values,
             "motif": motif_values,
@@ -1097,6 +1127,8 @@ def _attribute_peaks_to_cistarget(
         },
         columns=["regulon", "motif", "peak_id", "auc"],
     ).reset_index(drop=True)
+    out.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
+    return out
 
 
 def _region_cistarget_with_peak_ids(

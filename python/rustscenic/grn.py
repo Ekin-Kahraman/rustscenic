@@ -141,6 +141,7 @@ def infer(
         None if min_importance is None else float(min_importance),
     )
     if sp.issparse(X):
+        backend_symbol = "grn_infer_sparse_csc"
         (
             tfs,
             targets,
@@ -158,6 +159,7 @@ def infer(
             *common_args,
         )
     else:
+        backend_symbol = "grn_infer"
         (
             tfs,
             targets,
@@ -216,6 +218,7 @@ def infer(
         "target": targets,
         "importance": np.asarray(importances),
     })
+    df.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
 
     if verbose:
         if raw_n != len(df):

@@ -235,6 +235,7 @@ def _link_peaks_to_genes_pearson(
 
     gene_source_cols_u32 = gene_source_cols.astype(np.uint32, copy=False)
     if rna_csc is None:
+        backend_symbol = "enhancer_link_pearson"
         peak_ix, gene_ix, distances, corr = _enhancer_link_pearson(
             rna_dense,
             atac_indptr,
@@ -251,6 +252,7 @@ def _link_peaks_to_genes_pearson(
             None,
         )
     else:
+        backend_symbol = "enhancer_link_pearson_sparse_rna"
         peak_ix, gene_ix, distances, corr = _enhancer_link_pearson_sparse_rna(
             rna_indptr,
             rna_indices,
@@ -274,7 +276,9 @@ def _link_peaks_to_genes_pearson(
     peak_ix = np.asarray(peak_ix)
     gene_ix = np.asarray(gene_ix)
     if peak_ix.size == 0:
-        return pd.DataFrame(columns=_LINK_COLUMNS)
+        out = pd.DataFrame(columns=_LINK_COLUMNS)
+        out.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
+        return out
 
     correlations = np.asarray(corr, dtype=np.float32)
     out = pd.DataFrame(
@@ -290,7 +294,9 @@ def _link_peaks_to_genes_pearson(
         },
         columns=_LINK_COLUMNS,
     )
-    return out.reset_index(drop=True)
+    out = out.reset_index(drop=True)
+    out.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
+    return out
 
 
 def _chrom_examples(values, limit: int = 5) -> list[str]:

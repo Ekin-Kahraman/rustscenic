@@ -95,6 +95,7 @@ def _pearson_reference(x: np.ndarray, Y: np.ndarray) -> np.ndarray:
 def test_links_correlated_peak_to_correlated_gene():
     rna, atac, genes = _synthetic_multiome(seed=1)
     links = link_peaks_to_genes(rna, atac, genes, min_abs_corr=0.5)
+    assert links.attrs["rust_backend"]["symbols"] == ["enhancer_link_pearson"]
     # Expect peak_0 ↔ GENE_A and peak_1 ↔ GENE_C above threshold
     found = set(zip(links["peak_id"], links["gene"], strict=True))
     assert ("chr1:1000-1500", "GENE_A") in found
