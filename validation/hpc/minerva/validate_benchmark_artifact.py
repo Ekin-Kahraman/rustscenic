@@ -78,6 +78,58 @@ REQUIRED_FULL_PIPELINE_RUST_EXECUTION = {
     "pipeline_eregulons",
     "pipeline_aucell",
 }
+REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
+    "setup_fragments_to_matrix": {
+        "all_of": {"preproc_fragments_to_matrix"},
+    },
+    "pipeline_topics": {
+        "any_of": ({"topics_fit"}, {"topics_fit_gibbs"}),
+    },
+    "pipeline_grn": {
+        "all_of": {"gene_duplicate_summary"},
+        "any_of": ({"grn_infer"}, {"grn_infer_sparse_csc"}),
+    },
+    "pipeline_candidate_regulons": {
+        "all_of": {"pipeline_candidate_regulons_from_grn"},
+    },
+    "pipeline_cistarget": {
+        "any_of": (
+            {"cistarget_enrichment_from_rankings_i16"},
+            {"cistarget_enrichment_from_rankings_i32"},
+            {"cistarget_enrichment_from_rankings_i64"},
+        ),
+    },
+    "pipeline_enhancer": {
+        "all_of": {
+            "enhancer_align_cell_indices",
+            "enhancer_match_gene_coords_to_rna",
+            "enhancer_normalise_chrom_codes",
+            "enhancer_prepare_gene_order",
+        },
+        "any_of": (
+            {"enhancer_link_pearson"},
+            {"enhancer_link_pearson_sparse_rna"},
+        ),
+    },
+    "pipeline_eregulon_peak_attribution": {
+        "any_of": (
+            {"pipeline_attribute_peaks_to_cistarget_rows_f32"},
+            {"pipeline_attribute_peaks_to_cistarget_rows_f64"},
+            {"pipeline_expand_region_cistarget_rows_f32"},
+            {"pipeline_expand_region_cistarget_rows_f64"},
+        ),
+    },
+    "pipeline_eregulons": {
+        "any_of": ({"eregulon_assemble"}, {"eregulon_assemble_f32"}),
+    },
+    "pipeline_aucell": {
+        "all_of": {
+            "gene_duplicate_summary",
+            "stage_prepare_regulon_indices_with_coverage",
+        },
+        "any_of": ({"aucell_score"}, {"aucell_score_sparse_csr"}),
+    },
+}
 
 
 def _positive_number(value: Any) -> bool:
@@ -267,6 +319,38 @@ def _backend_execution_failures(
             or not all(_nonempty_str(symbol) for symbol in symbols)
         ):
             failures.append(f"{stage_prefix}.symbols must be a non-empty string list")
+            continue
+        failures.extend(_backend_execution_symbol_failures(stage, symbols, stage_prefix))
+    return failures
+
+
+def _backend_execution_symbol_failures(
+    stage: str,
+    symbols: list[str],
+    stage_prefix: str,
+) -> list[str]:
+    requirements = REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS.get(stage)
+    if not requirements:
+        return []
+
+    failures: list[str] = []
+    symbol_set = set(symbols)
+    missing_required = set(requirements.get("all_of", set())) - symbol_set
+    failures.extend(
+        f"{stage_prefix}.symbols missing required Rust symbol {symbol!r}"
+        for symbol in sorted(missing_required)
+    )
+
+    any_of = requirements.get("any_of", ())
+    if any_of and not any(set(option) <= symbol_set for option in any_of):
+        options = [
+            "{" + ", ".join(sorted(repr(symbol) for symbol in option)) + "}"
+            for option in any_of
+        ]
+        failures.append(
+            f"{stage_prefix}.symbols must include at least one Rust symbol set "
+            f"from {options}"
+        )
     return failures
 
 

@@ -1525,7 +1525,10 @@ def _backend_execution_state():
             "symbols": ["preproc_fragments_to_matrix"],
         },
         "pipeline_topics": {"engine": "rust", "symbols": ["topics_fit"]},
-        "pipeline_grn": {"engine": "rust", "symbols": ["grn_infer"]},
+        "pipeline_grn": {
+            "engine": "rust",
+            "symbols": ["gene_duplicate_summary", "grn_infer"],
+        },
         "pipeline_candidate_regulons": {
             "engine": "rust",
             "symbols": ["pipeline_candidate_regulons_from_grn"],
@@ -1536,7 +1539,13 @@ def _backend_execution_state():
         },
         "pipeline_enhancer": {
             "engine": "rust",
-            "symbols": ["enhancer_link_pearson_sparse_rna"],
+            "symbols": [
+                "enhancer_align_cell_indices",
+                "enhancer_match_gene_coords_to_rna",
+                "enhancer_normalise_chrom_codes",
+                "enhancer_prepare_gene_order",
+                "enhancer_link_pearson_sparse_rna",
+            ],
         },
         "pipeline_eregulon_peak_attribution": {
             "engine": "rust",
@@ -1548,7 +1557,11 @@ def _backend_execution_state():
         },
         "pipeline_aucell": {
             "engine": "rust",
-            "symbols": ["aucell_score_sparse_csr"],
+            "symbols": [
+                "gene_duplicate_summary",
+                "stage_prepare_regulon_indices_with_coverage",
+                "aucell_score_sparse_csr",
+            ],
         },
     }
 
@@ -2159,6 +2172,33 @@ def test_benchmark_artifact_validator_rejects_non_rust_full_pipeline_stage(tmp_p
         "full_pipeline.backend_execution.pipeline_enhancer.symbols must be a non-empty string list"
         in failures
     )
+
+
+def test_benchmark_artifact_validator_rejects_incomplete_rust_stage_symbols(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_incomplete_stage_symbols",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["backend_execution"]["pipeline_enhancer"] = {
+        "engine": "rust",
+        "symbols": ["enhancer_link_pearson_sparse_rna"],
+    }
+    record["backend_execution"]["pipeline_aucell"] = {
+        "engine": "rust",
+        "symbols": ["aucell_score_sparse_csr"],
+    }
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_enhancer.symbols missing "
+        "required Rust symbol 'enhancer_align_cell_indices'"
+    ) in failures
+    assert (
+        "full_pipeline.backend_execution.pipeline_aucell.symbols missing "
+        "required Rust symbol 'stage_prepare_regulon_indices_with_coverage'"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_scaling_row_without_backend_execution(tmp_path):
