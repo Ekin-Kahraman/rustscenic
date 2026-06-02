@@ -2254,6 +2254,48 @@ def test_benchmark_artifact_validator_accepts_annotation_pruning_metadata(tmp_pa
     )
 
 
+def test_benchmark_artifact_validator_requires_pruning_when_annotations_supplied(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_requires_annotation_pruning",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["params"]["motif_annotations"] = "motif_annotations.tsv"
+    record["setup_elapsed_s"]["motif_annotations"] = 0.05
+    record["reference_fingerprints"]["motif_annotations"] = {
+        "shape": [4, 2],
+        "index_name": None,
+        "index_sample": ["0"],
+        "column_sample": ["motif"],
+        "dtype_counts": {"object": 2},
+        "corner_sample_sha256": "c" * 64,
+    }
+    record["shapes"]["motif_annotations"] = [4, 2]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_cistarget_pruning must be an object"
+        in failures
+    )
+
+
+def test_benchmark_artifact_validator_requires_scaling_pruning_when_annotations_supplied(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_requires_scaling_annotation_pruning",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["params"]["motif_annotations"] = "motif_annotations.tsv"
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "runs[0].backend_execution.pipeline_cistarget_pruning must be an object"
+        in failures
+    )
+
+
 def test_benchmark_artifact_validator_rejects_scaling_row_without_backend_execution(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_scaling_backend_execution_regression",

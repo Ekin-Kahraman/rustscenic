@@ -449,6 +449,33 @@ def _reference_fingerprint_failures(record: dict[str, Any]) -> list[str]:
     return failures
 
 
+def _motif_annotations_supplied(record: dict[str, Any]) -> bool:
+    """Return true when a benchmark artefact says annotation pruning was requested."""
+    params = record.get("params")
+    if isinstance(params, dict):
+        motif_annotations = params.get("motif_annotations")
+        if isinstance(motif_annotations, str) and motif_annotations.strip():
+            return True
+    for section in ("reference_fingerprints", "shapes", "setup_elapsed_s"):
+        value = record.get(section)
+        if isinstance(value, dict) and "motif_annotations" in value:
+            return True
+    return False
+
+
+def _motif_annotation_pruning_failures(
+    record: dict[str, Any],
+    prefix: str,
+) -> list[str]:
+    if not _motif_annotations_supplied(record):
+        return []
+    return _backend_execution_failures(
+        record,
+        prefix,
+        {"pipeline_cistarget_pruning"},
+    )
+
+
 def _output_summary_failures(record: dict[str, Any]) -> list[str]:
     failures: list[str] = []
     summaries = record.get("output_summaries")
@@ -693,7 +720,12 @@ def _full_pipeline_scaling_row_child_failures(
     return failures
 
 
-def _full_pipeline_scaling_row_failures(row: dict[str, Any], prefix: str) -> list[str]:
+def _full_pipeline_scaling_row_failures(
+    row: dict[str, Any],
+    prefix: str,
+    *,
+    require_motif_pruning: bool = False,
+) -> list[str]:
     failures: list[str] = []
     n_cells = row.get("n_cells_actual")
     if not _positive_int(row.get("n_cells_requested")):
@@ -761,6 +793,14 @@ def _full_pipeline_scaling_row_failures(row: dict[str, Any], prefix: str) -> lis
             REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
         )
     )
+    if require_motif_pruning:
+        failures.extend(
+            _backend_execution_failures(
+                row,
+                prefix,
+                {"pipeline_cistarget_pruning"},
+            )
+        )
     return failures
 
 
@@ -781,6 +821,7 @@ def validate_full_pipeline(
             REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
         )
     )
+    failures.extend(_motif_annotation_pruning_failures(record, "full_pipeline"))
     failures.extend(
         _require_keys(
             record,
@@ -1023,6 +1064,7 @@ def validate_full_pipeline_scaling(
     if not _nonempty_str(dataset_name):
         failures.append("dataset_name must be a non-empty string")
     failures.extend(_thread_budget_failures(record, "full_pipeline_scaling", params_key="threads"))
+    require_motif_pruning = _motif_annotations_supplied(record)
 
     runs = record.get("runs")
     if not isinstance(runs, list) or not runs:
@@ -1054,7 +1096,13 @@ def validate_full_pipeline_scaling(
                     failures.append(f"{prefix}.wall_s.{key} must be positive")
         if not _positive_number(row.get("peak_rss_gb")):
             failures.append(f"{prefix}.peak_rss_gb must be positive")
-        failures.extend(_full_pipeline_scaling_row_failures(row, prefix))
+        failures.extend(
+            _full_pipeline_scaling_row_failures(
+                row,
+                prefix,
+                require_motif_pruning=require_motif_pruning,
+            )
+        )
 
         if check_output_files and isinstance(row.get("json_path"), str):
             child_path = Path(row["json_path"])
