@@ -25,6 +25,7 @@ from validation.hpc.minerva.prepare_real_pbmc3k_data import (
     PBMC3K_FILES,
     sha256_file,
 )
+from validation.python_hot_paths import hot_path_state
 from validation.repo_cleanliness import repo_state_from_git_outputs
 
 
@@ -227,6 +228,10 @@ def _backend_state(python: Path, repo: Path) -> dict[str, Any]:
     return payload
 
 
+def _python_hot_path_state(repo: Path) -> dict[str, Any]:
+    return hot_path_state(repo / "python" / "rustscenic")
+
+
 def _thread_env_state() -> dict[str, Any]:
     keys = (
         "RAYON_NUM_THREADS",
@@ -303,6 +308,7 @@ def preflight(args: argparse.Namespace) -> dict[str, Any]:
             "collector": _path_status(repo / "validation/hpc/minerva/collect_benchmark_results.py"),
             "validator": _path_status(repo / "validation/hpc/minerva/validate_benchmark_artifact.py"),
         },
+        "python_hot_paths": _python_hot_path_state(repo),
         "thread_env": _thread_env_state(),
     }
 
@@ -321,6 +327,9 @@ def preflight(args: argparse.Namespace) -> dict[str, Any]:
         for name, status in checks[group].items():
             if not status["exists"]:
                 failures.append(f"missing {group}.{name}: {status['path']}")
+    if args.require_rust_hot_paths and not checks["python_hot_paths"].get("ok"):
+        sample = ", ".join(checks["python_hot_paths"].get("violations", [])[:5])
+        failures.append(f"Python hot-path table work detected: {sample}")
 
     if repo.exists():
         checks["git"] = _git_state(repo)
@@ -414,6 +423,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "Fail unless rustscenic.__file__ resolves under --repo. Use this for "
             "benchmark jobs to avoid stale site-packages imports."
+        ),
+    )
+    parser.add_argument(
+        "--require-rust-hot-paths",
+        action="store_true",
+        help=(
+            "Fail if package source contains scale-sensitive Python table work "
+            "that should stay in Rust-backed kernels."
         ),
     )
     return parser.parse_args(argv)

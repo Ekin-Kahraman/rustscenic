@@ -957,6 +957,16 @@ def test_minerva_preflight_accepts_ready_clean_checkout(monkeypatch, tmp_path):
         },
     )
     monkeypatch.setattr(module, "_backend_state", lambda _python, _repo: _preflight_backend_state())
+    monkeypatch.setattr(
+        module,
+        "_python_hot_path_state",
+        lambda _repo: {
+            "ok": True,
+            "violation_count": 0,
+            "violations": [],
+            "package_dir": str(repo / "python" / "rustscenic"),
+        },
+    )
     args = module.parse_args(
         [
             "--repo", str(repo),
@@ -964,6 +974,7 @@ def test_minerva_preflight_accepts_ready_clean_checkout(monkeypatch, tmp_path):
             "--data-dir", str(data),
             "--require-repo-import",
             "--require-clean",
+            "--require-rust-hot-paths",
         ]
     )
 
@@ -974,9 +985,77 @@ def test_minerva_preflight_accepts_ready_clean_checkout(monkeypatch, tmp_path):
     assert result["git"]["commit"] == "abc123"
     assert result["import"]["rustscenic_version"] == "0.4.7"
     assert result["backend"]["ok"] is True
+    assert result["python_hot_paths"]["ok"] is True
     assert result["hpc_tools"]["prepare_data"]["exists"] is True
     assert result["hpc_tools"]["collector"]["exists"] is True
     assert result["hpc_tools"]["validator"]["exists"] is True
+
+
+def test_minerva_preflight_rejects_python_hot_path_regression(monkeypatch, tmp_path):
+    module = _load_module(
+        "preflight_minerva_hot_paths",
+        ROOT / "validation/hpc/minerva/preflight_minerva.py",
+    )
+    repo, env, data = _write_minerva_preflight_fixture(tmp_path)
+    monkeypatch.setattr(
+        module,
+        "_git_state",
+        lambda _repo: {
+            "commit": "abc123",
+            "commit_error": None,
+            "tracked_status_short": [],
+            "status_error": None,
+            "tracked_dirty": False,
+            "tracked_source_count": 0,
+            "tracked_source_sample": [],
+        },
+    )
+    monkeypatch.setattr(
+        module,
+        "_import_state",
+        lambda _python, _repo: {
+            "ok": True,
+            "python": str(env / "bin" / "python"),
+            "rustscenic_version": "0.4.7",
+            "package_version": "0.4.7",
+            "extension_version": "0.4.7",
+            "package_file": str(repo / "python" / "rustscenic" / "__init__.py"),
+            "package_under_repo": True,
+            "extension_file": str(repo / "python" / "rustscenic" / "_rustscenic.so"),
+            "extension_under_repo": True,
+            "extension_error": None,
+            "parse_error": None,
+            "stderr": "",
+        },
+    )
+    monkeypatch.setattr(module, "_backend_state", lambda _python, _repo: _preflight_backend_state())
+    monkeypatch.setattr(
+        module,
+        "_python_hot_path_state",
+        lambda _repo: {
+            "ok": False,
+            "violation_count": 1,
+            "violations": ["pipeline.py:999: left.merge(right, on='gene')"],
+            "package_dir": str(repo / "python" / "rustscenic"),
+        },
+    )
+    args = module.parse_args(
+        [
+            "--repo", str(repo),
+            "--env", str(env),
+            "--data-dir", str(data),
+            "--require-rust-hot-paths",
+        ]
+    )
+
+    result = module.preflight(args)
+
+    assert result["ok"] is False
+    assert (
+        "Python hot-path table work detected: "
+        "pipeline.py:999: left.merge(right, on='gene')"
+        in result["failures"]
+    )
 
 
 def test_minerva_preflight_rejects_unpinned_thread_env(monkeypatch, tmp_path):
@@ -2300,6 +2379,7 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "--require-repo-import" in full
     assert "--require-thread-pins" in full
     assert "--require-data-hashes" in full
+    assert "--require-rust-hot-paths" in full
     assert '--threads "${RAYON_NUM_THREADS}"' in full
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in full_scaling
     assert "validation/scaling/bench_real_multiome_pipeline_scaling.py" in full_scaling
@@ -2309,12 +2389,14 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "--require-repo-import" in full_scaling
     assert "--require-thread-pins" in full_scaling
     assert "--require-data-hashes" in full_scaling
+    assert "--require-rust-hot-paths" in full_scaling
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in grn
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in grn
     assert "validation/hpc/minerva/collect_benchmark_results.py" in grn
     assert "--require-repo-import" in grn
     assert "--require-thread-pins" in grn
     assert "--require-data-hashes" in grn
+    assert "--require-rust-hot-paths" in grn
     assert 'export RAYON_NUM_THREADS="${LSB_DJOB_NUMPROC:-16}"' in grn
 
 

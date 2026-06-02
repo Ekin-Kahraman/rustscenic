@@ -52,6 +52,7 @@ python validation/hpc/minerva/preflight_minerva.py \
   --require-repo-import \
   --require-thread-pins \
   --require-data-hashes \
+  --require-rust-hot-paths \
   --require-clean
 
 /usr/bin/time -v python validation/scaling/bench_real_multiome_pipeline_scaling.py \
