@@ -183,6 +183,8 @@ def test_coherence_npmi_separates_planted_from_random():
 
     assert npmi_planted.shape == (2,)
     assert npmi_random.shape == (2,)
+    assert npmi_planted.rust_backend["symbols"] == ["topics_npmi"]
+    assert npmi_random.rust_backend["symbols"] == ["topics_npmi"]
     # Planted topics should score strictly higher than random topics
     assert npmi_planted.mean() > npmi_random.mean()
 
@@ -295,6 +297,7 @@ def test_coherence_npmi_passes_numpy_csr_buffers_to_extension(monkeypatch):
     score = rustscenic.topics.coherence_npmi(result, (X, cells, peaks), top_n=3)
 
     assert score.shape == (2,)
+    assert score.rust_backend["symbols"] == ["topics_npmi"]
     assert np.shares_memory(seen["topic_word"], topic_values)
     assert seen["topic_word"].flags.f_contiguous
     assert not seen["topic_word"].flags.c_contiguous

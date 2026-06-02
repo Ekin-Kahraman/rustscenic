@@ -20,13 +20,21 @@ import numpy as np
 import pandas as pd
 
 from rustscenic._rustscenic import (
-    specificity_candidate_top_indices as _candidate_top_indices,
-    specificity_candidate_top_indices_f32 as _candidate_top_indices_f32,
     topics_cell_assignment as _topics_cell_assignment,
     topics_fit as _topics_fit,
     topics_fit_gibbs as _topics_fit_gibbs,
     topics_npmi as _topics_npmi,
 )
+from rustscenic.specificity import (
+    CandidateEnhancers,
+    candidate_enhancers_per_topic as _candidate_enhancers_per_topic,
+)
+
+
+class RustBackendArray(np.ndarray):
+    """ndarray subclass carrying exact Rust backend provenance."""
+
+    rust_backend: dict
 
 
 @dataclass
@@ -53,23 +61,15 @@ class TopicsResult:
                 UserWarning,
                 stacklevel=2,
             )
-        return pd.Series(values, index=self.cell_topic.index, dtype="object")
-
-    def top_peaks_per_topic(self, n: int = 20) -> dict[str, list[str]]:
-        weights = self.topic_peak.values
-        if weights.dtype == np.float32:
-            top_indices_raw = _candidate_top_indices_f32(weights, int(n))
-        else:
-            top_indices_raw = _candidate_top_indices(
-                weights.astype(np.float64, copy=False),
-                int(n),
-            )
-        top_indices = np.asarray(top_indices_raw)
-        peak_names = list(self.topic_peak.columns)
-        return {
-            str(topic): [peak_names[i] for i in top_indices[ti]]
-            for ti, topic in enumerate(self.topic_peak.index)
+        out = pd.Series(values, index=self.cell_topic.index, dtype="object")
+        out.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": ["topics_cell_assignment"],
         }
+        return out
+
+    def top_peaks_per_topic(self, n: int = 20) -> CandidateEnhancers:
+        return _candidate_enhancers_per_topic(self.topic_peak, top_n=n)
 
 
 def _topic_assignment_indices(cell_topic: pd.DataFrame) -> tuple[np.ndarray, int, int]:
@@ -314,7 +314,9 @@ def coherence_npmi(
         col_idx,
         int(top_n),
     )
-    return np.asarray(out)
+    scores = np.asarray(out).view(RustBackendArray)
+    scores.rust_backend = {"engine": "rust", "symbols": ["topics_npmi"]}
+    return scores
 
 
 def _coerce(expression):

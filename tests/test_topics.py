@@ -91,6 +91,7 @@ class TestTopicsCorrectness:
         with pytest.warns(UserWarning, match="zero or non-finite total topic weight"):
             assignment = res.cell_assignment()
 
+        assert assignment.attrs["rust_backend"]["symbols"] == ["topics_cell_assignment"]
         assert pd.isna(assignment.loc["empty_cell"])
         assert assignment.loc["active_cell"] == "Topic_1"
 
@@ -122,6 +123,7 @@ class TestTopicsCorrectness:
         with pytest.warns(UserWarning, match="zero or non-finite total topic weight"):
             assignment = res.cell_assignment()
 
+        assert assignment.attrs["rust_backend"]["symbols"] == ["topics_cell_assignment"]
         assert assignment.loc["c0"] == "Topic_1"
         assert pd.isna(assignment.loc["c1"])
         assert assignment.loc["c2"] == "Topic_0"
@@ -137,12 +139,14 @@ class TestTopicsCorrectness:
             n_topics=2,
         )
 
-        assert res.top_peaks_per_topic(n=2) == {
+        out = res.top_peaks_per_topic(n=2)
+        assert out == {
             "Topic_0": ["p1", "p3"],
             "Topic_1": ["p2", "p0"],
         }
+        assert out.rust_backend["symbols"] == ["specificity_candidate_top_indices"]
 
-    def test_top_peaks_per_topic_passes_strided_weights_without_copy(self, monkeypatch):
+    def test_top_peaks_per_topic_delegates_to_shared_candidate_helper(self, monkeypatch):
         values = np.asfortranarray(
             np.array(
                 [[0.1, 0.9, 0.2, 0.8], [0.6, 0.2, 0.7, 0.1]],
@@ -158,20 +162,30 @@ class TestTopicsCorrectness:
             ),
             n_topics=2,
         )
+        seen = {}
 
-        def fake_top_indices(weights, top_n):
-            assert np.shares_memory(weights, values)
-            assert weights.flags.f_contiguous
-            assert not weights.flags.c_contiguous
+        def fake_candidate_helper(topic_peak, top_n):
+            seen["topic_peak"] = topic_peak
             assert top_n == 2
-            return np.array([[1, 3], [2, 0]], dtype=np.uint64)
+            out = topics.CandidateEnhancers({
+                "Topic_0": ["p1", "p3"],
+                "Topic_1": ["p2", "p0"],
+            })
+            out.rust_backend = {
+                "engine": "rust",
+                "symbols": ["specificity_candidate_top_indices"],
+            }
+            return out
 
-        monkeypatch.setattr(topics, "_candidate_top_indices", fake_top_indices)
+        monkeypatch.setattr(topics, "_candidate_enhancers_per_topic", fake_candidate_helper)
 
-        assert res.top_peaks_per_topic(n=2) == {
+        out = res.top_peaks_per_topic(n=2)
+        assert seen["topic_peak"] is res.topic_peak
+        assert out == {
             "Topic_0": ["p1", "p3"],
             "Topic_1": ["p2", "p0"],
         }
+        assert out.rust_backend["symbols"] == ["specificity_candidate_top_indices"]
 
     def test_top_peaks_per_topic_passes_float32_weights_without_upcast(self, monkeypatch):
         values = np.asfortranarray(
@@ -190,20 +204,12 @@ class TestTopicsCorrectness:
             n_topics=2,
         )
 
-        def fake_top_indices(weights, top_n):
-            assert np.shares_memory(weights, values)
-            assert weights.dtype == np.float32
-            assert weights.flags.f_contiguous
-            assert not weights.flags.c_contiguous
-            assert top_n == 2
-            return np.array([[1, 3], [2, 0]], dtype=np.uint64)
-
-        monkeypatch.setattr(topics, "_candidate_top_indices_f32", fake_top_indices)
-
-        assert res.top_peaks_per_topic(n=2) == {
+        out = res.top_peaks_per_topic(n=2)
+        assert out == {
             "Topic_0": ["p1", "p3"],
             "Topic_1": ["p2", "p0"],
         }
+        assert out.rust_backend["symbols"] == ["specificity_candidate_top_indices_f32"]
 
 
 class TestTopicsEdgeCases:
