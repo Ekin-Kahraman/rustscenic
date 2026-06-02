@@ -22,6 +22,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from validation.backend_requirements import backend_capabilities
+from validation.python_hot_paths import hot_path_state
 from validation.repo_cleanliness import repo_state_from_git_outputs
 
 
@@ -185,6 +186,7 @@ def run_one(args: argparse.Namespace) -> dict[str, Any]:
             "repo_state": repo_state(),
             "runtime_import": runtime_import_state(),
             "backend_capabilities": backend_capabilities(),
+            "python_hot_paths": hot_path_state(),
         },
     }
     return out
@@ -339,6 +341,7 @@ def coordinator(args: argparse.Namespace) -> dict[str, Any]:
         "repo_state": state,
         "runtime_import": runtime_import_state(),
         "backend_capabilities": backend_capabilities(),
+        "python_hot_paths": hot_path_state(),
         "rustscenic": version("rustscenic"),
         "params": {
             "subset_sizes": args.subset_sizes,

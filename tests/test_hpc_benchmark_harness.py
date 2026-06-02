@@ -1506,6 +1506,18 @@ def _backend_capabilities():
     }
 
 
+def _python_hot_paths_state():
+    return {
+        "package_dir": str(ROOT / "python" / "rustscenic"),
+        "exists": True,
+        "ok": True,
+        "violation_count": 0,
+        "violations": [],
+        "allowed_hit_count": 6,
+        "pattern_count": 40,
+    }
+
+
 def _full_pipeline_record(tmp_path: Path):
     artefact_names = {
         "atac_matrix_path": "atac_cells_by_peaks.h5ad",
@@ -1543,6 +1555,7 @@ def _full_pipeline_record(tmp_path: Path):
         "repo_state": _clean_repo_state(),
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
+        "python_hot_paths": _python_hot_paths_state(),
         "rustscenic": "0.4.7",
         "input_hashes": {
             "rna_10x_h5_md5": "a",
@@ -1688,6 +1701,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         "repo_state": _clean_repo_state(),
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
+        "python_hot_paths": _python_hot_paths_state(),
         "rustscenic": "0.4.7",
         "params": {"cell_counts": [100, 200], "threads": 4, "seed": 777},
         "runs": runs,
@@ -1722,6 +1736,7 @@ def _grn_scaling_record():
             "repo_state": _clean_repo_state(),
             "runtime_import": _runtime_import_state(),
             "backend_capabilities": _backend_capabilities(),
+            "python_hot_paths": _python_hot_paths_state(),
             "rayon_num_threads": "4",
             "omp_num_threads": "1",
             "openblas_num_threads": "1",
@@ -1734,6 +1749,7 @@ def _grn_scaling_record():
         "repo_state": _clean_repo_state(),
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
+        "python_hot_paths": _python_hot_paths_state(),
         "rustscenic": "0.4.7",
         "params": {
             "subset_sizes": [100],
@@ -2034,6 +2050,55 @@ def test_benchmark_artifact_validator_rejects_missing_backend_symbols(tmp_path):
         "full_pipeline.backend_capabilities.required_symbols.enhancer "
         "must contain at least one symbol"
     ) in failures
+
+
+def test_benchmark_artifact_validator_rejects_python_hot_path_regression(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_hot_path_regression",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["python_hot_paths"]["ok"] = False
+    record["python_hot_paths"]["violation_count"] = 1
+    record["python_hot_paths"]["violations"] = [
+        "pipeline.py:999: merged = left.merge(right)"
+    ]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "full_pipeline.python_hot_paths.ok must be true" in failures
+    assert "full_pipeline.python_hot_paths.violation_count must be 0" in failures
+    assert any(
+        failure.startswith("full_pipeline.python_hot_paths.violations must be empty:")
+        for failure in failures
+    )
+
+
+def test_benchmark_artifact_validator_rejects_child_grn_python_hot_path_regression():
+    module = _load_module(
+        "validate_benchmark_artifact_child_hot_path_regression",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _grn_scaling_record()
+    record["subset_scaling"][0]["env"]["python_hot_paths"]["ok"] = False
+    record["subset_scaling"][0]["env"]["python_hot_paths"]["violation_count"] = 1
+    record["subset_scaling"][0]["env"]["python_hot_paths"]["violations"] = [
+        "eregulon.py:999: grouped = df.groupby('tf')"
+    ]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "subset_scaling[0].env.python_hot_paths.ok must be true" in failures
+    assert (
+        "subset_scaling[0].env.python_hot_paths.violation_count must be 0"
+        in failures
+    )
+    assert any(
+        failure.startswith(
+            "subset_scaling[0].env.python_hot_paths.violations must be empty:"
+        )
+        for failure in failures
+    )
 
 
 def test_benchmark_artifact_validator_rejects_package_extension_version_mismatch(tmp_path):

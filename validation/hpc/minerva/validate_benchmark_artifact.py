@@ -201,6 +201,36 @@ def _backend_failures(record: dict[str, Any], prefix: str) -> list[str]:
     return failures
 
 
+def _python_hot_path_failures(record: dict[str, Any], prefix: str) -> list[str]:
+    failures: list[str] = []
+    state = record.get("python_hot_paths")
+    if not isinstance(state, dict):
+        return [f"{prefix}.python_hot_paths missing"]
+    if state.get("exists") is not True:
+        failures.append(f"{prefix}.python_hot_paths.exists must be true")
+    if state.get("ok") is not True:
+        failures.append(f"{prefix}.python_hot_paths.ok must be true")
+    count = state.get("violation_count")
+    if not isinstance(count, int) or isinstance(count, bool):
+        failures.append(f"{prefix}.python_hot_paths.violation_count must be an integer")
+    elif count != 0:
+        failures.append(f"{prefix}.python_hot_paths.violation_count must be 0")
+    violations = state.get("violations")
+    if not isinstance(violations, list):
+        failures.append(f"{prefix}.python_hot_paths.violations must be a list")
+    elif violations:
+        failures.append(
+            f"{prefix}.python_hot_paths.violations must be empty: {violations[:5]}"
+        )
+    if not _positive_int(state.get("allowed_hit_count")):
+        failures.append(f"{prefix}.python_hot_paths.allowed_hit_count must be positive")
+    if not _positive_int(state.get("pattern_count")):
+        failures.append(f"{prefix}.python_hot_paths.pattern_count must be positive")
+    if not _nonempty_str(state.get("package_dir")):
+        failures.append(f"{prefix}.python_hot_paths.package_dir must be a non-empty string")
+    return failures
+
+
 def _require_keys(record: dict[str, Any], keys: set[str], prefix: str) -> list[str]:
     return [f"{prefix}.{key} missing" for key in sorted(keys) if key not in record]
 
@@ -556,6 +586,7 @@ def validate_full_pipeline(
     failures = _repo_failures(record, require_clean=require_clean)
     failures.extend(_runtime_import_failures(record, "full_pipeline"))
     failures.extend(_backend_failures(record, "full_pipeline"))
+    failures.extend(_python_hot_path_failures(record, "full_pipeline"))
     failures.extend(
         _require_keys(
             record,
@@ -564,6 +595,7 @@ def validate_full_pipeline(
                 "dataset_name",
                 "runtime_import",
                 "backend_capabilities",
+                "python_hot_paths",
                 "input_hashes",
                 "reference_fingerprints",
                 "params",
@@ -679,12 +711,14 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
     failures = _repo_failures(record, require_clean=require_clean)
     failures.extend(_runtime_import_failures(record, "grn_scaling"))
     failures.extend(_backend_failures(record, "grn_scaling"))
+    failures.extend(_python_hot_path_failures(record, "grn_scaling"))
     failures.extend(
         _require_keys(
             record,
             {
                 "runtime_import",
                 "backend_capabilities",
+                "python_hot_paths",
                 "rustscenic",
                 "dataset",
                 "params",
@@ -749,6 +783,7 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
             if isinstance(env, dict):
                 failures.extend(_runtime_import_failures(env, f"{prefix}.env"))
                 failures.extend(_backend_failures(env, f"{prefix}.env"))
+                failures.extend(_python_hot_path_failures(env, f"{prefix}.env"))
             else:
                 failures.append(f"{prefix}.env must be an object")
     return failures
@@ -763,12 +798,14 @@ def validate_full_pipeline_scaling(
     failures = _repo_failures(record, require_clean=require_clean)
     failures.extend(_runtime_import_failures(record, "full_pipeline_scaling"))
     failures.extend(_backend_failures(record, "full_pipeline_scaling"))
+    failures.extend(_python_hot_path_failures(record, "full_pipeline_scaling"))
     failures.extend(
         _require_keys(
             record,
             {
                 "runtime_import",
                 "backend_capabilities",
+                "python_hot_paths",
                 "rustscenic",
                 "dataset_name",
                 "params",
