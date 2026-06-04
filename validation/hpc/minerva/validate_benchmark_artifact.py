@@ -1280,6 +1280,7 @@ def _full_pipeline_scaling_row_child_failures(
         "wall_s": child.get("wall_s"),
         "peak_rss_gb": child.get("peak_rss_gb"),
         "setup_peak_rss_gb": child.get("setup_peak_rss_gb"),
+        "setup_elapsed_s": child.get("setup_elapsed_s"),
         "elapsed_per_stage": child.get("elapsed_per_stage"),
         "peak_rss_gb_per_stage": child.get("peak_rss_gb_per_stage"),
         "outputs": child.get("outputs"),
@@ -1339,6 +1340,35 @@ def _full_pipeline_scaling_row_failures(
 
     if not _positive_number(row.get("setup_peak_rss_gb")):
         failures.append(f"{prefix}.setup_peak_rss_gb must be positive")
+    setup_elapsed = row.get("setup_elapsed_s")
+    if not isinstance(setup_elapsed, dict):
+        failures.append(f"{prefix}.setup_elapsed_s must be an object")
+    else:
+        missing = REQUIRED_FULL_PIPELINE_SETUP_STAGES - set(setup_elapsed)
+        failures.extend(
+            f"{prefix}.setup_elapsed_s.{stage} missing"
+            for stage in sorted(missing)
+        )
+        for stage in sorted(REQUIRED_FULL_PIPELINE_SETUP_STAGES & set(setup_elapsed)):
+            if not _nonnegative_number(setup_elapsed.get(stage)):
+                failures.append(f"{prefix}.setup_elapsed_s.{stage} must be non-negative")
+        if "motif_annotations" in setup_elapsed and not _nonnegative_number(
+            setup_elapsed.get("motif_annotations")
+        ):
+            failures.append(f"{prefix}.setup_elapsed_s.motif_annotations must be non-negative")
+        if "region_motif_rankings_metadata" in setup_elapsed and not _nonnegative_number(
+            setup_elapsed.get("region_motif_rankings_metadata")
+        ):
+            failures.append(
+                f"{prefix}.setup_elapsed_s.region_motif_rankings_metadata must be non-negative"
+            )
+        if _positive_int(row.get("n_cells_requested")):
+            if "subset_requested_cells" not in setup_elapsed:
+                failures.append(f"{prefix}.setup_elapsed_s.subset_requested_cells missing")
+            elif not _nonnegative_number(setup_elapsed.get("subset_requested_cells")):
+                failures.append(
+                    f"{prefix}.setup_elapsed_s.subset_requested_cells must be non-negative"
+                )
     elapsed = row.get("elapsed_per_stage")
     if not isinstance(elapsed, dict):
         failures.append(f"{prefix}.elapsed_per_stage must be an object")

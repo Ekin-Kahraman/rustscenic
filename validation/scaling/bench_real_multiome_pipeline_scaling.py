@@ -188,6 +188,7 @@ def run_child(args: argparse.Namespace, *, n_cells: int) -> dict[str, Any]:
         "wall_s": record["wall_s"],
         "peak_rss_gb": record["peak_rss_gb"],
         "setup_peak_rss_gb": record["setup_peak_rss_gb"],
+        "setup_elapsed_s": record["setup_elapsed_s"],
         "elapsed_per_stage": record["elapsed_per_stage"],
         "peak_rss_gb_per_stage": record["peak_rss_gb_per_stage"],
         "backend_execution": record["backend_execution"],

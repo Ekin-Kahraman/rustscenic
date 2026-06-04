@@ -661,6 +661,7 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
             },
             "peak_rss_gb": 1.0,
             "setup_peak_rss_gb": 0.8,
+            "setup_elapsed_s": {"load_rna_qc": 0.1, "fragments_to_matrix": 0.9},
             "elapsed_per_stage": {},
             "peak_rss_gb_per_stage": {},
             "outputs": {"grn_edges": 1},
@@ -679,6 +680,7 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
             },
             "peak_rss_gb": 1.5,
             "setup_peak_rss_gb": 1.0,
+            "setup_elapsed_s": {"load_rna_qc": 0.2, "fragments_to_matrix": 1.8},
             "elapsed_per_stage": {},
             "peak_rss_gb_per_stage": {},
             "outputs": {"grn_edges": 1},
@@ -740,6 +742,7 @@ def test_real_multiome_scaling_coordinator_validates_final_aggregate(tmp_path, m
             },
             "peak_rss_gb": 1.0,
             "setup_peak_rss_gb": 0.8,
+            "setup_elapsed_s": {"load_rna_qc": 0.1, "fragments_to_matrix": 0.9},
             "elapsed_per_stage": {"grn": 1.0},
             "peak_rss_gb_per_stage": {"grn": 1.0},
             "outputs": {"grn_edges": 1},
@@ -2276,6 +2279,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "wall_s": child["wall_s"],
                 "peak_rss_gb": child["peak_rss_gb"],
                 "setup_peak_rss_gb": child["setup_peak_rss_gb"],
+                "setup_elapsed_s": child["setup_elapsed_s"],
                 "elapsed_per_stage": child["elapsed_per_stage"],
                 "peak_rss_gb_per_stage": child["peak_rss_gb_per_stage"],
                 "backend_execution": child["backend_execution"],
@@ -2641,6 +2645,7 @@ def test_benchmark_artifact_validator_rejects_incomplete_scaling_row_without_chi
     record = _full_pipeline_scaling_record(tmp_path)
     row = record["runs"][0]
     row["setup_peak_rss_gb"] = 0.0
+    del row["setup_elapsed_s"]
     del row["elapsed_per_stage"]["enhancer"]
     del row["peak_rss_gb_per_stage"]["aucell"]
     row["peak_rss_gb_per_stage"]["unexpected"] = 1.0
@@ -2656,6 +2661,7 @@ def test_benchmark_artifact_validator_rejects_incomplete_scaling_row_without_chi
     )
 
     assert "runs[0].setup_peak_rss_gb must be positive" in failures
+    assert "runs[0].setup_elapsed_s must be an object" in failures
     assert "runs[0].elapsed_per_stage.enhancer missing" in failures
     assert "runs[0].peak_rss_gb_per_stage.aucell missing" in failures
     assert "runs[0].unknown peak_rss_gb_per_stage.unexpected" in failures
