@@ -5,7 +5,6 @@ import json
 import math
 import os
 import platform
-import resource
 import subprocess
 import sys
 import time
@@ -23,6 +22,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from validation.backend_requirements import backend_capabilities
 from validation.python_hot_paths import hot_path_state
+from validation.process_memory import peak_rss_gb
 from validation.repo_cleanliness import repo_state_from_git_outputs
 
 
@@ -87,13 +87,6 @@ def runtime_import_state() -> dict[str, Any]:
         "extension_under_repo": _path_under(extension_file, REPO_ROOT),
         "extension_error": extension_error,
     }
-
-
-def peak_rss_gb() -> float:
-    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    if sys.platform == "darwin":
-        return float(rss) / (1024**3)
-    return float(rss) / (1024**2)
 
 
 def configure_thread_env(threads: int) -> None:

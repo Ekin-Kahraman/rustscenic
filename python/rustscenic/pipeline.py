@@ -1498,13 +1498,9 @@ def _attach_aucell_to_obs(adata_rna, auc: pd.DataFrame) -> None:
 
 
 def _peak_rss_gb() -> float:
-    import resource
-    import sys
+    from ._memory import peak_rss_gb
 
-    rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    if sys.platform == "darwin":
-        return round(float(rss) / (1024**3), 6)
-    return round(float(rss) / (1024**2), 6)
+    return peak_rss_gb()
 
 
 class _Logger:

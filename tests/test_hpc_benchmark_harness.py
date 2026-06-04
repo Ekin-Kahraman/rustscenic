@@ -1020,26 +1020,27 @@ def test_repo_cleanliness_state_builder_classifies_source_dirty():
 
 
 def test_grn_scaling_rss_units_handle_darwin_and_linux(monkeypatch):
-    module = _load_module(
-        "bench_real_pbmc3k_grn_scaling",
-        ROOT / "validation/scaling/bench_real_pbmc3k_grn_scaling.py",
-    )
+    from validation import process_memory
 
+    fake_resource = types.SimpleNamespace(RUSAGE_SELF=object())
+    monkeypatch.setattr(process_memory, "resource", fake_resource)
     monkeypatch.setattr(
-        module.resource,
+        fake_resource,
         "getrusage",
         lambda _who: types.SimpleNamespace(ru_maxrss=1024**3),
+        raising=False,
     )
-    monkeypatch.setattr(module.sys, "platform", "darwin")
-    assert module.peak_rss_gb() == 1.0
+    monkeypatch.setattr(process_memory.sys, "platform", "darwin")
+    assert process_memory.peak_rss_gb() == 1.0
 
     monkeypatch.setattr(
-        module.resource,
+        fake_resource,
         "getrusage",
         lambda _who: types.SimpleNamespace(ru_maxrss=1024**2),
+        raising=False,
     )
-    monkeypatch.setattr(module.sys, "platform", "linux")
-    assert module.peak_rss_gb() == 1.0
+    monkeypatch.setattr(process_memory.sys, "platform", "linux")
+    assert process_memory.peak_rss_gb() == 1.0
 
 
 def test_grn_scaling_rejects_ambiguous_or_invalid_args(tmp_path):
@@ -3868,7 +3869,7 @@ def test_minerva_project_path_matches_lab_shared_folder():
         ROOT / "validation/hpc/minerva/run_real_pbmc3k_grn_scaling.lsf",
     ]
 
-    assert str(preflight.DEFAULT_PROJECT) == expected
+    assert str(preflight.DEFAULT_PROJECT).replace("\\", "/") == expected
     for path in files:
         text = path.read_text()
         assert expected in text
