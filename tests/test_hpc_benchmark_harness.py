@@ -217,6 +217,42 @@ def test_real_multiome_harness_does_not_reread_pipeline_outputs_for_counts():
     assert '"setup_elapsed_s"' in source
 
 
+def test_real_multiome_harness_prefixes_pipeline_backend_execution():
+    module = _load_module(
+        "bench_real_multiome_backend_execution",
+        ROOT / "validation/scaling/bench_real_multiome_pipeline.py",
+    )
+    result = SimpleNamespace(
+        backend_execution={
+            "grn": {
+                "engine": "rust",
+                "symbols": ["gene_duplicate_summary", "grn_infer"],
+            },
+            "integrated_adata": {
+                "engine": "python_io",
+                "reason": "AnnData obs attachment and h5ad write",
+            },
+        }
+    )
+
+    execution = module.backend_execution_for_benchmark(result)
+
+    assert execution == {
+        "setup_fragments_to_matrix": {
+            "engine": "rust",
+            "symbols": ["preproc_fragments_to_matrix"],
+        },
+        "pipeline_grn": {
+            "engine": "rust",
+            "symbols": ["gene_duplicate_summary", "grn_infer"],
+        },
+        "pipeline_integrated_adata": {
+            "engine": "python_io",
+            "reason": "AnnData obs attachment and h5ad write",
+        },
+    }
+
+
 def test_real_multiome_harness_configures_cpu_thread_env(monkeypatch):
     module = _load_module(
         "bench_real_multiome_thread_env",
