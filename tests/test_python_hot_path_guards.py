@@ -42,3 +42,21 @@ def test_hot_path_scan_checks_nested_package_modules(tmp_path):
     assert violations == [
         "nested/stage.py:2: return left.merge(right, on='gene')"
     ]
+
+
+def test_hot_path_scan_rejects_python_row_iteration_and_apply(tmp_path):
+    package = tmp_path / "rustscenic"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    (package / "stage.py").write_text(
+        "def bad(df):\n"
+        "    rows = [row for _, row in df.iterrows()]\n"
+        "    return df.apply(lambda col: col)\n"
+    )
+
+    violations = scan_python_hot_paths(package)
+
+    assert violations == [
+        "stage.py:2: rows = [row for _, row in df.iterrows()]",
+        "stage.py:3: return df.apply(lambda col: col)",
+    ]
