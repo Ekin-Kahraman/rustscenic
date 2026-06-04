@@ -399,6 +399,10 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
         "stage_prepare_regulon_indices_with_coverage",
         "aucell_score",
     ]
+    assert result.backend_execution["integrated_adata"] == {
+        "engine": "python_io",
+        "reason": "AnnData obs attachment and h5ad write",
+    }
     assert manifest["backend_execution"]["enhancer"]["symbols"] == [
         "enhancer_align_cell_indices",
         "preproc_peak_coords_for_names",
@@ -408,6 +412,10 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
         "enhancer_prepare_gene_order",
         "enhancer_link_pearson"
     ]
+    assert manifest["backend_execution"]["integrated_adata"] == {
+        "engine": "python_io",
+        "reason": "AnnData obs attachment and h5ad write",
+    }
     assert manifest["n_grn_edges"] == result.n_grn_edges
     assert manifest["aucell_shape"] == result.aucell_shape
 
@@ -538,6 +546,10 @@ def test_pipeline_run_can_skip_integrated_h5ad_for_compute_profiling(tmp_path):
     manifest = json.loads((tmp_path / "out" / "manifest.json").read_text())
     assert manifest["integrated_adata_path"] is None
     assert "integrated_adata" not in manifest["memory"]
+    assert manifest["backend_execution"]["integrated_adata"] == {
+        "engine": "skipped",
+        "reason": "write_integrated_adata=False",
+    }
 
 
 def test_pipeline_run_with_pre_built_adata_atac_skips_fragments_to_matrix(tmp_path):
