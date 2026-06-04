@@ -864,6 +864,20 @@ def _thread_budget_failures(
     for key in ("omp_num_threads", "openblas_num_threads", "mkl_num_threads"):
         if env.get(key) != "1":
             failures.append(f"{prefix}.env.{key} must be '1' for reproducible CPU benchmarking")
+    lsf_cores = env.get("lsf_cores")
+    if lsf_cores is not None:
+        try:
+            actual_cores = int(lsf_cores)
+        except (TypeError, ValueError):
+            failures.append(f"{prefix}.env.lsf_cores must be a positive integer string")
+        else:
+            if actual_cores <= 0:
+                failures.append(f"{prefix}.env.lsf_cores must be positive")
+            elif actual_cores != expected_threads:
+                failures.append(
+                    f"{prefix}.env.lsf_cores must match params.{params_key}: "
+                    f"{actual_cores} != {expected_threads}"
+                )
     requested_cores = env.get("lsf_requested_cores")
     if requested_cores is not None:
         try:

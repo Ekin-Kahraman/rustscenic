@@ -3233,6 +3233,7 @@ def test_benchmark_artifact_validator_rejects_thread_budget_mismatch(tmp_path):
     record = _full_pipeline_record(tmp_path)
     record["params"]["threads"] = 8
     record["env"]["openblas_num_threads"] = "4"
+    record["env"]["lsf_cores"] = "4"
     record["env"]["lsf_requested_cores"] = "4"
     record["env"]["lsf_requested_mem_mb"] = "0"
     record["env"]["lsf_requested_queue"] = ""
@@ -3245,6 +3246,10 @@ def test_benchmark_artifact_validator_rejects_thread_budget_mismatch(tmp_path):
     )
     assert (
         "full_pipeline.env.openblas_num_threads must be '1' for reproducible CPU benchmarking"
+        in failures
+    )
+    assert (
+        "full_pipeline.env.lsf_cores must match params.threads: 4 != 8"
         in failures
     )
     assert (
@@ -3479,12 +3484,17 @@ def test_benchmark_artifact_validator_rejects_grn_thread_budget_mismatch():
     )
     record = _grn_scaling_record()
     record["subset_scaling"][0]["env"]["rayon_num_threads"] = "8"
+    record["subset_scaling"][0]["env"]["lsf_cores"] = "8"
     record["thread_scaling"][0]["env"]["mkl_num_threads"] = "2"
 
     failures = module.validate_record(record, require_clean=True)
 
     assert (
         "subset_scaling[0].env.rayon_num_threads must match params.threads: 8 != 4"
+        in failures
+    )
+    assert (
+        "subset_scaling[0].env.lsf_cores must match params.threads: 8 != 4"
         in failures
     )
     assert (
