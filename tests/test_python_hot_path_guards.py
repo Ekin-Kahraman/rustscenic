@@ -79,6 +79,23 @@ def test_hot_path_scan_rejects_concat_outside_allowlist(tmp_path):
     ]
 
 
+def test_hot_path_scan_pipeline_allowlist_is_exact_line_only(tmp_path):
+    package = tmp_path / "rustscenic"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    (package / "pipeline.py").write_text(
+        "def attach(obs, auc_obs, extra):\n"
+        "    adata_rna.obs = pd.concat([obs, auc_obs], axis=1, copy=False)\n"
+        "    return pd.concat(extra, ignore_index=True)\n"
+    )
+
+    violations = scan_python_hot_paths(package)
+
+    assert violations == [
+        "pipeline.py:3: return pd.concat(extra, ignore_index=True)"
+    ]
+
+
 def test_hot_path_cli_prints_json_state_for_hpc_preflight(tmp_path, capsys):
     package = tmp_path / "rustscenic"
     package.mkdir()

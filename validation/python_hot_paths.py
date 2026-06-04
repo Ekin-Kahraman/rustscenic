@@ -71,12 +71,41 @@ HOT_PATH_PATTERNS = (
 )
 
 ALLOWED_HITS = {
-    ("quickstart.py", ".nlargest("): "demo display only",
-    ("quickstart.py", ".sum(axis="): "demo normalisation only",
-    ("pipeline.py", "pd.concat("): "final AnnData obs attachment and h5ad IO only",
-    ("pipeline.py", ".concat("): "final AnnData obs attachment and h5ad IO only",
-    ("_gene_resolution.py", ".max()"): "public diagnostic helper only",
-    ("_gene_resolution.py", "warn_if_likely_unnormalized("): "public diagnostic helper only",
+    (
+        "quickstart.py",
+        ".nlargest(",
+        'print(grn.nlargest(10, "importance").to_string(index=False))',
+    ): "demo display only",
+    (
+        "quickstart.py",
+        ".sum(axis=",
+        "libsize = X.sum(axis=1, keepdims=True)",
+    ): "demo normalisation only",
+    (
+        "pipeline.py",
+        "pd.concat(",
+        "adata_rna.obs = pd.concat([obs, auc_obs], axis=1, copy=False)",
+    ): "final AnnData obs attachment and h5ad IO only",
+    (
+        "_gene_resolution.py",
+        ".max()",
+        "max_val = float(X.max())",
+    ): "public diagnostic helper only",
+    (
+        "_gene_resolution.py",
+        ".max()",
+        "max_val = float(arr.max())",
+    ): "public diagnostic helper only",
+    (
+        "_gene_resolution.py",
+        "warn_if_likely_unnormalized(",
+        "Plus ``warn_if_likely_unnormalized(X)`` - flags raw-count input that",
+    ): "public diagnostic helper docs only",
+    (
+        "_gene_resolution.py",
+        "warn_if_likely_unnormalized(",
+        "def warn_if_likely_unnormalized(X, *, max_threshold: float = 50.0, stacklevel: int = 2) -> None:",
+    ): "public diagnostic helper only",
 }
 
 
@@ -95,8 +124,8 @@ def scan_python_hot_paths(package_dir: Path = DEFAULT_PACKAGE) -> list[str]:
             for pattern in HOT_PATH_PATTERNS:
                 if pattern not in stripped:
                     continue
-                if (rel, pattern) in ALLOWED_HITS:
-                    continue
+                if (rel, pattern, stripped) in ALLOWED_HITS:
+                    break
                 violations.append(f"{rel}:{line_no}: {stripped}")
                 break
     return violations
