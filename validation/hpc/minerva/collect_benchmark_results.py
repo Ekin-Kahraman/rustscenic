@@ -107,6 +107,33 @@ def _cells(record: dict[str, Any]) -> str:
     return ""
 
 
+def _cell_barcode_filter(record: dict[str, Any]) -> str:
+    def _pair(row: dict[str, Any]) -> str:
+        barcode_filter = row.get("cell_barcode_filter")
+        if not isinstance(barcode_filter, dict):
+            return ""
+        requested = barcode_filter.get("requested")
+        matched = barcode_filter.get("matched")
+        if not isinstance(requested, int) or isinstance(requested, bool):
+            return ""
+        if not isinstance(matched, int) or isinstance(matched, bool):
+            return ""
+        return f"{matched}/{requested}"
+
+    if record.get("benchmark") == "real_multiome_full_pipeline_scaling":
+        runs = record.get("runs", [])
+        if not isinstance(runs, list):
+            return ""
+        pairs = [_pair(row) for row in runs if isinstance(row, dict)]
+        pairs = [pair for pair in pairs if pair]
+        if not pairs:
+            return ""
+        if len(pairs) == 1 or pairs[0] == pairs[-1]:
+            return pairs[0]
+        return f"{pairs[0]}..{pairs[-1]}"
+    return _pair(record)
+
+
 def _wall(record: dict[str, Any]) -> str:
     benchmark = record.get("benchmark")
     if benchmark == "real_multiome_full_pipeline_scaling":
@@ -267,6 +294,7 @@ def summarise_record(
         "commit": repo.get("commit", "") if isinstance(repo, dict) else "",
         "tracked_dirty": repo.get("tracked_dirty") if isinstance(repo, dict) else None,
         "cells": _cells(record),
+        "cell_barcode_filter": _cell_barcode_filter(record),
         "end_to_end_s": _wall(record),
         "peak_rss_gb": _peak_rss(record),
         "scaling": _scaling_summary(record),
@@ -343,6 +371,7 @@ def markdown_table(rows: list[dict[str, Any]]) -> str:
         ("benchmark", "benchmark"),
         ("dataset", "dataset"),
         ("cells", "cells"),
+        ("cell_barcode_filter", "barcode_filter"),
         ("end_to_end_s", "wall_s"),
         ("peak_rss_gb", "rss_gb"),
         ("outputs", "outputs"),

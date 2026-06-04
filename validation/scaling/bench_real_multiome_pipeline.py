@@ -508,6 +508,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         args.peaks,
         cell_barcodes=[str(cell) for cell in rna.obs_names],
     )
+    cell_barcode_filter = {
+        str(key): int(value)
+        for key, value in dict(atac.uns.get("cell_barcode_filter", {})).items()
+    }
     setup_elapsed["fragments_to_matrix"] = time.perf_counter() - t_step
 
     t_step = time.perf_counter()
@@ -665,6 +669,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "backend_capabilities": backend_capabilities(),
         "python_hot_paths": hot_path_state(),
         "backend_execution": backend_execution_for_benchmark(result),
+        "cell_barcode_filter": cell_barcode_filter,
         "rustscenic": version("rustscenic"),
         "input_hashes": {
             "rna_10x_h5_md5": md5(args.rna_10x_h5),

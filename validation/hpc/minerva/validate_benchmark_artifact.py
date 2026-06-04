@@ -974,6 +974,45 @@ def _full_pipeline_wall_breakdown_failures(
     return failures
 
 
+def _cell_barcode_filter_failures(
+    record: dict[str, Any],
+    prefix: str,
+    *,
+    min_matched_cells: int | None = None,
+    min_matched_label: str = "shapes.rna_post_qc",
+) -> list[str]:
+    failures: list[str] = []
+    barcode_filter = record.get("cell_barcode_filter")
+    if not isinstance(barcode_filter, dict):
+        return [f"{_path(prefix, 'cell_barcode_filter')} must be an object"]
+
+    requested = barcode_filter.get("requested")
+    matched = barcode_filter.get("matched")
+    if not _positive_int(requested):
+        failures.append(
+            f"{_path(prefix, 'cell_barcode_filter.requested')} must be positive"
+        )
+    if not _positive_int(matched):
+        failures.append(
+            f"{_path(prefix, 'cell_barcode_filter.matched')} must be positive"
+        )
+    if _positive_int(requested) and _positive_int(matched) and matched > requested:
+        failures.append(
+            f"{_path(prefix, 'cell_barcode_filter.matched')} must be <= "
+            f"{_path(prefix, 'cell_barcode_filter.requested')}"
+        )
+    if (
+        min_matched_cells is not None
+        and _positive_int(matched)
+        and matched < min_matched_cells
+    ):
+        failures.append(
+            f"{_path(prefix, 'cell_barcode_filter.matched')} must be >= "
+            f"{_path(prefix, min_matched_label)} cells"
+        )
+    return failures
+
+
 def _full_pipeline_scaling_row_child_failures(
     row: dict[str, Any],
     child: dict[str, Any],
@@ -994,6 +1033,7 @@ def _full_pipeline_scaling_row_child_failures(
         "outputs": child.get("outputs"),
         "expected_tf_recovery": child.get("expected_tf_recovery"),
         "backend_execution": child.get("backend_execution"),
+        "cell_barcode_filter": child.get("cell_barcode_filter"),
         "write_integrated_adata": child.get("params", {}).get(
             "write_integrated_adata",
             True,
@@ -1096,6 +1136,14 @@ def _full_pipeline_scaling_row_failures(
             REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
         )
     )
+    failures.extend(
+        _cell_barcode_filter_failures(
+            row,
+            prefix,
+            min_matched_cells=n_cells if _positive_int(n_cells) else None,
+            min_matched_label="n_cells_actual",
+        )
+    )
     failures.extend(_integrated_adata_execution_failures(row, prefix))
     if require_motif_pruning:
         failures.extend(
@@ -1147,6 +1195,7 @@ def validate_full_pipeline(
                 "backend_capabilities",
                 "python_hot_paths",
                 "backend_execution",
+                "cell_barcode_filter",
                 "input_hashes",
                 "reference_fingerprints",
                 "params",
@@ -1248,6 +1297,18 @@ def validate_full_pipeline(
         if _shape2(shapes.get("rna_post_qc")) and _shape2(shapes.get("atac_shared_cells")):
             if shapes["rna_post_qc"][0] != shapes["atac_shared_cells"][0]:
                 failures.append("shapes.rna_post_qc cells must equal shapes.atac_shared_cells cells")
+        min_matched_cells = (
+            int(shapes["rna_post_qc"][0])
+            if _shape2(shapes.get("rna_post_qc"))
+            else None
+        )
+        failures.extend(
+            _cell_barcode_filter_failures(
+                record,
+                "full_pipeline",
+                min_matched_cells=min_matched_cells,
+            )
+        )
 
     if not _positive_int(outputs.get("grn_edges")):
         failures.append("outputs.grn_edges must be positive")

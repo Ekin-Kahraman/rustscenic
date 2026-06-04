@@ -1865,6 +1865,7 @@ def _full_pipeline_record(tmp_path: Path):
         "backend_capabilities": _backend_capabilities(),
         "python_hot_paths": _python_hot_paths_state(),
         "backend_execution": _backend_execution_state(),
+        "cell_barcode_filter": {"requested": 100, "matched": 100},
         "rustscenic": "0.4.7",
         "input_hashes": {
             "rna_10x_h5_md5": "a",
@@ -1988,6 +1989,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         child["shapes"]["rna_post_qc"] = [n_cells, 1000]
         child["shapes"]["atac_shared_cells"] = [n_cells, 2000]
         child["params"]["n_cells_requested"] = n_cells
+        child["cell_barcode_filter"] = {"requested": n_cells, "matched": n_cells}
         child["outputs"]["aucell_shape"] = [n_cells, 2]
         child["wall_s"]["end_to_end"] = end_to_end
         child["wall_s"]["pipeline"] = end_to_end - 1.0
@@ -2017,6 +2019,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "elapsed_per_stage": child["elapsed_per_stage"],
                 "peak_rss_gb_per_stage": child["peak_rss_gb_per_stage"],
                 "backend_execution": child["backend_execution"],
+                "cell_barcode_filter": child["cell_barcode_filter"],
                 "outputs": child["outputs"],
                 "expected_tf_recovery": child.get("expected_tf_recovery"),
                 "write_integrated_adata": child["params"].get(
@@ -2264,6 +2267,23 @@ def test_benchmark_artifact_validator_rejects_scaling_tf_recovery_mismatch(tmp_p
     assert "runs[0].expected_tf_recovery must match child JSON" in failures
 
 
+def test_benchmark_artifact_validator_rejects_scaling_cell_barcode_filter_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_cell_barcode_filter_mismatch",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["cell_barcode_filter"] = {"requested": 101, "matched": 100}
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert "runs[0].cell_barcode_filter must match child JSON" in failures
+
+
 def test_benchmark_artifact_validator_rejects_incomplete_scaling_row_without_child_check(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_full_scaling_incomplete_row",
@@ -2278,6 +2298,7 @@ def test_benchmark_artifact_validator_rejects_incomplete_scaling_row_without_chi
     row["outputs"]["grn_edges"] = 0
     row["outputs"]["aucell_shape"] = [999, 2]
     del row["expected_tf_recovery"]
+    del row["cell_barcode_filter"]
 
     failures = module.validate_record(
         record,
@@ -2292,6 +2313,7 @@ def test_benchmark_artifact_validator_rejects_incomplete_scaling_row_without_chi
     assert "runs[0].outputs.grn_edges must be positive" in failures
     assert "runs[0].outputs.aucell_shape cells must equal n_cells_actual" in failures
     assert "runs[0].expected_tf_recovery must be an object" in failures
+    assert "runs[0].cell_barcode_filter must be an object" in failures
 
 
 def test_benchmark_artifact_validator_rejects_scaling_child_dataset_mismatch(tmp_path):
@@ -2927,6 +2949,36 @@ def test_benchmark_artifact_validator_rejects_thread_budget_mismatch(tmp_path):
     )
 
 
+def test_benchmark_artifact_validator_rejects_missing_cell_barcode_filter(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_cell_barcode_filter_missing",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    del record["cell_barcode_filter"]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "full_pipeline.cell_barcode_filter missing" in failures
+    assert "full_pipeline.cell_barcode_filter must be an object" in failures
+
+
+def test_benchmark_artifact_validator_rejects_invalid_cell_barcode_filter(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_cell_barcode_filter_invalid",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["cell_barcode_filter"] = {"requested": 50, "matched": 50}
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.cell_barcode_filter.matched must be >= "
+        "full_pipeline.shapes.rna_post_qc cells"
+    ) in failures
+
+
 def test_benchmark_artifact_validator_rejects_incomplete_full_pipeline(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_incomplete",
@@ -3083,6 +3135,7 @@ def test_minerva_result_collector_discovers_latest_valid_benchmarks(tmp_path):
     new_record = _full_pipeline_record(new_dir)
     new_record["shapes"]["rna_post_qc"] = [200, 1000]
     new_record["shapes"]["atac_shared_cells"] = [200, 2000]
+    new_record["cell_barcode_filter"] = {"requested": 200, "matched": 200}
     new_record["outputs"]["aucell_shape"] = [200, 2]
     scaling_record = _full_pipeline_scaling_record(scaling_dir)
 
@@ -3113,8 +3166,10 @@ def test_minerva_result_collector_discovers_latest_valid_benchmarks(tmp_path):
     assert full_row["path"] == str(new_path)
     assert full_row["valid"] is True
     assert full_row["cells"] == "200"
+    assert full_row["cell_barcode_filter"] == "200/200"
     assert full_row["outputs"] == "grn_edges=10, eregulon_rows=6, regulons=2"
     assert rows[1]["cells"] == "100..200"
+    assert rows[1]["cell_barcode_filter"] == "100/100..200/200"
     assert rows[1]["peak_rss_gb"] == "1.25..1.75"
     assert rows[1]["scaling"] == (
         "end_to_end_wall_slope_vs_cells=1, "
@@ -3221,8 +3276,8 @@ def test_minerva_result_collector_markdown_table_is_compact(tmp_path):
 
     table = module.markdown_table(rows)
 
-    assert table.startswith("| valid | benchmark | dataset | cells |")
-    assert "| yes | real_multiome_full_pipeline | pbmc3k | 100 |" in table
+    assert table.startswith("| valid | benchmark | dataset | cells | barcode_filter |")
+    assert "| yes | real_multiome_full_pipeline | pbmc3k | 100 | 100/100 |" in table
     assert "grn_edges=10, eregulon_rows=6, regulons=2" in table
 
 
