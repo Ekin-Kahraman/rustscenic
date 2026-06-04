@@ -25,7 +25,8 @@ python validation/hpc/minerva/preflight_minerva.py \
   --require-clean \
   --require-repo-import \
   --require-thread-pins \
-  --require-data-hashes
+  --require-data-hashes \
+  --require-rust-hot-paths
 bsub < validation/hpc/minerva/run_real_pbmc3k_full_pipeline.lsf
 bsub < validation/hpc/minerva/run_real_pbmc3k_full_pipeline_scaling.lsf
 bsub < validation/hpc/minerva/run_real_pbmc3k_grn_scaling.lsf
@@ -58,10 +59,10 @@ Each launcher runs the preflight first and writes a `.preflight.json` file next
 to the benchmark result. Before preflight, the launcher runs
 `prepare_real_pbmc3k_data.py` to download any missing 10x PBMC3k inputs and
 verify their SHA-256 hashes. The preflight records `rustscenic.__file__`, the
-compiled extension path, and PBMC3k file hashes, and the launchers pass
-`--require-repo-import` so jobs fail before benchmarking a stale installed
-package. It also checks that the compiled extension exposes the Rust kernels
-required by the pipeline.
+compiled extension path, PBMC3k file hashes, and the Python hot-path scan. The
+launchers pass `--require-repo-import` so jobs fail before benchmarking a stale
+installed package. It also checks that the compiled extension exposes the Rust
+kernels required by the pipeline.
 
 The benchmark artefact records the repo commit, tracked source-clean state,
 tracked-diff SHA-256 fingerprint, RustScenic version, backend capabilities,

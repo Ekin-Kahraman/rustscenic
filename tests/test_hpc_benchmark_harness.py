@@ -3156,15 +3156,23 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
         ROOT / "validation/hpc/minerva/run_real_pbmc3k_full_pipeline_scaling.lsf"
     ).read_text()
     grn = (ROOT / "validation/hpc/minerva/run_real_pbmc3k_grn_scaling.lsf").read_text()
+    readme = (ROOT / "validation/hpc/minerva/README.md").read_text()
 
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in full
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in full
     assert "validation/hpc/minerva/collect_benchmark_results.py" in full
+    for required_flag in (
+        "--require-repo-import",
+        "--require-thread-pins",
+        "--require-data-hashes",
+        "--require-rust-hot-paths",
+        "--require-clean",
+    ):
+        assert required_flag in readme
+        assert required_flag in full
+        assert required_flag in full_scaling
+        assert required_flag in grn
     assert "--check-output-files" in full
-    assert "--require-repo-import" in full
-    assert "--require-thread-pins" in full
-    assert "--require-data-hashes" in full
-    assert "--require-rust-hot-paths" in full
     assert '--threads "${RAYON_NUM_THREADS}"' in full
     assert 'MOTIF_RANKINGS="${MOTIF_RANKINGS:-}"' in full
     assert 'MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"' in full
@@ -3189,10 +3197,6 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in full_scaling
     assert "validation/hpc/minerva/collect_benchmark_results.py" in full_scaling
     assert "--check-output-files" in full_scaling
-    assert "--require-repo-import" in full_scaling
-    assert "--require-thread-pins" in full_scaling
-    assert "--require-data-hashes" in full_scaling
-    assert "--require-rust-hot-paths" in full_scaling
     assert 'MOTIF_RANKINGS="${MOTIF_RANKINGS:-}"' in full_scaling
     assert 'MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"' in full_scaling
     assert 'REGION_MOTIF_RANKINGS="${REGION_MOTIF_RANKINGS:-}"' in full_scaling
@@ -3218,10 +3222,6 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in grn
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in grn
     assert "validation/hpc/minerva/collect_benchmark_results.py" in grn
-    assert "--require-repo-import" in grn
-    assert "--require-thread-pins" in grn
-    assert "--require-data-hashes" in grn
-    assert "--require-rust-hot-paths" in grn
     assert 'export RAYON_NUM_THREADS="${LSB_DJOB_NUMPROC:-16}"' in grn
     assert "export RUSTSCENIC_LSF_PROJECT=acc_DiseaseGeneCell" in grn
     assert "export RUSTSCENIC_LSF_QUEUE=express" in grn
