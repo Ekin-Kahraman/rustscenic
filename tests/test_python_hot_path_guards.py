@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from validation import python_hot_paths
 from validation.python_hot_paths import scan_python_hot_paths
 
 
@@ -76,3 +77,33 @@ def test_hot_path_scan_rejects_concat_outside_allowlist(tmp_path):
     assert violations == [
         "stage.py:2: return pd.concat(frames, ignore_index=True)"
     ]
+
+
+def test_hot_path_cli_prints_json_state_for_hpc_preflight(tmp_path, capsys):
+    package = tmp_path / "rustscenic"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+
+    rc = python_hot_paths.main([str(package), "--json"])
+
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert '"ok": true' in out
+    assert '"violation_count": 0' in out
+
+
+def test_hot_path_cli_fails_on_violations(tmp_path, capsys):
+    package = tmp_path / "rustscenic"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    (package / "bad.py").write_text(
+        "def bad(left, right):\n"
+        "    return left.merge(right, on='gene')\n"
+    )
+
+    rc = python_hot_paths.main([str(package)])
+
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert "fail: 1 Python hot-path violations" in out
+    assert "bad.py:2: return left.merge(right, on='gene')" in out

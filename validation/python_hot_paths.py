@@ -1,6 +1,8 @@
 """Static guardrails for Python compute hot paths in the package."""
 from __future__ import annotations
 
+import argparse
+import json
 from pathlib import Path
 from typing import Any
 
@@ -112,3 +114,46 @@ def hot_path_state(package_dir: Path = DEFAULT_PACKAGE) -> dict[str, Any]:
         "allowed_hit_count": len(ALLOWED_HITS),
         "pattern_count": len(HOT_PATH_PATTERNS),
     }
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Check that scale-sensitive RustScenic package paths remain "
+            "outside Python."
+        )
+    )
+    parser.add_argument(
+        "package_dir",
+        nargs="?",
+        type=Path,
+        default=DEFAULT_PACKAGE,
+        help="Package directory to scan. Defaults to python/rustscenic.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Emit the full scan state as JSON.",
+    )
+    args = parser.parse_args(argv)
+
+    state = hot_path_state(args.package_dir)
+    if args.json:
+        print(json.dumps(state, indent=2, sort_keys=True))
+    elif state["ok"]:
+        print(
+            f"ok: no Python hot-path violations in {state['package_dir']} "
+            f"({state['pattern_count']} patterns)"
+        )
+    else:
+        print(
+            f"fail: {state['violation_count']} Python hot-path violations in "
+            f"{state['package_dir']}"
+        )
+        for violation in state["violations"]:
+            print(violation)
+    return 0 if state["ok"] else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
