@@ -788,6 +788,8 @@ def run(
 
 
 def _rust_execution(*symbols: str) -> dict:
+    if not symbols or not all(isinstance(symbol, str) and symbol for symbol in symbols):
+        raise ValueError("Rust execution metadata requires non-empty symbol names")
     return {"engine": "rust", "symbols": list(symbols)}
 
 

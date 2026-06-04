@@ -1674,6 +1674,16 @@ def test_pipeline_rust_execution_from_attrs_rejects_missing_metadata():
         _rust_execution_from_attrs(out, "grn_infer")
 
 
+def test_pipeline_rust_execution_rejects_empty_symbols():
+    import pytest
+    from rustscenic.pipeline import _rust_execution
+
+    with pytest.raises(ValueError, match="non-empty symbol"):
+        _rust_execution()
+    with pytest.raises(ValueError, match="non-empty symbol"):
+        _rust_execution("")
+
+
 def test_candidate_regulons_from_grn_keeps_top_targets_without_per_tf_scan():
     import rustscenic.pipeline
 
