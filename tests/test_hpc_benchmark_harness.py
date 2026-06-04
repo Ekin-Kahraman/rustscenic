@@ -617,6 +617,8 @@ def test_benchmark_harness_records_rust_backend_capabilities():
         assert backend["missing_symbols"] == []
         assert "pipeline_project_ranking_columns" in backend["required_symbols"]["pipeline"]
         assert "enhancer_link_pearson_sparse_rna" in backend["required_symbols"]["enhancer"]
+        assert "gene_dedupe_sparse_csc_f32" in backend["required_symbols"]["gene_resolution"]
+        assert "specificity_rss_f32" in backend["required_symbols"]["specificity"]
 
 
 def test_backend_requirement_contract_is_shared_across_hpc_scripts():
