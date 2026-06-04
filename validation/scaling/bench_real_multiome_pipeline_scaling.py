@@ -232,6 +232,12 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
             "n_cells": row["n_cells_actual"],
             "end_to_end_wall_s": row["wall_s"]["end_to_end"],
             "pipeline_wall_s": row["wall_s"]["pipeline"],
+            "pipeline_compute_stage_wall_s": row["wall_s"].get(
+                "pipeline_compute_stages"
+            ),
+            "pipeline_unattributed_wall_s": row["wall_s"].get(
+                "pipeline_unattributed"
+            ),
             "peak_rss_gb": row["peak_rss_gb"],
         }
         for row in runs
@@ -281,6 +287,16 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
                 wall_rows,
                 "n_cells",
                 "pipeline_wall_s",
+            ),
+            "pipeline_compute_stage_wall_slope_vs_cells": _rounded_slope(
+                wall_rows,
+                "n_cells",
+                "pipeline_compute_stage_wall_s",
+            ),
+            "pipeline_unattributed_wall_slope_vs_cells": _rounded_slope(
+                wall_rows,
+                "n_cells",
+                "pipeline_unattributed_wall_s",
             ),
             "peak_rss_slope_vs_cells": _rounded_slope(
                 wall_rows,

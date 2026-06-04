@@ -472,7 +472,13 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
             "n_cells_actual": 100,
             "json_path": str(tmp_path / "one.json"),
             "output_dir": str(tmp_path / "one"),
-            "wall_s": {"setup": 1.0, "pipeline": 2.0, "end_to_end": 3.0},
+            "wall_s": {
+                "setup": 1.0,
+                "pipeline": 2.0,
+                "pipeline_compute_stages": 1.0,
+                "pipeline_unattributed": 1.0,
+                "end_to_end": 3.0,
+            },
             "peak_rss_gb": 1.0,
             "setup_peak_rss_gb": 0.8,
             "elapsed_per_stage": {},
@@ -484,7 +490,13 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
             "n_cells_actual": 200,
             "json_path": str(tmp_path / "two.json"),
             "output_dir": str(tmp_path / "two"),
-            "wall_s": {"setup": 1.0, "pipeline": 4.0, "end_to_end": 6.0},
+            "wall_s": {
+                "setup": 1.0,
+                "pipeline": 4.0,
+                "pipeline_compute_stages": 2.0,
+                "pipeline_unattributed": 2.0,
+                "end_to_end": 6.0,
+            },
             "peak_rss_gb": 1.5,
             "setup_peak_rss_gb": 1.0,
             "elapsed_per_stage": {},
@@ -499,6 +511,8 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
     assert payload["runs"] == runs
     assert payload["params"]["expected_tfs"] == ["SPI1", "PAX5"]
     assert payload["scaling"]["pipeline_wall_slope_vs_cells"] == 1.0
+    assert payload["scaling"]["pipeline_compute_stage_wall_slope_vs_cells"] == 1.0
+    assert payload["scaling"]["pipeline_unattributed_wall_slope_vs_cells"] == 1.0
     assert payload["scaling"]["end_to_end_wall_slope_vs_cells"] == 1.0
     assert payload["scaling"]["peak_rss_slope_vs_cells"] > 0
 
@@ -537,7 +551,13 @@ def test_real_multiome_scaling_coordinator_validates_final_aggregate(tmp_path, m
             "n_cells_actual": n_cells,
             "json_path": str(tmp_path / "child.json"),
             "output_dir": str(tmp_path / "child_outputs"),
-            "wall_s": {"setup": 1.0, "pipeline": 2.0, "end_to_end": 3.0},
+            "wall_s": {
+                "setup": 1.0,
+                "pipeline": 2.0,
+                "pipeline_compute_stages": 1.0,
+                "pipeline_unattributed": 1.0,
+                "end_to_end": 3.0,
+            },
             "peak_rss_gb": 1.0,
             "setup_peak_rss_gb": 0.8,
             "elapsed_per_stage": {"grn": 1.0},
@@ -1976,6 +1996,8 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         "scaling": {
             "end_to_end_wall_slope_vs_cells": 1.0,
             "pipeline_wall_slope_vs_cells": 1.322,
+            "pipeline_compute_stage_wall_slope_vs_cells": 0.0,
+            "pipeline_unattributed_wall_slope_vs_cells": 3.7,
             "peak_rss_slope_vs_cells": 0.485,
         },
         "env": {

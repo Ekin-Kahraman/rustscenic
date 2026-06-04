@@ -1383,6 +1383,14 @@ def validate_full_pipeline_scaling(
                 if isinstance(row.get("wall_s"), dict) else None,
                 "pipeline_wall_s": row.get("wall_s", {}).get("pipeline")
                 if isinstance(row.get("wall_s"), dict) else None,
+                "pipeline_compute_stage_wall_s": row.get("wall_s", {}).get(
+                    "pipeline_compute_stages"
+                )
+                if isinstance(row.get("wall_s"), dict) else None,
+                "pipeline_unattributed_wall_s": row.get("wall_s", {}).get(
+                    "pipeline_unattributed"
+                )
+                if isinstance(row.get("wall_s"), dict) else None,
                 "peak_rss_gb": row.get("peak_rss_gb"),
             }
             for row in runs
@@ -1391,6 +1399,8 @@ def validate_full_pipeline_scaling(
         for key in (
             "end_to_end_wall_slope_vs_cells",
             "pipeline_wall_slope_vs_cells",
+            "pipeline_compute_stage_wall_slope_vs_cells",
+            "pipeline_unattributed_wall_slope_vs_cells",
             "peak_rss_slope_vs_cells",
         ):
             if not _nonnegative_number(scaling.get(key)):
@@ -1405,6 +1415,16 @@ def validate_full_pipeline_scaling(
                 wall_rows,
                 "n_cells",
                 "pipeline_wall_s",
+            ),
+            "pipeline_compute_stage_wall_slope_vs_cells": _rounded_slope(
+                wall_rows,
+                "n_cells",
+                "pipeline_compute_stage_wall_s",
+            ),
+            "pipeline_unattributed_wall_slope_vs_cells": _rounded_slope(
+                wall_rows,
+                "n_cells",
+                "pipeline_unattributed_wall_s",
             ),
             "peak_rss_slope_vs_cells": _rounded_slope(
                 wall_rows,
