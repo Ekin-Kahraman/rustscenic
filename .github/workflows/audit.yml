@@ -80,6 +80,10 @@ jobs:
           print('typing metadata: OK')
           PY
       # Python unit test suite
+      - name: Rust backend doctor
+        run: python -m rustscenic doctor --json
+      - name: Python hot-path audit
+        run: python validation/python_hot_paths.py python/rustscenic --json
       - run: pytest tests/ -v
       # End-to-end quickstart runs and produces output
       - run: python -m rustscenic.quickstart
