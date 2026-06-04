@@ -147,3 +147,21 @@ def test_pipeline_cli_rejects_adata_atac_with_fragments(tmp_path, capsys):
 
     assert rc == 2
     assert "--adata-atac cannot be combined" in capsys.readouterr().err
+
+
+def test_doctor_cli_reports_backend_capabilities(monkeypatch, capsys):
+    import rustscenic.backend
+    import rustscenic.cli
+
+    payload = {
+        "ok": True,
+        "extension_error": None,
+        "required_symbols": {"grn": ["grn_infer"]},
+        "missing_symbols": [],
+    }
+    monkeypatch.setattr(rustscenic.backend, "backend_capabilities", lambda: payload)
+
+    rc = rustscenic.cli.main(["doctor"])
+
+    assert rc == 0
+    assert '"ok": true' in capsys.readouterr().out

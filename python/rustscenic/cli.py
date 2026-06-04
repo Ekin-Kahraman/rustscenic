@@ -295,6 +295,15 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_doctor(args: argparse.Namespace) -> int:
+    """Check the installed Rust extension exposes all required symbols."""
+    from . import backend
+
+    payload = backend.backend_capabilities()
+    print(json.dumps(payload, indent=2 if args.pretty else None, sort_keys=True))
+    return 0 if payload["ok"] else 1
+
+
 def main(argv: list[str] | None = None) -> int:
     from . import __version__
     p = argparse.ArgumentParser(prog="rustscenic", description="Fast SCENIC+ stage replacements (Rust + PyO3)")
@@ -343,6 +352,10 @@ def main(argv: list[str] | None = None) -> int:
         help="Optional minimum NES (per-regulon z-score across motifs). 3.0 matches pyscenic / pycistarget canonical cutoff.",
     )
     pc.set_defaults(func=cmd_cistarget)
+
+    pd = sub.add_parser("doctor", help="Check Rust backend symbols required by the full pipeline")
+    pd.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
+    pd.set_defaults(func=cmd_doctor)
 
     pp = sub.add_parser(
         "pipeline",

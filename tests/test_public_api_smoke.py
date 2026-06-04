@@ -32,6 +32,17 @@ def test_pyo3_stub_matches_exposed_topic_and_preproc_surface():
     assert "npt.NDArray[np.uint32], npt.NDArray[np.uint32]" in stub
 
 
+def test_backend_capabilities_are_public_and_complete():
+    import rustscenic
+
+    capabilities = rustscenic.backend_capabilities()
+
+    assert capabilities["ok"] is True
+    assert capabilities["missing_symbols"] == []
+    assert "pipeline_project_ranking_columns" in capabilities["required_symbols"]["pipeline"]
+    assert "enhancer_link_pearson_sparse_rna" in capabilities["required_symbols"]["enhancer"]
+
+
 def test_download_motif_rankings_uses_cache_without_real_network(tmp_path, monkeypatch):
     import rustscenic.data as data
     import urllib.request
