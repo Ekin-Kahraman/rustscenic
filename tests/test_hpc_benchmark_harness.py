@@ -3779,7 +3779,15 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
         assert "rustscenic_doctor_json_begin" in launcher
         assert "python -m rustscenic doctor --json" in launcher
         assert "rustscenic_doctor_json_end" in launcher
+        assert "python_hot_paths_json_begin" in launcher
+        assert "python validation/python_hot_paths.py python/rustscenic --json" in launcher
+        assert "python_hot_paths_json_end" in launcher
         assert launcher.index("python -m rustscenic doctor --json") < launcher.index(
+            "python validation/python_hot_paths.py python/rustscenic --json"
+        )
+        assert launcher.index(
+            "python validation/python_hot_paths.py python/rustscenic --json"
+        ) < launcher.index(
             "validation/hpc/minerva/preflight_minerva.py"
         )
 

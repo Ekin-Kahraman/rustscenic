@@ -61,11 +61,12 @@ The GRN scaling job writes one JSON artefact under
 Each launcher runs the preflight first and writes a `.preflight.json` file next
 to the benchmark result. Before preflight, the launcher runs
 `prepare_real_pbmc3k_data.py` to download any missing 10x PBMC3k inputs and
-verify their SHA-256 hashes. The preflight records `rustscenic.__file__`, the
-compiled extension path, PBMC3k file hashes, and the Python hot-path scan. The
-launchers pass `--require-repo-import` so jobs fail before benchmarking a stale
-installed package. It also checks that the compiled extension exposes the Rust
-kernels required by the pipeline.
+verify their SHA-256 hashes, then prints backend-doctor JSON and Python
+hot-path-scan JSON into the LSF log. The preflight records
+`rustscenic.__file__`, the compiled extension path, PBMC3k file hashes, and the
+Python hot-path scan. The launchers pass `--require-repo-import` so jobs fail
+before benchmarking a stale installed package. It also checks that the compiled
+extension exposes the Rust kernels required by the pipeline.
 
 The benchmark artefact records the repo commit, tracked source-clean state,
 tracked-diff SHA-256 fingerprint, RustScenic version, backend capabilities,

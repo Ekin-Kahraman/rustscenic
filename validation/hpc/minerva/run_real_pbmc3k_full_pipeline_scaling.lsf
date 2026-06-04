@@ -83,6 +83,9 @@ echo "cell_counts=${CELL_COUNT_ARGS[*]}"
 echo "rustscenic_doctor_json_begin"
 python -m rustscenic doctor --json
 echo "rustscenic_doctor_json_end"
+echo "python_hot_paths_json_begin"
+python validation/python_hot_paths.py python/rustscenic --json
+echo "python_hot_paths_json_end"
 
 python validation/hpc/minerva/preflight_minerva.py \
   --repo "${REPO}" \
