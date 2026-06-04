@@ -72,6 +72,7 @@ class PipelineResult:
 
     output_dir: Path
     atac_matrix_path: Path | None = None
+    cell_barcode_filter: dict[str, int] | None = None
     grn_path: Path | None = None
     regulons_path: Path | None = None
     candidate_regulons_path: Path | None = None
@@ -271,11 +272,10 @@ def run(
     #   (a) `adata_atac` - caller passed an already-built (and typically
     #       cell-QC-subset) AnnData. Skip preproc entirely.
     #   (b) `fragments` + `peaks` - read raw 10x outputs and call
-    #       `rustscenic.preproc.fragments_to_matrix`. Note this returns
-    #       ALL observed barcodes (including empty droplets); on raw 10x
-    #       this can be ~10–100× larger than the QC-passed cell count
-    #       and stall downstream stages. Prefer (a) for real workflows.
+    #       `rustscenic.preproc.fragments_to_matrix` with RNA barcodes,
+    #       so raw empty droplets never enter topics/enhancer stages.
     atac_matrix_path = None
+    cell_barcode_filter = None
     topics_dir = None
     have_atac_input = adata_atac is not None or (fragments is not None and peaks is not None)
     if have_atac_input:
@@ -285,6 +285,7 @@ def run(
                 adata_atac = ad.read_h5ad(adata_atac)
             else:
                 log("[2/8] preproc: using caller-provided ATAC AnnData (skipping fragments_to_matrix)")
+            cell_barcode_filter = _cell_barcode_filter_from_uns(adata_atac)
             elapsed["preproc"] = 0.0
             backend_execution["preproc"] = _skipped_execution("caller provided pre-built ATAC AnnData")
             log(f"      ATAC shape: {adata_atac.shape}")
@@ -302,6 +303,7 @@ def run(
                 adata_atac,
                 "preproc_fragments_to_matrix",
             )
+            cell_barcode_filter = _cell_barcode_filter_from_uns(adata_atac)
             log(f"      ATAC shape: {adata_atac.shape}, took {elapsed['preproc']:.1f}s")
         mark_memory("preproc")
 
@@ -760,6 +762,7 @@ def run(
     result = PipelineResult(
         output_dir=output_dir,
         atac_matrix_path=atac_matrix_path,
+        cell_barcode_filter=cell_barcode_filter,
         grn_path=grn_path,
         regulons_path=regulons_path,
         candidate_regulons_path=candidate_regulons_path,
@@ -904,6 +907,22 @@ def _subset_atac_to_rna_cells(adata_rna, adata_atac, *, log):
     adata_atac = adata_atac[matched_atac_idx].copy()
     log(f"      ATAC subset to RNA cells: {adata_atac.shape}")
     return adata_atac
+
+
+def _cell_barcode_filter_from_uns(adata) -> dict[str, int] | None:
+    raw = getattr(adata, "uns", {}).get("cell_barcode_filter")
+    if not isinstance(raw, dict):
+        return None
+    out: dict[str, int] = {}
+    for key in ("requested", "matched"):
+        value = raw.get(key)
+        if isinstance(value, bool) or value is None:
+            continue
+        try:
+            out[key] = int(value)
+        except (TypeError, ValueError):
+            continue
+    return out or None
 
 
 def _load_tfs(tfs):

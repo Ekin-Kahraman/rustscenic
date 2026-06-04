@@ -355,6 +355,10 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
         "requested": n_cells,
         "matched": n_cells,
     }
+    assert result.cell_barcode_filter == {
+        "requested": n_cells,
+        "matched": n_cells,
+    }
     assert result.grn_path.exists()
     assert result.aucell_path.exists()
     assert result.cistarget_path.exists()
@@ -419,6 +423,10 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     assert manifest["backend_execution"]["integrated_adata"] == {
         "engine": "python_io",
         "reason": "AnnData obs attachment and h5ad write",
+    }
+    assert manifest["cell_barcode_filter"] == {
+        "requested": n_cells,
+        "matched": n_cells,
     }
     assert manifest["n_grn_edges"] == result.n_grn_edges
     assert manifest["aucell_shape"] == result.aucell_shape
