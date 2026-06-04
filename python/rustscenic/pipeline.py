@@ -802,7 +802,11 @@ def _rust_execution_from_attrs(obj, *fallback_symbols: str) -> dict:
         and all(isinstance(symbol, str) and symbol for symbol in backend["symbols"])
     ):
         return {"engine": "rust", "symbols": list(backend["symbols"])}
-    return _rust_execution(*fallback_symbols)
+    expected = ", ".join(fallback_symbols) if fallback_symbols else "no fallback symbols"
+    raise RuntimeError(
+        "pipeline stage output is missing valid Rust backend metadata "
+        f"(expected symbols: {expected})"
+    )
 
 
 def _skipped_execution(reason: str) -> dict:

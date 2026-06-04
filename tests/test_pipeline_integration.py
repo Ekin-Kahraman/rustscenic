@@ -1627,17 +1627,24 @@ def test_pipeline_grn_top_targets_below_ten_still_builds_candidates(tmp_path, mo
     )
 
     def fake_infer(*_args, **_kwargs):
-        return pd.DataFrame(
+        out = pd.DataFrame(
             {
                 "TF": ["TF1"] * 5,
                 "target": [f"G{i}" for i in range(5)],
                 "importance": [5.0, 4.0, 3.0, 2.0, 1.0],
             }
         )
+        out.attrs["rust_backend"] = {"engine": "rust", "symbols": ["grn_infer"]}
+        return out
 
     def fake_score(expression, regulons, *, top_frac):
         assert regulons == [("TF1_regulon", [f"G{i}" for i in range(5)])]
-        return pd.DataFrame({"TF1_regulon": np.zeros(expression.n_obs)}, index=expression.obs_names)
+        out = pd.DataFrame(
+            {"TF1_regulon": np.zeros(expression.n_obs)},
+            index=expression.obs_names,
+        )
+        out.attrs["rust_backend"] = {"engine": "rust", "symbols": ["aucell_score"]}
+        return out
 
     monkeypatch.setattr(rustscenic.grn, "infer", fake_infer)
     monkeypatch.setattr(rustscenic.aucell, "score", fake_score)
@@ -1655,6 +1662,16 @@ def test_pipeline_grn_top_targets_below_ten_still_builds_candidates(tmp_path, mo
     assert candidates == {"TF1_regulon": [f"G{i}" for i in range(5)]}
     assert result.n_candidate_regulons == 1
     assert result.n_regulons == 1
+
+
+def test_pipeline_rust_execution_from_attrs_rejects_missing_metadata():
+    import pytest
+    from rustscenic.pipeline import _rust_execution_from_attrs
+
+    out = pd.DataFrame({"x": [1]})
+
+    with pytest.raises(RuntimeError, match="missing valid Rust backend metadata"):
+        _rust_execution_from_attrs(out, "grn_infer")
 
 
 def test_candidate_regulons_from_grn_keeps_top_targets_without_per_tf_scan():
