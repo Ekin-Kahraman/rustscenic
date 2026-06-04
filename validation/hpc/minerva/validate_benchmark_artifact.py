@@ -19,6 +19,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from validation.backend_requirements import REQUIRED_RUST_BACKEND_SYMBOLS
+from validation.python_hot_paths import ALLOWED_HITS, HOT_PATH_PATTERNS
 
 
 FULL_PIPELINE_STAGES = {
@@ -304,10 +305,24 @@ def _python_hot_path_failures(record: dict[str, Any], prefix: str) -> list[str]:
         failures.append(
             f"{prefix}.python_hot_paths.violations must be empty: {violations[:5]}"
         )
-    if not _positive_int(state.get("allowed_hit_count")):
-        failures.append(f"{prefix}.python_hot_paths.allowed_hit_count must be positive")
-    if not _positive_int(state.get("pattern_count")):
-        failures.append(f"{prefix}.python_hot_paths.pattern_count must be positive")
+    allowed_count = state.get("allowed_hit_count")
+    expected_allowed = len(ALLOWED_HITS)
+    if not isinstance(allowed_count, int) or isinstance(allowed_count, bool):
+        failures.append(f"{prefix}.python_hot_paths.allowed_hit_count must be an integer")
+    elif allowed_count != expected_allowed:
+        failures.append(
+            f"{prefix}.python_hot_paths.allowed_hit_count must equal "
+            f"{expected_allowed}"
+        )
+    pattern_count = state.get("pattern_count")
+    expected_patterns = len(HOT_PATH_PATTERNS)
+    if not isinstance(pattern_count, int) or isinstance(pattern_count, bool):
+        failures.append(f"{prefix}.python_hot_paths.pattern_count must be an integer")
+    elif pattern_count != expected_patterns:
+        failures.append(
+            f"{prefix}.python_hot_paths.pattern_count must equal "
+            f"{expected_patterns}"
+        )
     if not _nonempty_str(state.get("package_dir")):
         failures.append(f"{prefix}.python_hot_paths.package_dir must be a non-empty string")
     return failures

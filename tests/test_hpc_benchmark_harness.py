@@ -21,6 +21,7 @@ from validation.backend_requirements import (
     REQUIRED_RUST_BACKEND_SYMBOLS,
     backend_capabilities as shared_backend_capabilities,
 )
+from validation.python_hot_paths import ALLOWED_HITS, HOT_PATH_PATTERNS
 from validation.repo_cleanliness import (
     git_status_paths,
     repo_state_from_git_outputs,
@@ -1642,8 +1643,8 @@ def _python_hot_paths_state():
         "ok": True,
         "violation_count": 0,
         "violations": [],
-        "allowed_hit_count": 6,
-        "pattern_count": 40,
+        "allowed_hit_count": len(ALLOWED_HITS),
+        "pattern_count": len(HOT_PATH_PATTERNS),
     }
 
 
@@ -2252,6 +2253,27 @@ def test_benchmark_artifact_validator_rejects_python_hot_path_regression(tmp_pat
         failure.startswith("full_pipeline.python_hot_paths.violations must be empty:")
         for failure in failures
     )
+
+
+def test_benchmark_artifact_validator_rejects_weakened_hot_path_scan(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_hot_path_scan_coverage",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["python_hot_paths"]["pattern_count"] = len(HOT_PATH_PATTERNS) - 1
+    record["python_hot_paths"]["allowed_hit_count"] = len(ALLOWED_HITS) + 1
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.python_hot_paths.pattern_count must equal "
+        f"{len(HOT_PATH_PATTERNS)}"
+    ) in failures
+    assert (
+        "full_pipeline.python_hot_paths.allowed_hit_count must equal "
+        f"{len(ALLOWED_HITS)}"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_child_grn_python_hot_path_regression():
