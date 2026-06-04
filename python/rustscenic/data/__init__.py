@@ -71,6 +71,81 @@ def tfs(species: Literal["hs", "mm"] = "hs") -> list[str]:
 _AERTSLAB_RANKINGS_BASE = "https://resources.aertslab.org/cistarget/databases"
 
 
+def _motif_collection_short(motif_collection: str) -> str:
+    return (
+        motif_collection.split("_", 1)[1]
+        if motif_collection.startswith("mc_")
+        else motif_collection
+    )
+
+
+def _motif_rankings_filename(
+    *,
+    genome: str,
+    motif_collection: str = "mc_v10_clust",
+    region: str = "gene_based",
+    window: str = "10kbp_up_10kbp_down",
+    score_type: str = "rankings",
+) -> str:
+    mc_short = _motif_collection_short(motif_collection)
+    if region == "region_based":
+        return f"{genome}_screen_{mc_short}.regions_vs_motifs.{score_type}.feather"
+    region_token = {"gene_based": "genes"}.get(region, region)
+    return (
+        f"{genome}_{window}_full_tx_{mc_short}."
+        f"{region_token}_vs_motifs.{score_type}.feather"
+    )
+
+
+def _motif_rankings_url(
+    *,
+    species_dir: str,
+    genome: str,
+    motif_collection: str = "mc_v10_clust",
+    refseq_release: str = "refseq_r80",
+    region: str = "gene_based",
+    filename: str,
+) -> str:
+    if region == "region_based":
+        return (
+            f"{_AERTSLAB_RANKINGS_BASE}/{species_dir}/{genome}/"
+            f"screen/{motif_collection}/region_based/{filename}"
+        )
+    return (
+        f"{_AERTSLAB_RANKINGS_BASE}/{species_dir}/{genome}/"
+        f"{refseq_release}/{motif_collection}/{region}/{filename}"
+    )
+
+
+def _motif_rankings_cache_path(
+    species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
+    genome: str | None = None,
+    motif_collection: str = "mc_v10_clust",
+    refseq_release: str = "refseq_r80",
+    region: str = "gene_based",
+    window: str = "10kbp_up_10kbp_down",
+    score_type: str = "rankings",
+    cache_dir: Path | None = None,
+    filename: str | None = None,
+    url: str | None = None,
+) -> Path:
+    del refseq_release, url
+    if cache_dir is None:
+        cache_dir = Path.home() / ".cache" / "rustscenic" / "cistarget"
+    canonical_species = _species_code(species)
+    if genome is None:
+        genome = "hg38" if canonical_species == "hs" else "mm10"
+    if filename is None:
+        filename = _motif_rankings_filename(
+            genome=genome,
+            motif_collection=motif_collection,
+            region=region,
+            window=window,
+            score_type=score_type,
+        )
+    return Path(cache_dir) / filename
+
+
 def download_motif_rankings(
     species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
     genome: str | None = None,
@@ -162,30 +237,37 @@ def download_motif_rankings(
     #                  {genome}_screen_{mc_short}.regions_vs_motifs.{score_type}.feather
     # The motif-collection short slug ("v10_clust") is the trailing piece
     # of the collection ("mc_v10_clust") after stripping the "mc_" prefix.
-    mc_short = motif_collection.split("_", 1)[1] if motif_collection.startswith("mc_") else motif_collection
     if filename is None:
-        if region == "region_based":
-            filename = f"{genome}_screen_{mc_short}.regions_vs_motifs.{score_type}.feather"
-        else:
-            region_token = {"gene_based": "genes"}.get(region, region)
-            filename = (
-                f"{genome}_{window}_full_tx_{mc_short}."
-                f"{region_token}_vs_motifs.{score_type}.feather"
-            )
+        filename = _motif_rankings_filename(
+            genome=genome,
+            motif_collection=motif_collection,
+            region=region,
+            window=window,
+            score_type=score_type,
+        )
 
     if url is None:
-        if region == "region_based":
-            url = (
-                f"{_AERTSLAB_RANKINGS_BASE}/{species_dir}/{genome}/"
-                f"screen/{motif_collection}/region_based/{filename}"
-            )
-        else:
-            url = (
-                f"{_AERTSLAB_RANKINGS_BASE}/{species_dir}/{genome}/"
-                f"{refseq_release}/{motif_collection}/{region}/{filename}"
-            )
+        url = _motif_rankings_url(
+            species_dir=species_dir,
+            genome=genome,
+            motif_collection=motif_collection,
+            refseq_release=refseq_release,
+            region=region,
+            filename=filename,
+        )
 
-    local_path = cache_dir / filename
+    local_path = _motif_rankings_cache_path(
+        species=species,
+        genome=genome,
+        motif_collection=motif_collection,
+        refseq_release=refseq_release,
+        region=region,
+        window=window,
+        score_type=score_type,
+        cache_dir=cache_dir,
+        filename=filename,
+        url=url,
+    )
 
     if not local_path.exists():
         if verbose:
@@ -238,6 +320,25 @@ _GENCODE_URLS = {
 }
 
 
+def _gene_coords_cache_paths(
+    species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
+    cache_dir: Path | None = None,
+    url: str | None = None,
+) -> dict[str, Path | str]:
+    norm = _species_code(species)
+    resolved_url = _GENCODE_URLS[norm] if url is None else url
+    if cache_dir is None:
+        cache_dir = Path.home() / ".cache" / "rustscenic" / "gene_coords"
+    cache_dir = Path(cache_dir)
+    return {
+        "species": norm,
+        "url": resolved_url,
+        "cache_dir": cache_dir,
+        "parquet_path": cache_dir / f"{norm}_gene_tss.parquet",
+        "gtf_path": cache_dir / Path(resolved_url).name,
+    }
+
+
 def download_gene_coords(
     species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
     cache_dir: Path | None = None,
@@ -277,20 +378,17 @@ def download_gene_coords(
     import urllib.request
     import pandas as pd
 
-    norm = _species_code(species)
-    if url is None:
-        url = _GENCODE_URLS[norm]
-
-    if cache_dir is None:
-        cache_dir = Path.home() / ".cache" / "rustscenic" / "gene_coords"
-    cache_dir = Path(cache_dir)
+    cache_paths = _gene_coords_cache_paths(species, cache_dir=cache_dir, url=url)
+    norm = str(cache_paths["species"])
+    url = str(cache_paths["url"])
+    cache_dir = Path(cache_paths["cache_dir"])
     cache_dir.mkdir(parents=True, exist_ok=True)
 
-    parquet_path = cache_dir / f"{norm}_gene_tss.parquet"
+    parquet_path = Path(cache_paths["parquet_path"])
     if parquet_path.exists():
         return pd.read_parquet(parquet_path)
 
-    gtf_path = cache_dir / Path(url).name
+    gtf_path = Path(cache_paths["gtf_path"])
     if not gtf_path.exists():
         if verbose:
             print(f"downloading {Path(url).name} → {gtf_path}", flush=True)

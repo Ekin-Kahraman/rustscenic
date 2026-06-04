@@ -2025,6 +2025,17 @@ def _matrix_inputs_state(n_cells: int = 100):
     }
 
 
+def _explicit_reference_source(path: Path | str):
+    return {
+        "source": "explicit_path",
+        "path": str(path),
+        "exists_before": True,
+        "exists_after": True,
+        "cache_exists_before": None,
+        "cache_exists_after": None,
+    }
+
+
 def _full_pipeline_record(tmp_path: Path):
     artefact_names = {
         "atac_matrix_path": "atac_cells_by_peaks.h5ad",
@@ -2098,6 +2109,17 @@ def _full_pipeline_record(tmp_path: Path):
                 "dtype_counts": {"object": 2, "int64": 1},
                 "corner_sample_sha256": "b" * 64,
             },
+        },
+        "reference_sources": {
+            "motif_rankings": {
+                "source": "default_cache",
+                "path": str(tmp_path / "motif_rankings.feather"),
+                "exists_before": True,
+                "exists_after": True,
+                "cache_exists_before": True,
+                "cache_exists_after": True,
+            },
+            "gene_coords": _explicit_reference_source(tmp_path / "gene_coords.parquet"),
         },
         "params": {
             "seed": 777,
@@ -3041,6 +3063,9 @@ def test_benchmark_artifact_validator_accepts_annotation_pruning_metadata(tmp_pa
         "dtype_counts": {"object": 2},
         "corner_sample_sha256": "c" * 64,
     }
+    record["reference_sources"]["motif_annotations"] = _explicit_reference_source(
+        tmp_path / "motif_annotations.tsv"
+    )
     record["shapes"]["motif_annotations"] = [4, 2]
     record["outputs"]["pruned_regulons"] = 1
     record["backend_execution"]["pipeline_cistarget_pruning"] = {
@@ -3088,6 +3113,9 @@ def test_benchmark_artifact_validator_accepts_region_motif_rankings_metadata(tmp
         "path_name": "region_rankings.feather",
         "size_bytes": 1024,
     }
+    record["reference_sources"]["region_motif_rankings"] = _explicit_reference_source(
+        tmp_path / "region_rankings.feather"
+    )
     record["shapes"]["region_motif_rankings"] = [8, 2000]
     record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
         "engine": "rust",
@@ -3121,6 +3149,9 @@ def test_benchmark_artifact_validator_requires_region_cistarget_symbols(tmp_path
         "dtype_counts": {"int32": 2000},
         "corner_sample_sha256": "d" * 64,
     }
+    record["reference_sources"]["region_motif_rankings"] = _explicit_reference_source(
+        tmp_path / "region_rankings.feather"
+    )
     record["shapes"]["region_motif_rankings"] = [8, 2000]
 
     failures = module.validate_record(record, require_clean=True)
@@ -3171,6 +3202,12 @@ def test_benchmark_artifact_validator_requires_region_peak_filter_with_annotatio
         "path_name": "region_rankings.feather",
         "size_bytes": 1024,
     }
+    record["reference_sources"]["motif_annotations"] = _explicit_reference_source(
+        tmp_path / "motif_annotations.tsv"
+    )
+    record["reference_sources"]["region_motif_rankings"] = _explicit_reference_source(
+        tmp_path / "region_rankings.feather"
+    )
     record["shapes"]["motif_annotations"] = [4, 2]
     record["shapes"]["region_motif_rankings"] = [8, 2000]
     record["backend_execution"]["pipeline_cistarget_pruning"] = {
@@ -3542,6 +3579,31 @@ def test_benchmark_artifact_validator_rejects_missing_reference_fingerprints(tmp
         "reference_fingerprints.gene_coords.shape rows must match shapes.gene_coords_rows"
         in failures
     )
+
+
+def test_benchmark_artifact_validator_rejects_bad_reference_sources(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_reference_sources",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    del record["reference_sources"]["motif_rankings"]
+    record["reference_sources"]["gene_coords"] = {
+        "source": "default_download",
+        "path": str(tmp_path / "gene_coords.parquet"),
+        "exists_before": False,
+        "exists_after": False,
+        "cache_exists_before": True,
+        "cache_exists_after": False,
+    }
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "reference_sources.motif_rankings must be an object" in failures
+    assert (
+        "reference_sources.gene_coords default_download must be absent before "
+        "and cached after loading"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_missing_output_summaries(tmp_path):

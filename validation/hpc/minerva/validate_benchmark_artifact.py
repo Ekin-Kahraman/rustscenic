@@ -604,6 +604,71 @@ def _reference_fingerprint_failures(record: dict[str, Any]) -> list[str]:
     return failures
 
 
+def _reference_source_failures(record: dict[str, Any]) -> list[str]:
+    failures: list[str] = []
+    sources = record.get("reference_sources")
+    fingerprints = record.get("reference_fingerprints", {})
+    fingerprint_keys = fingerprints if isinstance(fingerprints, dict) else {}
+    if not isinstance(sources, dict):
+        return ["reference_sources must be an object"]
+    keys = ["motif_rankings", "gene_coords"]
+    if (
+        "motif_annotations" in fingerprint_keys
+        or _motif_annotations_supplied(record)
+    ):
+        keys.append("motif_annotations")
+    if (
+        "region_motif_rankings" in fingerprint_keys
+        or _region_motif_rankings_supplied(record)
+    ):
+        keys.append("region_motif_rankings")
+
+    for key in keys:
+        entry = sources.get(key)
+        prefix = f"reference_sources.{key}"
+        if not isinstance(entry, dict):
+            failures.append(f"{prefix} must be an object")
+            continue
+
+        source = entry.get("source")
+        if source not in {"explicit_path", "default_cache", "default_download"}:
+            failures.append(
+                f"{prefix}.source must be explicit_path, default_cache, or default_download"
+            )
+        if not _nonempty_str(entry.get("path")):
+            failures.append(f"{prefix}.path must be a non-empty string")
+        if not isinstance(entry.get("exists_before"), bool):
+            failures.append(f"{prefix}.exists_before must be a boolean")
+        if not isinstance(entry.get("exists_after"), bool):
+            failures.append(f"{prefix}.exists_after must be a boolean")
+
+        if source == "explicit_path":
+            if entry.get("exists_before") is not True or entry.get("exists_after") is not True:
+                failures.append(f"{prefix} explicit paths must exist before and after loading")
+            if entry.get("cache_exists_before") is not None:
+                failures.append(f"{prefix}.cache_exists_before must be null for explicit paths")
+            if entry.get("cache_exists_after") is not None:
+                failures.append(f"{prefix}.cache_exists_after must be null for explicit paths")
+        elif source in {"default_cache", "default_download"}:
+            cache_before = entry.get("cache_exists_before")
+            cache_after = entry.get("cache_exists_after")
+            if not isinstance(cache_before, bool):
+                failures.append(f"{prefix}.cache_exists_before must be a boolean")
+            if not isinstance(cache_after, bool):
+                failures.append(f"{prefix}.cache_exists_after must be a boolean")
+            if source == "default_cache" and (
+                cache_before is not True or cache_after is not True
+            ):
+                failures.append(f"{prefix} default_cache must exist before and after loading")
+            if source == "default_download" and (
+                cache_before is not False or cache_after is not True
+            ):
+                failures.append(
+                    f"{prefix} default_download must be absent before and cached after loading"
+                )
+    return failures
+
+
 def _region_motif_fingerprint_failures(fp: dict[str, Any]) -> list[str]:
     failures: list[str] = []
     if fp.get("file_backed") is not True:
@@ -1504,6 +1569,7 @@ def validate_full_pipeline(
                 "cell_barcode_filter",
                 "input_hashes",
                 "reference_fingerprints",
+                "reference_sources",
                 "params",
                 "shapes",
                 "wall_s",
@@ -1526,6 +1592,7 @@ def validate_full_pipeline(
     if not _nonempty_str(record.get("dataset_name")):
         failures.append("dataset_name must be a non-empty string")
     failures.extend(_reference_fingerprint_failures(record))
+    failures.extend(_reference_source_failures(record))
     failures.extend(_expected_tf_recovery_failures(record, "full_pipeline"))
     failures.extend(_thread_budget_failures(record, "full_pipeline", params_key="threads"))
     failures.extend(_output_summary_failures(record))

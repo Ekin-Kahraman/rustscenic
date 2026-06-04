@@ -162,6 +162,33 @@ def file_info(path: str | Path | None) -> dict[str, Any] | None:
     }
 
 
+def explicit_reference_source(path: Path) -> dict[str, Any]:
+    return {
+        "source": "explicit_path",
+        "path": str(path),
+        "exists_before": path.exists(),
+        "exists_after": path.exists(),
+        "cache_exists_before": None,
+        "cache_exists_after": None,
+    }
+
+
+def default_reference_source(
+    path: Path,
+    *,
+    cache_exists_before: bool,
+) -> dict[str, Any]:
+    cache_exists_after = path.exists()
+    return {
+        "source": "default_cache" if cache_exists_before else "default_download",
+        "path": str(path),
+        "exists_before": cache_exists_before,
+        "exists_after": cache_exists_after,
+        "cache_exists_before": cache_exists_before,
+        "cache_exists_after": cache_exists_after,
+    }
+
+
 def backend_execution_for_benchmark(result) -> dict[str, Any]:
     execution = {
         "setup_fragments_to_matrix": {
@@ -585,25 +612,47 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     rna, atac = subset_shared_cells(rna, atac, n_cells=args.n_cells, seed=args.seed)
     setup_elapsed["subset_shared_cells"] = time.perf_counter() - t_step
 
+    reference_sources: dict[str, dict[str, Any]] = {}
+
     t_step = time.perf_counter()
     motif_rankings = load_optional_table(args.motif_rankings)
+    motif_rankings_default_path = None
+    motif_rankings_cache_exists_before = None
     if motif_rankings is None:
+        motif_rankings_default_path = rustscenic.data._motif_rankings_cache_path(
+            species=args.motif_species,
+        )
+        motif_rankings_cache_exists_before = motif_rankings_default_path.exists()
         print("[setup] downloading or loading cached motif rankings", flush=True)
         motif_rankings = rustscenic.data.download_motif_rankings(
             species=args.motif_species,
             verbose=not args.quiet,
+        )
+        reference_sources["motif_rankings"] = default_reference_source(
+            motif_rankings_default_path,
+            cache_exists_before=motif_rankings_cache_exists_before,
+        )
+    else:
+        reference_sources["motif_rankings"] = explicit_reference_source(
+            args.motif_rankings
         )
     setup_elapsed["motif_rankings"] = time.perf_counter() - t_step
 
     t_step = time.perf_counter()
     motif_annotations = load_optional_table(args.motif_annotations)
     if args.motif_annotations is not None:
+        reference_sources["motif_annotations"] = explicit_reference_source(
+            args.motif_annotations
+        )
         setup_elapsed["motif_annotations"] = time.perf_counter() - t_step
 
     t_step = time.perf_counter()
     region_motif_rankings = args.region_motif_rankings
     region_motif_rankings_fingerprint = None
     if region_motif_rankings is not None:
+        reference_sources["region_motif_rankings"] = explicit_reference_source(
+            region_motif_rankings
+        )
         region_motif_rankings_fingerprint = file_backed_table_fingerprint(
             region_motif_rankings
         )
@@ -611,11 +660,27 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     t_step = time.perf_counter()
     gene_coords = load_optional_table(args.gene_coords)
+    gene_coords_default_path = None
+    gene_coords_cache_exists_before = None
     if gene_coords is None:
+        gene_coords_default_path = Path(
+            rustscenic.data._gene_coords_cache_paths(
+                species=args.gene_species,
+            )["parquet_path"]
+        )
+        gene_coords_cache_exists_before = gene_coords_default_path.exists()
         print("[setup] downloading or loading cached gene coordinates", flush=True)
         gene_coords = rustscenic.data.download_gene_coords(
             species=args.gene_species,
             verbose=not args.quiet,
+        )
+        reference_sources["gene_coords"] = default_reference_source(
+            gene_coords_default_path,
+            cache_exists_before=gene_coords_cache_exists_before,
+        )
+    else:
+        reference_sources["gene_coords"] = explicit_reference_source(
+            args.gene_coords
         )
     setup_elapsed["gene_coords"] = time.perf_counter() - t_step
 
@@ -750,6 +815,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "peaks_bed_md5": md5(args.peaks),
         },
         "reference_fingerprints": reference_fingerprints,
+        "reference_sources": reference_sources,
         "params": {
             "n_cells_requested": args.n_cells,
             "grn_n_estimators": args.grn_n_estimators,
