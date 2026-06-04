@@ -198,6 +198,14 @@ def _nonnegative_number(value: Any) -> bool:
     return not isinstance(value, bool) and isinstance(value, (int, float)) and value >= 0
 
 
+def _finite_number(value: Any) -> bool:
+    return (
+        not isinstance(value, bool)
+        and isinstance(value, (int, float))
+        and math.isfinite(float(value))
+    )
+
+
 def _shape2(value: Any) -> bool:
     return (
         isinstance(value, list)
@@ -1819,10 +1827,11 @@ def validate_full_pipeline_scaling(
             "pipeline_wall_slope_vs_cells",
             "pipeline_compute_stage_wall_slope_vs_cells",
             "pipeline_unattributed_wall_slope_vs_cells",
-            "peak_rss_slope_vs_cells",
         ):
             if not _nonnegative_number(scaling.get(key)):
                 failures.append(f"scaling.{key} must be non-negative")
+        if not _finite_number(scaling.get("peak_rss_slope_vs_cells")):
+            failures.append("scaling.peak_rss_slope_vs_cells must be a finite number")
         expected_slopes = {
             "end_to_end_wall_slope_vs_cells": _rounded_slope(
                 wall_rows,

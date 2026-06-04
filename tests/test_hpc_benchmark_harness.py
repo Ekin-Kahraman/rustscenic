@@ -2474,6 +2474,40 @@ def test_benchmark_artifact_validator_accepts_full_pipeline_scaling_record(tmp_p
     assert failures == []
 
 
+def test_benchmark_artifact_validator_accepts_negative_peak_rss_slope(tmp_path):
+    """Peak RSS is measured in independent child processes, so allocator and
+    OS effects can make the larger subset report a lower maximum RSS. The
+    validator should require provenance consistency, not monotonic memory."""
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_negative_rss",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    for row, peak_rss in zip(record["runs"], (1.9, 1.7), strict=True):
+        row["peak_rss_gb"] = peak_rss
+        child_path = Path(row["json_path"])
+        child = json.loads(child_path.read_text())
+        child["peak_rss_gb"] = peak_rss
+        child_path.write_text(json.dumps(child))
+    record["scaling"]["peak_rss_slope_vs_cells"] = module._rounded_slope(
+        [
+            {"n_cells": row["n_cells_actual"], "peak_rss_gb": row["peak_rss_gb"]}
+            for row in record["runs"]
+        ],
+        "n_cells",
+        "peak_rss_gb",
+    )
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert record["scaling"]["peak_rss_slope_vs_cells"] < 0
+    assert failures == []
+
+
 def test_benchmark_artifact_validator_rejects_missing_scaling_child(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_full_scaling_missing_child",
