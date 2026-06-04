@@ -446,6 +446,30 @@ def _backend_execution_symbol_failures(
     return failures
 
 
+def _integrated_adata_execution_failures(
+    record: dict[str, Any],
+    prefix: str,
+) -> list[str]:
+    execution = record.get("backend_execution")
+    if not isinstance(execution, dict):
+        return []
+
+    stage_prefix = f"{prefix}.backend_execution.pipeline_integrated_adata"
+    state = execution.get("pipeline_integrated_adata")
+    if not isinstance(state, dict):
+        return [f"{stage_prefix} must be an object"]
+
+    expected_engine = "python_io" if _write_integrated_adata(record) else "skipped"
+    failures: list[str] = []
+    if state.get("engine") != expected_engine:
+        failures.append(f"{stage_prefix}.engine must be '{expected_engine}'")
+
+    reason = state.get("reason")
+    if not _nonempty_str(reason):
+        failures.append(f"{stage_prefix}.reason must be a non-empty string")
+    return failures
+
+
 def _require_keys(record: dict[str, Any], keys: set[str], prefix: str) -> list[str]:
     return [f"{prefix}.{key} missing" for key in sorted(keys) if key not in record]
 
@@ -1072,6 +1096,7 @@ def _full_pipeline_scaling_row_failures(
             REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
         )
     )
+    failures.extend(_integrated_adata_execution_failures(row, prefix))
     if require_motif_pruning:
         failures.extend(
             _backend_execution_failures(
@@ -1109,6 +1134,7 @@ def validate_full_pipeline(
             REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
         )
     )
+    failures.extend(_integrated_adata_execution_failures(record, "full_pipeline"))
     failures.extend(_motif_annotation_pruning_failures(record, "full_pipeline"))
     failures.extend(_region_motif_ranking_failures(record, "full_pipeline"))
     failures.extend(

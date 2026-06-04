@@ -1783,6 +1783,10 @@ def _backend_execution_state():
                 "aucell_score_sparse_csr",
             ],
         },
+        "pipeline_integrated_adata": {
+            "engine": "python_io",
+            "reason": "AnnData obs attachment and h5ad write",
+        },
     }
 
 
@@ -2511,6 +2515,42 @@ def test_benchmark_artifact_validator_rejects_incomplete_rust_stage_symbols(tmp_
         "full_pipeline.backend_execution.pipeline_aucell.symbols missing "
         "required Rust symbol 'stage_prepare_regulon_indices_with_coverage'"
     ) in failures
+
+
+def test_benchmark_artifact_validator_requires_integrated_adata_io_provenance(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_integrated_adata_io",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    missing_record = _full_pipeline_record(tmp_path)
+    del missing_record["backend_execution"]["pipeline_integrated_adata"]
+
+    missing_failures = module.validate_record(missing_record, require_clean=True)
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_integrated_adata must be an object"
+        in missing_failures
+    )
+
+    wrong_engine_record = _full_pipeline_record(tmp_path)
+    wrong_engine_record["backend_execution"]["pipeline_integrated_adata"] = {
+        "engine": "rust",
+        "symbols": ["some_rust_symbol"],
+    }
+
+    wrong_engine_failures = module.validate_record(
+        wrong_engine_record,
+        require_clean=True,
+    )
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_integrated_adata.engine "
+        "must be 'python_io'"
+    ) in wrong_engine_failures
+    assert (
+        "full_pipeline.backend_execution.pipeline_integrated_adata.reason "
+        "must be a non-empty string"
+    ) in wrong_engine_failures
 
 
 def test_benchmark_artifact_validator_accepts_annotation_pruning_metadata(tmp_path):
