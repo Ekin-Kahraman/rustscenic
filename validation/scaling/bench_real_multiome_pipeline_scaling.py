@@ -181,6 +181,7 @@ def run_child(args: argparse.Namespace, *, n_cells: int) -> dict[str, Any]:
     return {
         "n_cells_requested": int(n_cells),
         "n_cells_actual": int(record["shapes"]["rna_post_qc"][0]),
+        "threads": int(args.threads),
         "json_path": str(out_json),
         "output_dir": str(out_dir),
         "wall_s": record["wall_s"],
@@ -193,6 +194,7 @@ def run_child(args: argparse.Namespace, *, n_cells: int) -> dict[str, Any]:
         "matrix_inputs": record["matrix_inputs"],
         "outputs": record["outputs"],
         "expected_tf_recovery": record.get("expected_tf_recovery"),
+        "env": record["env"],
         "write_integrated_adata": record.get("params", {}).get(
             "write_integrated_adata",
             True,

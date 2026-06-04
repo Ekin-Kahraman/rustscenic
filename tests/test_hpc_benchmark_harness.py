@@ -2211,6 +2211,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
             {
                 "n_cells_requested": n_cells,
                 "n_cells_actual": n_cells,
+                "threads": child["params"]["threads"],
                 "json_path": str(child_path),
                 "output_dir": str(child_dir),
                 "wall_s": child["wall_s"],
@@ -2223,6 +2224,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "matrix_inputs": child["matrix_inputs"],
                 "outputs": child["outputs"],
                 "expected_tf_recovery": child.get("expected_tf_recovery"),
+                "env": child["env"],
                 "write_integrated_adata": child["params"].get(
                     "write_integrated_adata",
                     True,
@@ -2484,6 +2486,41 @@ def test_benchmark_artifact_validator_rejects_scaling_cell_barcode_filter_mismat
     )
 
     assert "runs[0].cell_barcode_filter must match child JSON" in failures
+
+
+def test_benchmark_artifact_validator_rejects_scaling_row_env_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_row_env_mismatch",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["env"]["rayon_num_threads"] = "2"
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert "runs[0].env.rayon_num_threads must match params.threads: 2 != 4" in failures
+    assert "runs[0].env must match child JSON" in failures
+
+
+def test_benchmark_artifact_validator_accepts_legacy_scaling_row_without_env(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_legacy_row_env",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    for row in record["runs"]:
+        row.pop("threads")
+        row.pop("env")
+
+    assert module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    ) == []
 
 
 def test_benchmark_artifact_validator_rejects_scaling_matrix_inputs_child_mismatch(tmp_path):

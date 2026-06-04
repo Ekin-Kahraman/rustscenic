@@ -1270,8 +1270,15 @@ def _full_pipeline_scaling_row_child_failures(
             True,
         ),
     }
+    optional_checks = {
+        "threads": child.get("params", {}).get("threads"),
+        "env": child.get("env"),
+    }
     for key, expected in checks.items():
         if row.get(key) != expected:
+            failures.append(f"{prefix}.{key} must match child JSON")
+    for key, expected in optional_checks.items():
+        if key in row and row.get(key) != expected:
             failures.append(f"{prefix}.{key} must match child JSON")
 
     output_dir = row.get("output_dir")
@@ -1302,6 +1309,11 @@ def _full_pipeline_scaling_row_failures(
     n_cells = row.get("n_cells_actual")
     if not _positive_int(row.get("n_cells_requested")):
         failures.append(f"{prefix}.n_cells_requested must be positive")
+    if "env" in row or "threads" in row:
+        if not _positive_int(row.get("threads")):
+            failures.append(f"{prefix}.threads must be positive when row env is present")
+        else:
+            failures.extend(_thread_budget_failures(row, prefix, params_key="threads"))
 
     if not _positive_number(row.get("setup_peak_rss_gb")):
         failures.append(f"{prefix}.setup_peak_rss_gb must be positive")
