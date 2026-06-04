@@ -1860,26 +1860,14 @@ def _full_pipeline_record(tmp_path: Path):
     backend_execution = _backend_execution_state()
     cell_barcode_filter = {"requested": 100, "matched": 100}
     manifest_path = tmp_path / "manifest.json"
-    manifest_backend = {
-        key.removeprefix("pipeline_"): value
-        for key, value in backend_execution.items()
-        if key.startswith("pipeline_")
-    }
-    manifest_path.write_text(
-        json.dumps(
-            {
-                "backend_execution": manifest_backend,
-                "cell_barcode_filter": cell_barcode_filter,
-            }
-        )
-    )
+    manifest_path.write_text("{}")
     output_inventory["manifest_path"] = {
         "path": str(manifest_path),
         "exists": True,
         "type": "file",
         "size_bytes": manifest_path.stat().st_size,
     }
-    return {
+    record = {
         "benchmark": "real_multiome_full_pipeline",
         "dataset_name": "pbmc3k",
         "repo_state": _clean_repo_state(),
@@ -1996,6 +1984,8 @@ def _full_pipeline_record(tmp_path: Path):
             "mkl_num_threads": "1",
         },
     }
+    _sync_full_pipeline_manifest(record)
+    return record
 
 
 def _sync_full_pipeline_manifest(record: dict) -> None:
@@ -2006,9 +1996,38 @@ def _sync_full_pipeline_manifest(record: dict) -> None:
         for key, value in record["backend_execution"].items()
         if key.startswith("pipeline_")
     }
+    inventory = record["output_inventory"]
+    outputs = record["outputs"]
+    shapes = record["shapes"]
     path.write_text(
         json.dumps(
             {
+                "output_dir": str(path.parent),
+                "atac_matrix_path": inventory["atac_matrix_path"]["path"],
+                "grn_path": inventory["grn_path"]["path"],
+                "regulons_path": inventory["regulons_path"]["path"],
+                "candidate_regulons_path": inventory["candidate_regulons_path"]["path"],
+                "aucell_path": inventory["aucell_path"]["path"],
+                "topics_dir": inventory["topics_dir"]["path"],
+                "cistarget_path": inventory["cistarget_path"]["path"],
+                "enhancer_links_path": inventory["enhancer_links_path"]["path"],
+                "eregulons_path": inventory["eregulons_path"]["path"],
+                "integrated_adata_path": (
+                    inventory.get("integrated_adata_path", {}).get("path")
+                ),
+                "elapsed": record["elapsed_per_stage"],
+                "memory": record["peak_rss_gb_per_stage"],
+                "n_cells": shapes["rna_post_qc"][0],
+                "n_grn_edges": outputs["grn_edges"],
+                "n_regulons": outputs["regulons"],
+                "n_candidate_regulons": outputs["candidate_regulons"],
+                "n_pruned_regulons": outputs.get("pruned_regulons"),
+                "n_cistarget_rows": outputs["cistarget_rows"],
+                "n_enhancer_links": outputs["enhancer_links"],
+                "n_eregulon_rows": outputs["eregulon_rows"],
+                "n_eregulons": outputs["eregulons"],
+                "aucell_shape": outputs["aucell_shape"],
+                "regulon_source": "candidate_grn_top_targets",
                 "backend_execution": manifest_backend,
                 "cell_barcode_filter": record.get("cell_barcode_filter"),
             }
@@ -2416,6 +2435,10 @@ def test_benchmark_artifact_validator_rejects_manifest_mismatch(tmp_path):
     manifest_path = Path(manifest_info["path"])
     manifest = json.loads(manifest_path.read_text())
     manifest["cell_barcode_filter"] = {"requested": 99, "matched": 99}
+    manifest["grn_path"] = str(tmp_path / "wrong_grn.parquet")
+    manifest["n_grn_edges"] = 999
+    manifest["elapsed"]["grn"] = 999.0
+    manifest["memory"]["grn"] = 999.0
     manifest["backend_execution"]["enhancer"] = {
         "engine": "rust",
         "symbols": ["enhancer_link_pearson"],
@@ -2433,6 +2456,22 @@ def test_benchmark_artifact_validator_rejects_manifest_mismatch(tmp_path):
         "output_inventory.manifest_path cell_barcode_filter must match benchmark JSON"
         in failures
     )
+    assert (
+        "output_inventory.manifest_path grn_path must match "
+        "output_inventory.grn_path.path"
+    ) in failures
+    assert (
+        "output_inventory.manifest_path n_grn_edges must match benchmark JSON"
+        in failures
+    )
+    assert (
+        "output_inventory.manifest_path elapsed.grn must match "
+        "benchmark elapsed_per_stage.grn"
+    ) in failures
+    assert (
+        "output_inventory.manifest_path memory.grn must match "
+        "benchmark peak_rss_gb_per_stage.grn"
+    ) in failures
     assert (
         "output_inventory.manifest_path backend_execution.enhancer must match "
         "benchmark backend_execution.pipeline_enhancer"

@@ -915,6 +915,24 @@ def _pipeline_manifest_failures(record: dict[str, Any]) -> list[str]:
         failures.append(
             "output_inventory.manifest_path cell_barcode_filter must match benchmark JSON"
         )
+    failures.extend(_pipeline_manifest_path_failures(record, manifest))
+    failures.extend(_pipeline_manifest_count_failures(record, manifest))
+    failures.extend(
+        _pipeline_manifest_stage_metric_failures(
+            record,
+            manifest,
+            manifest_key="elapsed",
+            record_key="elapsed_per_stage",
+        )
+    )
+    failures.extend(
+        _pipeline_manifest_stage_metric_failures(
+            record,
+            manifest,
+            manifest_key="memory",
+            record_key="peak_rss_gb_per_stage",
+        )
+    )
 
     manifest_execution = manifest.get("backend_execution")
     benchmark_execution = record.get("backend_execution")
@@ -929,6 +947,116 @@ def _pipeline_manifest_failures(record: dict[str, Any]) -> list[str]:
                     f"must match benchmark backend_execution.{key}"
                 )
     return failures
+
+
+def _pipeline_manifest_path_failures(
+    record: dict[str, Any],
+    manifest: dict[str, Any],
+) -> list[str]:
+    failures: list[str] = []
+    inventory = record.get("output_inventory")
+    if not isinstance(inventory, dict):
+        return failures
+    for key in (
+        "atac_matrix_path",
+        "grn_path",
+        "regulons_path",
+        "candidate_regulons_path",
+        "aucell_path",
+        "topics_dir",
+        "cistarget_path",
+        "enhancer_links_path",
+        "eregulons_path",
+        "integrated_adata_path",
+    ):
+        info = inventory.get(key)
+        expected = info.get("path") if isinstance(info, dict) else None
+        actual = manifest.get(key)
+        if expected is None:
+            if actual is not None:
+                failures.append(
+                    f"output_inventory.manifest_path {key} must be null when "
+                    f"benchmark output_inventory.{key} is absent"
+                )
+        elif actual != expected:
+            failures.append(
+                f"output_inventory.manifest_path {key} must match "
+                f"output_inventory.{key}.path"
+            )
+    return failures
+
+
+def _pipeline_manifest_count_failures(
+    record: dict[str, Any],
+    manifest: dict[str, Any],
+) -> list[str]:
+    failures: list[str] = []
+    outputs = record.get("outputs", {})
+    shapes = record.get("shapes", {})
+    expected = {
+        "n_cells": (
+            shapes.get("rna_post_qc", [None])[0]
+            if isinstance(shapes, dict)
+            else None
+        ),
+        "n_grn_edges": outputs.get("grn_edges") if isinstance(outputs, dict) else None,
+        "n_regulons": outputs.get("regulons") if isinstance(outputs, dict) else None,
+        "n_candidate_regulons": (
+            outputs.get("candidate_regulons") if isinstance(outputs, dict) else None
+        ),
+        "n_pruned_regulons": (
+            outputs.get("pruned_regulons") if isinstance(outputs, dict) else None
+        ),
+        "n_cistarget_rows": (
+            outputs.get("cistarget_rows") if isinstance(outputs, dict) else None
+        ),
+        "n_enhancer_links": (
+            outputs.get("enhancer_links") if isinstance(outputs, dict) else None
+        ),
+        "n_eregulon_rows": (
+            outputs.get("eregulon_rows") if isinstance(outputs, dict) else None
+        ),
+        "n_eregulons": outputs.get("eregulons") if isinstance(outputs, dict) else None,
+        "aucell_shape": outputs.get("aucell_shape") if isinstance(outputs, dict) else None,
+    }
+    for key, value in expected.items():
+        if manifest.get(key) != value:
+            failures.append(
+                f"output_inventory.manifest_path {key} must match benchmark JSON"
+            )
+    return failures
+
+
+def _pipeline_manifest_stage_metric_failures(
+    record: dict[str, Any],
+    manifest: dict[str, Any],
+    *,
+    manifest_key: str,
+    record_key: str,
+) -> list[str]:
+    failures: list[str] = []
+    manifest_values = manifest.get(manifest_key)
+    record_values = record.get(record_key)
+    if not isinstance(manifest_values, dict):
+        return [f"output_inventory.manifest_path {manifest_key} must be an object"]
+    if not isinstance(record_values, dict):
+        return failures
+    for stage, expected in record_values.items():
+        actual = manifest_values.get(stage)
+        if not _numbers_match_rounded(actual, expected):
+            failures.append(
+                f"output_inventory.manifest_path {manifest_key}.{stage} "
+                f"must match benchmark {record_key}.{stage}"
+            )
+    return failures
+
+
+def _numbers_match_rounded(actual: Any, expected: Any) -> bool:
+    if isinstance(actual, bool) or isinstance(expected, bool):
+        return actual == expected
+    if isinstance(actual, (int, float)) and isinstance(expected, (int, float)):
+        return round(float(actual), 6) == round(float(expected), 6)
+    return actual == expected
 
 
 def _log_log_slope(rows: list[dict[str, Any]], x_key: str, y_key: str) -> float | None:
