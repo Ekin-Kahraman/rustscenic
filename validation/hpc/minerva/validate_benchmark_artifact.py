@@ -1686,6 +1686,8 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
     if not _nonempty_str(record.get("dataset")):
         failures.append("dataset must be a non-empty string")
 
+    subset_rows = record.get("subset_scaling")
+    thread_rows = record.get("thread_scaling")
     for section in ("subset_scaling", "thread_scaling"):
         rows = record.get(section)
         if not isinstance(rows, list) or not rows:
@@ -1743,7 +1745,80 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
                     required_rust_stages={"grn"},
                 )
             )
+    failures.extend(_grn_scaling_summary_failures(subset_rows, thread_rows, record))
     return failures
+
+
+def _grn_scaling_summary_failures(
+    subset_rows: Any,
+    thread_rows: Any,
+    record: dict[str, Any],
+) -> list[str]:
+    failures: list[str] = []
+    if isinstance(subset_rows, list):
+        subset_wall = _rounded_slope(
+            [row for row in subset_rows if isinstance(row, dict)],
+            "n_cells",
+            "grn_wall_s",
+        )
+        subset_memory = _rounded_slope(
+            [row for row in subset_rows if isinstance(row, dict)],
+            "n_cells",
+            "peak_rss_gb",
+        )
+        for key, expected in (
+            ("subset_wall_slope_vs_cells", subset_wall),
+            ("subset_memory_slope_vs_cells", subset_memory),
+        ):
+            actual = record.get(key)
+            if expected is None:
+                if actual is not None:
+                    failures.append(
+                        f"{key} must be null when fewer than two subset rows are usable"
+                    )
+            elif actual != expected:
+                failures.append(
+                    f"{key} must match subset_scaling: {actual} != {expected}"
+                )
+
+    if isinstance(thread_rows, list):
+        expected_speedups = _grn_thread_speedups(
+            [row for row in thread_rows if isinstance(row, dict)]
+        )
+        actual_speedups = record.get("thread_speedups")
+        if not isinstance(actual_speedups, list):
+            failures.append("thread_speedups must be a list")
+        elif actual_speedups != expected_speedups:
+            failures.append("thread_speedups must match thread_scaling rows")
+    return failures
+
+
+def _grn_thread_speedups(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    usable = [
+        row
+        for row in rows
+        if _positive_int(row.get("threads"))
+        and _positive_number(row.get("grn_wall_s"))
+    ]
+    if not usable:
+        return []
+    by_threads = sorted(usable, key=lambda row: int(row["threads"]))
+    baseline = next((row for row in by_threads if row["threads"] == 1), by_threads[0])
+    base_threads = int(baseline["threads"])
+    base_wall = float(baseline["grn_wall_s"])
+    return [
+        {
+            "threads": int(row["threads"]),
+            "wall_s": row["grn_wall_s"],
+            "speedup_vs_baseline": round(base_wall / float(row["grn_wall_s"]), 3),
+            "efficiency_vs_baseline": round(
+                (base_wall / float(row["grn_wall_s"]))
+                / (int(row["threads"]) / base_threads),
+                3,
+            ),
+        }
+        for row in by_threads
+    ]
 
 
 def validate_full_pipeline_scaling(

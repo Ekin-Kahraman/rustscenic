@@ -2377,8 +2377,8 @@ def _grn_scaling_record():
                 "efficiency_vs_baseline": 1.0,
             }
         ],
-        "subset_wall_slope_vs_cells": 1.0,
-        "subset_memory_slope_vs_cells": 0.5,
+        "subset_wall_slope_vs_cells": None,
+        "subset_memory_slope_vs_cells": None,
     }
 
 
@@ -3570,6 +3570,24 @@ def test_benchmark_artifact_validator_accepts_grn_scaling_record():
     assert failures == []
 
 
+def test_benchmark_artifact_validator_rejects_grn_summary_mismatch():
+    module = _load_module(
+        "validate_benchmark_artifact_grn_summary_mismatch",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _grn_scaling_record()
+    record["subset_wall_slope_vs_cells"] = 1.0
+    record["thread_speedups"][0]["speedup_vs_baseline"] = 2.0
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "subset_wall_slope_vs_cells must be null when fewer than two subset rows are usable"
+        in failures
+    )
+    assert "thread_speedups must match thread_scaling rows" in failures
+
+
 def test_benchmark_artifact_validator_rejects_grn_row_without_rust_execution():
     module = _load_module(
         "validate_benchmark_artifact_grn_backend_execution",
@@ -3740,13 +3758,24 @@ def test_minerva_result_collector_summarises_grn_scaling(tmp_path):
         }
     )
     record["subset_wall_slope_vs_cells"] = 1.0
-    record["subset_memory_slope_vs_cells"] = 0.5
+    record["subset_memory_slope_vs_cells"] = 0.737
+    record["thread_scaling"].append(
+        {
+            **deepcopy(record["thread_scaling"][0]),
+            "threads": 8,
+            "grn_wall_s": 0.75,
+            "env": {
+                **record["thread_scaling"][0]["env"],
+                "rayon_num_threads": "8",
+            },
+        }
+    )
     record["thread_speedups"].append(
         {
             "threads": 8,
             "wall_s": 0.75,
             "speedup_vs_baseline": 2.0,
-            "efficiency_vs_baseline": 0.25,
+            "efficiency_vs_baseline": 1.0,
         }
     )
     path = tmp_path / "grn_scaling.json"
@@ -3768,7 +3797,7 @@ def test_minerva_result_collector_summarises_grn_scaling(tmp_path):
     assert rows[0]["outputs"] == "edges=1000..2000, genes=1000, tfs=50"
     assert (
         rows[0]["scaling"]
-        == "subset_wall_slope_vs_cells=1, subset_memory_slope_vs_cells=0.5, "
+        == "subset_wall_slope_vs_cells=1, subset_memory_slope_vs_cells=0.737, "
         "best_thread_speedup=2@8t"
     )
 
