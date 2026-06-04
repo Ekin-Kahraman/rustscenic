@@ -371,7 +371,9 @@ def _peak_frame(atac_adata, peak_coords) -> pd.DataFrame:
         missing = need - set(peak_coords.columns)
         if missing:
             raise ValueError(f"peak_coords missing columns: {missing}")
-        return peak_coords.loc[atac_adata.var_names]
+        out = peak_coords.loc[atac_adata.var_names]
+        out.attrs.update(getattr(peak_coords, "attrs", {}))
+        return out
     # Try to get from atac_adata.var
     var = atac_adata.var
     if {"chrom", "start", "end"}.issubset(var.columns):

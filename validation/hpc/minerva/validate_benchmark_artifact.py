@@ -123,6 +123,7 @@ REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
             "enhancer_match_gene_coords_to_rna",
             "enhancer_normalise_chrom_codes",
             "enhancer_prepare_gene_order",
+            "preproc_peak_coords_for_names",
         },
         "any_of": (
             {"enhancer_link_pearson"},

@@ -1673,6 +1673,7 @@ def _backend_execution_state():
                 "enhancer_match_gene_coords_to_rna",
                 "enhancer_normalise_chrom_codes",
                 "enhancer_prepare_gene_order",
+                "preproc_peak_coords_for_names",
                 "enhancer_link_pearson_sparse_rna",
             ],
         },

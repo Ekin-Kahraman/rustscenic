@@ -1393,7 +1393,7 @@ def _peak_coords_from_bed(bed_path, atac_var_names):
         str(Path(bed_path)),
         [str(name) for name in atac_var_names],
     )
-    return pd.DataFrame(
+    out = pd.DataFrame(
         {
             "chrom": list(chroms),
             "start": np.asarray(starts, dtype=np.uint32),
@@ -1401,6 +1401,11 @@ def _peak_coords_from_bed(bed_path, atac_var_names):
         },
         index=pd.Index(list(peak_ids), name="name"),
     )
+    out.attrs["rust_backend"] = {
+        "engine": "rust",
+        "symbols": ["preproc_peak_coords_for_names"],
+    }
+    return out
 
 
 def _coerce_gene_coords(coords):

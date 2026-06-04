@@ -382,6 +382,7 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     ]
     assert result.backend_execution["enhancer"]["symbols"] == [
         "enhancer_align_cell_indices",
+        "preproc_peak_coords_for_names",
         "enhancer_match_gene_coords_to_rna",
         "enhancer_normalise_chrom_codes",
         "enhancer_prepare_gene_order",
@@ -398,6 +399,7 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     ]
     assert manifest["backend_execution"]["enhancer"]["symbols"] == [
         "enhancer_align_cell_indices",
+        "preproc_peak_coords_for_names",
         "enhancer_match_gene_coords_to_rna",
         "enhancer_normalise_chrom_codes",
         "enhancer_prepare_gene_order",
@@ -2018,6 +2020,10 @@ def test_peak_coords_from_bed_uses_rust_parser_and_preserves_atac_order(tmp_path
     assert got["chrom"].tolist() == ["chr3", "chr1"]
     assert got["start"].tolist() == [500, 100]
     assert got["end"].tolist() == [700, 200]
+    assert got.attrs["rust_backend"] == {
+        "engine": "rust",
+        "symbols": ["preproc_peak_coords_for_names"],
+    }
 
 
 def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch):
