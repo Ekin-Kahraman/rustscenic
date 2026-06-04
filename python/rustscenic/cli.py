@@ -354,6 +354,7 @@ def main(argv: list[str] | None = None) -> int:
     pc.set_defaults(func=cmd_cistarget)
 
     pd = sub.add_parser("doctor", help="Check Rust backend symbols required by the full pipeline")
+    pd.add_argument("--json", action="store_true", help="Emit JSON output. This is the default.")
     pd.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
     pd.set_defaults(func=cmd_doctor)
 

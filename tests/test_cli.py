@@ -167,6 +167,11 @@ def test_doctor_cli_reports_backend_capabilities(monkeypatch, capsys):
     assert rc == 0
     assert '"ok": true' in capsys.readouterr().out
 
+    rc = rustscenic.cli.main(["doctor", "--json"])
+
+    assert rc == 0
+    assert '"ok": true' in capsys.readouterr().out
+
 
 def test_pipeline_cli_runs_full_multiome_smoke(tmp_path):
     import gzip
