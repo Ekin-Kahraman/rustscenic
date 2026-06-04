@@ -132,7 +132,7 @@ def test_real_multiome_harness_fingerprints_feather_without_full_table_read(
     assert read_columns == [["motifs"]]
 
 
-def test_real_multiome_harness_builds_compact_output_summaries(tmp_path):
+def test_real_multiome_harness_builds_compact_output_summaries(monkeypatch, tmp_path):
     module = _load_module(
         "bench_real_multiome_output_summaries",
         ROOT / "validation/scaling/bench_real_multiome_pipeline.py",
@@ -191,6 +191,17 @@ def test_real_multiome_harness_builds_compact_output_summaries(tmp_path):
     assert summaries["top_enhancer_links"][0]["peak_id"] == "p1"
     assert summaries["top_enhancer_links"][0]["abs_correlation"] == 0.9
     assert summaries["top_eregulon_rows"][0]["tf"] == "TF1"
+    assert summaries["summary_max_rows"] is None
+
+    def fail_full_parquet_read(*_args, **_kwargs):
+        raise AssertionError("bounded summaries must not call pd.read_parquet")
+
+    monkeypatch.setattr(module.pd, "read_parquet", fail_full_parquet_read)
+    bounded = module.output_summaries(result, n=1, max_rows=1)
+
+    assert bounded["summary_max_rows"] == 1
+    assert bounded["top_grn_edges"] == [{"TF": "TF2", "target": "G2", "importance": 0.2}]
+    assert bounded["top_cistarget_rows"][0]["motif"] == "m1"
 
 
 def test_real_multiome_harness_does_not_reread_pipeline_outputs_for_counts():
@@ -278,6 +289,7 @@ def test_real_multiome_harness_rejects_invalid_args(tmp_path):
         (["--cistarget-auc-threshold", "-1"], "--cistarget-auc-threshold must be non-negative"),
         (["--enhancer-max-distance", "-1"], "--enhancer-max-distance must be non-negative"),
         (["--summary-rows", "0"], "--summary-rows must be positive"),
+        (["--summary-max-rows", "0"], "--summary-max-rows must be positive"),
     ):
         args = module.parse_args([*common, *extra])
         try:
@@ -325,6 +337,8 @@ def test_real_multiome_scaling_child_cmd_runs_full_pipeline_in_child(tmp_path):
             "--expected-tfs",
             "SPI1",
             "PAX5",
+            "--summary-max-rows",
+            "25",
             "--skip-integrated-adata",
             "--require-clean",
         ]
@@ -352,6 +366,8 @@ def test_real_multiome_scaling_child_cmd_runs_full_pipeline_in_child(tmp_path):
     assert cmd[cmd.index("--gene-coords") + 1].endswith("genes.parquet")
     assert "--expected-tfs" in cmd
     assert "SPI1" in cmd
+    assert "--summary-max-rows" in cmd
+    assert cmd[cmd.index("--summary-max-rows") + 1] == "25"
     assert "--skip-integrated-adata" in cmd
     assert "--require-clean" in cmd
 

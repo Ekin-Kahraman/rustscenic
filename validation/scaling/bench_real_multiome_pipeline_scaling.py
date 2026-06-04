@@ -123,6 +123,8 @@ def child_cmd(
         cmd.extend(["--gene-coords", str(args.gene_coords)])
     if args.expected_tfs:
         cmd.extend(["--expected-tfs", *args.expected_tfs])
+    if args.summary_max_rows is not None:
+        cmd.extend(["--summary-max-rows", str(args.summary_max_rows)])
     if args.skip_integrated_adata:
         cmd.append("--skip-integrated-adata")
     if args.require_clean:
@@ -263,6 +265,7 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
             "eregulon_min_target_genes": args.eregulon_min_target_genes,
             "eregulon_min_enhancer_links": args.eregulon_min_enhancer_links,
             "write_integrated_adata": not args.skip_integrated_adata,
+            "summary_max_rows": args.summary_max_rows,
             "expected_tfs": args.expected_tfs,
             "seed": args.seed,
             "force": args.force,
@@ -362,6 +365,8 @@ def validate_args(args: argparse.Namespace) -> None:
             raise SystemExit(f"--{name.replace('_', '-')} must be positive")
     if args.grn_target_block_size is not None and args.grn_target_block_size <= 0:
         raise SystemExit("--grn-target-block-size must be positive when set")
+    if args.summary_max_rows is not None and args.summary_max_rows <= 0:
+        raise SystemExit("--summary-max-rows must be positive when set")
     if not (0 < args.grn_max_features <= 1):
         raise SystemExit("--grn-max-features must be in (0, 1]")
     if not (0 < args.cistarget_top_frac <= 1):
@@ -408,6 +413,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--eregulon-min-target-genes", type=int, default=2)
     parser.add_argument("--eregulon-min-enhancer-links", type=int, default=1)
     parser.add_argument("--summary-rows", type=int, default=10)
+    parser.add_argument("--summary-max-rows", type=int, default=None)
     parser.add_argument("--skip-integrated-adata", action="store_true")
     parser.add_argument("--seed", type=int, default=777)
     parser.add_argument(

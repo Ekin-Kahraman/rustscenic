@@ -197,31 +197,84 @@ def _records(df: pd.DataFrame, *, n: int) -> list[dict[str, Any]]:
     ]
 
 
-def _read_parquet_columns(path: str | Path | None, columns: list[str]) -> pd.DataFrame:
+def _read_parquet_columns(
+    path: str | Path | None,
+    columns: list[str],
+    *,
+    max_rows: int | None = None,
+) -> pd.DataFrame:
     if path is None:
         return pd.DataFrame(columns=columns)
     p = Path(path)
     if not p.exists():
         return pd.DataFrame(columns=columns)
+    if max_rows is not None:
+        return _read_parquet_columns_bounded(p, columns, max_rows=max_rows)
     try:
-        return pd.read_parquet(p, columns=columns)
+        df = pd.read_parquet(p, columns=columns)
     except Exception:
         df = pd.read_parquet(p)
-        return df[[col for col in columns if col in df.columns]]
+        df = df[[col for col in columns if col in df.columns]]
+    return df
 
 
-def output_summaries(result: Any, *, n: int = 10) -> dict[str, Any]:
+def _read_parquet_columns_bounded(
+    path: Path,
+    columns: list[str],
+    *,
+    max_rows: int,
+) -> pd.DataFrame:
+    if max_rows <= 0:
+        return pd.DataFrame(columns=columns)
+    import pyarrow.parquet as pq
+
+    parquet = pq.ParquetFile(path)
+    available = set(parquet.schema.names)
+    read_columns = [col for col in columns if col in available]
+    if not read_columns:
+        return pd.DataFrame(columns=columns)
+
+    frames: list[pd.DataFrame] = []
+    remaining = int(max_rows)
+    for row_group in range(parquet.num_row_groups):
+        if remaining <= 0:
+            break
+        table = parquet.read_row_group(row_group, columns=read_columns)
+        if table.num_rows > remaining:
+            table = table.slice(0, remaining)
+        frame = table.to_pandas()
+        frames.append(frame)
+        remaining -= len(frame)
+    if not frames:
+        return pd.DataFrame(columns=read_columns)
+    return pd.concat(frames, ignore_index=True)
+
+
+def output_summaries(
+    result: Any,
+    *,
+    n: int = 10,
+    max_rows: int | None = None,
+) -> dict[str, Any]:
     """Read compact biological summaries from output artefacts.
 
     Counts come from ``PipelineResult``. This post-run summary is deliberately
     small and human-auditable, so benchmark JSON can be inspected without
     loading full parquet outputs.
     """
-    grn = _read_parquet_columns(result.grn_path, ["TF", "target", "importance"])
+    grn = _read_parquet_columns(
+        result.grn_path,
+        ["TF", "target", "importance"],
+        max_rows=max_rows,
+    )
     if {"TF", "target", "importance"}.issubset(grn.columns):
         grn = grn.sort_values("importance", ascending=False, kind="mergesort")
 
-    cistarget = _read_parquet_columns(result.cistarget_path, ["regulon", "motif", "auc", "nes"])
+    cistarget = _read_parquet_columns(
+        result.cistarget_path,
+        ["regulon", "motif", "auc", "nes"],
+        max_rows=max_rows,
+    )
     cistarget_sort = [col for col in ("nes", "auc") if col in cistarget.columns]
     if cistarget_sort:
         cistarget = cistarget.sort_values(cistarget_sort, ascending=False, kind="mergesort")
@@ -229,6 +282,7 @@ def output_summaries(result: Any, *, n: int = 10) -> dict[str, Any]:
     enhancer = _read_parquet_columns(
         result.enhancer_links_path,
         ["peak_id", "gene", "correlation", "distance"],
+        max_rows=max_rows,
     )
     if "correlation" in enhancer.columns:
         enhancer = enhancer.assign(abs_correlation=enhancer["correlation"].abs())
@@ -237,6 +291,7 @@ def output_summaries(result: Any, *, n: int = 10) -> dict[str, Any]:
     eregulons = _read_parquet_columns(
         result.eregulons_path,
         ["tf", "enhancer", "target_gene", "n_enhancer_links", "motif_auc"],
+        max_rows=max_rows,
     )
     eregulon_sort = [col for col in ("motif_auc", "n_enhancer_links") if col in eregulons.columns]
     if eregulon_sort:
@@ -253,6 +308,7 @@ def output_summaries(result: Any, *, n: int = 10) -> dict[str, Any]:
         "top_cistarget_rows": _records(cistarget, n=n),
         "top_enhancer_links": _records(enhancer, n=n),
         "top_eregulon_rows": _records(eregulons, n=n),
+        "summary_max_rows": max_rows,
     }
 
 
@@ -627,6 +683,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "eregulon_min_target_genes": args.eregulon_min_target_genes,
             "eregulon_min_enhancer_links": args.eregulon_min_enhancer_links,
             "write_integrated_adata": not args.skip_integrated_adata,
+            "summary_max_rows": args.summary_max_rows,
             "seed": args.seed,
         },
         "shapes": shapes,
@@ -651,7 +708,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "missing": sorted(set(expected) - set(found)),
             "fraction": None if not expected else round(len(found) / len(expected), 6),
         },
-        "output_summaries": output_summaries(result, n=args.summary_rows),
+        "output_summaries": output_summaries(
+            result,
+            n=args.summary_rows,
+            max_rows=args.summary_max_rows,
+        ),
         "output_inventory": {k: file_info(v) for k, v in artefact_paths.items()},
         "env": {
             "python": platform.python_version(),
@@ -693,6 +754,8 @@ def validate_args(args: argparse.Namespace) -> None:
             raise SystemExit(f"--{name.replace('_', '-')} must be positive")
     if args.grn_target_block_size is not None and args.grn_target_block_size <= 0:
         raise SystemExit("--grn-target-block-size must be positive when set")
+    if args.summary_max_rows is not None and args.summary_max_rows <= 0:
+        raise SystemExit("--summary-max-rows must be positive when set")
     if not (0 < args.grn_max_features <= 1):
         raise SystemExit("--grn-max-features must be in (0, 1]")
     if not (0 < args.cistarget_top_frac <= 1):
@@ -744,6 +807,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--skip-integrated-adata", action="store_true")
     parser.add_argument("--seed", type=int, default=777)
     parser.add_argument("--summary-rows", type=int, default=10)
+    parser.add_argument("--summary-max-rows", type=int, default=None)
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument(
         "--require-clean",

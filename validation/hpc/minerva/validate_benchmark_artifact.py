@@ -660,6 +660,17 @@ def _output_summary_failures(record: dict[str, Any]) -> list[str]:
         value = summaries.get(summary_key)
         if isinstance(value, list) and value and not all(isinstance(row, dict) for row in value):
             failures.append(f"output_summaries.{summary_key} rows must be objects")
+    summary_max_rows = summaries.get("summary_max_rows")
+    if summary_max_rows is not None and not _positive_int(summary_max_rows):
+        failures.append("output_summaries.summary_max_rows must be a positive integer or null")
+
+    params = record.get("params")
+    if isinstance(params, dict):
+        param_summary_max_rows = params.get("summary_max_rows")
+        if param_summary_max_rows != summary_max_rows:
+            failures.append(
+                "output_summaries.summary_max_rows must match params.summary_max_rows"
+            )
     return failures
 
 
