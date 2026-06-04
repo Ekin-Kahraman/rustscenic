@@ -52,6 +52,7 @@ from rustscenic._stage_utils import (
     prepare_regulon_indices,
     prepare_regulon_indices_with_coverage,
     require_columns as _require_columns,
+    string_list,
     tf_from_regulon_name,
 )
 
@@ -106,8 +107,8 @@ def enrich(
     """
     # Expect motifs as rows, genes as columns. Refuse to guess orientation -
     # a wrong guess silently produces an empty result.
-    motif_names = list(rankings.index)
-    gene_names = list(rankings.columns)
+    motif_names = string_list(rankings.index)
+    gene_names = string_list(rankings.columns)
     ranking_values = rankings.to_numpy(copy=False)
     if ranking_values.dtype == object:
         raise TypeError(
@@ -370,12 +371,12 @@ def prune_enriched_motifs(
             tf_values,
             annotation_tf,
         ) = standard_kernel(
-            enriched["regulon"].astype(str).tolist(),
-            enriched["motif"].astype(str).tolist(),
+            string_list(enriched["regulon"]),
+            string_list(enriched["motif"]),
             auc_values,
             nes_values,
-            motif_annotations[motif_col].astype(str).tolist(),
-            annotation_tfs.astype(str).tolist(),
+            string_list(motif_annotations[motif_col]),
+            string_list(annotation_tfs),
             auc_threshold,
             nes_threshold,
             bool(case_sensitive),
@@ -414,12 +415,12 @@ def prune_enriched_motifs(
     )
     backend_symbol = _motif_annotation_prune_backend_symbol(kernel)
     row_ix, tf_values, annotation_tf = kernel(
-        enriched["regulon"].astype(str).tolist(),
-        enriched["motif"].astype(str).tolist(),
+        string_list(enriched["regulon"]),
+        string_list(enriched["motif"]),
         auc_values,
         nes_values,
-        motif_annotations[motif_col].astype(str).tolist(),
-        annotation_tfs.astype(str).tolist(),
+        string_list(motif_annotations[motif_col]),
+        string_list(annotation_tfs),
         auc_threshold,
         nes_threshold,
         bool(case_sensitive),
@@ -499,12 +500,12 @@ def prune_regulons(
         ranking_values, kernel = _prune_rankings_kernel_arg(rankings)
         names, genes = kernel(
             ranking_values,
-            [str(v) for v in rankings.index],
-            [str(v) for v in rankings.columns],
+            string_list(rankings.index),
+            string_list(rankings.columns),
             candidate_names,
             candidate_genes,
-            pruned_motifs["regulon"].astype(str).tolist(),
-            pruned_motifs["motif"].astype(str).tolist(),
+            string_list(pruned_motifs["regulon"]),
+            string_list(pruned_motifs["motif"]),
             rank_cutoff,
             int(min_genes),
         )
@@ -513,7 +514,7 @@ def prune_regulons(
     names, genes = _prune_regulon_targets_unranked(
         candidate_names,
         candidate_genes,
-        pruned_motifs["regulon"].astype(str).tolist(),
+        string_list(pruned_motifs["regulon"]),
         int(min_genes),
     )
     return dict(zip(names, genes, strict=True))

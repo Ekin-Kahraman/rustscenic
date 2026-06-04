@@ -31,6 +31,7 @@ from rustscenic._stage_utils import (
     as_float32_array,
     as_float32_contiguous,
     prepare_regulon_indices_with_coverage,
+    string_list,
 )
 
 
@@ -205,14 +206,14 @@ def _coerce(expression):
                 X = X.tocsr()
         if not sp.issparse(X):
             X = np.asarray(X)
-        return X, resolve_gene_names(expression), list(expression.obs_names)
+        return X, resolve_gene_names(expression), string_list(expression.obs_names)
     if isinstance(expression, pd.DataFrame):
-        return np.asarray(expression.values), list(expression.columns), list(expression.index)
+        return np.asarray(expression.values), string_list(expression.columns), list(expression.index)
     if isinstance(expression, tuple) and len(expression) == 2:
         X, gene_names = expression
         if not sp.issparse(X):
             X = np.asarray(X)
-        return X, list(gene_names), list(range(X.shape[0]))
+        return X, string_list(gene_names), list(range(X.shape[0]))
     raise TypeError("expression must be AnnData, pandas.DataFrame, or (matrix, gene_names) tuple")
 
 

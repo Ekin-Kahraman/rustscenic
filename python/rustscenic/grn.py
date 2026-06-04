@@ -21,7 +21,7 @@ from rustscenic._gene_resolution import (
     duplicate_gene_summary,
     warn_if_max_likely_unnormalized,
 )
-from rustscenic._stage_utils import as_float32_array, as_float32_contiguous
+from rustscenic._stage_utils import as_float32_array, as_float32_contiguous, string_list
 
 
 def infer(
@@ -112,7 +112,7 @@ def infer(
         else:
             X = as_float32_contiguous(X)
 
-    tfs_list = list(tf_names)
+    tfs_list = string_list(tf_names)
     if not tfs_list:
         import warnings
         warnings.warn("empty TF list - returning empty DataFrame", UserWarning, stacklevel=2)
@@ -132,7 +132,7 @@ def infer(
         None if top_targets_per_tf is None else int(top_targets_per_tf)
     )
     common_args = (
-        list(gene_names),
+        string_list(gene_names),
         tfs_list,
         n_estimators,
         learning_rate,
@@ -276,12 +276,12 @@ def _coerce_expression(expression):
         gene_names = resolve_gene_names(expression)
         return X, gene_names
     if isinstance(expression, pd.DataFrame):
-        return np.asarray(expression.values), list(expression.columns)
+        return np.asarray(expression.values), string_list(expression.columns)
     if isinstance(expression, tuple) and len(expression) == 2:
         X, gene_names = expression
         if sp.issparse(X):
-            return X, list(gene_names)
-        return np.asarray(X), list(gene_names)
+            return X, string_list(gene_names)
+        return np.asarray(X), string_list(gene_names)
     raise TypeError(
         "expression must be AnnData, pandas.DataFrame, or (matrix, gene_names) tuple"
     )

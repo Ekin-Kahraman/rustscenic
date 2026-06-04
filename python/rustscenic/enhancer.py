@@ -38,7 +38,7 @@ from rustscenic._rustscenic import (
     enhancer_parse_peak_names as _parse_peak_names_rust,
     enhancer_prepare_gene_order as _prepare_gene_order,
 )
-from rustscenic._stage_utils import as_float32_array
+from rustscenic._stage_utils import as_float32_array, string_list
 
 _LINK_COLUMNS = [
     "peak_id", "peak_chrom", "peak_start", "peak_end",
@@ -111,8 +111,8 @@ def link_peaks_to_genes(
     genes = _validate_gene_coords(gene_coords)
 
     matched_gene_rows, source_rna_cols = _match_gene_coords_to_rna(
-        [str(gene) for gene in gene_names_rna],
-        [str(gene) for gene in genes["gene"].to_numpy(copy=False)],
+        string_list(gene_names_rna),
+        string_list(genes["gene"]),
     )
     backend_symbols.append("enhancer_match_gene_coords_to_rna")
     matched_gene_rows = np.asarray(matched_gene_rows, dtype=np.intp)
@@ -128,8 +128,8 @@ def link_peaks_to_genes(
     # kernel. The vector loop runs in Rust because peak tables can be large.
     gene_chrom_norm, peak_chrom_norm, gene_chrom_codes, peak_chrom_codes = (
         _normalise_chrom_codes(
-            [str(chrom) for chrom in genes_in_rna["chrom"].to_numpy(copy=False)],
-            [str(chrom) for chrom in peaks["chrom"].to_numpy(copy=False)],
+            string_list(genes_in_rna["chrom"]),
+            string_list(peaks["chrom"]),
         )
     )
     backend_symbols.append("enhancer_normalise_chrom_codes")
@@ -338,8 +338,8 @@ def _chrom_examples(values, limit: int = 5) -> list[str]:
 
 def _align_cells(rna_adata, atac_adata):
     rna_idx, atac_idx = _align_cell_indices(
-        [str(cell) for cell in rna_adata.obs_names],
-        [str(cell) for cell in atac_adata.obs_names],
+        string_list(rna_adata.obs_names),
+        string_list(atac_adata.obs_names),
     )
     rna_idx = np.asarray(rna_idx, dtype=np.intp)
     atac_idx = np.asarray(atac_idx, dtype=np.intp)
@@ -379,7 +379,7 @@ def _peak_frame(atac_adata, peak_coords) -> pd.DataFrame:
     if {"chrom", "start", "end"}.issubset(var.columns):
         return var[["chrom", "start", "end"]].copy()
     # Parse "chrN:start-end" pattern from var_names
-    parsed = _parse_peak_names(list(atac_adata.var_names))
+    parsed = _parse_peak_names(string_list(atac_adata.var_names))
     if parsed is None:
         raise ValueError(
             "atac_adata has no peak coordinates - either include chrom/start/end "
@@ -400,7 +400,7 @@ def _parse_peak_names(names):
     name normalisation for cross-convention joining is done in
     ``_normalise_chrom`` at join time rather than here.
     """
-    parsed = _parse_peak_names_rust([str(n) for n in names])
+    parsed = _parse_peak_names_rust(string_list(names))
     if parsed is None:
         return None
     chroms, starts, ends = parsed

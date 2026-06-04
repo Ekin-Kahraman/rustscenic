@@ -57,6 +57,7 @@ from rustscenic._rustscenic import (
 from rustscenic._stage_utils import (
     as_float32_contiguous,
     iter_regulon_pairs,
+    string_list,
     tf_from_regulon_name,
 )
 
@@ -558,8 +559,8 @@ def run(
         # obs/varm/uns the caller may have attached.
         adata_atac_for_link = adata_atac
         shared_atac_idx = _pipeline_match_atac_cell_indices(
-            [str(cell) for cell in adata_rna.obs_names],
-            [str(cell) for cell in adata_atac_for_link.obs_names],
+            string_list(adata_rna.obs_names),
+            string_list(adata_atac_for_link.obs_names),
         )
         if len(shared_atac_idx) == 0:
             log("      skipped - no shared barcodes between RNA and ATAC")
@@ -822,8 +823,8 @@ def _candidate_regulons_from_grn(
     if grn.empty:
         return {}
     names, target_lists = _pipeline_candidate_regulons_from_grn(
-        grn["TF"].astype(str).tolist(),
-        grn["target"].astype(str).tolist(),
+        string_list(grn["TF"]),
+        string_list(grn["target"]),
         grn["importance"].to_numpy(dtype=np.float64, copy=False),
         int(top_targets),
         int(min_targets),
@@ -844,10 +845,10 @@ def _peak_regulons_and_projection_features(
     enhancer_links: pd.DataFrame,
 ) -> tuple[list[tuple[str, list[str]]], list[str]]:
     names, peaks, features = _pipeline_peak_regulons_and_features(
-        grn["TF"].astype(str).tolist(),
-        grn["target"].astype(str).tolist(),
-        enhancer_links["gene"].astype(str).tolist(),
-        enhancer_links["peak_id"].astype(str).tolist(),
+        string_list(grn["TF"]),
+        string_list(grn["target"]),
+        string_list(enhancer_links["gene"]),
+        string_list(enhancer_links["peak_id"]),
     )
     return list(zip(names, peaks, strict=True)), list(features)
 
@@ -868,8 +869,8 @@ def _coerce_adata(rna):
 def _subset_atac_to_rna_cells(adata_rna, adata_atac, *, log):
     """Keep ATAC barcodes that exist in RNA, preserving ATAC row order."""
     matched_atac_idx = _pipeline_match_atac_cell_indices(
-        [str(cell) for cell in adata_rna.obs_names],
-        [str(cell) for cell in adata_atac.obs_names],
+        string_list(adata_rna.obs_names),
+        string_list(adata_atac.obs_names),
     )
     matched_atac_idx = np.asarray(matched_atac_idx, dtype=np.intp)
     if matched_atac_idx.size == 0:
@@ -1008,7 +1009,7 @@ def _ranking_column_projection(
     motif_col: str | None,
 ) -> tuple[list, list[str]]:
     keep, examples = _pipeline_project_ranking_columns(
-        [str(c) for c in columns],
+        string_list(columns),
         features,
         motif_col,
     )
@@ -1108,17 +1109,17 @@ def _attribute_peaks_to_cistarget(
         return pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
 
     regulon_pairs = [
-        (str(regulon_name), [str(g) for g in targets])
+        (str(regulon_name), string_list(targets))
         for regulon_name, targets in iter_regulon_pairs(regulons)
     ]
-    enriched_regulons = enriched["regulon"].astype(str).tolist()
+    enriched_regulons = string_list(enriched["regulon"])
     enriched_motifs = (
-        enriched["motif"].astype(str).tolist()
+        string_list(enriched["motif"])
         if "motif" in enriched.columns else None
     )
     enriched_aucs = _auc_column_arg(enriched["auc"], name="enriched['auc']")
-    enhancer_genes = [str(v) for v in enhancer_links["gene"].to_numpy(copy=False)]
-    enhancer_peaks = [str(v) for v in enhancer_links["peak_id"].to_numpy(copy=False)]
+    enhancer_genes = string_list(enhancer_links["gene"])
+    enhancer_peaks = string_list(enhancer_links["peak_id"])
     kernel = (
         _pipeline_attribute_peak_rows_f32
         if enriched_aucs.dtype == np.float32
@@ -1190,8 +1191,8 @@ def _region_cistarget_with_peak_ids(
 
     n_regions = region_rankings.shape[1]
     rank_cutoff = max(1, int(np.ceil(top_frac * n_regions)))
-    peak_regulon_names = [str(name) for name, _ in peak_regulons]
-    peak_regulon_peaks = [[str(p) for p in peaks] for _, peaks in peak_regulons]
+    peak_regulon_names = string_list(name for name, _ in peak_regulons)
+    peak_regulon_peaks = [string_list(peaks) for _, peaks in peak_regulons]
     if not any(peak_regulon_peaks):
         empty = pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
         empty.attrs["rust_backend"] = _region_attribution_backend(region_enrich)
@@ -1202,15 +1203,15 @@ def _region_cistarget_with_peak_ids(
         rank_cutoff,
     )
     peak_values_symbol = _region_peak_values_backend_symbol(kernel)
-    motif_names = [str(m) for m in region_rankings.index]
-    peak_names = [str(p) for p in region_rankings.columns]
+    motif_names = string_list(region_rankings.index)
+    peak_names = string_list(region_rankings.columns)
     common_args = (
         motif_names,
         peak_names,
         peak_regulon_names,
         peak_regulon_peaks,
-        region_enrich["regulon"].astype(str).tolist(),
-        region_enrich["motif"].astype(str).tolist(),
+        string_list(region_enrich["regulon"]),
+        string_list(region_enrich["motif"]),
     )
     row_idx, peak_ids = kernel(
         ranking_values,
@@ -1224,8 +1225,8 @@ def _region_cistarget_with_peak_ids(
             peak_values_symbol,
         )
         return region_enrich, empty
-    region_regulons = region_enrich["regulon"].astype(str).tolist()
-    region_motifs = region_enrich["motif"].astype(str).tolist()
+    region_regulons = string_list(region_enrich["regulon"])
+    region_motifs = string_list(region_enrich["motif"])
     region_aucs = _auc_column_arg(region_enrich["auc"], name="region_enrich['auc']")
     expand_kernel = (
         _pipeline_expand_region_rows_f32
@@ -1322,12 +1323,12 @@ def _filter_cistarget_peak_rows(
         else "pipeline_filter_cistarget_peak_rows_f64"
     )
     regulon_values, motif_values, peak_values, auc_values = kernel(
-        enriched_with_peaks["regulon"].astype(str).tolist(),
-        enriched_with_peaks["motif"].astype(str).tolist(),
-        enriched_with_peaks["peak_id"].astype(str).tolist(),
+        string_list(enriched_with_peaks["regulon"]),
+        string_list(enriched_with_peaks["motif"]),
+        string_list(enriched_with_peaks["peak_id"]),
         auc_values,
-        keep["regulon"].astype(str).tolist(),
-        keep["motif"].astype(str).tolist(),
+        string_list(keep["regulon"]),
+        string_list(keep["motif"]),
     )
     out = pd.DataFrame(
         {
@@ -1402,7 +1403,7 @@ def _peak_coords_from_bed(bed_path, atac_var_names):
     """
     peak_ids, chroms, starts, ends = _preproc_peak_coords_for_names(
         str(Path(bed_path)),
-        [str(name) for name in atac_var_names],
+        string_list(atac_var_names),
     )
     out = pd.DataFrame(
         {

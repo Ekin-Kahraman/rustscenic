@@ -28,6 +28,26 @@ def as_float32_array(values) -> np.ndarray:
     return arr
 
 
+def string_list(values: Iterable) -> list[str]:
+    """Return Python strings with minimal pandas boundary overhead."""
+    if isinstance(values, (pd.Series, pd.Index)):
+        arr = values.to_numpy(copy=False)
+    elif isinstance(values, np.ndarray):
+        arr = values
+    else:
+        out = list(values)
+        if all(isinstance(value, str) for value in out):
+            return out
+        return [str(value) for value in out]
+
+    out = arr.tolist()
+    if not isinstance(out, list):
+        return [str(out)]
+    if all(isinstance(value, str) for value in out):
+        return out
+    return [str(value) for value in out]
+
+
 def coerce_regulon(reg) -> tuple[str, list[str]]:
     """Normalise all accepted regulon-like objects to ``(name, genes)``."""
     if isinstance(reg, tuple) and len(reg) == 2:
@@ -60,9 +80,9 @@ def prepare_regulon_indices(
     regulons: Iterable,
 ) -> tuple[list[str], list[list[int]], list[tuple[str, list[str]]], int]:
     """Map regulon genes onto a feature axis once, preserving coverage inputs."""
-    gene_names_list = [str(g) for g in gene_names]
+    gene_names_list = string_list(gene_names)
     reg_pairs = [
-        (name, [str(g) for g in genes_list])
+        (name, string_list(genes_list))
         for name, genes_list in iter_regulon_pairs(regulons)
     ]
     reg_names, reg_gene_indices, dropped_empty = _stage_prepare_regulon_indices(
@@ -84,9 +104,9 @@ def prepare_regulon_indices_with_coverage(
     int,
 ]:
     """Map regulon genes and coverage in one Rust call."""
-    gene_names_list = [str(g) for g in gene_names]
+    gene_names_list = string_list(gene_names)
     reg_pairs = [
-        (name, [str(g) for g in genes_list])
+        (name, string_list(genes_list))
         for name, genes_list in iter_regulon_pairs(regulons)
     ]
     names = [name for name, _ in reg_pairs]

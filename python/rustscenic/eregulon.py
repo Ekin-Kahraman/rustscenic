@@ -35,6 +35,7 @@ from rustscenic._rustscenic import (
 )
 from rustscenic._stage_utils import (
     require_columns as _require_columns,
+    string_list,
 )
 
 
@@ -157,8 +158,8 @@ def _build_eregulon_objects(
     peak_col = _find_peak_column(cistarget)
 
     if use_grn_intersection:
-        grn_tfs = grn["TF"].astype(str).tolist()
-        grn_targets = grn["target"].astype(str).tolist()
+        grn_tfs = string_list(grn["TF"])
+        grn_targets = string_list(grn["target"])
     else:
         grn_tfs = []
         grn_targets = []
@@ -176,11 +177,11 @@ def _build_eregulon_objects(
     ) = _eregulon_assemble_summary_arg(cistarget_aucs)(
         grn_tfs,
         grn_targets,
-        cistarget["regulon"].astype(str).tolist(),
-        cistarget[peak_col].astype(str).tolist(),
+        string_list(cistarget["regulon"]),
+        string_list(cistarget[peak_col]),
         cistarget_aucs,
-        enhancer_links["peak_id"].astype(str).tolist(),
-        enhancer_links["gene"].astype(str).tolist(),
+        string_list(enhancer_links["peak_id"]),
+        string_list(enhancer_links["gene"]),
         enhancer_links["correlation"].to_numpy(dtype=np.float32, copy=False),
         int(min_target_genes),
         int(min_enhancer_links),
@@ -237,8 +238,8 @@ def _build_eregulons_dataframe(
     peak_col = _find_peak_column(cistarget)
 
     if use_grn_intersection:
-        grn_tfs = grn["TF"].astype(str).tolist()
-        grn_targets = grn["target"].astype(str).tolist()
+        grn_tfs = string_list(grn["TF"])
+        grn_targets = string_list(grn["target"])
     else:
         grn_tfs = []
         grn_targets = []
@@ -260,11 +261,11 @@ def _build_eregulons_dataframe(
     ) = _eregulon_assemble_arg(cistarget_aucs)(
         grn_tfs,
         grn_targets,
-        cistarget["regulon"].astype(str).tolist(),
-        cistarget[peak_col].astype(str).tolist(),
+        string_list(cistarget["regulon"]),
+        string_list(cistarget[peak_col]),
         cistarget_aucs,
-        enhancer_links["peak_id"].astype(str).tolist(),
-        enhancer_links["gene"].astype(str).tolist(),
+        string_list(enhancer_links["peak_id"]),
+        string_list(enhancer_links["gene"]),
         enhancer_links["correlation"].to_numpy(dtype=np.float32, copy=False),
         int(min_target_genes),
         int(min_enhancer_links),
