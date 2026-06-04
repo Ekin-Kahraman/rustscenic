@@ -2969,8 +2969,14 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert 'MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"' in full
     assert 'REGION_MOTIF_RANKINGS="${REGION_MOTIF_RANKINGS:-}"' in full
     assert 'GENE_COORDS="${GENE_COORDS:-}"' in full
+    assert 'SUMMARY_MAX_ROWS="${SUMMARY_MAX_ROWS:-}"' in full
+    assert 'SKIP_INTEGRATED_ADATA="${SKIP_INTEGRATED_ADATA:-0}"' in full
     assert "--region-motif-rankings" in full
+    assert "--summary-max-rows" in full
+    assert "--skip-integrated-adata" in full
+    assert "benchmark_args=${BENCHMARK_ARGS[*]}" in full
     assert full.count('"${REFERENCE_TABLE_ARGS[@]}"') == 2
+    assert full.count('"${BENCHMARK_ARGS[@]}"') == 1
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in full_scaling
     assert "validation/scaling/bench_real_multiome_pipeline_scaling.py" in full_scaling
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in full_scaling
@@ -2984,8 +2990,14 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert 'MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"' in full_scaling
     assert 'REGION_MOTIF_RANKINGS="${REGION_MOTIF_RANKINGS:-}"' in full_scaling
     assert 'GENE_COORDS="${GENE_COORDS:-}"' in full_scaling
+    assert 'SUMMARY_MAX_ROWS="${SUMMARY_MAX_ROWS:-}"' in full_scaling
+    assert 'SKIP_INTEGRATED_ADATA="${SKIP_INTEGRATED_ADATA:-0}"' in full_scaling
     assert "--region-motif-rankings" in full_scaling
+    assert "--summary-max-rows" in full_scaling
+    assert "--skip-integrated-adata" in full_scaling
+    assert "benchmark_args=${BENCHMARK_ARGS[*]}" in full_scaling
     assert full_scaling.count('"${REFERENCE_TABLE_ARGS[@]}"') == 2
+    assert full_scaling.count('"${BENCHMARK_ARGS[@]}"') == 1
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in grn
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in grn
     assert "validation/hpc/minerva/collect_benchmark_results.py" in grn

@@ -31,6 +31,15 @@ bsub < validation/hpc/minerva/run_real_pbmc3k_full_pipeline_scaling.lsf
 bsub < validation/hpc/minerva/run_real_pbmc3k_grn_scaling.lsf
 ```
 
+Optional full-pipeline profiling knobs can be exported before `bsub`:
+
+```bash
+export SUMMARY_MAX_ROWS=1000        # bound post-run output-summary reads
+export SKIP_INTEGRATED_ADATA=1      # skip final rna_with_regulons.h5ad write
+```
+
+Leave both unset for full end-to-end publication artefacts.
+
 Run the data-preparation command on the login node before `bsub`. The LSF
 launchers run it again and skip already-valid files, so the jobs still work if
 the dataset is already present and compute nodes have restricted outbound

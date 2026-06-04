@@ -31,6 +31,8 @@ MOTIF_RANKINGS="${MOTIF_RANKINGS:-}"
 MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"
 REGION_MOTIF_RANKINGS="${REGION_MOTIF_RANKINGS:-}"
 GENE_COORDS="${GENE_COORDS:-}"
+SUMMARY_MAX_ROWS="${SUMMARY_MAX_ROWS:-}"
+SKIP_INTEGRATED_ADATA="${SKIP_INTEGRATED_ADATA:-0}"
 REFERENCE_TABLE_ARGS=()
 if [[ -n "${MOTIF_RANKINGS}" ]]; then
   REFERENCE_TABLE_ARGS+=(--motif-rankings "${MOTIF_RANKINGS}")
@@ -43,6 +45,13 @@ if [[ -n "${REGION_MOTIF_RANKINGS}" ]]; then
 fi
 if [[ -n "${GENE_COORDS}" ]]; then
   REFERENCE_TABLE_ARGS+=(--gene-coords "${GENE_COORDS}")
+fi
+BENCHMARK_ARGS=()
+if [[ -n "${SUMMARY_MAX_ROWS}" ]]; then
+  BENCHMARK_ARGS+=(--summary-max-rows "${SUMMARY_MAX_ROWS}")
+fi
+if [[ "${SKIP_INTEGRATED_ADATA}" == "1" || "${SKIP_INTEGRATED_ADATA}" == "true" ]]; then
+  BENCHMARK_ARGS+=(--skip-integrated-adata)
 fi
 
 mkdir -p "${PROJECT}/logs" "${PROJECT}/results/real_pbmc3k_full_pipeline" "${TMPDIR}"
@@ -61,6 +70,7 @@ echo "repo_sha=$(git rev-parse --short HEAD)"
 echo "result_json=${OUT_JSON}"
 echo "RAYON_NUM_THREADS=${RAYON_NUM_THREADS}"
 echo "reference_table_args=${REFERENCE_TABLE_ARGS[*]}"
+echo "benchmark_args=${BENCHMARK_ARGS[*]}"
 
 python validation/hpc/minerva/preflight_minerva.py \
   --repo "${REPO}" \
@@ -83,6 +93,7 @@ python validation/hpc/minerva/preflight_minerva.py \
   --out-json "${OUT_JSON}" \
   --run-id "${RUN_ID}" \
   "${REFERENCE_TABLE_ARGS[@]}" \
+  "${BENCHMARK_ARGS[@]}" \
   --expected-tfs SPI1 PAX5 GATA3 TBX21 EBF1 IRF8 TCF7 RUNX3 \
   --threads "${RAYON_NUM_THREADS}" \
   --grn-n-estimators 100 \
