@@ -33,6 +33,8 @@ REGION_MOTIF_RANKINGS="${REGION_MOTIF_RANKINGS:-}"
 GENE_COORDS="${GENE_COORDS:-}"
 SUMMARY_MAX_ROWS="${SUMMARY_MAX_ROWS:-}"
 SKIP_INTEGRATED_ADATA="${SKIP_INTEGRATED_ADATA:-0}"
+CELL_COUNTS="${CELL_COUNTS:-500 1000 2000 2767}"
+read -r -a CELL_COUNT_ARGS <<< "${CELL_COUNTS}"
 REFERENCE_TABLE_ARGS=()
 if [[ -n "${MOTIF_RANKINGS}" ]]; then
   REFERENCE_TABLE_ARGS+=(--motif-rankings "${MOTIF_RANKINGS}")
@@ -71,6 +73,7 @@ echo "result_json=${OUT_JSON}"
 echo "RAYON_NUM_THREADS=${RAYON_NUM_THREADS}"
 echo "reference_table_args=${REFERENCE_TABLE_ARGS[*]}"
 echo "benchmark_args=${BENCHMARK_ARGS[*]}"
+echo "cell_counts=${CELL_COUNT_ARGS[*]}"
 
 python validation/hpc/minerva/preflight_minerva.py \
   --repo "${REPO}" \
@@ -94,7 +97,7 @@ python validation/hpc/minerva/preflight_minerva.py \
   --run-prefix "${RUN_PREFIX}" \
   "${REFERENCE_TABLE_ARGS[@]}" \
   "${BENCHMARK_ARGS[@]}" \
-  --cell-counts 500 1000 2000 2767 \
+  --cell-counts "${CELL_COUNT_ARGS[@]}" \
   --threads "${RAYON_NUM_THREADS}" \
   --expected-tfs SPI1 PAX5 GATA3 TBX21 EBF1 IRF8 TCF7 RUNX3 \
   --grn-n-estimators 100 \

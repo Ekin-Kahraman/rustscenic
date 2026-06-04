@@ -2992,10 +2992,14 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert 'GENE_COORDS="${GENE_COORDS:-}"' in full_scaling
     assert 'SUMMARY_MAX_ROWS="${SUMMARY_MAX_ROWS:-}"' in full_scaling
     assert 'SKIP_INTEGRATED_ADATA="${SKIP_INTEGRATED_ADATA:-0}"' in full_scaling
+    assert 'CELL_COUNTS="${CELL_COUNTS:-500 1000 2000 2767}"' in full_scaling
+    assert 'read -r -a CELL_COUNT_ARGS <<< "${CELL_COUNTS}"' in full_scaling
+    assert 'cell_counts=${CELL_COUNT_ARGS[*]}' in full_scaling
     assert "--region-motif-rankings" in full_scaling
     assert "--summary-max-rows" in full_scaling
     assert "--skip-integrated-adata" in full_scaling
     assert "benchmark_args=${BENCHMARK_ARGS[*]}" in full_scaling
+    assert '--cell-counts "${CELL_COUNT_ARGS[@]}"' in full_scaling
     assert full_scaling.count('"${REFERENCE_TABLE_ARGS[@]}"') == 2
     assert full_scaling.count('"${BENCHMARK_ARGS[@]}"') == 1
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in grn

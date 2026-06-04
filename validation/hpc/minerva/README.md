@@ -36,9 +36,10 @@ Optional full-pipeline profiling knobs can be exported before `bsub`:
 ```bash
 export SUMMARY_MAX_ROWS=1000        # bound post-run output-summary reads
 export SKIP_INTEGRATED_ADATA=1      # skip final rna_with_regulons.h5ad write
+export CELL_COUNTS="500 1000 2000"  # override scaling subsets
 ```
 
-Leave both unset for full end-to-end publication artefacts.
+Leave these unset for full end-to-end publication artefacts.
 
 Run the data-preparation command on the login node before `bsub`. The LSF
 launchers run it again and skip already-valid files, so the jobs still work if
