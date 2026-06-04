@@ -71,6 +71,8 @@ HOT_PATH_PATTERNS = (
 ALLOWED_HITS = {
     ("quickstart.py", ".nlargest("): "demo display only",
     ("quickstart.py", ".sum(axis="): "demo normalisation only",
+    ("pipeline.py", "pd.concat("): "final AnnData obs attachment and h5ad IO only",
+    ("pipeline.py", ".concat("): "final AnnData obs attachment and h5ad IO only",
     ("_gene_resolution.py", ".max()"): "public diagnostic helper only",
     ("_gene_resolution.py", "warn_if_likely_unnormalized("): "public diagnostic helper only",
 }
@@ -94,6 +96,7 @@ def scan_python_hot_paths(package_dir: Path = DEFAULT_PACKAGE) -> list[str]:
                 if (rel, pattern) in ALLOWED_HITS:
                     continue
                 violations.append(f"{rel}:{line_no}: {stripped}")
+                break
     return violations
 
 

@@ -60,3 +60,19 @@ def test_hot_path_scan_rejects_python_row_iteration_and_apply(tmp_path):
         "stage.py:2: rows = [row for _, row in df.iterrows()]",
         "stage.py:3: return df.apply(lambda col: col)",
     ]
+
+
+def test_hot_path_scan_rejects_concat_outside_allowlist(tmp_path):
+    package = tmp_path / "rustscenic"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    (package / "stage.py").write_text(
+        "def bad(frames):\n"
+        "    return pd.concat(frames, ignore_index=True)\n"
+    )
+
+    violations = scan_python_hot_paths(package)
+
+    assert violations == [
+        "stage.py:2: return pd.concat(frames, ignore_index=True)"
+    ]

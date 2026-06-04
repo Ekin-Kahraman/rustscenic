@@ -1447,9 +1447,9 @@ def _attach_aucell_to_obs(adata_rna, auc: pd.DataFrame) -> None:
 
     The AUCell result is produced in RNA cell order in normal pipeline runs.
     If a caller supplies an externally aligned AUCell frame in future, reindex
-    only the AUCell frame, then rebuild obs once. Assigning thousands of
-    regulon columns one by one fragments pandas' block manager and inflates the
-    final integrated-output step.
+    only the AUCell frame, then concatenate once. Assigning thousands of regulon
+    columns one by one fragments pandas' block manager and inflates the final
+    integrated-output step.
     """
     obs = adata_rna.obs
     overlap = [col for col in auc.columns if col in obs.columns]
@@ -1459,18 +1459,13 @@ def _attach_aucell_to_obs(adata_rna, auc: pd.DataFrame) -> None:
     if not pd.Index(auc.index).equals(pd.Index(adata_rna.obs_names)):
         auc = auc.reindex(adata_rna.obs_names)
 
-    data = {col: obs[col] for col in obs.columns}
-    data.update(
-        {
-            col: pd.Series(
-                auc[col].to_numpy(copy=False),
-                index=obs.index,
-                name=col,
-            )
-            for col in auc.columns
-        }
+    auc_obs = pd.DataFrame(
+        auc.to_numpy(copy=False),
+        index=obs.index,
+        columns=auc.columns,
+        copy=False,
     )
-    adata_rna.obs = pd.DataFrame(data, index=obs.index)
+    adata_rna.obs = pd.concat([obs, auc_obs], axis=1, copy=False)
 
 
 def _peak_rss_gb() -> float:
