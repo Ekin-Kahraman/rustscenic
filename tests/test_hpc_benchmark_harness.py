@@ -264,6 +264,35 @@ def test_real_multiome_harness_builds_compact_output_summaries(monkeypatch, tmp_
     assert bounded["top_cistarget_rows"][0]["motif"] == "m1"
 
 
+def test_real_multiome_harness_defaults_to_bounded_output_summaries():
+    module = _load_module(
+        "bench_real_multiome_default_summary_bound",
+        ROOT / "validation/scaling/bench_real_multiome_pipeline.py",
+    )
+    scaling = _load_module(
+        "bench_real_multiome_scaling_default_summary_bound",
+        ROOT / "validation/scaling/bench_real_multiome_pipeline_scaling.py",
+    )
+
+    assert module.DEFAULT_SUMMARY_MAX_ROWS == 1000
+    assert module.parse_args([
+        "--dataset-name", "pbmc",
+        "--rna-10x-h5", "rna.h5",
+        "--fragments", "fragments.tsv.gz",
+        "--peaks", "peaks.bed",
+        "--out-dir", "out",
+        "--out-json", "out.json",
+    ]).summary_max_rows == 1000
+    assert scaling.parse_args([
+        "--dataset-name", "pbmc",
+        "--rna-10x-h5", "rna.h5",
+        "--fragments", "fragments.tsv.gz",
+        "--peaks", "peaks.bed",
+        "--out-root", "out",
+        "--out-json", "out.json",
+    ]).summary_max_rows == 1000
+
+
 def test_real_multiome_harness_does_not_reread_pipeline_outputs_for_counts():
     source = (ROOT / "validation/scaling/bench_real_multiome_pipeline.py").read_text()
 
@@ -3695,7 +3724,7 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert 'MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"' in full
     assert 'REGION_MOTIF_RANKINGS="${REGION_MOTIF_RANKINGS:-}"' in full
     assert 'GENE_COORDS="${GENE_COORDS:-}"' in full
-    assert 'SUMMARY_MAX_ROWS="${SUMMARY_MAX_ROWS:-}"' in full
+    assert 'SUMMARY_MAX_ROWS="${SUMMARY_MAX_ROWS:-1000}"' in full
     assert 'SKIP_INTEGRATED_ADATA="${SKIP_INTEGRATED_ADATA:-0}"' in full
     assert "--region-motif-rankings" in full
     assert "--summary-max-rows" in full
@@ -3718,7 +3747,7 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert 'MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"' in full_scaling
     assert 'REGION_MOTIF_RANKINGS="${REGION_MOTIF_RANKINGS:-}"' in full_scaling
     assert 'GENE_COORDS="${GENE_COORDS:-}"' in full_scaling
-    assert 'SUMMARY_MAX_ROWS="${SUMMARY_MAX_ROWS:-}"' in full_scaling
+    assert 'SUMMARY_MAX_ROWS="${SUMMARY_MAX_ROWS:-1000}"' in full_scaling
     assert 'SKIP_INTEGRATED_ADATA="${SKIP_INTEGRATED_ADATA:-0}"' in full_scaling
     assert 'CELL_COUNTS="${CELL_COUNTS:-500 1000 2000 2767}"' in full_scaling
     assert 'read -r -a CELL_COUNT_ARGS <<< "${CELL_COUNTS}"' in full_scaling

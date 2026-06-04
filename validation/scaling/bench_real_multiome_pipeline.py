@@ -44,6 +44,9 @@ from validation.python_hot_paths import hot_path_state
 from validation.repo_cleanliness import repo_state_from_git_outputs
 
 
+DEFAULT_SUMMARY_MAX_ROWS = 1000
+
+
 def peak_rss_gb() -> float:
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     if sys.platform == "darwin":
@@ -899,7 +902,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--skip-integrated-adata", action="store_true")
     parser.add_argument("--seed", type=int, default=777)
     parser.add_argument("--summary-rows", type=int, default=10)
-    parser.add_argument("--summary-max-rows", type=int, default=None)
+    parser.add_argument("--summary-max-rows", type=int, default=DEFAULT_SUMMARY_MAX_ROWS)
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument(
         "--require-clean",

@@ -35,12 +35,15 @@ bsub < validation/hpc/minerva/run_real_pbmc3k_grn_scaling.lsf
 Optional full-pipeline profiling knobs can be exported before `bsub`:
 
 ```bash
-export SUMMARY_MAX_ROWS=1000        # bound post-run output-summary reads
+export SUMMARY_MAX_ROWS=5000        # default 1000; bounds post-run summary reads
 export SKIP_INTEGRATED_ADATA=1      # skip final rna_with_regulons.h5ad write
 export CELL_COUNTS="500 1000 2000"  # override scaling subsets
 ```
 
-Leave these unset for full end-to-end publication artefacts.
+Leave `SKIP_INTEGRATED_ADATA` unset for full end-to-end publication artefacts.
+`SUMMARY_MAX_ROWS` only limits the compact JSON preview rows read after the
+pipeline completes; output counts, timings, peak RSS and saved parquet files
+remain complete.
 
 Run the data-preparation command on the login node before `bsub`. The LSF
 launchers run it again and skip already-valid files, so the jobs still work if

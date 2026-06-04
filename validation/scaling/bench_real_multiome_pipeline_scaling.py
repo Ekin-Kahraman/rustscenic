@@ -27,6 +27,7 @@ from validation.backend_requirements import backend_capabilities
 from validation.hpc.minerva.validate_benchmark_artifact import validate_record
 from validation.python_hot_paths import hot_path_state
 from validation.scaling.bench_real_multiome_pipeline import (
+    DEFAULT_SUMMARY_MAX_ROWS,
     benchmark_env,
     repo_state,
     runtime_import_state,
@@ -431,7 +432,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--eregulon-min-target-genes", type=int, default=2)
     parser.add_argument("--eregulon-min-enhancer-links", type=int, default=1)
     parser.add_argument("--summary-rows", type=int, default=10)
-    parser.add_argument("--summary-max-rows", type=int, default=None)
+    parser.add_argument("--summary-max-rows", type=int, default=DEFAULT_SUMMARY_MAX_ROWS)
     parser.add_argument("--skip-integrated-adata", action="store_true")
     parser.add_argument("--seed", type=int, default=777)
     parser.add_argument(
