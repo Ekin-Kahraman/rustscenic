@@ -844,6 +844,70 @@ def _rounded_slope(rows: list[dict[str, Any]], x_key: str, y_key: str) -> float 
     return None if slope is None else round(slope, 3)
 
 
+def _path(prefix: str, field: str) -> str:
+    return f"{prefix}.{field}" if prefix else field
+
+
+def _full_pipeline_wall_breakdown_failures(
+    record: dict[str, Any],
+    prefix: str = "",
+) -> list[str]:
+    failures: list[str] = []
+    wall = record.get("wall_s")
+    elapsed = record.get("elapsed_per_stage")
+    if not isinstance(wall, dict) or not isinstance(elapsed, dict):
+        return failures
+
+    compute = wall.get("pipeline_compute_stages")
+    unattributed = wall.get("pipeline_unattributed")
+    if not _nonnegative_number(compute):
+        failures.append(
+            f"{_path(prefix, 'wall_s.pipeline_compute_stages')} must be non-negative"
+        )
+    if not _nonnegative_number(unattributed):
+        failures.append(
+            f"{_path(prefix, 'wall_s.pipeline_unattributed')} must be non-negative"
+        )
+
+    elapsed_values = []
+    for value in elapsed.values():
+        if not _nonnegative_number(value):
+            return failures
+        elapsed_values.append(float(value))
+
+    if _nonnegative_number(compute):
+        expected_compute = round(sum(elapsed_values), 3)
+        if abs(float(compute) - expected_compute) > 0.005:
+            failures.append(
+                f"{_path(prefix, 'wall_s.pipeline_compute_stages')} must match "
+                f"elapsed_per_stage sum: {compute} != {expected_compute}"
+            )
+        if (
+            _positive_number(wall.get("pipeline"))
+            and float(compute) > float(wall["pipeline"]) + 0.25
+        ):
+            failures.append(
+                f"{_path(prefix, 'wall_s.pipeline_compute_stages')} must not exceed "
+                "wall_s.pipeline"
+            )
+
+    if (
+        _positive_number(wall.get("pipeline"))
+        and _nonnegative_number(compute)
+        and _nonnegative_number(unattributed)
+    ):
+        expected_unattributed = round(
+            max(0.0, float(wall["pipeline"]) - float(compute)),
+            3,
+        )
+        if abs(float(unattributed) - expected_unattributed) > 0.01:
+            failures.append(
+                f"{_path(prefix, 'wall_s.pipeline_unattributed')} must match "
+                f"pipeline minus compute stages: {unattributed} != {expected_unattributed}"
+            )
+    return failures
+
+
 def _full_pipeline_scaling_row_child_failures(
     row: dict[str, Any],
     child: dict[str, Any],
@@ -935,6 +999,7 @@ def _full_pipeline_scaling_row_failures(
             f"{prefix}.unknown peak_rss_gb_per_stage.{stage}"
             for stage in sorted(unknown)
         )
+    failures.extend(_full_pipeline_wall_breakdown_failures(row, prefix))
 
     outputs = row.get("outputs")
     if not isinstance(outputs, dict):
@@ -1079,6 +1144,7 @@ def validate_full_pipeline(
         for stage in sorted(REQUIRED_FULL_PIPELINE_ELAPSED_STAGES & set(elapsed)):
             if not _nonnegative_number(elapsed.get(stage)):
                 failures.append(f"elapsed_per_stage.{stage} must be non-negative")
+    failures.extend(_full_pipeline_wall_breakdown_failures(record))
     if isinstance(memory, dict):
         required_memory = _required_full_pipeline_memory_stages(record)
         missing = required_memory - set(memory)

@@ -586,6 +586,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     )
     pipeline_wall = time.perf_counter() - t_pipeline
     end_to_end_wall = time.perf_counter() - t_end_to_end
+    pipeline_compute_stage_wall = sum(float(v) for v in result.elapsed.values())
+    pipeline_unattributed_wall = max(
+        0.0,
+        pipeline_wall - pipeline_compute_stage_wall,
+    )
 
     regulon_names: set[str] = set()
     if result.regulons_path and Path(result.regulons_path).exists():
@@ -690,6 +695,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "wall_s": {
             "setup": round(setup_wall, 3),
             "pipeline": round(pipeline_wall, 3),
+            "pipeline_compute_stages": round(pipeline_compute_stage_wall, 3),
+            "pipeline_unattributed": round(pipeline_unattributed_wall, 3),
             "end_to_end": round(end_to_end_wall, 3),
         },
         "setup_elapsed_s": {

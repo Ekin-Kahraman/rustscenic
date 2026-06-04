@@ -211,6 +211,8 @@ def test_real_multiome_harness_does_not_reread_pipeline_outputs_for_counts():
     assert "pd.read_parquet(result." not in source
     assert "result.n_grn_edges" in source
     assert "result.aucell_shape" in source
+    assert '"pipeline_compute_stages": round(pipeline_compute_stage_wall, 3)' in source
+    assert '"pipeline_unattributed": round(pipeline_unattributed_wall, 3)' in source
     assert '"end_to_end": round(end_to_end_wall, 3)' in source
     assert '"setup_elapsed_s"' in source
 
@@ -1837,7 +1839,13 @@ def _full_pipeline_record(tmp_path: Path):
             "gene_coords_rows": 1000,
             "tfs_supplied": 100,
         },
-        "wall_s": {"setup": 1.0, "pipeline": 2.0, "end_to_end": 3.0},
+        "wall_s": {
+            "setup": 1.0,
+            "pipeline": 2.0,
+            "pipeline_compute_stages": 1.75,
+            "pipeline_unattributed": 0.25,
+            "end_to_end": 3.0,
+        },
         "setup_elapsed_s": {
             "load_rna_qc": 0.2,
             "fragments_to_matrix": 0.3,
@@ -1920,6 +1928,17 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         child["outputs"]["aucell_shape"] = [n_cells, 2]
         child["wall_s"]["end_to_end"] = end_to_end
         child["wall_s"]["pipeline"] = end_to_end - 1.0
+        child["wall_s"]["pipeline_compute_stages"] = round(
+            sum(float(v) for v in child["elapsed_per_stage"].values()),
+            3,
+        )
+        child["wall_s"]["pipeline_unattributed"] = round(
+            max(
+                0.0,
+                child["wall_s"]["pipeline"] - child["wall_s"]["pipeline_compute_stages"],
+            ),
+            3,
+        )
         child["peak_rss_gb"] = peak_rss
         child_path = tmp_path / f"{label}.json"
         child_path.write_text(json.dumps(child))
@@ -2035,6 +2054,31 @@ def test_benchmark_artifact_validator_accepts_full_pipeline_record(tmp_path):
     )
 
     assert failures == []
+
+
+def test_benchmark_artifact_validator_rejects_bad_full_pipeline_wall_breakdown(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_bad_full_wall_breakdown",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["wall_s"]["pipeline_compute_stages"] = 0.5
+    record["wall_s"]["pipeline_unattributed"] = 0.1
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert (
+        "wall_s.pipeline_compute_stages must match elapsed_per_stage sum: "
+        "0.5 != 1.75"
+    ) in failures
+    assert (
+        "wall_s.pipeline_unattributed must match pipeline minus compute stages: "
+        "0.1 != 1.5"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_accepts_compute_profile_without_integrated_h5ad(tmp_path):
