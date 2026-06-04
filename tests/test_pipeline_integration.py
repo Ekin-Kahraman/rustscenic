@@ -384,6 +384,7 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     assert result.backend_execution["enhancer"]["symbols"] == [
         "enhancer_align_cell_indices",
         "preproc_peak_coords_for_names",
+        "enhancer_match_peak_coords_to_atac",
         "enhancer_match_gene_coords_to_rna",
         "enhancer_normalise_chrom_codes",
         "enhancer_prepare_gene_order",
@@ -401,6 +402,7 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     assert manifest["backend_execution"]["enhancer"]["symbols"] == [
         "enhancer_align_cell_indices",
         "preproc_peak_coords_for_names",
+        "enhancer_match_peak_coords_to_atac",
         "enhancer_match_gene_coords_to_rna",
         "enhancer_normalise_chrom_codes",
         "enhancer_prepare_gene_order",

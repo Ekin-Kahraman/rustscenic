@@ -34,6 +34,7 @@ from rustscenic._rustscenic import (
     enhancer_link_pearson as _enhancer_link_pearson,
     enhancer_link_pearson_sparse_rna as _enhancer_link_pearson_sparse_rna,
     enhancer_match_gene_coords_to_rna as _match_gene_coords_to_rna,
+    enhancer_match_peak_coords_to_atac as _match_peak_coords_to_atac,
     enhancer_normalise_chrom_codes as _normalise_chrom_codes,
     enhancer_parse_peak_names as _parse_peak_names_rust,
     enhancer_prepare_gene_order as _prepare_gene_order,
@@ -371,8 +372,23 @@ def _peak_frame(atac_adata, peak_coords) -> pd.DataFrame:
         missing = need - set(peak_coords.columns)
         if missing:
             raise ValueError(f"peak_coords missing columns: {missing}")
-        out = peak_coords.loc[atac_adata.var_names]
+        row_ix, missing_peaks = _match_peak_coords_to_atac(
+            string_list(atac_adata.var_names),
+            string_list(peak_coords.index),
+        )
+        if missing_peaks:
+            preview = ", ".join(str(name) for name in list(missing_peaks)[:3])
+            raise ValueError(
+                f"peak_coords missing {len(missing_peaks)} ATAC peaks; "
+                f"first missing: {preview}"
+            )
+        out = peak_coords.take(row_ix, axis=0)
+        source_symbols = _rust_backend_symbols(peak_coords)
         out.attrs.update(getattr(peak_coords, "attrs", {}))
+        out.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": source_symbols + ["enhancer_match_peak_coords_to_atac"],
+        }
         return out
     # Try to get from atac_adata.var
     var = atac_adata.var

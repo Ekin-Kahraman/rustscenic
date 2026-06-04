@@ -288,6 +288,13 @@ def enhancer_match_gene_coords_to_rna(
     """Match gene-coordinate rows to RNA feature columns."""
 
 
+def enhancer_match_peak_coords_to_atac(
+    atac_peak_names: list[str],
+    peak_coord_names: list[str],
+) -> tuple[npt.NDArray[np.uint64], list[str]]:
+    """Match peak-coordinate rows to ATAC peak columns."""
+
+
 def enhancer_prepare_gene_order(
     peak_chrom_codes: npt.NDArray[np.int32],
     gene_chrom_codes: npt.NDArray[np.int32],

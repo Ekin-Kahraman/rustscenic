@@ -204,8 +204,8 @@ peak_coords = pd.DataFrame(
     [(pid, *parts) for pid, parts in zip(atac.var_names, parsed) if parts is not None],
     columns=["peak_id", "chrom", "start", "end"],
 ).set_index("peak_id")
-# enhancer._peak_frame does `peak_coords.loc[atac_adata.var_names]` — peak_id
-# must be the index, not a column.
+# enhancer._peak_frame aligns explicit peak_coords to atac.var_names by index.
+# peak_id must be the index, not a column.
 print(f"  parsed peak coords: {len(peak_coords)}/{atac.n_vars}", flush=True)
 
 with stage("enhancer"):

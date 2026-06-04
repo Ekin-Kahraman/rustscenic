@@ -218,6 +218,7 @@ def test_peak_coords_override_var_lookup():
         rna, atac2, genes, peak_coords=peak_coords, min_abs_corr=0.5,
     )
     assert ("peakA", "GENE_A") in set(zip(links["peak_id"], links["gene"], strict=True))
+    assert "enhancer_match_peak_coords_to_atac" in links.attrs["rust_backend"]["symbols"]
 
 
 def test_correlation_sign_preserved():
@@ -594,6 +595,18 @@ def test_gene_coordinate_rna_matcher_preserves_rows_and_duplicate_rna_semantics(
 
     np.testing.assert_array_equal(row_ix, np.array([1, 2, 3], dtype=np.uint64))
     np.testing.assert_array_equal(source_cols, np.array([2, 0, 2], dtype=np.int64))
+
+
+def test_peak_coordinate_matcher_preserves_atac_order_and_reports_missing():
+    from rustscenic._rustscenic import enhancer_match_peak_coords_to_atac
+
+    row_ix, missing = enhancer_match_peak_coords_to_atac(
+        ["p2", "missing", "p1", "p2"],
+        ["p1", "p2", "p2"],
+    )
+
+    np.testing.assert_array_equal(row_ix, np.array([2, 0, 2], dtype=np.uint64))
+    assert missing == ["missing"]
 
 
 def test_multichrom_sparse_atac_reuses_original_csc_buffers(monkeypatch):

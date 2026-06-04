@@ -98,6 +98,10 @@ type EnhancerGeneMatchPyResult = (
     Py<PyArray1<u64>>, // gene-coordinate row indices present in RNA
     Py<PyArray1<i64>>, // source RNA column indices
 );
+type EnhancerPeakCoordMatchPyResult = (
+    Py<PyArray1<u64>>, // peak-coordinate row indices in ATAC peak order
+    Py<PyList>,        // missing ATAC peak names
+);
 type EnhancerPearsonPyResult = (
     Py<PyArray1<u32>>, // peak indices
     Py<PyArray1<u32>>, // gene indices in the sorted gene-coordinate frame
@@ -1956,6 +1960,41 @@ fn enhancer_match_gene_coords_to_rna<'py>(
     Ok((
         PyArray1::from_vec(py, row_indices).unbind(),
         PyArray1::from_vec(py, source_cols).unbind(),
+    ))
+}
+
+/// Match peak-coordinate rows to ATAC peak columns in ATAC peak order.
+///
+/// Duplicate peak-coordinate names map to the last row, matching
+/// [`enhancer_match_gene_coords_to_rna`] duplicate-name semantics.
+#[pyfunction]
+fn enhancer_match_peak_coords_to_atac<'py>(
+    py: Python<'py>,
+    atac_peak_names: Vec<String>,
+    peak_coord_names: Vec<String>,
+) -> PyResult<EnhancerPeakCoordMatchPyResult> {
+    let (row_indices, missing) = py.allow_threads(|| {
+        let mut coord_row_by_peak: HashMap<&str, usize> =
+            HashMap::with_capacity(peak_coord_names.len());
+        for (idx, peak) in peak_coord_names.iter().enumerate() {
+            coord_row_by_peak.insert(peak.as_str(), idx);
+        }
+
+        let mut row_indices = Vec::with_capacity(atac_peak_names.len());
+        let mut missing = Vec::new();
+        for peak in &atac_peak_names {
+            if let Some(&row_idx) = coord_row_by_peak.get(peak.as_str()) {
+                row_indices.push(row_idx as u64);
+            } else {
+                missing.push(peak.clone());
+            }
+        }
+        (row_indices, missing)
+    });
+
+    Ok((
+        PyArray1::from_vec(py, row_indices).unbind(),
+        PyList::new(py, missing.iter().map(|s| s.as_str()))?.unbind(),
     ))
 }
 
@@ -6341,6 +6380,7 @@ fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(enhancer_normalise_chrom_codes, m)?)?;
     m.add_function(wrap_pyfunction!(enhancer_parse_peak_names, m)?)?;
     m.add_function(wrap_pyfunction!(enhancer_match_gene_coords_to_rna, m)?)?;
+    m.add_function(wrap_pyfunction!(enhancer_match_peak_coords_to_atac, m)?)?;
     m.add_function(wrap_pyfunction!(enhancer_prepare_gene_order, m)?)?;
     m.add_function(wrap_pyfunction!(enhancer_link_pearson, m)?)?;
     m.add_function(wrap_pyfunction!(enhancer_link_pearson_sparse_rna, m)?)?;

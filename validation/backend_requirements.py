@@ -37,6 +37,7 @@ REQUIRED_RUST_BACKEND_SYMBOLS: dict[str, list[str]] = {
         "enhancer_link_pearson",
         "enhancer_link_pearson_sparse_rna",
         "enhancer_match_gene_coords_to_rna",
+        "enhancer_match_peak_coords_to_atac",
         "enhancer_normalise_chrom_codes",
         "enhancer_parse_peak_names",
         "enhancer_prepare_gene_order",
