@@ -67,7 +67,7 @@ def scan_python_hot_paths(package_dir: Path = DEFAULT_PACKAGE) -> list[str]:
         return [f"missing package directory: {package_dir}"]
 
     violations: list[str] = []
-    for path in sorted(package_dir.glob("*.py")):
+    for path in sorted(package_dir.rglob("*.py")):
         rel = path.relative_to(package_dir).as_posix()
         for line_no, line in enumerate(path.read_text().splitlines(), start=1):
             stripped = line.strip()
