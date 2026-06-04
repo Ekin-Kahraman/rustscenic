@@ -1,4 +1,4 @@
-"""rustscenic CLI entry point - covers all 4 SCENIC+ stages.
+"""rustscenic CLI entry point.
 
     rustscenic grn       --expression --tfs --output [--seed ...]
     rustscenic aucell    --expression --regulons --output [--top-frac ...]
@@ -249,21 +249,27 @@ def cmd_cistarget(args: argparse.Namespace) -> int:
 
 
 def cmd_pipeline(args: argparse.Namespace) -> int:
-    """Run available stages: preproc + topics + grn + cistarget + aucell."""
+    """Run available stages through the public pipeline orchestrator."""
     from . import pipeline
 
     if (args.fragments is None) != (args.peaks is None):
         print("error: --fragments and --peaks must be supplied together", file=sys.stderr)
         return 2
+    if args.adata_atac is not None and (args.fragments is not None or args.peaks is not None):
+        print("error: --adata-atac cannot be combined with --fragments / --peaks", file=sys.stderr)
+        return 2
 
     result = pipeline.run(
         rna=Path(args.rna),
         output_dir=Path(args.output),
+        adata_atac=Path(args.adata_atac) if args.adata_atac else None,
         fragments=Path(args.fragments) if args.fragments else None,
         peaks=Path(args.peaks) if args.peaks else None,
         tfs=Path(args.tfs),
         motif_rankings=Path(args.motif_rankings) if args.motif_rankings else None,
         motif_annotations=Path(args.motif_annotations) if args.motif_annotations else None,
+        region_motif_rankings=Path(args.region_motif_rankings) if args.region_motif_rankings else None,
+        gene_coords=Path(args.gene_coords) if args.gene_coords else None,
         grn_n_estimators=args.grn_n_estimators,
         grn_max_features=args.grn_max_features,
         grn_target_block_size=args.grn_target_block_size,
@@ -271,9 +277,17 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
         aucell_top_frac=args.aucell_top_frac,
         topics_n_topics=args.topics_n_topics,
         topics_n_passes=args.topics_n_passes,
+        topics_method=args.topics_method,
+        topics_n_iters=args.topics_n_iters,
+        topics_n_threads=args.topics_n_threads,
         cistarget_top_frac=args.cistarget_top_frac,
         cistarget_auc_threshold=args.cistarget_auc_threshold,
         cistarget_nes_threshold=args.cistarget_nes_threshold,
+        enhancer_max_distance=args.enhancer_max_distance,
+        enhancer_min_abs_corr=args.enhancer_min_abs_corr,
+        eregulon_min_target_genes=args.eregulon_min_target_genes,
+        eregulon_min_enhancer_links=args.eregulon_min_enhancer_links,
+        write_integrated_adata=not args.skip_integrated_adata,
         seed=args.seed,
         verbose=True,
     )
@@ -332,15 +346,18 @@ def main(argv: list[str] | None = None) -> int:
 
     pp = sub.add_parser(
         "pipeline",
-        help="Pipeline runner (preproc + topics + grn + cistarget + aucell)",
+        help="Pipeline runner (preproc + topics + grn + cistarget + enhancer + eRegulon + aucell)",
     )
     pp.add_argument("--rna", required=True, help="RNA expression (.h5ad)")
     pp.add_argument("--output", required=True, help="Output directory for all artifacts")
     pp.add_argument("--tfs", required=True, help="Newline-separated TF names file")
+    pp.add_argument("--adata-atac", default=None, help="Optional: pre-built cells × peaks ATAC AnnData (.h5ad)")
     pp.add_argument("--fragments", default=None, help="Optional: 10x fragments.tsv[.gz]")
     pp.add_argument("--peaks", default=None, help="Optional: consensus peaks BED (required with --fragments)")
     pp.add_argument("--motif-rankings", default=None, help="Optional: motif ranking parquet/feather")
     pp.add_argument("--motif-annotations", default=None, help="Optional: motif-to-TF annotation parquet/feather/csv/tsv")
+    pp.add_argument("--region-motif-rankings", default=None, help="Optional: region/peak motif ranking parquet/feather")
+    pp.add_argument("--gene-coords", default=None, help="Optional: gene coordinate table with gene/chrom/tss columns")
     pp.add_argument("--grn-n-estimators", type=int, default=500)
     pp.add_argument("--grn-max-features", type=float, default=0.1)
     pp.add_argument(
@@ -353,11 +370,23 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument("--aucell-top-frac", type=float, default=0.05)
     pp.add_argument("--topics-n-topics", type=int, default=30)
     pp.add_argument("--topics-n-passes", type=int, default=3)
+    pp.add_argument("--topics-method", choices=["vb", "gibbs"], default="vb")
+    pp.add_argument("--topics-n-iters", type=int, default=200)
+    pp.add_argument("--topics-n-threads", type=int, default=1)
     pp.add_argument("--cistarget-top-frac", type=float, default=0.05)
     pp.add_argument("--cistarget-auc-threshold", type=float, default=0.05)
     pp.add_argument(
         "--cistarget-nes-threshold", type=float, default=None,
         help="Optional minimum NES on enriched motifs (per-regulon z-score across motifs). 3.0 matches pyscenic / pycistarget canonical cutoff.",
+    )
+    pp.add_argument("--enhancer-max-distance", type=int, default=500_000)
+    pp.add_argument("--enhancer-min-abs-corr", type=float, default=0.1)
+    pp.add_argument("--eregulon-min-target-genes", type=int, default=5)
+    pp.add_argument("--eregulon-min-enhancer-links", type=int, default=2)
+    pp.add_argument(
+        "--skip-integrated-adata",
+        action="store_true",
+        help="Skip writing RNA with AUCell scores attached; useful for profiling runs.",
     )
     pp.add_argument("--seed", type=int, default=777)
     pp.set_defaults(func=cmd_pipeline)
