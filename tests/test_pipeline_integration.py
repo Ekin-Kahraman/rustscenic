@@ -2134,6 +2134,9 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
         ):
             rank_matrix[tf_idx, gene_idx] = rank
     motif_rankings = pd.DataFrame(rank_matrix, index=motif_names, columns=rna_genes)
+    motif_annotations = pd.DataFrame(
+        {"motif": motif_names, "TF": ["G000", "G005", "G010"]}
+    )
 
     # Synthetic REGION rankings - same kernel, different feature set
     n_peaks = len(peak_names)
@@ -2169,6 +2172,7 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
         peaks=str(peaks_path),
         tfs=["G000", "G005", "G010"],
         motif_rankings=motif_rankings,
+        motif_annotations=motif_annotations,
         region_motif_rankings=region_rankings_path,
         gene_coords=gene_coords,
         grn_n_estimators=15,
@@ -2193,16 +2197,35 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
     assert all(cols is not None for cols in read_feather_calls)
     assert all("motifs" in cols for cols in read_feather_calls)
     assert all("unused_peak_not_in_run" not in cols for cols in read_feather_calls)
+    assert result.backend_execution["cistarget_pruning"]["symbols"] == [
+        "cistarget_motif_annotation_prune_standard_rows_f32",
+        "cistarget_prune_regulon_targets_i32",
+    ]
     region_symbols = [
         "cistarget_enrichment_from_rankings_i32",
         "cistarget_region_attribution_peak_values_i32",
         "pipeline_expand_region_cistarget_rows_f32",
     ]
     assert result.backend_execution["eregulon_peak_attribution"]["symbols"] == region_symbols
+    region_filter_symbols = region_symbols + [
+        "pipeline_filter_cistarget_peak_rows_f32"
+    ]
+    assert result.backend_execution["eregulon_peak_filter"]["symbols"] == region_filter_symbols
     manifest = json.loads((out / "manifest.json").read_text())
+    assert (
+        manifest["backend_execution"]["cistarget_pruning"]["symbols"]
+        == [
+            "cistarget_motif_annotation_prune_standard_rows_f32",
+            "cistarget_prune_regulon_targets_i32",
+        ]
+    )
     assert (
         manifest["backend_execution"]["eregulon_peak_attribution"]["symbols"]
         == region_symbols
+    )
+    assert (
+        manifest["backend_execution"]["eregulon_peak_filter"]["symbols"]
+        == region_filter_symbols
     )
 
     # Region-only should also work. The exact region-cistarget path must

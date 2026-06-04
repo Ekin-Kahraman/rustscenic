@@ -659,7 +659,7 @@ def run(
                     enriched_with_peaks = _filter_cistarget_peak_rows(
                         enriched_with_peaks,
                         region_enrich,
-                )
+                    )
                     backend_execution["eregulon_peak_filter"] = _rust_execution_from_attrs(
                         enriched_with_peaks,
                         "pipeline_filter_cistarget_peak_rows_f32",
