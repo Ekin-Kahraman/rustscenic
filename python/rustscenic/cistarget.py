@@ -53,6 +53,7 @@ from rustscenic._stage_utils import (
     prepare_regulon_indices_with_coverage,
     require_columns as _require_columns,
     string_list,
+    string_list_missing_empty,
     tf_from_regulon_name,
 )
 
@@ -351,10 +352,7 @@ def prune_enriched_motifs(
         ],
         role="TF",
     )
-    annotation_tfs = motif_annotations[tf_col].where(
-        motif_annotations[tf_col].notna(),
-        "",
-    )
+    annotation_tfs = string_list_missing_empty(motif_annotations[tf_col])
 
     standard_columns = {"regulon", "motif", "auc", "nes"}
     if all(col in standard_columns for col in enriched.columns):
@@ -376,7 +374,7 @@ def prune_enriched_motifs(
             auc_values,
             nes_values,
             string_list(motif_annotations[motif_col]),
-            string_list(annotation_tfs),
+            annotation_tfs,
             auc_threshold,
             nes_threshold,
             bool(case_sensitive),
@@ -420,7 +418,7 @@ def prune_enriched_motifs(
         auc_values,
         nes_values,
         string_list(motif_annotations[motif_col]),
-        string_list(annotation_tfs),
+        annotation_tfs,
         auc_threshold,
         nes_threshold,
         bool(case_sensitive),

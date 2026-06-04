@@ -359,6 +359,64 @@ class TestCistargetCorrectness:
             "cistarget_motif_annotation_prune_standard_rows_f32"
         ]
 
+    def test_prune_enriched_motifs_maps_missing_annotation_tfs_without_pandas_mask(
+        self,
+        monkeypatch,
+    ):
+        enriched = pd.DataFrame(
+            {
+                "regulon": ["TF1_regulon"],
+                "motif": ["M1"],
+                "auc": np.asarray([0.5], dtype=np.float32),
+                "nes": np.asarray([3.5], dtype=np.float32),
+            }
+        )
+        annotations = pd.DataFrame(
+            {
+                "motif": ["M0", "M1", "M2", "M3"],
+                "TF": [None, "TF1", np.nan, pd.NA],
+            }
+        )
+
+        def fake_standard_rows(
+            enriched_regulons,
+            enriched_motifs,
+            enriched_auc,
+            enriched_nes,
+            annotation_motifs,
+            annotation_tfs,
+            auc_threshold,
+            nes_threshold,
+            case_sensitive,
+        ):
+            assert annotation_motifs == ["M0", "M1", "M2", "M3"]
+            assert annotation_tfs == ["", "TF1", "", ""]
+            return (
+                list(enriched_regulons),
+                list(enriched_motifs),
+                np.asarray([0.5], dtype=np.float32),
+                np.asarray([3.5], dtype=np.float32),
+                ["TF1"],
+                ["TF1"],
+            )
+
+        monkeypatch.setattr(
+            cistarget,
+            "_motif_annotation_prune_standard_rows_f32",
+            fake_standard_rows,
+        )
+
+        out = cistarget.prune_enriched_motifs(
+            enriched,
+            annotations,
+            auc_threshold=0.2,
+            nes_threshold=1.0,
+        )
+
+        assert out[["tf", "annotation_tf"]].to_dict("records") == [
+            {"tf": "TF1", "annotation_tf": "TF1"}
+        ]
+
     def test_prune_regulons_keeps_only_recovered_targets(self):
         enriched = pd.DataFrame(
             [{"regulon": "G000_regulon", "motif": "M_G000", "auc": 0.30}]

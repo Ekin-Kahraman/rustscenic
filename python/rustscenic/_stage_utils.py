@@ -48,6 +48,31 @@ def string_list(values: Iterable) -> list[str]:
     return [str(value) for value in out]
 
 
+def string_list_missing_empty(values: Iterable) -> list[str]:
+    """Return strings, mapping pandas-style missing scalar values to ``""``."""
+    if isinstance(values, (pd.Series, pd.Index)):
+        arr = values.to_numpy(copy=False)
+    elif isinstance(values, np.ndarray):
+        arr = values
+    else:
+        arr = list(values)
+
+    out = []
+    for value in arr:
+        if isinstance(value, str):
+            out.append(value)
+            continue
+        if value is None:
+            out.append("")
+            continue
+        try:
+            is_missing = bool(pd.isna(value))
+        except (TypeError, ValueError):
+            is_missing = False
+        out.append("" if is_missing else str(value))
+    return out
+
+
 def coerce_regulon(reg) -> tuple[str, list[str]]:
     """Normalise all accepted regulon-like objects to ``(name, genes)``."""
     if isinstance(reg, tuple) and len(reg) == 2:
