@@ -155,6 +155,29 @@ REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
 }
 
 
+def _write_integrated_adata(record: dict[str, Any]) -> bool:
+    params = record.get("params")
+    if isinstance(params, dict) and params.get("write_integrated_adata") is False:
+        return False
+    if record.get("write_integrated_adata") is False:
+        return False
+    return True
+
+
+def _required_full_pipeline_artefacts(record: dict[str, Any]) -> dict[str, str]:
+    required = dict(REQUIRED_FULL_PIPELINE_ARTEFACTS)
+    if not _write_integrated_adata(record):
+        required.pop("integrated_adata_path", None)
+    return required
+
+
+def _required_full_pipeline_memory_stages(record: dict[str, Any]) -> set[str]:
+    required = set(REQUIRED_FULL_PIPELINE_MEMORY_STAGES)
+    if not _write_integrated_adata(record):
+        required.discard("integrated_adata")
+    return required
+
+
 def _positive_number(value: Any) -> bool:
     return not isinstance(value, bool) and isinstance(value, (int, float)) and value > 0
 
@@ -743,7 +766,7 @@ def _output_inventory_failures(record: dict[str, Any]) -> list[str]:
     if not isinstance(inventory, dict):
         return ["output_inventory must be an object when --check-output-files is set"]
 
-    for key, expected_type in sorted(REQUIRED_FULL_PIPELINE_ARTEFACTS.items()):
+    for key, expected_type in sorted(_required_full_pipeline_artefacts(record).items()):
         info = inventory.get(key)
         if not isinstance(info, dict):
             failures.append(f"output_inventory.{key} must be an object")
@@ -830,6 +853,10 @@ def _full_pipeline_scaling_row_child_failures(
         "outputs": child.get("outputs"),
         "expected_tf_recovery": child.get("expected_tf_recovery"),
         "backend_execution": child.get("backend_execution"),
+        "write_integrated_adata": child.get("params", {}).get(
+            "write_integrated_adata",
+            True,
+        ),
     }
     for key, expected in checks.items():
         if row.get(key) != expected:
@@ -883,12 +910,13 @@ def _full_pipeline_scaling_row_failures(
     if not isinstance(memory, dict):
         failures.append(f"{prefix}.peak_rss_gb_per_stage must be an object")
     else:
-        missing = REQUIRED_FULL_PIPELINE_MEMORY_STAGES - set(memory)
+        required_memory = _required_full_pipeline_memory_stages(row)
+        missing = required_memory - set(memory)
         failures.extend(
             f"{prefix}.peak_rss_gb_per_stage.{stage} missing"
             for stage in sorted(missing)
         )
-        for stage in sorted(REQUIRED_FULL_PIPELINE_MEMORY_STAGES & set(memory)):
+        for stage in sorted(required_memory & set(memory)):
             if not _positive_number(memory.get(stage)):
                 failures.append(f"{prefix}.peak_rss_gb_per_stage.{stage} must be positive")
         unknown = set(memory) - FULL_PIPELINE_STAGES
@@ -1041,9 +1069,10 @@ def validate_full_pipeline(
             if not _nonnegative_number(elapsed.get(stage)):
                 failures.append(f"elapsed_per_stage.{stage} must be non-negative")
     if isinstance(memory, dict):
-        missing = REQUIRED_FULL_PIPELINE_MEMORY_STAGES - set(memory)
+        required_memory = _required_full_pipeline_memory_stages(record)
+        missing = required_memory - set(memory)
         failures.extend(f"peak_rss_gb_per_stage.{stage} missing" for stage in sorted(missing))
-        for stage in sorted(REQUIRED_FULL_PIPELINE_MEMORY_STAGES & set(memory)):
+        for stage in sorted(required_memory & set(memory)):
             if not _positive_number(memory.get(stage)):
                 failures.append(f"peak_rss_gb_per_stage.{stage} must be positive")
         unknown = set(memory) - FULL_PIPELINE_STAGES

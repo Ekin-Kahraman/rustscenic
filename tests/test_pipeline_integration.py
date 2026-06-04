@@ -20,6 +20,7 @@ upstream one broke.
 """
 from __future__ import annotations
 
+import json
 import warnings
 
 import anndata as ad
@@ -498,6 +499,43 @@ def test_subset_atac_to_rna_cells_uses_rust_indices_and_preserves_atac_order():
     np.testing.assert_array_equal(subset.X, atac.X[[1, 2]])
     assert any("subsetting ATAC from 4 barcodes to 2" in str(w.message) for w in caught)
     assert log_lines == ["      ATAC subset to RNA cells: (2, 3)"]
+
+
+def test_pipeline_run_can_skip_integrated_h5ad_for_compute_profiling(tmp_path):
+    import rustscenic.pipeline
+
+    cells = [f"c{i}" for i in range(20)]
+    genes = ["TF1", "G1", "G2", "G3", "G4"]
+    x = np.arange(len(cells) * len(genes), dtype=np.float32).reshape(
+        len(cells),
+        len(genes),
+    )
+    rna = ad.AnnData(
+        X=x,
+        obs=pd.DataFrame(index=cells),
+        var=pd.DataFrame(index=genes),
+    )
+
+    result = rustscenic.pipeline.run(
+        rna,
+        tmp_path / "out",
+        tfs=["TF1"],
+        grn_n_estimators=5,
+        grn_top_targets=2,
+        write_integrated_adata=False,
+        verbose=False,
+    )
+
+    assert result.integrated_adata_path is None
+    assert not (tmp_path / "out" / "rna_with_regulons.h5ad").exists()
+    assert "integrated_adata" not in result.memory
+    assert result.backend_execution["integrated_adata"] == {
+        "engine": "skipped",
+        "reason": "write_integrated_adata=False",
+    }
+    manifest = json.loads((tmp_path / "out" / "manifest.json").read_text())
+    assert manifest["integrated_adata_path"] is None
+    assert "integrated_adata" not in manifest["memory"]
 
 
 def test_pipeline_run_with_pre_built_adata_atac_skips_fragments_to_matrix(tmp_path):

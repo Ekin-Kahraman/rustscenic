@@ -123,6 +123,8 @@ def child_cmd(
         cmd.extend(["--gene-coords", str(args.gene_coords)])
     if args.expected_tfs:
         cmd.extend(["--expected-tfs", *args.expected_tfs])
+    if args.skip_integrated_adata:
+        cmd.append("--skip-integrated-adata")
     if args.require_clean:
         cmd.append("--require-clean")
     return cmd
@@ -187,6 +189,10 @@ def run_child(args: argparse.Namespace, *, n_cells: int) -> dict[str, Any]:
         "backend_execution": record["backend_execution"],
         "outputs": record["outputs"],
         "expected_tf_recovery": record.get("expected_tf_recovery"),
+        "write_integrated_adata": record.get("params", {}).get(
+            "write_integrated_adata",
+            True,
+        ),
     }
 
 
@@ -256,6 +262,7 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
             "enhancer_min_abs_corr": args.enhancer_min_abs_corr,
             "eregulon_min_target_genes": args.eregulon_min_target_genes,
             "eregulon_min_enhancer_links": args.eregulon_min_enhancer_links,
+            "write_integrated_adata": not args.skip_integrated_adata,
             "expected_tfs": args.expected_tfs,
             "seed": args.seed,
             "force": args.force,
@@ -401,6 +408,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--eregulon-min-target-genes", type=int, default=2)
     parser.add_argument("--eregulon-min-enhancer-links", type=int, default=1)
     parser.add_argument("--summary-rows", type=int, default=10)
+    parser.add_argument("--skip-integrated-adata", action="store_true")
     parser.add_argument("--seed", type=int, default=777)
     parser.add_argument(
         "--force",

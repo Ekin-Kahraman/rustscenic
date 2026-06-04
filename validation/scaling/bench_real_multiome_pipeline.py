@@ -524,6 +524,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         enhancer_min_abs_corr=args.enhancer_min_abs_corr,
         eregulon_min_target_genes=args.eregulon_min_target_genes,
         eregulon_min_enhancer_links=args.eregulon_min_enhancer_links,
+        write_integrated_adata=not args.skip_integrated_adata,
         seed=args.seed,
         verbose=not args.quiet,
     )
@@ -625,6 +626,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "enhancer_min_abs_corr": args.enhancer_min_abs_corr,
             "eregulon_min_target_genes": args.eregulon_min_target_genes,
             "eregulon_min_enhancer_links": args.eregulon_min_enhancer_links,
+            "write_integrated_adata": not args.skip_integrated_adata,
             "seed": args.seed,
         },
         "shapes": shapes,
@@ -739,6 +741,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--enhancer-min-abs-corr", type=float, default=0.1)
     parser.add_argument("--eregulon-min-target-genes", type=int, default=2)
     parser.add_argument("--eregulon-min-enhancer-links", type=int, default=1)
+    parser.add_argument("--skip-integrated-adata", action="store_true")
     parser.add_argument("--seed", type=int, default=777)
     parser.add_argument("--summary-rows", type=int, default=10)
     parser.add_argument("--quiet", action="store_true")

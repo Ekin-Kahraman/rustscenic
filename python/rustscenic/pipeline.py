@@ -133,6 +133,7 @@ def run(
     enhancer_min_abs_corr: float = 0.1,
     eregulon_min_target_genes: int = 5,
     eregulon_min_enhancer_links: int = 2,
+    write_integrated_adata: bool = True,
     seed: int = 777,
     verbose: bool = True,
 ) -> PipelineResult:
@@ -215,6 +216,11 @@ def run(
         ``rustscenic.grn.infer``. ``None`` uses the adaptive default,
         which shrinks the block at high cell counts to reduce
         memory-bandwidth pressure.
+    write_integrated_adata
+        Write ``rna_with_regulons.h5ad`` with AUCell scores attached to
+        ``obs``. Default ``True`` preserves the full end-to-end artifact.
+        Set ``False`` for HPC profiling runs that need to measure compute
+        stages without the final full-RNA h5ad materialisation and write.
 
     Returns
     -------
@@ -734,12 +740,17 @@ def run(
     mark_memory("aucell")
 
     # ---- 6. integrate into AnnData ----
-    _attach_aucell_to_obs(adata_rna, auc)
-    backend_execution["integrated_adata"] = _python_io_execution("AnnData obs attachment and h5ad write")
-    integrated_path = output_dir / "rna_with_regulons.h5ad"
-    adata_rna.write_h5ad(integrated_path)
-    log(f"      integrated → {integrated_path.name}")
-    mark_memory("integrated_adata")
+    integrated_path = None
+    if write_integrated_adata:
+        _attach_aucell_to_obs(adata_rna, auc)
+        backend_execution["integrated_adata"] = _python_io_execution("AnnData obs attachment and h5ad write")
+        integrated_path = output_dir / "rna_with_regulons.h5ad"
+        adata_rna.write_h5ad(integrated_path)
+        log(f"      integrated → {integrated_path.name}")
+        mark_memory("integrated_adata")
+    else:
+        backend_execution["integrated_adata"] = _skipped_execution("write_integrated_adata=False")
+        log("      integrated AnnData write skipped")
 
     result = PipelineResult(
         output_dir=output_dir,

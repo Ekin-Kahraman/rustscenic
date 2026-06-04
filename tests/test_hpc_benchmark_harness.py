@@ -325,6 +325,7 @@ def test_real_multiome_scaling_child_cmd_runs_full_pipeline_in_child(tmp_path):
             "--expected-tfs",
             "SPI1",
             "PAX5",
+            "--skip-integrated-adata",
             "--require-clean",
         ]
     )
@@ -351,6 +352,7 @@ def test_real_multiome_scaling_child_cmd_runs_full_pipeline_in_child(tmp_path):
     assert cmd[cmd.index("--gene-coords") + 1].endswith("genes.parquet")
     assert "--expected-tfs" in cmd
     assert "SPI1" in cmd
+    assert "--skip-integrated-adata" in cmd
     assert "--require-clean" in cmd
 
 
@@ -1919,6 +1921,10 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "backend_execution": child["backend_execution"],
                 "outputs": child["outputs"],
                 "expected_tf_recovery": child.get("expected_tf_recovery"),
+                "write_integrated_adata": child["params"].get(
+                    "write_integrated_adata",
+                    True,
+                ),
             }
         )
     return {
@@ -2008,6 +2014,29 @@ def test_benchmark_artifact_validator_accepts_full_pipeline_record(tmp_path):
 
     failures = module.validate_record(
         _full_pipeline_record(tmp_path),
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert failures == []
+
+
+def test_benchmark_artifact_validator_accepts_compute_profile_without_integrated_h5ad(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_no_integrated",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["params"]["write_integrated_adata"] = False
+    record["output_inventory"].pop("integrated_adata_path")
+    record["peak_rss_gb_per_stage"].pop("integrated_adata")
+    record["backend_execution"]["pipeline_integrated_adata"] = {
+        "engine": "skipped",
+        "reason": "write_integrated_adata=False",
+    }
+
+    failures = module.validate_record(
+        record,
         require_clean=True,
         check_output_files=True,
     )
