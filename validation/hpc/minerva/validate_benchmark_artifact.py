@@ -1146,8 +1146,10 @@ def _cell_barcode_filter_failures(
     record: dict[str, Any],
     prefix: str,
     *,
-    min_matched_cells: int | None = None,
-    min_matched_label: str = "shapes.rna_post_qc",
+    expected_requested_cells: int | None = None,
+    expected_requested_label: str = "params.n_cells_requested",
+    expected_matched_cells: int | None = None,
+    expected_matched_label: str = "shapes.rna_post_qc",
 ) -> list[str]:
     failures: list[str] = []
     barcode_filter = record.get("cell_barcode_filter")
@@ -1160,6 +1162,11 @@ def _cell_barcode_filter_failures(
         failures.append(
             f"{_path(prefix, 'cell_barcode_filter.requested')} must be positive"
         )
+    elif expected_requested_cells is not None and requested != expected_requested_cells:
+        failures.append(
+            f"{_path(prefix, 'cell_barcode_filter.requested')} must equal "
+            f"{_path(prefix, expected_requested_label)}"
+        )
     if not _positive_int(matched):
         failures.append(
             f"{_path(prefix, 'cell_barcode_filter.matched')} must be positive"
@@ -1170,13 +1177,13 @@ def _cell_barcode_filter_failures(
             f"{_path(prefix, 'cell_barcode_filter.requested')}"
         )
     if (
-        min_matched_cells is not None
+        expected_matched_cells is not None
         and _positive_int(matched)
-        and matched < min_matched_cells
+        and matched != expected_matched_cells
     ):
         failures.append(
-            f"{_path(prefix, 'cell_barcode_filter.matched')} must be >= "
-            f"{_path(prefix, min_matched_label)} cells"
+            f"{_path(prefix, 'cell_barcode_filter.matched')} must equal "
+            f"{_path(prefix, expected_matched_label)} cells"
         )
     return failures
 
@@ -1308,8 +1315,14 @@ def _full_pipeline_scaling_row_failures(
         _cell_barcode_filter_failures(
             row,
             prefix,
-            min_matched_cells=n_cells if _positive_int(n_cells) else None,
-            min_matched_label="n_cells_actual",
+            expected_requested_cells=(
+                row.get("n_cells_requested")
+                if _positive_int(row.get("n_cells_requested"))
+                else None
+            ),
+            expected_requested_label="n_cells_requested",
+            expected_matched_cells=n_cells if _positive_int(n_cells) else None,
+            expected_matched_label="n_cells_actual",
         )
     )
     failures.extend(_integrated_adata_execution_failures(row, prefix))
@@ -1426,6 +1439,15 @@ def validate_full_pipeline(
             setup_elapsed.get("region_motif_rankings_metadata")
         ):
             failures.append("setup_elapsed_s.region_motif_rankings_metadata must be non-negative")
+        params_for_subset = record.get("params", {})
+        if (
+            isinstance(params_for_subset, dict)
+            and _positive_int(params_for_subset.get("n_cells_requested"))
+        ):
+            if "subset_requested_cells" not in setup_elapsed:
+                failures.append("setup_elapsed_s.subset_requested_cells missing")
+            elif not _nonnegative_number(setup_elapsed.get("subset_requested_cells")):
+                failures.append("setup_elapsed_s.subset_requested_cells must be non-negative")
     if not isinstance(elapsed, dict):
         failures.append("elapsed_per_stage must be an object")
     if not isinstance(memory, dict):
@@ -1449,6 +1471,7 @@ def validate_full_pipeline(
 
     outputs = record.get("outputs", {})
     shapes = record.get("shapes", {})
+    params = record.get("params", {})
     if not isinstance(shapes, dict):
         failures.append("shapes must be an object")
     else:
@@ -1474,7 +1497,13 @@ def validate_full_pipeline(
             _cell_barcode_filter_failures(
                 record,
                 "full_pipeline",
-                min_matched_cells=min_matched_cells,
+                expected_requested_cells=(
+                    params.get("n_cells_requested")
+                    if isinstance(params, dict)
+                    and _positive_int(params.get("n_cells_requested"))
+                    else None
+                ),
+                expected_matched_cells=min_matched_cells,
             )
         )
 

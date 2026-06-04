@@ -335,6 +335,19 @@ def subset_shared_cells(rna, atac, *, n_cells: int | None, seed: int):
     return rna[shared].copy(), atac[shared].copy()
 
 
+def subset_requested_cells(adata, *, n_cells: int | None, seed: int):
+    """Apply requested cell-count scaling before fragment-matrix construction."""
+    if n_cells is None or n_cells >= adata.n_obs:
+        return adata
+    rng = np.random.default_rng(seed)
+    cells = np.asarray(sorted(adata.obs_names), dtype=object)
+    selected = np.asarray(
+        sorted(rng.choice(cells, size=n_cells, replace=False)),
+        dtype=object,
+    )
+    return adata[selected].copy()
+
+
 def load_optional_table(path: Path | None) -> pd.DataFrame | None:
     if path is None:
         return None
@@ -500,6 +513,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     t_step = time.perf_counter()
     rna = load_and_qc_rna(args.rna_10x_h5)
     setup_elapsed["load_rna_qc"] = time.perf_counter() - t_step
+
+    t_step = time.perf_counter()
+    rna = subset_requested_cells(rna, n_cells=args.n_cells, seed=args.seed)
+    setup_elapsed["subset_requested_cells"] = time.perf_counter() - t_step
 
     print(f"[setup] building ATAC matrix from {args.fragments}", flush=True)
     t_step = time.perf_counter()

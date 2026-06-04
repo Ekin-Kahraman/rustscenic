@@ -69,6 +69,34 @@ def test_real_multiome_harness_strips_common_regulon_suffixes():
     assert module.strip_regulon_name("IRF8_repressor(-)") == "IRF8"
 
 
+def test_real_multiome_harness_subsets_requested_cells_before_fragments():
+    module = _load_module(
+        "bench_real_multiome_cell_subset",
+        ROOT / "validation/scaling/bench_real_multiome_pipeline.py",
+    )
+    import anndata as ad
+
+    cells = [f"c{i}" for i in range(6)]
+    adata = ad.AnnData(
+        X=np.zeros((6, 3), dtype=np.float32),
+        obs=pd.DataFrame(index=cells),
+        var=pd.DataFrame(index=["g0", "g1", "g2"]),
+    )
+
+    subset = module.subset_requested_cells(adata, n_cells=3, seed=7)
+    expected = sorted(
+        np.random.default_rng(7).choice(
+            np.asarray(sorted(cells), dtype=object),
+            size=3,
+            replace=False,
+        )
+    )
+
+    assert list(subset.obs_names) == expected
+    assert module.subset_requested_cells(adata, n_cells=None, seed=7) is adata
+    assert module.subset_requested_cells(adata, n_cells=6, seed=7) is adata
+
+
 def test_real_multiome_harness_fingerprints_reference_dataframes():
     module = _load_module(
         "bench_real_multiome_fingerprint",
@@ -1922,6 +1950,7 @@ def _full_pipeline_record(tmp_path: Path):
         },
         "setup_elapsed_s": {
             "load_rna_qc": 0.2,
+            "subset_requested_cells": 0.01,
             "fragments_to_matrix": 0.3,
             "subset_shared_cells": 0.1,
             "motif_rankings": 0.15,
@@ -3089,7 +3118,11 @@ def test_benchmark_artifact_validator_rejects_invalid_cell_barcode_filter(tmp_pa
     failures = module.validate_record(record, require_clean=True)
 
     assert (
-        "full_pipeline.cell_barcode_filter.matched must be >= "
+        "full_pipeline.cell_barcode_filter.requested must equal "
+        "full_pipeline.params.n_cells_requested"
+    ) in failures
+    assert (
+        "full_pipeline.cell_barcode_filter.matched must equal "
         "full_pipeline.shapes.rna_post_qc cells"
     ) in failures
 
@@ -3109,6 +3142,7 @@ def test_benchmark_artifact_validator_rejects_incomplete_full_pipeline(tmp_path)
     del record["peak_rss_gb_per_stage"]["integrated_adata"]
     record["peak_rss_gb_per_stage"]["unexpected"] = 1.0
     del record["setup_elapsed_s"]["fragments_to_matrix"]
+    del record["setup_elapsed_s"]["subset_requested_cells"]
     record["wall_s"]["end_to_end"] = 1.0
 
     failures = module.validate_record(record, require_clean=True)
@@ -3122,6 +3156,7 @@ def test_benchmark_artifact_validator_rejects_incomplete_full_pipeline(tmp_path)
     assert "peak_rss_gb_per_stage.integrated_adata missing" in failures
     assert "unknown peak_rss_gb_per_stage.unexpected" in failures
     assert "setup_elapsed_s.fragments_to_matrix missing" in failures
+    assert "setup_elapsed_s.subset_requested_cells missing" in failures
     assert "wall_s.end_to_end must include setup + pipeline time" in failures
 
 
@@ -3250,6 +3285,7 @@ def test_minerva_result_collector_discovers_latest_valid_benchmarks(tmp_path):
     new_record = _full_pipeline_record(new_dir)
     new_record["shapes"]["rna_post_qc"] = [200, 1000]
     new_record["shapes"]["atac_shared_cells"] = [200, 2000]
+    new_record["params"]["n_cells_requested"] = 200
     new_record["cell_barcode_filter"] = {"requested": 200, "matched": 200}
     new_record["outputs"]["aucell_shape"] = [200, 2]
     _sync_full_pipeline_manifest(new_record)
