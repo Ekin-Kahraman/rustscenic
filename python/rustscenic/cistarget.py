@@ -435,17 +435,9 @@ def prune_enriched_motifs(
         }
         return out
 
-    idx = np.asarray(row_ix)
-    out_cols = {
-        col: enriched[col].to_numpy(copy=False)[idx]
-        for col in enriched.columns
-    }
-    out_cols["tf"] = list(tf_values)
-    out_cols["annotation_tf"] = list(annotation_tf)
-    out = pd.DataFrame(
-        out_cols,
-        columns=list(enriched.columns) + ["tf", "annotation_tf"],
-    ).reset_index(drop=True)
+    out = enriched.take(row_ix, axis=0).reset_index(drop=True)
+    out["tf"] = list(tf_values)
+    out["annotation_tf"] = list(annotation_tf)
     out.attrs["rust_backend"] = {
         "engine": "rust",
         "symbols": [backend_symbol],

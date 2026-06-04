@@ -56,8 +56,6 @@ ALLOWED_HITS = {
     ("quickstart.py", ".sum(axis="): "demo normalisation only",
     ("_gene_resolution.py", ".max()"): "public diagnostic helper only",
     ("_gene_resolution.py", "warn_if_likely_unnormalized("): "public diagnostic helper only",
-    ("cistarget.py", "idx = np.asarray(row_ix)"): "extra-column public fallback after Rust pruning",
-    ("cistarget.py", "np.asarray(row_ix)"): "extra-column public fallback after Rust pruning",
 }
 
 
