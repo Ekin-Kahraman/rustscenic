@@ -11,7 +11,6 @@ import argparse
 import json
 import math
 import os
-import platform
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -28,6 +27,7 @@ from validation.backend_requirements import backend_capabilities
 from validation.hpc.minerva.validate_benchmark_artifact import validate_record
 from validation.python_hot_paths import hot_path_state
 from validation.scaling.bench_real_multiome_pipeline import (
+    benchmark_env,
     repo_state,
     runtime_import_state,
 )
@@ -306,23 +306,7 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
                 "peak_rss_gb",
             ),
         },
-        "env": {
-            "python": platform.python_version(),
-            "platform": platform.platform(),
-            "host": platform.node(),
-            "rayon_num_threads": os.environ.get("RAYON_NUM_THREADS"),
-            "omp_num_threads": os.environ.get("OMP_NUM_THREADS"),
-            "openblas_num_threads": os.environ.get("OPENBLAS_NUM_THREADS"),
-            "mkl_num_threads": os.environ.get("MKL_NUM_THREADS"),
-            "lsf_jobid": os.environ.get("LSB_JOBID"),
-            "lsf_queue": os.environ.get("LSB_QUEUE"),
-            "lsf_cores": os.environ.get("LSB_DJOB_NUMPROC"),
-            "lsf_project": os.environ.get("RUSTSCENIC_LSF_PROJECT"),
-            "lsf_requested_queue": os.environ.get("RUSTSCENIC_LSF_QUEUE"),
-            "lsf_requested_cores": os.environ.get("RUSTSCENIC_LSF_CORES"),
-            "lsf_requested_mem_mb": os.environ.get("RUSTSCENIC_LSF_MEM_MB"),
-            "lsf_requested_walltime": os.environ.get("RUSTSCENIC_LSF_WALLTIME"),
-        },
+        "env": benchmark_env(),
     }
 
 

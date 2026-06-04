@@ -507,6 +507,30 @@ def matrix_profile(adata) -> dict[str, Any]:
     }
 
 
+def benchmark_env() -> dict[str, Any]:
+    env = {
+        "python": platform.python_version(),
+        "platform": platform.platform(),
+        "host": platform.node(),
+        "rayon_num_threads": os.environ.get("RAYON_NUM_THREADS"),
+        "omp_num_threads": os.environ.get("OMP_NUM_THREADS"),
+        "openblas_num_threads": os.environ.get("OPENBLAS_NUM_THREADS"),
+        "mkl_num_threads": os.environ.get("MKL_NUM_THREADS"),
+    }
+    optional_env = {
+        "lsf_jobid": os.environ.get("LSB_JOBID"),
+        "lsf_queue": os.environ.get("LSB_QUEUE"),
+        "lsf_cores": os.environ.get("LSB_DJOB_NUMPROC"),
+        "lsf_project": os.environ.get("RUSTSCENIC_LSF_PROJECT"),
+        "lsf_requested_queue": os.environ.get("RUSTSCENIC_LSF_QUEUE"),
+        "lsf_requested_cores": os.environ.get("RUSTSCENIC_LSF_CORES"),
+        "lsf_requested_mem_mb": os.environ.get("RUSTSCENIC_LSF_MEM_MB"),
+        "lsf_requested_walltime": os.environ.get("RUSTSCENIC_LSF_WALLTIME"),
+    }
+    env.update({key: value for key, value in optional_env.items() if value})
+    return env
+
+
 def strip_regulon_name(name: str) -> str:
     value = str(name)
     for suffix in ("(+)", "(-)"):
@@ -615,6 +639,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         rna=rna,
         output_dir=args.out_dir,
         adata_atac=atac,
+        peaks=args.peaks,
         motif_rankings=motif_rankings,
         motif_annotations=motif_annotations,
         region_motif_rankings=region_motif_rankings,
@@ -783,23 +808,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             max_rows=args.summary_max_rows,
         ),
         "output_inventory": {k: file_info(v) for k, v in artefact_paths.items()},
-        "env": {
-            "python": platform.python_version(),
-            "platform": platform.platform(),
-            "host": platform.node(),
-            "rayon_num_threads": os.environ.get("RAYON_NUM_THREADS"),
-            "omp_num_threads": os.environ.get("OMP_NUM_THREADS"),
-            "openblas_num_threads": os.environ.get("OPENBLAS_NUM_THREADS"),
-            "mkl_num_threads": os.environ.get("MKL_NUM_THREADS"),
-            "lsf_jobid": os.environ.get("LSB_JOBID"),
-            "lsf_queue": os.environ.get("LSB_QUEUE"),
-            "lsf_cores": os.environ.get("LSB_DJOB_NUMPROC"),
-            "lsf_project": os.environ.get("RUSTSCENIC_LSF_PROJECT"),
-            "lsf_requested_queue": os.environ.get("RUSTSCENIC_LSF_QUEUE"),
-            "lsf_requested_cores": os.environ.get("RUSTSCENIC_LSF_CORES"),
-            "lsf_requested_mem_mb": os.environ.get("RUSTSCENIC_LSF_MEM_MB"),
-            "lsf_requested_walltime": os.environ.get("RUSTSCENIC_LSF_WALLTIME"),
-        },
+        "env": benchmark_env(),
     }
     args.out_json.write_text(json.dumps(record, indent=2) + "\n")
     print(f"[done] wrote {args.out_json}", flush=True)

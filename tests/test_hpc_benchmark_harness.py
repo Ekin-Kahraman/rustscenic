@@ -277,6 +277,13 @@ def test_real_multiome_harness_does_not_reread_pipeline_outputs_for_counts():
     assert '"setup_elapsed_s"' in source
 
 
+def test_real_multiome_harness_passes_peak_bed_to_pipeline():
+    source = (ROOT / "validation/scaling/bench_real_multiome_pipeline.py").read_text()
+
+    assert "adata_atac=atac," in source
+    assert "peaks=args.peaks," in source
+
+
 def test_real_multiome_harness_prefixes_pipeline_backend_execution():
     module = _load_module(
         "bench_real_multiome_backend_execution",
@@ -355,6 +362,46 @@ def test_benchmark_thread_env_overrides_inherited_blas_settings(monkeypatch):
         assert os.environ["MKL_NUM_THREADS"] == "1"
         for key in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
             monkeypatch.setenv(key, "8")
+
+
+def test_real_multiome_harness_omits_empty_lsf_env(monkeypatch):
+    module = _load_module(
+        "bench_real_multiome_benchmark_env",
+        ROOT / "validation/scaling/bench_real_multiome_pipeline.py",
+    )
+    for key in (
+        "LSB_JOBID",
+        "LSB_QUEUE",
+        "LSB_DJOB_NUMPROC",
+        "RUSTSCENIC_LSF_PROJECT",
+        "RUSTSCENIC_LSF_QUEUE",
+        "RUSTSCENIC_LSF_CORES",
+        "RUSTSCENIC_LSF_MEM_MB",
+        "RUSTSCENIC_LSF_WALLTIME",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("RAYON_NUM_THREADS", "4")
+    monkeypatch.setenv("OMP_NUM_THREADS", "1")
+    monkeypatch.setenv("OPENBLAS_NUM_THREADS", "1")
+    monkeypatch.setenv("MKL_NUM_THREADS", "1")
+
+    env = module.benchmark_env()
+
+    assert env["rayon_num_threads"] == "4"
+    assert env["omp_num_threads"] == "1"
+    assert "lsf_project" not in env
+    assert "lsf_requested_queue" not in env
+    assert "lsf_requested_walltime" not in env
+
+    monkeypatch.setenv("RUSTSCENIC_LSF_PROJECT", "acc_DiseaseGeneCell")
+    monkeypatch.setenv("RUSTSCENIC_LSF_QUEUE", "express")
+    monkeypatch.setenv("RUSTSCENIC_LSF_WALLTIME", "08:00")
+
+    env = module.benchmark_env()
+
+    assert env["lsf_project"] == "acc_DiseaseGeneCell"
+    assert env["lsf_requested_queue"] == "express"
+    assert env["lsf_requested_walltime"] == "08:00"
 
 
 def test_real_multiome_harness_rejects_invalid_args(tmp_path):
