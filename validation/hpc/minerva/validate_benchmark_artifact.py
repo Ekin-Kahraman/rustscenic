@@ -206,6 +206,61 @@ def _shape2(value: Any) -> bool:
     )
 
 
+def _matrix_input_failures(
+    record: dict[str, Any],
+    prefix: str,
+    *,
+    shape_keys: tuple[str, ...] = ("rna_post_qc", "atac_shared_cells"),
+    require_sparse: bool = True,
+) -> list[str]:
+    matrix_inputs = record.get("matrix_inputs")
+    if not isinstance(matrix_inputs, dict):
+        return [f"{prefix}.matrix_inputs must be an object"]
+
+    shapes = record.get("shapes", {})
+    failures: list[str] = []
+    for key in shape_keys:
+        stage_prefix = f"{prefix}.matrix_inputs.{key}"
+        profile = matrix_inputs.get(key)
+        if not isinstance(profile, dict):
+            failures.append(f"{stage_prefix} must be an object")
+            continue
+
+        expected_shape = shapes.get(key) if isinstance(shapes, dict) else None
+        shape = profile.get("shape")
+        if not _shape2(shape):
+            failures.append(f"{stage_prefix}.shape must be [positive_rows, positive_cols]")
+        elif _shape2(expected_shape) and shape != expected_shape:
+            failures.append(f"{stage_prefix}.shape must equal {prefix}.shapes.{key}")
+
+        storage = profile.get("storage")
+        if storage not in {"sparse", "dense"}:
+            failures.append(f"{stage_prefix}.storage must be 'sparse' or 'dense'")
+        elif require_sparse and storage != "sparse":
+            failures.append(f"{stage_prefix}.storage must be 'sparse'")
+
+        if not _nonempty_str(profile.get("format")):
+            failures.append(f"{stage_prefix}.format must be a non-empty string")
+        if not _nonempty_str(profile.get("dtype")):
+            failures.append(f"{stage_prefix}.dtype must be a non-empty string")
+
+        nnz = profile.get("nnz")
+        density = profile.get("density")
+        if storage == "sparse":
+            if not _positive_int(nnz):
+                failures.append(f"{stage_prefix}.nnz must be positive for sparse matrices")
+            elif _shape2(shape) and nnz > int(shape[0]) * int(shape[1]):
+                failures.append(f"{stage_prefix}.nnz must be <= rows * columns")
+            if not _nonnegative_number(density) or density > 1:
+                failures.append(f"{stage_prefix}.density must be in [0, 1]")
+        elif storage == "dense":
+            if nnz is not None:
+                failures.append(f"{stage_prefix}.nnz must be null for dense matrices")
+            if density is not None:
+                failures.append(f"{stage_prefix}.density must be null for dense matrices")
+    return failures
+
+
 def _sha256_hex(value: Any) -> bool:
     return (
         isinstance(value, str)
@@ -1325,6 +1380,7 @@ def _full_pipeline_scaling_row_failures(
             expected_matched_label="n_cells_actual",
         )
     )
+    failures.extend(_matrix_input_failures(row, prefix))
     failures.extend(_integrated_adata_execution_failures(row, prefix))
     if require_motif_pruning:
         failures.extend(
@@ -1506,6 +1562,7 @@ def validate_full_pipeline(
                 expected_matched_cells=min_matched_cells,
             )
         )
+        failures.extend(_matrix_input_failures(record, "full_pipeline"))
 
     if not _positive_int(outputs.get("grn_edges")):
         failures.append("outputs.grn_edges must be positive")

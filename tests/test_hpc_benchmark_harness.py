@@ -97,6 +97,38 @@ def test_real_multiome_harness_subsets_requested_cells_before_fragments():
     assert module.subset_requested_cells(adata, n_cells=6, seed=7) is adata
 
 
+def test_real_multiome_harness_records_sparse_matrix_profile():
+    module = _load_module(
+        "bench_real_multiome_matrix_profile",
+        ROOT / "validation/scaling/bench_real_multiome_pipeline.py",
+    )
+    import anndata as ad
+    import scipy.sparse as sp
+
+    adata = ad.AnnData(
+        X=sp.csr_matrix(
+            np.asarray(
+                [
+                    [1.0, 0.0, 2.0],
+                    [0.0, 0.0, 3.0],
+                ],
+                dtype=np.float32,
+            )
+        ),
+        obs=pd.DataFrame(index=["c0", "c1"]),
+        var=pd.DataFrame(index=["g0", "g1", "g2"]),
+    )
+
+    assert module.matrix_profile(adata) == {
+        "shape": [2, 3],
+        "storage": "sparse",
+        "format": "csr",
+        "dtype": "float32",
+        "nnz": 3,
+        "density": 0.5,
+    }
+
+
 def test_real_multiome_harness_fingerprints_reference_dataframes():
     module = _load_module(
         "bench_real_multiome_fingerprint",
@@ -1854,6 +1886,27 @@ def _backend_execution_state():
     }
 
 
+def _matrix_inputs_state(n_cells: int = 100):
+    return {
+        "rna_post_qc": {
+            "shape": [n_cells, 1000],
+            "storage": "sparse",
+            "format": "csr",
+            "dtype": "float32",
+            "nnz": n_cells * 100,
+            "density": 0.1,
+        },
+        "atac_shared_cells": {
+            "shape": [n_cells, 2000],
+            "storage": "sparse",
+            "format": "csr",
+            "dtype": "float32",
+            "nnz": n_cells * 50,
+            "density": 0.025,
+        },
+    }
+
+
 def _full_pipeline_record(tmp_path: Path):
     artefact_names = {
         "atac_matrix_path": "atac_cells_by_peaks.h5ad",
@@ -1941,6 +1994,7 @@ def _full_pipeline_record(tmp_path: Path):
             "gene_coords_rows": 1000,
             "tfs_supplied": 100,
         },
+        "matrix_inputs": _matrix_inputs_state(),
         "wall_s": {
             "setup": 1.0,
             "pipeline": 2.0,
@@ -2077,6 +2131,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         child["run_id"] = label
         child["shapes"]["rna_post_qc"] = [n_cells, 1000]
         child["shapes"]["atac_shared_cells"] = [n_cells, 2000]
+        child["matrix_inputs"] = _matrix_inputs_state(n_cells)
         child["params"]["n_cells_requested"] = n_cells
         child["cell_barcode_filter"] = {"requested": n_cells, "matched": n_cells}
         child["outputs"]["aucell_shape"] = [n_cells, 2]
@@ -2110,6 +2165,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "peak_rss_gb_per_stage": child["peak_rss_gb_per_stage"],
                 "backend_execution": child["backend_execution"],
                 "cell_barcode_filter": child["cell_barcode_filter"],
+                "matrix_inputs": child["matrix_inputs"],
                 "outputs": child["outputs"],
                 "expected_tf_recovery": child.get("expected_tf_recovery"),
                 "write_integrated_adata": child["params"].get(
@@ -3189,6 +3245,64 @@ def test_benchmark_artifact_validator_rejects_invalid_full_pipeline_shapes(tmp_p
     assert "outputs.aucell_shape cells must equal shapes.rna_post_qc cells" in failures
 
 
+def test_benchmark_artifact_validator_rejects_invalid_matrix_inputs(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_matrix_inputs",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    missing_record = _full_pipeline_record(tmp_path)
+    del missing_record["matrix_inputs"]
+
+    missing_failures = module.validate_record(missing_record, require_clean=True)
+
+    assert "full_pipeline.matrix_inputs must be an object" in missing_failures
+
+    dense_record = _full_pipeline_record(tmp_path)
+    dense_record["matrix_inputs"]["rna_post_qc"] = {
+        "shape": [100, 999],
+        "storage": "dense",
+        "format": "ndarray",
+        "dtype": "float32",
+        "nnz": 100,
+        "density": 0.1,
+    }
+    dense_record["matrix_inputs"]["atac_shared_cells"]["density"] = 1.5
+
+    dense_failures = module.validate_record(dense_record, require_clean=True)
+
+    assert (
+        "full_pipeline.matrix_inputs.rna_post_qc.shape must equal "
+        "full_pipeline.shapes.rna_post_qc"
+    ) in dense_failures
+    assert (
+        "full_pipeline.matrix_inputs.rna_post_qc.storage must be 'sparse'"
+    ) in dense_failures
+    assert (
+        "full_pipeline.matrix_inputs.rna_post_qc.nnz must be null for dense matrices"
+    ) in dense_failures
+    assert (
+        "full_pipeline.matrix_inputs.rna_post_qc.density must be null for dense matrices"
+    ) in dense_failures
+    assert (
+        "full_pipeline.matrix_inputs.atac_shared_cells.density must be in [0, 1]"
+    ) in dense_failures
+
+
+def test_benchmark_artifact_validator_rejects_scaling_row_matrix_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_scaling_matrix_inputs",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["matrix_inputs"]["rna_post_qc"]["storage"] = "dense"
+    record["runs"][0]["matrix_inputs"]["rna_post_qc"]["nnz"] = None
+    record["runs"][0]["matrix_inputs"]["rna_post_qc"]["density"] = None
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "runs[0].matrix_inputs.rna_post_qc.storage must be 'sparse'" in failures
+
+
 def test_benchmark_artifact_validator_rejects_missing_reference_fingerprints(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_reference_fingerprints",
@@ -3285,6 +3399,7 @@ def test_minerva_result_collector_discovers_latest_valid_benchmarks(tmp_path):
     new_record = _full_pipeline_record(new_dir)
     new_record["shapes"]["rna_post_qc"] = [200, 1000]
     new_record["shapes"]["atac_shared_cells"] = [200, 2000]
+    new_record["matrix_inputs"] = _matrix_inputs_state(200)
     new_record["params"]["n_cells_requested"] = 200
     new_record["cell_barcode_filter"] = {"requested": 200, "matched": 200}
     new_record["outputs"]["aucell_shape"] = [200, 2]

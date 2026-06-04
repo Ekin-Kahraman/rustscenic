@@ -477,6 +477,36 @@ def dataframe_fingerprint(df: pd.DataFrame, *, sample: int = 8) -> dict[str, Any
     }
 
 
+def matrix_profile(adata) -> dict[str, Any]:
+    """Record sparse/dense matrix provenance without scanning dense payloads."""
+    import scipy.sparse as sp
+
+    rows, cols = int(adata.n_obs), int(adata.n_vars)
+    shape = [rows, cols]
+    matrix = adata.X
+    dtype = str(getattr(matrix, "dtype", "unknown"))
+    if sp.issparse(matrix):
+        nnz = int(matrix.nnz)
+        total = rows * cols
+        density = 0.0 if total == 0 else round(nnz / total, 8)
+        return {
+            "shape": shape,
+            "storage": "sparse",
+            "format": matrix.getformat(),
+            "dtype": dtype,
+            "nnz": nnz,
+            "density": density,
+        }
+    return {
+        "shape": shape,
+        "storage": "dense",
+        "format": type(matrix).__name__,
+        "dtype": dtype,
+        "nnz": None,
+        "density": None,
+    }
+
+
 def strip_regulon_name(name: str) -> str:
     value = str(name)
     for suffix in ("(+)", "(-)"):
@@ -663,6 +693,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         shapes["motif_annotations"] = list(motif_annotations.shape)
     if region_motif_rankings_fingerprint is not None:
         shapes["region_motif_rankings"] = region_motif_rankings_fingerprint["shape"]
+    matrix_inputs = {
+        "rna_post_qc": matrix_profile(rna),
+        "atac_shared_cells": matrix_profile(atac),
+    }
 
     outputs = {
         "grn_edges": int(result.n_grn_edges or 0),
@@ -719,6 +753,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "seed": args.seed,
         },
         "shapes": shapes,
+        "matrix_inputs": matrix_inputs,
         "wall_s": {
             "setup": round(setup_wall, 3),
             "pipeline": round(pipeline_wall, 3),
