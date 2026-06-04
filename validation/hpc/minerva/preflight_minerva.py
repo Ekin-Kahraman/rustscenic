@@ -281,6 +281,7 @@ def _reference_table_statuses(args: argparse.Namespace) -> dict[str, Any]:
     tables = {
         "motif_rankings": args.motif_rankings,
         "motif_annotations": args.motif_annotations,
+        "region_motif_rankings": args.region_motif_rankings,
         "gene_coords": args.gene_coords,
     }
     return {
@@ -421,6 +422,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--out-json", type=Path, default=None)
     parser.add_argument("--motif-rankings", type=Path, default=None)
     parser.add_argument("--motif-annotations", type=Path, default=None)
+    parser.add_argument("--region-motif-rankings", type=Path, default=None)
     parser.add_argument("--gene-coords", type=Path, default=None)
     parser.add_argument("--require-clean", action="store_true")
     parser.add_argument(

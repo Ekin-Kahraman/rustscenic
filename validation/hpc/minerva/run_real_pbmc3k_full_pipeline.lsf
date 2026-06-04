@@ -29,6 +29,7 @@ OUT_DIR="${PROJECT}/results/real_pbmc3k_full_pipeline/${RUN_ID}_outputs"
 OUT_JSON="${PROJECT}/results/real_pbmc3k_full_pipeline/${RUN_ID}.json"
 MOTIF_RANKINGS="${MOTIF_RANKINGS:-}"
 MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"
+REGION_MOTIF_RANKINGS="${REGION_MOTIF_RANKINGS:-}"
 GENE_COORDS="${GENE_COORDS:-}"
 REFERENCE_TABLE_ARGS=()
 if [[ -n "${MOTIF_RANKINGS}" ]]; then
@@ -36,6 +37,9 @@ if [[ -n "${MOTIF_RANKINGS}" ]]; then
 fi
 if [[ -n "${MOTIF_ANNOTATIONS}" ]]; then
   REFERENCE_TABLE_ARGS+=(--motif-annotations "${MOTIF_ANNOTATIONS}")
+fi
+if [[ -n "${REGION_MOTIF_RANKINGS}" ]]; then
+  REFERENCE_TABLE_ARGS+=(--region-motif-rankings "${REGION_MOTIF_RANKINGS}")
 fi
 if [[ -n "${GENE_COORDS}" ]]; then
   REFERENCE_TABLE_ARGS+=(--gene-coords "${GENE_COORDS}")

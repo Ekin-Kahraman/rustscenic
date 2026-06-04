@@ -139,6 +139,9 @@ REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
             {"pipeline_expand_region_cistarget_rows_f64"},
         ),
     },
+    "pipeline_eregulon_peak_regulons": {
+        "all_of": {"pipeline_peak_regulons_and_features_from_edges"},
+    },
     "pipeline_eregulons": {
         "any_of": ({"eregulon_assemble"}, {"eregulon_assemble_f32"}),
     },
@@ -424,8 +427,9 @@ def _reference_fingerprint_failures(record: dict[str, Any]) -> list[str]:
     if not isinstance(fingerprints, dict):
         return ["reference_fingerprints must be an object"]
     keys = ["motif_rankings", "gene_coords"]
-    if "motif_annotations" in fingerprints:
-        keys.append("motif_annotations")
+    for optional_key in ("motif_annotations", "region_motif_rankings"):
+        if optional_key in fingerprints:
+            keys.append(optional_key)
     for key in keys:
         fp = fingerprints.get(key)
         if not isinstance(fp, dict):
@@ -457,6 +461,17 @@ def _reference_fingerprint_failures(record: dict[str, Any]) -> list[str]:
             failures.append(
                 "reference_fingerprints.motif_annotations.shape must match shapes.motif_annotations"
             )
+        region_shape = shapes.get("region_motif_rankings")
+        region_fp = fingerprints.get("region_motif_rankings")
+        if (
+            isinstance(region_fp, dict)
+            and _shape2(region_shape)
+            and region_fp.get("shape") != region_shape
+        ):
+            failures.append(
+                "reference_fingerprints.region_motif_rankings.shape must match "
+                "shapes.region_motif_rankings"
+            )
         gene_rows = shapes.get("gene_coords_rows")
         gene_fp = fingerprints.get("gene_coords")
         if isinstance(gene_fp, dict) and _positive_int(gene_rows) and _shape2(gene_fp.get("shape")):
@@ -479,6 +494,20 @@ def _motif_annotations_supplied(record: dict[str, Any]) -> bool:
     return False
 
 
+def _region_motif_rankings_supplied(record: dict[str, Any]) -> bool:
+    """Return true when a benchmark artefact says region cistarget was requested."""
+    params = record.get("params")
+    if isinstance(params, dict):
+        region_rankings = params.get("region_motif_rankings")
+        if isinstance(region_rankings, str) and region_rankings.strip():
+            return True
+    for section in ("reference_fingerprints", "shapes", "setup_elapsed_s"):
+        value = record.get(section)
+        if isinstance(value, dict) and "region_motif_rankings" in value:
+            return True
+    return False
+
+
 def _motif_annotation_pruning_failures(
     record: dict[str, Any],
     prefix: str,
@@ -490,6 +519,53 @@ def _motif_annotation_pruning_failures(
         prefix,
         {"pipeline_cistarget_pruning"},
     )
+
+
+def _region_motif_ranking_failures(
+    record: dict[str, Any],
+    prefix: str,
+    *,
+    required: bool = False,
+) -> list[str]:
+    if not required and not _region_motif_rankings_supplied(record):
+        return []
+    failures = _backend_execution_failures(
+        record,
+        prefix,
+        {"pipeline_eregulon_peak_regulons", "pipeline_eregulon_peak_attribution"},
+    )
+    execution = record.get("backend_execution")
+    state = execution.get("pipeline_eregulon_peak_attribution") if isinstance(execution, dict) else None
+    symbols = state.get("symbols") if isinstance(state, dict) else None
+    if not isinstance(symbols, list):
+        return failures
+    symbol_set = {symbol for symbol in symbols if isinstance(symbol, str)}
+    if not (
+        {
+            "cistarget_region_attribution_i16",
+            "cistarget_region_attribution_i32",
+            "cistarget_region_attribution_i64",
+        }
+        & symbol_set
+    ):
+        failures.append(
+            f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
+            "symbols must include a cistarget_region_attribution_* Rust symbol "
+            "when region_motif_rankings is supplied"
+        )
+    if not (
+        {
+            "pipeline_expand_region_cistarget_rows_f32",
+            "pipeline_expand_region_cistarget_rows_f64",
+        }
+        & symbol_set
+    ):
+        failures.append(
+            f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
+            "symbols must include a pipeline_expand_region_cistarget_rows_* "
+            "Rust symbol when region_motif_rankings is supplied"
+        )
+    return failures
 
 
 def _output_summary_failures(record: dict[str, Any]) -> list[str]:
@@ -741,6 +817,7 @@ def _full_pipeline_scaling_row_failures(
     prefix: str,
     *,
     require_motif_pruning: bool = False,
+    require_region_cistarget: bool = False,
 ) -> list[str]:
     failures: list[str] = []
     n_cells = row.get("n_cells_actual")
@@ -817,6 +894,8 @@ def _full_pipeline_scaling_row_failures(
                 {"pipeline_cistarget_pruning"},
             )
         )
+    if require_region_cistarget:
+        failures.extend(_region_motif_ranking_failures(row, prefix, required=True))
     return failures
 
 
@@ -838,6 +917,7 @@ def validate_full_pipeline(
         )
     )
     failures.extend(_motif_annotation_pruning_failures(record, "full_pipeline"))
+    failures.extend(_region_motif_ranking_failures(record, "full_pipeline"))
     failures.extend(
         _require_keys(
             record,
@@ -906,6 +986,10 @@ def validate_full_pipeline(
             setup_elapsed.get("motif_annotations")
         ):
             failures.append("setup_elapsed_s.motif_annotations must be non-negative")
+        if "region_motif_rankings_metadata" in setup_elapsed and not _nonnegative_number(
+            setup_elapsed.get("region_motif_rankings_metadata")
+        ):
+            failures.append("setup_elapsed_s.region_motif_rankings_metadata must be non-negative")
     if not isinstance(elapsed, dict):
         failures.append("elapsed_per_stage must be an object")
     if not isinstance(memory, dict):
@@ -935,6 +1019,8 @@ def validate_full_pipeline(
                 failures.append(f"shapes.{key} must be [positive_rows, positive_cols]")
         if "motif_annotations" in shapes and not _shape2(shapes.get("motif_annotations")):
             failures.append("shapes.motif_annotations must be [positive_rows, positive_cols]")
+        if "region_motif_rankings" in shapes and not _shape2(shapes.get("region_motif_rankings")):
+            failures.append("shapes.region_motif_rankings must be [positive_rows, positive_cols]")
         for key in ("gene_coords_rows", "tfs_supplied"):
             if not _positive_int(shapes.get(key)):
                 failures.append(f"shapes.{key} must be positive")
@@ -1081,6 +1167,7 @@ def validate_full_pipeline_scaling(
         failures.append("dataset_name must be a non-empty string")
     failures.extend(_thread_budget_failures(record, "full_pipeline_scaling", params_key="threads"))
     require_motif_pruning = _motif_annotations_supplied(record)
+    require_region_cistarget = _region_motif_rankings_supplied(record)
 
     runs = record.get("runs")
     if not isinstance(runs, list) or not runs:
@@ -1117,6 +1204,7 @@ def validate_full_pipeline_scaling(
                 row,
                 prefix,
                 require_motif_pruning=require_motif_pruning,
+                require_region_cistarget=require_region_cistarget,
             )
         )
 

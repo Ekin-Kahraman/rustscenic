@@ -296,6 +296,59 @@ def load_optional_table(path: Path | None) -> pd.DataFrame | None:
     raise ValueError(f"unsupported table format for {path}")
 
 
+def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, Any]:
+    """Return metadata for a large reference table without loading it.
+
+    Region motif-ranking databases can be tens of GB wide. Full DataFrame
+    loading would defeat the benchmark's memory model, so record schema and a
+    small byte sample while letting ``pipeline.run`` project columns on read.
+    """
+    suffix = path.suffix.lower()
+    n_rows: int | None = None
+    columns: list[str] = []
+    dtype_counts: dict[str, int] = {}
+    if suffix == ".parquet":
+        import pyarrow.parquet as pq
+
+        parquet = pq.ParquetFile(path)
+        n_rows = int(parquet.metadata.num_rows)
+        arrow_schema = parquet.schema_arrow
+        columns = [str(name) for name in arrow_schema.names]
+        for field in arrow_schema:
+            dtype = str(field.type)
+            dtype_counts[dtype] = dtype_counts.get(dtype, 0) + 1
+    elif suffix in {".feather", ".ft"}:
+        import pyarrow.ipc as ipc
+
+        with ipc.open_file(str(path)) as reader:
+            schema = reader.schema
+            columns = [str(name) for name in schema.names]
+            for field in schema:
+                dtype = str(field.type)
+                dtype_counts[dtype] = dtype_counts.get(dtype, 0) + 1
+            n_rows = sum(reader.get_batch(i).num_rows for i in range(reader.num_record_batches))
+    else:
+        raise ValueError(f"unsupported file-backed table format for {path}")
+
+    digest = hashlib.sha256()
+    digest.update(str(path.name).encode())
+    digest.update(str(path.stat().st_size).encode())
+    digest.update(json.dumps(columns[:sample] + columns[-sample:], sort_keys=True).encode())
+    with path.open("rb") as handle:
+        digest.update(handle.read(1024 * 1024))
+    return {
+        "shape": [int(n_rows or 0), len(columns)],
+        "index_name": None,
+        "index_sample": ["file-backed:not-loaded"],
+        "column_sample": columns[: min(sample, len(columns))],
+        "dtype_counts": dtype_counts,
+        "corner_sample_sha256": digest.hexdigest(),
+        "file_backed": True,
+        "path_name": path.name,
+        "size_bytes": path.stat().st_size,
+    }
+
+
 def dataframe_fingerprint(df: pd.DataFrame, *, sample: int = 8) -> dict[str, Any]:
     """Return a cheap deterministic fingerprint for large reference tables.
 
@@ -402,6 +455,15 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         setup_elapsed["motif_annotations"] = time.perf_counter() - t_step
 
     t_step = time.perf_counter()
+    region_motif_rankings = args.region_motif_rankings
+    region_motif_rankings_fingerprint = None
+    if region_motif_rankings is not None:
+        region_motif_rankings_fingerprint = file_backed_table_fingerprint(
+            region_motif_rankings
+        )
+        setup_elapsed["region_motif_rankings_metadata"] = time.perf_counter() - t_step
+
+    t_step = time.perf_counter()
     gene_coords = load_optional_table(args.gene_coords)
     if gene_coords is None:
         print("[setup] downloading or loading cached gene coordinates", flush=True)
@@ -429,6 +491,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         adata_atac=atac,
         motif_rankings=motif_rankings,
         motif_annotations=motif_annotations,
+        region_motif_rankings=region_motif_rankings,
         gene_coords=gene_coords,
         tfs=tfs,
         grn_n_estimators=args.grn_n_estimators,
@@ -481,6 +544,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         reference_fingerprints["motif_annotations"] = dataframe_fingerprint(
             motif_annotations
         )
+    if region_motif_rankings_fingerprint is not None:
+        reference_fingerprints["region_motif_rankings"] = (
+            region_motif_rankings_fingerprint
+        )
 
     shapes = {
         "rna_post_qc": [int(rna.n_obs), int(rna.n_vars)],
@@ -491,6 +558,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     }
     if motif_annotations is not None:
         shapes["motif_annotations"] = list(motif_annotations.shape)
+    if region_motif_rankings_fingerprint is not None:
+        shapes["region_motif_rankings"] = region_motif_rankings_fingerprint["shape"]
 
     outputs = {
         "grn_edges": int(result.n_grn_edges or 0),
@@ -535,6 +604,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "threads": args.threads,
             "rayon_num_threads": env_positive_int("RAYON_NUM_THREADS"),
             "motif_annotations": str(args.motif_annotations) if args.motif_annotations else None,
+            "region_motif_rankings": str(args.region_motif_rankings) if args.region_motif_rankings else None,
             "cistarget_nes_threshold": args.cistarget_nes_threshold,
             "enhancer_max_distance": args.enhancer_max_distance,
             "enhancer_min_abs_corr": args.enhancer_min_abs_corr,
@@ -632,6 +702,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--n-cells", type=int, default=None)
     parser.add_argument("--motif-rankings", type=Path, default=None)
     parser.add_argument("--motif-annotations", type=Path, default=None)
+    parser.add_argument("--region-motif-rankings", type=Path, default=None)
     parser.add_argument("--gene-coords", type=Path, default=None)
     parser.add_argument("--motif-species", default="human")
     parser.add_argument("--gene-species", default="hs")
@@ -671,6 +742,8 @@ def main(argv: list[str] | None = None) -> int:
     for path in (args.rna_10x_h5, args.fragments, args.peaks):
         if not path.exists():
             raise SystemExit(f"missing input: {path}")
+    if args.region_motif_rankings is not None and not args.region_motif_rankings.exists():
+        raise SystemExit(f"missing input: {args.region_motif_rankings}")
     run(args)
     return 0
 

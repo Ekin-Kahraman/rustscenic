@@ -279,6 +279,8 @@ def test_real_multiome_scaling_child_cmd_runs_full_pipeline_in_child(tmp_path):
             str(tmp_path / "motifs.parquet"),
             "--motif-annotations",
             str(tmp_path / "annotations.tsv"),
+            "--region-motif-rankings",
+            str(tmp_path / "region_rankings.feather"),
             "--gene-coords",
             str(tmp_path / "genes.parquet"),
             "--expected-tfs",
@@ -304,6 +306,8 @@ def test_real_multiome_scaling_child_cmd_runs_full_pipeline_in_child(tmp_path):
     assert cmd[cmd.index("--motif-rankings") + 1].endswith("motifs.parquet")
     assert "--motif-annotations" in cmd
     assert cmd[cmd.index("--motif-annotations") + 1].endswith("annotations.tsv")
+    assert "--region-motif-rankings" in cmd
+    assert cmd[cmd.index("--region-motif-rankings") + 1].endswith("region_rankings.feather")
     assert "--gene-coords" in cmd
     assert cmd[cmd.index("--gene-coords") + 1].endswith("genes.parquet")
     assert "--expected-tfs" in cmd
@@ -1012,8 +1016,9 @@ def test_minerva_preflight_checks_optional_reference_tables(monkeypatch, tmp_pat
     repo, env, data = _write_minerva_preflight_fixture(tmp_path)
     motif_rankings = tmp_path / "motifs.parquet"
     motif_annotations = tmp_path / "motif_annotations.tsv"
+    region_motif_rankings = tmp_path / "region_motifs.feather"
     gene_coords = tmp_path / "gene_coords.parquet"
-    for path in (motif_rankings, motif_annotations, gene_coords):
+    for path in (motif_rankings, motif_annotations, region_motif_rankings, gene_coords):
         path.write_text("fixture\n")
     monkeypatch.setattr(
         module,
@@ -1054,6 +1059,7 @@ def test_minerva_preflight_checks_optional_reference_tables(monkeypatch, tmp_pat
             "--data-dir", str(data),
             "--motif-rankings", str(motif_rankings),
             "--motif-annotations", str(motif_annotations),
+            "--region-motif-rankings", str(region_motif_rankings),
             "--gene-coords", str(gene_coords),
         ]
     )
@@ -1063,6 +1069,7 @@ def test_minerva_preflight_checks_optional_reference_tables(monkeypatch, tmp_pat
     assert result["ok"] is True
     assert result["reference_tables"]["motif_rankings"]["exists"] is True
     assert result["reference_tables"]["motif_annotations"]["exists"] is True
+    assert result["reference_tables"]["region_motif_rankings"]["exists"] is True
     assert result["reference_tables"]["gene_coords"]["exists"] is True
 
 
@@ -2394,6 +2401,71 @@ def test_benchmark_artifact_validator_accepts_annotation_pruning_metadata(tmp_pa
     )
 
 
+def test_benchmark_artifact_validator_accepts_region_motif_rankings_metadata(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_region_rankings",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["params"]["region_motif_rankings"] = "region_rankings.feather"
+    record["setup_elapsed_s"]["region_motif_rankings_metadata"] = 0.02
+    record["reference_fingerprints"]["region_motif_rankings"] = {
+        "shape": [8, 2000],
+        "index_name": None,
+        "index_sample": ["file-backed:not-loaded"],
+        "column_sample": ["motif", "peak_1"],
+        "dtype_counts": {"int32": 2000},
+        "corner_sample_sha256": "d" * 64,
+        "file_backed": True,
+    }
+    record["shapes"]["region_motif_rankings"] = [8, 2000]
+    record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
+        "engine": "rust",
+        "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
+    }
+    record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
+        "engine": "rust",
+        "symbols": [
+            "cistarget_region_attribution_i32",
+            "cistarget_region_attribution_peak_values_i32",
+            "pipeline_expand_region_cistarget_rows_f32",
+        ],
+    }
+
+    assert module.validate_record(record, require_clean=True) == []
+
+
+def test_benchmark_artifact_validator_requires_region_cistarget_symbols(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_requires_region_rankings",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["params"]["region_motif_rankings"] = "region_rankings.feather"
+    record["setup_elapsed_s"]["region_motif_rankings_metadata"] = 0.02
+    record["reference_fingerprints"]["region_motif_rankings"] = {
+        "shape": [8, 2000],
+        "index_name": None,
+        "index_sample": ["file-backed:not-loaded"],
+        "column_sample": ["motif", "peak_1"],
+        "dtype_counts": {"int32": 2000},
+        "corner_sample_sha256": "d" * 64,
+    }
+    record["shapes"]["region_motif_rankings"] = [8, 2000]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_eregulon_peak_regulons must be an object"
+        in failures
+    )
+    assert (
+        "full_pipeline.backend_execution.pipeline_eregulon_peak_attribution."
+        "symbols must include a cistarget_region_attribution_* Rust symbol "
+        "when region_motif_rankings is supplied"
+    ) in failures
+
+
 def test_benchmark_artifact_validator_requires_pruning_when_annotations_supplied(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_requires_annotation_pruning",
@@ -2803,7 +2875,9 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert '--threads "${RAYON_NUM_THREADS}"' in full
     assert 'MOTIF_RANKINGS="${MOTIF_RANKINGS:-}"' in full
     assert 'MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"' in full
+    assert 'REGION_MOTIF_RANKINGS="${REGION_MOTIF_RANKINGS:-}"' in full
     assert 'GENE_COORDS="${GENE_COORDS:-}"' in full
+    assert "--region-motif-rankings" in full
     assert full.count('"${REFERENCE_TABLE_ARGS[@]}"') == 2
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in full_scaling
     assert "validation/scaling/bench_real_multiome_pipeline_scaling.py" in full_scaling
@@ -2816,7 +2890,9 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "--require-rust-hot-paths" in full_scaling
     assert 'MOTIF_RANKINGS="${MOTIF_RANKINGS:-}"' in full_scaling
     assert 'MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"' in full_scaling
+    assert 'REGION_MOTIF_RANKINGS="${REGION_MOTIF_RANKINGS:-}"' in full_scaling
     assert 'GENE_COORDS="${GENE_COORDS:-}"' in full_scaling
+    assert "--region-motif-rankings" in full_scaling
     assert full_scaling.count('"${REFERENCE_TABLE_ARGS[@]}"') == 2
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in grn
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in grn

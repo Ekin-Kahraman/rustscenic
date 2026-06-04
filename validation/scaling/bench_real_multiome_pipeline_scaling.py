@@ -117,6 +117,8 @@ def child_cmd(
         cmd.extend(["--motif-rankings", str(args.motif_rankings)])
     if args.motif_annotations is not None:
         cmd.extend(["--motif-annotations", str(args.motif_annotations)])
+    if args.region_motif_rankings is not None:
+        cmd.extend(["--region-motif-rankings", str(args.region_motif_rankings)])
     if args.gene_coords is not None:
         cmd.extend(["--gene-coords", str(args.gene_coords)])
     if args.expected_tfs:
@@ -249,6 +251,7 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
             "topics_n_threads": args.topics_n_threads,
             "cistarget_nes_threshold": args.cistarget_nes_threshold,
             "motif_annotations": str(args.motif_annotations) if args.motif_annotations else None,
+            "region_motif_rankings": str(args.region_motif_rankings) if args.region_motif_rankings else None,
             "enhancer_max_distance": args.enhancer_max_distance,
             "enhancer_min_abs_corr": args.enhancer_min_abs_corr,
             "eregulon_min_target_genes": args.eregulon_min_target_genes,
@@ -379,6 +382,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--motif-rankings", type=Path, default=None)
     parser.add_argument("--motif-annotations", type=Path, default=None)
+    parser.add_argument("--region-motif-rankings", type=Path, default=None)
     parser.add_argument("--gene-coords", type=Path, default=None)
     parser.add_argument("--expected-tfs", nargs="*", default=[])
     parser.add_argument("--grn-n-estimators", type=int, default=100)
@@ -417,6 +421,8 @@ def main(argv: list[str] | None = None) -> int:
     for path in (args.rna_10x_h5, args.fragments, args.peaks):
         if not path.exists():
             raise SystemExit(f"missing input: {path}")
+    if args.region_motif_rankings is not None and not args.region_motif_rankings.exists():
+        raise SystemExit(f"missing input: {args.region_motif_rankings}")
     payload = coordinator(args)
     print(json.dumps(payload, indent=2), flush=True)
     return 0
