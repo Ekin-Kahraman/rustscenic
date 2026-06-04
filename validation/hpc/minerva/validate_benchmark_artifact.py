@@ -1264,6 +1264,7 @@ def _full_pipeline_scaling_row_child_failures(
         "expected_tf_recovery": child.get("expected_tf_recovery"),
         "backend_execution": child.get("backend_execution"),
         "cell_barcode_filter": child.get("cell_barcode_filter"),
+        "matrix_inputs": child.get("matrix_inputs"),
         "write_integrated_adata": child.get("params", {}).get(
             "write_integrated_adata",
             True,

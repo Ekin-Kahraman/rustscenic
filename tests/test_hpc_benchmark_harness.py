@@ -2478,6 +2478,23 @@ def test_benchmark_artifact_validator_rejects_scaling_cell_barcode_filter_mismat
     assert "runs[0].cell_barcode_filter must match child JSON" in failures
 
 
+def test_benchmark_artifact_validator_rejects_scaling_matrix_inputs_child_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_matrix_inputs_child_mismatch",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["matrix_inputs"]["rna_post_qc"]["nnz"] += 1
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert "runs[0].matrix_inputs must match child JSON" in failures
+
+
 def test_benchmark_artifact_validator_rejects_incomplete_scaling_row_without_child_check(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_full_scaling_incomplete_row",
