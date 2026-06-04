@@ -503,7 +503,7 @@ def test_real_multiome_scaling_child_cmd_runs_full_pipeline_in_child(tmp_path):
             "100",
             "200",
             "--threads",
-            "4",
+            "6",
             "--motif-rankings",
             str(tmp_path / "motifs.parquet"),
             "--motif-annotations",
@@ -534,6 +534,8 @@ def test_real_multiome_scaling_child_cmd_runs_full_pipeline_in_child(tmp_path):
     assert cmd[1].endswith("bench_real_multiome_pipeline.py")
     assert "--n-cells" in cmd
     assert cmd[cmd.index("--n-cells") + 1] == "100"
+    assert "--threads" in cmd
+    assert cmd[cmd.index("--threads") + 1] == "6"
     assert "--motif-rankings" in cmd
     assert cmd[cmd.index("--motif-rankings") + 1].endswith("motifs.parquet")
     assert "--motif-annotations" in cmd

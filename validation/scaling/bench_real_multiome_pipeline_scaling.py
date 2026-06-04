@@ -78,6 +78,8 @@ def child_cmd(
         run_id,
         "--n-cells",
         str(n_cells),
+        "--threads",
+        str(args.threads),
         "--grn-n-estimators",
         str(args.grn_n_estimators),
         "--grn-max-features",
