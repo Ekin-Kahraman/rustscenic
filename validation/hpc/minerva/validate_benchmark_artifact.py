@@ -140,6 +140,12 @@ REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
             {"pipeline_expand_region_cistarget_rows_f64"},
         ),
     },
+    "pipeline_eregulon_peak_filter": {
+        "any_of": (
+            {"pipeline_filter_cistarget_peak_rows_f32"},
+            {"pipeline_filter_cistarget_peak_rows_f64"},
+        ),
+    },
     "pipeline_eregulon_peak_regulons": {
         "all_of": {"pipeline_peak_regulons_and_features_from_edges"},
     },
@@ -590,6 +596,7 @@ def _region_motif_ranking_failures(
     prefix: str,
     *,
     required: bool = False,
+    require_peak_filter: bool = False,
 ) -> list[str]:
     if not required and not _region_motif_rankings_supplied(record):
         return []
@@ -628,6 +635,14 @@ def _region_motif_ranking_failures(
             f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
             "symbols must include a pipeline_expand_region_cistarget_rows_* "
             "Rust symbol when region_motif_rankings is supplied"
+        )
+    if require_peak_filter or _motif_annotations_supplied(record):
+        failures.extend(
+            _backend_execution_failures(
+                record,
+                prefix,
+                {"pipeline_eregulon_peak_filter"},
+            )
         )
     return failures
 
@@ -1040,7 +1055,14 @@ def _full_pipeline_scaling_row_failures(
             )
         )
     if require_region_cistarget:
-        failures.extend(_region_motif_ranking_failures(row, prefix, required=True))
+        failures.extend(
+            _region_motif_ranking_failures(
+                row,
+                prefix,
+                required=True,
+                require_peak_filter=require_motif_pruning,
+            )
+        )
     return failures
 
 

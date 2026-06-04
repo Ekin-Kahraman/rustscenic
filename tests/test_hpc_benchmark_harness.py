@@ -2625,6 +2625,74 @@ def test_benchmark_artifact_validator_requires_region_cistarget_symbols(tmp_path
     )
 
 
+def test_benchmark_artifact_validator_requires_region_peak_filter_with_annotations(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_requires_region_peak_filter",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["params"]["motif_annotations"] = "motif_annotations.tsv"
+    record["params"]["region_motif_rankings"] = "region_rankings.feather"
+    record["setup_elapsed_s"]["motif_annotations"] = 0.05
+    record["setup_elapsed_s"]["region_motif_rankings_metadata"] = 0.02
+    record["reference_fingerprints"]["motif_annotations"] = {
+        "shape": [4, 2],
+        "index_name": None,
+        "index_sample": ["0"],
+        "column_sample": ["motif"],
+        "dtype_counts": {"object": 2},
+        "corner_sample_sha256": "c" * 64,
+    }
+    record["reference_fingerprints"]["region_motif_rankings"] = {
+        "shape": [8, 2000],
+        "index_name": None,
+        "index_sample": ["file-backed:not-loaded"],
+        "column_sample": ["motif", "peak_1"],
+        "dtype_counts": {"int32": 2000},
+        "corner_sample_sha256": "d" * 64,
+        "file_backed": True,
+        "format": "feather",
+        "metadata_read_columns": ["motifs"],
+        "path_name": "region_rankings.feather",
+        "size_bytes": 1024,
+    }
+    record["shapes"]["motif_annotations"] = [4, 2]
+    record["shapes"]["region_motif_rankings"] = [8, 2000]
+    record["backend_execution"]["pipeline_cistarget_pruning"] = {
+        "engine": "rust",
+        "symbols": [
+            "cistarget_motif_annotation_prune_standard_rows_f32",
+            "cistarget_prune_regulon_targets_i32",
+        ],
+    }
+    record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
+        "engine": "rust",
+        "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
+    }
+    record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
+        "engine": "rust",
+        "symbols": [
+            "cistarget_region_attribution_i32",
+            "cistarget_region_attribution_peak_values_i32",
+            "pipeline_expand_region_cistarget_rows_f32",
+        ],
+    }
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_eregulon_peak_filter must be an object"
+        in failures
+    )
+
+    record["backend_execution"]["pipeline_eregulon_peak_filter"] = {
+        "engine": "rust",
+        "symbols": ["pipeline_filter_cistarget_peak_rows_f32"],
+    }
+
+    assert module.validate_record(record, require_clean=True) == []
+
+
 def test_benchmark_artifact_validator_requires_pruning_when_annotations_supplied(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_requires_annotation_pruning",
@@ -2665,6 +2733,51 @@ def test_benchmark_artifact_validator_requires_scaling_pruning_when_annotations_
         "runs[0].backend_execution.pipeline_cistarget_pruning must be an object"
         in failures
     )
+
+
+def test_benchmark_artifact_validator_requires_scaling_region_peak_filter_with_annotations(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_requires_scaling_region_peak_filter",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["params"]["motif_annotations"] = "motif_annotations.tsv"
+    record["params"]["region_motif_rankings"] = "region_rankings.feather"
+    for row in record["runs"]:
+        row["backend_execution"]["pipeline_cistarget_pruning"] = {
+            "engine": "rust",
+            "symbols": [
+                "cistarget_motif_annotation_prune_standard_rows_f32",
+                "cistarget_prune_regulon_targets_i32",
+            ],
+        }
+        row["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
+            "engine": "rust",
+            "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
+        }
+        row["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
+            "engine": "rust",
+            "symbols": [
+                "cistarget_region_attribution_i32",
+                "cistarget_region_attribution_peak_values_i32",
+                "pipeline_expand_region_cistarget_rows_f32",
+            ],
+        }
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "runs[0].backend_execution.pipeline_eregulon_peak_filter must be an object"
+        in failures
+    )
+
+    for row in record["runs"]:
+        row["backend_execution"]["pipeline_eregulon_peak_filter"] = {
+            "engine": "rust",
+            "symbols": ["pipeline_filter_cistarget_peak_rows_f32"],
+        }
+
+    assert module.validate_record(record, require_clean=True) == []
 
 
 def test_benchmark_artifact_validator_rejects_scaling_row_without_backend_execution(tmp_path):
