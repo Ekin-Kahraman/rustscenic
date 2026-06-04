@@ -1156,6 +1156,36 @@ def _preflight_backend_state():
     }
 
 
+def test_minerva_backend_state_uses_package_self_check():
+    module = _load_module(
+        "preflight_minerva_backend_self_check",
+        ROOT / "validation/hpc/minerva/preflight_minerva.py",
+    )
+
+    state = module._backend_state(Path(sys.executable), ROOT)
+
+    assert state["ok"] is True
+    assert state["extension_error"] is None
+    assert state["missing_symbols"] == []
+    assert "pipeline_project_ranking_columns" in state["required_symbols"]["pipeline"]
+
+
+def test_minerva_backend_state_rejects_package_without_self_check(tmp_path):
+    module = _load_module(
+        "preflight_minerva_backend_stale_package",
+        ROOT / "validation/hpc/minerva/preflight_minerva.py",
+    )
+    stale_pkg = tmp_path / "rustscenic"
+    stale_pkg.mkdir()
+    (stale_pkg / "__init__.py").write_text("__version__ = '0.4.6'\n")
+
+    state = module._backend_state(Path(sys.executable), tmp_path)
+
+    assert state["ok"] is False
+    assert "backend_capabilities" in state["extension_error"]
+    assert state["required_symbols"] == module.REQUIRED_RUST_BACKEND_SYMBOLS
+
+
 def test_prepare_real_pbmc3k_data_skips_valid_existing_file(tmp_path):
     from validation.hpc.minerva import prepare_real_pbmc3k_data as module
 
