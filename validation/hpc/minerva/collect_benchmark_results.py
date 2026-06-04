@@ -232,6 +232,8 @@ def _scaling_summary(record: dict[str, Any]) -> str:
     keys = (
         "end_to_end_wall_slope_vs_cells",
         "pipeline_wall_slope_vs_cells",
+        "pipeline_compute_stage_wall_slope_vs_cells",
+        "pipeline_unattributed_wall_slope_vs_cells",
         "peak_rss_slope_vs_cells",
     )
     parts = [

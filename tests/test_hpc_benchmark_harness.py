@@ -2913,6 +2913,13 @@ def test_minerva_result_collector_discovers_latest_valid_benchmarks(tmp_path):
     assert full_row["outputs"] == "grn_edges=10, eregulon_rows=6, regulons=2"
     assert rows[1]["cells"] == "100..200"
     assert rows[1]["peak_rss_gb"] == "1.25..1.75"
+    assert rows[1]["scaling"] == (
+        "end_to_end_wall_slope_vs_cells=1, "
+        "pipeline_wall_slope_vs_cells=1.322, "
+        "pipeline_compute_stage_wall_slope_vs_cells=0, "
+        "pipeline_unattributed_wall_slope_vs_cells=3.7, "
+        "peak_rss_slope_vs_cells=0.485"
+    )
 
 
 def test_minerva_result_collector_reports_validation_failures(tmp_path):
