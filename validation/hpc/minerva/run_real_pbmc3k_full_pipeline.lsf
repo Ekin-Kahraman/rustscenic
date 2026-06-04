@@ -19,6 +19,11 @@ export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export RAYON_NUM_THREADS="${LSB_DJOB_NUMPROC:-4}"
 export TMPDIR=/sc/arion/work/kahrae01/rustscenic/tmp
+export RUSTSCENIC_LSF_PROJECT=acc_DiseaseGeneCell
+export RUSTSCENIC_LSF_QUEUE=express
+export RUSTSCENIC_LSF_CORES=4
+export RUSTSCENIC_LSF_MEM_MB=8000
+export RUSTSCENIC_LSF_WALLTIME=03:00
 
 PROJECT=/sc/arion/projects/DiseaseGeneCell/Huang_lab_projects/rustscenic
 ENV=/sc/arion/work/kahrae01/rustscenic/envs/rustscenic-v047
@@ -69,6 +74,7 @@ echo "python=$(python --version)"
 echo "repo_sha=$(git rev-parse --short HEAD)"
 echo "result_json=${OUT_JSON}"
 echo "RAYON_NUM_THREADS=${RAYON_NUM_THREADS}"
+echo "lsf_request=project:${RUSTSCENIC_LSF_PROJECT},queue:${RUSTSCENIC_LSF_QUEUE},cores:${RUSTSCENIC_LSF_CORES},mem_mb:${RUSTSCENIC_LSF_MEM_MB},walltime:${RUSTSCENIC_LSF_WALLTIME}"
 echo "reference_table_args=${REFERENCE_TABLE_ARGS[*]}"
 echo "benchmark_args=${BENCHMARK_ARGS[*]}"
 

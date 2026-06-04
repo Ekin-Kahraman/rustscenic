@@ -784,6 +784,32 @@ def _thread_budget_failures(
     for key in ("omp_num_threads", "openblas_num_threads", "mkl_num_threads"):
         if env.get(key) != "1":
             failures.append(f"{prefix}.env.{key} must be '1' for reproducible CPU benchmarking")
+    requested_cores = env.get("lsf_requested_cores")
+    if requested_cores is not None:
+        try:
+            requested = int(requested_cores)
+        except (TypeError, ValueError):
+            failures.append(f"{prefix}.env.lsf_requested_cores must be a positive integer string")
+        else:
+            if requested <= 0:
+                failures.append(f"{prefix}.env.lsf_requested_cores must be positive")
+            elif requested != expected_threads:
+                failures.append(
+                    f"{prefix}.env.lsf_requested_cores must match params.{params_key}: "
+                    f"{requested} != {expected_threads}"
+                )
+    requested_mem = env.get("lsf_requested_mem_mb")
+    if requested_mem is not None:
+        try:
+            mem_mb = int(requested_mem)
+        except (TypeError, ValueError):
+            failures.append(f"{prefix}.env.lsf_requested_mem_mb must be a positive integer string")
+        else:
+            if mem_mb <= 0:
+                failures.append(f"{prefix}.env.lsf_requested_mem_mb must be positive")
+    for key in ("lsf_project", "lsf_requested_queue", "lsf_requested_walltime"):
+        if key in env and not _nonempty_str(env.get(key)):
+            failures.append(f"{prefix}.env.{key} must be a non-empty string when present")
     return failures
 
 

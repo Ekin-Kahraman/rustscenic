@@ -2824,6 +2824,9 @@ def test_benchmark_artifact_validator_rejects_thread_budget_mismatch(tmp_path):
     record = _full_pipeline_record(tmp_path)
     record["params"]["threads"] = 8
     record["env"]["openblas_num_threads"] = "4"
+    record["env"]["lsf_requested_cores"] = "4"
+    record["env"]["lsf_requested_mem_mb"] = "0"
+    record["env"]["lsf_requested_queue"] = ""
 
     failures = module.validate_record(record, require_clean=True)
 
@@ -2833,6 +2836,15 @@ def test_benchmark_artifact_validator_rejects_thread_budget_mismatch(tmp_path):
     )
     assert (
         "full_pipeline.env.openblas_num_threads must be '1' for reproducible CPU benchmarking"
+        in failures
+    )
+    assert (
+        "full_pipeline.env.lsf_requested_cores must match params.threads: 4 != 8"
+        in failures
+    )
+    assert "full_pipeline.env.lsf_requested_mem_mb must be positive" in failures
+    assert (
+        "full_pipeline.env.lsf_requested_queue must be a non-empty string when present"
         in failures
     )
 
@@ -3162,6 +3174,12 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "--summary-max-rows" in full
     assert "--skip-integrated-adata" in full
     assert "benchmark_args=${BENCHMARK_ARGS[*]}" in full
+    assert "export RUSTSCENIC_LSF_PROJECT=acc_DiseaseGeneCell" in full
+    assert "export RUSTSCENIC_LSF_QUEUE=express" in full
+    assert "export RUSTSCENIC_LSF_CORES=4" in full
+    assert "export RUSTSCENIC_LSF_MEM_MB=8000" in full
+    assert "export RUSTSCENIC_LSF_WALLTIME=03:00" in full
+    assert "lsf_request=project:${RUSTSCENIC_LSF_PROJECT}" in full
     assert full.count('"${REFERENCE_TABLE_ARGS[@]}"') == 2
     assert full.count('"${BENCHMARK_ARGS[@]}"') == 1
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in full_scaling
@@ -3186,6 +3204,12 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "--summary-max-rows" in full_scaling
     assert "--skip-integrated-adata" in full_scaling
     assert "benchmark_args=${BENCHMARK_ARGS[*]}" in full_scaling
+    assert "export RUSTSCENIC_LSF_PROJECT=acc_DiseaseGeneCell" in full_scaling
+    assert "export RUSTSCENIC_LSF_QUEUE=express" in full_scaling
+    assert "export RUSTSCENIC_LSF_CORES=4" in full_scaling
+    assert "export RUSTSCENIC_LSF_MEM_MB=8000" in full_scaling
+    assert "export RUSTSCENIC_LSF_WALLTIME=08:00" in full_scaling
+    assert "lsf_request=project:${RUSTSCENIC_LSF_PROJECT}" in full_scaling
     assert '--cell-counts "${CELL_COUNT_ARGS[@]}"' in full_scaling
     assert full_scaling.count('"${REFERENCE_TABLE_ARGS[@]}"') == 2
     assert full_scaling.count('"${BENCHMARK_ARGS[@]}"') == 1
@@ -3197,6 +3221,12 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "--require-data-hashes" in grn
     assert "--require-rust-hot-paths" in grn
     assert 'export RAYON_NUM_THREADS="${LSB_DJOB_NUMPROC:-16}"' in grn
+    assert "export RUSTSCENIC_LSF_PROJECT=acc_DiseaseGeneCell" in grn
+    assert "export RUSTSCENIC_LSF_QUEUE=express" in grn
+    assert "export RUSTSCENIC_LSF_CORES=16" in grn
+    assert "export RUSTSCENIC_LSF_MEM_MB=4000" in grn
+    assert "export RUSTSCENIC_LSF_WALLTIME=03:00" in grn
+    assert "lsf_request=project:${RUSTSCENIC_LSF_PROJECT}" in grn
 
 
 def test_minerva_project_path_matches_lab_shared_folder():

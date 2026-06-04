@@ -315,6 +315,11 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
             "lsf_jobid": os.environ.get("LSB_JOBID"),
             "lsf_queue": os.environ.get("LSB_QUEUE"),
             "lsf_cores": os.environ.get("LSB_DJOB_NUMPROC"),
+            "lsf_project": os.environ.get("RUSTSCENIC_LSF_PROJECT"),
+            "lsf_requested_queue": os.environ.get("RUSTSCENIC_LSF_QUEUE"),
+            "lsf_requested_cores": os.environ.get("RUSTSCENIC_LSF_CORES"),
+            "lsf_requested_mem_mb": os.environ.get("RUSTSCENIC_LSF_MEM_MB"),
+            "lsf_requested_walltime": os.environ.get("RUSTSCENIC_LSF_WALLTIME"),
         },
     }
 
