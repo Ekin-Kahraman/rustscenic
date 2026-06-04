@@ -292,7 +292,11 @@ def run(
             import rustscenic.preproc
             log("[2/8] preproc: fragments + peaks → cells × peaks")
             t0 = time.perf_counter()
-            adata_atac = rustscenic.preproc.fragments_to_matrix(fragments, peaks)
+            adata_atac = rustscenic.preproc.fragments_to_matrix(
+                fragments,
+                peaks,
+                cell_barcodes=string_list(adata_rna.obs_names),
+            )
             elapsed["preproc"] = time.perf_counter() - t0
             backend_execution["preproc"] = _rust_execution_from_attrs(
                 adata_atac,

@@ -351,6 +351,10 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     atac_written = ad.read_h5ad(result.atac_matrix_path)
     assert atac_written.n_obs == n_cells
     assert set(atac_written.obs_names) == set(cells)
+    assert atac_written.uns["cell_barcode_filter"] == {
+        "requested": n_cells,
+        "matched": n_cells,
+    }
     assert result.grn_path.exists()
     assert result.aucell_path.exists()
     assert result.cistarget_path.exists()

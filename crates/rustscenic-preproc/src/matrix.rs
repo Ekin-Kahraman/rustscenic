@@ -18,6 +18,7 @@
 
 use crate::fragments::FragmentTable;
 use crate::peaks::PeakTable;
+use std::collections::HashSet;
 
 /// Sparse matrix in CSR layout.
 ///
@@ -49,8 +50,42 @@ pub fn build_cell_peak_matrix(
     fragments: &FragmentTable,
     peaks: &PeakTable,
 ) -> (CsrMatrix, Vec<String>, Vec<String>) {
-    let n_barcodes = fragments.n_barcodes();
+    build_cell_peak_matrix_inner(fragments, peaks, None)
+}
+
+/// Build a cells × peaks matrix for a caller-provided barcode whitelist.
+///
+/// Row order follows the fragment file's first-seen barcode order, filtered to
+/// requested names. Requested barcodes absent from the fragment file are
+/// ignored, matching the pipeline's previous post-hoc AnnData subset semantics.
+pub fn build_cell_peak_matrix_for_barcodes(
+    fragments: &FragmentTable,
+    peaks: &PeakTable,
+    barcode_names: &[String],
+) -> (CsrMatrix, Vec<String>, Vec<String>) {
+    let keep: HashSet<&str> = barcode_names.iter().map(|name| name.as_str()).collect();
+    build_cell_peak_matrix_inner(fragments, peaks, Some(&keep))
+}
+
+fn build_cell_peak_matrix_inner(
+    fragments: &FragmentTable,
+    peaks: &PeakTable,
+    barcode_filter: Option<&HashSet<&str>>,
+) -> (CsrMatrix, Vec<String>, Vec<String>) {
     let n_peaks = peaks.len();
+    let mut barcode_row: Vec<Option<u32>> = vec![None; fragments.n_barcodes()];
+    let mut barcode_names = Vec::new();
+    for (idx, name) in fragments.barcode_names.iter().enumerate() {
+        let keep_barcode = match barcode_filter {
+            Some(keep) => keep.contains(name.as_str()),
+            None => true,
+        };
+        if keep_barcode {
+            barcode_row[idx] = Some(barcode_names.len() as u32);
+            barcode_names.push(name.clone());
+        }
+    }
+    let n_barcodes = barcode_names.len();
 
     // 1. Align peaks' chrom indices into fragments' chrom space.
     //    Peaks on chroms not in fragments are dropped (mapped to None).
@@ -120,8 +155,10 @@ pub fn build_cell_peak_matrix(
                 // Overlap check: f_end > p_start is already satisfied by
                 // the first_candidate advance. Also need f_start < p_end,
                 // satisfied by the loop condition above.
-                let barcode = fragments.barcode_idx[f];
-                *counts.entry((barcode, p as u32)).or_insert(0) += 1;
+                let raw_barcode = fragments.barcode_idx[f] as usize;
+                if let Some(barcode) = barcode_row[raw_barcode] {
+                    *counts.entry((barcode, p as u32)).or_insert(0) += 1;
+                }
             }
         }
     }
@@ -153,7 +190,7 @@ pub fn build_cell_peak_matrix(
         indptr,
     };
 
-    (csr, fragments.barcode_names.clone(), peaks.name.clone())
+    (csr, barcode_names, peaks.name.clone())
 }
 
 #[cfg(test)]
@@ -248,5 +285,36 @@ chr3\t1\t100\tnowhere
         let p = read_peaks_from(Cursor::new(peaks)).unwrap();
         let (mtx, _, _) = build_cell_peak_matrix(&f, &p);
         assert_eq!(mtx.data, vec![1]);
+    }
+
+    #[test]
+    fn barcode_filter_builds_only_requested_rows_in_fragment_order() {
+        let f = read_fragments_from(Cursor::new(FRAGS)).unwrap();
+        let p = read_peaks_from(Cursor::new(PEAKS)).unwrap();
+        let requested = vec!["MISSING-1".to_string(), "BBB-1".to_string()];
+        let (mtx, bnames, _) = build_cell_peak_matrix_for_barcodes(&f, &p, &requested);
+
+        assert_eq!(bnames, vec!["BBB-1".to_string()]);
+        assert_eq!(mtx.n_rows, 1);
+        assert_eq!(mtx.n_cols, 4);
+        assert_eq!(mtx.indptr, vec![0, 1]);
+        assert_eq!(mtx.indices, vec![1]);
+        assert_eq!(mtx.data, vec![1]);
+    }
+
+    #[test]
+    fn empty_barcode_filter_keeps_peak_axis_and_zero_rows() {
+        let f = read_fragments_from(Cursor::new(FRAGS)).unwrap();
+        let p = read_peaks_from(Cursor::new(PEAKS)).unwrap();
+        let requested: Vec<String> = Vec::new();
+        let (mtx, bnames, pnames) = build_cell_peak_matrix_for_barcodes(&f, &p, &requested);
+
+        assert!(bnames.is_empty());
+        assert_eq!(pnames.len(), 4);
+        assert_eq!(mtx.n_rows, 0);
+        assert_eq!(mtx.n_cols, 4);
+        assert_eq!(mtx.indptr, vec![0]);
+        assert!(mtx.indices.is_empty());
+        assert!(mtx.data.is_empty());
     }
 }

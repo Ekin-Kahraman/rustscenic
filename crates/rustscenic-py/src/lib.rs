@@ -10,9 +10,10 @@ use rustscenic_grn::{
     infer_indices_with_overlap, GrnConfig, IndexedAdjacency, TfOverlapSummary,
 };
 use rustscenic_preproc::{
-    build_cell_peak_matrix, call_peaks_from_pseudobulks, fragments::barcode_qc_counts,
-    frip as preproc_frip_fn, insert_size_stats as preproc_insert_size_stats_fn, read_fragments,
-    read_peaks, tss_enrichment as preproc_tss_enrichment_fn, PeakCallingConfig, TssSite,
+    build_cell_peak_matrix, build_cell_peak_matrix_for_barcodes, call_peaks_from_pseudobulks,
+    fragments::barcode_qc_counts, frip as preproc_frip_fn,
+    insert_size_stats as preproc_insert_size_stats_fn, read_fragments, read_peaks,
+    tss_enrichment as preproc_tss_enrichment_fn, PeakCallingConfig, TssSite,
 };
 use rustscenic_topics::{online_vb_lda, topic_coherence_npmi_view};
 use std::collections::{HashMap, HashSet};
@@ -5648,27 +5649,76 @@ fn validate_topic_csr(
 /// (matches the input BED order). QC arrays are parallel to `barcodes`.
 ///
 /// Paths accept both `.tsv`/`.bed` plain files and `.gz` compressed.
+fn median_u32(values: &[u32]) -> Option<f32> {
+    if values.is_empty() {
+        return None;
+    }
+    let mut sorted = values.to_vec();
+    sorted.sort_unstable();
+    let mid = sorted.len() / 2;
+    if sorted.len() % 2 == 1 {
+        Some(sorted[mid] as f32)
+    } else {
+        Some((sorted[mid - 1] as f32 + sorted[mid] as f32) / 2.0)
+    }
+}
+
 #[pyfunction]
-#[pyo3(signature = (fragments_path, peaks_path))]
+#[pyo3(signature = (fragments_path, peaks_path, cell_barcodes=None))]
 fn preproc_fragments_to_matrix<'py>(
     py: Python<'py>,
     fragments_path: PathBuf,
     peaks_path: PathBuf,
+    cell_barcodes: Option<Vec<String>>,
 ) -> PyResult<FragmentsToMatrixPyResult> {
     let (csr, barcodes, peak_names, fpc, tcc, total_fragment_records, median_fragments) = py
         .allow_threads(|| -> anyhow::Result<_> {
             let fragments = read_fragments(&fragments_path)?;
             let qc = barcode_qc_counts(&fragments, fragments.n_barcodes() > 100_000);
             let peaks = read_peaks(&peaks_path)?;
-            let (csr, bnames, pnames) = build_cell_peak_matrix(&fragments, &peaks);
+            let (csr, bnames, pnames) = match &cell_barcodes {
+                Some(requested) => {
+                    build_cell_peak_matrix_for_barcodes(&fragments, &peaks, requested)
+                }
+                None => build_cell_peak_matrix(&fragments, &peaks),
+            };
+            let (fragments_per_barcode, total_counts_per_barcode, median_out) =
+                if cell_barcodes.is_some() {
+                    let barcode_to_idx: HashMap<&str, usize> = fragments
+                        .barcode_names
+                        .iter()
+                        .enumerate()
+                        .map(|(idx, name)| (name.as_str(), idx))
+                        .collect();
+                    let mut selected_fpc = Vec::with_capacity(bnames.len());
+                    let mut selected_tcc = Vec::with_capacity(bnames.len());
+                    for name in &bnames {
+                        if let Some(&idx) = barcode_to_idx.get(name.as_str()) {
+                            selected_fpc.push(qc.fragments_per_barcode[idx]);
+                            selected_tcc.push(qc.total_counts_per_barcode[idx]);
+                        }
+                    }
+                    let median = if selected_fpc.len() > 100_000 {
+                        median_u32(&selected_fpc).unwrap_or(f32::NAN)
+                    } else {
+                        f32::NAN
+                    };
+                    (selected_fpc, selected_tcc, median)
+                } else {
+                    (
+                        qc.fragments_per_barcode,
+                        qc.total_counts_per_barcode,
+                        qc.median_fragments_per_barcode.unwrap_or(f32::NAN),
+                    )
+                };
             Ok((
                 csr,
                 bnames,
                 pnames,
-                qc.fragments_per_barcode,
-                qc.total_counts_per_barcode,
+                fragments_per_barcode,
+                total_counts_per_barcode,
                 qc.total_fragment_records,
-                qc.median_fragments_per_barcode.unwrap_or(f32::NAN),
+                median_out,
             ))
         })
         .map_err(|e| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()))?;

@@ -23,7 +23,7 @@ pub mod peaks;
 pub mod qc;
 
 pub use fragments::{read_fragments, Fragment, FragmentTable};
-pub use matrix::{build_cell_peak_matrix, CsrMatrix};
+pub use matrix::{build_cell_peak_matrix, build_cell_peak_matrix_for_barcodes, CsrMatrix};
 pub use peak_calling::{call_peaks_from_pseudobulks, PeakCallingConfig};
 pub use peaks::{read_peaks, Peak, PeakTable};
 pub use qc::{frip, insert_size_stats, tss_enrichment, InsertSizeStats, TssSite};

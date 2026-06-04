@@ -503,7 +503,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     print(f"[setup] building ATAC matrix from {args.fragments}", flush=True)
     t_step = time.perf_counter()
-    atac = rustscenic.preproc.fragments_to_matrix(args.fragments, args.peaks)
+    atac = rustscenic.preproc.fragments_to_matrix(
+        args.fragments,
+        args.peaks,
+        cell_barcodes=[str(cell) for cell in rna.obs_names],
+    )
     setup_elapsed["fragments_to_matrix"] = time.perf_counter() - t_step
 
     t_step = time.perf_counter()

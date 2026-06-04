@@ -30,11 +30,14 @@ from rustscenic._rustscenic import (
     preproc_insert_size_stats as _insert_size_stats,
     preproc_tss_enrichment as _tss_enrichment,
 )
+from rustscenic._stage_utils import string_list
 
 
 def fragments_to_matrix(
     fragments_path: str | Path,
     peaks_path: str | Path,
+    *,
+    cell_barcodes: list[str] | None = None,
 ):
     """Build a cells × peaks AnnData from fragments + peaks.
 
@@ -45,6 +48,10 @@ def fragments_to_matrix(
     peaks_path : str or Path
         Consensus peak BED (plain or .gz). Uses the first three columns;
         column 4 (if present) is stored as `peak_id`.
+    cell_barcodes
+        Optional cell-called barcode whitelist. When supplied, the Rust
+        parser emits matrix rows only for matching barcodes, avoiding a
+        large all-observed-barcode matrix from raw 10x fragments.
 
     Returns
     -------
@@ -72,6 +79,7 @@ def fragments_to_matrix(
 
     fragments_path = str(Path(fragments_path))
     peaks_path = str(Path(peaks_path))
+    selected_barcodes = None if cell_barcodes is None else string_list(cell_barcodes)
 
     (
         data,
@@ -84,7 +92,7 @@ def fragments_to_matrix(
         tcc,
         total_frags,
         median_frags,
-    ) = _fragments_to_matrix(fragments_path, peaks_path)
+    ) = _fragments_to_matrix(fragments_path, peaks_path, selected_barcodes)
 
     # Guard against the 6-column strand BED parse mode - if > 90% of
     # "barcodes" are unique (i.e. one per fragment), the barcode column
@@ -142,6 +150,11 @@ def fragments_to_matrix(
         "engine": "rust",
         "symbols": ["preproc_fragments_to_matrix"],
     }
+    if selected_barcodes is not None:
+        adata.uns["cell_barcode_filter"] = {
+            "requested": len(selected_barcodes),
+            "matched": len(barcodes),
+        }
     return adata
 
 

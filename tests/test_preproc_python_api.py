@@ -396,3 +396,30 @@ def test_fragments_to_matrix_warns_on_unfiltered_barcodes():
         _ = rustscenic.preproc.fragments_to_matrix(frag_path, peaks_path)
     msgs = [str(w.message) for w in caught]
     assert any("cell-called barcodes" in m for m in msgs), msgs
+
+
+def test_fragments_to_matrix_cell_barcode_filter_builds_only_requested_rows():
+    frag_path, td = _write_fragments([
+        "chr1\t100\t150\tAAA-1\t1",
+        "chr1\t120\t170\tBBB-1\t7",
+        "chr1\t520\t580\tBBB-1\t2",
+        "chr1\t520\t580\tEMPTY-1\t1",
+    ])
+    peaks_path, td_p = _write_peaks_bed([
+        "chr1\t90\t200\tpeak1",
+        "chr1\t500\t600\tpeak2",
+    ])
+
+    with td, td_p:
+        adata = rustscenic.preproc.fragments_to_matrix(
+            frag_path,
+            peaks_path,
+            cell_barcodes=["MISSING-1", "BBB-1"],
+        )
+
+    assert list(adata.obs_names) == ["BBB-1"]
+    assert list(adata.var_names) == ["peak1", "peak2"]
+    np.testing.assert_array_equal(adata.X.toarray(), np.array([[1, 1]], dtype=np.uint32))
+    assert adata.obs.loc["BBB-1", "fragments_per_cell"] == 2
+    assert adata.obs.loc["BBB-1", "total_counts"] == 9
+    assert adata.uns["cell_barcode_filter"] == {"requested": 2, "matched": 1}

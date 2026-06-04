@@ -805,6 +805,7 @@ def pipeline_project_ranking_columns(
 def preproc_fragments_to_matrix(
     fragments_path: str,
     peaks_path: str,
+    cell_barcodes: list[str] | None = None,
 ) -> tuple[
     npt.NDArray[np.uint32],   # data
     npt.NDArray[np.uint32],   # indices
