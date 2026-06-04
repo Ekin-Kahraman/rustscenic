@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -165,3 +166,109 @@ def test_doctor_cli_reports_backend_capabilities(monkeypatch, capsys):
 
     assert rc == 0
     assert '"ok": true' in capsys.readouterr().out
+
+
+def test_pipeline_cli_runs_full_multiome_smoke(tmp_path):
+    import gzip
+
+    import anndata as ad
+    import numpy as np
+    import rustscenic.cli
+
+    rng = np.random.default_rng(42)
+    n_cells = 80
+    cells = [f"cell{i}" for i in range(n_cells)]
+    cluster = np.array([i % 2 for i in range(n_cells)], dtype=np.int8)
+    signal = cluster.astype(np.float32)
+    genes = ["TF_A", "TF_B"] + [f"G{i:03d}" for i in range(10)]
+    X = rng.normal(0.2, 0.03, size=(n_cells, len(genes))).astype(np.float32)
+    X[:, 0] += 1.0 - signal
+    X[:, 1] += signal
+    X[:, 2:7] += (1.0 - signal)[:, None]
+    X[:, 7:12] += signal[:, None]
+    X = np.clip(X, 0, None)
+    rna_path = tmp_path / "rna.h5ad"
+    ad.AnnData(
+        X=X,
+        obs=pd.DataFrame(index=cells),
+        var=pd.DataFrame(index=genes),
+    ).write_h5ad(rna_path)
+
+    tfs_path = tmp_path / "tfs.txt"
+    tfs_path.write_text("TF_A\nTF_B\n")
+
+    frag_lines = []
+    for cell, group in zip(cells, cluster, strict=True):
+        base = 10_000 if group == 0 else 110_000
+        for _ in range(6):
+            start = base + int(rng.integers(0, 1_000))
+            frag_lines.append(f"chr1\t{start}\t{start + 120}\t{cell}\t1")
+    fragments_path = tmp_path / "fragments.tsv.gz"
+    with gzip.open(fragments_path, "wt") as handle:
+        handle.write("\n".join(frag_lines) + "\n")
+
+    peaks_path = tmp_path / "peaks.bed"
+    peaks_path.write_text(
+        "chr1\t9500\t11500\tpeak_A\n"
+        "chr1\t109500\t111500\tpeak_B\n"
+    )
+
+    gene_coords_path = tmp_path / "gene_coords.parquet"
+    pd.DataFrame(
+        {
+            "gene": genes[2:],
+            "chrom": ["chr1"] * 10,
+            "tss": [10_100] * 5 + [110_100] * 5,
+        }
+    ).to_parquet(gene_coords_path, index=False)
+
+    motif_rankings_path = tmp_path / "motif_rankings.parquet"
+    ranks = np.tile(np.arange(len(genes), dtype=np.int32), (2, 1))
+    ranks[0, :] = len(genes) - 1
+    ranks[1, :] = len(genes) - 1
+    ranks[0, [2, 3, 4, 5, 6]] = np.arange(5, dtype=np.int32)
+    ranks[1, [7, 8, 9, 10, 11]] = np.arange(5, dtype=np.int32)
+    pd.DataFrame(ranks, index=["motif_A", "motif_B"], columns=genes).to_parquet(
+        motif_rankings_path
+    )
+
+    out = tmp_path / "out"
+    rc = rustscenic.cli.main(
+        [
+            "pipeline",
+            "--rna", str(rna_path),
+            "--output", str(out),
+            "--tfs", str(tfs_path),
+            "--fragments", str(fragments_path),
+            "--peaks", str(peaks_path),
+            "--motif-rankings", str(motif_rankings_path),
+            "--gene-coords", str(gene_coords_path),
+            "--grn-n-estimators", "8",
+            "--grn-max-features", "1.0",
+            "--grn-top-targets", "2",
+            "--aucell-top-frac", "0.2",
+            "--topics-n-topics", "2",
+            "--topics-n-passes", "1",
+            "--cistarget-top-frac", "0.5",
+            "--cistarget-auc-threshold", "0.0",
+            "--enhancer-min-abs-corr", "0.0",
+            "--eregulon-min-target-genes", "1",
+            "--eregulon-min-enhancer-links", "1",
+            "--skip-integrated-adata",
+            "--seed", "7",
+        ]
+    )
+
+    assert rc == 0
+    manifest = json.loads((out / "manifest.json").read_text())
+    assert manifest["n_cistarget_rows"] > 0
+    assert manifest["n_enhancer_links"] > 0
+    assert Path(manifest["eregulons_path"]).exists()
+    assert manifest["backend_execution"]["preproc"]["engine"] == "rust"
+    assert manifest["backend_execution"]["topics"]["engine"] == "rust"
+    assert manifest["backend_execution"]["grn"]["engine"] == "rust"
+    assert manifest["backend_execution"]["cistarget"]["engine"] == "rust"
+    assert manifest["backend_execution"]["enhancer"]["engine"] == "rust"
+    assert manifest["backend_execution"]["eregulons"]["engine"] == "rust"
+    assert manifest["backend_execution"]["aucell"]["engine"] == "rust"
+    assert manifest["backend_execution"]["integrated_adata"]["engine"] == "skipped"
