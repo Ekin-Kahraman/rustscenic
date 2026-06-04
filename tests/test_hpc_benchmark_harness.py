@@ -1003,6 +1003,123 @@ def test_minerva_preflight_accepts_ready_clean_checkout(monkeypatch, tmp_path):
     assert result["hpc_tools"]["validator"]["exists"] is True
 
 
+def test_minerva_preflight_checks_optional_reference_tables(monkeypatch, tmp_path):
+    module = _load_module(
+        "preflight_minerva_reference_tables",
+        ROOT / "validation/hpc/minerva/preflight_minerva.py",
+    )
+    repo, env, data = _write_minerva_preflight_fixture(tmp_path)
+    motif_rankings = tmp_path / "motifs.parquet"
+    motif_annotations = tmp_path / "motif_annotations.tsv"
+    gene_coords = tmp_path / "gene_coords.parquet"
+    for path in (motif_rankings, motif_annotations, gene_coords):
+        path.write_text("fixture\n")
+    monkeypatch.setattr(
+        module,
+        "_git_state",
+        lambda _repo: {
+            "commit": "abc123",
+            "commit_error": None,
+            "tracked_status_short": [],
+            "status_error": None,
+            "tracked_dirty": False,
+            "tracked_source_count": 0,
+            "tracked_source_sample": [],
+        },
+    )
+    monkeypatch.setattr(
+        module,
+        "_import_state",
+        lambda _python, _repo: {
+            "ok": True,
+            "python": str(env / "bin" / "python"),
+            "rustscenic_version": "0.4.7",
+            "package_version": "0.4.7",
+            "extension_version": "0.4.7",
+            "package_file": str(repo / "python" / "rustscenic" / "__init__.py"),
+            "package_under_repo": True,
+            "extension_file": str(repo / "python" / "rustscenic" / "_rustscenic.so"),
+            "extension_under_repo": True,
+            "extension_error": None,
+            "parse_error": None,
+            "stderr": "",
+        },
+    )
+    monkeypatch.setattr(module, "_backend_state", lambda _python, _repo: _preflight_backend_state())
+    args = module.parse_args(
+        [
+            "--repo", str(repo),
+            "--env", str(env),
+            "--data-dir", str(data),
+            "--motif-rankings", str(motif_rankings),
+            "--motif-annotations", str(motif_annotations),
+            "--gene-coords", str(gene_coords),
+        ]
+    )
+
+    result = module.preflight(args)
+
+    assert result["ok"] is True
+    assert result["reference_tables"]["motif_rankings"]["exists"] is True
+    assert result["reference_tables"]["motif_annotations"]["exists"] is True
+    assert result["reference_tables"]["gene_coords"]["exists"] is True
+
+
+def test_minerva_preflight_rejects_missing_optional_reference_table(monkeypatch, tmp_path):
+    module = _load_module(
+        "preflight_minerva_missing_reference_table",
+        ROOT / "validation/hpc/minerva/preflight_minerva.py",
+    )
+    repo, env, data = _write_minerva_preflight_fixture(tmp_path)
+    missing = tmp_path / "missing_annotations.tsv"
+    monkeypatch.setattr(
+        module,
+        "_git_state",
+        lambda _repo: {
+            "commit": "abc123",
+            "commit_error": None,
+            "tracked_status_short": [],
+            "status_error": None,
+            "tracked_dirty": False,
+            "tracked_source_count": 0,
+            "tracked_source_sample": [],
+        },
+    )
+    monkeypatch.setattr(
+        module,
+        "_import_state",
+        lambda _python, _repo: {
+            "ok": True,
+            "python": str(env / "bin" / "python"),
+            "rustscenic_version": "0.4.7",
+            "package_version": "0.4.7",
+            "extension_version": "0.4.7",
+            "package_file": str(repo / "python" / "rustscenic" / "__init__.py"),
+            "package_under_repo": True,
+            "extension_file": str(repo / "python" / "rustscenic" / "_rustscenic.so"),
+            "extension_under_repo": True,
+            "extension_error": None,
+            "parse_error": None,
+            "stderr": "",
+        },
+    )
+    monkeypatch.setattr(module, "_backend_state", lambda _python, _repo: _preflight_backend_state())
+    args = module.parse_args(
+        [
+            "--repo", str(repo),
+            "--env", str(env),
+            "--data-dir", str(data),
+            "--motif-annotations", str(missing),
+        ]
+    )
+
+    result = module.preflight(args)
+
+    assert result["ok"] is False
+    assert result["reference_tables"]["motif_annotations"]["exists"] is False
+    assert f"missing reference table motif_annotations: {missing}" in result["failures"]
+
+
 def test_minerva_preflight_rejects_python_hot_path_regression(monkeypatch, tmp_path):
     module = _load_module(
         "preflight_minerva_hot_paths",
@@ -2664,7 +2781,7 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert 'MOTIF_RANKINGS="${MOTIF_RANKINGS:-}"' in full
     assert 'MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"' in full
     assert 'GENE_COORDS="${GENE_COORDS:-}"' in full
-    assert '"${REFERENCE_TABLE_ARGS[@]}"' in full
+    assert full.count('"${REFERENCE_TABLE_ARGS[@]}"') == 2
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in full_scaling
     assert "validation/scaling/bench_real_multiome_pipeline_scaling.py" in full_scaling
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in full_scaling
@@ -2677,7 +2794,7 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert 'MOTIF_RANKINGS="${MOTIF_RANKINGS:-}"' in full_scaling
     assert 'MOTIF_ANNOTATIONS="${MOTIF_ANNOTATIONS:-}"' in full_scaling
     assert 'GENE_COORDS="${GENE_COORDS:-}"' in full_scaling
-    assert '"${REFERENCE_TABLE_ARGS[@]}"' in full_scaling
+    assert full_scaling.count('"${REFERENCE_TABLE_ARGS[@]}"') == 2
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in grn
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in grn
     assert "validation/hpc/minerva/collect_benchmark_results.py" in grn

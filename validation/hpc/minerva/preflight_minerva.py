@@ -277,6 +277,18 @@ def _thread_env_failures(thread_env: dict[str, Any]) -> list[str]:
     return failures
 
 
+def _reference_table_statuses(args: argparse.Namespace) -> dict[str, Any]:
+    tables = {
+        "motif_rankings": args.motif_rankings,
+        "motif_annotations": args.motif_annotations,
+        "gene_coords": args.gene_coords,
+    }
+    return {
+        name: _path_status(path) if path is not None else {"path": None, "exists": None}
+        for name, path in tables.items()
+    }
+
+
 def preflight(args: argparse.Namespace) -> dict[str, Any]:
     repo = args.repo.resolve()
     env = args.env.resolve()
@@ -293,6 +305,7 @@ def preflight(args: argparse.Namespace) -> dict[str, Any]:
             name: _data_file_status(data_dir / name, name)
             for name in REQUIRED_DATA_FILES
         },
+        "reference_tables": _reference_table_statuses(args),
         "benchmark_scripts": {
             "full_pipeline": _path_status(repo / "validation/scaling/bench_real_multiome_pipeline.py"),
             "full_pipeline_scaling": _path_status(repo / "validation/scaling/bench_real_multiome_pipeline_scaling.py"),
@@ -323,6 +336,9 @@ def preflight(args: argparse.Namespace) -> dict[str, Any]:
             failures.append(f"missing data file {name}: {status['path']}")
         elif args.require_data_hashes and status.get("hash_ok") is not True:
             failures.append(f"data file hash mismatch {name}: {status['path']}")
+    for name, status in checks["reference_tables"].items():
+        if status["exists"] is False:
+            failures.append(f"missing reference table {name}: {status['path']}")
     for group in ("benchmark_scripts", "lsf_scripts", "hpc_tools"):
         for name, status in checks[group].items():
             if not status["exists"]:
@@ -403,6 +419,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--data-dir", type=Path, default=DEFAULT_REPO / "validation/real_multiome_v036")
     parser.add_argument("--python", type=Path, default=None)
     parser.add_argument("--out-json", type=Path, default=None)
+    parser.add_argument("--motif-rankings", type=Path, default=None)
+    parser.add_argument("--motif-annotations", type=Path, default=None)
+    parser.add_argument("--gene-coords", type=Path, default=None)
     parser.add_argument("--require-clean", action="store_true")
     parser.add_argument(
         "--require-thread-pins",

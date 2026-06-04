@@ -63,6 +63,7 @@ python validation/hpc/minerva/preflight_minerva.py \
   --env "${ENV}" \
   --data-dir "${DATA_DIR}" \
   --out-json "${PROJECT}/results/real_pbmc3k_full_pipeline_scaling/${RUN_PREFIX}.preflight.json" \
+  "${REFERENCE_TABLE_ARGS[@]}" \
   --require-repo-import \
   --require-thread-pins \
   --require-data-hashes \
