@@ -47,6 +47,9 @@ echo "repo_sha=$(git rev-parse --short HEAD)"
 echo "result_json=${OUT_JSON}"
 echo "RAYON_NUM_THREADS=${RAYON_NUM_THREADS}"
 echo "lsf_request=project:${RUSTSCENIC_LSF_PROJECT},queue:${RUSTSCENIC_LSF_QUEUE},cores:${RUSTSCENIC_LSF_CORES},mem_mb:${RUSTSCENIC_LSF_MEM_MB},walltime:${RUSTSCENIC_LSF_WALLTIME}"
+echo "rustscenic_doctor_json_begin"
+python -m rustscenic doctor --json
+echo "rustscenic_doctor_json_end"
 
 python validation/hpc/minerva/preflight_minerva.py \
   --repo "${REPO}" \

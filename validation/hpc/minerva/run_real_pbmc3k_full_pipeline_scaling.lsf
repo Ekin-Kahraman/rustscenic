@@ -80,6 +80,9 @@ echo "lsf_request=project:${RUSTSCENIC_LSF_PROJECT},queue:${RUSTSCENIC_LSF_QUEUE
 echo "reference_table_args=${REFERENCE_TABLE_ARGS[*]}"
 echo "benchmark_args=${BENCHMARK_ARGS[*]}"
 echo "cell_counts=${CELL_COUNT_ARGS[*]}"
+echo "rustscenic_doctor_json_begin"
+python -m rustscenic doctor --json
+echo "rustscenic_doctor_json_end"
 
 python validation/hpc/minerva/preflight_minerva.py \
   --repo "${REPO}" \

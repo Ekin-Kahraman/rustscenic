@@ -3774,6 +3774,14 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     grn = (ROOT / "validation/hpc/minerva/run_real_pbmc3k_grn_scaling.lsf").read_text()
     readme = (ROOT / "validation/hpc/minerva/README.md").read_text()
 
+    for launcher in (full, full_scaling, grn):
+        assert "rustscenic_doctor_json_begin" in launcher
+        assert "python -m rustscenic doctor --json" in launcher
+        assert "rustscenic_doctor_json_end" in launcher
+        assert launcher.index("python -m rustscenic doctor --json") < launcher.index(
+            "validation/hpc/minerva/preflight_minerva.py"
+        )
+
     assert "validation/hpc/minerva/prepare_real_pbmc3k_data.py" in full
     assert "validation/hpc/minerva/validate_benchmark_artifact.py" in full
     assert "validation/hpc/minerva/collect_benchmark_results.py" in full
