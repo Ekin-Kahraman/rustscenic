@@ -67,6 +67,7 @@ REQUIRED_FULL_PIPELINE_ARTEFACTS = {
     "enhancer_links_path": "file",
     "eregulons_path": "file",
     "integrated_adata_path": "file",
+    "manifest_path": "file",
 }
 REQUIRED_FULL_PIPELINE_RUST_EXECUTION = {
     "setup_fragments_to_matrix",
@@ -891,6 +892,45 @@ def _output_inventory_failures(record: dict[str, Any]) -> list[str]:
     return failures
 
 
+def _pipeline_manifest_failures(record: dict[str, Any]) -> list[str]:
+    inventory = record.get("output_inventory")
+    if not isinstance(inventory, dict):
+        return []
+    info = inventory.get("manifest_path")
+    if not isinstance(info, dict) or not isinstance(info.get("path"), str):
+        return []
+    manifest_path = Path(info["path"])
+    if not manifest_path.is_file():
+        return []
+
+    try:
+        manifest = json.loads(manifest_path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        return [f"output_inventory.manifest_path could not be read as JSON: {exc}"]
+    if not isinstance(manifest, dict):
+        return ["output_inventory.manifest_path JSON must be an object"]
+
+    failures: list[str] = []
+    if manifest.get("cell_barcode_filter") != record.get("cell_barcode_filter"):
+        failures.append(
+            "output_inventory.manifest_path cell_barcode_filter must match benchmark JSON"
+        )
+
+    manifest_execution = manifest.get("backend_execution")
+    benchmark_execution = record.get("backend_execution")
+    if not isinstance(manifest_execution, dict):
+        failures.append("output_inventory.manifest_path backend_execution must be an object")
+    elif isinstance(benchmark_execution, dict):
+        for stage, state in manifest_execution.items():
+            key = f"pipeline_{stage}"
+            if benchmark_execution.get(key) != state:
+                failures.append(
+                    f"output_inventory.manifest_path backend_execution.{stage} "
+                    f"must match benchmark backend_execution.{key}"
+                )
+    return failures
+
+
 def _log_log_slope(rows: list[dict[str, Any]], x_key: str, y_key: str) -> float | None:
     usable = [row for row in rows if row.get(x_key) and row.get(y_key)]
     if len(usable) < 2:
@@ -1330,6 +1370,7 @@ def validate_full_pipeline(
 
     if check_output_files:
         failures.extend(_output_inventory_failures(record))
+        failures.extend(_pipeline_manifest_failures(record))
     return failures
 
 

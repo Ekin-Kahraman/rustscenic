@@ -619,6 +619,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "enhancer_links_path": result.enhancer_links_path,
         "eregulons_path": result.eregulons_path,
         "integrated_adata_path": result.integrated_adata_path,
+        "manifest_path": result.output_dir / "manifest.json",
     }
 
     reference_fingerprints = {

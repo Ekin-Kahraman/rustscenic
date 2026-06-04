@@ -1857,6 +1857,28 @@ def _full_pipeline_record(tmp_path: Path):
         "type": "dir",
         "entries": len(list(topics_dir.iterdir())),
     }
+    backend_execution = _backend_execution_state()
+    cell_barcode_filter = {"requested": 100, "matched": 100}
+    manifest_path = tmp_path / "manifest.json"
+    manifest_backend = {
+        key.removeprefix("pipeline_"): value
+        for key, value in backend_execution.items()
+        if key.startswith("pipeline_")
+    }
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "backend_execution": manifest_backend,
+                "cell_barcode_filter": cell_barcode_filter,
+            }
+        )
+    )
+    output_inventory["manifest_path"] = {
+        "path": str(manifest_path),
+        "exists": True,
+        "type": "file",
+        "size_bytes": manifest_path.stat().st_size,
+    }
     return {
         "benchmark": "real_multiome_full_pipeline",
         "dataset_name": "pbmc3k",
@@ -1864,8 +1886,8 @@ def _full_pipeline_record(tmp_path: Path):
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
         "python_hot_paths": _python_hot_paths_state(),
-        "backend_execution": _backend_execution_state(),
-        "cell_barcode_filter": {"requested": 100, "matched": 100},
+        "backend_execution": backend_execution,
+        "cell_barcode_filter": cell_barcode_filter,
         "rustscenic": "0.4.7",
         "input_hashes": {
             "rna_10x_h5_md5": "a",
@@ -1976,6 +1998,25 @@ def _full_pipeline_record(tmp_path: Path):
     }
 
 
+def _sync_full_pipeline_manifest(record: dict) -> None:
+    info = record["output_inventory"]["manifest_path"]
+    path = Path(info["path"])
+    manifest_backend = {
+        key.removeprefix("pipeline_"): value
+        for key, value in record["backend_execution"].items()
+        if key.startswith("pipeline_")
+    }
+    path.write_text(
+        json.dumps(
+            {
+                "backend_execution": manifest_backend,
+                "cell_barcode_filter": record.get("cell_barcode_filter"),
+            }
+        )
+    )
+    info["size_bytes"] = path.stat().st_size
+
+
 def _full_pipeline_scaling_record(tmp_path: Path):
     runs = []
     for label, n_cells, end_to_end, peak_rss in (
@@ -2005,6 +2046,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
             3,
         )
         child["peak_rss_gb"] = peak_rss
+        _sync_full_pipeline_manifest(child)
         child_path = tmp_path / f"{label}.json"
         child_path.write_text(json.dumps(child))
         runs.append(
@@ -2162,6 +2204,7 @@ def test_benchmark_artifact_validator_accepts_compute_profile_without_integrated
         "engine": "skipped",
         "reason": "write_integrated_adata=False",
     }
+    _sync_full_pipeline_manifest(record)
 
     failures = module.validate_record(
         record,
@@ -2361,6 +2404,39 @@ def test_benchmark_artifact_validator_rejects_incomplete_output_inventory(tmp_pa
         f"output_inventory.cistarget_path file is empty: {cistarget_path}"
         in failures
     )
+
+
+def test_benchmark_artifact_validator_rejects_manifest_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_manifest_mismatch",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    manifest_info = record["output_inventory"]["manifest_path"]
+    manifest_path = Path(manifest_info["path"])
+    manifest = json.loads(manifest_path.read_text())
+    manifest["cell_barcode_filter"] = {"requested": 99, "matched": 99}
+    manifest["backend_execution"]["enhancer"] = {
+        "engine": "rust",
+        "symbols": ["enhancer_link_pearson"],
+    }
+    manifest_path.write_text(json.dumps(manifest))
+    manifest_info["size_bytes"] = manifest_path.stat().st_size
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert (
+        "output_inventory.manifest_path cell_barcode_filter must match benchmark JSON"
+        in failures
+    )
+    assert (
+        "output_inventory.manifest_path backend_execution.enhancer must match "
+        "benchmark backend_execution.pipeline_enhancer"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_dirty_full_pipeline(tmp_path):
@@ -3137,6 +3213,7 @@ def test_minerva_result_collector_discovers_latest_valid_benchmarks(tmp_path):
     new_record["shapes"]["atac_shared_cells"] = [200, 2000]
     new_record["cell_barcode_filter"] = {"requested": 200, "matched": 200}
     new_record["outputs"]["aucell_shape"] = [200, 2]
+    _sync_full_pipeline_manifest(new_record)
     scaling_record = _full_pipeline_scaling_record(scaling_dir)
 
     old_path = tmp_path / "pbmc_full_old.json"
