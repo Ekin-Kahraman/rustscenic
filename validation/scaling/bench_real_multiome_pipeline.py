@@ -307,6 +307,7 @@ def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, A
     n_rows: int | None = None
     columns: list[str] = []
     dtype_counts: dict[str, int] = {}
+    metadata_read_columns: list[str] = []
     if suffix == ".parquet":
         import pyarrow.parquet as pq
 
@@ -328,6 +329,7 @@ def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, A
                 dtype = str(field.type)
                 dtype_counts[dtype] = dtype_counts.get(dtype, 0) + 1
         count_col = _file_backed_row_count_column(columns, path)
+        metadata_read_columns = [count_col]
         n_rows = int(feather.read_table(path, columns=[count_col]).num_rows)
     else:
         raise ValueError(f"unsupported file-backed table format for {path}")
@@ -346,6 +348,8 @@ def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, A
         "dtype_counts": dtype_counts,
         "corner_sample_sha256": digest.hexdigest(),
         "file_backed": True,
+        "format": suffix.removeprefix("."),
+        "metadata_read_columns": metadata_read_columns,
         "path_name": path.name,
         "size_bytes": path.stat().st_size,
     }

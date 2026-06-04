@@ -125,6 +125,10 @@ def test_real_multiome_harness_fingerprints_feather_without_full_table_read(
 
     assert fp["shape"] == [3, 3]
     assert fp["file_backed"] is True
+    assert fp["format"] == "feather"
+    assert fp["metadata_read_columns"] == ["motifs"]
+    assert fp["path_name"] == path.name
+    assert fp["size_bytes"] == path.stat().st_size
     assert read_columns == [["motifs"]]
 
 
@@ -2452,6 +2456,10 @@ def test_benchmark_artifact_validator_accepts_region_motif_rankings_metadata(tmp
         "dtype_counts": {"int32": 2000},
         "corner_sample_sha256": "d" * 64,
         "file_backed": True,
+        "format": "feather",
+        "metadata_read_columns": ["motifs"],
+        "path_name": "region_rankings.feather",
+        "size_bytes": 1024,
     }
     record["shapes"]["region_motif_rankings"] = [8, 2000]
     record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
@@ -2499,6 +2507,10 @@ def test_benchmark_artifact_validator_requires_region_cistarget_symbols(tmp_path
         "symbols must include a cistarget_region_attribution_* Rust symbol "
         "when region_motif_rankings is supplied"
     ) in failures
+    assert (
+        "reference_fingerprints.region_motif_rankings.file_backed must be true"
+        in failures
+    )
 
 
 def test_benchmark_artifact_validator_requires_pruning_when_annotations_supplied(tmp_path):

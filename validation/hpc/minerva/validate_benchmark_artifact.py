@@ -445,6 +445,8 @@ def _reference_fingerprint_failures(record: dict[str, Any]) -> list[str]:
             failures.append(f"reference_fingerprints.{key}.column_sample must be a non-empty list")
         if not isinstance(fp.get("dtype_counts"), dict) or not fp["dtype_counts"]:
             failures.append(f"reference_fingerprints.{key}.dtype_counts must be a non-empty object")
+        if key == "region_motif_rankings":
+            failures.extend(_region_motif_fingerprint_failures(fp))
 
     if isinstance(shapes, dict):
         motif_shape = shapes.get("motif_rankings")
@@ -477,6 +479,44 @@ def _reference_fingerprint_failures(record: dict[str, Any]) -> list[str]:
         if isinstance(gene_fp, dict) and _positive_int(gene_rows) and _shape2(gene_fp.get("shape")):
             if gene_fp["shape"][0] != gene_rows:
                 failures.append("reference_fingerprints.gene_coords.shape rows must match shapes.gene_coords_rows")
+    return failures
+
+
+def _region_motif_fingerprint_failures(fp: dict[str, Any]) -> list[str]:
+    failures: list[str] = []
+    if fp.get("file_backed") is not True:
+        failures.append(
+            "reference_fingerprints.region_motif_rankings.file_backed must be true"
+        )
+    if not _nonempty_str(fp.get("path_name")):
+        failures.append(
+            "reference_fingerprints.region_motif_rankings.path_name must be a non-empty string"
+        )
+    if not _positive_int(fp.get("size_bytes")):
+        failures.append(
+            "reference_fingerprints.region_motif_rankings.size_bytes must be positive"
+        )
+    format_value = fp.get("format")
+    if format_value not in {"parquet", "feather", "ft"}:
+        failures.append(
+            "reference_fingerprints.region_motif_rankings.format must be one of "
+            "parquet, feather, ft"
+        )
+    read_columns = fp.get("metadata_read_columns")
+    if (
+        not isinstance(read_columns, list)
+        or len(read_columns) > 1
+        or not all(_nonempty_str(column) for column in read_columns)
+    ):
+        failures.append(
+            "reference_fingerprints.region_motif_rankings.metadata_read_columns "
+            "must be a string list of length 0 or 1"
+        )
+    if format_value in {"feather", "ft"} and isinstance(read_columns, list) and not read_columns:
+        failures.append(
+            "reference_fingerprints.region_motif_rankings.metadata_read_columns "
+            "must name the one Feather column read for row counting"
+        )
     return failures
 
 
