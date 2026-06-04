@@ -89,6 +89,18 @@ def runtime_import_state() -> dict[str, Any]:
     }
 
 
+def backend_execution_for_grn(grn) -> dict[str, Any]:
+    backend = getattr(grn, "attrs", {}).get("rust_backend")
+    if (
+        isinstance(backend, dict)
+        and backend.get("engine") == "rust"
+        and isinstance(backend.get("symbols"), list)
+        and all(isinstance(symbol, str) and symbol for symbol in backend["symbols"])
+    ):
+        return {"grn": {"engine": "rust", "symbols": list(backend["symbols"])}}
+    return {"grn": {"engine": "unknown", "reason": "missing GRN Rust backend metadata"}}
+
+
 def configure_thread_env(threads: int) -> None:
     os.environ["RAYON_NUM_THREADS"] = str(threads)
     os.environ["OMP_NUM_THREADS"] = "1"
@@ -166,6 +178,7 @@ def run_one(args: argparse.Namespace) -> dict[str, Any]:
         "grn_wall_s": round(grn_wall, 3),
         "edges": int(len(grn)),
         "peak_rss_gb": round(peak_rss_gb(), 3),
+        "backend_execution": backend_execution_for_grn(grn),
         "env": {
             "python": platform.python_version(),
             "rustscenic": version("rustscenic"),

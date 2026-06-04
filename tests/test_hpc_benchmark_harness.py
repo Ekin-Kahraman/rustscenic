@@ -2335,6 +2335,12 @@ def _grn_scaling_record():
         "edges": 1000,
         "grn_wall_s": 1.5,
         "peak_rss_gb": 0.75,
+        "backend_execution": {
+            "grn": {
+                "engine": "rust",
+                "symbols": ["gene_duplicate_summary", "grn_infer_sparse_csc"],
+            }
+        },
         "env": {
             "repo_state": _clean_repo_state(),
             "runtime_import": _runtime_import_state(),
@@ -2362,7 +2368,7 @@ def _grn_scaling_record():
             "seed": 777,
         },
         "subset_scaling": [row],
-        "thread_scaling": [{**row, "run_kind": "thread_scaling"}],
+        "thread_scaling": [{**deepcopy(row), "run_kind": "thread_scaling"}],
         "thread_speedups": [
             {
                 "threads": 4,
@@ -3562,6 +3568,30 @@ def test_benchmark_artifact_validator_accepts_grn_scaling_record():
     failures = module.validate_record(_grn_scaling_record(), require_clean=True)
 
     assert failures == []
+
+
+def test_benchmark_artifact_validator_rejects_grn_row_without_rust_execution():
+    module = _load_module(
+        "validate_benchmark_artifact_grn_backend_execution",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _grn_scaling_record()
+    record["thread_scaling"][0]["backend_execution"] = {
+        "grn": {
+            "engine": "python",
+            "symbols": [],
+        }
+    }
+    del record["subset_scaling"][0]["backend_execution"]["grn"]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "subset_scaling[0].backend_execution.grn must be an object" in failures
+    assert "thread_scaling[0].backend_execution.grn.engine must be 'rust'" in failures
+    assert (
+        "thread_scaling[0].backend_execution.grn.symbols must be a non-empty string list"
+        in failures
+    )
 
 
 def test_benchmark_artifact_validator_rejects_dirty_child_grn_record():

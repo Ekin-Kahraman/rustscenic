@@ -70,9 +70,10 @@ extension exposes the Rust kernels required by the pipeline.
 
 The benchmark artefact records the repo commit, tracked source-clean state,
 tracked-diff SHA-256 fingerprint, RustScenic version, backend capabilities,
-dataset hashes, input shape, parameters, stage timings, per-stage peak RSS,
-output counts and LSF environment. Use those JSON files as the source of truth
-for benchmark docs. Public benchmark claims should use runs where
+per-run backend execution metadata, dataset hashes, input shape, parameters,
+stage timings, per-stage peak RSS, output counts and LSF environment. Use those
+JSON files as the source of truth for benchmark docs. Public benchmark claims
+should use runs where
 `repo_state.tracked_source_count` and `repo_state.untracked_source_count` are
 both `0`. The LSF launchers pass `--require-clean`, so publication-grade jobs
 fail immediately if source files differ from HEAD or untracked source files are

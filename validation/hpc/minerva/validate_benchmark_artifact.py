@@ -81,6 +81,10 @@ REQUIRED_FULL_PIPELINE_RUST_EXECUTION = {
     "pipeline_aucell",
 }
 REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
+    "grn": {
+        "all_of": {"gene_duplicate_summary"},
+        "any_of": ({"grn_infer"}, {"grn_infer_sparse_csc"}),
+    },
     "setup_fragments_to_matrix": {
         "all_of": {"preproc_fragments_to_matrix"},
     },
@@ -1732,6 +1736,13 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
                 failures.extend(_python_hot_path_failures(env, f"{prefix}.env"))
             else:
                 failures.append(f"{prefix}.env must be an object")
+            failures.extend(
+                _backend_execution_failures(
+                    row,
+                    prefix,
+                    required_rust_stages={"grn"},
+                )
+            )
     return failures
 
 
