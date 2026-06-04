@@ -93,6 +93,41 @@ def test_real_multiome_harness_fingerprints_reference_dataframes():
     assert changed["corner_sample_sha256"] != first["corner_sample_sha256"]
 
 
+def test_real_multiome_harness_fingerprints_feather_without_full_table_read(
+    monkeypatch,
+    tmp_path,
+):
+    module = _load_module(
+        "bench_real_multiome_file_backed_fingerprint",
+        ROOT / "validation/scaling/bench_real_multiome_pipeline.py",
+    )
+    path = tmp_path / "regions_vs_motifs.rankings.feather"
+    pd.DataFrame(
+        {
+            "motifs": ["m1", "m2", "m3"],
+            "peak_1": np.asarray([1, 2, 3], dtype=np.int32),
+            "peak_2": np.asarray([3, 2, 1], dtype=np.int32),
+        }
+    ).to_feather(path)
+
+    import pyarrow.feather as feather
+
+    real_read_table = feather.read_table
+    read_columns = []
+
+    def recording_read_table(*args, **kwargs):
+        read_columns.append(kwargs.get("columns"))
+        return real_read_table(*args, **kwargs)
+
+    monkeypatch.setattr(feather, "read_table", recording_read_table)
+
+    fp = module.file_backed_table_fingerprint(path)
+
+    assert fp["shape"] == [3, 3]
+    assert fp["file_backed"] is True
+    assert read_columns == [["motifs"]]
+
+
 def test_real_multiome_harness_builds_compact_output_summaries(tmp_path):
     module = _load_module(
         "bench_real_multiome_output_summaries",

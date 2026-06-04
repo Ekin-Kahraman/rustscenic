@@ -318,6 +318,7 @@ def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, A
             dtype = str(field.type)
             dtype_counts[dtype] = dtype_counts.get(dtype, 0) + 1
     elif suffix in {".feather", ".ft"}:
+        import pyarrow.feather as feather
         import pyarrow.ipc as ipc
 
         with ipc.open_file(str(path)) as reader:
@@ -326,7 +327,8 @@ def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, A
             for field in schema:
                 dtype = str(field.type)
                 dtype_counts[dtype] = dtype_counts.get(dtype, 0) + 1
-            n_rows = sum(reader.get_batch(i).num_rows for i in range(reader.num_record_batches))
+        count_col = _file_backed_row_count_column(columns, path)
+        n_rows = int(feather.read_table(path, columns=[count_col]).num_rows)
     else:
         raise ValueError(f"unsupported file-backed table format for {path}")
 
@@ -347,6 +349,15 @@ def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, A
         "path_name": path.name,
         "size_bytes": path.stat().st_size,
     }
+
+
+def _file_backed_row_count_column(columns: list[str], path: Path) -> str:
+    if not columns:
+        raise ValueError(f"file-backed table has no columns: {path}")
+    for candidate in ("motifs", path.stem, "motif", "motif_id", "features", "feature"):
+        if candidate in columns:
+            return candidate
+    return columns[0]
 
 
 def dataframe_fingerprint(df: pd.DataFrame, *, sample: int = 8) -> dict[str, Any]:
