@@ -435,6 +435,10 @@ def test_real_multiome_harness_rejects_invalid_args(tmp_path):
         (["--enhancer-max-distance", "-1"], "--enhancer-max-distance must be non-negative"),
         (["--summary-rows", "0"], "--summary-rows must be positive"),
         (["--summary-max-rows", "0"], "--summary-max-rows must be positive"),
+        (["--motif-rankings", str(tmp_path / "missing.parquet")], "missing input:"),
+        (["--motif-annotations", str(tmp_path / "missing.tsv")], "missing input:"),
+        (["--region-motif-rankings", str(tmp_path / "missing.feather")], "missing input:"),
+        (["--gene-coords", str(tmp_path / "missing_genes.parquet")], "missing input:"),
     ):
         args = module.parse_args([*common, *extra])
         try:
@@ -543,6 +547,10 @@ def test_real_multiome_scaling_rejects_ambiguous_cell_counts(tmp_path):
         (["--cell-counts", "0", "100"], "positive integers"),
         (["--threads", "0"], "--threads must be positive"),
         (["--grn-max-features", "1.5"], "--grn-max-features must be in"),
+        (["--motif-rankings", str(tmp_path / "missing.parquet")], "missing input:"),
+        (["--motif-annotations", str(tmp_path / "missing.tsv")], "missing input:"),
+        (["--region-motif-rankings", str(tmp_path / "missing.feather")], "missing input:"),
+        (["--gene-coords", str(tmp_path / "missing_genes.parquet")], "missing input:"),
     ):
         args = module.parse_args([*common, *extra])
         try:

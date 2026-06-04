@@ -386,6 +386,15 @@ def validate_args(args: argparse.Namespace) -> None:
         raise SystemExit("--enhancer-max-distance must be non-negative")
     if args.enhancer_min_abs_corr < 0:
         raise SystemExit("--enhancer-min-abs-corr must be non-negative")
+    for name in (
+        "motif_rankings",
+        "motif_annotations",
+        "region_motif_rankings",
+        "gene_coords",
+    ):
+        path = getattr(args, name)
+        if path is not None and not path.exists():
+            raise SystemExit(f"missing input: {path}")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -442,8 +451,6 @@ def main(argv: list[str] | None = None) -> int:
     for path in (args.rna_10x_h5, args.fragments, args.peaks):
         if not path.exists():
             raise SystemExit(f"missing input: {path}")
-    if args.region_motif_rankings is not None and not args.region_motif_rankings.exists():
-        raise SystemExit(f"missing input: {args.region_motif_rankings}")
     payload = coordinator(args)
     print(json.dumps(payload, indent=2), flush=True)
     return 0
