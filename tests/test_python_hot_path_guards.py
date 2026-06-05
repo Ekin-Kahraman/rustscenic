@@ -149,8 +149,6 @@ def test_hot_path_scan_allows_rust_index_projection_boundaries(tmp_path):
         "def ok(df, enriched_with_peaks, keep):\n"
         "    df = df.loc[:, keep]\n"
         "    return all(pd.api.types.is_numeric_dtype(dtype) for dtype in df.dtypes.iloc[1:])\n"
-        "    out = enriched_with_peaks.iloc[[]].copy().reset_index(drop=True)\n"
-        "    return out\n"
     )
 
     violations = scan_python_hot_paths(package)

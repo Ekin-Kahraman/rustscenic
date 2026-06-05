@@ -1534,6 +1534,41 @@ def test_filter_cistarget_peak_rows_matches_pandas_merge_reference():
     ]
 
 
+def test_filter_cistarget_peak_rows_empty_keep_preserves_schema_and_symbols():
+    from rustscenic.pipeline import _filter_cistarget_peak_rows
+
+    prior_symbols = [
+        "cistarget_enrichment_from_rankings_i32",
+        "cistarget_region_attribution_peak_values_i32",
+        "pipeline_expand_region_cistarget_rows_f32",
+    ]
+    enriched_with_peaks = pd.DataFrame(
+        {
+            "regulon": ["TF1_regulon"],
+            "motif": ["m1"],
+            "peak_id": ["p1"],
+            "auc": np.asarray([0.8], dtype=np.float64),
+        }
+    )
+    enriched_with_peaks.attrs["rust_backend"] = {
+        "engine": "rust",
+        "symbols": prior_symbols,
+    }
+    keep = pd.DataFrame(
+        {
+            "regulon": pd.Series(dtype="object"),
+            "motif": pd.Series(dtype="object"),
+        }
+    )
+
+    got = _filter_cistarget_peak_rows(enriched_with_peaks, keep)
+
+    assert list(got.columns) == ["regulon", "motif", "peak_id", "auc"]
+    assert got.empty
+    assert got["auc"].dtype == np.float64
+    assert got.attrs["rust_backend"]["symbols"] == prior_symbols
+
+
 def test_filter_cistarget_peak_rows_uses_rust_row_helper(monkeypatch):
     import rustscenic.pipeline as pipeline
 

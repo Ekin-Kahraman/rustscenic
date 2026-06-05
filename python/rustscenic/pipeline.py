@@ -1242,13 +1242,19 @@ def _all_non_index_columns_numeric(df: pd.DataFrame) -> bool:
     return all(pd.api.types.is_numeric_dtype(dtype) for dtype in df.dtypes.iloc[1:])
 
 
-def _empty_cistarget_peak_attribution_frame() -> pd.DataFrame:
+def _empty_cistarget_peak_attribution_frame(auc_dtype=np.float32) -> pd.DataFrame:
+    try:
+        auc_dtype = np.dtype(auc_dtype)
+    except TypeError:
+        auc_dtype = np.dtype(np.float32)
+    if not np.issubdtype(auc_dtype, np.number):
+        auc_dtype = np.dtype(np.float32)
     return pd.DataFrame(
         {
             "regulon": pd.Series(dtype="object"),
             "motif": pd.Series(dtype="object"),
             "peak_id": pd.Series(dtype="object"),
-            "auc": pd.Series(dtype=np.float32),
+            "auc": pd.Series(dtype=auc_dtype),
         },
         columns=["regulon", "motif", "peak_id", "auc"],
     )
@@ -1273,7 +1279,8 @@ def _attribute_peaks_to_cistarget(
     the same top-N target set that was scored by cistarget.
     """
     if enriched.empty:
-        return _empty_cistarget_peak_attribution_frame()
+        auc_dtype = enriched["auc"].dtype if "auc" in enriched.columns else np.float32
+        return _empty_cistarget_peak_attribution_frame(auc_dtype)
 
     regulon_pairs = [
         (str(regulon_name), string_list(targets))
@@ -1307,7 +1314,7 @@ def _attribute_peaks_to_cistarget(
         enhancer_peaks,
     )
     if len(regulon_values) == 0:
-        out = _empty_cistarget_peak_attribution_frame()
+        out = _empty_cistarget_peak_attribution_frame(auc_values.dtype)
         out.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
         return out
 
@@ -1472,7 +1479,11 @@ def _filter_cistarget_peak_rows(
     keep: pd.DataFrame,
 ) -> pd.DataFrame:
     if enriched_with_peaks.empty or keep.empty:
-        out = enriched_with_peaks.iloc[[]].copy().reset_index(drop=True)
+        auc_dtype = (
+            enriched_with_peaks["auc"].dtype
+            if "auc" in enriched_with_peaks.columns else np.float32
+        )
+        out = _empty_cistarget_peak_attribution_frame(auc_dtype)
         out.attrs["rust_backend"] = {
             "engine": "rust",
             "symbols": _rust_backend_symbols(enriched_with_peaks),

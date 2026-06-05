@@ -115,11 +115,6 @@ ALLOWED_HITS = {
         "return all(pd.api.types.is_numeric_dtype(dtype) for dtype in df.dtypes.iloc[1:])",
     ): "metadata-only dtype scan for first-column motif export detection",
     (
-        "pipeline.py",
-        ".iloc[",
-        "out = enriched_with_peaks.iloc[[]].copy().reset_index(drop=True)",
-    ): "empty Rust-backed peak-attribution result boundary",
-    (
         "_gene_resolution.py",
         ".max()",
         "max_val = float(X.max())",
