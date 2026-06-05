@@ -5467,6 +5467,28 @@ fn build_peak_regulons_and_features_from_edges(
 }
 
 #[pyfunction]
+fn pipeline_unique_regulon_features<'py>(
+    py: Python<'py>,
+    regulon_genes: Vec<Vec<String>>,
+) -> PyResult<Py<PyList>> {
+    let features = py.allow_threads(|| build_unique_regulon_features(&regulon_genes));
+    Ok(PyList::new(py, features.iter().map(String::as_str))?.unbind())
+}
+
+fn build_unique_regulon_features(regulon_genes: &[Vec<String>]) -> Vec<String> {
+    let mut seen: HashSet<&str> = HashSet::new();
+    let mut features = Vec::new();
+    for genes in regulon_genes {
+        for gene in genes {
+            if seen.insert(gene.as_str()) {
+                features.push(gene.clone());
+            }
+        }
+    }
+    features
+}
+
+#[pyfunction]
 fn pipeline_project_ranking_columns<'py>(
     py: Python<'py>,
     columns: Vec<String>,
@@ -6869,6 +6891,7 @@ fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
         pipeline_peak_regulons_and_features_from_edges,
         m
     )?)?;
+    m.add_function(wrap_pyfunction!(pipeline_unique_regulon_features, m)?)?;
     m.add_function(wrap_pyfunction!(pipeline_project_ranking_columns, m)?)?;
     m.add_function(wrap_pyfunction!(cistarget_region_attribution_i16, m)?)?;
     m.add_function(wrap_pyfunction!(cistarget_region_attribution_i32, m)?)?;

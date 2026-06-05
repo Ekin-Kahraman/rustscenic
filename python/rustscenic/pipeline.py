@@ -52,6 +52,7 @@ from rustscenic._rustscenic import (
     pipeline_match_atac_cell_indices as _pipeline_match_atac_cell_indices,
     pipeline_peak_regulons_and_features_from_edges as _pipeline_peak_regulons_and_features,
     pipeline_project_ranking_columns as _pipeline_project_ranking_columns,
+    pipeline_unique_regulon_features as _pipeline_unique_regulon_features,
     preproc_peak_coords_for_names as _preproc_peak_coords_for_names,
 )
 from rustscenic._stage_utils import (
@@ -1194,16 +1195,10 @@ def _ranking_shape_for_provenance(
 
 
 def _regulon_feature_names(regulons: Iterable) -> list[str]:
-    seen: set[str] = set()
-    features: list[str] = []
-    for _, genes in iter_regulon_pairs(regulons):
-        for gene in genes:
-            feature = str(gene)
-            if feature in seen:
-                continue
-            seen.add(feature)
-            features.append(feature)
-    return features
+    regulon_genes = [string_list(genes) for _, genes in iter_regulon_pairs(regulons)]
+    if not regulon_genes:
+        return []
+    return _pipeline_unique_regulon_features(regulon_genes)
 
 
 def _ranking_universe_size(rankings) -> int | None:

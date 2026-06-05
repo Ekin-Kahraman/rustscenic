@@ -2840,6 +2840,37 @@ def test_ranking_column_projection_uses_rust_name_projection(monkeypatch):
     assert examples == ["missing", "peak_a"]
 
 
+def test_unique_regulon_features_preserves_first_seen_order():
+    from rustscenic._rustscenic import pipeline_unique_regulon_features
+
+    assert pipeline_unique_regulon_features(
+        [["GATA1", "SPI1", "GATA1"], ["SPI1", "IRF8"]]
+    ) == ["GATA1", "SPI1", "IRF8"]
+
+
+def test_regulon_feature_names_uses_rust_unique_order(monkeypatch):
+    import rustscenic.pipeline as pipeline
+
+    seen = {}
+
+    def fake_unique(regulon_genes):
+        seen["regulon_genes"] = [list(genes) for genes in regulon_genes]
+        return ["GATA1", "SPI1", "IRF8"]
+
+    monkeypatch.setattr(pipeline, "_pipeline_unique_regulon_features", fake_unique)
+
+    out = pipeline._regulon_feature_names({
+        "TF1_regulon": ["GATA1", "SPI1", "GATA1"],
+        "TF2_regulon": ["SPI1", "IRF8"],
+    })
+
+    assert seen["regulon_genes"] == [
+        ["GATA1", "SPI1", "GATA1"],
+        ["SPI1", "IRF8"],
+    ]
+    assert out == ["GATA1", "SPI1", "IRF8"]
+
+
 def test_projected_ranking_columns_reports_sorted_requested_examples(tmp_path):
     import pytest
 

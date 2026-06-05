@@ -927,6 +927,10 @@ def pipeline_peak_regulons_and_features_from_edges(
     """Build TF peak-regulons plus sorted unique peak IDs for ranking projection."""
 
 
+def pipeline_unique_regulon_features(regulon_genes: list[list[str]]) -> list[str]:
+    """Return first-seen unique feature names across regulon gene lists."""
+
+
 def pipeline_project_ranking_columns(
     columns: list[str],
     requested_features: list[str],
