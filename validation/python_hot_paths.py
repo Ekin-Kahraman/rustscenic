@@ -30,6 +30,7 @@ HOT_PATH_PATTERNS = (
     ".duplicated(",
     ".value_counts(",
     ".notna(",
+    ".take(",
     ".todense(",
     ".toarray(",
     ".where(",
@@ -86,6 +87,16 @@ ALLOWED_HITS = {
         "pd.concat(",
         "adata_rna.obs = pd.concat([obs, auc_obs], axis=1, copy=False)",
     ): "final AnnData obs attachment and h5ad IO only",
+    (
+        "cistarget.py",
+        ".take(",
+        "out = enriched.take(row_ix, axis=0).reset_index(drop=True)",
+    ): "Rust-returned row-index projection boundary",
+    (
+        "enhancer.py",
+        ".take(",
+        "out = peak_coords.take(row_ix, axis=0)",
+    ): "Rust-returned peak-coordinate projection boundary",
     (
         "_gene_resolution.py",
         ".max()",

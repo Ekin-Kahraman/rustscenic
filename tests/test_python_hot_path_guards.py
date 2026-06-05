@@ -96,6 +96,42 @@ def test_hot_path_scan_pipeline_allowlist_is_exact_line_only(tmp_path):
     ]
 
 
+def test_hot_path_scan_rejects_unapproved_dataframe_take(tmp_path):
+    package = tmp_path / "rustscenic"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    (package / "stage.py").write_text(
+        "def bad(df, row_ix):\n"
+        "    return df.take(row_ix, axis=0)\n"
+    )
+
+    violations = scan_python_hot_paths(package)
+
+    assert violations == [
+        "stage.py:2: return df.take(row_ix, axis=0)"
+    ]
+
+
+def test_hot_path_scan_allows_rust_index_projection_boundaries(tmp_path):
+    package = tmp_path / "rustscenic"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    (package / "cistarget.py").write_text(
+        "def ok(enriched, row_ix):\n"
+        "    out = enriched.take(row_ix, axis=0).reset_index(drop=True)\n"
+        "    return out\n"
+    )
+    (package / "enhancer.py").write_text(
+        "def ok(peak_coords, row_ix):\n"
+        "    out = peak_coords.take(row_ix, axis=0)\n"
+        "    return out\n"
+    )
+
+    violations = scan_python_hot_paths(package)
+
+    assert violations == []
+
+
 def test_hot_path_cli_prints_json_state_for_hpc_preflight(tmp_path, capsys):
     package = tmp_path / "rustscenic"
     package.mkdir()
