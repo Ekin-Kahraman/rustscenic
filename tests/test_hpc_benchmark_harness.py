@@ -1145,6 +1145,7 @@ def _write_minerva_preflight_fixture(tmp_path: Path):
     (hpc / "run_real_pbmc3k_full_pipeline_scaling.lsf").write_text("# fixture\n")
     (hpc / "run_real_pbmc3k_grn_scaling.lsf").write_text("# fixture\n")
     (hpc / "prepare_real_pbmc3k_data.py").write_text("# fixture\n")
+    (hpc / "prepare_reference_cache.py").write_text("# fixture\n")
     (hpc / "collect_benchmark_results.py").write_text("# fixture\n")
     (hpc / "validate_benchmark_artifact.py").write_text("# fixture\n")
     (env / "bin" / "python").write_text("# fixture\n")
@@ -1301,6 +1302,7 @@ def test_minerva_preflight_accepts_ready_clean_checkout(monkeypatch, tmp_path):
     assert result["backend"]["ok"] is True
     assert result["python_hot_paths"]["ok"] is True
     assert result["hpc_tools"]["prepare_data"]["exists"] is True
+    assert result["hpc_tools"]["prepare_references"]["exists"] is True
     assert result["hpc_tools"]["collector"]["exists"] is True
     assert result["hpc_tools"]["validator"]["exists"] is True
 
@@ -1527,6 +1529,63 @@ def test_minerva_preflight_reports_default_reference_cache_paths(monkeypatch, tm
     assert result["gene_coords"]["needed"] is True
     assert result["gene_coords"]["source"] == "default_cache"
     assert result["gene_coords"]["path"].endswith("hs_gene_tss.parquet")
+
+
+def test_prepare_reference_cache_warms_without_loading_motif_rankings(monkeypatch, tmp_path):
+    module = _load_module(
+        "prepare_reference_cache",
+        ROOT / "validation/hpc/minerva/prepare_reference_cache.py",
+    )
+    motif_cache = tmp_path / "motifs"
+    gene_cache = tmp_path / "genes"
+    calls: list[str] = []
+
+    def fake_ensure_motif_rankings_cached(*, species, cache_dir, verbose, **_kwargs):
+        calls.append("ensure_motif")
+        path = module.data._motif_rankings_cache_path(
+            species=species,
+            cache_dir=cache_dir,
+        )
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"fixture feather")
+        return path
+
+    def fail_if_loaded(*_args, **_kwargs):
+        raise AssertionError("reference-cache prep must not load motif rankings")
+
+    def fake_download_gene_coords(*, species, cache_dir, verbose, **_kwargs):
+        calls.append("gene_coords")
+        paths = module.data._gene_coords_cache_paths(
+            species=species,
+            cache_dir=cache_dir,
+        )
+        parquet_path = Path(paths["parquet_path"])
+        parquet_path.parent.mkdir(parents=True, exist_ok=True)
+        parquet_path.write_bytes(b"fixture parquet")
+        return pd.DataFrame({"gene": ["SPI1"], "chrom": ["chr1"], "tss": [100]})
+
+    monkeypatch.setattr(
+        module.data,
+        "_ensure_motif_rankings_cached",
+        fake_ensure_motif_rankings_cached,
+    )
+    monkeypatch.setattr(module.data, "download_motif_rankings", fail_if_loaded)
+    monkeypatch.setattr(module.data, "download_gene_coords", fake_download_gene_coords)
+
+    result = module.prepare_references(
+        motif_species="human",
+        gene_species="hs",
+        motif_cache_dir=motif_cache,
+        gene_cache_dir=gene_cache,
+        verbose=False,
+    )
+
+    assert result["ok"] is True
+    assert calls == ["ensure_motif", "gene_coords"]
+    assert result["references"]["motif_rankings"]["after"]["exists"] is True
+    assert result["references"]["motif_rankings"]["status"] == "cached"
+    assert result["references"]["gene_coords"]["rows"] == 1
+    assert result["references"]["gene_coords"]["after"]["exists"] is True
 
 
 def test_minerva_preflight_rejects_python_hot_path_regression(monkeypatch, tmp_path):
@@ -4036,8 +4095,7 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "--require-reference-cache" in full
     assert "--require-reference-cache" in full_scaling
     assert "--require-reference-cache" not in grn
-    assert "data.download_motif_rankings" in readme
-    assert "data.download_gene_coords" in readme
+    assert "validation/hpc/minerva/prepare_reference_cache.py" in readme
     assert "--check-output-files" in full
     assert '--threads "${RAYON_NUM_THREADS}"' in full
     assert 'MOTIF_RANKINGS="${MOTIF_RANKINGS:-}"' in full

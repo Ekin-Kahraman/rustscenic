@@ -21,11 +21,7 @@ export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export RAYON_NUM_THREADS="${LSB_DJOB_NUMPROC:-4}"
 python validation/hpc/minerva/prepare_real_pbmc3k_data.py
-python - <<'PY'
-import rustscenic.data as data
-data.download_motif_rankings(species="human")
-data.download_gene_coords(species="hs")
-PY
+python validation/hpc/minerva/prepare_reference_cache.py
 python validation/hpc/minerva/preflight_minerva.py \
   --require-clean \
   --require-repo-import \

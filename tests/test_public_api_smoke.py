@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import anndata as ad
 import numpy as np
@@ -73,6 +74,31 @@ def test_download_motif_rankings_uses_cache_without_real_network(tmp_path, monke
     monkeypatch.setattr(urllib.request, "urlretrieve", fail_if_called)
     cached = data.download_motif_rankings(cache_dir=tmp_path, verbose=False)
     pd.testing.assert_frame_equal(out, cached)
+
+
+def test_ensure_motif_rankings_cached_does_not_load_feather(tmp_path, monkeypatch):
+    import rustscenic.data as data
+    import urllib.request
+
+    expected_name = "hg38_10kbp_up_10kbp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather"
+    calls = []
+
+    def fake_urlretrieve(url, local_path):
+        calls.append(url)
+        Path(local_path).write_bytes(b"fixture feather")
+        return local_path, None
+
+    def fail_if_loaded(*_args, **_kwargs):
+        raise AssertionError("cache-only helper must not read Feather contents")
+
+    monkeypatch.setattr(urllib.request, "urlretrieve", fake_urlretrieve)
+    monkeypatch.setattr(pd, "read_feather", fail_if_loaded)
+
+    out = data._ensure_motif_rankings_cached(cache_dir=tmp_path, verbose=False)
+
+    assert out == tmp_path / expected_name
+    assert out.exists()
+    assert calls and calls[0].endswith(expected_name)
 
 
 def test_download_gene_coords_parses_gencode_gtf(tmp_path, monkeypatch):

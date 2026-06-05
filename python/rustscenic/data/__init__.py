@@ -146,6 +146,107 @@ def _motif_rankings_cache_path(
     return Path(cache_dir) / filename
 
 
+def _motif_rankings_cache_target(
+    species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
+    genome: str | None = None,
+    motif_collection: str = "mc_v10_clust",
+    refseq_release: str = "refseq_r80",
+    region: str = "gene_based",
+    window: str = "10kbp_up_10kbp_down",
+    score_type: str = "rankings",
+    cache_dir: Path | None = None,
+    filename: str | None = None,
+    url: str | None = None,
+) -> tuple[Path, str, str, str, str]:
+    if cache_dir is None:
+        cache_dir = Path.home() / ".cache" / "rustscenic" / "cistarget"
+    cache_dir = Path(cache_dir)
+    canonical_species = _species_code(species)
+    species_dir = _SPECIES_DIRS[canonical_species]
+    if genome is None:
+        genome = "hg38" if canonical_species == "hs" else "mm10"
+    if filename is None:
+        filename = _motif_rankings_filename(
+            genome=genome,
+            motif_collection=motif_collection,
+            region=region,
+            window=window,
+            score_type=score_type,
+        )
+    if url is None:
+        url = _motif_rankings_url(
+            species_dir=species_dir,
+            genome=genome,
+            motif_collection=motif_collection,
+            refseq_release=refseq_release,
+            region=region,
+            filename=filename,
+        )
+    local_path = _motif_rankings_cache_path(
+        species=species,
+        genome=genome,
+        motif_collection=motif_collection,
+        refseq_release=refseq_release,
+        region=region,
+        window=window,
+        score_type=score_type,
+        cache_dir=cache_dir,
+        filename=filename,
+        url=url,
+    )
+    return local_path, url, filename, species_dir, genome
+
+
+def _ensure_motif_rankings_cached(
+    species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
+    genome: str | None = None,
+    motif_collection: str = "mc_v10_clust",
+    refseq_release: str = "refseq_r80",
+    region: str = "gene_based",
+    window: str = "10kbp_up_10kbp_down",
+    score_type: str = "rankings",
+    cache_dir: Path | None = None,
+    filename: str | None = None,
+    url: str | None = None,
+    verbose: bool = True,
+) -> Path:
+    import urllib.request
+
+    local_path, url, filename, species_dir, genome = _motif_rankings_cache_target(
+        species=species,
+        genome=genome,
+        motif_collection=motif_collection,
+        refseq_release=refseq_release,
+        region=region,
+        window=window,
+        score_type=score_type,
+        cache_dir=cache_dir,
+        filename=filename,
+        url=url,
+    )
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+    if local_path.exists():
+        return local_path
+
+    if verbose:
+        print(f"downloading {filename} → {local_path}", flush=True)
+    try:
+        urllib.request.urlretrieve(url, local_path)
+    except (OSError, urllib.error.URLError) as e:
+        # Network timeout / DNS failure / HTTP error all unlink the
+        # partial file so a retry doesn't get short-circuited by the
+        # cache check serving a truncated feather.
+        if local_path.exists():
+            local_path.unlink()
+        raise RuntimeError(
+            f"failed to download {url} ({e}). Browse "
+            f"https://resources.aertslab.org/cistarget/databases/"
+            f"{species_dir}/{genome}/ for the directory and pass the "
+            f"exact `filename=` (or full `url=`) you find there."
+        ) from e
+    return local_path
+
+
 def download_motif_rankings(
     species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
     genome: str | None = None,
@@ -214,49 +315,8 @@ def download_motif_rankings(
     authoritative directory.
     """
     import pandas as pd
-    import urllib.request
 
-    if cache_dir is None:
-        cache_dir = Path.home() / ".cache" / "rustscenic" / "cistarget"
-    cache_dir = Path(cache_dir)
-    cache_dir.mkdir(parents=True, exist_ok=True)
-
-    # Normalise the species alias from the single source of truth in
-    # ``_TF_ALIAS_MAP`` so adding an alias there exposes it through every
-    # data-module entry point automatically.
-    canonical_species = _species_code(species)
-    species_dir = _SPECIES_DIRS[canonical_species]
-    if genome is None:
-        genome = "hg38" if canonical_species == "hs" else "mm10"
-
-    # aertslab paths differ between gene_based and region_based on the
-    # directory tree:
-    #   gene_based:    {species_dir}/{genome}/{refseq_release}/{motif_collection}/gene_based/
-    #                  {genome}_{window}_full_tx_{mc_short}.genes_vs_motifs.{score_type}.feather
-    #   region_based:  {species_dir}/{genome}/screen/{motif_collection}/region_based/
-    #                  {genome}_screen_{mc_short}.regions_vs_motifs.{score_type}.feather
-    # The motif-collection short slug ("v10_clust") is the trailing piece
-    # of the collection ("mc_v10_clust") after stripping the "mc_" prefix.
-    if filename is None:
-        filename = _motif_rankings_filename(
-            genome=genome,
-            motif_collection=motif_collection,
-            region=region,
-            window=window,
-            score_type=score_type,
-        )
-
-    if url is None:
-        url = _motif_rankings_url(
-            species_dir=species_dir,
-            genome=genome,
-            motif_collection=motif_collection,
-            refseq_release=refseq_release,
-            region=region,
-            filename=filename,
-        )
-
-    local_path = _motif_rankings_cache_path(
+    local_path = _ensure_motif_rankings_cached(
         species=species,
         genome=genome,
         motif_collection=motif_collection,
@@ -267,34 +327,20 @@ def download_motif_rankings(
         cache_dir=cache_dir,
         filename=filename,
         url=url,
+        verbose=verbose,
     )
-
-    if not local_path.exists():
-        if verbose:
-            print(f"downloading {filename} → {local_path}", flush=True)
-        try:
-            urllib.request.urlretrieve(url, local_path)
-        except (OSError, urllib.error.URLError) as e:
-            # Network timeout / DNS failure / HTTP error all unlink the
-            # partial file so a retry doesn't get short-circuited by the
-            # cache check serving a truncated feather.
-            if local_path.exists():
-                local_path.unlink()
-            raise RuntimeError(
-                f"failed to download {url} ({e}). Browse "
-                f"https://resources.aertslab.org/cistarget/databases/"
-                f"{species_dir}/{genome}/ for the directory and pass the "
-                f"exact `filename=` (or full `url=`) you find there."
-            ) from e
 
     rankings = pd.read_feather(local_path)
     if rankings.empty or len(rankings.columns) == 0:
+        canonical_species = _species_code(species)
+        resolved_genome = genome or ("hg38" if canonical_species == "hs" else "mm10")
         raise RuntimeError(
             f"motif rankings feather at {local_path} is empty (zero rows or "
             f"zero columns). The download likely returned an empty body for "
             f"an unsupported species/genome combination. Delete the file and "
             f"retry with a different filename / url, or browse "
-            f"https://resources.aertslab.org/cistarget/databases/{species_dir}/{genome}/ "
+            f"https://resources.aertslab.org/cistarget/databases/"
+            f"{_SPECIES_DIRS[canonical_species]}/{resolved_genome}/ "
             f"for valid options."
         )
     # Aertslab v10_clust feathers store the motifs column at the END, not the

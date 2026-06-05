@@ -332,7 +332,12 @@ def _reference_cache_statuses(
             "}))",
         ]
     )
-    proc = _run([str(python), "-c", code], cwd=repo)
+    try:
+        proc = _run([str(python), "-c", code], cwd=repo)
+    except OSError as exc:
+        statuses["ok"] = False
+        statuses["stderr"] = str(exc)
+        return statuses
     if proc.returncode != 0:
         statuses["ok"] = False
         statuses["stderr"] = proc.stderr.strip() or proc.stdout.strip()
@@ -388,6 +393,7 @@ def preflight(args: argparse.Namespace) -> dict[str, Any]:
         },
         "hpc_tools": {
             "prepare_data": _path_status(repo / "validation/hpc/minerva/prepare_real_pbmc3k_data.py"),
+            "prepare_references": _path_status(repo / "validation/hpc/minerva/prepare_reference_cache.py"),
             "collector": _path_status(repo / "validation/hpc/minerva/collect_benchmark_results.py"),
             "validator": _path_status(repo / "validation/hpc/minerva/validate_benchmark_artifact.py"),
         },
