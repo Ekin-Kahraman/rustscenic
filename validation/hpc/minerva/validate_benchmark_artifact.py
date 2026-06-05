@@ -808,6 +808,19 @@ def _region_motif_ranking_failures(
         )
     if not (
         {
+            "cistarget_region_attribution_peak_values_i16",
+            "cistarget_region_attribution_peak_values_i32",
+            "cistarget_region_attribution_peak_values_i64",
+        }
+        & symbol_set
+    ):
+        failures.append(
+            f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
+            "symbols must include a cistarget_region_attribution_peak_values_* "
+            "Rust symbol when region_motif_rankings is supplied"
+        )
+    if not (
+        {
             "pipeline_expand_region_cistarget_rows_f32",
             "pipeline_expand_region_cistarget_rows_f64",
         }

@@ -3516,9 +3516,60 @@ def test_benchmark_artifact_validator_requires_region_cistarget_symbols(tmp_path
         "when region_motif_rankings is supplied"
     ) in failures
     assert (
+        "full_pipeline.backend_execution.pipeline_eregulon_peak_attribution."
+        "symbols must include a cistarget_region_attribution_peak_values_* "
+        "Rust symbol when region_motif_rankings is supplied"
+    ) in failures
+    assert (
         "reference_fingerprints.region_motif_rankings.file_backed must be true"
         in failures
     )
+
+
+def test_benchmark_artifact_validator_requires_region_peak_value_symbols(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_requires_region_peak_values",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["params"]["region_motif_rankings"] = "region_rankings.feather"
+    record["setup_elapsed_s"]["region_motif_rankings_metadata"] = 0.02
+    record["reference_fingerprints"]["region_motif_rankings"] = {
+        "shape": [8, 2000],
+        "index_name": None,
+        "index_sample": ["file-backed:not-loaded"],
+        "column_sample": ["motif", "peak_1"],
+        "dtype_counts": {"int32": 2000},
+        "corner_sample_sha256": "d" * 64,
+        "file_backed": True,
+        "format": "feather",
+        "metadata_read_columns": ["motifs"],
+        "path_name": "region_rankings.feather",
+        "size_bytes": 1024,
+    }
+    record["reference_sources"]["region_motif_rankings"] = _explicit_reference_source(
+        tmp_path / "region_rankings.feather"
+    )
+    record["shapes"]["region_motif_rankings"] = [8, 2000]
+    record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
+        "engine": "rust",
+        "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
+    }
+    record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
+        "engine": "rust",
+        "symbols": [
+            "cistarget_region_attribution_i32",
+            "pipeline_expand_region_cistarget_rows_f32",
+        ],
+    }
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_eregulon_peak_attribution."
+        "symbols must include a cistarget_region_attribution_peak_values_* "
+        "Rust symbol when region_motif_rankings is supplied"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_requires_region_peak_filter_with_annotations(tmp_path):
@@ -3682,6 +3733,36 @@ def test_benchmark_artifact_validator_requires_scaling_region_peak_filter_with_a
         }
 
     assert module.validate_record(record, require_clean=True) == []
+
+
+def test_benchmark_artifact_validator_requires_scaling_region_peak_value_symbols(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_requires_scaling_region_peak_values",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["params"]["region_motif_rankings"] = "region_rankings.feather"
+    for row in record["runs"]:
+        row["params"]["region_motif_rankings"] = "region_rankings.feather"
+        row["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
+            "engine": "rust",
+            "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
+        }
+        row["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
+            "engine": "rust",
+            "symbols": [
+                "cistarget_region_attribution_i32",
+                "pipeline_expand_region_cistarget_rows_f32",
+            ],
+        }
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "runs[0].backend_execution.pipeline_eregulon_peak_attribution."
+        "symbols must include a cistarget_region_attribution_peak_values_* "
+        "Rust symbol when region_motif_rankings is supplied"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_scaling_row_without_backend_execution(tmp_path):
