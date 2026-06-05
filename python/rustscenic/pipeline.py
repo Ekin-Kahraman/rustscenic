@@ -99,6 +99,7 @@ class PipelineResult:
     backend_execution: dict = field(default_factory=dict)
     matrix_inputs: dict = field(default_factory=dict)
     cistarget_rankings: dict = field(default_factory=dict)
+    region_cistarget_rankings: dict = field(default_factory=dict)
 
     def manifest(self) -> dict:
         d = asdict(self)
@@ -433,6 +434,7 @@ def run(
     enriched: pd.DataFrame | None = None
     enriched_for_eregulons: pd.DataFrame | None = None
     cistarget_rankings: dict = {}
+    region_cistarget_rankings: dict = {}
     motif_annotations_df = (
         _coerce_motif_annotations(motif_annotations)
         if motif_annotations is not None and motif_rankings is not None else None
@@ -478,20 +480,13 @@ def run(
             and rank_universe_size > loaded_feature_count
             else None
         )
-        cistarget_rankings = {
-            "input_kind": _ranking_input_kind(motif_rankings),
-            "mode": (
-                "projected_file"
-                if rank_universe_arg is not None
-                else "dataframe" if isinstance(motif_rankings, pd.DataFrame)
-                else "full_file"
-            ),
-            "projected": rank_universe_arg is not None,
-            "loaded_columns": loaded_feature_count,
-            "rank_universe_size": int(rank_universe_arg or loaded_feature_count),
-            "requested_features": requested_feature_count,
-            "motifs": int(len(ranking_motif_names)),
-        }
+        cistarget_rankings = _ranking_provenance(
+            motif_rankings,
+            loaded_columns=loaded_feature_count,
+            rank_universe_size=rank_universe_size,
+            requested_features=requested_feature_count,
+            motifs=len(ranking_motif_names),
+        )
         universe_note = (
             f" projected from {rank_universe_arg:,}-gene universe"
             if rank_universe_arg is not None else ""
@@ -736,6 +731,23 @@ def run(
                         region_motif_rankings,
                         feature_names=region_ranking_features,
                     )
+                (
+                    region_loaded_columns,
+                    region_rank_universe_size,
+                    region_motif_count,
+                ) = _ranking_shape_for_provenance(
+                    region_rankings,
+                    region_motif_rankings,
+                )
+                region_cistarget_rankings = _ranking_provenance(
+                    region_motif_rankings,
+                    loaded_columns=region_loaded_columns,
+                    rank_universe_size=region_rank_universe_size,
+                    requested_features=len(region_ranking_features)
+                    if region_ranking_features is not None
+                    else None,
+                    motifs=region_motif_count,
+                )
                 region_enrich, enriched_with_peaks = _region_cistarget_with_peak_ids(
                     region_rankings,
                     peak_regulons,
@@ -891,6 +903,7 @@ def run(
         backend_execution=backend_execution,
         matrix_inputs=matrix_inputs,
         cistarget_rankings=cistarget_rankings,
+        region_cistarget_rankings=region_cistarget_rankings,
     )
     # Manifest is the single source of truth for "what did this run produce"
     (output_dir / "manifest.json").write_text(json.dumps(result.manifest(), indent=2))
@@ -1133,6 +1146,48 @@ def _ranking_input_kind(rankings) -> str:
         return "dataframe"
     suffix = Path(rankings).suffix.lower().lstrip(".")
     return suffix or "file"
+
+
+def _ranking_provenance(
+    rankings,
+    *,
+    loaded_columns: int,
+    rank_universe_size: int | None,
+    requested_features: int | None,
+    motifs: int,
+) -> dict[str, int | str | bool | None]:
+    projected_universe = (
+        rank_universe_size
+        if rank_universe_size is not None and rank_universe_size > loaded_columns
+        else None
+    )
+    return {
+        "input_kind": _ranking_input_kind(rankings),
+        "mode": (
+            "projected_file"
+            if projected_universe is not None
+            else "dataframe" if isinstance(rankings, pd.DataFrame)
+            else "full_file"
+        ),
+        "projected": projected_universe is not None,
+        "loaded_columns": int(loaded_columns),
+        "rank_universe_size": int(projected_universe or loaded_columns),
+        "requested_features": requested_features,
+        "motifs": int(motifs),
+    }
+
+
+def _ranking_shape_for_provenance(
+    rankings: pd.DataFrame | _RankingsArray,
+    source,
+) -> tuple[int, int | None, int]:
+    if isinstance(rankings, _RankingsArray):
+        return (
+            int(rankings.values.shape[1]),
+            rankings.metadata.get("rank_universe_size"),
+            len(rankings.motif_names),
+        )
+    return int(rankings.shape[1]), _ranking_universe_size(source), int(len(rankings.index))
 
 
 def _regulon_feature_names(regulons: Iterable) -> list[str]:

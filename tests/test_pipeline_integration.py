@@ -2531,6 +2531,17 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
     assert result.cistarget_rankings["loaded_columns"] < (
         result.cistarget_rankings["rank_universe_size"]
     )
+    assert result.region_cistarget_rankings["mode"] == "projected_file"
+    assert result.region_cistarget_rankings["projected"] is True
+    assert result.region_cistarget_rankings["rank_universe_size"] == len(peak_names) + 1
+    assert result.region_cistarget_rankings["loaded_columns"] < (
+        result.region_cistarget_rankings["rank_universe_size"]
+    )
+    assert (
+        result.region_cistarget_rankings["requested_features"]
+        == result.region_cistarget_rankings["loaded_columns"]
+    )
+    assert result.region_cistarget_rankings["motifs"] == len(motif_names)
     region_symbols = [
         "cistarget_enrichment_from_projected_rankings_i32",
         "cistarget_region_attribution_peak_values_i32",
@@ -2550,6 +2561,10 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
         ]
     )
     assert manifest["cistarget_rankings"] == result.cistarget_rankings
+    assert (
+        manifest["region_cistarget_rankings"]
+        == result.region_cistarget_rankings
+    )
     assert (
         manifest["backend_execution"]["eregulon_peak_attribution"]["symbols"]
         == region_symbols
@@ -2594,6 +2609,8 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
         region_only.backend_execution["eregulon_peak_attribution"]["symbols"]
         == region_symbols
     )
+    assert region_only.region_cistarget_rankings["mode"] == "projected_file"
+    assert region_only.region_cistarget_rankings["projected"] is True
 
 
 def test_coerce_rankings_accepts_aertslab_feather_path(tmp_path):
