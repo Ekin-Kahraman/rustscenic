@@ -112,6 +112,24 @@ def test_hot_path_scan_rejects_unapproved_dataframe_take(tmp_path):
     ]
 
 
+def test_hot_path_scan_rejects_unapproved_loc_and_iloc_projections(tmp_path):
+    package = tmp_path / "rustscenic"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    (package / "stage.py").write_text(
+        "def bad(df, keep, rows):\n"
+        "    projected = df.loc[:, keep]\n"
+        "    return projected.iloc[rows]\n"
+    )
+
+    violations = scan_python_hot_paths(package)
+
+    assert violations == [
+        "stage.py:2: projected = df.loc[:, keep]",
+        "stage.py:3: return projected.iloc[rows]",
+    ]
+
+
 def test_hot_path_scan_allows_rust_index_projection_boundaries(tmp_path):
     package = tmp_path / "rustscenic"
     package.mkdir()
@@ -124,6 +142,14 @@ def test_hot_path_scan_allows_rust_index_projection_boundaries(tmp_path):
     (package / "enhancer.py").write_text(
         "def ok(peak_coords, row_ix):\n"
         "    out = peak_coords.take(row_ix, axis=0)\n"
+        "    genes_in_rna = genes.iloc[matched_gene_rows].reset_index(drop=True)\n"
+        "    return out\n"
+    )
+    (package / "pipeline.py").write_text(
+        "def ok(df, enriched_with_peaks, keep):\n"
+        "    df = df.loc[:, keep]\n"
+        "    return all(pd.api.types.is_numeric_dtype(dtype) for dtype in df.dtypes.iloc[1:])\n"
+        "    out = enriched_with_peaks.iloc[[]].copy().reset_index(drop=True)\n"
         "    return out\n"
     )
 

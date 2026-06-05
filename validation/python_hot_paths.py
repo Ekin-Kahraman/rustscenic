@@ -31,6 +31,8 @@ HOT_PATH_PATTERNS = (
     ".value_counts(",
     ".notna(",
     ".take(",
+    ".loc[",
+    ".iloc[",
     ".todense(",
     ".toarray(",
     ".where(",
@@ -97,6 +99,26 @@ ALLOWED_HITS = {
         ".take(",
         "out = peak_coords.take(row_ix, axis=0)",
     ): "Rust-returned peak-coordinate projection boundary",
+    (
+        "enhancer.py",
+        ".iloc[",
+        "genes_in_rna = genes.iloc[matched_gene_rows].reset_index(drop=True)",
+    ): "Rust-returned gene-coordinate projection boundary",
+    (
+        "pipeline.py",
+        ".loc[",
+        "df = df.loc[:, keep]",
+    ): "caller-supplied DataFrame ranking projection after Rust column selection; file-backed HPC projection reads selected columns directly",
+    (
+        "pipeline.py",
+        ".iloc[",
+        "return all(pd.api.types.is_numeric_dtype(dtype) for dtype in df.dtypes.iloc[1:])",
+    ): "metadata-only dtype scan for first-column motif export detection",
+    (
+        "pipeline.py",
+        ".iloc[",
+        "out = enriched_with_peaks.iloc[[]].copy().reset_index(drop=True)",
+    ): "empty Rust-backed peak-attribution result boundary",
     (
         "_gene_resolution.py",
         ".max()",
