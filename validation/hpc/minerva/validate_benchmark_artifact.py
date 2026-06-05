@@ -1425,26 +1425,55 @@ def _full_pipeline_scaling_design_failures(
     if not isinstance(params, dict):
         return ["full_pipeline_scaling.params must be an object"]
 
+    failures: list[str] = []
     cell_counts = params.get("cell_counts")
     if (
         not isinstance(cell_counts, list)
         or len(cell_counts) < 2
         or not all(_positive_int(value) for value in cell_counts)
     ):
-        return ["params.cell_counts must contain at least two positive integers"]
-    if cell_counts != sorted(cell_counts):
-        return ["params.cell_counts must be sorted ascending"]
-    if len(set(cell_counts)) != len(cell_counts):
-        return ["params.cell_counts must not contain duplicates"]
+        failures.append("params.cell_counts must contain at least two positive integers")
+    else:
+        if cell_counts != sorted(cell_counts):
+            failures.append("params.cell_counts must be sorted ascending")
+        if len(set(cell_counts)) != len(cell_counts):
+            failures.append("params.cell_counts must not contain duplicates")
 
-    requested = [
-        row.get("n_cells_requested")
-        for row in runs
-        if isinstance(row, dict)
-    ]
-    if requested != cell_counts:
-        return ["params.cell_counts must match runs[*].n_cells_requested"]
-    return []
+        requested = [
+            row.get("n_cells_requested")
+            for row in runs
+            if isinstance(row, dict)
+        ]
+        if requested != cell_counts:
+            failures.append("params.cell_counts must match runs[*].n_cells_requested")
+
+    threads = params.get("threads")
+    if _positive_int(threads):
+        row_threads = [
+            row.get("threads")
+            for row in runs
+            if isinstance(row, dict) and "threads" in row
+        ]
+        if row_threads and row_threads != [threads] * len(row_threads):
+            failures.append("params.threads must match runs[*].threads")
+
+    if "write_integrated_adata" in params:
+        write_integrated = params.get("write_integrated_adata")
+        if not isinstance(write_integrated, bool):
+            failures.append("params.write_integrated_adata must be boolean when present")
+        else:
+            row_write_flags = [
+                row.get("write_integrated_adata")
+                for row in runs
+                if isinstance(row, dict) and "write_integrated_adata" in row
+            ]
+            if row_write_flags and row_write_flags != [write_integrated] * len(row_write_flags):
+                failures.append(
+                    "params.write_integrated_adata must match "
+                    "runs[*].write_integrated_adata"
+                )
+
+    return failures
 
 
 def _full_pipeline_scaling_row_failures(

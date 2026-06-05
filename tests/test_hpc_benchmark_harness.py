@@ -2697,6 +2697,44 @@ def test_benchmark_artifact_validator_rejects_scaling_cell_count_design_mismatch
     assert "params.cell_counts must match runs[*].n_cells_requested" in failures
 
 
+def test_benchmark_artifact_validator_rejects_scaling_thread_design_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_thread_design",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["params"]["threads"] = 8
+    record["env"]["rayon_num_threads"] = "8"
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert "params.threads must match runs[*].threads" in failures
+
+
+def test_benchmark_artifact_validator_rejects_scaling_integrated_mode_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_integrated_design",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["params"]["write_integrated_adata"] = False
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "params.write_integrated_adata must match "
+        "runs[*].write_integrated_adata"
+    ) in failures
+
+
 def test_benchmark_artifact_validator_rejects_single_point_scaling_record(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_full_scaling_single_point",
