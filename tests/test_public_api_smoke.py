@@ -205,6 +205,32 @@ def test_real_pbmc_bench_gene_coords_modes_are_interpretable(tmp_path, monkeypat
     assert coords.to_dict("records") == [{"gene": "GENE1", "chrom": "chr1", "tss": 123}]
 
 
+def test_legacy_scaling_benches_use_result_counts_not_output_rereads():
+    """Legacy scaling scripts must not inflate benchmark RSS by loading full
+    ranking/output tables outside pipeline.run.
+    """
+    from pathlib import Path
+
+    scaling = Path(__file__).parent.parent / "validation" / "scaling"
+    scripts = [
+        scaling / "bench_real_pbmc_full_e2e.py",
+        scaling / "bench_full_pipeline_gibbs.py",
+        scaling / "bench_full_pipeline_pbmc_multiome.py",
+        scaling / "bench_pbmc_multiome_3k.py",
+    ]
+    for script in scripts:
+        source = script.read_text()
+        assert "pd.read_parquet(result." not in source, script.name
+        assert "result.n_grn_edges" in source, script.name
+        assert "result.aucell_shape" in source, script.name
+        assert '"backend_execution": result.backend_execution' in source, script.name
+
+    full_e2e = scripts[0].read_text()
+    assert "pd.read_feather(RANKINGS)" not in full_e2e
+    assert "motif_rankings = RANKINGS" in full_e2e
+    assert '"cistarget_rankings": result.cistarget_rankings' in full_e2e
+
+
 def test_synthetic_grn_scaling_curve_cli_smoke(tmp_path):
     import subprocess
     import sys

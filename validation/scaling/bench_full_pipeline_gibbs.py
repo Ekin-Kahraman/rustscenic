@@ -99,8 +99,8 @@ def main() -> int:
     for k, v in result.elapsed.items():
         print(f"  {k:12s} {v:7.1f}s", flush=True)
     print(f"  {'TOTAL':12s} {total:7.1f}s", flush=True)
-    print(f"  GRN edges: {pd.read_parquet(result.grn_path).shape[0]:,}", flush=True)
-    print(f"  AUCell shape: {pd.read_parquet(result.aucell_path).shape}", flush=True)
+    print(f"  GRN edges: {result.n_grn_edges:,}", flush=True)
+    print(f"  AUCell shape: {tuple(result.aucell_shape)}", flush=True)
 
     record = {
         "n_cells": rna.n_obs,
@@ -110,6 +110,10 @@ def main() -> int:
         "topics_n_threads": 4,
         "elapsed": result.elapsed,
         "total": total,
+        "n_grn_edges": result.n_grn_edges,
+        "n_regulons": result.n_regulons,
+        "aucell_shape": result.aucell_shape,
+        "backend_execution": result.backend_execution,
     }
     out_file = Path(__file__).parent / "real_multiome_gibbs_e2e.json"
     out_file.write_text(json.dumps(record, indent=2))

@@ -116,7 +116,7 @@ def main() -> int:
         print(f"  {k:12s} {v:7.1f}s")
     print(f"  {'TOTAL':12s} {total:7.1f}s")
     print()
-    print(f"GRN edges: {pd.read_parquet(result.grn_path).shape[0]:,}")
+    print(f"GRN edges: {result.n_grn_edges:,}")
     print(f"regulons: {result.n_regulons}")
 
     # Save the timing record for cross-run comparison.
@@ -127,6 +127,10 @@ def main() -> int:
         "n_tfs": len(tfs_present),
         "elapsed": result.elapsed,
         "total": total,
+        "n_grn_edges": result.n_grn_edges,
+        "n_regulons": result.n_regulons,
+        "aucell_shape": result.aucell_shape,
+        "backend_execution": result.backend_execution,
     }
     (HERE / "bench_record.json").write_text(json.dumps(record, indent=2))
     print(f"\nrecord → {HERE / 'bench_record.json'}")

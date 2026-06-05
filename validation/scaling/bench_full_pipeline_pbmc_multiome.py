@@ -121,9 +121,14 @@ def main() -> int:
     for k, v in result.elapsed.items():
         print(f"  {k:12s} {v:7.1f}s")
     print(f"  {'TOTAL':12s} {total:7.1f}s")
-    print(f"\n  GRN edges: {pd.read_parquet(result.grn_path).shape[0]:,}")
-    print(f"  AUCell shape: {pd.read_parquet(result.aucell_path).shape}")
-    print(f"  enhancer links: {pd.read_parquet(result.enhancer_links_path).shape[0] if result.enhancer_links_path else 'skipped'}")
+    print(f"\n  GRN edges: {result.n_grn_edges:,}")
+    print(f"  AUCell shape: {tuple(result.aucell_shape)}")
+    enhancer_links = (
+        f"{result.n_enhancer_links:,}"
+        if result.enhancer_links_path
+        else "skipped"
+    )
+    print(f"  enhancer links: {enhancer_links}")
     print(f"  eRegulons: {result.n_eregulons}")
 
     record = {
@@ -132,6 +137,11 @@ def main() -> int:
         "n_tfs": len(tfs),
         "elapsed": result.elapsed,
         "total": total,
+        "n_grn_edges": result.n_grn_edges,
+        "n_enhancer_links": result.n_enhancer_links,
+        "n_eregulons": result.n_eregulons,
+        "aucell_shape": result.aucell_shape,
+        "backend_execution": result.backend_execution,
     }
     (Path(__file__).parent / "real_multiome_full_e2e.json").write_text(
         json.dumps(record, indent=2)

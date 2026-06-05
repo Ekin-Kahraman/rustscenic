@@ -130,18 +130,12 @@ def main() -> int:
     rna.X = rna.X.astype(np.float32)
     print(f"  RNA: {rna.shape}", flush=True)
 
-    print("Loading aertslab hg38 motif rankings...", flush=True)
-    t0 = time.monotonic()
-    motif_rankings = pd.read_feather(RANKINGS)
-    # aertslab v10 feather: motifs are rows under a `motifs` column at the
-    # end; genes are columns. Set the motif column as the index so cistarget
-    # gets a (n_motifs × n_genes) numeric DataFrame indexed by motif name.
-    if "motifs" in motif_rankings.columns:
-        motif_rankings = motif_rankings.set_index("motifs")
-    else:
-        motif_rankings = motif_rankings.set_index(motif_rankings.columns[0])
-    print(f"  rankings: {motif_rankings.shape} (motifs × genes) in "
-          f"{time.monotonic()-t0:.1f}s", flush=True)
+    motif_rankings = RANKINGS
+    print(
+        "Using file-backed aertslab hg38 motif rankings "
+        f"({RANKINGS.stat().st_size / 1e9:.2f} GB)",
+        flush=True,
+    )
 
     gene_coords, gene_coords_mode, gene_coords_source = load_gene_coords(rna)
     print(f"  gene_coords: {gene_coords_mode} ({len(gene_coords):,} records)",
@@ -181,16 +175,12 @@ def main() -> int:
     for k, v in result.elapsed.items():
         print(f"  {k:12s} {v:7.1f}s", flush=True)
     print(f"  {'TOTAL':12s} {total:7.1f}s", flush=True)
-    print(f"  GRN edges:        {pd.read_parquet(result.grn_path).shape[0]:,}",
-          flush=True)
-    print(f"  AUCell shape:     {pd.read_parquet(result.aucell_path).shape}",
-          flush=True)
+    print(f"  GRN edges:        {result.n_grn_edges:,}", flush=True)
+    print(f"  AUCell shape:     {tuple(result.aucell_shape)}", flush=True)
     if result.cistarget_path:
-        ct = pd.read_parquet(result.cistarget_path)
-        print(f"  Cistarget hits:   {len(ct):,}", flush=True)
+        print(f"  Cistarget hits:   {result.n_cistarget_rows:,}", flush=True)
     if result.enhancer_links_path:
-        links = pd.read_parquet(result.enhancer_links_path)
-        print(f"  Enhancer links:   {len(links):,}", flush=True)
+        print(f"  Enhancer links:   {result.n_enhancer_links:,}", flush=True)
     print(f"  eRegulons:        {result.n_eregulons}", flush=True)
 
     record = {
@@ -209,7 +199,13 @@ def main() -> int:
         ),
         "elapsed": result.elapsed,
         "total": total,
+        "cistarget_rankings": result.cistarget_rankings,
+        "backend_execution": result.backend_execution,
+        "n_grn_edges": result.n_grn_edges,
+        "n_cistarget_rows": result.n_cistarget_rows,
+        "n_enhancer_links": result.n_enhancer_links,
         "n_eregulons": result.n_eregulons,
+        "aucell_shape": result.aucell_shape,
     }
     out_file = Path(__file__).parent / "real_pbmc_full_e2e.json"
     out_file.write_text(json.dumps(record, indent=2))
