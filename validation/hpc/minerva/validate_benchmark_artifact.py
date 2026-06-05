@@ -162,6 +162,12 @@ REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
     "pipeline_candidate_regulons": {
         "all_of": {"pipeline_candidate_regulons_from_grn"},
     },
+    "pipeline_cistarget_projection_features": {
+        "all_of": {"pipeline_unique_regulon_features"},
+    },
+    "pipeline_cistarget_ranking_projection": {
+        "all_of": {"pipeline_project_ranking_columns"},
+    },
     "pipeline_cistarget": {
         "any_of": (
             {"cistarget_enrichment_from_rankings_i16"},
@@ -223,6 +229,9 @@ REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
     },
     "pipeline_eregulon_peak_regulons": {
         "all_of": {"pipeline_peak_regulons_and_features_from_edges"},
+    },
+    "pipeline_region_cistarget_ranking_projection": {
+        "all_of": {"pipeline_project_ranking_columns"},
     },
     "pipeline_eregulons": {
         "any_of": ({"eregulon_assemble"}, {"eregulon_assemble_f32"}),
@@ -879,6 +888,7 @@ def _cistarget_ranking_metadata_failures(
         field="cistarget_rankings",
         shape_key="motif_rankings",
         projected_stage="pipeline_cistarget",
+        projection_stage="pipeline_cistarget_ranking_projection",
         required=True,
     )
 
@@ -895,6 +905,7 @@ def _region_cistarget_ranking_metadata_failures(
         field="region_cistarget_rankings",
         shape_key="region_motif_rankings",
         projected_stage="pipeline_eregulon_peak_attribution",
+        projection_stage="pipeline_region_cistarget_ranking_projection",
         required=required,
     )
 
@@ -906,6 +917,7 @@ def _ranking_metadata_failures(
     field: str,
     shape_key: str,
     projected_stage: str,
+    projection_stage: str,
     required: bool,
 ) -> list[str]:
     failures: list[str] = []
@@ -985,6 +997,14 @@ def _ranking_metadata_failures(
                 stage=projected_stage,
             )
         )
+        failures.extend(
+            _ranking_projection_backend_failures(
+                record,
+                prefix,
+                field=field,
+                stage=projection_stage,
+            )
+        )
     elif mode == "full_file":
         if projected is not False:
             failures.append(f"{prefix}.{field}.projected must be false")
@@ -1052,6 +1072,27 @@ def _projected_cistarget_symbol_failures(
         f"{prefix}.backend_execution.{stage}.symbols must include "
         "a cistarget_enrichment_from_projected_rankings* Rust symbol when "
         f"{field}.mode is projected_file"
+    ]
+
+
+def _ranking_projection_backend_failures(
+    record: dict[str, Any],
+    prefix: str,
+    *,
+    field: str,
+    stage: str,
+) -> list[str]:
+    failures = _backend_execution_failures(record, prefix, {stage})
+    if failures:
+        return failures
+    execution = record.get("backend_execution")
+    state = execution.get(stage) if isinstance(execution, dict) else None
+    symbols = state.get("symbols") if isinstance(state, dict) else None
+    if isinstance(symbols, list) and "pipeline_project_ranking_columns" in symbols:
+        return []
+    return [
+        f"{prefix}.backend_execution.{stage}.symbols must include "
+        f"'pipeline_project_ranking_columns' when {field}.mode is projected_file"
     ]
 
 

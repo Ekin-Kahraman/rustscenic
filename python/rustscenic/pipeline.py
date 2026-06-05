@@ -442,9 +442,15 @@ def run(
     )
     if motif_rankings is not None:
         import rustscenic.cistarget
+        regulon_feature_names = _regulon_feature_names(candidate_regulon_pairs)
+        backend_execution["cistarget_projection_features"] = (
+            _rust_execution("pipeline_unique_regulon_features")
+            if regulon_feature_names
+            else _skipped_execution("no candidate regulon features to project")
+        )
         ranking_features = _ranking_projection_features(
             motif_rankings,
-            _regulon_feature_names(candidate_regulon_pairs),
+            regulon_feature_names,
         )
         if ranking_features is None:
             requested_feature_count = None
@@ -488,6 +494,10 @@ def run(
             requested_features=requested_feature_count,
             motifs=len(ranking_motif_names),
         )
+        if cistarget_rankings.get("projected"):
+            backend_execution["cistarget_ranking_projection"] = _rust_execution(
+                "pipeline_project_ranking_columns"
+            )
         universe_note = (
             f" projected from {rank_universe_arg:,}-gene universe"
             if rank_universe_arg is not None else ""
@@ -752,6 +762,10 @@ def run(
                     else None,
                     motifs=region_motif_count,
                 )
+                if region_cistarget_rankings.get("projected"):
+                    backend_execution["region_cistarget_ranking_projection"] = (
+                        _rust_execution("pipeline_project_ranking_columns")
+                    )
                 region_enrich, enriched_with_peaks = _region_cistarget_with_peak_ids(
                     region_rankings,
                     peak_regulons,
