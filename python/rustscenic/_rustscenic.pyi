@@ -347,7 +347,7 @@ def enhancer_parse_peak_names(
 def enhancer_match_gene_coords_to_rna(
     rna_gene_names: list[str],
     gene_coord_names: list[str],
-) -> tuple[npt.NDArray[np.uint64], npt.NDArray[np.int64]]:
+) -> tuple[npt.NDArray[np.uint64], npt.NDArray[np.uint32]]:
     """Match gene-coordinate rows to RNA feature columns."""
 
 
@@ -362,7 +362,7 @@ def enhancer_prepare_gene_order(
     peak_chrom_codes: npt.NDArray[np.int32],
     gene_chrom_codes: npt.NDArray[np.int32],
     gene_tss: npt.NDArray[np.int64],
-    gene_source_cols: npt.NDArray[np.int64],
+    gene_source_cols: npt.NDArray[np.uint32],
 ) -> tuple[npt.NDArray[np.uint64], bool, int]:
     """Sort enhancer gene coordinates and return overlap/unique-column metadata."""
 

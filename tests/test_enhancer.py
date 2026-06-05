@@ -502,7 +502,7 @@ def test_gene_coordinate_setup_uses_rust_helper(monkeypatch):
         seen["coord_genes"] = list(coord_genes)
         return (
             np.array([0, 1], dtype=np.uint64),
-            np.array([1, 0], dtype=np.int64),
+            np.array([1, 0], dtype=np.uint32),
         )
 
     def fake_prepare(peak_chrom_codes, gene_chrom_codes, gene_tss, gene_source_cols):
@@ -531,6 +531,7 @@ def test_gene_coordinate_setup_uses_rust_helper(monkeypatch):
         assert peak_ends.tolist() == [70]
         assert gene_tss.tolist() == [50, 100]
         assert gene_rna_cols.tolist() == [0, 1]
+        assert gene_rna_cols.dtype == np.uint32
         assert max_distance == 500_000
         assert min_abs_corr == 0.1
         return (
@@ -550,6 +551,7 @@ def test_gene_coordinate_setup_uses_rust_helper(monkeypatch):
     assert seen["coord_genes"] == ["G1", "G0"]
     assert seen["gene_tss"].tolist() == [100, 50]
     assert seen["gene_source_cols"].tolist() == [1, 0]
+    assert seen["gene_source_cols"].dtype == np.uint32
     assert links[["peak_id", "gene", "gene_tss", "distance", "correlation"]].to_dict(
         "records"
     ) == [
@@ -623,7 +625,7 @@ def test_gene_coordinate_rna_matcher_preserves_rows_and_duplicate_rna_semantics(
     )
 
     np.testing.assert_array_equal(row_ix, np.array([1, 2, 3], dtype=np.uint64))
-    np.testing.assert_array_equal(source_cols, np.array([2, 0, 2], dtype=np.int64))
+    np.testing.assert_array_equal(source_cols, np.array([2, 0, 2], dtype=np.uint32))
 
 
 def test_peak_coordinate_matcher_preserves_atac_order_and_reports_missing():

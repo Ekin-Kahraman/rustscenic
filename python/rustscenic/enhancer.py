@@ -123,7 +123,7 @@ def link_peaks_to_genes(
             "check species + symbol convention"
         )
     genes_in_rna = genes.iloc[matched_gene_rows].reset_index(drop=True)
-    source_rna_cols = np.asarray(source_rna_cols, dtype=np.int64)
+    source_rna_cols = np.asarray(source_rna_cols, dtype=np.uint32)
 
     # Normalise chrom names and encode chromosomes once for the Rust Pearson
     # kernel. The vector loop runs in Rust because peak tables can be large.
@@ -243,7 +243,6 @@ def _link_peaks_to_genes_pearson(
     atac_indices = np.asarray(atac_csc.indices, dtype=np.int32)
     atac_data = np.asarray(atac_csc.data, dtype=np.float32)
 
-    gene_source_cols_u32 = gene_source_cols.astype(np.uint32, copy=False)
     if rna_csc is None:
         backend_symbol = "enhancer_link_pearson"
         peak_ix, gene_ix, distances, corr = _enhancer_link_pearson(
@@ -256,7 +255,7 @@ def _link_peaks_to_genes_pearson(
             peak_ends,
             gene_chrom_codes,
             gene_tss,
-            gene_source_cols_u32,
+            gene_source_cols,
             int(max_distance),
             float(min_abs_corr),
             None,
@@ -277,7 +276,7 @@ def _link_peaks_to_genes_pearson(
             peak_ends,
             gene_chrom_codes,
             gene_tss,
-            gene_source_cols_u32,
+            gene_source_cols,
             int(max_distance),
             float(min_abs_corr),
             None,

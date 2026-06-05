@@ -97,7 +97,7 @@ type EnhancerChromCodesPyResult = (
 );
 type EnhancerGeneMatchPyResult = (
     Py<PyArray1<u64>>, // gene-coordinate row indices present in RNA
-    Py<PyArray1<i64>>, // source RNA column indices
+    Py<PyArray1<u32>>, // source RNA column indices
 );
 type EnhancerPeakCoordMatchPyResult = (
     Py<PyArray1<u64>>, // peak-coordinate row indices in ATAC peak order
@@ -2087,6 +2087,13 @@ fn enhancer_match_gene_coords_to_rna<'py>(
     rna_gene_names: Vec<String>,
     gene_coord_names: Vec<String>,
 ) -> PyResult<EnhancerGeneMatchPyResult> {
+    if rna_gene_names.len() > u32::MAX as usize {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "rna_gene_names has {} entries, exceeding the uint32 column-index limit",
+            rna_gene_names.len()
+        )));
+    }
+
     let (row_indices, source_cols) = py.allow_threads(|| {
         let mut rna_col_by_gene: HashMap<&str, usize> =
             HashMap::with_capacity(rna_gene_names.len());
@@ -2099,7 +2106,7 @@ fn enhancer_match_gene_coords_to_rna<'py>(
         for (row_idx, gene) in gene_coord_names.iter().enumerate() {
             if let Some(&source_col) = rna_col_by_gene.get(gene.as_str()) {
                 row_indices.push(row_idx as u64);
-                source_cols.push(source_col as i64);
+                source_cols.push(source_col as u32);
             }
         }
         (row_indices, source_cols)
@@ -2157,7 +2164,7 @@ fn enhancer_prepare_gene_order<'py>(
     peak_chrom_codes: PyReadonlyArray1<'py, i32>,
     gene_chrom_codes: PyReadonlyArray1<'py, i32>,
     gene_tss: PyReadonlyArray1<'py, i64>,
-    gene_source_cols: PyReadonlyArray1<'py, i64>,
+    gene_source_cols: PyReadonlyArray1<'py, u32>,
 ) -> PyResult<(Py<PyArray1<u64>>, bool, usize)> {
     let peak_chrom_codes = peak_chrom_codes.as_slice().map_err(|_| {
         pyo3::exceptions::PyValueError::new_err("peak_chrom_codes must be contiguous")
@@ -2180,16 +2187,6 @@ fn enhancer_prepare_gene_order<'py>(
             gene_source_cols.len()
         )));
     }
-    if let Some((i, &col)) = gene_source_cols
-        .iter()
-        .enumerate()
-        .find(|(_, &col)| col < 0 || col > u32::MAX as i64)
-    {
-        return Err(pyo3::exceptions::PyValueError::new_err(format!(
-            "gene_source_cols[{i}] = {col} is outside uint32 range"
-        )));
-    }
-
     let (order, has_overlap, n_unique_source_cols) = py.allow_threads(|| {
         let mut order: Vec<usize> = (0..gene_chrom_codes.len()).collect();
         order.sort_by(|&a, &b| {
@@ -2206,7 +2203,7 @@ fn enhancer_prepare_gene_order<'py>(
         let n_unique_source_cols = gene_source_cols
             .iter()
             .copied()
-            .collect::<HashSet<i64>>()
+            .collect::<HashSet<u32>>()
             .len();
         (order, has_overlap, n_unique_source_cols)
     });
