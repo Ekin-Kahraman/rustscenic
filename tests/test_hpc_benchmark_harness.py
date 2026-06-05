@@ -666,6 +666,7 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
             "setup_elapsed_s": {"load_rna_qc": 0.1, "fragments_to_matrix": 0.9},
             "elapsed_per_stage": {},
             "peak_rss_gb_per_stage": {},
+            "reference_sources": _default_cached_reference_sources(tmp_path / "one"),
             "outputs": {"grn_edges": 1},
         },
         {
@@ -685,6 +686,7 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
             "setup_elapsed_s": {"load_rna_qc": 0.2, "fragments_to_matrix": 1.8},
             "elapsed_per_stage": {},
             "peak_rss_gb_per_stage": {},
+            "reference_sources": _default_cached_reference_sources(tmp_path / "two"),
             "outputs": {"grn_edges": 1},
         },
     ]
@@ -747,6 +749,7 @@ def test_real_multiome_scaling_coordinator_validates_final_aggregate(tmp_path, m
             "setup_elapsed_s": {"load_rna_qc": 0.1, "fragments_to_matrix": 0.9},
             "elapsed_per_stage": {"grn": 1.0},
             "peak_rss_gb_per_stage": {"grn": 1.0},
+            "reference_sources": _default_cached_reference_sources(tmp_path / "child"),
             "outputs": {"grn_edges": 1},
         },
     )
@@ -2201,6 +2204,20 @@ def _explicit_reference_source(path: Path | str):
     }
 
 
+def _default_cached_reference_sources(tmp_path: Path):
+    return {
+        "motif_rankings": {
+            "source": "default_cache",
+            "path": str(tmp_path / "motif_rankings.feather"),
+            "exists_before": True,
+            "exists_after": True,
+            "cache_exists_before": True,
+            "cache_exists_after": True,
+        },
+        "gene_coords": _explicit_reference_source(tmp_path / "gene_coords.parquet"),
+    }
+
+
 def _full_pipeline_record(tmp_path: Path):
     artefact_names = {
         "atac_matrix_path": "atac_cells_by_peaks.h5ad",
@@ -2275,17 +2292,7 @@ def _full_pipeline_record(tmp_path: Path):
                 "corner_sample_sha256": "b" * 64,
             },
         },
-        "reference_sources": {
-            "motif_rankings": {
-                "source": "default_cache",
-                "path": str(tmp_path / "motif_rankings.feather"),
-                "exists_before": True,
-                "exists_after": True,
-                "cache_exists_before": True,
-                "cache_exists_after": True,
-            },
-            "gene_coords": _explicit_reference_source(tmp_path / "gene_coords.parquet"),
-        },
+        "reference_sources": _default_cached_reference_sources(tmp_path),
         "params": {
             "seed": 777,
             "n_cells_requested": 100,
@@ -2473,6 +2480,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "backend_execution": child["backend_execution"],
                 "cell_barcode_filter": child["cell_barcode_filter"],
                 "matrix_inputs": child["matrix_inputs"],
+                "reference_sources": child["reference_sources"],
                 "outputs": child["outputs"],
                 "expected_tf_recovery": child.get("expected_tf_recovery"),
                 "env": child["env"],
@@ -2829,6 +2837,27 @@ def test_benchmark_artifact_validator_rejects_scaling_matrix_inputs_child_mismat
     )
 
     assert "runs[0].matrix_inputs must match child JSON" in failures
+
+
+def test_benchmark_artifact_validator_rejects_scaling_reference_download(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_reference_download",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["reference_sources"]["motif_rankings"]["source"] = "default_download"
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert (
+        "runs[0].reference_sources.motif_rankings.source must be explicit_path "
+        "or default_cache for full-pipeline scaling"
+    ) in failures
+    assert "runs[0].reference_sources must match child JSON" in failures
 
 
 def test_benchmark_artifact_validator_rejects_incomplete_scaling_row_without_child_check(tmp_path):

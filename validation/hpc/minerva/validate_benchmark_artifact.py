@@ -1357,6 +1357,7 @@ def _full_pipeline_scaling_row_child_failures(
         "backend_execution": child.get("backend_execution"),
         "cell_barcode_filter": child.get("cell_barcode_filter"),
         "matrix_inputs": child.get("matrix_inputs"),
+        "reference_sources": child.get("reference_sources"),
         "write_integrated_adata": child.get("params", {}).get(
             "write_integrated_adata",
             True,
@@ -1387,6 +1388,32 @@ def _full_pipeline_scaling_row_child_failures(
                     failures.append(
                         f"{prefix}.output_dir must contain child output_inventory.{key}"
                     )
+    return failures
+
+
+def _full_pipeline_scaling_reference_source_failures(
+    row: dict[str, Any],
+    prefix: str,
+) -> list[str]:
+    sources = row.get("reference_sources")
+    if not isinstance(sources, dict):
+        return [f"{prefix}.reference_sources must be an object"]
+
+    failures: list[str] = []
+    for key in ("motif_rankings", "gene_coords"):
+        entry = sources.get(key)
+        entry_prefix = f"{prefix}.reference_sources.{key}"
+        if not isinstance(entry, dict):
+            failures.append(f"{entry_prefix} must be an object")
+            continue
+        source = entry.get("source")
+        if source not in {"explicit_path", "default_cache"}:
+            failures.append(
+                f"{entry_prefix}.source must be explicit_path or default_cache "
+                "for full-pipeline scaling"
+            )
+        if not _nonempty_str(entry.get("path")):
+            failures.append(f"{entry_prefix}.path must be a non-empty string")
     return failures
 
 
@@ -1515,6 +1542,7 @@ def _full_pipeline_scaling_row_failures(
         )
     )
     failures.extend(_matrix_input_failures(row, prefix))
+    failures.extend(_full_pipeline_scaling_reference_source_failures(row, prefix))
     failures.extend(_integrated_adata_execution_failures(row, prefix))
     if require_motif_pruning:
         failures.extend(
