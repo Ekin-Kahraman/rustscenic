@@ -854,10 +854,47 @@ def _cistarget_ranking_metadata_failures(
     record: dict[str, Any],
     prefix: str,
 ) -> list[str]:
+    return _ranking_metadata_failures(
+        record,
+        prefix,
+        field="cistarget_rankings",
+        shape_key="motif_rankings",
+        projected_stage="pipeline_cistarget",
+        required=True,
+    )
+
+
+def _region_cistarget_ranking_metadata_failures(
+    record: dict[str, Any],
+    prefix: str,
+    *,
+    required: bool,
+) -> list[str]:
+    return _ranking_metadata_failures(
+        record,
+        prefix,
+        field="region_cistarget_rankings",
+        shape_key="region_motif_rankings",
+        projected_stage="pipeline_eregulon_peak_attribution",
+        required=required,
+    )
+
+
+def _ranking_metadata_failures(
+    record: dict[str, Any],
+    prefix: str,
+    *,
+    field: str,
+    shape_key: str,
+    projected_stage: str,
+    required: bool,
+) -> list[str]:
     failures: list[str] = []
-    meta = record.get("cistarget_rankings")
-    if not isinstance(meta, dict):
-        return [f"{prefix}.cistarget_rankings must be an object"]
+    meta = record.get(field)
+    if not meta and not required:
+        return []
+    if not isinstance(meta, dict) or not meta:
+        return [f"{prefix}.{field} must be an object"]
 
     mode = meta.get("mode")
     projected = meta.get("projected")
@@ -869,25 +906,25 @@ def _cistarget_ranking_metadata_failures(
 
     if mode not in {"projected_file", "full_file", "dataframe"}:
         failures.append(
-            f"{prefix}.cistarget_rankings.mode must be projected_file, "
+            f"{prefix}.{field}.mode must be projected_file, "
             "full_file, or dataframe"
         )
     if not _nonempty_str(input_kind):
-        failures.append(f"{prefix}.cistarget_rankings.input_kind must be a non-empty string")
+        failures.append(f"{prefix}.{field}.input_kind must be a non-empty string")
     if not isinstance(projected, bool):
-        failures.append(f"{prefix}.cistarget_rankings.projected must be boolean")
+        failures.append(f"{prefix}.{field}.projected must be boolean")
     if not _positive_int(loaded_columns):
-        failures.append(f"{prefix}.cistarget_rankings.loaded_columns must be positive")
+        failures.append(f"{prefix}.{field}.loaded_columns must be positive")
     if not _positive_int(rank_universe_size):
-        failures.append(f"{prefix}.cistarget_rankings.rank_universe_size must be positive")
+        failures.append(f"{prefix}.{field}.rank_universe_size must be positive")
     elif _positive_int(loaded_columns) and rank_universe_size < loaded_columns:
         failures.append(
-            f"{prefix}.cistarget_rankings.rank_universe_size must be >= "
-            f"{prefix}.cistarget_rankings.loaded_columns"
+            f"{prefix}.{field}.rank_universe_size must be >= "
+            f"{prefix}.{field}.loaded_columns"
         )
     if requested_features is not None and not _positive_int(requested_features):
         failures.append(
-            f"{prefix}.cistarget_rankings.requested_features must be positive or null"
+            f"{prefix}.{field}.requested_features must be positive or null"
         )
     elif (
         _positive_int(requested_features)
@@ -895,73 +932,80 @@ def _cistarget_ranking_metadata_failures(
         and requested_features < loaded_columns
     ):
         failures.append(
-            f"{prefix}.cistarget_rankings.requested_features must be >= "
-            f"{prefix}.cistarget_rankings.loaded_columns"
+            f"{prefix}.{field}.requested_features must be >= "
+            f"{prefix}.{field}.loaded_columns"
         )
     if not _positive_int(motifs):
-        failures.append(f"{prefix}.cistarget_rankings.motifs must be positive")
+        failures.append(f"{prefix}.{field}.motifs must be positive")
 
     if mode == "projected_file":
         if projected is not True:
-            failures.append(f"{prefix}.cistarget_rankings.projected must be true")
+            failures.append(f"{prefix}.{field}.projected must be true")
         if input_kind == "dataframe":
             failures.append(
-                f"{prefix}.cistarget_rankings.input_kind must not be dataframe "
+                f"{prefix}.{field}.input_kind must not be dataframe "
                 "for projected_file mode"
             )
         if _positive_int(rank_universe_size) and _positive_int(loaded_columns):
             if rank_universe_size <= loaded_columns:
                 failures.append(
-                    f"{prefix}.cistarget_rankings.rank_universe_size must be "
-                    f"> {prefix}.cistarget_rankings.loaded_columns in "
+                    f"{prefix}.{field}.rank_universe_size must be "
+                    f"> {prefix}.{field}.loaded_columns in "
                     "projected_file mode"
                 )
         if not _positive_int(requested_features):
             failures.append(
-                f"{prefix}.cistarget_rankings.requested_features must be "
+                f"{prefix}.{field}.requested_features must be "
                 "positive in projected_file mode"
             )
-        failures.extend(_projected_cistarget_symbol_failures(record, prefix))
+        failures.extend(
+            _projected_cistarget_symbol_failures(
+                record,
+                prefix,
+                field=field,
+                stage=projected_stage,
+            )
+        )
     elif mode == "full_file":
         if projected is not False:
-            failures.append(f"{prefix}.cistarget_rankings.projected must be false")
+            failures.append(f"{prefix}.{field}.projected must be false")
         if input_kind == "dataframe":
             failures.append(
-                f"{prefix}.cistarget_rankings.input_kind must not be dataframe "
+                f"{prefix}.{field}.input_kind must not be dataframe "
                 "for full_file mode"
             )
         if _positive_int(rank_universe_size) and _positive_int(loaded_columns):
             if rank_universe_size != loaded_columns:
                 failures.append(
-                    f"{prefix}.cistarget_rankings.rank_universe_size must equal "
-                    f"{prefix}.cistarget_rankings.loaded_columns in full_file mode"
+                    f"{prefix}.{field}.rank_universe_size must equal "
+                    f"{prefix}.{field}.loaded_columns in full_file mode"
                 )
     elif mode == "dataframe":
         if projected is not False:
-            failures.append(f"{prefix}.cistarget_rankings.projected must be false")
+            failures.append(f"{prefix}.{field}.projected must be false")
         if input_kind != "dataframe":
             failures.append(
-                f"{prefix}.cistarget_rankings.input_kind must be dataframe "
+                f"{prefix}.{field}.input_kind must be dataframe "
                 "for dataframe mode"
             )
         if requested_features is not None:
             failures.append(
-                f"{prefix}.cistarget_rankings.requested_features must be null "
+                f"{prefix}.{field}.requested_features must be null "
                 "for dataframe mode"
             )
 
     shapes = record.get("shapes")
-    motif_shape = shapes.get("motif_rankings") if isinstance(shapes, dict) else None
+    motif_shape = shapes.get(shape_key) if isinstance(shapes, dict) else None
     if _shape2(motif_shape):
         if _positive_int(motifs) and motifs != motif_shape[0]:
             failures.append(
-                f"{prefix}.cistarget_rankings.motifs must match "
-                f"{prefix}.shapes.motif_rankings rows"
+                f"{prefix}.{field}.motifs must match "
+                f"{prefix}.shapes.{shape_key} rows"
             )
         if _positive_int(rank_universe_size) and rank_universe_size != motif_shape[1]:
             failures.append(
-                f"{prefix}.cistarget_rankings.rank_universe_size must match "
-                f"{prefix}.shapes.motif_rankings columns"
+                f"{prefix}.{field}.rank_universe_size must match "
+                f"{prefix}.shapes.{shape_key} columns"
             )
 
     return failures
@@ -970,9 +1014,12 @@ def _cistarget_ranking_metadata_failures(
 def _projected_cistarget_symbol_failures(
     record: dict[str, Any],
     prefix: str,
+    *,
+    field: str,
+    stage: str,
 ) -> list[str]:
     execution = record.get("backend_execution")
-    state = execution.get("pipeline_cistarget") if isinstance(execution, dict) else None
+    state = execution.get(stage) if isinstance(execution, dict) else None
     symbols = state.get("symbols") if isinstance(state, dict) else None
     if not isinstance(symbols, list):
         return []
@@ -983,9 +1030,9 @@ def _projected_cistarget_symbol_failures(
     ):
         return []
     return [
-        f"{prefix}.backend_execution.pipeline_cistarget.symbols must include "
+        f"{prefix}.backend_execution.{stage}.symbols must include "
         "a cistarget_enrichment_from_projected_rankings* Rust symbol when "
-        "cistarget_rankings.mode is projected_file"
+        f"{field}.mode is projected_file"
     ]
 
 
@@ -1015,6 +1062,13 @@ def _region_motif_ranking_failures(
         record,
         prefix,
         {"pipeline_eregulon_peak_regulons", "pipeline_eregulon_peak_attribution"},
+    )
+    failures.extend(
+        _region_cistarget_ranking_metadata_failures(
+            record,
+            prefix,
+            required=True,
+        )
     )
     execution = record.get("backend_execution")
     state = execution.get("pipeline_eregulon_peak_attribution") if isinstance(execution, dict) else None
@@ -1317,6 +1371,10 @@ def _pipeline_manifest_failures(record: dict[str, Any]) -> list[str]:
         failures.append(
             "output_inventory.manifest_path cistarget_rankings must match benchmark JSON"
         )
+    if manifest.get("region_cistarget_rankings") != record.get("region_cistarget_rankings"):
+        failures.append(
+            "output_inventory.manifest_path region_cistarget_rankings must match benchmark JSON"
+        )
     failures.extend(_pipeline_manifest_path_failures(record, manifest))
     failures.extend(_pipeline_manifest_count_failures(record, manifest))
     failures.extend(
@@ -1613,6 +1671,9 @@ def _full_pipeline_scaling_row_child_failures(
         "backend_execution": child.get("backend_execution"),
         "cell_barcode_filter": child.get("cell_barcode_filter"),
         "matrix_inputs": child.get("matrix_inputs"),
+        "shapes": child.get("shapes"),
+        "cistarget_rankings": child.get("cistarget_rankings"),
+        "region_cistarget_rankings": child.get("region_cistarget_rankings"),
         "reference_sources": child.get("reference_sources"),
         "params": child.get("params"),
         "write_integrated_adata": child.get("params", {}).get(
@@ -1964,6 +2025,7 @@ def validate_full_pipeline(
                 "backend_execution",
                 "cell_barcode_filter",
                 "cistarget_rankings",
+                "region_cistarget_rankings",
                 "input_hashes",
                 "reference_fingerprints",
                 "reference_sources",

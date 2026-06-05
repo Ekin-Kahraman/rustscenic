@@ -2425,6 +2425,7 @@ def _full_pipeline_record(tmp_path: Path):
             "requested_features": 2000,
             "motifs": 50,
         },
+        "region_cistarget_rankings": {},
         "params": {
             "seed": 777,
             "n_cells_requested": 100,
@@ -2582,10 +2583,23 @@ def _sync_full_pipeline_manifest(record: dict) -> None:
                 "cell_barcode_filter": record.get("cell_barcode_filter"),
                 "matrix_inputs": record.get("matrix_inputs"),
                 "cistarget_rankings": record.get("cistarget_rankings"),
+                "region_cistarget_rankings": record.get("region_cistarget_rankings"),
             }
         )
     )
     info["size_bytes"] = path.stat().st_size
+
+
+def _projected_region_cistarget_rankings_state() -> dict:
+    return {
+        "input_kind": "feather",
+        "mode": "projected_file",
+        "projected": True,
+        "loaded_columns": 750,
+        "rank_universe_size": 2000,
+        "requested_features": 900,
+        "motifs": 8,
+    }
 
 
 def _full_pipeline_scaling_record(tmp_path: Path):
@@ -2638,7 +2652,9 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "backend_execution": child["backend_execution"],
                 "cell_barcode_filter": child["cell_barcode_filter"],
                 "matrix_inputs": child["matrix_inputs"],
+                "shapes": child["shapes"],
                 "cistarget_rankings": child["cistarget_rankings"],
+                "region_cistarget_rankings": child["region_cistarget_rankings"],
                 "reference_sources": child["reference_sources"],
                 "outputs": child["outputs"],
                 "expected_tf_recovery": child.get("expected_tf_recovery"),
@@ -2818,6 +2834,19 @@ def test_benchmark_artifact_validator_rejects_missing_cistarget_rankings(tmp_pat
     failures = module.validate_record(record, require_clean=True)
 
     assert "full_pipeline.cistarget_rankings must be an object" in failures
+
+
+def test_benchmark_artifact_validator_rejects_missing_region_cistarget_rankings(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_missing_region_cistarget_rankings",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    del record["region_cistarget_rankings"]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "full_pipeline.region_cistarget_rankings missing" in failures
 
 
 def test_benchmark_artifact_validator_rejects_projected_cistarget_without_projected_kernel(tmp_path):
@@ -3838,6 +3867,7 @@ def test_benchmark_artifact_validator_accepts_region_motif_rankings_metadata(tmp
         tmp_path / "region_rankings.feather"
     )
     record["shapes"]["region_motif_rankings"] = [8, 2000]
+    record["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
     record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
         "engine": "rust",
         "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
@@ -3850,6 +3880,7 @@ def test_benchmark_artifact_validator_accepts_region_motif_rankings_metadata(tmp
             "pipeline_expand_region_cistarget_rows_f32",
         ],
     }
+    _sync_full_pipeline_manifest(record)
 
     assert module.validate_record(record, require_clean=True) == []
 
@@ -3874,6 +3905,8 @@ def test_benchmark_artifact_validator_requires_region_cistarget_symbols(tmp_path
         tmp_path / "region_rankings.feather"
     )
     record["shapes"]["region_motif_rankings"] = [8, 2000]
+    record["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
+    _sync_full_pipeline_manifest(record)
 
     failures = module.validate_record(record, require_clean=True)
 
@@ -3923,6 +3956,7 @@ def test_benchmark_artifact_validator_requires_region_peak_value_symbols(tmp_pat
         tmp_path / "region_rankings.feather"
     )
     record["shapes"]["region_motif_rankings"] = [8, 2000]
+    record["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
     record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
         "engine": "rust",
         "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
@@ -3930,10 +3964,11 @@ def test_benchmark_artifact_validator_requires_region_peak_value_symbols(tmp_pat
     record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
         "engine": "rust",
         "symbols": [
-            "cistarget_region_attribution_i32",
+            "cistarget_enrichment_from_projected_rankings_i32",
             "pipeline_expand_region_cistarget_rows_f32",
         ],
     }
+    _sync_full_pipeline_manifest(record)
 
     failures = module.validate_record(record, require_clean=True)
 
@@ -3983,6 +4018,7 @@ def test_benchmark_artifact_validator_requires_region_peak_filter_with_annotatio
     )
     record["shapes"]["motif_annotations"] = [4, 2]
     record["shapes"]["region_motif_rankings"] = [8, 2000]
+    record["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
     record["backend_execution"]["pipeline_cistarget_pruning"] = {
         "engine": "rust",
         "symbols": [
@@ -3997,11 +4033,12 @@ def test_benchmark_artifact_validator_requires_region_peak_filter_with_annotatio
     record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
         "engine": "rust",
         "symbols": [
-            "cistarget_region_attribution_i32",
+            "cistarget_enrichment_from_projected_rankings_i32",
             "cistarget_region_attribution_peak_values_i32",
             "pipeline_expand_region_cistarget_rows_f32",
         ],
     }
+    _sync_full_pipeline_manifest(record)
 
     failures = module.validate_record(record, require_clean=True)
 
@@ -4071,6 +4108,8 @@ def test_benchmark_artifact_validator_requires_scaling_region_peak_filter_with_a
     for row in record["runs"]:
         row["params"]["motif_annotations"] = "motif_annotations.tsv"
         row["params"]["region_motif_rankings"] = "region_rankings.feather"
+        row["shapes"]["region_motif_rankings"] = [8, 2000]
+        row["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
         row["backend_execution"]["pipeline_cistarget_pruning"] = {
             "engine": "rust",
             "symbols": [
@@ -4085,7 +4124,7 @@ def test_benchmark_artifact_validator_requires_scaling_region_peak_filter_with_a
         row["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
             "engine": "rust",
             "symbols": [
-                "cistarget_region_attribution_i32",
+                "cistarget_enrichment_from_projected_rankings_i32",
                 "cistarget_region_attribution_peak_values_i32",
                 "pipeline_expand_region_cistarget_rows_f32",
             ],
@@ -4116,6 +4155,8 @@ def test_benchmark_artifact_validator_requires_scaling_region_peak_value_symbols
     record["params"]["region_motif_rankings"] = "region_rankings.feather"
     for row in record["runs"]:
         row["params"]["region_motif_rankings"] = "region_rankings.feather"
+        row["shapes"]["region_motif_rankings"] = [8, 2000]
+        row["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
         row["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
             "engine": "rust",
             "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
@@ -4123,7 +4164,7 @@ def test_benchmark_artifact_validator_requires_scaling_region_peak_value_symbols
         row["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
             "engine": "rust",
             "symbols": [
-                "cistarget_region_attribution_i32",
+                "cistarget_enrichment_from_projected_rankings_i32",
                 "pipeline_expand_region_cistarget_rows_f32",
             ],
         }
