@@ -154,12 +154,42 @@ def file_info(path: str | Path | None) -> dict[str, Any] | None:
             "exists": True,
             "type": "dir",
             "entries": len(list(p.iterdir())),
+            "size_bytes": path_size_bytes(p),
         }
     return {
         "path": str(p),
         "exists": True,
         "type": "file",
         "size_bytes": p.stat().st_size,
+    }
+
+
+def path_size_bytes(path: Path) -> int:
+    if path.is_file():
+        return int(path.stat().st_size)
+    if not path.is_dir():
+        return 0
+    total = 0
+    for child in path.rglob("*"):
+        if child.is_file():
+            total += int(child.stat().st_size)
+    return total
+
+
+def output_storage(inventory: dict[str, dict[str, Any] | None]) -> dict[str, Any]:
+    artifact_size_bytes = {
+        key: int(info["size_bytes"])
+        for key, info in inventory.items()
+        if isinstance(info, dict)
+        and info.get("exists") is True
+        and isinstance(info.get("size_bytes"), int)
+        and info["size_bytes"] >= 0
+    }
+    total = sum(artifact_size_bytes.values())
+    return {
+        "artifact_size_bytes": artifact_size_bytes,
+        "total_size_bytes": total,
+        "total_size_gb": round(total / (1024 ** 3), 6),
     }
 
 
@@ -843,6 +873,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     if result.n_pruned_regulons is not None:
         outputs["pruned_regulons"] = int(result.n_pruned_regulons)
 
+    inventory = {k: file_info(v) for k, v in artefact_paths.items()}
+
     record = {
         "benchmark": "real_multiome_full_pipeline",
         "dataset_name": args.dataset_name,
@@ -925,7 +957,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             n=args.summary_rows,
             max_rows=args.summary_max_rows,
         ),
-        "output_inventory": {k: file_info(v) for k, v in artefact_paths.items()},
+        "output_inventory": inventory,
+        "output_storage": output_storage(inventory),
         "env": benchmark_env(),
     }
     args.out_json.write_text(json.dumps(record, indent=2) + "\n")

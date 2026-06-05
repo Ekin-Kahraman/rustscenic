@@ -2378,6 +2378,9 @@ def _full_pipeline_record(tmp_path: Path):
         "exists": True,
         "type": "dir",
         "entries": len(list(topics_dir.iterdir())),
+        "size_bytes": sum(
+            child.stat().st_size for child in topics_dir.rglob("*") if child.is_file()
+        ),
     }
     backend_execution = _backend_execution_state()
     cell_barcode_filter = {"requested": 100, "matched": 100}
@@ -2533,6 +2536,7 @@ def _full_pipeline_record(tmp_path: Path):
             "top_eregulon_rows": [{"tf": "TF1", "enhancer": "p1", "target_gene": "G1"}],
         },
         "output_inventory": output_inventory,
+        "output_storage": _output_storage_from_inventory(output_inventory),
         "env": {
             "python": "3.13.0",
             "host": "minerva",
@@ -2544,6 +2548,22 @@ def _full_pipeline_record(tmp_path: Path):
     }
     _sync_full_pipeline_manifest(record)
     return record
+
+
+def _output_storage_from_inventory(output_inventory: dict) -> dict:
+    artifact_size_bytes = {
+        key: int(info["size_bytes"])
+        for key, info in output_inventory.items()
+        if isinstance(info, dict)
+        and isinstance(info.get("size_bytes"), int)
+        and info["size_bytes"] >= 0
+    }
+    total = sum(artifact_size_bytes.values())
+    return {
+        "artifact_size_bytes": artifact_size_bytes,
+        "total_size_bytes": total,
+        "total_size_gb": round(total / (1024 ** 3), 6),
+    }
 
 
 def _sync_full_pipeline_manifest(record: dict) -> None:
@@ -2596,6 +2616,10 @@ def _sync_full_pipeline_manifest(record: dict) -> None:
         )
     )
     info["size_bytes"] = path.stat().st_size
+    if "output_storage" in record:
+        record["output_storage"] = _output_storage_from_inventory(
+            record["output_inventory"]
+        )
 
 
 def _projected_region_cistarget_rankings_state() -> dict:
@@ -2657,6 +2681,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "setup_elapsed_s": child["setup_elapsed_s"],
                 "elapsed_per_stage": child["elapsed_per_stage"],
                 "peak_rss_gb_per_stage": child["peak_rss_gb_per_stage"],
+                "output_storage": child["output_storage"],
                 "backend_execution": child["backend_execution"],
                 "cell_barcode_filter": child["cell_barcode_filter"],
                 "matrix_inputs": child["matrix_inputs"],
@@ -2715,6 +2740,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
             "pipeline_compute_stage_wall_slope_vs_cells": 0.0,
             "pipeline_unattributed_wall_slope_vs_cells": 3.7,
             "peak_rss_slope_vs_cells": 0.485,
+            "output_total_size_slope_vs_cells": 0.0,
         },
         "env": {
             "python": "3.13.0",
@@ -2981,6 +3007,47 @@ def test_benchmark_artifact_validator_accounts_for_pipeline_io_timing(tmp_path):
     assert (
         "wall_s.pipeline_unattributed must match pipeline minus compute stages "
         "and IO stages: 0.15 != 0.05"
+    ) in failures
+
+
+def test_benchmark_artifact_validator_checks_output_storage_totals(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_output_storage",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+
+    assert module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    ) == []
+
+    record["output_storage"]["total_size_bytes"] += 1
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert any(
+        failure.startswith(
+            "output_storage.total_size_bytes must equal artifact_size_bytes sum:"
+        )
+        for failure in failures
+    )
+
+    record = _full_pipeline_record(tmp_path)
+    record["output_storage"]["artifact_size_bytes"]["grn_path"] += 1
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert (
+        "output_storage.artifact_size_bytes.grn_path must match "
+        "output_inventory.grn_path.size_bytes"
     ) in failures
 
 
@@ -4789,7 +4856,8 @@ def test_minerva_result_collector_discovers_latest_valid_benchmarks(tmp_path):
         "pipeline_wall_slope_vs_cells=1.322, "
         "pipeline_compute_stage_wall_slope_vs_cells=0, "
         "pipeline_unattributed_wall_slope_vs_cells=3.7, "
-        "peak_rss_slope_vs_cells=0.485"
+        "peak_rss_slope_vs_cells=0.485, "
+        "output_total_size_slope_vs_cells=0"
     )
 
 

@@ -277,6 +277,10 @@ def _positive_int(value: Any) -> bool:
     return not isinstance(value, bool) and isinstance(value, int) and value > 0
 
 
+def _nonnegative_int(value: Any) -> bool:
+    return not isinstance(value, bool) and isinstance(value, int) and value >= 0
+
+
 def _nonnegative_number(value: Any) -> bool:
     return not isinstance(value, bool) and isinstance(value, (int, float)) and value >= 0
 
@@ -1400,6 +1404,68 @@ def _output_inventory_failures(record: dict[str, Any]) -> list[str]:
     return failures
 
 
+def _output_storage_failures(record: dict[str, Any]) -> list[str]:
+    storage = record.get("output_storage")
+    if storage is None:
+        return []
+    if not isinstance(storage, dict):
+        return ["output_storage must be an object when present"]
+
+    failures: list[str] = []
+    sizes = storage.get("artifact_size_bytes")
+    if not isinstance(sizes, dict):
+        failures.append("output_storage.artifact_size_bytes must be an object")
+        sizes = {}
+    else:
+        for key, value in sizes.items():
+            if not _nonempty_str(key):
+                failures.append("output_storage.artifact_size_bytes keys must be non-empty strings")
+            if not _nonnegative_int(value):
+                failures.append(
+                    f"output_storage.artifact_size_bytes.{key} must be a non-negative integer"
+                )
+
+    total = storage.get("total_size_bytes")
+    if not _nonnegative_int(total):
+        failures.append("output_storage.total_size_bytes must be a non-negative integer")
+    elif isinstance(sizes, dict):
+        expected_total = sum(
+            int(value)
+            for value in sizes.values()
+            if _nonnegative_int(value)
+        )
+        if int(total) != expected_total:
+            failures.append(
+                "output_storage.total_size_bytes must equal artifact_size_bytes sum: "
+                f"{total} != {expected_total}"
+            )
+
+    total_gb = storage.get("total_size_gb")
+    if not _nonnegative_number(total_gb):
+        failures.append("output_storage.total_size_gb must be non-negative")
+    elif _nonnegative_int(total):
+        expected_gb = round(int(total) / (1024 ** 3), 6)
+        if round(float(total_gb), 6) != expected_gb:
+            failures.append(
+                "output_storage.total_size_gb must match total_size_bytes: "
+                f"{total_gb} != {expected_gb}"
+            )
+
+    inventory = record.get("output_inventory")
+    if isinstance(inventory, dict) and isinstance(sizes, dict):
+        for key, info in inventory.items():
+            if not isinstance(info, dict):
+                continue
+            size = info.get("size_bytes")
+            if _nonnegative_int(size):
+                if sizes.get(key) != size:
+                    failures.append(
+                        f"output_storage.artifact_size_bytes.{key} must match "
+                        f"output_inventory.{key}.size_bytes"
+                    )
+    return failures
+
+
 def _pipeline_manifest_failures(record: dict[str, Any]) -> list[str]:
     inventory = record.get("output_inventory")
     if not isinstance(inventory, dict):
@@ -1814,6 +1880,7 @@ def _full_pipeline_scaling_row_child_failures(
         "elapsed_per_stage": child.get("elapsed_per_stage"),
         "io_elapsed_per_stage": child.get("io_elapsed_per_stage"),
         "peak_rss_gb_per_stage": child.get("peak_rss_gb_per_stage"),
+        "output_storage": child.get("output_storage"),
         "outputs": child.get("outputs"),
         "expected_tf_recovery": child.get("expected_tf_recovery"),
         "backend_execution": child.get("backend_execution"),
@@ -2344,6 +2411,7 @@ def validate_full_pipeline(
     if check_output_files:
         failures.extend(_output_inventory_failures(record))
         failures.extend(_pipeline_manifest_failures(record))
+    failures.extend(_output_storage_failures(record))
     return failures
 
 
@@ -2637,6 +2705,10 @@ def validate_full_pipeline_scaling(
                 )
                 if isinstance(row.get("wall_s"), dict) else None,
                 "peak_rss_gb": row.get("peak_rss_gb"),
+                "output_total_size_gb": row.get("output_storage", {}).get(
+                    "total_size_gb"
+                )
+                if isinstance(row.get("output_storage"), dict) else None,
             }
             for row in runs
             if isinstance(row, dict)
@@ -2658,6 +2730,11 @@ def validate_full_pipeline_scaling(
                 )
         if not _finite_number(scaling.get("peak_rss_slope_vs_cells")):
             failures.append("scaling.peak_rss_slope_vs_cells must be a finite number")
+        if "output_total_size_slope_vs_cells" in scaling:
+            if not _finite_number(scaling.get("output_total_size_slope_vs_cells")):
+                failures.append(
+                    "scaling.output_total_size_slope_vs_cells must be a finite number"
+                )
         expected_slopes = {
             "end_to_end_wall_slope_vs_cells": _rounded_slope(
                 wall_rows,
@@ -2689,12 +2766,23 @@ def validate_full_pipeline_scaling(
                 "n_cells",
                 "peak_rss_gb",
             ),
+            "output_total_size_slope_vs_cells": _rounded_slope(
+                wall_rows,
+                "n_cells",
+                "output_total_size_gb",
+            ),
         }
         for key, expected in expected_slopes.items():
             if (
                 key == "pipeline_io_stage_wall_slope_vs_cells"
                 and key not in scaling
                 and all(row.get("pipeline_io_stage_wall_s") is None for row in wall_rows)
+            ):
+                continue
+            if (
+                key == "output_total_size_slope_vs_cells"
+                and key not in scaling
+                and all(row.get("output_total_size_gb") is None for row in wall_rows)
             ):
                 continue
             if expected is not None and scaling.get(key) != expected:

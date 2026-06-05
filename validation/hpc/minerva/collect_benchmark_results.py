@@ -263,6 +263,7 @@ def _scaling_summary(record: dict[str, Any]) -> str:
         "pipeline_io_stage_wall_slope_vs_cells",
         "pipeline_unattributed_wall_slope_vs_cells",
         "peak_rss_slope_vs_cells",
+        "output_total_size_slope_vs_cells",
     )
     parts = [
         f"{key}={_format_number(scaling[key])}"
