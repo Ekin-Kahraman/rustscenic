@@ -389,6 +389,15 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
     assert result.backend_execution["cistarget"]["symbols"] == [
         "cistarget_enrichment_from_rankings_i32"
     ]
+    assert result.cistarget_rankings == {
+        "input_kind": "dataframe",
+        "mode": "dataframe",
+        "projected": False,
+        "loaded_columns": len(rna_genes),
+        "rank_universe_size": len(rna_genes),
+        "requested_features": None,
+        "motifs": len(motif_names),
+    }
     assert result.backend_execution["enhancer"]["symbols"] == [
         "enhancer_align_cell_indices",
         "preproc_peak_coords_for_names",
@@ -428,6 +437,7 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
         "requested": n_cells,
         "matched": n_cells,
     }
+    assert manifest["cistarget_rankings"] == result.cistarget_rankings
     assert manifest["matrix_inputs"] == result.matrix_inputs
     assert result.matrix_inputs["rna_post_qc"]["shape"] == [n_cells, len(rna_genes)]
     assert result.matrix_inputs["rna_post_qc"]["storage"] == "dense"
@@ -2190,6 +2200,15 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
         ):
             rank_matrix[tf_idx, gene_idx] = rank
     motif_rankings = pd.DataFrame(rank_matrix, index=motif_names, columns=rna_genes)
+    motif_rankings_export = motif_rankings.copy()
+    for j in range(6):
+        motif_rankings_export[f"DECOY_{j}"] = np.arange(
+            len(motif_rankings_export),
+            dtype=np.int32,
+        )
+    motif_rankings_export.insert(0, "motifs", motif_rankings_export.index)
+    motif_rankings_path = tmp_path / "genes_vs_motifs.rankings.feather"
+    motif_rankings_export.reset_index(drop=True).to_feather(motif_rankings_path)
     motif_annotations = pd.DataFrame(
         {"motif": motif_names, "TF": ["G000", "G005", "G010"]}
     )
@@ -2227,7 +2246,7 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
         fragments=str(frag_path),
         peaks=str(peaks_path),
         tfs=["G000", "G005", "G010"],
-        motif_rankings=motif_rankings,
+        motif_rankings=motif_rankings_path,
         motif_annotations=motif_annotations,
         region_motif_rankings=region_rankings_path,
         gene_coords=gene_coords,
@@ -2255,8 +2274,17 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
     assert all("unused_peak_not_in_run" not in cols for cols in read_feather_calls)
     assert result.backend_execution["cistarget_pruning"]["symbols"] == [
         "cistarget_motif_annotation_prune_standard_rows_f32",
-        "cistarget_prune_regulon_targets_i32",
+        "cistarget_prune_regulon_targets_projected_i32",
     ]
+    assert result.backend_execution["cistarget"]["symbols"] == [
+        "cistarget_enrichment_from_projected_rankings_i32"
+    ]
+    assert result.cistarget_rankings["mode"] == "projected_file"
+    assert result.cistarget_rankings["projected"] is True
+    assert result.cistarget_rankings["rank_universe_size"] == len(rna_genes) + 6
+    assert result.cistarget_rankings["loaded_columns"] < (
+        result.cistarget_rankings["rank_universe_size"]
+    )
     region_symbols = [
         "cistarget_enrichment_from_rankings_i32",
         "cistarget_region_attribution_peak_values_i32",
@@ -2272,9 +2300,10 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
         manifest["backend_execution"]["cistarget_pruning"]["symbols"]
         == [
             "cistarget_motif_annotation_prune_standard_rows_f32",
-            "cistarget_prune_regulon_targets_i32",
+            "cistarget_prune_regulon_targets_projected_i32",
         ]
     )
+    assert manifest["cistarget_rankings"] == result.cistarget_rankings
     assert (
         manifest["backend_execution"]["eregulon_peak_attribution"]["symbols"]
         == region_symbols

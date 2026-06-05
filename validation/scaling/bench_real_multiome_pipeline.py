@@ -861,6 +861,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         },
         "reference_fingerprints": reference_fingerprints,
         "reference_sources": reference_sources,
+        "cistarget_rankings": dict(result.cistarget_rankings),
         "params": {
             "n_cells_requested": args.n_cells,
             "grn_n_estimators": args.grn_n_estimators,

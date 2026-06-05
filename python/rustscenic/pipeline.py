@@ -98,6 +98,7 @@ class PipelineResult:
     regulon_source: str = "candidate_grn_top_targets"
     backend_execution: dict = field(default_factory=dict)
     matrix_inputs: dict = field(default_factory=dict)
+    cistarget_rankings: dict = field(default_factory=dict)
 
     def manifest(self) -> dict:
         d = asdict(self)
@@ -423,6 +424,7 @@ def run(
     cistarget_path = None
     enriched: pd.DataFrame | None = None
     enriched_for_eregulons: pd.DataFrame | None = None
+    cistarget_rankings: dict = {}
     motif_annotations_df = (
         _coerce_motif_annotations(motif_annotations)
         if motif_annotations is not None and motif_rankings is not None else None
@@ -433,6 +435,11 @@ def run(
             motif_rankings,
             _regulon_feature_names(candidate_regulon_pairs),
         )
+        if ranking_features is None:
+            requested_feature_count = None
+        else:
+            ranking_features = list(ranking_features)
+            requested_feature_count = len(ranking_features)
         rank_universe_size = (
             _ranking_universe_size(motif_rankings)
             if ranking_features is not None else None
@@ -447,6 +454,20 @@ def run(
             and rank_universe_size > rankings_df.shape[1]
             else None
         )
+        cistarget_rankings = {
+            "input_kind": _ranking_input_kind(motif_rankings),
+            "mode": (
+                "projected_file"
+                if rank_universe_arg is not None
+                else "dataframe" if isinstance(motif_rankings, pd.DataFrame)
+                else "full_file"
+            ),
+            "projected": rank_universe_arg is not None,
+            "loaded_columns": int(rankings_df.shape[1]),
+            "rank_universe_size": int(rank_universe_arg or rankings_df.shape[1]),
+            "requested_features": requested_feature_count,
+            "motifs": int(len(rankings_df)),
+        }
         universe_note = (
             f" projected from {rank_universe_arg:,}-gene universe"
             if rank_universe_arg is not None else ""
@@ -820,6 +841,7 @@ def run(
         regulon_source=regulon_source,
         backend_execution=backend_execution,
         matrix_inputs=matrix_inputs,
+        cistarget_rankings=cistarget_rankings,
     )
     # Manifest is the single source of truth for "what did this run produce"
     (output_dir / "manifest.json").write_text(json.dumps(result.manifest(), indent=2))
@@ -1045,6 +1067,13 @@ def _ranking_projection_features(
     if isinstance(rankings, pd.DataFrame):
         return None
     return feature_names
+
+
+def _ranking_input_kind(rankings) -> str:
+    if isinstance(rankings, pd.DataFrame):
+        return "dataframe"
+    suffix = Path(rankings).suffix.lower().lstrip(".")
+    return suffix or "file"
 
 
 def _regulon_feature_names(regulons: Iterable) -> list[str]:

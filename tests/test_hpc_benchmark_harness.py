@@ -2416,6 +2416,15 @@ def _full_pipeline_record(tmp_path: Path):
             },
         },
         "reference_sources": _default_cached_reference_sources(tmp_path),
+        "cistarget_rankings": {
+            "input_kind": "feather",
+            "mode": "full_file",
+            "projected": False,
+            "loaded_columns": 2000,
+            "rank_universe_size": 2000,
+            "requested_features": 2000,
+            "motifs": 50,
+        },
         "params": {
             "seed": 777,
             "n_cells_requested": 100,
@@ -2572,6 +2581,7 @@ def _sync_full_pipeline_manifest(record: dict) -> None:
                 "backend_execution": manifest_backend,
                 "cell_barcode_filter": record.get("cell_barcode_filter"),
                 "matrix_inputs": record.get("matrix_inputs"),
+                "cistarget_rankings": record.get("cistarget_rankings"),
             }
         )
     )
@@ -2628,6 +2638,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "backend_execution": child["backend_execution"],
                 "cell_barcode_filter": child["cell_barcode_filter"],
                 "matrix_inputs": child["matrix_inputs"],
+                "cistarget_rankings": child["cistarget_rankings"],
                 "reference_sources": child["reference_sources"],
                 "outputs": child["outputs"],
                 "expected_tf_recovery": child.get("expected_tf_recovery"),
@@ -2764,6 +2775,75 @@ def test_benchmark_artifact_validator_accepts_full_pipeline_record(tmp_path):
     )
 
     assert failures == []
+
+
+def test_benchmark_artifact_validator_accepts_projected_cistarget_rankings(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_projected_cistarget",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["cistarget_rankings"] = {
+        "input_kind": "feather",
+        "mode": "projected_file",
+        "projected": True,
+        "loaded_columns": 750,
+        "rank_universe_size": 2000,
+        "requested_features": 900,
+        "motifs": 50,
+    }
+    record["backend_execution"]["pipeline_cistarget"] = {
+        "engine": "rust",
+        "symbols": ["cistarget_enrichment_from_projected_rankings_i32"],
+    }
+    _sync_full_pipeline_manifest(record)
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert failures == []
+
+
+def test_benchmark_artifact_validator_rejects_missing_cistarget_rankings(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_missing_cistarget_rankings",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    del record["cistarget_rankings"]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "full_pipeline.cistarget_rankings must be an object" in failures
+
+
+def test_benchmark_artifact_validator_rejects_projected_cistarget_without_projected_kernel(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_projected_cistarget_kernel",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["cistarget_rankings"] = {
+        "input_kind": "feather",
+        "mode": "projected_file",
+        "projected": True,
+        "loaded_columns": 750,
+        "rank_universe_size": 2000,
+        "requested_features": 900,
+        "motifs": 50,
+    }
+    _sync_full_pipeline_manifest(record)
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_cistarget.symbols must include "
+        "a cistarget_enrichment_from_projected_rankings* Rust symbol when "
+        "cistarget_rankings.mode is projected_file"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_bad_full_pipeline_wall_breakdown(tmp_path):
