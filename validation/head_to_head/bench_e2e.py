@@ -595,7 +595,28 @@ def _top_r2g_edges(
     return records
 
 
-def _rust_eregulon_edges(eregulons: list[Any]) -> list[dict[str, str]]:
+def _rust_eregulon_edges(eregulons: Any) -> list[dict[str, str]]:
+    if isinstance(eregulons, pd.DataFrame):
+        required = {"tf", "enhancer", "target_gene"}
+        missing = required - set(eregulons.columns)
+        if missing:
+            raise ValueError(f"rustscenic eRegulon table missing columns: {sorted(missing)}")
+        rows = [
+            {
+                "key": f"{tf}|{region}|{target}",
+                "tf": str(tf),
+                "region": str(region),
+                "target": str(target),
+            }
+            for tf, region, target in zip(
+                eregulons["tf"],
+                eregulons["enhancer"],
+                eregulons["target_gene"],
+                strict=False,
+            )
+        ]
+        return sorted(rows, key=lambda r: r["key"])
+
     rows = []
     for er in eregulons:
         for target, peaks in getattr(er, "target_to_peaks", {}).items():
@@ -664,7 +685,10 @@ def _output_signature(
 ) -> dict[str, Any]:
     if tool == "rustscenic":
         eregulon_edges = _rust_eregulon_edges(eregulons)
-        eregulon_tfs = sorted({str(er.tf) for er in eregulons})
+        if isinstance(eregulons, pd.DataFrame):
+            eregulon_tfs = sorted({str(tf) for tf in eregulons["tf"]})
+        else:
+            eregulon_tfs = sorted({str(er.tf) for er in eregulons})
     else:
         eregulon_edges = _scenicplus_eregulon_edges(eregulons)
         eregulon_tfs = sorted({str(er.transcription_factor) for er in eregulons})
@@ -711,7 +735,7 @@ def run_rustscenic(data: dict[str, Any], args: argparse.Namespace) -> dict[str, 
     stage_times["region_to_gene"] = time.perf_counter() - t0
 
     t0 = time.perf_counter()
-    eregs = rustscenic.eregulon.build_eregulons(
+    eregs = rustscenic.eregulon.build_eregulons_dataframe(
         grn,
         _rust_cistarget_with_peaks(data["cistrome"]),
         links,
@@ -719,13 +743,18 @@ def run_rustscenic(data: dict[str, Any], args: argparse.Namespace) -> dict[str, 
         min_enhancer_links=1,
     )
     stage_times["eregulons"] = time.perf_counter() - t0
+    n_eregulons = int(eregs.attrs.get("n_eregulons", 0))
 
-    gene_regulons = [
-        (f"{er.tf}_eregulon_{i}", er.target_genes) for i, er in enumerate(eregs)
-    ]
-    region_regulons = [
-        (f"{er.tf}_eregulon_{i}", er.enhancers) for i, er in enumerate(eregs)
-    ]
+    gene_regulons = rustscenic.eregulon.regulons_from_dataframe(
+        eregs,
+        feature_col="target_gene",
+        suffix_with_index=True,
+    )
+    region_regulons = rustscenic.eregulon.regulons_from_dataframe(
+        eregs,
+        feature_col="enhancer",
+        suffix_with_index=True,
+    )
     t0 = time.perf_counter()
     gene_auc = rustscenic.aucell.score(data["rna"], gene_regulons, top_frac=args.top_frac)
     region_auc = rustscenic.aucell.score(
@@ -738,7 +767,7 @@ def run_rustscenic(data: dict[str, Any], args: argparse.Namespace) -> dict[str, 
         "output_counts": {
             "tf_to_gene_edges": int(len(grn)),
             "region_to_gene_links": int(len(links)),
-            "eregulons": int(len(eregs)),
+            "eregulons": n_eregulons,
             "gene_auc_shape": list(gene_auc.shape),
             "region_auc_shape": list(region_auc.shape),
         },

@@ -15,6 +15,7 @@ from rustscenic.eregulon import (
     build_eregulons,
     build_eregulons_dataframe,
     eregulons_to_dataframe,
+    regulons_from_dataframe,
 )
 from rustscenic._stage_utils import tf_from_regulon_name
 
@@ -87,6 +88,29 @@ def test_builds_eregulons_for_both_tfs():
     tfs = [e.tf for e in eregs]
     assert "SPI1" in tfs
     assert "PAX5" in tfs
+
+
+def test_regulons_from_dataframe_groups_unique_features_in_rust():
+    table = pd.DataFrame(
+        {
+            "tf": ["SPI1", "SPI1", "PAX5", "SPI1", "PAX5"],
+            "target_gene": ["GENE_A", "GENE_A", "GENE_F", "GENE_B", "GENE_F"],
+            "enhancer": ["peak_1", "peak_2", "peak_4", "peak_1", "peak_5"],
+        }
+    )
+
+    assert regulons_from_dataframe(table) == [
+        ("SPI1_eregulon", ["GENE_A", "GENE_B"]),
+        ("PAX5_eregulon", ["GENE_F"]),
+    ]
+    assert regulons_from_dataframe(
+        table,
+        feature_col="enhancer",
+        suffix_with_index=True,
+    ) == [
+        ("SPI1_eregulon_0", ["peak_1", "peak_2"]),
+        ("PAX5_eregulon_1", ["peak_4", "peak_5"]),
+    ]
 
 
 def test_spi1_targets_are_grn_intersect_enhancer():

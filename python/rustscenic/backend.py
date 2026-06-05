@@ -55,6 +55,7 @@ REQUIRED_RUST_BACKEND_SYMBOLS: dict[str, list[str]] = {
         "eregulon_assemble_f32",
         "eregulon_assemble_summary",
         "eregulon_assemble_summary_f32",
+        "eregulon_regulon_pairs_from_columns",
     ],
     "preproc": [
         "preproc_call_peaks",

@@ -266,12 +266,13 @@ def main() -> int:
     t0 = time.monotonic()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        eregs = rustscenic.eregulon.build_eregulons(
+        eregs = rustscenic.eregulon.build_eregulons_dataframe(
             grn, ct_peak_df, links,
             min_target_genes=5, min_enhancer_links=2,
         )
     elapsed["eregulon"] = round(time.monotonic() - t0, 1)
-    print(f"  → {len(eregs)} eRegulons in {elapsed['eregulon']}s", flush=True)
+    n_eregulons = int(eregs.attrs.get("n_eregulons", 0))
+    print(f"  → {n_eregulons} eRegulons in {elapsed['eregulon']}s", flush=True)
     mark("after_eregulon")
 
     # ---- 7. AUCell ----
@@ -280,8 +281,8 @@ def main() -> int:
     t0 = time.monotonic()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        if eregs:
-            reg_for_aucell = [(f"{er.tf}_eregulon", er.target_genes) for er in eregs]
+        if n_eregulons:
+            reg_for_aucell = rustscenic.eregulon.regulons_from_dataframe(eregs)
         else:
             # fallback to GRN regulons if eregulon assembly emptied out
             reg_for_aucell = regulons

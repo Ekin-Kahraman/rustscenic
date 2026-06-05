@@ -30,6 +30,7 @@ import pandas as pd
 from rustscenic._rustscenic import (
     eregulon_assemble as _eregulon_assemble,
     eregulon_assemble_f32 as _eregulon_assemble_f32,
+    eregulon_regulon_pairs_from_columns as _eregulon_regulon_pairs_from_columns,
     eregulon_assemble_summary as _eregulon_assemble_summary,
     eregulon_assemble_summary_f32 as _eregulon_assemble_summary_f32,
 )
@@ -392,6 +393,27 @@ def _warn_if_catastrophic_drop_counts(
     )
 
 
+def regulons_from_dataframe(
+    eregulons: pd.DataFrame,
+    *,
+    feature_col: str = "target_gene",
+    suffix_with_index: bool = False,
+) -> list[tuple[str, list[str]]]:
+    """Build AUCell regulon pairs from the Rust-backed long eRegulon table.
+
+    This avoids reconstructing public ``ERegulon`` objects, nested
+    ``target_to_peaks`` dictionaries, and Python-side feature de-duplication
+    in benchmark and HPC paths that only need ``(regulon, features)`` pairs.
+    """
+    _require_columns(eregulons, {"tf", feature_col}, name="eregulons")
+    names, features = _eregulon_regulon_pairs_from_columns(
+        string_list(eregulons["tf"]),
+        string_list(eregulons[feature_col]),
+        bool(suffix_with_index),
+    )
+    return list(zip(string_list(names), [string_list(values) for values in features]))
+
+
 def eregulons_to_dataframe(eregulons: Sequence[ERegulon]) -> pd.DataFrame:
     """Flatten a list of ERegulon objects into a long-format DataFrame.
 
@@ -428,5 +450,6 @@ __all__ = [
     "ERegulon",
     "build_eregulons",
     "build_eregulons_dataframe",
+    "regulons_from_dataframe",
     "eregulons_to_dataframe",
 ]

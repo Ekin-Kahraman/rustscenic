@@ -201,12 +201,13 @@ def main() -> int:
     t0 = time.monotonic()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        eregs = rustscenic.eregulon.build_eregulons(
+        eregs = rustscenic.eregulon.build_eregulons_dataframe(
             grn, ct_peak_df, links,
             min_target_genes=5, min_enhancer_links=2,
         )
     elapsed["eregulon"] = round(time.monotonic() - t0, 2)
-    print(f"  → {len(eregs)} eRegulons", flush=True)
+    n_eregulons = int(eregs.attrs.get("n_eregulons", 0))
+    print(f"  → {n_eregulons} eRegulons", flush=True)
 
     print("\n[7/7] AUCell", flush=True)
     import rustscenic.aucell
@@ -214,8 +215,8 @@ def main() -> int:
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         reg_for_aucell = (
-            [(f"{er.tf}_eregulon", er.target_genes) for er in eregs]
-            if eregs else regulons
+            rustscenic.eregulon.regulons_from_dataframe(eregs)
+            if n_eregulons else regulons
         )
         auc = rustscenic.aucell.score(rna, reg_for_aucell, top_frac=0.05)
     elapsed["aucell"] = round(time.monotonic() - t0, 1)

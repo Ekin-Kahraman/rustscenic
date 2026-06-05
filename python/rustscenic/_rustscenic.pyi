@@ -537,6 +537,14 @@ def eregulon_assemble_summary_f32(
     """Assemble grouped eRegulon summaries from float32 cistarget AUCs."""
 
 
+def eregulon_regulon_pairs_from_columns(
+    groups: list[str],
+    features: list[str],
+    suffix_with_index: bool = False,
+) -> tuple[list[str], list[list[str]]]:
+    """Group long eRegulon rows into unique AUCell regulon feature lists."""
+
+
 def cistarget_region_attribution_i16(
     rankings: npt.NDArray[np.int16],
     motif_names: list[str],

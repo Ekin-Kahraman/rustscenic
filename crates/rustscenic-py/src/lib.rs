@@ -128,6 +128,10 @@ type ERegulonSummaryPyResult = (
     usize,             // number of input TFs after cistarget filtering
     usize,             // number of assembled eRegulons
 );
+type ERegulonRegulonPairsPyResult = (
+    Py<PyList>, // regulon names
+    Py<PyList>, // unique feature lists per regulon
+);
 type RegionAttributionIndexPyResult = (Py<PyArray1<u64>>, Py<PyArray1<u64>>);
 type RegionAttributionPeakValuePyResult = (Py<PyArray1<u64>>, Py<PyList>);
 type MotifAnnotationPrunePyResult = (
@@ -3469,6 +3473,76 @@ fn eregulon_assemble_summary_f32<'py>(
     )
 }
 
+#[pyfunction]
+#[pyo3(signature = (groups, features, suffix_with_index = false))]
+fn eregulon_regulon_pairs_from_columns<'py>(
+    py: Python<'py>,
+    groups: Vec<String>,
+    features: Vec<String>,
+    suffix_with_index: bool,
+) -> PyResult<ERegulonRegulonPairsPyResult> {
+    if groups.len() != features.len() {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "groups length {} does not match features length {}",
+            groups.len(),
+            features.len()
+        )));
+    }
+    let (names, feature_lists) = py
+        .allow_threads(|| build_regulon_pairs_from_columns(&groups, &features, suffix_with_index));
+    let lists = PyList::empty(py);
+    for values in feature_lists {
+        lists.append(PyList::new(py, values.iter().map(|s| s.as_str()))?)?;
+    }
+    Ok((
+        PyList::new(py, names.iter().map(|s| s.as_str()))?.unbind(),
+        lists.unbind(),
+    ))
+}
+
+fn build_regulon_pairs_from_columns(
+    groups: &[String],
+    features: &[String],
+    suffix_with_index: bool,
+) -> (Vec<String>, Vec<Vec<String>>) {
+    let mut group_order: Vec<&str> = Vec::new();
+    let mut group_to_idx: HashMap<&str, usize> = HashMap::new();
+    let mut seen_features: Vec<HashSet<&str>> = Vec::new();
+    let mut feature_lists: Vec<Vec<String>> = Vec::new();
+
+    for (group, feature) in groups.iter().zip(features) {
+        let group_key = group.as_str();
+        let idx = match group_to_idx.get(group_key).copied() {
+            Some(idx) => idx,
+            None => {
+                let idx = group_order.len();
+                group_order.push(group_key);
+                group_to_idx.insert(group_key, idx);
+                seen_features.push(HashSet::new());
+                feature_lists.push(Vec::new());
+                idx
+            }
+        };
+        let feature_key = feature.as_str();
+        if seen_features[idx].insert(feature_key) {
+            feature_lists[idx].push(feature.clone());
+        }
+    }
+
+    let names = group_order
+        .iter()
+        .enumerate()
+        .map(|(idx, group)| {
+            if suffix_with_index {
+                format!("{group}_eregulon_{idx}")
+            } else {
+                format!("{group}_eregulon")
+            }
+        })
+        .collect();
+    (names, feature_lists)
+}
+
 #[allow(clippy::too_many_arguments)]
 fn eregulon_assemble_summary_from_slices<'py, T: Copy + Into<f64> + Sync>(
     py: Python<'py>,
@@ -5063,18 +5137,9 @@ macro_rules! prune_regulon_targets_projected_pyfunction {
     };
 }
 
-prune_regulon_targets_projected_pyfunction!(
-    cistarget_prune_regulon_targets_projected_i16,
-    i16
-);
-prune_regulon_targets_projected_pyfunction!(
-    cistarget_prune_regulon_targets_projected_i32,
-    i32
-);
-prune_regulon_targets_projected_pyfunction!(
-    cistarget_prune_regulon_targets_projected_i64,
-    i64
-);
+prune_regulon_targets_projected_pyfunction!(cistarget_prune_regulon_targets_projected_i16, i16);
+prune_regulon_targets_projected_pyfunction!(cistarget_prune_regulon_targets_projected_i32, i32);
+prune_regulon_targets_projected_pyfunction!(cistarget_prune_regulon_targets_projected_i64, i64);
 prune_regulon_targets_projected_pyfunction!(
     cistarget_prune_regulon_targets_projected_f32,
     f32,
@@ -6876,6 +6941,7 @@ fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(eregulon_assemble, m)?)?;
     m.add_function(wrap_pyfunction!(eregulon_assemble_summary_f32, m)?)?;
     m.add_function(wrap_pyfunction!(eregulon_assemble_summary, m)?)?;
+    m.add_function(wrap_pyfunction!(eregulon_regulon_pairs_from_columns, m)?)?;
     m.add_function(wrap_pyfunction!(pipeline_match_atac_cell_indices, m)?)?;
     m.add_function(wrap_pyfunction!(
         pipeline_attribute_peaks_to_cistarget_rows_f32,
