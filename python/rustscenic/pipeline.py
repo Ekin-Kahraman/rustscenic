@@ -536,6 +536,7 @@ def run(
             # nes_threshold is applied inside enrich(), so `enriched` already
             # reflects it. Avoid passing it again to prune_* to keep the
             # filter site singular and the data flow auditable.
+            t_prune = time.perf_counter()
             pruned_enriched = rustscenic.cistarget.prune_enriched_motifs(
                 enriched,
                 motif_annotations_df,
@@ -551,6 +552,7 @@ def run(
                 min_genes=1,
                 rank_universe_size=rank_universe_arg,
             )
+            elapsed["cistarget_pruning"] = time.perf_counter() - t_prune
             pruning_symbols = _rust_backend_symbols(pruned_enriched)
             if not pruned_enriched.empty:
                 pruning_symbols.extend(
@@ -564,6 +566,7 @@ def run(
                 if pruning_symbols
                 else _skipped_execution("no enriched cistarget rows to prune")
             )
+            mark_memory("cistarget_pruning")
             n_pruned_regulons = len(pruned_regulons)
             if pruned_regulons:
                 pruned_enriched_path = output_dir / "cistarget_pruned_enriched.parquet"

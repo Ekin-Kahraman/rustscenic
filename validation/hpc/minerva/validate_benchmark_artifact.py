@@ -34,6 +34,9 @@ FULL_PIPELINE_STAGES = {
     "aucell",
     "integrated_adata",
 }
+OPTIONAL_FULL_PIPELINE_MEMORY_STAGES = {
+    "cistarget_pruning",
+}
 REQUIRED_FULL_PIPELINE_MEMORY_STAGES = FULL_PIPELINE_STAGES
 REQUIRED_FULL_PIPELINE_ELAPSED_STAGES = {
     "preproc",
@@ -43,6 +46,22 @@ REQUIRED_FULL_PIPELINE_ELAPSED_STAGES = {
     "enhancer",
     "eregulons",
     "aucell",
+}
+OPTIONAL_FULL_PIPELINE_ELAPSED_STAGES = {
+    "cistarget_pruning",
+}
+COMPUTE_ELAPSED_BACKEND_STAGES = {
+    "preproc": ("setup_fragments_to_matrix",),
+    "topics": ("pipeline_topics",),
+    "grn": ("pipeline_grn",),
+    "cistarget": ("pipeline_cistarget",),
+    "cistarget_pruning": ("pipeline_cistarget_pruning",),
+    "enhancer": ("pipeline_enhancer",),
+    "eregulons": (
+        "pipeline_eregulon_peak_attribution",
+        "pipeline_eregulons",
+    ),
+    "aucell": ("pipeline_aucell",),
 }
 REQUIRED_FULL_PIPELINE_SETUP_STAGES = {
     "load_rna_qc",
@@ -1602,6 +1621,48 @@ def _full_pipeline_wall_breakdown_failures(
     return failures
 
 
+def _compute_elapsed_backend_failures(
+    record: dict[str, Any],
+    prefix: str = "",
+) -> list[str]:
+    elapsed = record.get("elapsed_per_stage")
+    if not isinstance(elapsed, dict):
+        return []
+    execution = record.get("backend_execution")
+    if not isinstance(execution, dict):
+        return []
+
+    allowed = set(REQUIRED_FULL_PIPELINE_ELAPSED_STAGES) | set(
+        OPTIONAL_FULL_PIPELINE_ELAPSED_STAGES
+    )
+    failures: list[str] = []
+    unknown = set(elapsed) - allowed
+    failures.extend(
+        f"{_path(prefix, 'elapsed_per_stage')}.{stage} is not a recognised Rust compute stage"
+        for stage in sorted(unknown)
+    )
+
+    for stage in sorted(set(elapsed) & allowed):
+        value = elapsed.get(stage)
+        if not _nonnegative_number(value) or float(value) == 0.0:
+            continue
+        for backend_stage in COMPUTE_ELAPSED_BACKEND_STAGES[stage]:
+            state = execution.get(backend_stage)
+            stage_path = _path(prefix, f"backend_execution.{backend_stage}")
+            if not isinstance(state, dict):
+                failures.append(
+                    f"{_path(prefix, f'elapsed_per_stage.{stage}')} is counted as "
+                    f"compute but {stage_path} must be an object"
+                )
+                continue
+            if state.get("engine") != "rust":
+                failures.append(
+                    f"{_path(prefix, f'elapsed_per_stage.{stage}')} is counted as "
+                    f"compute but {stage_path}.engine must be 'rust'"
+                )
+    return failures
+
+
 def _cell_barcode_filter_failures(
     record: dict[str, Any],
     prefix: str,
@@ -1904,6 +1965,9 @@ def _full_pipeline_scaling_row_failures(
         for stage in sorted(REQUIRED_FULL_PIPELINE_ELAPSED_STAGES & set(elapsed)):
             if not _nonnegative_number(elapsed.get(stage)):
                 failures.append(f"{prefix}.elapsed_per_stage.{stage} must be non-negative")
+        for stage in sorted(OPTIONAL_FULL_PIPELINE_ELAPSED_STAGES & set(elapsed)):
+            if not _nonnegative_number(elapsed.get(stage)):
+                failures.append(f"{prefix}.elapsed_per_stage.{stage} must be non-negative")
 
     memory = row.get("peak_rss_gb_per_stage")
     if not isinstance(memory, dict):
@@ -1918,12 +1982,16 @@ def _full_pipeline_scaling_row_failures(
         for stage in sorted(required_memory & set(memory)):
             if not _positive_number(memory.get(stage)):
                 failures.append(f"{prefix}.peak_rss_gb_per_stage.{stage} must be positive")
-        unknown = set(memory) - FULL_PIPELINE_STAGES
+        for stage in sorted(OPTIONAL_FULL_PIPELINE_MEMORY_STAGES & set(memory)):
+            if not _positive_number(memory.get(stage)):
+                failures.append(f"{prefix}.peak_rss_gb_per_stage.{stage} must be positive")
+        unknown = set(memory) - FULL_PIPELINE_STAGES - OPTIONAL_FULL_PIPELINE_MEMORY_STAGES
         failures.extend(
             f"{prefix}.unknown peak_rss_gb_per_stage.{stage}"
             for stage in sorted(unknown)
         )
     failures.extend(_full_pipeline_wall_breakdown_failures(row, prefix))
+    failures.extend(_compute_elapsed_backend_failures(row, prefix))
 
     outputs = row.get("outputs")
     if not isinstance(outputs, dict):
@@ -2110,7 +2178,11 @@ def validate_full_pipeline(
         for stage in sorted(REQUIRED_FULL_PIPELINE_ELAPSED_STAGES & set(elapsed)):
             if not _nonnegative_number(elapsed.get(stage)):
                 failures.append(f"elapsed_per_stage.{stage} must be non-negative")
+        for stage in sorted(OPTIONAL_FULL_PIPELINE_ELAPSED_STAGES & set(elapsed)):
+            if not _nonnegative_number(elapsed.get(stage)):
+                failures.append(f"elapsed_per_stage.{stage} must be non-negative")
     failures.extend(_full_pipeline_wall_breakdown_failures(record))
+    failures.extend(_compute_elapsed_backend_failures(record))
     if isinstance(memory, dict):
         required_memory = _required_full_pipeline_memory_stages(record)
         missing = required_memory - set(memory)
@@ -2118,7 +2190,10 @@ def validate_full_pipeline(
         for stage in sorted(required_memory & set(memory)):
             if not _positive_number(memory.get(stage)):
                 failures.append(f"peak_rss_gb_per_stage.{stage} must be positive")
-        unknown = set(memory) - FULL_PIPELINE_STAGES
+        for stage in sorted(OPTIONAL_FULL_PIPELINE_MEMORY_STAGES & set(memory)):
+            if not _positive_number(memory.get(stage)):
+                failures.append(f"peak_rss_gb_per_stage.{stage} must be positive")
+        unknown = set(memory) - FULL_PIPELINE_STAGES - OPTIONAL_FULL_PIPELINE_MEMORY_STAGES
         failures.extend(f"unknown peak_rss_gb_per_stage.{stage}" for stage in sorted(unknown))
 
     outputs = record.get("outputs", {})

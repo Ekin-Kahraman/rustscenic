@@ -2900,6 +2900,42 @@ def test_benchmark_artifact_validator_rejects_bad_full_pipeline_wall_breakdown(t
     ) in failures
 
 
+def test_benchmark_artifact_validator_rejects_python_io_in_compute_timing(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_python_io_compute_timing",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["elapsed_per_stage"]["integrated_adata"] = 0.1
+    record["wall_s"]["pipeline_compute_stages"] = 1.85
+    record["wall_s"]["pipeline_unattributed"] = 0.15
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "elapsed_per_stage.integrated_adata is not a recognised Rust compute stage"
+        in failures
+    )
+
+
+def test_benchmark_artifact_validator_rejects_timed_stage_without_rust_backend(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_optional_compute_backend",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["elapsed_per_stage"]["cistarget_pruning"] = 0.04
+    record["wall_s"]["pipeline_compute_stages"] = 1.79
+    record["wall_s"]["pipeline_unattributed"] = 0.21
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "elapsed_per_stage.cistarget_pruning is counted as compute but "
+        "backend_execution.pipeline_cistarget_pruning must be an object"
+    ) in failures
+
+
 def test_benchmark_artifact_validator_accepts_compute_profile_without_integrated_h5ad(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_full_no_integrated",
