@@ -45,6 +45,7 @@ from validation.repo_cleanliness import repo_state_from_git_outputs
 
 
 DEFAULT_SUMMARY_MAX_ROWS = 1000
+FILE_BACKED_RANKING_SUFFIXES = {".parquet", ".feather", ".ft"}
 
 
 def configure_thread_env(threads: int) -> None:
@@ -388,6 +389,43 @@ def load_optional_table(path: Path | None) -> pd.DataFrame | None:
     raise ValueError(f"unsupported table format for {path}")
 
 
+def prepare_motif_rankings_input(
+    path: Path | None,
+    *,
+    species: str,
+    quiet: bool,
+) -> tuple[Path | pd.DataFrame, dict[str, Any], dict[str, Any]]:
+    """Prepare motif rankings without eager full-table loading when possible."""
+    if path is not None:
+        if path.suffix.lower() in FILE_BACKED_RANKING_SUFFIXES:
+            return (
+                path,
+                file_backed_table_fingerprint(path),
+                explicit_reference_source(path),
+            )
+        loaded = load_optional_table(path)
+        assert loaded is not None
+        return loaded, dataframe_fingerprint(loaded), explicit_reference_source(path)
+
+    import rustscenic.data
+
+    cache_path = rustscenic.data._motif_rankings_cache_path(species=species)
+    cache_exists_before = cache_path.exists()
+    print("[setup] downloading or loading cached motif rankings", flush=True)
+    cached_path = rustscenic.data._ensure_motif_rankings_cached(
+        species=species,
+        verbose=not quiet,
+    )
+    return (
+        cached_path,
+        file_backed_table_fingerprint(cached_path),
+        default_reference_source(
+            cached_path,
+            cache_exists_before=cache_exists_before,
+        ),
+    )
+
+
 def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, Any]:
     """Return metadata for a large reference table without loading it.
 
@@ -398,6 +436,7 @@ def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, A
     suffix = path.suffix.lower()
     n_rows: int | None = None
     columns: list[str] = []
+    dtypes_by_column: dict[str, str] = {}
     dtype_counts: dict[str, int] = {}
     metadata_read_columns: list[str] = []
     if suffix == ".parquet":
@@ -409,6 +448,7 @@ def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, A
         columns = [str(name) for name in arrow_schema.names]
         for field in arrow_schema:
             dtype = str(field.type)
+            dtypes_by_column[str(field.name)] = dtype
             dtype_counts[dtype] = dtype_counts.get(dtype, 0) + 1
     elif suffix in {".feather", ".ft"}:
         import pyarrow.feather as feather
@@ -419,8 +459,9 @@ def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, A
             columns = [str(name) for name in schema.names]
             for field in schema:
                 dtype = str(field.type)
+                dtypes_by_column[str(field.name)] = dtype
                 dtype_counts[dtype] = dtype_counts.get(dtype, 0) + 1
-        count_col = _file_backed_row_count_column(columns, path)
+        count_col = _file_backed_row_count_column(columns, path, dtypes_by_column)
         metadata_read_columns = [count_col]
         n_rows = int(feather.read_table(path, columns=[count_col]).num_rows)
     else:
@@ -432,12 +473,18 @@ def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, A
     digest.update(json.dumps(columns[:sample] + columns[-sample:], sort_keys=True).encode())
     with path.open("rb") as handle:
         digest.update(handle.read(1024 * 1024))
+    index_col = _file_backed_row_count_column(columns, path, dtypes_by_column)
+    data_columns = [col for col in columns if col != index_col]
+    data_dtype_counts: dict[str, int] = {}
+    for col in data_columns:
+        dtype = dtypes_by_column.get(col, "unknown")
+        data_dtype_counts[dtype] = data_dtype_counts.get(dtype, 0) + 1
     return {
-        "shape": [int(n_rows or 0), len(columns)],
-        "index_name": None,
+        "shape": [int(n_rows or 0), len(data_columns)],
+        "index_name": index_col,
         "index_sample": ["file-backed:not-loaded"],
-        "column_sample": columns[: min(sample, len(columns))],
-        "dtype_counts": dtype_counts,
+        "column_sample": data_columns[: min(sample, len(data_columns))],
+        "dtype_counts": data_dtype_counts or dtype_counts,
         "corner_sample_sha256": digest.hexdigest(),
         "file_backed": True,
         "format": suffix.removeprefix("."),
@@ -447,12 +494,21 @@ def file_backed_table_fingerprint(path: Path, *, sample: int = 8) -> dict[str, A
     }
 
 
-def _file_backed_row_count_column(columns: list[str], path: Path) -> str:
+def _file_backed_row_count_column(
+    columns: list[str],
+    path: Path,
+    dtypes_by_column: dict[str, str] | None = None,
+) -> str:
     if not columns:
         raise ValueError(f"file-backed table has no columns: {path}")
     for candidate in ("motifs", path.stem, "motif", "motif_id", "features", "feature"):
         if candidate in columns:
             return candidate
+    if dtypes_by_column:
+        for column in columns:
+            dtype = dtypes_by_column.get(column, "").lower()
+            if "string" in dtype or dtype in {"object", "str"}:
+                return column
     return columns[0]
 
 
@@ -615,27 +671,14 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     reference_sources: dict[str, dict[str, Any]] = {}
 
     t_step = time.perf_counter()
-    motif_rankings = load_optional_table(args.motif_rankings)
-    motif_rankings_default_path = None
-    motif_rankings_cache_exists_before = None
-    if motif_rankings is None:
-        motif_rankings_default_path = rustscenic.data._motif_rankings_cache_path(
+    motif_rankings, motif_rankings_fingerprint, motif_rankings_source = (
+        prepare_motif_rankings_input(
+            args.motif_rankings,
             species=args.motif_species,
+            quiet=args.quiet,
         )
-        motif_rankings_cache_exists_before = motif_rankings_default_path.exists()
-        print("[setup] downloading or loading cached motif rankings", flush=True)
-        motif_rankings = rustscenic.data.download_motif_rankings(
-            species=args.motif_species,
-            verbose=not args.quiet,
-        )
-        reference_sources["motif_rankings"] = default_reference_source(
-            motif_rankings_default_path,
-            cache_exists_before=motif_rankings_cache_exists_before,
-        )
-    else:
-        reference_sources["motif_rankings"] = explicit_reference_source(
-            args.motif_rankings
-        )
+    )
+    reference_sources["motif_rankings"] = motif_rankings_source
     setup_elapsed["motif_rankings"] = time.perf_counter() - t_step
 
     t_step = time.perf_counter()
@@ -756,7 +799,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     }
 
     reference_fingerprints = {
-        "motif_rankings": dataframe_fingerprint(motif_rankings),
+        "motif_rankings": motif_rankings_fingerprint,
         "gene_coords": dataframe_fingerprint(gene_coords),
     }
     if motif_annotations is not None:
@@ -771,7 +814,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     shapes = {
         "rna_post_qc": [int(rna.n_obs), int(rna.n_vars)],
         "atac_shared_cells": [int(atac.n_obs), int(atac.n_vars)],
-        "motif_rankings": list(motif_rankings.shape),
+        "motif_rankings": motif_rankings_fingerprint["shape"],
         "gene_coords_rows": int(len(gene_coords)),
         "tfs_supplied": int(len(tfs)),
     }

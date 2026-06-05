@@ -183,13 +183,101 @@ def test_real_multiome_harness_fingerprints_feather_without_full_table_read(
 
     fp = module.file_backed_table_fingerprint(path)
 
-    assert fp["shape"] == [3, 3]
+    assert fp["shape"] == [3, 2]
+    assert fp["index_name"] == "motifs"
+    assert fp["column_sample"] == ["peak_1", "peak_2"]
+    assert fp["dtype_counts"] == {"int32": 2}
     assert fp["file_backed"] is True
     assert fp["format"] == "feather"
     assert fp["metadata_read_columns"] == ["motifs"]
     assert fp["path_name"] == path.name
     assert fp["size_bytes"] == path.stat().st_size
     assert read_columns == [["motifs"]]
+
+
+def test_real_multiome_harness_prepares_explicit_motif_rankings_without_loading(
+    monkeypatch,
+    tmp_path,
+):
+    module = _load_module(
+        "bench_real_multiome_explicit_motif_path",
+        ROOT / "validation/scaling/bench_real_multiome_pipeline.py",
+    )
+    path = tmp_path / "motifs.feather"
+    pd.DataFrame(
+        {
+            "motifs": ["m1", "m2"],
+            "GATA3": np.asarray([0, 1], dtype=np.int32),
+            "SPI1": np.asarray([1, 0], dtype=np.int32),
+        }
+    ).to_feather(path)
+
+    monkeypatch.setattr(
+        module,
+        "load_optional_table",
+        lambda _path: (_ for _ in ()).throw(
+            AssertionError("file-backed motif rankings should not load in setup")
+        ),
+    )
+
+    rankings_arg, fingerprint, source = module.prepare_motif_rankings_input(
+        path,
+        species="human",
+        quiet=True,
+    )
+
+    assert rankings_arg == path
+    assert fingerprint["shape"] == [2, 2]
+    assert fingerprint["file_backed"] is True
+    assert source["source"] == "explicit_path"
+    assert source["path"] == str(path)
+
+
+def test_real_multiome_harness_prepares_default_motif_cache_without_loading(
+    monkeypatch,
+    tmp_path,
+):
+    module = _load_module(
+        "bench_real_multiome_default_motif_path",
+        ROOT / "validation/scaling/bench_real_multiome_pipeline.py",
+    )
+    import rustscenic.data as data
+
+    cache_path = tmp_path / "default_motifs.feather"
+    pd.DataFrame(
+        {
+            "motifs": ["m1", "m2"],
+            "GATA3": np.asarray([0, 1], dtype=np.int32),
+            "SPI1": np.asarray([1, 0], dtype=np.int32),
+        }
+    ).to_feather(cache_path)
+
+    monkeypatch.setattr(data, "_motif_rankings_cache_path", lambda *, species: cache_path)
+    monkeypatch.setattr(
+        data,
+        "_ensure_motif_rankings_cached",
+        lambda *, species, verbose: cache_path,
+    )
+    monkeypatch.setattr(
+        data,
+        "download_motif_rankings",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("default motif rankings should be cached, not loaded")
+        ),
+    )
+
+    rankings_arg, fingerprint, source = module.prepare_motif_rankings_input(
+        None,
+        species="human",
+        quiet=True,
+    )
+
+    assert rankings_arg == cache_path
+    assert fingerprint["shape"] == [2, 2]
+    assert fingerprint["file_backed"] is True
+    assert source["source"] == "default_cache"
+    assert source["cache_exists_before"] is True
+    assert source["cache_exists_after"] is True
 
 
 def test_real_multiome_harness_builds_compact_output_summaries(monkeypatch, tmp_path):

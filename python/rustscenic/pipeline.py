@@ -1000,7 +1000,7 @@ def _coerce_rankings(rankings, *, feature_names: Iterable[str] | None = None):
         return df
     path = Path(rankings)
     suffix = path.suffix.lower()
-    if suffix in (".parquet", ".feather"):
+    if suffix in (".parquet", ".feather", ".ft"):
         return _rankings_with_motif_index(
             _read_rankings_file(path, feature_names=feature_names),
             path,
@@ -1036,10 +1036,10 @@ def _read_rankings_file(
     if not features:
         if suffix == ".parquet":
             return pd.read_parquet(path)
-        if suffix == ".feather":
+        if suffix in (".feather", ".ft"):
             return pd.read_feather(path)
 
-    if suffix == ".feather":
+    if suffix in (".feather", ".ft"):
         cols = _projected_ranking_columns(path, features, kind="feather")
         return pd.read_feather(path, columns=cols)
     if suffix == ".parquet":
