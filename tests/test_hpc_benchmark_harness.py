@@ -3572,6 +3572,26 @@ def test_benchmark_artifact_validator_rejects_incomplete_rust_stage_symbols(tmp_
     ) in failures
 
 
+def test_benchmark_artifact_validator_accepts_prebuilt_atac_var_peak_coords(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_prebuilt_atac_var_peak_coords",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["backend_execution"]["pipeline_enhancer"] = {
+        "engine": "rust",
+        "symbols": [
+            "enhancer_align_cell_indices",
+            "enhancer_match_gene_coords_to_rna",
+            "enhancer_normalise_chrom_codes",
+            "enhancer_prepare_gene_order",
+            "enhancer_link_pearson_sparse_rna",
+        ],
+    }
+
+    assert module.validate_record(record, require_clean=True) == []
+
+
 def test_benchmark_artifact_validator_requires_sparse_enhancer_kernel_for_sparse_rna(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_sparse_enhancer_kernel",
