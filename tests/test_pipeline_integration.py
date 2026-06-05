@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import warnings
+from pathlib import Path
 
 import anndata as ad
 import numpy as np
@@ -2629,6 +2630,45 @@ def test_gene_cistarget_file_projection_preserves_full_rank_universe(tmp_path):
     )
 
     pd.testing.assert_frame_equal(got, expected)
+
+
+def test_projected_file_rankings_reuse_schema_for_universe_metadata(
+    tmp_path,
+    monkeypatch,
+):
+    import rustscenic.pipeline as pipeline
+
+    path = tmp_path / "genes_vs_motifs.rankings.feather"
+    pd.DataFrame({
+        "motifs": ["MOTIF_A", "MOTIF_B"],
+        "GATA1": [0, 7],
+        "SPI1": [1, 8],
+        "IRF8": [7, 0],
+        "BCL11A": [8, 1],
+    }).to_feather(path)
+
+    calls = []
+    real_ranking_file_columns = pipeline._ranking_file_columns
+
+    def recording_ranking_file_columns(path_arg, *, kind):
+        calls.append((Path(path_arg).name, kind))
+        return real_ranking_file_columns(path_arg, kind=kind)
+
+    monkeypatch.setattr(
+        pipeline,
+        "_ranking_file_columns",
+        recording_ranking_file_columns,
+    )
+
+    rankings, metadata = pipeline._coerce_rankings_with_metadata(
+        path,
+        feature_names=["GATA1", "IRF8"],
+    )
+
+    assert calls == [("genes_vs_motifs.rankings.feather", "feather")]
+    assert metadata == {"rank_universe_size": 4, "motif_col": "motifs"}
+    assert list(rankings.index) == ["MOTIF_A", "MOTIF_B"]
+    assert list(rankings.columns) == ["GATA1", "IRF8"]
 
 
 def test_coerce_rankings_projects_dataframe_without_losing_motif_index():

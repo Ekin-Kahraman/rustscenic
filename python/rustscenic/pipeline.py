@@ -440,13 +440,13 @@ def run(
         else:
             ranking_features = list(ranking_features)
             requested_feature_count = len(ranking_features)
-        rank_universe_size = (
-            _ranking_universe_size(motif_rankings)
-            if ranking_features is not None else None
-        )
-        rankings_df = _coerce_rankings(
+        rankings_df, rankings_metadata = _coerce_rankings_with_metadata(
             motif_rankings,
             feature_names=ranking_features,
+        )
+        rank_universe_size = (
+            rankings_metadata.get("rank_universe_size")
+            if ranking_features is not None else None
         )
         rank_universe_arg = (
             rank_universe_size
@@ -1038,6 +1038,15 @@ def _load_tfs(tfs):
 
 
 def _coerce_rankings(rankings, *, feature_names: Iterable[str] | None = None):
+    df, _ = _coerce_rankings_with_metadata(rankings, feature_names=feature_names)
+    return df
+
+
+def _coerce_rankings_with_metadata(
+    rankings,
+    *,
+    feature_names: Iterable[str] | None = None,
+) -> tuple[pd.DataFrame, dict[str, int | str | None]]:
     if isinstance(rankings, pd.DataFrame):
         df = _rankings_with_motif_index(rankings, Path("rankings"))
         if feature_names is not None:
@@ -1055,14 +1064,15 @@ def _coerce_rankings(rankings, *, feature_names: Iterable[str] | None = None):
                         "match the motif-ranking column names."
                     )
                 df = df.loc[:, keep]
-        return df
+        return df, {"rank_universe_size": None, "motif_col": None}
     path = Path(rankings)
     suffix = path.suffix.lower()
     if suffix in (".parquet", ".feather", ".ft"):
-        return _rankings_with_motif_index(
-            _read_rankings_file(path, feature_names=feature_names),
+        df, metadata = _read_rankings_file_with_metadata(
             path,
+            feature_names=feature_names,
         )
+        return _rankings_with_motif_index(df, path), metadata
     raise ValueError(f"unsupported motif-ranking format: {suffix}")
 
 
@@ -1119,6 +1129,13 @@ def _feature_name_list(feature_names: Iterable[str] | None) -> list[str]:
 def _read_rankings_file(
     path: Path, *, feature_names: Iterable[str] | None = None,
 ) -> pd.DataFrame:
+    df, _ = _read_rankings_file_with_metadata(path, feature_names=feature_names)
+    return df
+
+
+def _read_rankings_file_with_metadata(
+    path: Path, *, feature_names: Iterable[str] | None = None,
+) -> tuple[pd.DataFrame, dict[str, int | str | None]]:
     """Read a motif ranking file, optionally projecting to needed features.
 
     Large aertslab region-ranking feathers can be tens of GB wide. When
@@ -1129,22 +1146,47 @@ def _read_rankings_file(
     features = _feature_name_list(feature_names)
     if not features:
         if suffix == ".parquet":
-            return pd.read_parquet(path)
+            return pd.read_parquet(path), {
+                "rank_universe_size": None,
+                "motif_col": None,
+            }
         if suffix in (".feather", ".ft"):
-            return pd.read_feather(path)
+            return pd.read_feather(path), {
+                "rank_universe_size": None,
+                "motif_col": None,
+            }
 
     if suffix in (".feather", ".ft"):
-        cols = _projected_ranking_columns(path, features, kind="feather")
-        return pd.read_feather(path, columns=cols)
+        cols, metadata = _projected_ranking_columns_with_metadata(
+            path,
+            features,
+            kind="feather",
+        )
+        return pd.read_feather(path, columns=cols), metadata
     if suffix == ".parquet":
-        cols = _projected_ranking_columns(path, features, kind="parquet")
-        return pd.read_parquet(path, columns=cols)
+        cols, metadata = _projected_ranking_columns_with_metadata(
+            path,
+            features,
+            kind="parquet",
+        )
+        return pd.read_parquet(path, columns=cols), metadata
     raise ValueError(f"unsupported motif-ranking format: {suffix}")
 
 
 def _projected_ranking_columns(path: Path, features: list[str], *, kind: str) -> list[str]:
+    cols, _ = _projected_ranking_columns_with_metadata(path, features, kind=kind)
+    return cols
+
+
+def _projected_ranking_columns_with_metadata(
+    path: Path,
+    features: list[str],
+    *,
+    kind: str,
+) -> tuple[list[str], dict[str, int | str | None]]:
     columns = _ranking_file_columns(path, kind=kind)
     motif_col = _detect_motif_column(columns, path)
+    rank_universe_size = len(columns) - (1 if motif_col is not None else 0)
     keep, examples = _ranking_column_projection(columns, features, motif_col=motif_col)
     feature_count = len(keep) - (1 if motif_col is not None and keep and keep[0] == motif_col else 0)
     if feature_count == 0:
@@ -1154,7 +1196,10 @@ def _projected_ranking_columns(path: Path, features: list[str], *, kind: str) ->
             f"features: {examples}. Check that gene or peak IDs match the "
             "ranking database convention."
         )
-    return keep
+    return keep, {
+        "rank_universe_size": rank_universe_size,
+        "motif_col": motif_col,
+    }
 
 
 def _ranking_column_projection(
