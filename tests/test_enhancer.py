@@ -221,6 +221,35 @@ def test_peak_coords_override_var_lookup():
     assert "enhancer_match_peak_coords_to_atac" in links.attrs["rust_backend"]["symbols"]
 
 
+def test_peak_frame_var_coordinates_do_not_copy(monkeypatch):
+    import rustscenic.enhancer as enh
+
+    atac = ad.AnnData(
+        X=np.zeros((2, 3), dtype=np.float32),
+        obs=pd.DataFrame(index=["c0", "c1"]),
+        var=pd.DataFrame(
+            {
+                "chrom": ["chr1", "chr1", "chr2"],
+                "start": np.array([10, 30, 50], dtype=np.int64),
+                "end": np.array([20, 40, 60], dtype=np.int64),
+                "score": [1.0, 2.0, 3.0],
+            },
+            index=["p0", "p1", "p2"],
+        ),
+    )
+
+    def fail_copy(*_args, **_kwargs):
+        raise AssertionError("adata_atac.var peak coordinates should not be cloned")
+
+    monkeypatch.setattr(pd.DataFrame, "copy", fail_copy)
+
+    peaks = enh._peak_frame(atac, peak_coords=None)
+
+    assert list(peaks.columns) == ["chrom", "start", "end"]
+    assert list(peaks.index) == ["p0", "p1", "p2"]
+    np.testing.assert_array_equal(peaks["start"].to_numpy(), [10, 30, 50])
+
+
 def test_correlation_sign_preserved():
     """Negative correlation (accessibility inversely tracking expression)
     should be reported with a negative sign, not rejected."""

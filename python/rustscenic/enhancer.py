@@ -393,7 +393,7 @@ def _peak_frame(atac_adata, peak_coords) -> pd.DataFrame:
     # Try to get from atac_adata.var
     var = atac_adata.var
     if {"chrom", "start", "end"}.issubset(var.columns):
-        return var[["chrom", "start", "end"]].copy()
+        return var[["chrom", "start", "end"]]
     # Parse "chrN:start-end" pattern from var_names
     parsed = _parse_peak_names(string_list(atac_adata.var_names))
     if parsed is None:
