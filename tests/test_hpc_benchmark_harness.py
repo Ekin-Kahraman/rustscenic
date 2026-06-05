@@ -389,7 +389,9 @@ def test_real_multiome_harness_does_not_reread_pipeline_outputs_for_counts():
     assert "result.n_grn_edges" in source
     assert "result.aucell_shape" in source
     assert '"pipeline_compute_stages": round(pipeline_compute_stage_wall, 3)' in source
+    assert '"pipeline_io_stages": round(pipeline_io_stage_wall, 3)' in source
     assert '"pipeline_unattributed": round(pipeline_unattributed_wall, 3)' in source
+    assert '"io_elapsed_per_stage"' in source
     assert '"end_to_end": round(end_to_end_wall, 3)' in source
     assert '"setup_elapsed_s"' in source
 
@@ -768,6 +770,7 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
                 "setup": 1.0,
                 "pipeline": 2.0,
                 "pipeline_compute_stages": 1.0,
+                "pipeline_io_stages": 0.25,
                 "pipeline_unattributed": 1.0,
                 "end_to_end": 3.0,
             },
@@ -775,6 +778,7 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
             "setup_peak_rss_gb": 0.8,
             "setup_elapsed_s": {"load_rna_qc": 0.1, "fragments_to_matrix": 0.9},
             "elapsed_per_stage": {},
+            "io_elapsed_per_stage": {"fixture_write": 0.25},
             "peak_rss_gb_per_stage": {},
             "reference_sources": _default_cached_reference_sources(tmp_path / "one"),
             "outputs": {"grn_edges": 1},
@@ -788,6 +792,7 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
                 "setup": 1.0,
                 "pipeline": 4.0,
                 "pipeline_compute_stages": 2.0,
+                "pipeline_io_stages": 0.5,
                 "pipeline_unattributed": 2.0,
                 "end_to_end": 6.0,
             },
@@ -795,6 +800,7 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
             "setup_peak_rss_gb": 1.0,
             "setup_elapsed_s": {"load_rna_qc": 0.2, "fragments_to_matrix": 1.8},
             "elapsed_per_stage": {},
+            "io_elapsed_per_stage": {"fixture_write": 0.5},
             "peak_rss_gb_per_stage": {},
             "reference_sources": _default_cached_reference_sources(tmp_path / "two"),
             "outputs": {"grn_edges": 1},
@@ -808,6 +814,7 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
     assert payload["params"]["expected_tfs"] == ["SPI1", "PAX5"]
     assert payload["scaling"]["pipeline_wall_slope_vs_cells"] == 1.0
     assert payload["scaling"]["pipeline_compute_stage_wall_slope_vs_cells"] == 1.0
+    assert payload["scaling"]["pipeline_io_stage_wall_slope_vs_cells"] == 1.0
     assert payload["scaling"]["pipeline_unattributed_wall_slope_vs_cells"] == 1.0
     assert payload["scaling"]["end_to_end_wall_slope_vs_cells"] == 1.0
     assert payload["scaling"]["peak_rss_slope_vs_cells"] > 0
@@ -2567,6 +2574,7 @@ def _sync_full_pipeline_manifest(record: dict) -> None:
                     inventory.get("integrated_adata_path", {}).get("path")
                 ),
                 "elapsed": record["elapsed_per_stage"],
+                "io_elapsed": record.get("io_elapsed_per_stage", {}),
                 "memory": record["peak_rss_gb_per_stage"],
                 "n_cells": shapes["rna_post_qc"][0],
                 "n_grn_edges": outputs["grn_edges"],
@@ -2934,6 +2942,45 @@ def test_benchmark_artifact_validator_rejects_bad_full_pipeline_wall_breakdown(t
     assert (
         "wall_s.pipeline_unattributed must match pipeline minus compute stages: "
         "0.1 != 1.5"
+    ) in failures
+
+
+def test_benchmark_artifact_validator_accounts_for_pipeline_io_timing(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_pipeline_io_timing",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["io_elapsed_per_stage"] = {
+        "grn_parquet_write": 0.04,
+        "aucell_parquet_write": 0.06,
+    }
+    record["wall_s"]["pipeline_io_stages"] = 0.1
+    record["wall_s"]["pipeline_unattributed"] = 0.15
+    _sync_full_pipeline_manifest(record)
+
+    assert module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    ) == []
+
+    record["wall_s"]["pipeline_io_stages"] = 0.2
+    record["wall_s"]["pipeline_unattributed"] = 0.15
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert (
+        "wall_s.pipeline_io_stages must match io_elapsed_per_stage sum: "
+        "0.2 != 0.1"
+    ) in failures
+    assert (
+        "wall_s.pipeline_unattributed must match pipeline minus compute stages "
+        "and IO stages: 0.15 != 0.05"
     ) in failures
 
 

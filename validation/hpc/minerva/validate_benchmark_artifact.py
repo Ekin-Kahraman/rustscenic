@@ -1453,6 +1453,15 @@ def _pipeline_manifest_failures(record: dict[str, Any]) -> list[str]:
             record_key="peak_rss_gb_per_stage",
         )
     )
+    if "io_elapsed_per_stage" in record:
+        failures.extend(
+            _pipeline_manifest_stage_metric_failures(
+                record,
+                manifest,
+                manifest_key="io_elapsed",
+                record_key="io_elapsed_per_stage",
+            )
+        )
 
     manifest_execution = manifest.get("backend_execution")
     benchmark_execution = record.get("backend_execution")
@@ -1613,10 +1622,16 @@ def _full_pipeline_wall_breakdown_failures(
         return failures
 
     compute = wall.get("pipeline_compute_stages")
+    io = wall.get("pipeline_io_stages", 0.0)
     unattributed = wall.get("pipeline_unattributed")
     if not _nonnegative_number(compute):
         failures.append(
             f"{_path(prefix, 'wall_s.pipeline_compute_stages')} must be non-negative"
+        )
+    io_elapsed = record.get("io_elapsed_per_stage")
+    if io_elapsed is not None and not _nonnegative_number(io):
+        failures.append(
+            f"{_path(prefix, 'wall_s.pipeline_io_stages')} must be non-negative"
         )
     if not _nonnegative_number(unattributed):
         failures.append(
@@ -1645,19 +1660,49 @@ def _full_pipeline_wall_breakdown_failures(
                 "wall_s.pipeline"
             )
 
+    if io_elapsed is not None:
+        if not isinstance(io_elapsed, dict):
+            failures.append(f"{_path(prefix, 'io_elapsed_per_stage')} must be an object")
+        else:
+            io_values = []
+            for stage, value in io_elapsed.items():
+                if not _nonempty_str(stage):
+                    failures.append(
+                        f"{_path(prefix, 'io_elapsed_per_stage')} keys must be non-empty strings"
+                    )
+                    continue
+                if not _nonnegative_number(value):
+                    failures.append(
+                        f"{_path(prefix, f'io_elapsed_per_stage.{stage}')} must be non-negative"
+                    )
+                    continue
+                io_values.append(float(value))
+            if _nonnegative_number(io):
+                expected_io = round(sum(io_values), 3)
+                if abs(float(io) - expected_io) > 0.005:
+                    failures.append(
+                        f"{_path(prefix, 'wall_s.pipeline_io_stages')} must match "
+                        f"io_elapsed_per_stage sum: {io} != {expected_io}"
+                    )
+    else:
+        io = 0.0
+
     if (
         _positive_number(wall.get("pipeline"))
         and _nonnegative_number(compute)
+        and _nonnegative_number(io)
         and _nonnegative_number(unattributed)
     ):
         expected_unattributed = round(
-            max(0.0, float(wall["pipeline"]) - float(compute)),
+            max(0.0, float(wall["pipeline"]) - float(compute) - float(io)),
             3,
         )
         if abs(float(unattributed) - expected_unattributed) > 0.01:
+            io_note = " and IO stages" if io_elapsed is not None else ""
             failures.append(
                 f"{_path(prefix, 'wall_s.pipeline_unattributed')} must match "
-                f"pipeline minus compute stages: {unattributed} != {expected_unattributed}"
+                f"pipeline minus compute stages{io_note}: "
+                f"{unattributed} != {expected_unattributed}"
             )
     return failures
 
@@ -1767,6 +1812,7 @@ def _full_pipeline_scaling_row_child_failures(
         "setup_peak_rss_gb": child.get("setup_peak_rss_gb"),
         "setup_elapsed_s": child.get("setup_elapsed_s"),
         "elapsed_per_stage": child.get("elapsed_per_stage"),
+        "io_elapsed_per_stage": child.get("io_elapsed_per_stage"),
         "peak_rss_gb_per_stage": child.get("peak_rss_gb_per_stage"),
         "outputs": child.get("outputs"),
         "expected_tf_recovery": child.get("expected_tf_recovery"),
@@ -2582,6 +2628,10 @@ def validate_full_pipeline_scaling(
                     "pipeline_compute_stages"
                 )
                 if isinstance(row.get("wall_s"), dict) else None,
+                "pipeline_io_stage_wall_s": row.get("wall_s", {}).get(
+                    "pipeline_io_stages"
+                )
+                if isinstance(row.get("wall_s"), dict) else None,
                 "pipeline_unattributed_wall_s": row.get("wall_s", {}).get(
                     "pipeline_unattributed"
                 )
@@ -2599,6 +2649,13 @@ def validate_full_pipeline_scaling(
         ):
             if not _nonnegative_number(scaling.get(key)):
                 failures.append(f"scaling.{key} must be non-negative")
+        if "pipeline_io_stage_wall_slope_vs_cells" in scaling:
+            if not _nonnegative_number(
+                scaling.get("pipeline_io_stage_wall_slope_vs_cells")
+            ):
+                failures.append(
+                    "scaling.pipeline_io_stage_wall_slope_vs_cells must be non-negative"
+                )
         if not _finite_number(scaling.get("peak_rss_slope_vs_cells")):
             failures.append("scaling.peak_rss_slope_vs_cells must be a finite number")
         expected_slopes = {
@@ -2617,6 +2674,11 @@ def validate_full_pipeline_scaling(
                 "n_cells",
                 "pipeline_compute_stage_wall_s",
             ),
+            "pipeline_io_stage_wall_slope_vs_cells": _rounded_slope(
+                wall_rows,
+                "n_cells",
+                "pipeline_io_stage_wall_s",
+            ),
             "pipeline_unattributed_wall_slope_vs_cells": _rounded_slope(
                 wall_rows,
                 "n_cells",
@@ -2629,6 +2691,12 @@ def validate_full_pipeline_scaling(
             ),
         }
         for key, expected in expected_slopes.items():
+            if (
+                key == "pipeline_io_stage_wall_slope_vs_cells"
+                and key not in scaling
+                and all(row.get("pipeline_io_stage_wall_s") is None for row in wall_rows)
+            ):
+                continue
             if expected is not None and scaling.get(key) != expected:
                 failures.append(
                     f"scaling.{key} must match runs: {scaling.get(key)} != {expected}"

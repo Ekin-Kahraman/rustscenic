@@ -771,9 +771,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     pipeline_wall = time.perf_counter() - t_pipeline
     end_to_end_wall = time.perf_counter() - t_end_to_end
     pipeline_compute_stage_wall = sum(float(v) for v in result.elapsed.values())
+    pipeline_io_stage_wall = sum(float(v) for v in result.io_elapsed.values())
     pipeline_unattributed_wall = max(
         0.0,
-        pipeline_wall - pipeline_compute_stage_wall,
+        pipeline_wall - pipeline_compute_stage_wall - pipeline_io_stage_wall,
     )
 
     regulon_names: set[str] = set()
@@ -896,6 +897,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "setup": round(setup_wall, 3),
             "pipeline": round(pipeline_wall, 3),
             "pipeline_compute_stages": round(pipeline_compute_stage_wall, 3),
+            "pipeline_io_stages": round(pipeline_io_stage_wall, 3),
             "pipeline_unattributed": round(pipeline_unattributed_wall, 3),
             "end_to_end": round(end_to_end_wall, 3),
         },
@@ -905,6 +907,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "setup_peak_rss_gb": round(setup_peak_rss_gb, 6),
         "peak_rss_gb": round(peak_rss_gb(), 6),
         "elapsed_per_stage": {k: round(float(v), 6) for k, v in result.elapsed.items()},
+        "io_elapsed_per_stage": {
+            k: round(float(v), 6) for k, v in result.io_elapsed.items()
+        },
         "peak_rss_gb_per_stage": {
             k: round(float(v), 6) for k, v in result.memory.items()
         },

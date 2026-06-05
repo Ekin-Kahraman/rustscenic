@@ -85,6 +85,7 @@ class PipelineResult:
     eregulons_path: Path | None = None
     integrated_adata_path: Path | None = None
     elapsed: dict = field(default_factory=dict)
+    io_elapsed: dict = field(default_factory=dict)
     memory: dict = field(default_factory=dict)
     n_cells: int | None = None
     n_grn_edges: int | None = None
@@ -250,6 +251,7 @@ def run(
     output_dir.mkdir(parents=True, exist_ok=True)
     log = _Logger(verbose)
     elapsed: dict = {}
+    io_elapsed: dict = {}
     memory: dict = {}
     backend_execution: dict = {}
     n_cistarget_rows: int | None = None
@@ -258,6 +260,12 @@ def run(
 
     def mark_memory(stage: str) -> None:
         memory[stage] = _peak_rss_gb()
+
+    def time_io(stage: str, fn):
+        t0 = time.perf_counter()
+        out = fn()
+        io_elapsed[stage] = io_elapsed.get(stage, 0.0) + (time.perf_counter() - t0)
+        return out
 
     if motif_annotations is not None and motif_rankings is None:
         # Pruning needs both. Without rankings we have no enriched motifs to
@@ -328,7 +336,7 @@ def run(
         # full, unserializable obs), downstream stages must skip rather than
         # raise FileNotFoundError reading a path that was never written.
         _atac_artefact = output_dir / "atac_cells_by_peaks.h5ad"
-        adata_atac.write_h5ad(_atac_artefact)
+        time_io("atac_h5ad_write", lambda: adata_atac.write_h5ad(_atac_artefact))
         atac_matrix_path = _atac_artefact
 
         # Topics on the sparse ATAC matrix
@@ -370,10 +378,26 @@ def run(
         topics_dir.mkdir(exist_ok=True)
         # topics_result is typically a (cell_topic, topic_peak) pair
         if hasattr(topics_result, "cell_topic"):
-            np.save(topics_dir / "cell_topic.npy", topics_result.cell_topic)
-            np.save(topics_dir / "topic_peak.npy", topics_result.topic_peak)
-            topics_result.cell_topic.to_parquet(topics_dir / "cell_topic.parquet")
-            topics_result.topic_peak.to_parquet(topics_dir / "topic_peak.parquet")
+            time_io(
+                "topics_cell_topic_npy_write",
+                lambda: np.save(topics_dir / "cell_topic.npy", topics_result.cell_topic),
+            )
+            time_io(
+                "topics_topic_peak_npy_write",
+                lambda: np.save(topics_dir / "topic_peak.npy", topics_result.topic_peak),
+            )
+            time_io(
+                "topics_cell_topic_parquet_write",
+                lambda: topics_result.cell_topic.to_parquet(
+                    topics_dir / "cell_topic.parquet"
+                ),
+            )
+            time_io(
+                "topics_topic_peak_parquet_write",
+                lambda: topics_result.topic_peak.to_parquet(
+                    topics_dir / "topic_peak.parquet"
+                ),
+            )
     else:
         log("[2/8] preproc + topics: skipped (no fragments / peaks)")
         log("[3/8] topics: skipped")
@@ -400,7 +424,7 @@ def run(
     )
     n_grn_edges = int(len(grn))
     grn_path = output_dir / "grn.parquet"
-    grn.to_parquet(grn_path, index=False)
+    time_io("grn_parquet_write", lambda: grn.to_parquet(grn_path, index=False))
     log(f"      {n_grn_edges:,} edges in {elapsed['grn']:.1f}s → {grn_path.name}")
     mark_memory("grn")
 
@@ -418,7 +442,10 @@ def run(
         "pipeline_candidate_regulons_from_grn"
     )
     candidate_regulons_path = output_dir / "candidate_regulons.json"
-    candidate_regulons_path.write_text(json.dumps(candidate_regulons, indent=2))
+    time_io(
+        "candidate_regulons_json_write",
+        lambda: candidate_regulons_path.write_text(json.dumps(candidate_regulons, indent=2)),
+    )
     candidate_regulon_pairs = list(iter_regulon_pairs(candidate_regulons))
     regulons = dict(candidate_regulons)
     regulon_source = "candidate_grn_top_targets"
@@ -448,6 +475,7 @@ def run(
             if regulon_feature_names
             else _skipped_execution("no candidate regulon features to project")
         )
+        t_rankings = time.perf_counter()
         ranking_features = _ranking_projection_features(
             motif_rankings,
             regulon_feature_names,
@@ -480,6 +508,10 @@ def run(
             ranking_values = rankings_array.values
             ranking_motif_names = rankings_array.motif_names
             ranking_feature_names = rankings_array.feature_names
+        io_elapsed["cistarget_rankings_load"] = (
+            io_elapsed.get("cistarget_rankings_load", 0.0)
+            + (time.perf_counter() - t_rankings)
+        )
         loaded_feature_count = int(ranking_values.shape[1])
         rank_universe_arg = (
             rank_universe_size
@@ -535,7 +567,10 @@ def run(
         elapsed["cistarget"] = time.perf_counter() - t0
         n_cistarget_rows = int(len(enriched))
         cistarget_path = output_dir / "cistarget_enriched.parquet"
-        enriched.to_parquet(cistarget_path, index=False)
+        time_io(
+            "cistarget_parquet_write",
+            lambda: enriched.to_parquet(cistarget_path, index=False),
+        )
         log(
             f"      {len(enriched):,} enriched pairs in {elapsed['cistarget']:.1f}s"
             + (f" (nes_threshold={cistarget_nes_threshold})" if cistarget_nes_threshold is not None else "")
@@ -581,9 +616,15 @@ def run(
             n_pruned_regulons = len(pruned_regulons)
             if pruned_regulons:
                 pruned_enriched_path = output_dir / "cistarget_pruned_enriched.parquet"
-                pruned_enriched.to_parquet(pruned_enriched_path, index=False)
+                time_io(
+                    "cistarget_pruned_enriched_parquet_write",
+                    lambda: pruned_enriched.to_parquet(pruned_enriched_path, index=False),
+                )
                 pruned_regulons_path = output_dir / "pruned_regulons.json"
-                pruned_regulons_path.write_text(json.dumps(pruned_regulons, indent=2))
+                time_io(
+                    "pruned_regulons_json_write",
+                    lambda: pruned_regulons_path.write_text(json.dumps(pruned_regulons, indent=2)),
+                )
                 regulons = pruned_regulons
                 enriched_for_eregulons = pruned_enriched
                 regulon_source = "motif_annotation_pruned"
@@ -645,7 +686,10 @@ def run(
                 )
 
     regulons_path = output_dir / "regulons.json"
-    regulons_path.write_text(json.dumps(regulons, indent=2))
+    time_io(
+        "regulons_json_write",
+        lambda: regulons_path.write_text(json.dumps(regulons, indent=2)),
+    )
     log(f"      active regulons: {len(regulons)} ({regulon_source}) → {regulons_path.name}")
 
     # ---- 4c. enhancer → gene linking (optional, requires multiome + gene_coords) ----
@@ -697,7 +741,10 @@ def run(
             elapsed["enhancer"] = time.perf_counter() - t0
             n_enhancer_links = int(len(enhancer_links))
             enhancer_links_path = output_dir / "enhancer_links.parquet"
-            enhancer_links.to_parquet(enhancer_links_path, index=False)
+            time_io(
+                "enhancer_links_parquet_write",
+                lambda: enhancer_links.to_parquet(enhancer_links_path, index=False),
+            )
             log(
                 f"      {n_enhancer_links:,} peak-gene links in "
                 f"{elapsed['enhancer']:.1f}s"
@@ -736,6 +783,7 @@ def run(
                     region_motif_rankings,
                     needed_peaks,
                 )
+                t_region_rankings = time.perf_counter()
                 region_rankings = _projected_rankings_array_with_metadata(
                     region_motif_rankings,
                     feature_names=region_ranking_features,
@@ -745,6 +793,10 @@ def run(
                         region_motif_rankings,
                         feature_names=region_ranking_features,
                     )
+                io_elapsed["region_cistarget_rankings_load"] = (
+                    io_elapsed.get("region_cistarget_rankings_load", 0.0)
+                    + (time.perf_counter() - t_region_rankings)
+                )
                 (
                     region_loaded_columns,
                     region_rank_universe_size,
@@ -799,15 +851,21 @@ def run(
                 if cistarget_path is None:
                     cistarget_path = output_dir / "region_cistarget_enriched.parquet"
                     n_cistarget_rows = int(len(region_enrich))
-                    region_enrich.to_parquet(cistarget_path, index=False)
+                    time_io(
+                        "region_cistarget_parquet_write",
+                        lambda: region_enrich.to_parquet(cistarget_path, index=False),
+                    )
                     log(
                         f"      {len(region_enrich):,} region-enriched pairs → "
                         f"{cistarget_path.name}"
                     )
                 else:
-                    region_enrich.to_parquet(
-                        output_dir / "region_cistarget_enriched.parquet",
-                        index=False,
+                    time_io(
+                        "region_cistarget_parquet_write",
+                        lambda: region_enrich.to_parquet(
+                            output_dir / "region_cistarget_enriched.parquet",
+                            index=False,
+                        ),
                     )
             else:
                 enriched_with_peaks = _empty_cistarget_peak_attribution_frame()
@@ -845,7 +903,7 @@ def run(
         elapsed["eregulons"] = time.perf_counter() - t0
         n_eregulon_rows = int(len(eregulons_df))
         eregulons_path = output_dir / "eregulons.parquet"
-        eregulons_df.to_parquet(eregulons_path, index=False)
+        time_io("eregulons_parquet_write", lambda: eregulons_df.to_parquet(eregulons_path, index=False))
         n_eregulons = int(eregulons_df.attrs.get("n_eregulons", 0))
         log(
             f"      {n_eregulons} eRegulons assembled in "
@@ -874,7 +932,7 @@ def run(
     elapsed["aucell"] = time.perf_counter() - t0
     aucell_shape = [int(auc.shape[0]), int(auc.shape[1])]
     aucell_path = output_dir / "aucell.parquet"
-    auc.to_parquet(aucell_path)
+    time_io("aucell_parquet_write", lambda: auc.to_parquet(aucell_path))
     log(f"      {auc.shape[0]:,} cells × {auc.shape[1]} regulons in {elapsed['aucell']:.1f}s")
     mark_memory("aucell")
 
@@ -884,7 +942,7 @@ def run(
         _attach_aucell_to_obs(adata_rna, auc)
         backend_execution["integrated_adata"] = _python_io_execution("AnnData obs attachment and h5ad write")
         integrated_path = output_dir / "rna_with_regulons.h5ad"
-        adata_rna.write_h5ad(integrated_path)
+        time_io("integrated_adata_h5ad_write", lambda: adata_rna.write_h5ad(integrated_path))
         log(f"      integrated → {integrated_path.name}")
         mark_memory("integrated_adata")
     else:
@@ -906,6 +964,7 @@ def run(
         eregulons_path=eregulons_path,
         integrated_adata_path=integrated_path,
         elapsed=elapsed,
+        io_elapsed=io_elapsed,
         memory=memory,
         n_cells=n_cells,
         n_grn_edges=n_grn_edges,

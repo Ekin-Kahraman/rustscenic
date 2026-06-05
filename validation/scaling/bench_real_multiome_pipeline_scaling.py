@@ -193,6 +193,7 @@ def run_child(args: argparse.Namespace, *, n_cells: int) -> dict[str, Any]:
         "setup_peak_rss_gb": record["setup_peak_rss_gb"],
         "setup_elapsed_s": record["setup_elapsed_s"],
         "elapsed_per_stage": record["elapsed_per_stage"],
+        "io_elapsed_per_stage": record.get("io_elapsed_per_stage", {}),
         "peak_rss_gb_per_stage": record["peak_rss_gb_per_stage"],
         "backend_execution": record["backend_execution"],
         "cell_barcode_filter": record["cell_barcode_filter"],
@@ -245,6 +246,9 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
             "pipeline_wall_s": row["wall_s"]["pipeline"],
             "pipeline_compute_stage_wall_s": row["wall_s"].get(
                 "pipeline_compute_stages"
+            ),
+            "pipeline_io_stage_wall_s": row["wall_s"].get(
+                "pipeline_io_stages"
             ),
             "pipeline_unattributed_wall_s": row["wall_s"].get(
                 "pipeline_unattributed"
@@ -306,6 +310,11 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
                 wall_rows,
                 "n_cells",
                 "pipeline_compute_stage_wall_s",
+            ),
+            "pipeline_io_stage_wall_slope_vs_cells": _rounded_slope(
+                wall_rows,
+                "n_cells",
+                "pipeline_io_stage_wall_s",
             ),
             "pipeline_unattributed_wall_slope_vs_cells": _rounded_slope(
                 wall_rows,
