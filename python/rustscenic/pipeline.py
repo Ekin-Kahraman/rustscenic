@@ -50,6 +50,11 @@ from rustscenic._rustscenic import (
     pipeline_filter_cistarget_peak_rows_f32 as _pipeline_filter_cistarget_peak_rows_f32,
     pipeline_filter_cistarget_peak_rows_f64 as _pipeline_filter_cistarget_peak_rows_f64,
     pipeline_match_atac_cell_indices as _pipeline_match_atac_cell_indices,
+    pipeline_pack_ranking_columns_f32 as _pipeline_pack_ranking_columns_f32,
+    pipeline_pack_ranking_columns_f64 as _pipeline_pack_ranking_columns_f64,
+    pipeline_pack_ranking_columns_i16 as _pipeline_pack_ranking_columns_i16,
+    pipeline_pack_ranking_columns_i32 as _pipeline_pack_ranking_columns_i32,
+    pipeline_pack_ranking_columns_i64 as _pipeline_pack_ranking_columns_i64,
     pipeline_peak_regulons_and_features_from_edges as _pipeline_peak_regulons_and_features,
     pipeline_project_ranking_columns as _pipeline_project_ranking_columns,
     pipeline_unique_regulon_features as _pipeline_unique_regulon_features,
@@ -1341,7 +1346,7 @@ def _projected_rankings_array_with_metadata(
             "none of the current run's requested features were present in "
             f"the motif-ranking columns for {path.name}"
         )
-    values = arrays[0].reshape(-1, 1) if len(arrays) == 1 else np.column_stack(arrays)
+    values = _pack_projected_ranking_columns(arrays)
     if values.dtype == object or not np.issubdtype(values.dtype, np.number):
         raise TypeError("rankings must contain numeric rank values")
     return _RankingsArray(
@@ -1349,6 +1354,29 @@ def _projected_rankings_array_with_metadata(
         motif_names=motif_names,
         feature_names=string_list(feature_cols),
         metadata=metadata,
+    )
+
+
+def _pack_projected_ranking_columns(arrays: list[np.ndarray]) -> np.ndarray:
+    """Pack selected Arrow ranking columns into a row-major matrix in Rust."""
+    if not arrays:
+        raise ValueError("at least one ranking value column is required")
+    dtype = np.dtype(arrays[0].dtype)
+    if any(np.dtype(array.dtype) != dtype for array in arrays):
+        raise TypeError("projected ranking columns must have the same dtype")
+    if dtype == np.dtype(np.int16):
+        return _pipeline_pack_ranking_columns_i16(arrays)
+    if dtype == np.dtype(np.int32):
+        return _pipeline_pack_ranking_columns_i32(arrays)
+    if dtype == np.dtype(np.int64):
+        return _pipeline_pack_ranking_columns_i64(arrays)
+    if dtype == np.dtype(np.float32):
+        return _pipeline_pack_ranking_columns_f32(arrays)
+    if dtype == np.dtype(np.float64):
+        return _pipeline_pack_ranking_columns_f64(arrays)
+    raise TypeError(
+        "projected ranking columns must be int16, int32, int64, float32, "
+        f"or float64, got {dtype}"
     )
 
 

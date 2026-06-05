@@ -76,6 +76,11 @@ REQUIRED_RUST_BACKEND_SYMBOLS: dict[str, list[str]] = {
         "pipeline_match_atac_cell_indices",
         "pipeline_peak_regulons_and_features_from_edges",
         "pipeline_project_ranking_columns",
+        "pipeline_pack_ranking_columns_i16",
+        "pipeline_pack_ranking_columns_i32",
+        "pipeline_pack_ranking_columns_i64",
+        "pipeline_pack_ranking_columns_f32",
+        "pipeline_pack_ranking_columns_f64",
         "pipeline_unique_regulon_features",
     ],
     "gene_resolution": [

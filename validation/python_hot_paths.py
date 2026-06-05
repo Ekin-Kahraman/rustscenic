@@ -44,6 +44,7 @@ HOT_PATH_PATTERNS = (
     "np.argsort(",
     "np.argpartition(",
     "np.bincount(",
+    "np.column_stack(",
     "np.searchsorted(",
     "np.corrcoef(",
     "np.median(",

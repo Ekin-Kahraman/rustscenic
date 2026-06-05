@@ -27,6 +27,7 @@ from pathlib import Path
 import anndata as ad
 import numpy as np
 import pandas as pd
+import pytest
 import rustscenic.aucell
 import rustscenic.cistarget
 import rustscenic.enhancer
@@ -2857,6 +2858,32 @@ def test_ranking_column_projection_uses_rust_name_projection(monkeypatch):
     }
     assert keep == ["motifs", "peak_a"]
     assert examples == ["missing", "peak_a"]
+
+
+def test_pack_projected_ranking_columns_uses_rust_matrix_packer():
+    from rustscenic.pipeline import _pack_projected_ranking_columns
+
+    arrays = [
+        np.array([1, 2, 3], dtype=np.int32),
+        np.array([4, 5, 6], dtype=np.int32),
+    ]
+    packed = _pack_projected_ranking_columns(arrays)
+
+    assert packed.dtype == np.int32
+    np.testing.assert_array_equal(
+        packed,
+        np.array([[1, 4], [2, 5], [3, 6]], dtype=np.int32),
+    )
+
+
+def test_pack_projected_ranking_columns_rejects_mixed_dtypes():
+    from rustscenic.pipeline import _pack_projected_ranking_columns
+
+    with pytest.raises(TypeError, match="same dtype"):
+        _pack_projected_ranking_columns([
+            np.array([1, 2], dtype=np.int32),
+            np.array([1.0, 2.0], dtype=np.float32),
+        ])
 
 
 def test_unique_regulon_features_preserves_first_seen_order():

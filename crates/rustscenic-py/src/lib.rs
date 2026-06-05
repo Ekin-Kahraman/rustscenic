@@ -43,6 +43,7 @@ type PipelineCellIndexPyResult = Py<PyArray1<u64>>;
 type PipelineAttributeRowsF32PyResult = (Py<PyList>, Py<PyList>, Py<PyList>, Py<PyArray1<f32>>);
 type PipelineAttributeRowsF64PyResult = (Py<PyList>, Py<PyList>, Py<PyList>, Py<PyArray1<f64>>);
 type PipelineRankingColumnProjectionPyResult = (Py<PyList>, Py<PyList>);
+type PipelineRankingMatrixPyResult<T> = Py<PyArray2<T>>;
 type PreprocPeakCoordsPyResult = (
     Py<PyList>,        // peak IDs
     Py<PyList>,        // chromosome names
@@ -5680,6 +5681,61 @@ fn build_ranking_column_projection_names(
     (keep, examples)
 }
 
+macro_rules! pipeline_pack_ranking_columns_pyfunction {
+    ($name:ident, $ty:ty) => {
+        #[pyfunction]
+        fn $name<'py>(
+            py: Python<'py>,
+            columns: Vec<PyReadonlyArray1<'py, $ty>>,
+        ) -> PyResult<PipelineRankingMatrixPyResult<$ty>> {
+            let mut slices: Vec<&[$ty]> = Vec::with_capacity(columns.len());
+            for column in &columns {
+                slices.push(column.as_slice().map_err(|_| {
+                    pyo3::exceptions::PyValueError::new_err(
+                        "ranking columns must be contiguous one-dimensional arrays",
+                    )
+                })?);
+            }
+            let (n_rows, n_cols, values) =
+                py.allow_threads(|| pack_ranking_column_slices(&slices))?;
+            let out = ndarray::Array2::from_shape_vec((n_rows, n_cols), values)
+                .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
+            Ok(PyArray2::from_owned_array(py, out).unbind())
+        }
+    };
+}
+
+pipeline_pack_ranking_columns_pyfunction!(pipeline_pack_ranking_columns_i16, i16);
+pipeline_pack_ranking_columns_pyfunction!(pipeline_pack_ranking_columns_i32, i32);
+pipeline_pack_ranking_columns_pyfunction!(pipeline_pack_ranking_columns_i64, i64);
+pipeline_pack_ranking_columns_pyfunction!(pipeline_pack_ranking_columns_f32, f32);
+pipeline_pack_ranking_columns_pyfunction!(pipeline_pack_ranking_columns_f64, f64);
+
+fn pack_ranking_column_slices<T: Copy>(columns: &[&[T]]) -> PyResult<(usize, usize, Vec<T>)> {
+    if columns.is_empty() {
+        return Err(pyo3::exceptions::PyValueError::new_err(
+            "at least one ranking value column is required",
+        ));
+    }
+    let n_rows = columns[0].len();
+    for (idx, column) in columns.iter().enumerate().skip(1) {
+        if column.len() != n_rows {
+            return Err(pyo3::exceptions::PyValueError::new_err(format!(
+                "ranking column {idx} has length {} but column 0 has length {n_rows}",
+                column.len()
+            )));
+        }
+    }
+    let n_cols = columns.len();
+    let mut values = Vec::with_capacity(n_rows.saturating_mul(n_cols));
+    for row in 0..n_rows {
+        for column in columns {
+            values.push(column[row]);
+        }
+    }
+    Ok((n_rows, n_cols, values))
+}
+
 /// Build top-target candidate regulons directly from GRN edge columns.
 ///
 /// This mirrors pandas:
@@ -7024,6 +7080,11 @@ fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     )?)?;
     m.add_function(wrap_pyfunction!(pipeline_unique_regulon_features, m)?)?;
     m.add_function(wrap_pyfunction!(pipeline_project_ranking_columns, m)?)?;
+    m.add_function(wrap_pyfunction!(pipeline_pack_ranking_columns_i16, m)?)?;
+    m.add_function(wrap_pyfunction!(pipeline_pack_ranking_columns_i32, m)?)?;
+    m.add_function(wrap_pyfunction!(pipeline_pack_ranking_columns_i64, m)?)?;
+    m.add_function(wrap_pyfunction!(pipeline_pack_ranking_columns_f32, m)?)?;
+    m.add_function(wrap_pyfunction!(pipeline_pack_ranking_columns_f64, m)?)?;
     m.add_function(wrap_pyfunction!(cistarget_region_attribution_i16, m)?)?;
     m.add_function(wrap_pyfunction!(cistarget_region_attribution_i32, m)?)?;
     m.add_function(wrap_pyfunction!(cistarget_region_attribution_i64, m)?)?;

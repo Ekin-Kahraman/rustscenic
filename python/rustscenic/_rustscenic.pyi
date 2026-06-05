@@ -965,6 +965,36 @@ def pipeline_project_ranking_columns(
     """Select motif-ranking column names for requested features."""
 
 
+def pipeline_pack_ranking_columns_i16(
+    columns: list[npt.NDArray[np.int16]],
+) -> npt.NDArray[np.int16]:
+    """Pack projected int16 ranking columns into a row-major matrix."""
+
+
+def pipeline_pack_ranking_columns_i32(
+    columns: list[npt.NDArray[np.int32]],
+) -> npt.NDArray[np.int32]:
+    """Pack projected int32 ranking columns into a row-major matrix."""
+
+
+def pipeline_pack_ranking_columns_i64(
+    columns: list[npt.NDArray[np.int64]],
+) -> npt.NDArray[np.int64]:
+    """Pack projected int64 ranking columns into a row-major matrix."""
+
+
+def pipeline_pack_ranking_columns_f32(
+    columns: list[npt.NDArray[np.float32]],
+) -> npt.NDArray[np.float32]:
+    """Pack projected float32 ranking columns into a row-major matrix."""
+
+
+def pipeline_pack_ranking_columns_f64(
+    columns: list[npt.NDArray[np.float64]],
+) -> npt.NDArray[np.float64]:
+    """Pack projected float64 ranking columns into a row-major matrix."""
+
+
 def preproc_fragments_to_matrix(
     fragments_path: str,
     peaks_path: str,
