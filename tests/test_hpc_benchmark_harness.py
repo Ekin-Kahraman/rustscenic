@@ -393,6 +393,28 @@ def test_benchmark_thread_env_overrides_inherited_blas_settings(monkeypatch):
             monkeypatch.setenv(key, "8")
 
 
+def test_real_pbmc3k_grn_harness_records_sparse_matrix_profile():
+    module = _load_module(
+        "bench_real_pbmc3k_grn_matrix_profile",
+        ROOT / "validation/scaling/bench_real_pbmc3k_grn_scaling.py",
+    )
+    import anndata as ad
+    import scipy.sparse as sp
+
+    adata = ad.AnnData(X=sp.csr_matrix(np.eye(3, dtype=np.float32)))
+
+    profile = module.matrix_profile(adata)
+
+    assert profile == {
+        "shape": [3, 3],
+        "storage": "sparse",
+        "format": "csr",
+        "dtype": "float32",
+        "nnz": 3,
+        "density": 0.33333333,
+    }
+
+
 def test_real_multiome_harness_omits_empty_lsf_env(monkeypatch):
     module = _load_module(
         "bench_real_multiome_benchmark_env",
@@ -2193,6 +2215,19 @@ def _matrix_inputs_state(n_cells: int = 100):
     }
 
 
+def _grn_matrix_inputs_state(n_cells: int = 100):
+    return {
+        "rna_post_qc": {
+            "shape": [n_cells, 1000],
+            "storage": "sparse",
+            "format": "csr",
+            "dtype": "float32",
+            "nnz": n_cells * 100,
+            "density": 0.1,
+        },
+    }
+
+
 def _explicit_reference_source(path: Path | str):
     return {
         "source": "explicit_path",
@@ -2579,6 +2614,7 @@ def _grn_scaling_record():
         "edges": 1000,
         "grn_wall_s": 1.5,
         "peak_rss_gb": 0.75,
+        "matrix_inputs": _grn_matrix_inputs_state(),
         "backend_execution": {
             "grn": {
                 "engine": "rust",
@@ -4246,6 +4282,45 @@ def test_benchmark_artifact_validator_rejects_grn_row_without_rust_execution():
         "thread_scaling[0].backend_execution.grn.symbols must be a non-empty string list"
         in failures
     )
+
+
+def test_benchmark_artifact_validator_rejects_grn_row_without_matrix_inputs():
+    module = _load_module(
+        "validate_benchmark_artifact_grn_matrix_inputs",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _grn_scaling_record()
+    del record["subset_scaling"][0]["matrix_inputs"]
+    record["thread_scaling"][0]["matrix_inputs"]["rna_post_qc"]["storage"] = "dense"
+    record["thread_scaling"][0]["matrix_inputs"]["rna_post_qc"]["nnz"] = None
+    record["thread_scaling"][0]["matrix_inputs"]["rna_post_qc"]["density"] = None
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "subset_scaling[0].matrix_inputs must be an object" in failures
+    assert (
+        "thread_scaling[0].matrix_inputs.rna_post_qc.storage must be 'sparse'"
+        in failures
+    )
+
+
+def test_benchmark_artifact_validator_rejects_sparse_grn_row_without_sparse_kernel():
+    module = _load_module(
+        "validate_benchmark_artifact_grn_sparse_kernel",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _grn_scaling_record()
+    record["subset_scaling"][0]["backend_execution"]["grn"]["symbols"] = [
+        "gene_duplicate_summary",
+        "grn_infer",
+    ]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "subset_scaling[0].backend_execution.grn.symbols must include "
+        "'grn_infer_sparse_csc' when matrix_inputs.rna_post_qc.storage is 'sparse'"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_dirty_child_grn_record():

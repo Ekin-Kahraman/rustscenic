@@ -576,6 +576,33 @@ def _sparse_rna_backend_failures(
     return failures
 
 
+def _sparse_grn_backend_failures(
+    record: dict[str, Any],
+    prefix: str,
+) -> list[str]:
+    matrix_inputs = record.get("matrix_inputs")
+    if not isinstance(matrix_inputs, dict):
+        return []
+    rna_profile = matrix_inputs.get("rna_post_qc")
+    if not isinstance(rna_profile, dict) or rna_profile.get("storage") != "sparse":
+        return []
+
+    execution = record.get("backend_execution")
+    state = execution.get("grn") if isinstance(execution, dict) else None
+    symbols = state.get("symbols") if isinstance(state, dict) else None
+    if not isinstance(symbols, list):
+        return []
+    if "grn_infer_sparse_csc" in {
+        symbol for symbol in symbols if isinstance(symbol, str)
+    }:
+        return []
+    return [
+        f"{prefix}.backend_execution.grn.symbols must include "
+        "'grn_infer_sparse_csc' when matrix_inputs.rna_post_qc.storage "
+        "is 'sparse'"
+    ]
+
+
 def _integrated_adata_execution_failures(
     record: dict[str, Any],
     prefix: str,
@@ -2027,6 +2054,14 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
                     required_rust_stages={"grn"},
                 )
             )
+            failures.extend(
+                _matrix_input_failures(
+                    row,
+                    prefix,
+                    shape_keys=("rna_post_qc",),
+                )
+            )
+            failures.extend(_sparse_grn_backend_failures(row, prefix))
     failures.extend(_grn_scaling_summary_failures(subset_rows, thread_rows, record))
     return failures
 

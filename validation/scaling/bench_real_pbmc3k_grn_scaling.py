@@ -127,6 +127,32 @@ def load_pbmc_rna(data_dir: Path):
     return rna, tfs
 
 
+def matrix_profile(adata) -> dict[str, Any]:
+    """Record sparse/dense matrix provenance without scanning dense payloads."""
+    import scipy.sparse as sp
+
+    x = adata.X
+    if sp.issparse(x):
+        return {
+            "shape": [int(x.shape[0]), int(x.shape[1])],
+            "storage": "sparse",
+            "format": x.getformat(),
+            "dtype": str(x.dtype),
+            "nnz": int(x.nnz),
+            "density": round(float(x.nnz) / float(x.shape[0] * x.shape[1]), 8)
+            if x.shape[0] and x.shape[1]
+            else 0.0,
+        }
+    return {
+        "shape": [int(x.shape[0]), int(x.shape[1])],
+        "storage": "dense",
+        "format": "ndarray",
+        "dtype": str(x.dtype),
+        "nnz": None,
+        "density": None,
+    }
+
+
 def subset_cells(rna, n_cells: int, seed: int):
     if n_cells >= rna.n_obs:
         return rna.copy()
@@ -178,6 +204,9 @@ def run_one(args: argparse.Namespace) -> dict[str, Any]:
         "grn_wall_s": round(grn_wall, 3),
         "edges": int(len(grn)),
         "peak_rss_gb": round(peak_rss_gb(), 3),
+        "matrix_inputs": {
+            "rna_post_qc": matrix_profile(rna_sub),
+        },
         "backend_execution": backend_execution_for_grn(grn),
         "env": {
             "python": platform.python_version(),
