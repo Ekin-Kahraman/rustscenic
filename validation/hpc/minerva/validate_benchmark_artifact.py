@@ -539,7 +539,7 @@ def _backend_execution_symbol_failures(
     return failures
 
 
-def _sparse_enhancer_backend_failures(
+def _sparse_rna_backend_failures(
     record: dict[str, Any],
     prefix: str,
 ) -> list[str]:
@@ -551,19 +551,29 @@ def _sparse_enhancer_backend_failures(
         return []
 
     execution = record.get("backend_execution")
-    state = execution.get("pipeline_enhancer") if isinstance(execution, dict) else None
-    symbols = state.get("symbols") if isinstance(state, dict) else None
-    if not isinstance(symbols, list):
+    if not isinstance(execution, dict):
         return []
-    if "enhancer_link_pearson_sparse_rna" in {
-        symbol for symbol in symbols if isinstance(symbol, str)
-    }:
-        return []
-    return [
-        f"{prefix}.backend_execution.pipeline_enhancer.symbols must include "
-        "'enhancer_link_pearson_sparse_rna' when "
-        "matrix_inputs.rna_post_qc.storage is 'sparse'"
-    ]
+
+    required = {
+        "pipeline_grn": "grn_infer_sparse_csc",
+        "pipeline_enhancer": "enhancer_link_pearson_sparse_rna",
+        "pipeline_aucell": "aucell_score_sparse_csr",
+    }
+    failures: list[str] = []
+    for stage, required_symbol in required.items():
+        state = execution.get(stage)
+        symbols = state.get("symbols") if isinstance(state, dict) else None
+        if not isinstance(symbols, list):
+            continue
+        symbol_set = {symbol for symbol in symbols if isinstance(symbol, str)}
+        if required_symbol in symbol_set:
+            continue
+        failures.append(
+            f"{prefix}.backend_execution.{stage}.symbols must include "
+            f"{required_symbol!r} when matrix_inputs.rna_post_qc.storage "
+            "is 'sparse'"
+        )
+    return failures
 
 
 def _integrated_adata_execution_failures(
@@ -1717,7 +1727,7 @@ def _full_pipeline_scaling_row_failures(
         )
     )
     failures.extend(_matrix_input_failures(row, prefix))
-    failures.extend(_sparse_enhancer_backend_failures(row, prefix))
+    failures.extend(_sparse_rna_backend_failures(row, prefix))
     failures.extend(_full_pipeline_scaling_reference_source_failures(row, prefix))
     failures.extend(_integrated_adata_execution_failures(row, prefix))
     if require_motif_pruning:
@@ -1903,7 +1913,7 @@ def validate_full_pipeline(
             )
         )
         failures.extend(_matrix_input_failures(record, "full_pipeline"))
-        failures.extend(_sparse_enhancer_backend_failures(record, "full_pipeline"))
+        failures.extend(_sparse_rna_backend_failures(record, "full_pipeline"))
 
     if not _positive_int(outputs.get("grn_edges")):
         failures.append("outputs.grn_edges must be positive")

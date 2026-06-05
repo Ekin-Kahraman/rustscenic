@@ -2127,7 +2127,7 @@ def _backend_execution_state():
         "pipeline_topics": {"engine": "rust", "symbols": ["topics_fit"]},
         "pipeline_grn": {
             "engine": "rust",
-            "symbols": ["gene_duplicate_summary", "grn_infer"],
+            "symbols": ["gene_duplicate_summary", "grn_infer_sparse_csc"],
         },
         "pipeline_candidate_regulons": {
             "engine": "rust",
@@ -3390,6 +3390,50 @@ def test_benchmark_artifact_validator_requires_sparse_enhancer_kernel_for_sparse
     ) in failures
 
 
+def test_benchmark_artifact_validator_requires_sparse_grn_kernel_for_sparse_rna(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_sparse_grn_kernel",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["backend_execution"]["pipeline_grn"] = {
+        "engine": "rust",
+        "symbols": ["gene_duplicate_summary", "grn_infer"],
+    }
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_grn.symbols must include "
+        "'grn_infer_sparse_csc' when matrix_inputs.rna_post_qc.storage "
+        "is 'sparse'"
+    ) in failures
+
+
+def test_benchmark_artifact_validator_requires_sparse_aucell_kernel_for_sparse_rna(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_sparse_aucell_kernel",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["backend_execution"]["pipeline_aucell"] = {
+        "engine": "rust",
+        "symbols": [
+            "gene_duplicate_summary",
+            "stage_prepare_regulon_indices_with_coverage",
+            "aucell_score",
+        ],
+    }
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_aucell.symbols must include "
+        "'aucell_score_sparse_csr' when matrix_inputs.rna_post_qc.storage "
+        "is 'sparse'"
+    ) in failures
+
+
 def test_benchmark_artifact_validator_requires_sparse_enhancer_kernel_in_scaling_rows(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_scaling_sparse_enhancer_kernel",
@@ -3419,6 +3463,43 @@ def test_benchmark_artifact_validator_requires_sparse_enhancer_kernel_in_scaling
         "runs[0].backend_execution.pipeline_enhancer.symbols must include "
         "'enhancer_link_pearson_sparse_rna' when "
         "matrix_inputs.rna_post_qc.storage is 'sparse'"
+    ) in failures
+
+
+def test_benchmark_artifact_validator_requires_sparse_grn_and_aucell_kernels_in_scaling_rows(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_scaling_sparse_rna_kernels",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["backend_execution"]["pipeline_grn"] = {
+        "engine": "rust",
+        "symbols": ["gene_duplicate_summary", "grn_infer"],
+    }
+    record["runs"][0]["backend_execution"]["pipeline_aucell"] = {
+        "engine": "rust",
+        "symbols": [
+            "gene_duplicate_summary",
+            "stage_prepare_regulon_indices_with_coverage",
+            "aucell_score",
+        ],
+    }
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "runs[0].backend_execution.pipeline_grn.symbols must include "
+        "'grn_infer_sparse_csc' when matrix_inputs.rna_post_qc.storage "
+        "is 'sparse'"
+    ) in failures
+    assert (
+        "runs[0].backend_execution.pipeline_aucell.symbols must include "
+        "'aucell_score_sparse_csr' when matrix_inputs.rna_post_qc.storage "
+        "is 'sparse'"
     ) in failures
 
 
