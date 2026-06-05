@@ -738,19 +738,26 @@ def run(
                         index=False,
                     )
             else:
-                enriched_with_peaks = pd.DataFrame(
-                    columns=["regulon", "motif", "peak_id", "auc"]
+                enriched_with_peaks = _empty_cistarget_peak_attribution_frame()
+                backend_execution["eregulon_peak_attribution"] = _skipped_execution(
+                    "no peak-linked regulons to attribute"
                 )
         else:
             log("      gene-only - bridging via active regulon targets")
-            enriched_with_peaks = _attribute_peaks_to_cistarget(
-                enriched_for_eregulons, enhancer_links, regulons=regulons,
-            )
-            backend_execution["eregulon_peak_attribution"] = _rust_execution_from_attrs(
-                enriched_with_peaks,
-                "pipeline_attribute_peaks_to_cistarget_rows_f32",
-                "pipeline_attribute_peaks_to_cistarget_rows_f64",
-            )
+            if enriched_for_eregulons.empty:
+                enriched_with_peaks = _empty_cistarget_peak_attribution_frame()
+                backend_execution["eregulon_peak_attribution"] = _skipped_execution(
+                    "no enriched cistarget rows to attribute"
+                )
+            else:
+                enriched_with_peaks = _attribute_peaks_to_cistarget(
+                    enriched_for_eregulons, enhancer_links, regulons=regulons,
+                )
+                backend_execution["eregulon_peak_attribution"] = _rust_execution_from_attrs(
+                    enriched_with_peaks,
+                    "pipeline_attribute_peaks_to_cistarget_rows_f32",
+                    "pipeline_attribute_peaks_to_cistarget_rows_f64",
+                )
         eregulons_df = rustscenic.eregulon.build_eregulons_dataframe(
             grn,
             enriched_with_peaks,
@@ -1235,6 +1242,18 @@ def _all_non_index_columns_numeric(df: pd.DataFrame) -> bool:
     return all(pd.api.types.is_numeric_dtype(dtype) for dtype in df.dtypes.iloc[1:])
 
 
+def _empty_cistarget_peak_attribution_frame() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "regulon": pd.Series(dtype="object"),
+            "motif": pd.Series(dtype="object"),
+            "peak_id": pd.Series(dtype="object"),
+            "auc": pd.Series(dtype=np.float32),
+        },
+        columns=["regulon", "motif", "peak_id", "auc"],
+    )
+
+
 def _attribute_peaks_to_cistarget(
     enriched: pd.DataFrame,
     enhancer_links: pd.DataFrame,
@@ -1254,7 +1273,7 @@ def _attribute_peaks_to_cistarget(
     the same top-N target set that was scored by cistarget.
     """
     if enriched.empty:
-        return pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+        return _empty_cistarget_peak_attribution_frame()
 
     regulon_pairs = [
         (str(regulon_name), string_list(targets))
@@ -1288,7 +1307,7 @@ def _attribute_peaks_to_cistarget(
         enhancer_peaks,
     )
     if len(regulon_values) == 0:
-        out = pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
+        out = _empty_cistarget_peak_attribution_frame()
         out.attrs["rust_backend"] = {"engine": "rust", "symbols": [backend_symbol]}
         return out
 

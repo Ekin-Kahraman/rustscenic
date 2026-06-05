@@ -2079,7 +2079,154 @@ def test_attribute_peaks_to_cistarget_handles_empty():
     links = pd.DataFrame(columns=["peak_id", "gene", "correlation"])
     out = _attribute_peaks_to_cistarget(enriched, links, {})
     assert list(out.columns) == ["regulon", "motif", "peak_id", "auc"]
+    assert out["auc"].dtype == np.float32
+    assert "rust_backend" not in out.attrs
     assert out.empty
+
+
+def test_pipeline_records_skipped_peak_attribution_when_cistarget_empty(
+    tmp_path,
+    monkeypatch,
+):
+    """Empty gene-level cistarget output should not masquerade as Rust work.
+
+    The bridge stage is skipped because there are no cistarget rows to
+    attribute, but eRegulon assembly still receives a typed empty frame and
+    records the Rust assembler used for the no-op output.
+    """
+    from types import SimpleNamespace
+
+    import anndata as ad
+    import pandas as pd
+    import rustscenic.aucell
+    import rustscenic.cistarget
+    import rustscenic.enhancer
+    import rustscenic.pipeline
+    import rustscenic.topics
+
+    cells = [f"c{i}" for i in range(6)]
+    genes = ["TF1", "G1", "G2", "G3"]
+    rna = ad.AnnData(
+        X=np.ones((len(cells), len(genes)), dtype=np.float32),
+        obs=pd.DataFrame(index=cells),
+        var=pd.DataFrame(index=genes),
+    )
+    atac = ad.AnnData(
+        X=np.ones((len(cells), 2), dtype=np.float32),
+        obs=pd.DataFrame(index=cells),
+        var=pd.DataFrame(
+            {
+                "chrom": ["chr1", "chr1"],
+                "start": [100, 200],
+                "end": [150, 250],
+            },
+            index=["p0", "p1"],
+        ),
+    )
+    rankings = pd.DataFrame(
+        np.arange(len(genes), dtype=np.int32).reshape(1, len(genes)),
+        index=["m0"],
+        columns=genes,
+    )
+    gene_coords = pd.DataFrame(
+        {"gene": ["G1"], "chrom": ["chr1"], "tss": [125]}
+    )
+
+    def fake_topics_fit(adata, *, n_topics, n_passes, seed):
+        cell_topic = pd.DataFrame(
+            np.ones((adata.n_obs, n_topics), dtype=np.float32),
+            index=adata.obs_names,
+            columns=[f"topic{i}" for i in range(n_topics)],
+        )
+        topic_peak = pd.DataFrame(
+            np.ones((n_topics, adata.n_vars), dtype=np.float32),
+            index=cell_topic.columns,
+            columns=adata.var_names,
+        )
+        cell_topic.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": ["topics_fit"],
+        }
+        return SimpleNamespace(cell_topic=cell_topic, topic_peak=topic_peak)
+
+    def fake_grn_infer(*_args, **_kwargs):
+        out = pd.DataFrame(
+            {
+                "TF": ["TF1", "TF1", "TF1"],
+                "target": ["G1", "G2", "G3"],
+                "importance": [3.0, 2.0, 1.0],
+            }
+        )
+        out.attrs["rust_backend"] = {"engine": "rust", "symbols": ["grn_infer"]}
+        return out
+
+    def fake_cistarget_enrich(*_args, **_kwargs):
+        out = pd.DataFrame(
+            {
+                "regulon": pd.Series(dtype="object"),
+                "motif": pd.Series(dtype="object"),
+                "auc": pd.Series(dtype=np.float32),
+            }
+        )
+        out.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": ["cistarget_enrichment_from_rankings_i32"],
+        }
+        return out
+
+    def fake_enhancer_link(*_args, **_kwargs):
+        out = pd.DataFrame(
+            {"peak_id": ["p0"], "gene": ["G1"], "correlation": [0.9]}
+        )
+        out.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": ["enhancer_link_pearson"],
+        }
+        return out
+
+    def fake_aucell_score(expression, regulons, *, top_frac):
+        out = pd.DataFrame(
+            {"TF1_regulon": np.ones(expression.n_obs, dtype=np.float32)},
+            index=expression.obs_names,
+        )
+        out.attrs["rust_backend"] = {"engine": "rust", "symbols": ["aucell_score"]}
+        return out
+
+    monkeypatch.setattr(rustscenic.topics, "fit", fake_topics_fit)
+    monkeypatch.setattr(rustscenic.grn, "infer", fake_grn_infer)
+    monkeypatch.setattr(rustscenic.cistarget, "enrich", fake_cistarget_enrich)
+    monkeypatch.setattr(rustscenic.enhancer, "link_peaks_to_genes", fake_enhancer_link)
+    monkeypatch.setattr(rustscenic.aucell, "score", fake_aucell_score)
+
+    result = rustscenic.pipeline.run(
+        rna,
+        tmp_path,
+        adata_atac=atac,
+        tfs=["TF1"],
+        motif_rankings=rankings,
+        gene_coords=gene_coords,
+        grn_top_targets=3,
+        topics_n_topics=2,
+        topics_n_passes=1,
+        eregulon_min_target_genes=1,
+        eregulon_min_enhancer_links=1,
+        verbose=False,
+    )
+
+    assert result.n_cistarget_rows == 0
+    assert result.n_eregulon_rows == 0
+    assert result.backend_execution["eregulon_peak_attribution"] == {
+        "engine": "skipped",
+        "reason": "no enriched cistarget rows to attribute",
+    }
+    assert result.backend_execution["eregulons"]["symbols"] == [
+        "eregulon_assemble_f32"
+    ]
+    manifest = json.loads((tmp_path / "manifest.json").read_text())
+    assert manifest["backend_execution"]["eregulon_peak_attribution"] == {
+        "engine": "skipped",
+        "reason": "no enriched cistarget rows to attribute",
+    }
 
 
 def test_pipeline_run_topics_method_invalid(tmp_path):
