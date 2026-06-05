@@ -2680,6 +2680,41 @@ def test_benchmark_artifact_validator_accepts_full_pipeline_scaling_record(tmp_p
     assert failures == []
 
 
+def test_benchmark_artifact_validator_rejects_scaling_cell_count_design_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_cell_count_design",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["params"]["cell_counts"] = [100, 250]
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert "params.cell_counts must match runs[*].n_cells_requested" in failures
+
+
+def test_benchmark_artifact_validator_rejects_single_point_scaling_record(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_single_point",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"] = record["runs"][:1]
+    record["params"]["cell_counts"] = [record["runs"][0]["n_cells_requested"]]
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert "params.cell_counts must contain at least two positive integers" in failures
+
+
 def test_benchmark_artifact_validator_accepts_negative_peak_rss_slope(tmp_path):
     """Peak RSS is measured in independent child processes, so allocator and
     OS effects can make the larger subset report a lower maximum RSS. The

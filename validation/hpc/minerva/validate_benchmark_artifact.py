@@ -1417,6 +1417,36 @@ def _full_pipeline_scaling_reference_source_failures(
     return failures
 
 
+def _full_pipeline_scaling_design_failures(
+    record: dict[str, Any],
+    runs: list[Any],
+) -> list[str]:
+    params = record.get("params")
+    if not isinstance(params, dict):
+        return ["full_pipeline_scaling.params must be an object"]
+
+    cell_counts = params.get("cell_counts")
+    if (
+        not isinstance(cell_counts, list)
+        or len(cell_counts) < 2
+        or not all(_positive_int(value) for value in cell_counts)
+    ):
+        return ["params.cell_counts must contain at least two positive integers"]
+    if cell_counts != sorted(cell_counts):
+        return ["params.cell_counts must be sorted ascending"]
+    if len(set(cell_counts)) != len(cell_counts):
+        return ["params.cell_counts must not contain duplicates"]
+
+    requested = [
+        row.get("n_cells_requested")
+        for row in runs
+        if isinstance(row, dict)
+    ]
+    if requested != cell_counts:
+        return ["params.cell_counts must match runs[*].n_cells_requested"]
+    return []
+
+
 def _full_pipeline_scaling_row_failures(
     row: dict[str, Any],
     prefix: str,
@@ -1956,6 +1986,7 @@ def validate_full_pipeline_scaling(
     if not isinstance(runs, list) or not runs:
         failures.append("runs must contain at least one full-pipeline row")
         return failures
+    failures.extend(_full_pipeline_scaling_design_failures(record, runs))
     previous_cells = 0
     for idx, row in enumerate(runs):
         prefix = f"runs[{idx}]"
