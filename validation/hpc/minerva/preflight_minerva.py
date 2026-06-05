@@ -275,6 +275,85 @@ def _reference_table_statuses(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def _reference_cache_statuses(
+    args: argparse.Namespace,
+    *,
+    python: Path,
+    repo: Path,
+) -> dict[str, Any]:
+    statuses: dict[str, Any] = {
+        "ok": True,
+        "stderr": "",
+        "parse_error": None,
+        "motif_rankings": {
+            "needed": args.motif_rankings is None,
+            "bypassed_by_explicit_path": (
+                str(args.motif_rankings) if args.motif_rankings else None
+            ),
+        },
+        "gene_coords": {
+            "needed": args.gene_coords is None,
+            "bypassed_by_explicit_path": (
+                str(args.gene_coords) if args.gene_coords else None
+            ),
+        },
+    }
+    if args.motif_rankings is not None and args.gene_coords is not None:
+        return statuses
+    if not python.exists():
+        statuses["ok"] = False
+        statuses["stderr"] = f"missing python: {python}"
+        return statuses
+    if not os.access(python, os.X_OK):
+        statuses["ok"] = False
+        statuses["stderr"] = f"python is not executable: {python}"
+        return statuses
+
+    code = "\n".join(
+        [
+            "import json",
+            "from pathlib import Path",
+            "import rustscenic.data as data",
+            "",
+            "def status(path):",
+            "    p = Path(path)",
+            "    out = {'path': str(p), 'exists': p.exists()}",
+            "    if p.exists():",
+            "        out['type'] = 'dir' if p.is_dir() else 'file'",
+            "        if p.is_file():",
+            "            out['size_bytes'] = p.stat().st_size",
+            "    return out",
+            "",
+            f"motif_path = data._motif_rankings_cache_path(species={args.motif_species!r})",
+            f"gene_paths = data._gene_coords_cache_paths(species={args.gene_species!r})",
+            "print(json.dumps({",
+            "    'motif_rankings': status(motif_path),",
+            "    'gene_coords': status(gene_paths['parquet_path']),",
+            "}))",
+        ]
+    )
+    proc = _run([str(python), "-c", code], cwd=repo)
+    if proc.returncode != 0:
+        statuses["ok"] = False
+        statuses["stderr"] = proc.stderr.strip() or proc.stdout.strip()
+        return statuses
+    try:
+        payload = json.loads(proc.stdout.splitlines()[-1])
+    except (IndexError, json.JSONDecodeError) as exc:
+        statuses["ok"] = False
+        statuses["parse_error"] = repr(exc)
+        statuses["stderr"] = proc.stderr.strip()
+        return statuses
+
+    for key in ("motif_rankings", "gene_coords"):
+        if statuses[key]["needed"]:
+            statuses[key].update(payload.get(key, {}))
+            statuses[key]["source"] = "default_cache"
+        else:
+            statuses[key]["source"] = "explicit_path"
+    return statuses
+
+
 def preflight(args: argparse.Namespace) -> dict[str, Any]:
     repo = args.repo.resolve()
     env = args.env.resolve()
@@ -292,6 +371,11 @@ def preflight(args: argparse.Namespace) -> dict[str, Any]:
             for name in REQUIRED_DATA_FILES
         },
         "reference_tables": _reference_table_statuses(args),
+        "reference_caches": _reference_cache_statuses(
+            args,
+            python=python,
+            repo=repo,
+        ),
         "benchmark_scripts": {
             "full_pipeline": _path_status(repo / "validation/scaling/bench_real_multiome_pipeline.py"),
             "full_pipeline_scaling": _path_status(repo / "validation/scaling/bench_real_multiome_pipeline_scaling.py"),
@@ -325,6 +409,22 @@ def preflight(args: argparse.Namespace) -> dict[str, Any]:
     for name, status in checks["reference_tables"].items():
         if status["exists"] is False:
             failures.append(f"missing reference table {name}: {status['path']}")
+    if args.require_reference_cache:
+        if not checks["reference_caches"].get("ok"):
+            failures.append(
+                "reference cache status failed: "
+                + (
+                    checks["reference_caches"].get("stderr")
+                    or checks["reference_caches"].get("parse_error")
+                    or "unknown error"
+                )
+            )
+        for name in ("motif_rankings", "gene_coords"):
+            status = checks["reference_caches"].get(name, {})
+            if status.get("needed") and status.get("exists") is not True:
+                failures.append(
+                    f"missing default reference cache {name}: {status.get('path')}"
+                )
     for group in ("benchmark_scripts", "lsf_scripts", "hpc_tools"):
         for name, status in checks[group].items():
             if not status["exists"]:
@@ -409,6 +509,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--motif-annotations", type=Path, default=None)
     parser.add_argument("--region-motif-rankings", type=Path, default=None)
     parser.add_argument("--gene-coords", type=Path, default=None)
+    parser.add_argument("--motif-species", default="human")
+    parser.add_argument("--gene-species", default="hs")
     parser.add_argument("--require-clean", action="store_true")
     parser.add_argument(
         "--require-thread-pins",
@@ -437,6 +539,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "Fail if package source contains scale-sensitive Python table work "
             "that should stay in Rust-backed kernels."
+        ),
+    )
+    parser.add_argument(
+        "--require-reference-cache",
+        action="store_true",
+        help=(
+            "Fail if default motif rankings or gene-coordinate references are "
+            "not already cached. Use for timed full-pipeline benchmarks so "
+            "setup time cannot include first-use downloads."
         ),
     )
     return parser.parse_args(argv)

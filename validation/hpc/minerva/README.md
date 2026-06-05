@@ -21,11 +21,17 @@ export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 export RAYON_NUM_THREADS="${LSB_DJOB_NUMPROC:-4}"
 python validation/hpc/minerva/prepare_real_pbmc3k_data.py
+python - <<'PY'
+import rustscenic.data as data
+data.download_motif_rankings(species="human")
+data.download_gene_coords(species="hs")
+PY
 python validation/hpc/minerva/preflight_minerva.py \
   --require-clean \
   --require-repo-import \
   --require-thread-pins \
   --require-data-hashes \
+  --require-reference-cache \
   --require-rust-hot-paths
 bsub < validation/hpc/minerva/run_real_pbmc3k_full_pipeline.lsf
 bsub < validation/hpc/minerva/run_real_pbmc3k_full_pipeline_scaling.lsf
@@ -45,10 +51,11 @@ Leave `SKIP_INTEGRATED_ADATA` unset for full end-to-end publication artefacts.
 pipeline completes; output counts, timings, peak RSS and saved parquet files
 remain complete.
 
-Run the data-preparation command on the login node before `bsub`. The LSF
-launchers run it again and skip already-valid files, so the jobs still work if
-the dataset is already present and compute nodes have restricted outbound
-network access.
+Run the data-preparation and reference-cache commands on the login node before
+`bsub`. The LSF launchers run data preparation again and skip already-valid
+files, then require cached default motif rankings and gene coordinates before
+timing the full-pipeline benchmark. This prevents first-use reference downloads
+from contaminating setup timing.
 
 The full-pipeline job writes one JSON artefact under
 `/sc/arion/projects/DiseaseGeneCell/Huang_lab_projects/rustscenic/results/real_pbmc3k_full_pipeline/`.
