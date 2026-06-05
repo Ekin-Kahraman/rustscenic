@@ -144,7 +144,7 @@ class TestTopicsCorrectness:
             "Topic_0": ["p1", "p3"],
             "Topic_1": ["p2", "p0"],
         }
-        assert out.rust_backend["symbols"] == ["specificity_candidate_top_indices"]
+        assert out.rust_backend["symbols"] == ["specificity_candidate_enhancers"]
 
     def test_top_peaks_per_topic_delegates_to_shared_candidate_helper(self, monkeypatch):
         values = np.asfortranarray(
@@ -173,7 +173,7 @@ class TestTopicsCorrectness:
             })
             out.rust_backend = {
                 "engine": "rust",
-                "symbols": ["specificity_candidate_top_indices"],
+                "symbols": ["specificity_candidate_enhancers"],
             }
             return out
 
@@ -185,7 +185,7 @@ class TestTopicsCorrectness:
             "Topic_0": ["p1", "p3"],
             "Topic_1": ["p2", "p0"],
         }
-        assert out.rust_backend["symbols"] == ["specificity_candidate_top_indices"]
+        assert out.rust_backend["symbols"] == ["specificity_candidate_enhancers"]
 
     def test_top_peaks_per_topic_passes_float32_weights_without_upcast(self, monkeypatch):
         values = np.asfortranarray(
@@ -209,7 +209,7 @@ class TestTopicsCorrectness:
             "Topic_0": ["p1", "p3"],
             "Topic_1": ["p2", "p0"],
         }
-        assert out.rust_backend["symbols"] == ["specificity_candidate_top_indices_f32"]
+        assert out.rust_backend["symbols"] == ["specificity_candidate_enhancers_f32"]
 
 
 class TestTopicsEdgeCases:

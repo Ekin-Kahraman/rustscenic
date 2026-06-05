@@ -1869,30 +1869,93 @@ fn candidate_top_indices_impl<T: Copy + Into<f64> + Sync>(
     let n_topics = arr.shape()[0];
     let n_peaks = arr.shape()[1];
     let k = top_n.min(n_peaks);
-    let rows: Vec<Vec<u64>> = py.allow_threads(|| {
-        (0..n_topics)
-            .into_par_iter()
-            .map(|topic_idx| {
-                let row = arr.row(topic_idx);
-                let mut order: Vec<usize> = (0..n_peaks).collect();
-                order.sort_unstable_by(|&a, &b| {
-                    let left: f64 = row[b].into();
-                    let right: f64 = row[a].into();
-                    left.total_cmp(&right).then_with(|| a.cmp(&b))
-                });
-                order.truncate(k);
-                order.into_iter().map(|idx| idx as u64).collect()
-            })
-            .collect()
-    });
+    let rows = py.allow_threads(|| candidate_top_index_rows(arr, k));
     let mut flat = Vec::with_capacity(n_topics * k);
     for row in rows {
-        flat.extend(row);
+        flat.extend(row.into_iter().map(|idx| idx as u64));
     }
     let out = ndarray::Array2::from_shape_vec((n_topics, k), flat).map_err(
         |e: ndarray::ShapeError| pyo3::exceptions::PyRuntimeError::new_err(e.to_string()),
     )?;
     Ok(PyArray2::from_owned_array(py, out).unbind())
+}
+
+macro_rules! candidate_enhancers_pyfunction {
+    ($name:ident, $value_ty:ty) => {
+        #[pyfunction]
+        fn $name<'py>(
+            py: Python<'py>,
+            topic_peak: PyReadonlyArray2<'py, $value_ty>,
+            topic_names: Vec<String>,
+            peak_names: Vec<String>,
+            top_n: usize,
+        ) -> PyResult<Py<PyDict>> {
+            let arr = topic_peak.as_array();
+            candidate_enhancers_impl(py, arr, &topic_names, &peak_names, top_n)
+        }
+    };
+}
+
+candidate_enhancers_pyfunction!(specificity_candidate_enhancers_f32, f32);
+candidate_enhancers_pyfunction!(specificity_candidate_enhancers, f64);
+
+fn candidate_enhancers_impl<T: Copy + Into<f64> + Sync>(
+    py: Python<'_>,
+    arr: ndarray::ArrayView2<'_, T>,
+    topic_names: &[String],
+    peak_names: &[String],
+    top_n: usize,
+) -> PyResult<Py<PyDict>> {
+    let n_topics = arr.shape()[0];
+    let n_peaks = arr.shape()[1];
+    if topic_names.len() != n_topics {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "topic_names length {} does not match topic_peak rows {}",
+            topic_names.len(),
+            n_topics
+        )));
+    }
+    if peak_names.len() != n_peaks {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "peak_names length {} does not match topic_peak columns {}",
+            peak_names.len(),
+            n_peaks
+        )));
+    }
+
+    let k = top_n.min(n_peaks);
+    let rows = py.allow_threads(|| candidate_top_index_rows(arr, k));
+    let out = PyDict::new(py);
+    for (topic_name, indices) in topic_names.iter().zip(rows) {
+        let peaks = PyList::empty(py);
+        for idx in indices {
+            peaks.append(peak_names[idx].as_str())?;
+        }
+        out.set_item(topic_name, peaks)?;
+    }
+    Ok(out.unbind())
+}
+
+fn candidate_top_index_rows<T: Copy + Into<f64> + Sync>(
+    arr: ndarray::ArrayView2<'_, T>,
+    k: usize,
+) -> Vec<Vec<usize>> {
+    let n_topics = arr.shape()[0];
+    let n_peaks = arr.shape()[1];
+    (0..n_topics)
+        .into_par_iter()
+        .map(|topic_idx| {
+            let row = arr.row(topic_idx);
+            let mut order: Vec<usize> = (0..n_peaks).collect();
+            order.sort_unstable_by(|&a, &b| {
+                let left: f64 = row[b].into();
+                let right: f64 = row[a].into();
+                left.total_cmp(&right).then_with(|| a.cmp(&b))
+            });
+            order.truncate(k);
+            order
+        })
+        .collect()
 }
 
 /// Parse peak identifiers such as `chr1:100-200` into coordinate arrays.
@@ -6799,6 +6862,8 @@ fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(specificity_rss, m)?)?;
     m.add_function(wrap_pyfunction!(specificity_candidate_top_indices_f32, m)?)?;
     m.add_function(wrap_pyfunction!(specificity_candidate_top_indices, m)?)?;
+    m.add_function(wrap_pyfunction!(specificity_candidate_enhancers_f32, m)?)?;
+    m.add_function(wrap_pyfunction!(specificity_candidate_enhancers, m)?)?;
     m.add_function(wrap_pyfunction!(enhancer_align_cell_indices, m)?)?;
     m.add_function(wrap_pyfunction!(enhancer_normalise_chrom_codes, m)?)?;
     m.add_function(wrap_pyfunction!(enhancer_parse_peak_names, m)?)?;

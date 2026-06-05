@@ -96,8 +96,8 @@ REQUIRED_RUST_BACKEND_SYMBOLS: dict[str, list[str]] = {
         "gene_dedupe_dense_u64",
     ],
     "specificity": [
-        "specificity_candidate_top_indices",
-        "specificity_candidate_top_indices_f32",
+        "specificity_candidate_enhancers",
+        "specificity_candidate_enhancers_f32",
         "specificity_group_codes_with_numeric_order",
         "specificity_group_codes_with_order",
         "specificity_rss",

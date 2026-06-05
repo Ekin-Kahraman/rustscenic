@@ -23,8 +23,8 @@ import numpy as np
 import pandas as pd
 
 from rustscenic._rustscenic import (
-    specificity_candidate_top_indices as _candidate_top_indices,
-    specificity_candidate_top_indices_f32 as _candidate_top_indices_f32,
+    specificity_candidate_enhancers as _candidate_enhancers,
+    specificity_candidate_enhancers_f32 as _candidate_enhancers_f32,
     specificity_group_codes_with_numeric_order as _specificity_group_codes_with_numeric_order,
     specificity_group_codes_with_order as _specificity_group_codes_with_order,
     specificity_rss as _specificity_rss,
@@ -153,30 +153,31 @@ def candidate_enhancers_per_topic(
             peak_names = list(peak_names)
         topic_names = [f"topic_{i}" for i in range(weights.shape[0])]
 
-    weights_arg, top_indices_kernel, backend_symbol = _candidate_top_indices_kernel_arg(
+    weights_arg, candidate_kernel, backend_symbol = _candidate_enhancers_kernel_arg(
         weights
     )
-    top_indices = np.asarray(top_indices_kernel(weights_arg, int(top_n)))
-    out = CandidateEnhancers({
-        tname: [peak_names[i] for i in top_indices[ti]]
-        for ti, tname in enumerate(topic_names)
-    })
+    out = CandidateEnhancers(candidate_kernel(
+        weights_arg,
+        topic_names,
+        peak_names,
+        int(top_n),
+    ))
     out.rust_backend = {"engine": "rust", "symbols": [backend_symbol]}
     return out
 
 
-def _candidate_top_indices_kernel_arg(weights: np.ndarray):
+def _candidate_enhancers_kernel_arg(weights: np.ndarray):
     weights = np.asarray(weights)
     if weights.dtype == np.float32:
-        return weights, _candidate_top_indices_f32, "specificity_candidate_top_indices_f32"
+        return weights, _candidate_enhancers_f32, "specificity_candidate_enhancers_f32"
     if weights.dtype == np.float64:
-        return weights, _candidate_top_indices, "specificity_candidate_top_indices"
+        return weights, _candidate_enhancers, "specificity_candidate_enhancers"
     if not np.issubdtype(weights.dtype, np.number):
         raise TypeError("topic_peak must contain numeric values")
     return (
         weights.astype(np.float64, copy=False),
-        _candidate_top_indices,
-        "specificity_candidate_top_indices",
+        _candidate_enhancers,
+        "specificity_candidate_enhancers",
     )
 
 

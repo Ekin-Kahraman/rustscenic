@@ -319,6 +319,24 @@ def specificity_candidate_top_indices_f32(
     """Top candidate enhancer indices per topic from float32 weights."""
 
 
+def specificity_candidate_enhancers(
+    topic_peak: npt.NDArray[np.float64],
+    topic_names: list[str],
+    peak_names: list[str],
+    top_n: int,
+) -> dict[str, list[str]]:
+    """Top candidate enhancer names per topic, sorted by descending weight."""
+
+
+def specificity_candidate_enhancers_f32(
+    topic_peak: npt.NDArray[np.float32],
+    topic_names: list[str],
+    peak_names: list[str],
+    top_n: int,
+) -> dict[str, list[str]]:
+    """Top candidate enhancer names per topic from float32 weights."""
+
+
 def enhancer_align_cell_indices(
     rna_cells: list[str],
     atac_cells: list[str],

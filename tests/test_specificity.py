@@ -250,7 +250,7 @@ def test_candidate_enhancers_returns_top_n_per_topic_dataframe_input():
     )
     out = candidate_enhancers_per_topic(topic_peak, top_n=10)
     assert isinstance(out, dict)
-    assert out.rust_backend["symbols"] == ["specificity_candidate_top_indices"]
+    assert out.rust_backend["symbols"] == ["specificity_candidate_enhancers"]
     assert set(out.keys()) == {f"topic_{i}" for i in range(n_topics)}
     for topic, peaks in out.items():
         assert len(peaks) == 10
@@ -279,14 +279,19 @@ def test_candidate_enhancers_accepts_strided_weights_without_python_contiguity_c
         columns=[f"peak_{i}" for i in range(10)],
     )
 
-    def fake_top_indices(weights_arg, top_n):
+    def fake_candidate_enhancers(weights_arg, topic_names, peak_names, top_n):
         assert np.shares_memory(weights_arg, weights)
         assert weights_arg.flags.f_contiguous
         assert not weights_arg.flags.c_contiguous
+        assert topic_names == ["topic_0", "topic_1", "topic_2"]
+        assert peak_names == [f"peak_{i}" for i in range(10)]
         assert top_n == 4
-        return np.tile(np.arange(4, dtype=np.uint64), (3, 1))
+        return {
+            topic: ["peak_0", "peak_1", "peak_2", "peak_3"]
+            for topic in topic_names
+        }
 
-    monkeypatch.setattr(specificity, "_candidate_top_indices", fake_top_indices)
+    monkeypatch.setattr(specificity, "_candidate_enhancers", fake_candidate_enhancers)
     out = specificity.candidate_enhancers_per_topic(topic_peak, top_n=4)
 
     assert out == {
@@ -304,18 +309,23 @@ def test_candidate_enhancers_uses_float32_weights_without_upcast_copy(monkeypatc
         columns=[f"peak_{i}" for i in range(10)],
     )
 
-    def fake_top_indices(weights_arg, top_n):
+    def fake_candidate_enhancers(weights_arg, topic_names, peak_names, top_n):
         assert np.shares_memory(weights_arg, weights)
         assert weights_arg.dtype == np.float32
         assert weights_arg.flags.f_contiguous
         assert not weights_arg.flags.c_contiguous
+        assert topic_names == ["topic_0", "topic_1", "topic_2"]
+        assert peak_names == [f"peak_{i}" for i in range(10)]
         assert top_n == 4
-        return np.tile(np.arange(4, dtype=np.uint64), (3, 1))
+        return {
+            topic: ["peak_0", "peak_1", "peak_2", "peak_3"]
+            for topic in topic_names
+        }
 
-    monkeypatch.setattr(specificity, "_candidate_top_indices_f32", fake_top_indices)
+    monkeypatch.setattr(specificity, "_candidate_enhancers_f32", fake_candidate_enhancers)
     out = specificity.candidate_enhancers_per_topic(topic_peak, top_n=4)
 
-    assert out.rust_backend["symbols"] == ["specificity_candidate_top_indices_f32"]
+    assert out.rust_backend["symbols"] == ["specificity_candidate_enhancers_f32"]
     assert out == {
         "topic_0": ["peak_0", "peak_1", "peak_2", "peak_3"],
         "topic_1": ["peak_0", "peak_1", "peak_2", "peak_3"],
