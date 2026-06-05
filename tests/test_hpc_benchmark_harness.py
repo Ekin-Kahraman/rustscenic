@@ -3845,7 +3845,7 @@ def test_benchmark_artifact_validator_accepts_region_motif_rankings_metadata(tmp
     record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
         "engine": "rust",
         "symbols": [
-            "cistarget_region_attribution_i32",
+            "cistarget_enrichment_from_projected_rankings_i32",
             "cistarget_region_attribution_peak_values_i32",
             "pipeline_expand_region_cistarget_rows_f32",
         ],
@@ -3883,7 +3883,8 @@ def test_benchmark_artifact_validator_requires_region_cistarget_symbols(tmp_path
     )
     assert (
         "full_pipeline.backend_execution.pipeline_eregulon_peak_attribution."
-        "symbols must include a cistarget_region_attribution_* Rust symbol "
+        "symbols must include a cistarget enrichment or region-attribution "
+        "Rust symbol "
         "when region_motif_rankings is supplied"
     ) in failures
     assert (

@@ -80,6 +80,26 @@ REQUIRED_FULL_PIPELINE_RUST_EXECUTION = {
     "pipeline_eregulons",
     "pipeline_aucell",
 }
+REGION_CISTARGET_SCORING_SYMBOLS = {
+    "cistarget_enrichment_from_rankings_i16",
+    "cistarget_enrichment_from_rankings_i32",
+    "cistarget_enrichment_from_rankings_i64",
+    "cistarget_enrichment_from_projected_rankings_i16",
+    "cistarget_enrichment_from_projected_rankings_i32",
+    "cistarget_enrichment_from_projected_rankings_i64",
+    "cistarget_region_attribution_i16",
+    "cistarget_region_attribution_i32",
+    "cistarget_region_attribution_i64",
+}
+REGION_CISTARGET_PEAK_VALUE_SYMBOLS = {
+    "cistarget_region_attribution_peak_values_i16",
+    "cistarget_region_attribution_peak_values_i32",
+    "cistarget_region_attribution_peak_values_i64",
+}
+REGION_CISTARGET_EXPAND_SYMBOLS = {
+    "pipeline_expand_region_cistarget_rows_f32",
+    "pipeline_expand_region_cistarget_rows_f64",
+}
 FULL_PIPELINE_SCALING_CHILD_PARAM_KEYS = {
     "grn_n_estimators",
     "grn_max_features",
@@ -1002,39 +1022,20 @@ def _region_motif_ranking_failures(
     if not isinstance(symbols, list):
         return failures
     symbol_set = {symbol for symbol in symbols if isinstance(symbol, str)}
-    if not (
-        {
-            "cistarget_region_attribution_i16",
-            "cistarget_region_attribution_i32",
-            "cistarget_region_attribution_i64",
-        }
-        & symbol_set
-    ):
+    if not (REGION_CISTARGET_SCORING_SYMBOLS & symbol_set):
         failures.append(
             f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
-            "symbols must include a cistarget_region_attribution_* Rust symbol "
+            "symbols must include a cistarget enrichment or region-attribution "
+            "Rust symbol "
             "when region_motif_rankings is supplied"
         )
-    if not (
-        {
-            "cistarget_region_attribution_peak_values_i16",
-            "cistarget_region_attribution_peak_values_i32",
-            "cistarget_region_attribution_peak_values_i64",
-        }
-        & symbol_set
-    ):
+    if not (REGION_CISTARGET_PEAK_VALUE_SYMBOLS & symbol_set):
         failures.append(
             f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
             "symbols must include a cistarget_region_attribution_peak_values_* "
             "Rust symbol when region_motif_rankings is supplied"
         )
-    if not (
-        {
-            "pipeline_expand_region_cistarget_rows_f32",
-            "pipeline_expand_region_cistarget_rows_f64",
-        }
-        & symbol_set
-    ):
+    if not (REGION_CISTARGET_EXPAND_SYMBOLS & symbol_set):
         failures.append(
             f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
             "symbols must include a pipeline_expand_region_cistarget_rows_* "

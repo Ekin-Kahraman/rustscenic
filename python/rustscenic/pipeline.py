@@ -723,15 +723,21 @@ def run(
                 "pipeline_peak_regulons_and_features_from_edges"
             )
             if peak_regulons:
-                region_rankings_df = _coerce_rankings(
+                region_ranking_features = _ranking_projection_features(
                     region_motif_rankings,
-                    feature_names=_ranking_projection_features(
-                        region_motif_rankings,
-                        needed_peaks,
-                    ),
+                    needed_peaks,
                 )
+                region_rankings = _projected_rankings_array_with_metadata(
+                    region_motif_rankings,
+                    feature_names=region_ranking_features,
+                )
+                if region_rankings is None:
+                    region_rankings = _coerce_rankings(
+                        region_motif_rankings,
+                        feature_names=region_ranking_features,
+                    )
                 region_enrich, enriched_with_peaks = _region_cistarget_with_peak_ids(
-                    region_rankings_df,
+                    region_rankings,
                     peak_regulons,
                     top_frac=cistarget_top_frac,
                     auc_threshold=cistarget_auc_threshold,
@@ -1486,7 +1492,7 @@ def _attribute_peaks_to_cistarget(
 
 
 def _region_cistarget_with_peak_ids(
-    region_rankings: pd.DataFrame,
+    region_rankings: pd.DataFrame | _RankingsArray,
     peak_regulons: list[tuple[str, list[str]]],
     *,
     top_frac: float,
@@ -1505,19 +1511,42 @@ def _region_cistarget_with_peak_ids(
     """
     import rustscenic.cistarget
 
-    region_enrich = rustscenic.cistarget.enrich(
-        region_rankings,
-        peak_regulons,
-        top_frac=top_frac,
-        auc_threshold=auc_threshold,
-        nes_threshold=nes_threshold,
-    )
+    if isinstance(region_rankings, _RankingsArray):
+        ranking_values = region_rankings.values
+        motif_names = region_rankings.motif_names
+        peak_names = region_rankings.feature_names
+        n_loaded_regions = int(ranking_values.shape[1])
+        n_regions = int(
+            region_rankings.metadata.get("rank_universe_size") or n_loaded_regions
+        )
+        rank_universe_arg = n_regions if n_regions > n_loaded_regions else None
+        region_enrich = rustscenic.cistarget._enrich_from_rank_array(
+            ranking_values,
+            motif_names,
+            peak_names,
+            peak_regulons,
+            top_frac=top_frac,
+            auc_threshold=auc_threshold,
+            nes_threshold=nes_threshold,
+            rank_universe_size=rank_universe_arg,
+        )
+    else:
+        ranking_values = region_rankings.to_numpy(copy=False)
+        motif_names = string_list(region_rankings.index)
+        peak_names = string_list(region_rankings.columns)
+        n_regions = int(region_rankings.shape[1])
+        region_enrich = rustscenic.cistarget.enrich(
+            region_rankings,
+            peak_regulons,
+            top_frac=top_frac,
+            auc_threshold=auc_threshold,
+            nes_threshold=nes_threshold,
+        )
     if region_enrich.empty:
         empty = pd.DataFrame(columns=["regulon", "motif", "peak_id", "auc"])
         empty.attrs["rust_backend"] = _region_attribution_backend(region_enrich)
         return region_enrich, empty
 
-    n_regions = region_rankings.shape[1]
     rank_cutoff = max(1, int(np.ceil(top_frac * n_regions)))
     peak_regulon_names = string_list(name for name, _ in peak_regulons)
     peak_regulon_peaks = [string_list(peaks) for _, peaks in peak_regulons]
@@ -1527,12 +1556,10 @@ def _region_cistarget_with_peak_ids(
         return region_enrich, empty
 
     ranking_values, kernel, rank_cutoff_arg = _region_peak_values_kernel_arg(
-        region_rankings,
+        ranking_values,
         rank_cutoff,
     )
     peak_values_symbol = _region_peak_values_backend_symbol(kernel)
-    motif_names = string_list(region_rankings.index)
-    peak_names = string_list(region_rankings.columns)
     common_args = (
         motif_names,
         peak_names,
@@ -1599,7 +1626,7 @@ def _auc_column_arg(values: pd.Series, *, name: str) -> np.ndarray:
     return arr.astype(np.float64, copy=False)
 
 
-def _region_peak_values_kernel_arg(rankings: pd.DataFrame, rank_cutoff: int):
+def _region_peak_values_kernel_arg(rankings: pd.DataFrame | np.ndarray, rank_cutoff: int):
     values, kernel, rank_cutoff_arg = _region_rankings_kernel_arg(rankings, rank_cutoff)
     if kernel is _cistarget_region_attribution_i16:
         return values, _cistarget_region_peak_values_i16, rank_cutoff_arg
@@ -1689,8 +1716,16 @@ def _rust_backend_symbols(obj) -> list[str]:
     return []
 
 
-def _region_rankings_kernel_arg(rankings: pd.DataFrame, rank_cutoff: int):
-    values = rankings.to_numpy(copy=False)
+def _region_rankings_kernel_arg(rankings: pd.DataFrame | np.ndarray, rank_cutoff: int):
+    values = (
+        rankings.to_numpy(copy=False)
+        if isinstance(rankings, pd.DataFrame)
+        else np.asarray(rankings)
+    )
+    return _region_rankings_array_kernel_arg(values, rank_cutoff)
+
+
+def _region_rankings_array_kernel_arg(values: np.ndarray, rank_cutoff: int):
     if values.dtype == object:
         raise TypeError("region rankings DataFrame has dtype=object")
     if values.dtype == np.int16:

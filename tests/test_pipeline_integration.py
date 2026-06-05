@@ -1446,6 +1446,68 @@ def test_region_cistarget_uses_rust_row_expander(monkeypatch):
     ]
 
 
+def test_region_cistarget_projected_array_matches_full_dataframe(tmp_path):
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline as pipeline
+
+    motifs = ["motif_a", "motif_b", "motif_noise"]
+    full_rankings = pd.DataFrame(
+        np.array(
+            [
+                [0, 1, 4, 2, 3],
+                [4, 3, 0, 1, 2],
+                [4, 3, 2, 1, 0],
+            ],
+            dtype=np.int32,
+        ),
+        index=motifs,
+        columns=["p0", "p1", "p2", "decoy_0", "decoy_1"],
+    )
+    exported = full_rankings.copy()
+    exported.insert(0, "motifs", exported.index)
+    path = tmp_path / "regions_vs_motifs.rankings.feather"
+    exported.reset_index(drop=True).to_feather(path)
+    projected = pipeline._projected_rankings_array_with_metadata(
+        path,
+        feature_names=["p0", "p1", "p2"],
+    )
+    assert projected is not None
+    assert projected.metadata == {"rank_universe_size": 5, "motif_col": "motifs"}
+
+    peak_regulons = [
+        ("TF_A_regulon", ["p0", "p1"]),
+        ("TF_B_regulon", ["p2"]),
+    ]
+    full_enrich, full_attr = pipeline._region_cistarget_with_peak_ids(
+        full_rankings,
+        peak_regulons,
+        top_frac=0.4,
+        auc_threshold=0.0,
+    )
+    projected_enrich, projected_attr = pipeline._region_cistarget_with_peak_ids(
+        projected,
+        peak_regulons,
+        top_frac=0.4,
+        auc_threshold=0.0,
+    )
+
+    pd.testing.assert_frame_equal(
+        projected_enrich.sort_values(["regulon", "motif"]).reset_index(drop=True),
+        full_enrich.sort_values(["regulon", "motif"]).reset_index(drop=True),
+    )
+    pd.testing.assert_frame_equal(
+        _normalise_region_attribution(projected_attr),
+        _normalise_region_attribution(full_attr),
+        check_dtype=False,
+    )
+    assert projected_attr.attrs["rust_backend"]["symbols"] == [
+        "cistarget_enrichment_from_projected_rankings_i32",
+        "cistarget_region_attribution_peak_values_i32",
+        "pipeline_expand_region_cistarget_rows_f32",
+    ]
+
+
 def _reference_region_peak_attribution(
     region_rankings: pd.DataFrame,
     peak_regulons: list[tuple[str, list[str]]],
@@ -2412,7 +2474,6 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
     region_rankings_path = tmp_path / "regions_vs_motifs.rankings.feather"
     region_export.reset_index(drop=True).to_feather(region_rankings_path)
 
-    read_feather_calls = []
     real_read_feather = pd.read_feather
 
     def recording_read_feather(path, *args, **kwargs):
@@ -2421,7 +2482,9 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
                 "projected gene motif rankings should use the Arrow array path"
             )
         if Path(path) == region_rankings_path:
-            read_feather_calls.append(kwargs.get("columns"))
+            raise AssertionError(
+                "projected region motif rankings should use the Arrow array path"
+            )
         return real_read_feather(path, *args, **kwargs)
 
     monkeypatch.setattr(pd, "read_feather", recording_read_feather)
@@ -2455,10 +2518,6 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
     assert result.enhancer_links_path.exists()
     assert result.eregulons_path.exists()
     assert result.n_eregulons is not None
-    assert read_feather_calls
-    assert all(cols is not None for cols in read_feather_calls)
-    assert all("motifs" in cols for cols in read_feather_calls)
-    assert all("unused_peak_not_in_run" not in cols for cols in read_feather_calls)
     assert result.backend_execution["cistarget_pruning"]["symbols"] == [
         "cistarget_motif_annotation_prune_standard_rows_f32",
         "cistarget_prune_regulon_targets_projected_i32",
@@ -2473,7 +2532,7 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
         result.cistarget_rankings["rank_universe_size"]
     )
     region_symbols = [
-        "cistarget_enrichment_from_rankings_i32",
+        "cistarget_enrichment_from_projected_rankings_i32",
         "cistarget_region_attribution_peak_values_i32",
         "pipeline_expand_region_cistarget_rows_f32",
     ]
