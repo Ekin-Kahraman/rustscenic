@@ -2296,8 +2296,29 @@ def _full_pipeline_record(tmp_path: Path):
         "params": {
             "seed": 777,
             "n_cells_requested": 100,
+            "grn_n_estimators": 100,
+            "grn_max_features": 0.1,
+            "grn_target_block_size": None,
+            "topics_n_topics": 10,
+            "topics_n_passes": 3,
+            "topics_method": "vb",
+            "topics_n_iters": 200,
+            "topics_n_threads": 1,
             "threads": 4,
             "rayon_num_threads": 4,
+            "motif_annotations": None,
+            "region_motif_rankings": None,
+            "cistarget_top_frac": 0.05,
+            "cistarget_auc_threshold": 0.05,
+            "cistarget_nes_threshold": 3.0,
+            "enhancer_max_distance": 500_000,
+            "enhancer_min_abs_corr": 0.1,
+            "eregulon_min_target_genes": 2,
+            "eregulon_min_enhancer_links": 1,
+            "write_integrated_adata": True,
+            "summary_rows": 10,
+            "summary_max_rows": 1000,
+            "expected_tfs": ["TF1", "TF2"],
         },
         "shapes": {
             "rna_post_qc": [100, 1000],
@@ -2363,6 +2384,8 @@ def _full_pipeline_record(tmp_path: Path):
             "fraction": 0.5,
         },
         "output_summaries": {
+            "summary_rows": 10,
+            "summary_max_rows": 1000,
             "active_regulons_sample": ["TF1_regulon"],
             "top_grn_edges": [{"TF": "TF1", "target": "G1", "importance": 0.9}],
             "top_cistarget_rows": [{"regulon": "TF1_regulon", "motif": "m1", "auc": 0.5}],
@@ -2469,6 +2492,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "n_cells_requested": n_cells,
                 "n_cells_actual": n_cells,
                 "threads": child["params"]["threads"],
+                "params": child["params"],
                 "json_path": str(child_path),
                 "output_dir": str(child_dir),
                 "wall_s": child["wall_s"],
@@ -2499,7 +2523,32 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         "backend_capabilities": _backend_capabilities(),
         "python_hot_paths": _python_hot_paths_state(),
         "rustscenic": "0.4.7",
-        "params": {"cell_counts": [100, 200], "threads": 4, "seed": 777},
+        "params": {
+            "cell_counts": [100, 200],
+            "grn_n_estimators": 100,
+            "grn_max_features": 0.1,
+            "grn_target_block_size": None,
+            "topics_n_topics": 10,
+            "topics_n_passes": 3,
+            "topics_method": "vb",
+            "topics_n_iters": 200,
+            "topics_n_threads": 1,
+            "threads": 4,
+            "motif_annotations": None,
+            "region_motif_rankings": None,
+            "cistarget_top_frac": 0.05,
+            "cistarget_auc_threshold": 0.05,
+            "cistarget_nes_threshold": 3.0,
+            "enhancer_max_distance": 500_000,
+            "enhancer_min_abs_corr": 0.1,
+            "eregulon_min_target_genes": 2,
+            "eregulon_min_enhancer_links": 1,
+            "write_integrated_adata": True,
+            "summary_rows": 10,
+            "summary_max_rows": 1000,
+            "expected_tfs": ["TF1", "TF2"],
+            "seed": 777,
+        },
         "runs": runs,
         "scaling": {
             "end_to_end_wall_slope_vs_cells": 1.0,
@@ -2733,6 +2782,40 @@ def test_benchmark_artifact_validator_rejects_scaling_integrated_mode_mismatch(t
         "params.write_integrated_adata must match "
         "runs[*].write_integrated_adata"
     ) in failures
+
+
+def test_benchmark_artifact_validator_rejects_scaling_missing_row_params(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_missing_row_params",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    del record["runs"][0]["params"]
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert "runs[0].params must be an object" in failures
+
+
+def test_benchmark_artifact_validator_rejects_scaling_child_param_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_child_param_design",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["params"]["grn_n_estimators"] = 50
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert "params.grn_n_estimators must match runs[*].params.grn_n_estimators" in failures
 
 
 def test_benchmark_artifact_validator_rejects_single_point_scaling_record(tmp_path):
@@ -3563,6 +3646,8 @@ def test_benchmark_artifact_validator_requires_scaling_region_peak_filter_with_a
     record["params"]["motif_annotations"] = "motif_annotations.tsv"
     record["params"]["region_motif_rankings"] = "region_rankings.feather"
     for row in record["runs"]:
+        row["params"]["motif_annotations"] = "motif_annotations.tsv"
+        row["params"]["region_motif_rankings"] = "region_rankings.feather"
         row["backend_execution"]["pipeline_cistarget_pruning"] = {
             "engine": "rust",
             "symbols": [

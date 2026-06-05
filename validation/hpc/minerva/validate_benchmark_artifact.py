@@ -80,6 +80,31 @@ REQUIRED_FULL_PIPELINE_RUST_EXECUTION = {
     "pipeline_eregulons",
     "pipeline_aucell",
 }
+FULL_PIPELINE_SCALING_CHILD_PARAM_KEYS = {
+    "grn_n_estimators",
+    "grn_max_features",
+    "grn_target_block_size",
+    "topics_n_topics",
+    "topics_n_passes",
+    "topics_method",
+    "topics_n_iters",
+    "topics_n_threads",
+    "threads",
+    "motif_annotations",
+    "region_motif_rankings",
+    "cistarget_top_frac",
+    "cistarget_auc_threshold",
+    "cistarget_nes_threshold",
+    "enhancer_max_distance",
+    "enhancer_min_abs_corr",
+    "eregulon_min_target_genes",
+    "eregulon_min_enhancer_links",
+    "write_integrated_adata",
+    "summary_rows",
+    "summary_max_rows",
+    "expected_tfs",
+    "seed",
+}
 REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
     "grn": {
         "all_of": {"gene_duplicate_summary"},
@@ -1358,6 +1383,7 @@ def _full_pipeline_scaling_row_child_failures(
         "cell_barcode_filter": child.get("cell_barcode_filter"),
         "matrix_inputs": child.get("matrix_inputs"),
         "reference_sources": child.get("reference_sources"),
+        "params": child.get("params"),
         "write_integrated_adata": child.get("params", {}).get(
             "write_integrated_adata",
             True,
@@ -1472,6 +1498,56 @@ def _full_pipeline_scaling_design_failures(
                     "params.write_integrated_adata must match "
                     "runs[*].write_integrated_adata"
                 )
+
+    failures.extend(_full_pipeline_scaling_param_design_failures(params, runs))
+
+    return failures
+
+
+def _full_pipeline_scaling_param_design_failures(
+    params: dict[str, Any],
+    runs: list[Any],
+) -> list[str]:
+    failures: list[str] = []
+    for index, row in enumerate(runs):
+        if not isinstance(row, dict):
+            continue
+        prefix = f"runs[{index}]"
+        row_params = row.get("params")
+        if not isinstance(row_params, dict):
+            failures.append(f"{prefix}.params must be an object")
+            continue
+
+        if row_params.get("n_cells_requested") != row.get("n_cells_requested"):
+            failures.append(
+                f"{prefix}.params.n_cells_requested must match "
+                f"{prefix}.n_cells_requested"
+            )
+        if "threads" in row and row_params.get("threads") != row.get("threads"):
+            failures.append(f"{prefix}.params.threads must match {prefix}.threads")
+        if (
+            "write_integrated_adata" in row
+            and row_params.get("write_integrated_adata", True)
+            != row.get("write_integrated_adata")
+        ):
+            failures.append(
+                f"{prefix}.params.write_integrated_adata must match "
+                f"{prefix}.write_integrated_adata"
+            )
+
+    for key in sorted(FULL_PIPELINE_SCALING_CHILD_PARAM_KEYS):
+        if key not in params:
+            failures.append(f"params.{key} missing")
+            continue
+        mismatches = [
+            index
+            for index, row in enumerate(runs)
+            if isinstance(row, dict)
+            and isinstance(row.get("params"), dict)
+            and row["params"].get(key) != params.get(key)
+        ]
+        if mismatches:
+            failures.append(f"params.{key} must match runs[*].params.{key}")
 
     return failures
 
