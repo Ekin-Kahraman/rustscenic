@@ -954,6 +954,56 @@ cistarget_enrichment_pyfunction!(cistarget_enrichment_from_rankings_i16, i16, "i
 cistarget_enrichment_pyfunction!(cistarget_enrichment_from_rankings_i32, i32, "int32");
 cistarget_enrichment_pyfunction!(cistarget_enrichment_from_rankings_i64, i64, "int64");
 
+macro_rules! cistarget_projected_enrichment_pyfunction {
+    ($name:ident, $rank_ty:ty, $label:literal) => {
+        #[pyfunction]
+        #[pyo3(signature = (rankings, motif_names, regulon_names, regulon_gene_indices, rank_universe_size, top_frac = 0.05, auc_threshold = 0.05, nes_threshold = None, nes_min_motifs = 30))]
+        #[allow(clippy::too_many_arguments)]
+        fn $name<'py>(
+            py: Python<'py>,
+            rankings: PyReadonlyArray2<'py, $rank_ty>,
+            motif_names: Vec<String>,
+            regulon_names: Vec<String>,
+            regulon_gene_indices: Vec<Vec<usize>>,
+            rank_universe_size: usize,
+            top_frac: f32,
+            auc_threshold: f32,
+            nes_threshold: Option<f32>,
+            nes_min_motifs: usize,
+        ) -> PyResult<CistargetEnrichmentRowsPyResult> {
+            cistarget_enrichment_from_projected_integer_rankings_py(
+                py,
+                rankings,
+                motif_names,
+                regulon_names,
+                regulon_gene_indices,
+                rank_universe_size,
+                top_frac,
+                auc_threshold,
+                nes_threshold,
+                nes_min_motifs,
+                $label,
+            )
+        }
+    };
+}
+
+cistarget_projected_enrichment_pyfunction!(
+    cistarget_enrichment_from_projected_rankings_i16,
+    i16,
+    "int16"
+);
+cistarget_projected_enrichment_pyfunction!(
+    cistarget_enrichment_from_projected_rankings_i32,
+    i32,
+    "int32"
+);
+cistarget_projected_enrichment_pyfunction!(
+    cistarget_enrichment_from_projected_rankings_i64,
+    i64,
+    "int64"
+);
+
 macro_rules! cistarget_rankings_to_i32_pyfunction {
     ($name:ident, $value_ty:ty) => {
         #[pyfunction]
@@ -1040,6 +1090,74 @@ where
     cistarget_rows_to_py(py, rows)
 }
 
+#[allow(clippy::too_many_arguments)]
+fn cistarget_enrichment_from_projected_integer_rankings_py<'py, T>(
+    py: Python<'py>,
+    rankings: PyReadonlyArray2<'py, T>,
+    motif_names: Vec<String>,
+    regulon_names: Vec<String>,
+    regulon_gene_indices: Vec<Vec<usize>>,
+    rank_universe_size: usize,
+    top_frac: f32,
+    auc_threshold: f32,
+    nes_threshold: Option<f32>,
+    nes_min_motifs: usize,
+    _label: &'static str,
+) -> PyResult<CistargetEnrichmentRowsPyResult>
+where
+    T: Element + Copy + Ord + Into<i64> + Send + Sync,
+{
+    let arr = rankings.as_array();
+    let n_motifs = arr.shape()[0];
+    let n_projected_genes = arr.shape()[1];
+    validate_cistarget_ranking_inputs(
+        n_motifs,
+        n_projected_genes,
+        &motif_names,
+        &regulon_names,
+        &regulon_gene_indices,
+    )?;
+    validate_projected_rank_universe(n_projected_genes, rank_universe_size)?;
+    let n_regulons = regulon_names.len();
+    let auc = py.allow_threads(|| {
+        cistarget_auc_from_projected_integer_rankings(
+            arr,
+            &regulon_gene_indices,
+            top_frac,
+            rank_universe_size,
+        )
+    });
+    let rows = cistarget_enrichment_rows_impl(
+        &auc,
+        n_motifs,
+        n_regulons,
+        &motif_names,
+        &regulon_names,
+        auc_threshold,
+        nes_threshold,
+        nes_min_motifs,
+    );
+    cistarget_rows_to_py(py, rows)
+}
+
+fn validate_projected_rank_universe(
+    n_projected_genes: usize,
+    rank_universe_size: usize,
+) -> PyResult<()> {
+    if rank_universe_size == 0 {
+        return Err(pyo3::exceptions::PyValueError::new_err(
+            "rank_universe_size must be positive",
+        ));
+    }
+    if rank_universe_size < n_projected_genes {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "rank_universe_size {} is smaller than projected ranking columns {}",
+            rank_universe_size, n_projected_genes
+        )));
+    }
+    Ok(())
+}
+
 fn validate_cistarget_ranking_inputs(
     n_motifs: usize,
     n_genes: usize,
@@ -1090,6 +1208,35 @@ where
         return auc;
     }
     let rank_cutoff = cistarget_rank_cutoff(top_frac, n_genes);
+    if rank_cutoff == 0 {
+        return auc;
+    }
+
+    auc.par_chunks_mut(n_regulons)
+        .enumerate()
+        .for_each(|(motif_idx, motif_auc)| {
+            let row = rankings.row(motif_idx);
+            score_integer_rank_row(row, regulon_gene_indices, rank_cutoff, motif_auc);
+        });
+    auc
+}
+
+fn cistarget_auc_from_projected_integer_rankings<T>(
+    rankings: ndarray::ArrayView2<'_, T>,
+    regulon_gene_indices: &[Vec<usize>],
+    top_frac: f32,
+    rank_universe_size: usize,
+) -> Vec<f32>
+where
+    T: Copy + Ord + Into<i64> + Send + Sync,
+{
+    let n_motifs = rankings.shape()[0];
+    let n_regulons = regulon_gene_indices.len();
+    let mut auc = vec![0.0_f32; n_motifs * n_regulons];
+    if n_regulons == 0 {
+        return auc;
+    }
+    let rank_cutoff = cistarget_rank_cutoff(top_frac, rank_universe_size);
     if rank_cutoff == 0 {
         return auc;
     }
@@ -4798,6 +4945,87 @@ prune_regulon_targets_pyfunction!(cistarget_prune_regulon_targets_i64, i64);
 prune_regulon_targets_pyfunction!(cistarget_prune_regulon_targets_f32, f32, true);
 prune_regulon_targets_pyfunction!(cistarget_prune_regulon_targets_f64, f64, true);
 
+macro_rules! prune_regulon_targets_projected_pyfunction {
+    ($name:ident, $rank_ty:ty) => {
+        prune_regulon_targets_projected_pyfunction!($name, $rank_ty, false);
+    };
+    ($name:ident, $rank_ty:ty, $validate_finite:literal) => {
+        #[pyfunction]
+        #[pyo3(signature = (rankings, motif_names, gene_names, candidate_names, candidate_genes, pruned_regulons, pruned_motifs, rank_cutoff, min_genes))]
+        #[allow(clippy::too_many_arguments)]
+        fn $name<'py>(
+            py: Python<'py>,
+            rankings: PyReadonlyArray2<'py, $rank_ty>,
+            motif_names: Vec<String>,
+            gene_names: Vec<String>,
+            candidate_names: Vec<String>,
+            candidate_genes: Vec<Vec<String>>,
+            pruned_regulons: Vec<String>,
+            pruned_motifs: Vec<String>,
+            rank_cutoff: usize,
+            min_genes: usize,
+        ) -> PyResult<PrunedRegulonTargetsPyResult> {
+            let rankings_arr = rankings.as_array();
+            let rank_cutoff_value = rank_cutoff as $rank_ty;
+            let zero_value = 0 as $rank_ty;
+            let (names, genes) = py.allow_threads(|| -> PyResult<_> {
+                if $validate_finite {
+                    for value in rankings_arr.iter().copied() {
+                        if !(value as f64).is_finite() {
+                            return Err(pyo3::exceptions::PyValueError::new_err(
+                                "rankings contain NaN or Inf values",
+                            ));
+                        }
+                    }
+                }
+                prune_regulon_targets_projected_impl(
+                    rankings_arr,
+                    &motif_names,
+                    &gene_names,
+                    &candidate_names,
+                    &candidate_genes,
+                    &pruned_regulons,
+                    &pruned_motifs,
+                    rank_cutoff_value,
+                    zero_value,
+                    min_genes,
+                )
+            })?;
+            let gene_lists = PyList::empty(py);
+            for values in genes {
+                gene_lists.append(PyList::new(py, values.iter().map(|s| s.as_str()))?)?;
+            }
+            Ok((
+                PyList::new(py, names.iter().map(|s| s.as_str()))?.unbind(),
+                gene_lists.unbind(),
+            ))
+        }
+    };
+}
+
+prune_regulon_targets_projected_pyfunction!(
+    cistarget_prune_regulon_targets_projected_i16,
+    i16
+);
+prune_regulon_targets_projected_pyfunction!(
+    cistarget_prune_regulon_targets_projected_i32,
+    i32
+);
+prune_regulon_targets_projected_pyfunction!(
+    cistarget_prune_regulon_targets_projected_i64,
+    i64
+);
+prune_regulon_targets_projected_pyfunction!(
+    cistarget_prune_regulon_targets_projected_f32,
+    f32,
+    true
+);
+prune_regulon_targets_projected_pyfunction!(
+    cistarget_prune_regulon_targets_projected_f64,
+    f64,
+    true
+);
+
 #[pyfunction]
 fn cistarget_prune_regulon_targets_unranked<'py>(
     py: Python<'py>,
@@ -4950,6 +5178,120 @@ fn prune_regulon_targets_impl<T: Copy + PartialOrd>(
         for (gene_pos, gene_col) in candidate_gene_cols[candidate_idx].iter().enumerate() {
             if gene_col.is_some_and(|col| top_genes.contains(&col)) {
                 kept[candidate_idx].insert(gene_pos);
+            }
+        }
+    }
+
+    let mut names = Vec::new();
+    let mut genes = Vec::new();
+    for candidate_idx in output_order {
+        if kept[candidate_idx].len() < min_genes {
+            continue;
+        }
+        names.push(candidate_names[candidate_idx].clone());
+        genes.push(
+            candidate_genes[candidate_idx]
+                .iter()
+                .enumerate()
+                .filter(|(gene_pos, _)| kept[candidate_idx].contains(gene_pos))
+                .map(|(_, gene)| gene.clone())
+                .collect(),
+        );
+    }
+    Ok((names, genes))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn prune_regulon_targets_projected_impl<T: Copy + PartialOrd>(
+    rankings: ndarray::ArrayView2<'_, T>,
+    motif_names: &[String],
+    gene_names: &[String],
+    candidate_names: &[String],
+    candidate_genes: &[Vec<String>],
+    pruned_regulons: &[String],
+    pruned_motifs: &[String],
+    rank_cutoff: T,
+    zero_value: T,
+    min_genes: usize,
+) -> PyResult<(Vec<String>, Vec<Vec<String>>)> {
+    let n_motifs = rankings.shape()[0];
+    let n_projected_genes = rankings.shape()[1];
+    if motif_names.len() != n_motifs {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "motif_names length {} does not match ranking rows {}",
+            motif_names.len(),
+            n_motifs
+        )));
+    }
+    if gene_names.len() != n_projected_genes {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "gene_names length {} does not match ranking columns {}",
+            gene_names.len(),
+            n_projected_genes
+        )));
+    }
+    if candidate_names.len() != candidate_genes.len() {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "candidate_names length {} does not match candidate_genes length {}",
+            candidate_names.len(),
+            candidate_genes.len()
+        )));
+    }
+    let candidate_genes = deduplicate_candidate_gene_lists(candidate_genes);
+    if pruned_regulons.len() != pruned_motifs.len() {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "pruned_regulons length {} does not match pruned_motifs length {}",
+            pruned_regulons.len(),
+            pruned_motifs.len()
+        )));
+    }
+
+    let motif_to_idx: HashMap<&str, usize> = motif_names
+        .iter()
+        .enumerate()
+        .map(|(i, name)| (name.as_str(), i))
+        .collect();
+    let gene_to_idx: HashMap<&str, usize> = gene_names
+        .iter()
+        .enumerate()
+        .map(|(i, name)| (name.as_str(), i))
+        .collect();
+    let candidate_to_idx: HashMap<&str, usize> = candidate_names
+        .iter()
+        .enumerate()
+        .map(|(i, name)| (name.as_str(), i))
+        .collect();
+    let candidate_gene_cols: Vec<Vec<Option<usize>>> = candidate_genes
+        .iter()
+        .map(|genes| {
+            genes
+                .iter()
+                .map(|gene| gene_to_idx.get(gene.as_str()).copied())
+                .collect()
+        })
+        .collect();
+
+    let mut kept: Vec<HashSet<usize>> = vec![HashSet::new(); candidate_names.len()];
+    let mut seen_output = vec![false; candidate_names.len()];
+    let mut output_order = Vec::new();
+    for (regulon, motif) in pruned_regulons.iter().zip(pruned_motifs) {
+        let Some(&candidate_idx) = candidate_to_idx.get(regulon.as_str()) else {
+            continue;
+        };
+        let Some(&motif_idx) = motif_to_idx.get(motif.as_str()) else {
+            continue;
+        };
+        if !seen_output[candidate_idx] {
+            seen_output[candidate_idx] = true;
+            output_order.push(candidate_idx);
+        }
+        let row = rankings.row(motif_idx);
+        for (gene_pos, gene_col) in candidate_gene_cols[candidate_idx].iter().enumerate() {
+            if let Some(col) = gene_col {
+                let rank = row[*col];
+                if rank >= zero_value && rank < rank_cutoff {
+                    kept[candidate_idx].insert(gene_pos);
+                }
             }
         }
     }
@@ -6411,6 +6753,18 @@ fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(cistarget_enrichment_from_rankings_i16, m)?)?;
     m.add_function(wrap_pyfunction!(cistarget_enrichment_from_rankings_i32, m)?)?;
     m.add_function(wrap_pyfunction!(cistarget_enrichment_from_rankings_i64, m)?)?;
+    m.add_function(wrap_pyfunction!(
+        cistarget_enrichment_from_projected_rankings_i16,
+        m
+    )?)?;
+    m.add_function(wrap_pyfunction!(
+        cistarget_enrichment_from_projected_rankings_i32,
+        m
+    )?)?;
+    m.add_function(wrap_pyfunction!(
+        cistarget_enrichment_from_projected_rankings_i64,
+        m
+    )?)?;
     m.add_function(wrap_pyfunction!(cistarget_rankings_to_i32_f32, m)?)?;
     m.add_function(wrap_pyfunction!(cistarget_rankings_to_i32_f64, m)?)?;
     m.add_function(wrap_pyfunction!(topics_fit, m)?)?;
@@ -6490,6 +6844,26 @@ fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(cistarget_prune_regulon_targets_i64, m)?)?;
     m.add_function(wrap_pyfunction!(cistarget_prune_regulon_targets_f32, m)?)?;
     m.add_function(wrap_pyfunction!(cistarget_prune_regulon_targets_f64, m)?)?;
+    m.add_function(wrap_pyfunction!(
+        cistarget_prune_regulon_targets_projected_i32,
+        m
+    )?)?;
+    m.add_function(wrap_pyfunction!(
+        cistarget_prune_regulon_targets_projected_i16,
+        m
+    )?)?;
+    m.add_function(wrap_pyfunction!(
+        cistarget_prune_regulon_targets_projected_i64,
+        m
+    )?)?;
+    m.add_function(wrap_pyfunction!(
+        cistarget_prune_regulon_targets_projected_f32,
+        m
+    )?)?;
+    m.add_function(wrap_pyfunction!(
+        cistarget_prune_regulon_targets_projected_f64,
+        m
+    )?)?;
     m.add_function(wrap_pyfunction!(
         cistarget_prune_regulon_targets_unranked,
         m

@@ -74,12 +74,15 @@ class TestCistargetCorrectness:
             index=["m0", "m1", "m2"],
             columns=[f"g{i}" for i in range(base.shape[1])],
         )
-        rankings_arg, kernel = cistarget._rankings_kernel_arg(rankings.to_numpy(copy=False))
+        rankings_arg, kernel, projected = cistarget._rankings_kernel_arg(
+            rankings.to_numpy(copy=False)
+        )
 
         assert np.shares_memory(rankings_arg, values)
         assert rankings_arg.flags.f_contiguous
         assert not rankings_arg.flags.c_contiguous
         assert kernel is cistarget._cistarget_enrichment_from_rankings_i32
+        assert projected is None
 
         regs = [("R1", ["g0", "g1", "g2"]), ("R2", ["g3", "g4"])]
         got = cistarget.enrich(rankings, regs, top_frac=0.5, auc_threshold=0.0)
@@ -129,10 +132,13 @@ class TestCistargetCorrectness:
             index=["m0", "m1", "m2"],
             columns=[f"g{i}" for i in range(base.shape[1])],
         )
-        rankings_arg, kernel = cistarget._rankings_kernel_arg(rankings.to_numpy(copy=False))
+        rankings_arg, kernel, projected = cistarget._rankings_kernel_arg(
+            rankings.to_numpy(copy=False)
+        )
 
         assert rankings_arg.dtype == np.int64
         assert kernel is cistarget._cistarget_enrichment_from_rankings_i64
+        assert projected is None
         assert np.shares_memory(rankings_arg, values)
         assert rankings_arg.flags.f_contiguous
         assert not rankings_arg.flags.c_contiguous
@@ -177,11 +183,53 @@ class TestCistargetCorrectness:
 
         monkeypatch.setattr(cistarget, "_rankings_to_i32_f64", fake_to_i32)
 
-        rankings_arg, kernel = cistarget._rankings_kernel_arg(rankings.to_numpy(copy=False))
+        rankings_arg, kernel, projected = cistarget._rankings_kernel_arg(
+            rankings.to_numpy(copy=False)
+        )
 
         assert seen["called"] is True
         assert rankings_arg.dtype == np.int32
         assert kernel is cistarget._cistarget_enrichment_from_rankings_i32
+        assert projected is None
+
+    def test_projected_enrich_matches_full_rankings(self, tiny_rankings):
+        regs = [
+            ("R1", ["g0", "g1", "g2", "g3", "g4"]),
+            ("R2", ["g10", "g11", "g12"]),
+        ]
+        projected = tiny_rankings[["g0", "g1", "g2", "g3", "g4", "g10", "g11", "g12"]]
+
+        got = cistarget.enrich(
+            projected,
+            regs,
+            top_frac=0.3,
+            auc_threshold=0.0,
+            rank_universe_size=tiny_rankings.shape[1],
+        )
+        expected = cistarget.enrich(
+            tiny_rankings,
+            regs,
+            top_frac=0.3,
+            auc_threshold=0.0,
+        )
+
+        pd.testing.assert_frame_equal(got, expected)
+        assert got.attrs["rust_backend"] == {
+            "engine": "rust",
+            "symbols": ["cistarget_enrichment_from_projected_rankings_i32"],
+        }
+
+    def test_projected_rankings_kernel_uses_projected_symbol(self, tiny_rankings):
+        values = tiny_rankings[["g0", "g1"]].to_numpy(copy=False)
+
+        rankings_arg, kernel, projected = cistarget._rankings_kernel_arg(
+            values,
+            rank_universe_size=tiny_rankings.shape[1],
+        )
+
+        assert np.shares_memory(rankings_arg, values)
+        assert kernel is cistarget._cistarget_enrichment_from_projected_rankings_i32
+        assert projected == tiny_rankings.shape[1]
 
     def test_float_nan_rankings_do_not_allocate_python_isfinite_mask(
         self,
@@ -484,6 +532,56 @@ class TestCistargetCorrectness:
                 "TF1_regulon": ["g0", "g1", "g2", "g3"],
                 "TF2_regulon": ["g2"],
             }
+
+    def test_projected_prune_regulons_matches_full_rankings(self):
+        enriched = pd.DataFrame(
+            [
+                {"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30},
+                {"regulon": "TF2_regulon", "motif": "M2", "auc": 0.31},
+            ]
+        )
+        annotations = pd.DataFrame({"motif": ["M1", "M2"], "TF": ["TF1", "TF2"]})
+        full_rankings = pd.DataFrame(
+            [
+                [0, 1, 7, 8, 9, 2, 3, 4, 5, 6],
+                [7, 8, 0, 1, 9, 2, 3, 4, 5, 6],
+            ],
+            index=["M1", "M2"],
+            columns=[f"g{i}" for i in range(10)],
+            dtype=np.int32,
+        )
+        projected = full_rankings[["g0", "g1", "g2", "g3", "g4"]]
+        candidates = [
+            ("TF1_regulon", ["g0", "g1", "g4"]),
+            ("TF2_regulon", ["g2", "g3", "g4"]),
+        ]
+
+        got = cistarget.prune_regulons(
+            enriched,
+            candidates,
+            annotations,
+            rankings=projected,
+            top_frac=0.2,
+            min_genes=1,
+            rank_universe_size=full_rankings.shape[1],
+        )
+        expected = cistarget.prune_regulons(
+            enriched,
+            candidates,
+            annotations,
+            rankings=full_rankings,
+            top_frac=0.2,
+            min_genes=1,
+        )
+
+        assert got == expected == {
+            "TF1_regulon": ["g0", "g1"],
+            "TF2_regulon": ["g2", "g3"],
+        }
+        assert cistarget._prune_regulons_backend_symbols(
+            projected,
+            rank_universe_size=full_rankings.shape[1],
+        ) == ["cistarget_prune_regulon_targets_projected_i32"]
 
     def test_prune_regulons_without_rankings_keeps_supported_candidates_in_rust(self):
         enriched = pd.DataFrame(

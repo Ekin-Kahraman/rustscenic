@@ -429,8 +429,32 @@ def run(
     )
     if motif_rankings is not None:
         import rustscenic.cistarget
-        rankings_df = _coerce_rankings(motif_rankings)
-        log(f"[6/8] cistarget: {len(rankings_df):,} motifs × {rankings_df.shape[1]:,} genes")
+        ranking_features = _ranking_projection_features(
+            motif_rankings,
+            _regulon_feature_names(candidate_regulon_pairs),
+        )
+        rank_universe_size = (
+            _ranking_universe_size(motif_rankings)
+            if ranking_features is not None else None
+        )
+        rankings_df = _coerce_rankings(
+            motif_rankings,
+            feature_names=ranking_features,
+        )
+        rank_universe_arg = (
+            rank_universe_size
+            if rank_universe_size is not None
+            and rank_universe_size > rankings_df.shape[1]
+            else None
+        )
+        universe_note = (
+            f" projected from {rank_universe_arg:,}-gene universe"
+            if rank_universe_arg is not None else ""
+        )
+        log(
+            f"[6/8] cistarget: {len(rankings_df):,} motifs × "
+            f"{rankings_df.shape[1]:,} genes{universe_note}"
+        )
         t0 = time.perf_counter()
         enriched = rustscenic.cistarget.enrich(
             rankings_df,
@@ -438,6 +462,7 @@ def run(
             top_frac=cistarget_top_frac,
             auc_threshold=cistarget_auc_threshold,
             nes_threshold=cistarget_nes_threshold,
+            rank_universe_size=rank_universe_arg,
         )
         backend_execution["cistarget"] = _rust_execution_from_attrs(
             enriched,
@@ -472,11 +497,15 @@ def run(
                 top_frac=cistarget_top_frac,
                 auc_threshold=cistarget_auc_threshold,
                 min_genes=1,
+                rank_universe_size=rank_universe_arg,
             )
             pruning_symbols = _rust_backend_symbols(pruned_enriched)
             if not pruned_enriched.empty:
                 pruning_symbols.extend(
-                    rustscenic.cistarget._prune_regulons_backend_symbols(rankings_df)
+                    rustscenic.cistarget._prune_regulons_backend_symbols(
+                        rankings_df,
+                        rank_universe_size=rank_universe_arg,
+                    )
                 )
             backend_execution["cistarget_pruning"] = (
                 _rust_execution(*pruning_symbols)
@@ -1018,6 +1047,35 @@ def _ranking_projection_features(
     return feature_names
 
 
+def _regulon_feature_names(regulons: Iterable) -> list[str]:
+    seen: set[str] = set()
+    features: list[str] = []
+    for _, genes in iter_regulon_pairs(regulons):
+        for gene in genes:
+            feature = str(gene)
+            if feature in seen:
+                continue
+            seen.add(feature)
+            features.append(feature)
+    return features
+
+
+def _ranking_universe_size(rankings) -> int | None:
+    if isinstance(rankings, pd.DataFrame):
+        return None
+    path = Path(rankings)
+    suffix = path.suffix.lower()
+    if suffix in (".feather", ".ft"):
+        kind = "feather"
+    elif suffix == ".parquet":
+        kind = "parquet"
+    else:
+        return None
+    columns = _ranking_file_columns(path, kind=kind)
+    motif_col = _detect_motif_column(columns, path)
+    return len(columns) - (1 if motif_col is not None else 0)
+
+
 def _feature_name_list(feature_names: Iterable[str] | None) -> list[str]:
     return [] if feature_names is None else [str(x) for x in feature_names]
 
@@ -1055,10 +1113,10 @@ def _projected_ranking_columns(path: Path, features: list[str], *, kind: str) ->
     feature_count = len(keep) - (1 if motif_col is not None and keep and keep[0] == motif_col else 0)
     if feature_count == 0:
         raise ValueError(
-            "none of the current run's peak IDs were present in the "
-            f"motif-ranking columns for {path.name}. First requested peaks: "
-            f"{examples}. Check that the BED peak IDs match the ranking DB "
-            "region IDs, or rename/subset the BED to the ranking convention."
+            "none of the current run's requested features were present in "
+            f"the motif-ranking columns for {path.name}. First requested "
+            f"features: {examples}. Check that gene or peak IDs match the "
+            "ranking database convention."
         )
     return keep
 

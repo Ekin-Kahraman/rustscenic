@@ -31,6 +31,9 @@ import numpy as np
 import pandas as pd
 
 from rustscenic._rustscenic import (
+    cistarget_enrichment_from_projected_rankings_i16 as _cistarget_enrichment_from_projected_rankings_i16,
+    cistarget_enrichment_from_projected_rankings_i32 as _cistarget_enrichment_from_projected_rankings_i32,
+    cistarget_enrichment_from_projected_rankings_i64 as _cistarget_enrichment_from_projected_rankings_i64,
     cistarget_enrichment_from_rankings_i16 as _cistarget_enrichment_from_rankings_i16,
     cistarget_enrichment_from_rankings_i32 as _cistarget_enrichment_from_rankings_i32,
     cistarget_enrichment_from_rankings_i64 as _cistarget_enrichment_from_rankings_i64,
@@ -43,6 +46,11 @@ from rustscenic._rustscenic import (
     cistarget_prune_regulon_targets_i16 as _prune_regulon_targets_i16,
     cistarget_prune_regulon_targets_i32 as _prune_regulon_targets_i32,
     cistarget_prune_regulon_targets_i64 as _prune_regulon_targets_i64,
+    cistarget_prune_regulon_targets_projected_f32 as _prune_regulon_targets_projected_f32,
+    cistarget_prune_regulon_targets_projected_f64 as _prune_regulon_targets_projected_f64,
+    cistarget_prune_regulon_targets_projected_i16 as _prune_regulon_targets_projected_i16,
+    cistarget_prune_regulon_targets_projected_i32 as _prune_regulon_targets_projected_i32,
+    cistarget_prune_regulon_targets_projected_i64 as _prune_regulon_targets_projected_i64,
     cistarget_prune_regulon_targets_unranked as _prune_regulon_targets_unranked,
     cistarget_rankings_to_i32_f32 as _rankings_to_i32_f32,
     cistarget_rankings_to_i32_f64 as _rankings_to_i32_f64,
@@ -69,6 +77,7 @@ def enrich(
     top_frac: float = 0.05,
     auc_threshold: float = 0.05,
     nes_threshold: float | None = None,
+    rank_universe_size: int | None = None,
 ) -> pd.DataFrame:
     """Compute motif-regulon enrichment AUCs and NES.
 
@@ -97,6 +106,10 @@ def enrich(
         motifs, or fewer than 30 motifs), NES is recorded as ``NaN`` and a
         warning is emitted; ``NaN`` rows are dropped by any ``nes_threshold``
         filter but preserved when ``nes_threshold is None``.
+    rank_universe_size
+        Original ranking-universe width when ``rankings`` has been projected to
+        a subset of columns. Internal HPC pipeline hook; callers normally leave
+        this as ``None``.
 
     Returns
     -------
@@ -152,10 +165,14 @@ def enrich(
         top_frac=top_frac,
         auc_threshold=auc_threshold,
         nes_threshold=nes_threshold,
+        rank_universe_size=rank_universe_size,
     )
     out.attrs["rust_backend"] = {
         "engine": "rust",
-        "symbols": _rankings_backend_symbols(ranking_values),
+        "symbols": _rankings_backend_symbols(
+            ranking_values,
+            rank_universe_size=rank_universe_size,
+        ),
     }
     return out
 
@@ -169,57 +186,126 @@ def _enrichment_rows_from_rankings(
     top_frac: float,
     auc_threshold: float,
     nes_threshold: float | None,
+    rank_universe_size: int | None = None,
 ) -> pd.DataFrame:
     """Score cistarget directly from lower-is-better rankings in Rust."""
-    rankings_arg, kernel = _rankings_kernel_arg(ranking_values)
-    result = kernel(
-        rankings_arg,
-        motif_names,
-        reg_names,
-        reg_gene_indices,
-        float(top_frac),
-        float(auc_threshold),
-        None if nes_threshold is None else float(nes_threshold),
-        _NES_MIN_MOTIFS,
+    rankings_arg, kernel, projected_universe = _rankings_kernel_arg(
+        ranking_values,
+        rank_universe_size=rank_universe_size,
     )
+    if projected_universe is None:
+        result = kernel(
+            rankings_arg,
+            motif_names,
+            reg_names,
+            reg_gene_indices,
+            float(top_frac),
+            float(auc_threshold),
+            None if nes_threshold is None else float(nes_threshold),
+            _NES_MIN_MOTIFS,
+        )
+    else:
+        result = kernel(
+            rankings_arg,
+            motif_names,
+            reg_names,
+            reg_gene_indices,
+            int(projected_universe),
+            float(top_frac),
+            float(auc_threshold),
+            None if nes_threshold is None else float(nes_threshold),
+            _NES_MIN_MOTIFS,
+        )
     return _enrichment_result_to_dataframe(result, motif_names, reg_names)
 
 
-def _rankings_kernel_arg(ranking_values: np.ndarray):
+def _rankings_kernel_arg(
+    ranking_values: np.ndarray,
+    *,
+    rank_universe_size: int | None = None,
+):
     """Choose the Rust ranking kernel for integer cistarget databases."""
     values = np.asarray(ranking_values)
+    projected_universe = _projected_universe_arg(values, rank_universe_size)
+    if projected_universe is not None:
+        if values.dtype == np.int16:
+            return values, _cistarget_enrichment_from_projected_rankings_i16, projected_universe
+        if values.dtype == np.int32:
+            return values, _cistarget_enrichment_from_projected_rankings_i32, projected_universe
+        if values.dtype == np.int64:
+            return values, _cistarget_enrichment_from_projected_rankings_i64, projected_universe
+        if values.dtype == np.float32:
+            return (
+                _rankings_to_i32_f32(values),
+                _cistarget_enrichment_from_projected_rankings_i32,
+                projected_universe,
+            )
+        if values.dtype == np.float64:
+            return (
+                _rankings_to_i32_f64(values),
+                _cistarget_enrichment_from_projected_rankings_i32,
+                projected_universe,
+            )
+        raise TypeError(
+            "rankings must contain integer rank values for cistarget enrichment"
+        )
     if values.dtype == np.int16:
-        return values, _cistarget_enrichment_from_rankings_i16
+        return values, _cistarget_enrichment_from_rankings_i16, None
     if values.dtype == np.int32:
-        return values, _cistarget_enrichment_from_rankings_i32
+        return values, _cistarget_enrichment_from_rankings_i32, None
     if values.dtype == np.int64:
-        return values, _cistarget_enrichment_from_rankings_i64
+        return values, _cistarget_enrichment_from_rankings_i64, None
     if values.dtype == np.float32:
-        return _rankings_to_i32_f32(values), _cistarget_enrichment_from_rankings_i32
+        return _rankings_to_i32_f32(values), _cistarget_enrichment_from_rankings_i32, None
     if values.dtype == np.float64:
-        return _rankings_to_i32_f64(values), _cistarget_enrichment_from_rankings_i32
+        return _rankings_to_i32_f64(values), _cistarget_enrichment_from_rankings_i32, None
     raise TypeError(
         "rankings must contain integer rank values for cistarget enrichment"
     )
 
 
-def _rankings_backend_symbols(ranking_values: np.ndarray) -> list[str]:
+def _projected_universe_arg(
+    ranking_values: np.ndarray,
+    rank_universe_size: int | None,
+) -> int | None:
+    if rank_universe_size is None:
+        return None
+    universe = int(rank_universe_size)
+    n_ranked_columns = int(np.asarray(ranking_values).shape[1])
+    if universe < n_ranked_columns:
+        raise ValueError(
+            "rank_universe_size must be >= the number of ranking columns"
+        )
+    return universe if universe != n_ranked_columns else None
+
+
+def _rankings_backend_symbols(
+    ranking_values: np.ndarray,
+    *,
+    rank_universe_size: int | None = None,
+) -> list[str]:
     values = np.asarray(ranking_values)
+    projected = _projected_universe_arg(values, rank_universe_size) is not None
+    prefix = (
+        "cistarget_enrichment_from_projected_rankings"
+        if projected else
+        "cistarget_enrichment_from_rankings"
+    )
     if values.dtype == np.int16:
-        return ["cistarget_enrichment_from_rankings_i16"]
+        return [f"{prefix}_i16"]
     if values.dtype == np.int32:
-        return ["cistarget_enrichment_from_rankings_i32"]
+        return [f"{prefix}_i32"]
     if values.dtype == np.int64:
-        return ["cistarget_enrichment_from_rankings_i64"]
+        return [f"{prefix}_i64"]
     if values.dtype == np.float32:
         return [
             "cistarget_rankings_to_i32_f32",
-            "cistarget_enrichment_from_rankings_i32",
+            f"{prefix}_i32",
         ]
     if values.dtype == np.float64:
         return [
             "cistarget_rankings_to_i32_f64",
-            "cistarget_enrichment_from_rankings_i32",
+            f"{prefix}_i32",
         ]
     return []
 
@@ -456,6 +542,7 @@ def prune_regulons(
     motif_col: str | None = None,
     tf_col: str | None = None,
     case_sensitive: bool = False,
+    rank_universe_size: int | None = None,
 ) -> dict[str, list[str]]:
     """Create final motif-annotation-pruned regulons.
 
@@ -486,8 +573,18 @@ def prune_regulons(
         return {}
 
     if rankings is not None:
-        rank_cutoff = max(1, int(np.ceil(top_frac * rankings.shape[1])))
-        ranking_values, kernel = _prune_rankings_kernel_arg(rankings)
+        rank_universe = _projected_universe_arg(
+            rankings.to_numpy(copy=False),
+            rank_universe_size,
+        )
+        n_ranked_columns = (
+            int(rankings.shape[1]) if rank_universe is None else rank_universe
+        )
+        rank_cutoff = max(1, int(np.ceil(top_frac * n_ranked_columns)))
+        ranking_values, kernel = _prune_rankings_kernel_arg(
+            rankings,
+            projected=rank_universe is not None,
+        )
         names, genes = kernel(
             ranking_values,
             string_list(rankings.index),
@@ -568,33 +665,59 @@ def _motif_annotation_standard_backend_symbol(kernel) -> str:
     raise RuntimeError("unknown standard motif annotation pruning kernel")
 
 
-def _prune_regulons_backend_symbols(rankings: pd.DataFrame | None) -> list[str]:
+def _prune_regulons_backend_symbols(
+    rankings: pd.DataFrame | None,
+    *,
+    rank_universe_size: int | None = None,
+) -> list[str]:
     if rankings is None:
         return ["cistarget_prune_regulon_targets_unranked"]
     if not isinstance(rankings, pd.DataFrame):
         raise TypeError("rankings must be a pandas DataFrame")
-    return [_prune_rankings_backend_symbol_for_values(rankings.to_numpy(copy=False))]
+    values = rankings.to_numpy(copy=False)
+    projected = _projected_universe_arg(values, rank_universe_size) is not None
+    _, kernel = _prune_rankings_kernel_arg(rankings, projected=projected)
+    return [_prune_rankings_backend_symbol(kernel)]
 
 
-def _prune_rankings_kernel_arg(rankings: pd.DataFrame):
+def _prune_rankings_kernel_arg(
+    rankings: pd.DataFrame,
+    *,
+    projected: bool = False,
+):
     if not isinstance(rankings, pd.DataFrame):
         raise TypeError("rankings must be a pandas DataFrame")
     values = rankings.to_numpy(copy=False)
     if values.dtype == object:
         raise TypeError("rankings DataFrame has dtype=object")
     if values.dtype == np.int16:
-        return values, _prune_regulon_targets_i16
+        return values, (
+            _prune_regulon_targets_projected_i16
+            if projected else _prune_regulon_targets_i16
+        )
     if values.dtype == np.int32:
-        return values, _prune_regulon_targets_i32
+        return values, (
+            _prune_regulon_targets_projected_i32
+            if projected else _prune_regulon_targets_i32
+        )
     if values.dtype == np.int64:
-        return values, _prune_regulon_targets_i64
+        return values, (
+            _prune_regulon_targets_projected_i64
+            if projected else _prune_regulon_targets_i64
+        )
     if np.issubdtype(values.dtype, np.integer):
         if values.dtype.itemsize <= np.dtype(np.int32).itemsize and not np.issubdtype(
             values.dtype, np.unsignedinteger
         ):
-            return values.astype(np.int32, copy=False), _prune_regulon_targets_i32
+            return values.astype(np.int32, copy=False), (
+                _prune_regulon_targets_projected_i32
+                if projected else _prune_regulon_targets_i32
+            )
         if values.dtype.itemsize < np.dtype(np.int64).itemsize:
-            return values.astype(np.int64, copy=False), _prune_regulon_targets_i64
+            return values.astype(np.int64, copy=False), (
+                _prune_regulon_targets_projected_i64
+                if projected else _prune_regulon_targets_i64
+            )
         raise TypeError(
             "rankings integer dtype is wider than the supported signed int64 "
             "path; cast rankings to int64 before pruning"
@@ -602,10 +725,19 @@ def _prune_rankings_kernel_arg(rankings: pd.DataFrame):
     if not np.issubdtype(values.dtype, np.floating):
         raise TypeError("rankings must contain numeric rank values")
     if values.dtype == np.float32:
-        return values, _prune_regulon_targets_f32
+        return values, (
+            _prune_regulon_targets_projected_f32
+            if projected else _prune_regulon_targets_f32
+        )
     if values.dtype == np.float64:
-        return values, _prune_regulon_targets_f64
-    return values.astype(np.float64, copy=False), _prune_regulon_targets_f64
+        return values, (
+            _prune_regulon_targets_projected_f64
+            if projected else _prune_regulon_targets_f64
+        )
+    return values.astype(np.float64, copy=False), (
+        _prune_regulon_targets_projected_f64
+        if projected else _prune_regulon_targets_f64
+    )
 
 
 def _prune_rankings_backend_symbol(kernel) -> str:
@@ -619,6 +751,16 @@ def _prune_rankings_backend_symbol(kernel) -> str:
         return "cistarget_prune_regulon_targets_f32"
     if kernel is _prune_regulon_targets_f64:
         return "cistarget_prune_regulon_targets_f64"
+    if kernel is _prune_regulon_targets_projected_i16:
+        return "cistarget_prune_regulon_targets_projected_i16"
+    if kernel is _prune_regulon_targets_projected_i32:
+        return "cistarget_prune_regulon_targets_projected_i32"
+    if kernel is _prune_regulon_targets_projected_i64:
+        return "cistarget_prune_regulon_targets_projected_i64"
+    if kernel is _prune_regulon_targets_projected_f32:
+        return "cistarget_prune_regulon_targets_projected_f32"
+    if kernel is _prune_regulon_targets_projected_f64:
+        return "cistarget_prune_regulon_targets_projected_f64"
     raise RuntimeError("unknown regulon target pruning kernel")
 
 

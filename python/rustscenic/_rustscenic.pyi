@@ -150,6 +150,69 @@ def cistarget_enrichment_from_rankings_i64(
     """Compute cistarget enrichment rows directly from int64 rank matrices."""
 
 
+def cistarget_enrichment_from_projected_rankings_i16(
+    rankings: npt.NDArray[np.int16],
+    motif_names: list[str],
+    regulon_names: list[str],
+    regulon_gene_indices: list[list[int]],
+    rank_universe_size: int,
+    top_frac: float = 0.05,
+    auc_threshold: float = 0.05,
+    nes_threshold: float | None = None,
+    nes_min_motifs: int = 30,
+) -> tuple[
+    list[str],
+    list[str],
+    npt.NDArray[np.float32],
+    npt.NDArray[np.float32],
+    npt.NDArray[np.uint32],
+    bool,
+]:
+    """Compute cistarget enrichment from projected int16 rank columns."""
+
+
+def cistarget_enrichment_from_projected_rankings_i32(
+    rankings: npt.NDArray[np.int32],
+    motif_names: list[str],
+    regulon_names: list[str],
+    regulon_gene_indices: list[list[int]],
+    rank_universe_size: int,
+    top_frac: float = 0.05,
+    auc_threshold: float = 0.05,
+    nes_threshold: float | None = None,
+    nes_min_motifs: int = 30,
+) -> tuple[
+    list[str],
+    list[str],
+    npt.NDArray[np.float32],
+    npt.NDArray[np.float32],
+    npt.NDArray[np.uint32],
+    bool,
+]:
+    """Compute cistarget enrichment from projected int32 rank columns."""
+
+
+def cistarget_enrichment_from_projected_rankings_i64(
+    rankings: npt.NDArray[np.int64],
+    motif_names: list[str],
+    regulon_names: list[str],
+    regulon_gene_indices: list[list[int]],
+    rank_universe_size: int,
+    top_frac: float = 0.05,
+    auc_threshold: float = 0.05,
+    nes_threshold: float | None = None,
+    nes_min_motifs: int = 30,
+) -> tuple[
+    list[str],
+    list[str],
+    npt.NDArray[np.float32],
+    npt.NDArray[np.float32],
+    npt.NDArray[np.uint32],
+    bool,
+]:
+    """Compute cistarget enrichment from projected int64 rank columns."""
+
+
 def cistarget_rankings_to_i32_f32(
     rankings: npt.NDArray[np.float32],
 ) -> npt.NDArray[np.int32]:
@@ -774,6 +837,76 @@ def cistarget_prune_regulon_targets_f64(
     min_genes: int,
 ) -> tuple[list[str], list[list[str]]]:
     """Recover pruned regulon targets from floating-point motif rankings."""
+
+
+def cistarget_prune_regulon_targets_projected_i16(
+    rankings: npt.NDArray[np.int16],
+    motif_names: list[str],
+    gene_names: list[str],
+    candidate_names: list[str],
+    candidate_genes: list[list[str]],
+    pruned_regulons: list[str],
+    pruned_motifs: list[str],
+    rank_cutoff: int,
+    min_genes: int,
+) -> tuple[list[str], list[list[str]]]:
+    """Recover targets from projected int16 motif ranking columns."""
+
+
+def cistarget_prune_regulon_targets_projected_i32(
+    rankings: npt.NDArray[np.int32],
+    motif_names: list[str],
+    gene_names: list[str],
+    candidate_names: list[str],
+    candidate_genes: list[list[str]],
+    pruned_regulons: list[str],
+    pruned_motifs: list[str],
+    rank_cutoff: int,
+    min_genes: int,
+) -> tuple[list[str], list[list[str]]]:
+    """Recover targets from projected int32 motif ranking columns."""
+
+
+def cistarget_prune_regulon_targets_projected_i64(
+    rankings: npt.NDArray[np.int64],
+    motif_names: list[str],
+    gene_names: list[str],
+    candidate_names: list[str],
+    candidate_genes: list[list[str]],
+    pruned_regulons: list[str],
+    pruned_motifs: list[str],
+    rank_cutoff: int,
+    min_genes: int,
+) -> tuple[list[str], list[list[str]]]:
+    """Recover targets from projected int64 motif ranking columns."""
+
+
+def cistarget_prune_regulon_targets_projected_f32(
+    rankings: npt.NDArray[np.float32],
+    motif_names: list[str],
+    gene_names: list[str],
+    candidate_names: list[str],
+    candidate_genes: list[list[str]],
+    pruned_regulons: list[str],
+    pruned_motifs: list[str],
+    rank_cutoff: int,
+    min_genes: int,
+) -> tuple[list[str], list[list[str]]]:
+    """Recover targets from projected float32 motif ranking columns."""
+
+
+def cistarget_prune_regulon_targets_projected_f64(
+    rankings: npt.NDArray[np.float64],
+    motif_names: list[str],
+    gene_names: list[str],
+    candidate_names: list[str],
+    candidate_genes: list[list[str]],
+    pruned_regulons: list[str],
+    pruned_motifs: list[str],
+    rank_cutoff: int,
+    min_genes: int,
+) -> tuple[list[str], list[list[str]]]:
+    """Recover targets from projected float64 motif ranking columns."""
 
 
 def cistarget_prune_regulon_targets_unranked(

@@ -2367,6 +2367,59 @@ def test_coerce_rankings_projects_aertslab_feather_columns(tmp_path):
     assert list(rankings.columns) == ["chr1:300-400"]
 
 
+def test_gene_cistarget_file_projection_preserves_full_rank_universe(tmp_path):
+    import rustscenic.cistarget as cistarget
+    from rustscenic.pipeline import (
+        _coerce_rankings,
+        _ranking_universe_size,
+        _regulon_feature_names,
+    )
+
+    path = tmp_path / "genes_vs_motifs.rankings.feather"
+    pd.DataFrame({
+        "motifs": ["MOTIF_A", "MOTIF_B"],
+        "GATA1": [0, 7],
+        "SPI1": [1, 8],
+        "IRF8": [7, 0],
+        "BCL11A": [8, 1],
+        "DECOY1": [2, 2],
+        "DECOY2": [3, 3],
+        "DECOY3": [4, 4],
+        "DECOY4": [5, 5],
+        "DECOY5": [6, 6],
+        "DECOY6": [9, 9],
+    }).to_feather(path)
+    regulons = [
+        ("erythroid", ["GATA1", "SPI1"]),
+        ("myeloid", ["IRF8", "BCL11A"]),
+    ]
+
+    projected = _coerce_rankings(
+        path,
+        feature_names=_regulon_feature_names(regulons),
+    )
+    full = _coerce_rankings(path)
+
+    assert _ranking_universe_size(path) == 10
+    assert list(projected.columns) == ["GATA1", "SPI1", "IRF8", "BCL11A"]
+
+    got = cistarget.enrich(
+        projected,
+        regulons,
+        top_frac=0.2,
+        auc_threshold=0.0,
+        rank_universe_size=_ranking_universe_size(path),
+    )
+    expected = cistarget.enrich(
+        full,
+        regulons,
+        top_frac=0.2,
+        auc_threshold=0.0,
+    )
+
+    pd.testing.assert_frame_equal(got, expected)
+
+
 def test_coerce_rankings_projects_dataframe_without_losing_motif_index():
     from rustscenic.pipeline import _coerce_rankings
 
@@ -2439,7 +2492,7 @@ def test_projected_ranking_columns_reports_sorted_requested_examples(tmp_path):
         "peak_present": [1],
     }).to_feather(path)
 
-    with pytest.raises(ValueError, match="First requested peaks"):
+    with pytest.raises(ValueError, match="First requested features"):
         _projected_ranking_columns(
             path,
             ["z_peak", "a_peak", "m_peak"],
