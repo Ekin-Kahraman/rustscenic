@@ -698,7 +698,7 @@ def run(
                 "pipeline_attribute_peaks_to_cistarget_rows_f32",
                 "pipeline_attribute_peaks_to_cistarget_rows_f64",
             )
-        eregulons_df = rustscenic.eregulon._build_eregulons_dataframe(
+        eregulons_df = rustscenic.eregulon.build_eregulons_dataframe(
             grn,
             enriched_with_peaks,
             enhancer_links,

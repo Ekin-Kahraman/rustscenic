@@ -13,6 +13,7 @@ from rustscenic.eregulon import (
     ERegulon,
     _build_eregulons_dataframe,
     build_eregulons,
+    build_eregulons_dataframe,
     eregulons_to_dataframe,
 )
 from rustscenic._stage_utils import tf_from_regulon_name
@@ -307,6 +308,49 @@ def test_eregulon_dataframe_uses_float32_cistarget_auc_without_upcast(monkeypatc
 
     assert table.loc[0, "tf"] == "SPI1"
     assert table.attrs["rust_backend"]["symbols"] == ["eregulon_assemble_f32"]
+
+
+def test_public_eregulon_dataframe_api_uses_rust_table_path(monkeypatch):
+    import rustscenic.eregulon as ermod
+
+    captured = {}
+
+    def fake_dataframe(
+        grn,
+        cistarget,
+        enhancer_links,
+        **kwargs,
+    ):
+        captured["args"] = (grn, cistarget, enhancer_links)
+        captured["kwargs"] = kwargs
+        table = pd.DataFrame(
+            {
+                "tf": ["SPI1"],
+                "enhancer": ["peak_1"],
+                "target_gene": ["GENE_A"],
+                "n_enhancer_links": np.array([1], dtype=np.uint32),
+                "motif_auc": np.array([0.2], dtype=np.float64),
+            }
+        )
+        table.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": ["eregulon_assemble"],
+        }
+        return table
+
+    monkeypatch.setattr(ermod, "_build_eregulons_dataframe", fake_dataframe)
+
+    table = build_eregulons_dataframe(
+        _fixture_grn(),
+        _fixture_cistarget(),
+        _fixture_enhancer_links(),
+        min_target_genes=1,
+        min_enhancer_links=1,
+    )
+
+    assert table.attrs["rust_backend"]["symbols"] == ["eregulon_assemble"]
+    assert captured["kwargs"]["min_target_genes"] == 1
+    assert captured["kwargs"]["min_enhancer_links"] == 1
 
 
 def test_eregulon_dataframe_reuses_rust_string_lists(monkeypatch):

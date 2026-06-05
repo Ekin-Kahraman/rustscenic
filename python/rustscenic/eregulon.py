@@ -54,7 +54,7 @@ class ERegulon:
     target_genes
         Gene symbols reachable from this TF via either (a) an enhancer
         link on a TF-enriched peak, or (b) direct GRN co-expression when
-        ``use_grn_union=True`` in :func:`build_eregulons`.
+        ``use_grn_intersection=False`` in :func:`build_eregulons`.
     n_enhancer_links
         Number of (peak, gene) edges that survive all filters. A useful
         sanity signal - eRegulons with only 1-2 supporting links are
@@ -128,6 +128,33 @@ def build_eregulons(
     list[ERegulon] sorted by descending ``n_enhancer_links``.
     """
     return _build_eregulon_objects(
+        grn,
+        cistarget,
+        enhancer_links,
+        min_target_genes=min_target_genes,
+        min_enhancer_links=min_enhancer_links,
+        cistarget_auc_threshold=cistarget_auc_threshold,
+        use_grn_intersection=use_grn_intersection,
+    )
+
+
+def build_eregulons_dataframe(
+    grn: pd.DataFrame | None,
+    cistarget: pd.DataFrame,
+    enhancer_links: pd.DataFrame,
+    *,
+    min_target_genes: int = 5,
+    min_enhancer_links: int = 2,
+    cistarget_auc_threshold: float = 0.05,
+    use_grn_intersection: bool = True,
+) -> pd.DataFrame:
+    """Assemble eRegulons as a long DataFrame using the Rust table path.
+
+    This is the preferred API for large/HPC runs because it avoids building
+    Python ``ERegulon`` objects before writing parquet. ``build_eregulons``
+    remains available when callers need the object representation.
+    """
+    return _build_eregulons_dataframe(
         grn,
         cistarget,
         enhancer_links,
@@ -397,4 +424,9 @@ def _find_peak_column(ct: pd.DataFrame) -> str:
     )
 
 
-__all__ = ["ERegulon", "build_eregulons", "eregulons_to_dataframe"]
+__all__ = [
+    "ERegulon",
+    "build_eregulons",
+    "build_eregulons_dataframe",
+    "eregulons_to_dataframe",
+]

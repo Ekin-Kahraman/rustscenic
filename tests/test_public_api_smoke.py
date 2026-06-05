@@ -44,6 +44,13 @@ def test_backend_capabilities_are_public_and_complete():
     assert "enhancer_link_pearson_sparse_rna" in capabilities["required_symbols"]["enhancer"]
 
 
+def test_eregulon_dataframe_path_is_public_api():
+    import rustscenic.eregulon as eregulon
+
+    assert hasattr(eregulon, "build_eregulons_dataframe")
+    assert "build_eregulons_dataframe" in eregulon.__all__
+
+
 def test_download_motif_rankings_uses_cache_without_real_network(tmp_path, monkeypatch):
     import rustscenic.data as data
     import urllib.request
