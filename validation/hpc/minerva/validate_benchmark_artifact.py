@@ -1163,6 +1163,10 @@ def _pipeline_manifest_failures(record: dict[str, Any]) -> list[str]:
         failures.append(
             "output_inventory.manifest_path cell_barcode_filter must match benchmark JSON"
         )
+    if manifest.get("matrix_inputs") != record.get("matrix_inputs"):
+        failures.append(
+            "output_inventory.manifest_path matrix_inputs must match benchmark JSON"
+        )
     failures.extend(_pipeline_manifest_path_failures(record, manifest))
     failures.extend(_pipeline_manifest_count_failures(record, manifest))
     failures.extend(

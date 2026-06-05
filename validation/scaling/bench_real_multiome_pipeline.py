@@ -779,10 +779,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         shapes["motif_annotations"] = list(motif_annotations.shape)
     if region_motif_rankings_fingerprint is not None:
         shapes["region_motif_rankings"] = region_motif_rankings_fingerprint["shape"]
-    matrix_inputs = {
-        "rna_post_qc": matrix_profile(rna),
-        "atac_shared_cells": matrix_profile(atac),
-    }
+    matrix_inputs = dict(result.matrix_inputs)
+    if not matrix_inputs:
+        matrix_inputs = {
+            "rna_post_qc": matrix_profile(rna),
+            "atac_shared_cells": matrix_profile(atac),
+        }
 
     outputs = {
         "grn_edges": int(result.n_grn_edges or 0),

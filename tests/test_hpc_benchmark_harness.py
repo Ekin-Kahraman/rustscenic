@@ -2483,6 +2483,7 @@ def _sync_full_pipeline_manifest(record: dict) -> None:
                 "regulon_source": "candidate_grn_top_targets",
                 "backend_execution": manifest_backend,
                 "cell_barcode_filter": record.get("cell_barcode_filter"),
+                "matrix_inputs": record.get("matrix_inputs"),
             }
         )
     )
@@ -3147,6 +3148,7 @@ def test_benchmark_artifact_validator_rejects_manifest_mismatch(tmp_path):
     manifest["n_grn_edges"] = 999
     manifest["elapsed"]["grn"] = 999.0
     manifest["memory"]["grn"] = 999.0
+    manifest["matrix_inputs"]["rna_post_qc"]["nnz"] = 1
     manifest["backend_execution"]["enhancer"] = {
         "engine": "rust",
         "symbols": ["enhancer_link_pearson"],
@@ -3180,6 +3182,10 @@ def test_benchmark_artifact_validator_rejects_manifest_mismatch(tmp_path):
         "output_inventory.manifest_path memory.grn must match "
         "benchmark peak_rss_gb_per_stage.grn"
     ) in failures
+    assert (
+        "output_inventory.manifest_path matrix_inputs must match benchmark JSON"
+        in failures
+    )
     assert (
         "output_inventory.manifest_path backend_execution.enhancer must match "
         "benchmark backend_execution.pipeline_enhancer"

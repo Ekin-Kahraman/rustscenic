@@ -428,6 +428,11 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
         "requested": n_cells,
         "matched": n_cells,
     }
+    assert manifest["matrix_inputs"] == result.matrix_inputs
+    assert result.matrix_inputs["rna_post_qc"]["shape"] == [n_cells, len(rna_genes)]
+    assert result.matrix_inputs["rna_post_qc"]["storage"] == "dense"
+    assert result.matrix_inputs["atac_shared_cells"]["shape"][0] == n_cells
+    assert result.matrix_inputs["atac_shared_cells"]["storage"] == "sparse"
     assert manifest["n_grn_edges"] == result.n_grn_edges
     assert manifest["aucell_shape"] == result.aucell_shape
 

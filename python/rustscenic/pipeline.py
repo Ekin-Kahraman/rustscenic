@@ -97,6 +97,7 @@ class PipelineResult:
     aucell_shape: list[int] | None = None
     regulon_source: str = "candidate_grn_top_targets"
     backend_execution: dict = field(default_factory=dict)
+    matrix_inputs: dict = field(default_factory=dict)
 
     def manifest(self) -> dict:
         d = asdict(self)
@@ -263,6 +264,7 @@ def run(
     # ---- 1. load / normalise RNA ----
     log("[1/8] loading RNA expression")
     adata_rna = _coerce_adata(rna)
+    matrix_inputs = {"rna_post_qc": _matrix_profile(adata_rna)}
     n_cells = adata_rna.n_obs
     log(f"      RNA shape: {adata_rna.shape}")
     mark_memory("load_rna")
@@ -308,6 +310,7 @@ def run(
         mark_memory("preproc")
 
         adata_atac = _subset_atac_to_rna_cells(adata_rna, adata_atac, log=log)
+        matrix_inputs["atac_shared_cells"] = _matrix_profile(adata_atac)
 
         # Persist the artefact first; only mark have_atac=True (via
         # atac_matrix_path) once the file is on disk. If write fails (disk
@@ -787,6 +790,7 @@ def run(
         aucell_shape=aucell_shape,
         regulon_source=regulon_source,
         backend_execution=backend_execution,
+        matrix_inputs=matrix_inputs,
     )
     # Manifest is the single source of truth for "what did this run produce"
     (output_dir / "manifest.json").write_text(json.dumps(result.manifest(), indent=2))
@@ -877,6 +881,34 @@ def _coerce_adata(rna):
     if isinstance(rna, pd.DataFrame):
         return ad.AnnData(X=as_float32_contiguous(rna.values), obs=pd.DataFrame(index=rna.index), var=pd.DataFrame(index=rna.columns))
     raise TypeError(f"rna: expected AnnData / path / DataFrame, got {type(rna).__name__}")
+
+
+def _matrix_profile(adata) -> dict:
+    """Record sparse/dense matrix provenance without scanning dense payloads."""
+    import scipy.sparse as sp
+
+    rows, cols = int(adata.n_obs), int(adata.n_vars)
+    matrix = adata.X
+    dtype = str(getattr(matrix, "dtype", "unknown"))
+    if sp.issparse(matrix):
+        nnz = int(matrix.nnz)
+        total = rows * cols
+        return {
+            "shape": [rows, cols],
+            "storage": "sparse",
+            "format": matrix.getformat(),
+            "dtype": dtype,
+            "nnz": nnz,
+            "density": 0.0 if total == 0 else round(nnz / total, 8),
+        }
+    return {
+        "shape": [rows, cols],
+        "storage": "dense",
+        "format": type(matrix).__name__,
+        "dtype": dtype,
+        "nnz": None,
+        "density": None,
+    }
 
 
 def _subset_atac_to_rna_cells(adata_rna, adata_atac, *, log):
