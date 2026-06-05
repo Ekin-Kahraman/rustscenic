@@ -2416,6 +2416,10 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
     real_read_feather = pd.read_feather
 
     def recording_read_feather(path, *args, **kwargs):
+        if Path(path) == motif_rankings_path:
+            raise AssertionError(
+                "projected gene motif rankings should use the Arrow array path"
+            )
         if Path(path) == region_rankings_path:
             read_feather_calls.append(kwargs.get("columns"))
         return real_read_feather(path, *args, **kwargs)
@@ -2669,6 +2673,34 @@ def test_projected_file_rankings_reuse_schema_for_universe_metadata(
     assert metadata == {"rank_universe_size": 4, "motif_col": "motifs"}
     assert list(rankings.index) == ["MOTIF_A", "MOTIF_B"]
     assert list(rankings.columns) == ["GATA1", "IRF8"]
+
+
+def test_projected_file_rankings_array_keeps_names_and_metadata(tmp_path):
+    import rustscenic.pipeline as pipeline
+
+    path = tmp_path / "genes_vs_motifs.rankings.feather"
+    pd.DataFrame({
+        "motifs": ["MOTIF_A", "MOTIF_B"],
+        "GATA1": np.array([0, 7], dtype=np.int32),
+        "SPI1": np.array([1, 8], dtype=np.int32),
+        "IRF8": np.array([7, 0], dtype=np.int32),
+        "BCL11A": np.array([8, 1], dtype=np.int32),
+    }).to_feather(path)
+
+    rankings = pipeline._projected_rankings_array_with_metadata(
+        path,
+        feature_names=["IRF8", "GATA1"],
+    )
+
+    assert rankings is not None
+    assert rankings.motif_names == ["MOTIF_A", "MOTIF_B"]
+    assert rankings.feature_names == ["GATA1", "IRF8"]
+    assert rankings.metadata == {"rank_universe_size": 4, "motif_col": "motifs"}
+    assert rankings.values.dtype == np.int32
+    np.testing.assert_array_equal(
+        rankings.values,
+        np.array([[0, 7], [7, 0]], dtype=np.int32),
+    )
 
 
 def test_coerce_rankings_projects_dataframe_without_losing_motif_index():

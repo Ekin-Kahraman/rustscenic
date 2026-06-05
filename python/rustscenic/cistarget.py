@@ -121,15 +121,38 @@ def enrich(
     """
     # Expect motifs as rows, genes as columns. Refuse to guess orientation -
     # a wrong guess silently produces an empty result.
-    motif_names = string_list(rankings.index)
-    gene_names = string_list(rankings.columns)
-    ranking_values = rankings.to_numpy(copy=False)
-    if ranking_values.dtype == object:
+    return _enrich_from_rank_array(
+        rankings.to_numpy(copy=False),
+        rankings.index,
+        rankings.columns,
+        regulons,
+        top_frac=top_frac,
+        auc_threshold=auc_threshold,
+        nes_threshold=nes_threshold,
+        rank_universe_size=rank_universe_size,
+    )
+
+
+def _enrich_from_rank_array(
+    ranking_values: np.ndarray,
+    motif_names: Iterable,
+    gene_names: Iterable,
+    regulons: Iterable,
+    *,
+    top_frac: float = 0.05,
+    auc_threshold: float = 0.05,
+    nes_threshold: float | None = None,
+    rank_universe_size: int | None = None,
+) -> pd.DataFrame:
+    """Score cisTarget from array-backed rankings without building a DataFrame."""
+    values = np.asarray(ranking_values)
+    if values.dtype == object:
         raise TypeError(
             "rankings DataFrame has dtype=object (likely non-numeric or "
             "wrong columns). Ensure rank values are numeric before passing."
         )
-
+    motif_names = string_list(motif_names)
+    gene_names = string_list(gene_names)
     reg_names, reg_gene_indices, reg_pairs, coverage, dropped_empty = (
         prepare_regulon_indices_with_coverage(gene_names, regulons)
     )
@@ -146,7 +169,7 @@ def enrich(
         import warnings
         warnings.warn(
             f"all {dropped_empty} regulons dropped - none of their genes appear "
-            f"in the rankings DataFrame columns. Common causes: (1) rankings "
+            f"in the ranking columns. Common causes: (1) rankings "
             f"indexed by ENSEMBL while regulons use gene symbols; (2) species "
             f"mismatch between rankings (e.g. hg38) and regulons (e.g. mouse "
             f"MGI); (3) rankings orientation swapped (motifs-in-cols vs "
@@ -158,7 +181,7 @@ def enrich(
         return pd.DataFrame(columns=["regulon", "motif", "auc", "nes"])
 
     out = _enrichment_rows_from_rankings(
-        ranking_values,
+        values,
         motif_names,
         reg_names,
         reg_gene_indices,
@@ -170,7 +193,7 @@ def enrich(
     out.attrs["rust_backend"] = {
         "engine": "rust",
         "symbols": _rankings_backend_symbols(
-            ranking_values,
+            values,
             rank_universe_size=rank_universe_size,
         ),
     }
@@ -557,8 +580,6 @@ def prune_regulons(
     candidate_pairs = list(iter_regulon_pairs(regulons))
     if not candidate_pairs:
         return {}
-    candidate_names = [name for name, _ in candidate_pairs]
-    candidate_genes = [genes for _, genes in candidate_pairs]
 
     pruned_motifs = prune_enriched_motifs(
         enriched,
@@ -573,22 +594,61 @@ def prune_regulons(
         return {}
 
     if rankings is not None:
-        rank_universe = _projected_universe_arg(
-            rankings.to_numpy(copy=False),
-            rank_universe_size,
+        return _prune_regulons_from_pruned_motifs(
+            pruned_motifs,
+            candidate_pairs,
+            ranking_values=rankings.to_numpy(copy=False),
+            motif_names=rankings.index,
+            gene_names=rankings.columns,
+            top_frac=top_frac,
+            min_genes=min_genes,
+            rank_universe_size=rank_universe_size,
         )
+
+    return _prune_regulons_from_pruned_motifs(
+        pruned_motifs,
+        candidate_pairs,
+        min_genes=min_genes,
+    )
+
+
+def _prune_regulons_from_pruned_motifs(
+    pruned_motifs: pd.DataFrame,
+    regulons: Iterable,
+    *,
+    ranking_values: np.ndarray | None = None,
+    motif_names: Iterable | None = None,
+    gene_names: Iterable | None = None,
+    top_frac: float = 0.05,
+    min_genes: int = 1,
+    rank_universe_size: int | None = None,
+) -> dict[str, list[str]]:
+    """Prune candidate targets from already annotation-supported motif rows."""
+    candidate_pairs = list(iter_regulon_pairs(regulons))
+    if not candidate_pairs or pruned_motifs.empty:
+        return {}
+    candidate_names = [name for name, _ in candidate_pairs]
+    candidate_genes = [genes for _, genes in candidate_pairs]
+
+    if ranking_values is not None:
+        if motif_names is None or gene_names is None:
+            raise ValueError(
+                "motif_names and gene_names are required when ranking_values is supplied"
+            )
+        values = np.asarray(ranking_values)
+        rank_universe = _projected_universe_arg(values, rank_universe_size)
         n_ranked_columns = (
-            int(rankings.shape[1]) if rank_universe is None else rank_universe
+            int(values.shape[1]) if rank_universe is None else rank_universe
         )
         rank_cutoff = max(1, int(np.ceil(top_frac * n_ranked_columns)))
-        ranking_values, kernel = _prune_rankings_kernel_arg(
-            rankings,
+        rankings_arg, kernel = _prune_rankings_array_kernel_arg(
+            values,
             projected=rank_universe is not None,
         )
         names, genes = kernel(
-            ranking_values,
-            string_list(rankings.index),
-            string_list(rankings.columns),
+            rankings_arg,
+            string_list(motif_names),
+            string_list(gene_names),
             candidate_names,
             candidate_genes,
             string_list(pruned_motifs["regulon"]),
@@ -676,7 +736,7 @@ def _prune_regulons_backend_symbols(
         raise TypeError("rankings must be a pandas DataFrame")
     values = rankings.to_numpy(copy=False)
     projected = _projected_universe_arg(values, rank_universe_size) is not None
-    _, kernel = _prune_rankings_kernel_arg(rankings, projected=projected)
+    _, kernel = _prune_rankings_array_kernel_arg(values, projected=projected)
     return [_prune_rankings_backend_symbol(kernel)]
 
 
@@ -687,7 +747,18 @@ def _prune_rankings_kernel_arg(
 ):
     if not isinstance(rankings, pd.DataFrame):
         raise TypeError("rankings must be a pandas DataFrame")
-    values = rankings.to_numpy(copy=False)
+    return _prune_rankings_array_kernel_arg(
+        rankings.to_numpy(copy=False),
+        projected=projected,
+    )
+
+
+def _prune_rankings_array_kernel_arg(
+    values: np.ndarray,
+    *,
+    projected: bool = False,
+):
+    values = np.asarray(values)
     if values.dtype == object:
         raise TypeError("rankings DataFrame has dtype=object")
     if values.dtype == np.int16:
@@ -764,31 +835,18 @@ def _prune_rankings_backend_symbol(kernel) -> str:
     raise RuntimeError("unknown regulon target pruning kernel")
 
 
+def _prune_regulons_backend_symbols_for_values(
+    values: np.ndarray,
+    *,
+    rank_universe_size: int | None = None,
+) -> list[str]:
+    projected = _projected_universe_arg(values, rank_universe_size) is not None
+    _, kernel = _prune_rankings_array_kernel_arg(values, projected=projected)
+    return [_prune_rankings_backend_symbol(kernel)]
+
+
 def _prune_rankings_backend_symbol_for_values(values: np.ndarray) -> str:
-    if values.dtype == object:
-        raise TypeError("rankings DataFrame has dtype=object")
-    if values.dtype == np.int16:
-        return "cistarget_prune_regulon_targets_i16"
-    if values.dtype == np.int32:
-        return "cistarget_prune_regulon_targets_i32"
-    if values.dtype == np.int64:
-        return "cistarget_prune_regulon_targets_i64"
-    if np.issubdtype(values.dtype, np.integer):
-        if values.dtype.itemsize <= np.dtype(np.int32).itemsize and not np.issubdtype(
-            values.dtype, np.unsignedinteger
-        ):
-            return "cistarget_prune_regulon_targets_i32"
-        if values.dtype.itemsize < np.dtype(np.int64).itemsize:
-            return "cistarget_prune_regulon_targets_i64"
-        raise TypeError(
-            "rankings integer dtype is wider than the supported signed int64 "
-            "path; cast rankings to int64 before pruning"
-        )
-    if not np.issubdtype(values.dtype, np.floating):
-        raise TypeError("rankings must contain numeric rank values")
-    if values.dtype == np.float32:
-        return "cistarget_prune_regulon_targets_f32"
-    return "cistarget_prune_regulon_targets_f64"
+    return _prune_regulons_backend_symbols_for_values(values)[0]
 
 
 def _find_annotation_column(

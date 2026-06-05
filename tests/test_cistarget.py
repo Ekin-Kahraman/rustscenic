@@ -583,6 +583,80 @@ class TestCistargetCorrectness:
             rank_universe_size=full_rankings.shape[1],
         ) == ["cistarget_prune_regulon_targets_projected_i32"]
 
+    def test_array_backed_projected_enrich_and_prune_match_dataframe(self):
+        enriched = pd.DataFrame(
+            [
+                {"regulon": "TF1_regulon", "motif": "M1", "auc": 0.30},
+                {"regulon": "TF2_regulon", "motif": "M2", "auc": 0.31},
+            ]
+        )
+        annotations = pd.DataFrame({"motif": ["M1", "M2"], "TF": ["TF1", "TF2"]})
+        full_rankings = pd.DataFrame(
+            [
+                [0, 1, 7, 8, 9, 2, 3, 4, 5, 6],
+                [7, 8, 0, 1, 9, 2, 3, 4, 5, 6],
+            ],
+            index=["M1", "M2"],
+            columns=[f"g{i}" for i in range(10)],
+            dtype=np.int32,
+        )
+        projected = full_rankings[["g0", "g1", "g2", "g3", "g4"]]
+        candidates = [
+            ("TF1_regulon", ["g0", "g1", "g4"]),
+            ("TF2_regulon", ["g2", "g3", "g4"]),
+        ]
+
+        array_enriched = cistarget._enrich_from_rank_array(
+            projected.to_numpy(copy=False),
+            projected.index,
+            projected.columns,
+            candidates,
+            top_frac=0.2,
+            auc_threshold=0.0,
+            rank_universe_size=full_rankings.shape[1],
+        )
+        frame_enriched = cistarget.enrich(
+            projected,
+            candidates,
+            top_frac=0.2,
+            auc_threshold=0.0,
+            rank_universe_size=full_rankings.shape[1],
+        )
+        pd.testing.assert_frame_equal(array_enriched, frame_enriched)
+
+        pruned_motifs = cistarget.prune_enriched_motifs(
+            enriched,
+            annotations,
+        )
+        array_pruned = cistarget._prune_regulons_from_pruned_motifs(
+            pruned_motifs,
+            candidates,
+            ranking_values=projected.to_numpy(copy=False),
+            motif_names=projected.index,
+            gene_names=projected.columns,
+            top_frac=0.2,
+            min_genes=1,
+            rank_universe_size=full_rankings.shape[1],
+        )
+        frame_pruned = cistarget.prune_regulons(
+            enriched,
+            candidates,
+            annotations,
+            rankings=projected,
+            top_frac=0.2,
+            min_genes=1,
+            rank_universe_size=full_rankings.shape[1],
+        )
+
+        assert array_pruned == frame_pruned == {
+            "TF1_regulon": ["g0", "g1"],
+            "TF2_regulon": ["g2", "g3"],
+        }
+        assert cistarget._prune_regulons_backend_symbols_for_values(
+            projected.to_numpy(copy=False),
+            rank_universe_size=full_rankings.shape[1],
+        ) == ["cistarget_prune_regulon_targets_projected_i32"]
+
     def test_prune_regulons_without_rankings_keeps_supported_candidates_in_rust(self):
         enriched = pd.DataFrame(
             [

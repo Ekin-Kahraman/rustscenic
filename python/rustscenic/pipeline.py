@@ -108,6 +108,14 @@ class PipelineResult:
         return d
 
 
+@dataclass(frozen=True)
+class _RankingsArray:
+    values: np.ndarray
+    motif_names: list[str]
+    feature_names: list[str]
+    metadata: dict[str, int | str | None]
+
+
 def run(
     rna: str | Path | Any,
     output_dir: str | Path,
@@ -440,18 +448,34 @@ def run(
         else:
             ranking_features = list(ranking_features)
             requested_feature_count = len(ranking_features)
-        rankings_df, rankings_metadata = _coerce_rankings_with_metadata(
+        rankings_array = _projected_rankings_array_with_metadata(
             motif_rankings,
             feature_names=ranking_features,
         )
-        rank_universe_size = (
-            rankings_metadata.get("rank_universe_size")
-            if ranking_features is not None else None
-        )
+        if rankings_array is None:
+            rankings_df, rankings_metadata = _coerce_rankings_with_metadata(
+                motif_rankings,
+                feature_names=ranking_features,
+            )
+            rank_universe_size = (
+                rankings_metadata.get("rank_universe_size")
+                if ranking_features is not None else None
+            )
+            ranking_values = rankings_df.to_numpy(copy=False)
+            ranking_motif_names = string_list(rankings_df.index)
+            ranking_feature_names = string_list(rankings_df.columns)
+        else:
+            rankings_df = None
+            rankings_metadata = rankings_array.metadata
+            rank_universe_size = rankings_metadata.get("rank_universe_size")
+            ranking_values = rankings_array.values
+            ranking_motif_names = rankings_array.motif_names
+            ranking_feature_names = rankings_array.feature_names
+        loaded_feature_count = int(ranking_values.shape[1])
         rank_universe_arg = (
             rank_universe_size
             if rank_universe_size is not None
-            and rank_universe_size > rankings_df.shape[1]
+            and rank_universe_size > loaded_feature_count
             else None
         )
         cistarget_rankings = {
@@ -463,28 +487,40 @@ def run(
                 else "full_file"
             ),
             "projected": rank_universe_arg is not None,
-            "loaded_columns": int(rankings_df.shape[1]),
-            "rank_universe_size": int(rank_universe_arg or rankings_df.shape[1]),
+            "loaded_columns": loaded_feature_count,
+            "rank_universe_size": int(rank_universe_arg or loaded_feature_count),
             "requested_features": requested_feature_count,
-            "motifs": int(len(rankings_df)),
+            "motifs": int(len(ranking_motif_names)),
         }
         universe_note = (
             f" projected from {rank_universe_arg:,}-gene universe"
             if rank_universe_arg is not None else ""
         )
         log(
-            f"[6/8] cistarget: {len(rankings_df):,} motifs × "
-            f"{rankings_df.shape[1]:,} genes{universe_note}"
+            f"[6/8] cistarget: {len(ranking_motif_names):,} motifs × "
+            f"{loaded_feature_count:,} genes{universe_note}"
         )
         t0 = time.perf_counter()
-        enriched = rustscenic.cistarget.enrich(
-            rankings_df,
-            candidate_regulon_pairs,
-            top_frac=cistarget_top_frac,
-            auc_threshold=cistarget_auc_threshold,
-            nes_threshold=cistarget_nes_threshold,
-            rank_universe_size=rank_universe_arg,
-        )
+        if rankings_array is None:
+            enriched = rustscenic.cistarget.enrich(
+                rankings_df,
+                candidate_regulon_pairs,
+                top_frac=cistarget_top_frac,
+                auc_threshold=cistarget_auc_threshold,
+                nes_threshold=cistarget_nes_threshold,
+                rank_universe_size=rank_universe_arg,
+            )
+        else:
+            enriched = rustscenic.cistarget._enrich_from_rank_array(
+                ranking_values,
+                ranking_motif_names,
+                ranking_feature_names,
+                candidate_regulon_pairs,
+                top_frac=cistarget_top_frac,
+                auc_threshold=cistarget_auc_threshold,
+                nes_threshold=cistarget_nes_threshold,
+                rank_universe_size=rank_universe_arg,
+            )
         backend_execution["cistarget"] = _rust_execution_from_attrs(
             enriched,
             "cistarget_enrichment_from_rankings_i32",
@@ -510,21 +546,21 @@ def run(
                 motif_annotations_df,
                 auc_threshold=cistarget_auc_threshold,
             )
-            pruned_regulons = rustscenic.cistarget.prune_regulons(
-                enriched,
+            pruned_regulons = rustscenic.cistarget._prune_regulons_from_pruned_motifs(
+                pruned_enriched,
                 candidate_regulon_pairs,
-                motif_annotations_df,
-                rankings=rankings_df,
+                ranking_values=ranking_values,
+                motif_names=ranking_motif_names,
+                gene_names=ranking_feature_names,
                 top_frac=cistarget_top_frac,
-                auc_threshold=cistarget_auc_threshold,
                 min_genes=1,
                 rank_universe_size=rank_universe_arg,
             )
             pruning_symbols = _rust_backend_symbols(pruned_enriched)
             if not pruned_enriched.empty:
                 pruning_symbols.extend(
-                    rustscenic.cistarget._prune_regulons_backend_symbols(
-                        rankings_df,
+                    rustscenic.cistarget._prune_regulons_backend_symbols_for_values(
+                        ranking_values,
                         rank_universe_size=rank_universe_arg,
                     )
                 )
@@ -1131,6 +1167,79 @@ def _read_rankings_file(
 ) -> pd.DataFrame:
     df, _ = _read_rankings_file_with_metadata(path, feature_names=feature_names)
     return df
+
+
+def _projected_rankings_array_with_metadata(
+    rankings,
+    *,
+    feature_names: Iterable[str] | None,
+) -> _RankingsArray | None:
+    if isinstance(rankings, pd.DataFrame):
+        return None
+    features = _feature_name_list(feature_names)
+    if not features:
+        return None
+    path = Path(rankings)
+    suffix = path.suffix.lower()
+    if suffix in (".feather", ".ft"):
+        kind = "feather"
+    elif suffix == ".parquet":
+        kind = "parquet"
+    else:
+        return None
+    cols, metadata = _projected_ranking_columns_with_metadata(
+        path,
+        features,
+        kind=kind,
+    )
+    if _has_duplicate_names(cols):
+        return None
+    motif_col = metadata.get("motif_col")
+    if motif_col is None:
+        return None
+    table = _read_arrow_ranking_table(path, cols, kind=kind)
+    motif_names = string_list(table.column(str(motif_col)).to_pylist())
+    feature_cols = [col for col in cols if col != motif_col]
+    arrays = [
+        table.column(str(col)).combine_chunks().to_numpy(zero_copy_only=False)
+        for col in feature_cols
+    ]
+    if not arrays:
+        raise ValueError(
+            "none of the current run's requested features were present in "
+            f"the motif-ranking columns for {path.name}"
+        )
+    values = arrays[0].reshape(-1, 1) if len(arrays) == 1 else np.column_stack(arrays)
+    if values.dtype == object or not np.issubdtype(values.dtype, np.number):
+        raise TypeError("rankings must contain numeric rank values")
+    return _RankingsArray(
+        values=values,
+        motif_names=motif_names,
+        feature_names=string_list(feature_cols),
+        metadata=metadata,
+    )
+
+
+def _read_arrow_ranking_table(path: Path, columns: list[str], *, kind: str):
+    if kind == "feather":
+        import pyarrow.feather as feather
+
+        return feather.read_table(path, columns=columns)
+    if kind == "parquet":
+        import pyarrow.parquet as pq
+
+        return pq.read_table(path, columns=columns)
+    raise ValueError(f"unsupported ranking file kind: {kind}")
+
+
+def _has_duplicate_names(values: Iterable) -> bool:
+    seen = {}
+    for value in values:
+        key = str(value)
+        if key in seen:
+            return True
+        seen[key] = None
+    return False
 
 
 def _read_rankings_file_with_metadata(
