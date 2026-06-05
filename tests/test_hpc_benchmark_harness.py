@@ -3362,6 +3362,66 @@ def test_benchmark_artifact_validator_rejects_incomplete_rust_stage_symbols(tmp_
     ) in failures
 
 
+def test_benchmark_artifact_validator_requires_sparse_enhancer_kernel_for_sparse_rna(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_sparse_enhancer_kernel",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["backend_execution"]["pipeline_enhancer"] = {
+        "engine": "rust",
+        "symbols": [
+            "enhancer_align_cell_indices",
+            "preproc_peak_coords_for_names",
+            "enhancer_match_peak_coords_to_atac",
+            "enhancer_match_gene_coords_to_rna",
+            "enhancer_normalise_chrom_codes",
+            "enhancer_prepare_gene_order",
+            "enhancer_link_pearson",
+        ],
+    }
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_enhancer.symbols must include "
+        "'enhancer_link_pearson_sparse_rna' when "
+        "matrix_inputs.rna_post_qc.storage is 'sparse'"
+    ) in failures
+
+
+def test_benchmark_artifact_validator_requires_sparse_enhancer_kernel_in_scaling_rows(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_scaling_sparse_enhancer_kernel",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["backend_execution"]["pipeline_enhancer"] = {
+        "engine": "rust",
+        "symbols": [
+            "enhancer_align_cell_indices",
+            "preproc_peak_coords_for_names",
+            "enhancer_match_peak_coords_to_atac",
+            "enhancer_match_gene_coords_to_rna",
+            "enhancer_normalise_chrom_codes",
+            "enhancer_prepare_gene_order",
+            "enhancer_link_pearson",
+        ],
+    }
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "runs[0].backend_execution.pipeline_enhancer.symbols must include "
+        "'enhancer_link_pearson_sparse_rna' when "
+        "matrix_inputs.rna_post_qc.storage is 'sparse'"
+    ) in failures
+
+
 def test_benchmark_artifact_validator_requires_integrated_adata_io_provenance(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_integrated_adata_io",
