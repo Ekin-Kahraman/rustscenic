@@ -5043,6 +5043,42 @@ def test_benchmark_artifact_validator_requires_pruning_when_annotations_supplied
     assert "outputs.pruned_regulons must be positive" in failures
 
 
+def test_benchmark_artifact_validator_requires_annotation_fingerprint_when_supplied(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_requires_annotation_fingerprint",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["params"]["motif_annotations"] = "motif_annotations.tsv"
+    record["setup_elapsed_s"]["motif_annotations"] = 0.05
+    record["reference_sources"]["motif_annotations"] = _explicit_reference_source(
+        tmp_path / "motif_annotations.tsv"
+    )
+    record["shapes"]["motif_annotations"] = [4, 2]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "reference_fingerprints.motif_annotations must be an object" in failures
+
+
+def test_benchmark_artifact_validator_requires_region_fingerprint_when_supplied(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_requires_region_fingerprint",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["params"]["region_motif_rankings"] = "region_rankings.feather"
+    record["setup_elapsed_s"]["region_motif_rankings_metadata"] = 0.02
+    record["reference_sources"]["region_motif_rankings"] = _explicit_reference_source(
+        tmp_path / "region_rankings.feather"
+    )
+    record["shapes"]["region_motif_rankings"] = [8, 2000]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "reference_fingerprints.region_motif_rankings must be an object" in failures
+
+
 def test_benchmark_artifact_validator_requires_scaling_pruning_when_annotations_supplied(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_requires_scaling_annotation_pruning",
@@ -5079,6 +5115,27 @@ def test_benchmark_artifact_validator_requires_scaling_region_peak_filter_with_a
         row["reference_sources"]["region_motif_rankings"] = _explicit_reference_source(
             tmp_path / "region_rankings.feather"
         )
+        row["reference_fingerprints"]["motif_annotations"] = {
+            "shape": [4, 2],
+            "index_name": None,
+            "index_sample": ["0"],
+            "column_sample": ["motif"],
+            "dtype_counts": {"object": 2},
+            "corner_sample_sha256": "c" * 64,
+        }
+        row["reference_fingerprints"]["region_motif_rankings"] = {
+            "shape": [8, 2000],
+            "index_name": None,
+            "index_sample": ["file-backed:not-loaded"],
+            "column_sample": ["motif", "peak_1"],
+            "dtype_counts": {"int32": 2000},
+            "corner_sample_sha256": "d" * 64,
+            "file_backed": True,
+            "format": "feather",
+            "metadata_read_columns": ["motifs"],
+            "path_name": "region_rankings.feather",
+            "size_bytes": 1024,
+        }
         row["outputs"]["pruned_regulons"] = 1
         row["shapes"]["region_motif_rankings"] = [8, 2000]
         row["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()

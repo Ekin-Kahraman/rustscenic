@@ -757,8 +757,12 @@ def _reference_fingerprint_failures(
     if not isinstance(fingerprints, dict):
         return [f"{_path(prefix, 'reference_fingerprints')} must be an object"]
     keys = ["motif_rankings", "gene_coords"]
-    for optional_key in ("motif_annotations", "region_motif_rankings"):
-        if optional_key in fingerprints:
+    optional_requirements = (
+        ("motif_annotations", _motif_annotations_supplied(record)),
+        ("region_motif_rankings", _region_motif_rankings_supplied(record)),
+    )
+    for optional_key, required in optional_requirements:
+        if optional_key in fingerprints or required:
             keys.append(optional_key)
     for key in keys:
         fp = fingerprints.get(key)
