@@ -4124,6 +4124,62 @@ def test_benchmark_artifact_validator_accepts_region_motif_rankings_metadata(tmp
     assert module.validate_record(record, require_clean=True) == []
 
 
+def test_benchmark_artifact_validator_rejects_region_ranking_format_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_region_ranking_format",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["params"]["region_motif_rankings"] = "region_rankings.feather"
+    record["setup_elapsed_s"]["region_motif_rankings_metadata"] = 0.02
+    record["reference_fingerprints"]["region_motif_rankings"] = {
+        "shape": [8, 2000],
+        "index_name": None,
+        "index_sample": ["file-backed:not-loaded"],
+        "column_sample": ["motif", "peak_1"],
+        "dtype_counts": {"int32": 2000},
+        "corner_sample_sha256": "d" * 64,
+        "file_backed": True,
+        "format": "feather",
+        "metadata_read_columns": ["motifs"],
+        "path_name": "region_rankings.feather",
+        "size_bytes": 1024,
+    }
+    record["reference_sources"]["region_motif_rankings"] = _explicit_reference_source(
+        tmp_path / "region_rankings.feather"
+    )
+    record["shapes"]["region_motif_rankings"] = [8, 2000]
+    record["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
+    record["region_cistarget_rankings"]["input_kind"] = "parquet"
+    record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
+        "engine": "rust",
+        "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
+    }
+    record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
+        "engine": "rust",
+        "symbols": [
+            "cistarget_enrichment_from_projected_rankings_i32",
+            "cistarget_region_attribution_peak_values_i32",
+            "pipeline_expand_region_cistarget_rows_f32",
+        ],
+    }
+    record["backend_execution"]["pipeline_region_cistarget_ranking_projection"] = {
+        "engine": "rust",
+        "symbols": [
+            "pipeline_project_ranking_columns",
+            "pipeline_pack_ranking_columns_i32",
+        ],
+    }
+    _sync_full_pipeline_manifest(record)
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.region_cistarget_rankings.input_kind must match "
+        "full_pipeline.reference_fingerprints.region_motif_rankings.format"
+    ) in failures
+
+
 def test_benchmark_artifact_validator_requires_region_cistarget_symbols(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_requires_region_rankings",
@@ -4701,6 +4757,22 @@ def test_benchmark_artifact_validator_rejects_non_file_backed_motif_rankings(tmp
     assert (
         "reference_fingerprints.motif_rankings.metadata_read_columns must name "
         "the one Feather column read for row counting"
+    ) in failures
+
+
+def test_benchmark_artifact_validator_rejects_motif_ranking_format_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_motif_ranking_format",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["cistarget_rankings"]["input_kind"] = "parquet"
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.cistarget_rankings.input_kind must match "
+        "full_pipeline.reference_fingerprints.motif_rankings.format"
     ) in failures
 
 

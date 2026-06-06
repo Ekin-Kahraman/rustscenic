@@ -1059,8 +1059,42 @@ def _ranking_metadata_failures(
                 f"{prefix}.{field}.rank_universe_size must match "
                 f"{prefix}.shapes.{shape_key} columns"
             )
+    failures.extend(
+        _ranking_reference_format_failures(
+            record,
+            prefix,
+            field=field,
+            shape_key=shape_key,
+        )
+    )
 
     return failures
+
+
+def _ranking_reference_format_failures(
+    record: dict[str, Any],
+    prefix: str,
+    *,
+    field: str,
+    shape_key: str,
+) -> list[str]:
+    meta = record.get(field)
+    fingerprints = record.get("reference_fingerprints")
+    if not isinstance(meta, dict) or not isinstance(fingerprints, dict):
+        return []
+    fp = fingerprints.get(shape_key)
+    if not isinstance(fp, dict):
+        return []
+    input_kind = meta.get("input_kind")
+    reference_format = fp.get("format")
+    if input_kind == "dataframe" or reference_format is None:
+        return []
+    if input_kind != reference_format:
+        return [
+            f"{prefix}.{field}.input_kind must match "
+            f"{prefix}.reference_fingerprints.{shape_key}.format"
+        ]
+    return []
 
 
 def _projected_cistarget_symbol_failures(
