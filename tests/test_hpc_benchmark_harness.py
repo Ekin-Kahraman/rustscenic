@@ -3512,6 +3512,7 @@ def test_benchmark_artifact_validator_rejects_scaling_child_mismatch(tmp_path):
     )
     record = _full_pipeline_scaling_record(tmp_path)
     record["runs"][0]["wall_s"]["pipeline"] = 999.0
+    record["runs"][0]["peak_rss_gb_delta_per_stage"]["grn"] = 999.0
     record["scaling"]["pipeline_wall_slope_vs_cells"] = 0.0
 
     failures = module.validate_record(
@@ -3521,6 +3522,7 @@ def test_benchmark_artifact_validator_rejects_scaling_child_mismatch(tmp_path):
     )
 
     assert "runs[0].wall_s must match child JSON" in failures
+    assert "runs[0].peak_rss_gb_delta_per_stage must match child JSON" in failures
     assert any(
         failure.startswith("scaling.pipeline_wall_slope_vs_cells must match runs:")
         for failure in failures

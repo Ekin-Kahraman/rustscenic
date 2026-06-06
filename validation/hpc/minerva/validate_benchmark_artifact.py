@@ -2011,6 +2011,7 @@ def _full_pipeline_scaling_row_child_failures(
         "elapsed_per_stage": child.get("elapsed_per_stage"),
         "io_elapsed_per_stage": child.get("io_elapsed_per_stage"),
         "peak_rss_gb_per_stage": child.get("peak_rss_gb_per_stage"),
+        "peak_rss_gb_delta_per_stage": child.get("peak_rss_gb_delta_per_stage"),
         "output_storage": child.get("output_storage"),
         "outputs": child.get("outputs"),
         "expected_tf_recovery": child.get("expected_tf_recovery"),
