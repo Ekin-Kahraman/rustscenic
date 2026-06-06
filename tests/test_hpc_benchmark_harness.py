@@ -2526,6 +2526,18 @@ def _full_pipeline_record(tmp_path: Path):
             "aucell": 1.0,
             "integrated_adata": 1.25,
         },
+        "peak_rss_gb_delta_per_stage": {
+            "load_rna": 0.5,
+            "preproc": 0.1,
+            "topics": 0.1,
+            "grn": 0.1,
+            "candidate_regulons": 0.1,
+            "cistarget": 0.05,
+            "enhancer": 0.05,
+            "eregulons": 0.1,
+            "aucell": 0.0,
+            "integrated_adata": 0.15,
+        },
         "outputs": {
             "grn_edges": 10,
             "candidate_regulons": 3,
@@ -2682,6 +2694,10 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         )
         child["peak_rss_gb"] = peak_rss
         child["peak_rss_gb_per_stage"]["integrated_adata"] = peak_rss
+        child["peak_rss_gb_delta_per_stage"]["integrated_adata"] = round(
+            max(0.0, peak_rss - child["peak_rss_gb_per_stage"]["eregulons"]),
+            6,
+        )
         _sync_full_pipeline_manifest(child)
         child_path = tmp_path / f"{label}.json"
         child_path.write_text(json.dumps(child))
@@ -2699,6 +2715,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "setup_elapsed_s": child["setup_elapsed_s"],
                 "elapsed_per_stage": child["elapsed_per_stage"],
                 "peak_rss_gb_per_stage": child["peak_rss_gb_per_stage"],
+                "peak_rss_gb_delta_per_stage": child["peak_rss_gb_delta_per_stage"],
                 "output_storage": child["output_storage"],
                 "backend_execution": child["backend_execution"],
                 "cell_barcode_filter": child["cell_barcode_filter"],
@@ -2781,6 +2798,18 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "eregulons": 0.0,
                 "aucell": 0.0,
                 "integrated_adata": 0.485,
+            },
+            "peak_rss_gb_delta_per_stage_slope_vs_cells": {
+                "load_rna": 0.0,
+                "preproc": 0.0,
+                "topics": 0.0,
+                "grn": 0.0,
+                "candidate_regulons": 0.0,
+                "cistarget": 0.0,
+                "enhancer": 0.0,
+                "eregulons": 0.0,
+                "aucell": None,
+                "integrated_adata": 1.585,
             },
         },
         "env": {
@@ -3214,6 +3243,7 @@ def test_benchmark_artifact_validator_accepts_compute_profile_without_integrated
     record["params"]["write_integrated_adata"] = False
     record["output_inventory"].pop("integrated_adata_path")
     record["peak_rss_gb_per_stage"].pop("integrated_adata")
+    record["peak_rss_gb_delta_per_stage"].pop("integrated_adata")
     record["backend_execution"]["pipeline_integrated_adata"] = {
         "engine": "skipped",
         "reason": "write_integrated_adata=False",
@@ -3458,6 +3488,9 @@ def test_benchmark_artifact_validator_rejects_stale_stage_scaling(tmp_path):
     record["stage_scaling"]["peak_rss_gb_per_stage_slope_vs_cells"][
         "integrated_adata"
     ] = 0.0
+    record["stage_scaling"]["peak_rss_gb_delta_per_stage_slope_vs_cells"][
+        "integrated_adata"
+    ] = 0.0
 
     failures = module.validate_record(
         record,
@@ -3472,6 +3505,30 @@ def test_benchmark_artifact_validator_rejects_stale_stage_scaling(tmp_path):
     assert (
         "stage_scaling.peak_rss_gb_per_stage_slope_vs_cells.integrated_adata "
         "must match runs: 0.0 != 0.485"
+    ) in failures
+    assert (
+        "stage_scaling.peak_rss_gb_delta_per_stage_slope_vs_cells.integrated_adata "
+        "must match runs: 0.0 != 1.585"
+    ) in failures
+
+
+def test_benchmark_artifact_validator_rejects_stale_peak_rss_delta(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_peak_rss_delta",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["peak_rss_gb_delta_per_stage"]["integrated_adata"] = 0.0
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "peak_rss_gb_delta_per_stage.integrated_adata "
+        "must match peak_rss_gb_per_stage: 0.0 != 0.15"
     ) in failures
 
 
@@ -5190,9 +5247,13 @@ def test_minerva_result_collector_discovers_latest_valid_benchmarks(tmp_path):
     assert rows[1]["rss_stage_scaling"] == (
         "integrated_adata=0.485, aucell=0, candidate_regulons=0"
     )
+    assert rows[1]["rss_delta_stage_scaling"] == (
+        "integrated_adata=1.585, candidate_regulons=0, cistarget=0"
+    )
     table = module.markdown_table(rows)
     assert "elapsed_stage_scaling" in table
     assert "rss_stage_scaling" in table
+    assert "rss_delta_stage_scaling" in table
 
 
 def test_minerva_result_collector_reports_validation_failures(tmp_path):

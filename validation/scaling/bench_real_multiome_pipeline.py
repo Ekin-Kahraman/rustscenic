@@ -193,6 +193,21 @@ def output_storage(inventory: dict[str, dict[str, Any] | None]) -> dict[str, Any
     }
 
 
+def peak_rss_delta_per_stage(memory: dict[str, Any]) -> dict[str, float]:
+    """Return per-stage increases from cumulative peak-RSS marks."""
+    deltas: dict[str, float] = {}
+    previous_peak = 0.0
+    for stage, value in memory.items():
+        try:
+            current = float(value)
+        except (TypeError, ValueError):
+            continue
+        delta = max(0.0, current - previous_peak)
+        deltas[str(stage)] = round(delta, 6)
+        previous_peak = max(previous_peak, current)
+    return deltas
+
+
 def explicit_reference_source(path: Path) -> dict[str, Any]:
     return {
         "source": "explicit_path",
@@ -875,6 +890,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     inventory = {k: file_info(v) for k, v in artefact_paths.items()}
 
+    peak_rss_by_stage = {
+        k: round(float(v), 6) for k, v in result.memory.items()
+    }
+
     record = {
         "benchmark": "real_multiome_full_pipeline",
         "dataset_name": args.dataset_name,
@@ -942,9 +961,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "io_elapsed_per_stage": {
             k: round(float(v), 6) for k, v in result.io_elapsed.items()
         },
-        "peak_rss_gb_per_stage": {
-            k: round(float(v), 6) for k, v in result.memory.items()
-        },
+        "peak_rss_gb_per_stage": peak_rss_by_stage,
+        "peak_rss_gb_delta_per_stage": peak_rss_delta_per_stage(peak_rss_by_stage),
         "outputs": outputs,
         "expected_tf_recovery": {
             "expected_tfs": expected,

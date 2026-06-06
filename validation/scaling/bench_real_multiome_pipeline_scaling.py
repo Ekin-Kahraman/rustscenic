@@ -195,6 +195,7 @@ def run_child(args: argparse.Namespace, *, n_cells: int) -> dict[str, Any]:
         "elapsed_per_stage": record["elapsed_per_stage"],
         "io_elapsed_per_stage": record.get("io_elapsed_per_stage", {}),
         "peak_rss_gb_per_stage": record["peak_rss_gb_per_stage"],
+        "peak_rss_gb_delta_per_stage": record["peak_rss_gb_delta_per_stage"],
         "output_storage": record.get("output_storage", {}),
         "backend_execution": record["backend_execution"],
         "cell_barcode_filter": record["cell_barcode_filter"],
@@ -344,6 +345,10 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
             "peak_rss_gb_per_stage_slope_vs_cells": _stage_slopes(
                 runs,
                 field="peak_rss_gb_per_stage",
+            ),
+            "peak_rss_gb_delta_per_stage_slope_vs_cells": _stage_slopes(
+                runs,
+                field="peak_rss_gb_delta_per_stage",
             ),
         },
         "env": benchmark_env(),
