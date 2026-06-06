@@ -763,6 +763,74 @@ def test_real_multiome_scaling_refuses_stale_child_outputs(tmp_path):
     assert not out_dir.exists()
 
 
+def test_real_multiome_scaling_child_row_carries_child_validation_fields(
+    tmp_path,
+    monkeypatch,
+):
+    module = _load_module(
+        "bench_real_multiome_pipeline_scaling_child_row",
+        ROOT / "validation/scaling/bench_real_multiome_pipeline_scaling.py",
+    )
+    args = module.parse_args(
+        [
+            "--dataset-name",
+            "pbmc",
+            "--rna-10x-h5",
+            str(tmp_path / "rna.h5"),
+            "--fragments",
+            str(tmp_path / "fragments.tsv.gz"),
+            "--peaks",
+            str(tmp_path / "peaks.bed"),
+            "--out-root",
+            str(tmp_path / "runs"),
+            "--out-json",
+            str(tmp_path / "aggregate.json"),
+            "--run-prefix",
+            "fixture",
+            "--cell-counts",
+            "100",
+        ]
+    )
+    shapes = {"rna_post_qc": [100, 1000], "atac_shared_cells": [100, 2000]}
+    region_cistarget_rankings = {"input_kind": "feather", "mode": "projected_file"}
+    child_record = {
+        "shapes": shapes,
+        "params": {"n_cells_requested": 100, "write_integrated_adata": False},
+        "invocation": _invocation_state(),
+        "wall_s": {"setup": 1.0, "pipeline": 2.0, "end_to_end": 3.0},
+        "peak_rss_gb": 1.25,
+        "setup_peak_rss_gb": 0.75,
+        "setup_elapsed_s": {"load_rna_qc": 0.1},
+        "elapsed_per_stage": {"grn": 1.0},
+        "io_elapsed_per_stage": {"write_outputs": 0.1},
+        "peak_rss_gb_per_stage": {"grn": 1.0},
+        "peak_rss_gb_delta_per_stage": {"grn": 1.0},
+        "output_storage": {"total_size_gb": 0.001},
+        "backend_execution": {"pipeline_grn": {"engine": "rust", "symbols": ["grn_infer"]}},
+        "cell_barcode_filter": {"requested": 100, "matched": 100},
+        "matrix_inputs": _matrix_inputs_state(100),
+        "cistarget_rankings": {"input_kind": "feather"},
+        "region_cistarget_rankings": region_cistarget_rankings,
+        "reference_sources": _default_cached_reference_sources(tmp_path / "child"),
+        "outputs": {"grn_edges": 1},
+        "expected_tf_recovery": {"expected_tfs": [], "found": [], "missing": [], "fraction": None},
+        "env": {"rayon_num_threads": "4"},
+    }
+
+    def fake_run(cmd, **_kwargs):
+        out_json = Path(cmd[cmd.index("--out-json") + 1])
+        out_json.write_text(json.dumps(child_record))
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+    monkeypatch.setattr(module, "validate_record", lambda *_args, **_kwargs: [])
+
+    row = module.run_child(args, n_cells=100)
+
+    assert row["shapes"] == shapes
+    assert row["region_cistarget_rankings"] == region_cistarget_rankings
+
+
 def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatch):
     module = _load_module(
         "bench_real_multiome_pipeline_scaling_payload",
