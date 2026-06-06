@@ -205,6 +205,7 @@ REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
     "pipeline_enhancer": {
         "all_of": {
             "enhancer_align_cell_indices",
+            "enhancer_match_peak_coords_to_atac",
             "enhancer_match_gene_coords_to_rna",
             "enhancer_normalise_chrom_codes",
             "enhancer_prepare_gene_order",

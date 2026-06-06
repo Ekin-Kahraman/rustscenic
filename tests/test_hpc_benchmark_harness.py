@@ -4497,6 +4497,10 @@ def test_benchmark_artifact_validator_rejects_incomplete_rust_stage_symbols(tmp_
         "required Rust symbol 'enhancer_align_cell_indices'"
     ) in failures
     assert (
+        "full_pipeline.backend_execution.pipeline_enhancer.symbols missing "
+        "required Rust symbol 'enhancer_match_peak_coords_to_atac'"
+    ) in failures
+    assert (
         "full_pipeline.backend_execution.pipeline_aucell.symbols missing "
         "required Rust symbol 'stage_prepare_regulon_indices_with_coverage'"
     ) in failures
@@ -4512,6 +4516,7 @@ def test_benchmark_artifact_validator_accepts_prebuilt_atac_var_peak_coords(tmp_
         "engine": "rust",
         "symbols": [
             "enhancer_align_cell_indices",
+            "enhancer_match_peak_coords_to_atac",
             "enhancer_match_gene_coords_to_rna",
             "enhancer_normalise_chrom_codes",
             "enhancer_prepare_gene_order",
