@@ -2887,7 +2887,82 @@ def validate_full_pipeline_scaling(
                 failures.append(
                     f"scaling.{key} must match runs: {scaling.get(key)} != {expected}"
                 )
+        failures.extend(_stage_scaling_failures(record, runs))
     return failures
+
+
+def _stage_scaling_failures(record: dict[str, Any], runs: list[dict[str, Any]]) -> list[str]:
+    stage_scaling = record.get("stage_scaling")
+    if not isinstance(stage_scaling, dict):
+        return ["stage_scaling must be an object"]
+
+    failures: list[str] = []
+    expected = {
+        "elapsed_per_stage_slope_vs_cells": _stage_slopes_from_runs(
+            runs,
+            field="elapsed_per_stage",
+        ),
+        "peak_rss_gb_per_stage_slope_vs_cells": _stage_slopes_from_runs(
+            runs,
+            field="peak_rss_gb_per_stage",
+        ),
+    }
+    for key, expected_slopes in expected.items():
+        actual = stage_scaling.get(key)
+        if not isinstance(actual, dict):
+            failures.append(f"stage_scaling.{key} must be an object")
+            continue
+        if set(actual) != set(expected_slopes):
+            failures.append(
+                f"stage_scaling.{key} stages must match runs: "
+                f"{sorted(actual)} != {sorted(expected_slopes)}"
+            )
+        for stage, expected_slope in expected_slopes.items():
+            actual_slope = actual.get(stage)
+            if expected_slope is None:
+                if actual_slope is not None:
+                    failures.append(
+                        f"stage_scaling.{key}.{stage} must match runs: "
+                        f"{actual_slope} != {expected_slope}"
+                    )
+            elif actual_slope != expected_slope:
+                failures.append(
+                    f"stage_scaling.{key}.{stage} must match runs: "
+                    f"{actual_slope} != {expected_slope}"
+                )
+    return failures
+
+
+def _stage_slopes_from_runs(
+    runs: list[dict[str, Any]],
+    *,
+    field: str,
+) -> dict[str, float | None]:
+    stages = sorted(
+        {
+            stage
+            for row in runs
+            if isinstance(row, dict) and isinstance(row.get(field), dict)
+            for stage in row[field]
+        }
+    )
+    return {
+        stage: _rounded_slope(
+            [
+                {
+                    "n_cells": row.get("n_cells_actual"),
+                    "value": row.get(field, {}).get(stage)
+                    if isinstance(row.get(field), dict)
+                    else None,
+                }
+                for row in runs
+                if isinstance(row, dict)
+            ],
+            "n_cells",
+            "value",
+        )
+        for stage in stages
+    }
 
 
 def validate_record(

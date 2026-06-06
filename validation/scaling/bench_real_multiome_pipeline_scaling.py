@@ -336,6 +336,16 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
                 "output_total_size_gb",
             ),
         },
+        "stage_scaling": {
+            "elapsed_per_stage_slope_vs_cells": _stage_slopes(
+                runs,
+                field="elapsed_per_stage",
+            ),
+            "peak_rss_gb_per_stage_slope_vs_cells": _stage_slopes(
+                runs,
+                field="peak_rss_gb_per_stage",
+            ),
+        },
         "env": benchmark_env(),
     }
 
@@ -343,6 +353,33 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
 def _rounded_slope(rows: list[dict[str, Any]], x_key: str, y_key: str) -> float | None:
     slope = log_log_slope(rows, x_key, y_key)
     return None if slope is None else round(slope, 3)
+
+
+def _stage_slopes(runs: list[dict[str, Any]], *, field: str) -> dict[str, float | None]:
+    stages = sorted(
+        {
+            stage
+            for row in runs
+            if isinstance(row.get(field), dict)
+            for stage in row[field]
+        }
+    )
+    return {
+        stage: _rounded_slope(
+            [
+                {
+                    "n_cells": row.get("n_cells_actual"),
+                    "value": row.get(field, {}).get(stage)
+                    if isinstance(row.get(field), dict)
+                    else None,
+                }
+                for row in runs
+            ],
+            "n_cells",
+            "value",
+        )
+        for stage in stages
+    }
 
 
 def coordinator(args: argparse.Namespace) -> dict[str, Any]:

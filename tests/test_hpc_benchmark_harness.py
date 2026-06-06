@@ -2681,6 +2681,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
             3,
         )
         child["peak_rss_gb"] = peak_rss
+        child["peak_rss_gb_per_stage"]["integrated_adata"] = peak_rss
         _sync_full_pipeline_manifest(child)
         child_path = tmp_path / f"{label}.json"
         child_path.write_text(json.dumps(child))
@@ -2758,6 +2759,29 @@ def _full_pipeline_scaling_record(tmp_path: Path):
             "pipeline_unattributed_wall_slope_vs_cells": 2.322,
             "peak_rss_slope_vs_cells": 0.485,
             "output_total_size_slope_vs_cells": 0.0,
+        },
+        "stage_scaling": {
+            "elapsed_per_stage_slope_vs_cells": {
+                "preproc": None,
+                "topics": 0.0,
+                "grn": 0.0,
+                "cistarget": 0.0,
+                "enhancer": 0.0,
+                "eregulons": 0.0,
+                "aucell": 0.0,
+            },
+            "peak_rss_gb_per_stage_slope_vs_cells": {
+                "load_rna": 0.0,
+                "preproc": 0.0,
+                "topics": 0.0,
+                "grn": 0.0,
+                "candidate_regulons": 0.0,
+                "cistarget": 0.0,
+                "enhancer": 0.0,
+                "eregulons": 0.0,
+                "aucell": 0.0,
+                "integrated_adata": 0.485,
+            },
         },
         "env": {
             "python": "3.13.0",
@@ -3422,6 +3446,33 @@ def test_benchmark_artifact_validator_rejects_scaling_child_mismatch(tmp_path):
         failure.startswith("scaling.pipeline_wall_slope_vs_cells must match runs:")
         for failure in failures
     )
+
+
+def test_benchmark_artifact_validator_rejects_stale_stage_scaling(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_stage_slopes",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["stage_scaling"]["elapsed_per_stage_slope_vs_cells"]["grn"] = 9.0
+    record["stage_scaling"]["peak_rss_gb_per_stage_slope_vs_cells"][
+        "integrated_adata"
+    ] = 0.0
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "stage_scaling.elapsed_per_stage_slope_vs_cells.grn "
+        "must match runs: 9.0 != 0.0"
+    ) in failures
+    assert (
+        "stage_scaling.peak_rss_gb_per_stage_slope_vs_cells.integrated_adata "
+        "must match runs: 0.0 != 0.485"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_scaling_tf_recovery_mismatch(tmp_path):
