@@ -1331,10 +1331,18 @@ def _projected_rankings_array_with_metadata(
         kind=kind,
     )
     if _has_duplicate_names(cols):
-        return None
+        raise ValueError(
+            "projected motif-ranking columns contain duplicate names; "
+            "RustScenic cannot pack them through the Rust projected ranking "
+            f"path for {path.name}."
+        )
     motif_col = metadata.get("motif_col")
     if motif_col is None:
-        return None
+        raise ValueError(
+            "projected motif-ranking files must contain a motif identifier "
+            "column such as 'motifs', 'motif', 'motif_id', or 'features'. "
+            f"No motif column was detected in {path.name}."
+        )
     table = _read_arrow_ranking_table(path, cols, kind=kind)
     motif_names = string_list(table.column(str(motif_col)).to_pylist())
     feature_cols = [col for col in cols if col != motif_col]
@@ -1484,7 +1492,7 @@ def _projected_ranking_columns_with_metadata(
     motif_col = _detect_motif_column(columns, path)
     rank_universe_size = len(columns) - (1 if motif_col is not None else 0)
     keep, examples = _ranking_column_projection(columns, features, motif_col=motif_col)
-    feature_count = len(keep) - (1 if motif_col is not None and keep and keep[0] == motif_col else 0)
+    feature_count = len(keep) - (1 if motif_col is not None and motif_col in keep else 0)
     if feature_count == 0:
         raise ValueError(
             "none of the current run's requested features were present in "
@@ -1528,6 +1536,8 @@ def _ranking_file_columns(path: Path, *, kind: str) -> list[str]:
 def _detect_motif_column(columns: list[str], path: Path) -> str | None:
     if "motifs" in columns:
         return "motifs"
+    if "__index_level_0__" in columns:
+        return "__index_level_0__"
     if path.stem in columns:
         return path.stem
     for candidate in ("motif", "motif_id", "features", "feature"):

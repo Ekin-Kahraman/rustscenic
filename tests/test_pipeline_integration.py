@@ -2805,6 +2805,82 @@ def test_projected_file_rankings_array_keeps_names_and_metadata(tmp_path):
     )
 
 
+def test_projected_parquet_rankings_array_uses_pandas_index(tmp_path):
+    import rustscenic.pipeline as pipeline
+
+    path = tmp_path / "genes_vs_motifs.rankings.parquet"
+    pd.DataFrame(
+        {
+            "GATA1": np.array([0, 7], dtype=np.int32),
+            "SPI1": np.array([1, 8], dtype=np.int32),
+            "IRF8": np.array([7, 0], dtype=np.int32),
+            "BCL11A": np.array([8, 1], dtype=np.int32),
+        },
+        index=["MOTIF_A", "MOTIF_B"],
+    ).to_parquet(path)
+
+    rankings = pipeline._projected_rankings_array_with_metadata(
+        path,
+        feature_names=["IRF8", "GATA1"],
+    )
+
+    assert rankings is not None
+    assert rankings.motif_names == ["MOTIF_A", "MOTIF_B"]
+    assert rankings.feature_names == ["GATA1", "IRF8"]
+    assert rankings.metadata == {
+        "rank_universe_size": 4,
+        "motif_col": "__index_level_0__",
+    }
+    assert rankings.values.dtype == np.int32
+    np.testing.assert_array_equal(
+        rankings.values,
+        np.array([[0, 7], [7, 0]], dtype=np.int32),
+    )
+
+
+def test_projected_file_rankings_array_requires_motif_column(tmp_path):
+    import pytest
+    import rustscenic.pipeline as pipeline
+
+    path = tmp_path / "genes_vs_motifs.rankings.feather"
+    pd.DataFrame({
+        "GATA1": np.array([0, 7], dtype=np.int32),
+        "SPI1": np.array([1, 8], dtype=np.int32),
+    }).to_feather(path)
+
+    with pytest.raises(ValueError, match="must contain a motif identifier column"):
+        pipeline._projected_rankings_array_with_metadata(
+            path,
+            feature_names=["GATA1"],
+        )
+
+
+def test_projected_file_rankings_array_rejects_duplicate_projected_columns(
+    tmp_path,
+    monkeypatch,
+):
+    import pytest
+    import rustscenic.pipeline as pipeline
+
+    path = tmp_path / "genes_vs_motifs.rankings.feather"
+    path.write_bytes(b"fixture")
+
+    monkeypatch.setattr(
+        pipeline,
+        "_projected_ranking_columns_with_metadata",
+        lambda *_args, **_kwargs: (
+            ["motifs", "GATA1", "GATA1"],
+            {"rank_universe_size": 2, "motif_col": "motifs"},
+        ),
+    )
+
+    with pytest.raises(ValueError, match="contain duplicate names"):
+        pipeline._projected_rankings_array_with_metadata(
+            path,
+            feature_names=["GATA1"],
+        )
+
+
 def test_coerce_rankings_projects_dataframe_without_losing_motif_index():
     from rustscenic.pipeline import _coerce_rankings
 
