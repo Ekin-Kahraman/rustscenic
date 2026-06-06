@@ -2396,6 +2396,8 @@ def _full_pipeline_scaling_row_failures(
     else:
         if not _positive_int(outputs.get("grn_edges")):
             failures.append(f"{prefix}.outputs.grn_edges must be positive")
+        if not _positive_int(outputs.get("candidate_regulons")):
+            failures.append(f"{prefix}.outputs.candidate_regulons must be positive")
         if not _positive_int(outputs.get("regulons")):
             failures.append(f"{prefix}.outputs.regulons must be positive")
         for key in ("cistarget_rows", "enhancer_links", "eregulon_rows", "eregulons"):
@@ -2414,6 +2416,8 @@ def _full_pipeline_scaling_row_failures(
             failures.append(f"{prefix}.outputs.aucell_shape must be [positive_cells, positive_regulons]")
         elif _positive_int(n_cells) and aucell_shape[0] != n_cells:
             failures.append(f"{prefix}.outputs.aucell_shape cells must equal n_cells_actual")
+        elif _positive_int(outputs.get("regulons")) and aucell_shape[1] != outputs["regulons"]:
+            failures.append(f"{prefix}.outputs.aucell_shape regulons must equal outputs.regulons")
 
     failures.extend(_expected_tf_recovery_failures(row, prefix))
     failures.extend(
@@ -2659,6 +2663,8 @@ def validate_full_pipeline(
 
     if not _positive_int(outputs.get("grn_edges")):
         failures.append("outputs.grn_edges must be positive")
+    if not _positive_int(outputs.get("candidate_regulons")):
+        failures.append("outputs.candidate_regulons must be positive")
     if not _positive_int(outputs.get("regulons")):
         failures.append("outputs.regulons must be positive")
     for key in ("cistarget_rows", "enhancer_links", "eregulon_rows", "eregulons"):
@@ -2678,6 +2684,8 @@ def validate_full_pipeline(
     elif isinstance(shapes, dict) and _shape2(shapes.get("rna_post_qc")):
         if aucell_shape[0] != shapes["rna_post_qc"][0]:
             failures.append("outputs.aucell_shape cells must equal shapes.rna_post_qc cells")
+        elif _positive_int(outputs.get("regulons")) and aucell_shape[1] != outputs["regulons"]:
+            failures.append("outputs.aucell_shape regulons must equal outputs.regulons")
 
     if check_output_files:
         failures.extend(_output_inventory_failures(record))

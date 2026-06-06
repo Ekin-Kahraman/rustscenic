@@ -4147,6 +4147,7 @@ def test_benchmark_artifact_validator_rejects_incomplete_scaling_row_without_chi
     del row["peak_rss_gb_per_stage"]["aucell"]
     row["peak_rss_gb_per_stage"]["unexpected"] = 1.0
     row["outputs"]["grn_edges"] = 0
+    row["outputs"]["candidate_regulons"] = 0
     row["outputs"]["aucell_shape"] = [999, 2]
     del row["expected_tf_recovery"]
     del row["cell_barcode_filter"]
@@ -4163,9 +4164,33 @@ def test_benchmark_artifact_validator_rejects_incomplete_scaling_row_without_chi
     assert "runs[0].peak_rss_gb_per_stage.aucell missing" in failures
     assert "runs[0].unknown peak_rss_gb_per_stage.unexpected" in failures
     assert "runs[0].outputs.grn_edges must be positive" in failures
+    assert "runs[0].outputs.candidate_regulons must be positive" in failures
     assert "runs[0].outputs.aucell_shape cells must equal n_cells_actual" in failures
     assert "runs[0].expected_tf_recovery must be an object" in failures
     assert "runs[0].cell_barcode_filter must be an object" in failures
+
+
+def test_benchmark_artifact_validator_rejects_scaling_aucell_regulon_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_aucell_mismatch",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["outputs"]["aucell_shape"] = [
+        record["runs"][0]["n_cells_actual"],
+        99,
+    ]
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "runs[0].outputs.aucell_shape regulons must equal outputs.regulons"
+        in failures
+    )
 
 
 def test_benchmark_artifact_validator_rejects_scaling_child_dataset_mismatch(tmp_path):
@@ -5403,6 +5428,7 @@ def test_benchmark_artifact_validator_rejects_incomplete_full_pipeline(tmp_path)
     )
     record = _full_pipeline_record(tmp_path)
     record["outputs"]["grn_edges"] = 0
+    record["outputs"]["candidate_regulons"] = 0
     record["outputs"]["cistarget_rows"] = 0
     record["outputs"]["enhancer_links"] = 0
     record["outputs"]["eregulon_rows"] = 0
@@ -5417,6 +5443,7 @@ def test_benchmark_artifact_validator_rejects_incomplete_full_pipeline(tmp_path)
     failures = module.validate_record(record, require_clean=True)
 
     assert "outputs.grn_edges must be positive" in failures
+    assert "outputs.candidate_regulons must be positive" in failures
     assert "outputs.cistarget_rows must be positive" in failures
     assert "outputs.enhancer_links must be positive" in failures
     assert "outputs.eregulon_rows must be positive" in failures
@@ -5456,6 +5483,12 @@ def test_benchmark_artifact_validator_rejects_invalid_full_pipeline_shapes(tmp_p
 
     assert "shapes.rna_post_qc cells must equal shapes.atac_shared_cells cells" in failures
     assert "outputs.aucell_shape cells must equal shapes.rna_post_qc cells" in failures
+
+    record = _full_pipeline_record(tmp_path)
+    record["outputs"]["aucell_shape"] = [100, 99]
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "outputs.aucell_shape regulons must equal outputs.regulons" in failures
 
 
 def test_benchmark_artifact_validator_rejects_invalid_matrix_inputs(tmp_path):
