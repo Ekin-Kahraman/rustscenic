@@ -2652,9 +2652,10 @@ def _projected_region_cistarget_rankings_state() -> dict:
 
 def _full_pipeline_scaling_record(tmp_path: Path):
     runs = []
-    for label, n_cells, end_to_end, peak_rss in (
-        ("cells100", 100, 3.0, 1.25),
-        ("cells200", 200, 6.0, 1.75),
+    for label, n_cells, end_to_end, pipeline_wall, peak_rss in (
+        ("cells100", 100, 3.0, 2.0, 1.25),
+        ("cells200", 200, 6.0, 4.0, 1.75),
+        ("cells400", 400, 12.0, 8.0, 2.45),
     ):
         child_dir = tmp_path / label
         child_dir.mkdir()
@@ -2667,7 +2668,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         child["cell_barcode_filter"] = {"requested": n_cells, "matched": n_cells}
         child["outputs"]["aucell_shape"] = [n_cells, 2]
         child["wall_s"]["end_to_end"] = end_to_end
-        child["wall_s"]["pipeline"] = end_to_end - 1.0
+        child["wall_s"]["pipeline"] = pipeline_wall
         child["wall_s"]["pipeline_compute_stages"] = round(
             sum(float(v) for v in child["elapsed_per_stage"].values()),
             3,
@@ -2724,7 +2725,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         "python_hot_paths": _python_hot_paths_state(),
         "rustscenic": "0.4.7",
         "params": {
-            "cell_counts": [100, 200],
+            "cell_counts": [100, 200, 400],
             "grn_n_estimators": 100,
             "grn_max_features": 0.1,
             "grn_target_block_size": None,
@@ -2752,9 +2753,9 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         "runs": runs,
         "scaling": {
             "end_to_end_wall_slope_vs_cells": 1.0,
-            "pipeline_wall_slope_vs_cells": 1.322,
+            "pipeline_wall_slope_vs_cells": 1.0,
             "pipeline_compute_stage_wall_slope_vs_cells": 0.0,
-            "pipeline_unattributed_wall_slope_vs_cells": 3.7,
+            "pipeline_unattributed_wall_slope_vs_cells": 2.322,
             "peak_rss_slope_vs_cells": 0.485,
             "output_total_size_slope_vs_cells": 0.0,
         },
@@ -3249,7 +3250,7 @@ def test_benchmark_artifact_validator_rejects_scaling_cell_count_design_mismatch
         ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
     )
     record = _full_pipeline_scaling_record(tmp_path)
-    record["params"]["cell_counts"] = [100, 250]
+    record["params"]["cell_counts"] = [100, 250, 400]
 
     failures = module.validate_record(
         record,
@@ -3347,7 +3348,7 @@ def test_benchmark_artifact_validator_rejects_single_point_scaling_record(tmp_pa
         check_output_files=False,
     )
 
-    assert "params.cell_counts must contain at least two positive integers" in failures
+    assert "params.cell_counts must contain at least three positive integers" in failures
 
 
 def test_benchmark_artifact_validator_accepts_negative_peak_rss_slope(tmp_path):
@@ -3359,7 +3360,7 @@ def test_benchmark_artifact_validator_accepts_negative_peak_rss_slope(tmp_path):
         ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
     )
     record = _full_pipeline_scaling_record(tmp_path)
-    for row, peak_rss in zip(record["runs"], (1.9, 1.7), strict=True):
+    for row, peak_rss in zip(record["runs"], (1.9, 1.7, 1.5), strict=True):
         row["peak_rss_gb"] = peak_rss
         child_path = Path(row["json_path"])
         child = json.loads(child_path.read_text())
@@ -5121,14 +5122,14 @@ def test_minerva_result_collector_discovers_latest_valid_benchmarks(tmp_path):
     assert full_row["cells"] == "200"
     assert full_row["cell_barcode_filter"] == "200/200"
     assert full_row["outputs"] == "grn_edges=10, eregulon_rows=6, regulons=2"
-    assert rows[1]["cells"] == "100..200"
-    assert rows[1]["cell_barcode_filter"] == "100/100..200/200"
-    assert rows[1]["peak_rss_gb"] == "1.25..1.75"
+    assert rows[1]["cells"] == "100..400"
+    assert rows[1]["cell_barcode_filter"] == "100/100..400/400"
+    assert rows[1]["peak_rss_gb"] == "1.25..2.45"
     assert rows[1]["scaling"] == (
         "end_to_end_wall_slope_vs_cells=1, "
-        "pipeline_wall_slope_vs_cells=1.322, "
+        "pipeline_wall_slope_vs_cells=1, "
         "pipeline_compute_stage_wall_slope_vs_cells=0, "
-        "pipeline_unattributed_wall_slope_vs_cells=3.7, "
+        "pipeline_unattributed_wall_slope_vs_cells=2.322, "
         "peak_rss_slope_vs_cells=0.485, "
         "output_total_size_slope_vs_cells=0"
     )

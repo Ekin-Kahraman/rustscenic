@@ -2060,10 +2060,10 @@ def _full_pipeline_scaling_design_failures(
     cell_counts = params.get("cell_counts")
     if (
         not isinstance(cell_counts, list)
-        or len(cell_counts) < 2
+        or len(cell_counts) < 3
         or not all(_positive_int(value) for value in cell_counts)
     ):
-        failures.append("params.cell_counts must contain at least two positive integers")
+        failures.append("params.cell_counts must contain at least three positive integers")
     else:
         if cell_counts != sorted(cell_counts):
             failures.append("params.cell_counts must be sorted ascending")
