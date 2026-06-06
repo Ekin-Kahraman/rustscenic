@@ -37,6 +37,7 @@ jobs:
       # we're checking the dep graph, not target triples.
       - name: cargo-audit (Rust supply chain)
         if: matrix.os == 'ubuntu-24.04'
+        timeout-minutes: 15
         run: |
           cargo install --quiet --locked cargo-audit
           cargo audit

@@ -6162,6 +6162,7 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
 def test_audit_workflow_runs_backend_and_hot_path_preflights():
     workflow = (ROOT / ".github/workflows/audit.yml").read_text()
 
+    assert "timeout-minutes: 15" in workflow
     assert "python -m rustscenic doctor --json" in workflow
     assert "python validation/python_hot_paths.py python/rustscenic --json" in workflow
     assert workflow.index("python -m pip install target/wheels/rustscenic-*.whl") < workflow.index(
