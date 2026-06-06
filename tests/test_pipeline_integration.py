@@ -511,6 +511,25 @@ def test_attach_aucell_to_obs_avoids_fragmented_column_inserts():
     np.testing.assert_allclose(adata.obs["TF499_regulon"].to_numpy(), auc["TF499_regulon"].to_numpy())
 
 
+def test_attach_aucell_to_obs_noops_for_empty_aucell():
+    import rustscenic.pipeline
+
+    cells = ["c0", "c1", "c2"]
+    obs = pd.DataFrame({"batch": ["a", "b", "c"]}, index=cells)
+    adata = ad.AnnData(
+        X=np.zeros((3, 2), dtype=np.float32),
+        obs=obs.copy(),
+        var=pd.DataFrame(index=["G1", "G2"]),
+    )
+    auc = pd.DataFrame(index=cells)
+    before = adata.obs
+
+    rustscenic.pipeline._attach_aucell_to_obs(adata, auc)
+
+    assert adata.obs is before
+    pd.testing.assert_frame_equal(adata.obs, obs)
+
+
 def test_subset_atac_to_rna_cells_uses_rust_indices_and_preserves_atac_order():
     import rustscenic.pipeline
 

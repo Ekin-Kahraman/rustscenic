@@ -2028,6 +2028,9 @@ def _attach_aucell_to_obs(adata_rna, auc: pd.DataFrame) -> None:
     columns one by one fragments pandas' block manager and inflates the final
     integrated-output step.
     """
+    if auc.shape[1] == 0:
+        return
+
     obs = adata_rna.obs
     overlap = [col for col in auc.columns if col in obs.columns]
     if overlap:
