@@ -37,6 +37,18 @@ from validation.scaling.bench_real_multiome_pipeline import (
 CHILD_SCRIPT = REPO_ROOT / "validation/scaling/bench_real_multiome_pipeline.py"
 
 
+def invocation_state(argv: list[str] | None) -> dict[str, Any]:
+    script = Path(__file__).resolve()
+    args = [str(value) for value in (sys.argv[1:] if argv is None else argv)]
+    return {
+        "python": sys.executable,
+        "script": str(script),
+        "cwd": str(Path.cwd()),
+        "argv": args,
+        "command": [sys.executable, str(script), *args],
+    }
+
+
 def log_log_slope(rows: list[dict[str, Any]], x_key: str, y_key: str) -> float | None:
     usable = [row for row in rows if row.get(x_key) and row.get(y_key)]
     if len(usable) < 2:
@@ -268,6 +280,7 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
         "run_prefix": args.run_prefix,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "repo_state": repo_state(),
+        "invocation": getattr(args, "_invocation", invocation_state(None)),
         "runtime_import": runtime_import_state(),
         "backend_capabilities": backend_capabilities(),
         "python_hot_paths": hot_path_state(),
@@ -519,6 +532,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    args._invocation = invocation_state(argv)
     validate_args(args)
     for path in (args.rna_10x_h5, args.fragments, args.peaks):
         if not path.exists():

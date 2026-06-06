@@ -656,6 +656,18 @@ def benchmark_env() -> dict[str, Any]:
     return env
 
 
+def invocation_state(argv: list[str] | None) -> dict[str, Any]:
+    script = Path(__file__).resolve()
+    args = [str(value) for value in (sys.argv[1:] if argv is None else argv)]
+    return {
+        "python": sys.executable,
+        "script": str(script),
+        "cwd": str(Path.cwd()),
+        "argv": args,
+        "command": [sys.executable, str(script), *args],
+    }
+
+
 def strip_regulon_name(name: str) -> str:
     value = str(name)
     for suffix in ("(+)", "(-)"):
@@ -901,6 +913,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "run_id": args.run_id,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "repo_state": state,
+        "invocation": getattr(args, "_invocation", invocation_state(None)),
         "runtime_import": runtime_import_state(),
         "backend_capabilities": backend_capabilities(),
         "python_hot_paths": hot_path_state(),
@@ -1081,6 +1094,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    args._invocation = invocation_state(argv)
     validate_args(args)
     configure_thread_env(args.threads)
     for path in (args.rna_10x_h5, args.fragments, args.peaks):

@@ -525,6 +525,38 @@ def _python_hot_path_failures(record: dict[str, Any], prefix: str) -> list[str]:
     return failures
 
 
+def _invocation_failures(record: dict[str, Any], prefix: str) -> list[str]:
+    invocation = record.get("invocation")
+    if not isinstance(invocation, dict):
+        return [f"{prefix}.invocation must be an object"]
+
+    failures: list[str] = []
+    for key in ("python", "script", "cwd"):
+        if not _nonempty_str(invocation.get(key)):
+            failures.append(f"{prefix}.invocation.{key} must be a non-empty string")
+    argv = invocation.get("argv")
+    if not isinstance(argv, list) or not all(isinstance(v, str) for v in argv):
+        failures.append(f"{prefix}.invocation.argv must be a string list")
+    command = invocation.get("command")
+    if (
+        not isinstance(command, list)
+        or len(command) < 2
+        or not all(_nonempty_str(v) for v in command)
+    ):
+        failures.append(
+            f"{prefix}.invocation.command must contain python, script, and arguments"
+        )
+    elif (
+        _nonempty_str(invocation.get("python"))
+        and _nonempty_str(invocation.get("script"))
+        and (command[0] != invocation["python"] or command[1] != invocation["script"])
+    ):
+        failures.append(
+            f"{prefix}.invocation.command must start with invocation python and script"
+        )
+    return failures
+
+
 def _backend_execution_failures(
     record: dict[str, Any],
     prefix: str,
@@ -2369,6 +2401,7 @@ def validate_full_pipeline(
     failures.extend(_runtime_import_failures(record, "full_pipeline"))
     failures.extend(_backend_failures(record, "full_pipeline"))
     failures.extend(_python_hot_path_failures(record, "full_pipeline"))
+    failures.extend(_invocation_failures(record, "full_pipeline"))
     failures.extend(
         _backend_execution_failures(
             record,
@@ -2388,6 +2421,7 @@ def validate_full_pipeline(
             {
                 "rustscenic",
                 "dataset_name",
+                "invocation",
                 "runtime_import",
                 "backend_capabilities",
                 "python_hot_paths",
@@ -2756,6 +2790,7 @@ def validate_full_pipeline_scaling(
     failures.extend(_runtime_import_failures(record, "full_pipeline_scaling"))
     failures.extend(_backend_failures(record, "full_pipeline_scaling"))
     failures.extend(_python_hot_path_failures(record, "full_pipeline_scaling"))
+    failures.extend(_invocation_failures(record, "full_pipeline_scaling"))
     failures.extend(
         _require_keys(
             record,
@@ -2765,6 +2800,7 @@ def validate_full_pipeline_scaling(
                 "python_hot_paths",
                 "rustscenic",
                 "dataset_name",
+                "invocation",
                 "params",
                 "runs",
                 "scaling",

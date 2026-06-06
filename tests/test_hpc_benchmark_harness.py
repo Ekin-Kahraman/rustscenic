@@ -383,6 +383,29 @@ def test_real_multiome_harness_defaults_to_bounded_output_summaries():
     ]).summary_max_rows == 1000
 
 
+def test_real_multiome_harness_records_invocation_state():
+    module = _load_module(
+        "bench_real_multiome_invocation",
+        ROOT / "validation/scaling/bench_real_multiome_pipeline.py",
+    )
+    scaling = _load_module(
+        "bench_real_multiome_scaling_invocation",
+        ROOT / "validation/scaling/bench_real_multiome_pipeline_scaling.py",
+    )
+
+    state = module.invocation_state(["--dataset-name", "pbmc3k"])
+    scaling_state = scaling.invocation_state(["--dataset-name", "pbmc3k"])
+
+    assert state["script"].endswith("bench_real_multiome_pipeline.py")
+    assert scaling_state["script"].endswith("bench_real_multiome_pipeline_scaling.py")
+    assert state["argv"] == ["--dataset-name", "pbmc3k"]
+    assert state["command"][:2] == [state["python"], state["script"]]
+    assert scaling_state["command"][:2] == [
+        scaling_state["python"],
+        scaling_state["script"],
+    ]
+
+
 def test_real_multiome_harness_does_not_reread_pipeline_outputs_for_counts():
     source = (ROOT / "validation/scaling/bench_real_multiome_pipeline.py").read_text()
 
@@ -2302,6 +2325,21 @@ def _backend_execution_state():
     }
 
 
+def _invocation_state(script: str = "validation/scaling/bench_real_multiome_pipeline.py"):
+    return {
+        "python": "/hpc/env/bin/python",
+        "script": str(ROOT / script),
+        "cwd": str(ROOT),
+        "argv": ["--dataset-name", "pbmc3k"],
+        "command": [
+            "/hpc/env/bin/python",
+            str(ROOT / script),
+            "--dataset-name",
+            "pbmc3k",
+        ],
+    }
+
+
 def _matrix_inputs_state(n_cells: int = 100):
     return {
         "rna_post_qc": {
@@ -2409,6 +2447,7 @@ def _full_pipeline_record(tmp_path: Path):
         "benchmark": "real_multiome_full_pipeline",
         "dataset_name": "pbmc3k",
         "repo_state": _clean_repo_state(),
+        "invocation": _invocation_state(),
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
         "python_hot_paths": _python_hot_paths_state(),
@@ -2741,6 +2780,9 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         "dataset_name": "pbmc3k",
         "run_prefix": "fixture",
         "repo_state": _clean_repo_state(),
+        "invocation": _invocation_state(
+            "validation/scaling/bench_real_multiome_pipeline_scaling.py"
+        ),
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
         "python_hot_paths": _python_hot_paths_state(),
@@ -2921,6 +2963,26 @@ def test_benchmark_artifact_validator_rejects_unknown_full_pipeline_backend_stag
         "full_pipeline.backend_execution.pipeline_python_dataframe_merge "
         "is not a recognised full-pipeline stage"
     ) in failures
+
+
+def test_benchmark_artifact_validator_rejects_bad_full_pipeline_invocation(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_bad_invocation",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["invocation"]["command"] = ["/other/python", record["invocation"]["script"]]
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "full_pipeline.invocation.command must start with invocation python and script"
+        in failures
+    )
 
 
 def test_benchmark_artifact_validator_accepts_projected_cistarget_rankings(tmp_path):
