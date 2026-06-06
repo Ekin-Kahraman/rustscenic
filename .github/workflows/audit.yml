@@ -38,9 +38,9 @@ jobs:
       - name: cargo-audit (Rust supply chain)
         if: matrix.os == 'ubuntu-24.04'
         timeout-minutes: 15
-        run: |
-          cargo install --quiet --locked cargo-audit
-          cargo audit
+        uses: actions-rust-lang/audit@v1
+        with:
+          createIssues: false
 
   python:
     runs-on: ${{ matrix.os }}
