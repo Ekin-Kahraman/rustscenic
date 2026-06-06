@@ -201,6 +201,7 @@ def run_one(args: argparse.Namespace) -> dict[str, Any]:
     out = {
         "dataset": "10x_pbmc_unsorted_3k",
         "run_kind": args.run_kind,
+        "invocation": getattr(args, "_invocation", invocation_state(None)),
         "n_cells": int(rna_sub.n_obs),
         "n_genes": int(rna_sub.n_vars),
         "n_tfs": int(len(tfs)),

@@ -2880,6 +2880,9 @@ def _grn_scaling_record():
     row = {
         "dataset": "10x_pbmc_unsorted_3k",
         "run_kind": "subset_scaling",
+        "invocation": _invocation_state(
+            "validation/scaling/bench_real_pbmc3k_grn_scaling.py"
+        ),
         "n_cells": 100,
         "n_genes": 1000,
         "n_tfs": 50,
@@ -3011,6 +3014,26 @@ def test_benchmark_artifact_validator_rejects_bad_grn_scaling_invocation():
     )
 
     assert "grn_scaling.invocation must be an object" in failures
+
+
+def test_benchmark_artifact_validator_rejects_bad_grn_row_invocation():
+    module = _load_module(
+        "validate_benchmark_artifact_bad_grn_row_invocation",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _grn_scaling_record()
+    record["subset_scaling"][0]["invocation"]["command"] = ["python"]
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "subset_scaling[0].invocation.command must contain python, script, and arguments"
+        in failures
+    )
 
 
 def test_benchmark_artifact_validator_accepts_projected_cistarget_rankings(tmp_path):

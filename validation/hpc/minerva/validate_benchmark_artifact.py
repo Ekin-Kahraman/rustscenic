@@ -2650,6 +2650,7 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
             prefix = f"{section}[{idx}]"
             if not _nonempty_str(row.get("dataset")):
                 failures.append(f"{prefix}.dataset must be a non-empty string")
+            failures.extend(_invocation_failures(row, prefix))
             for key in ("n_cells", "n_genes", "n_tfs", "threads", "edges"):
                 if not _positive_int(row.get(key)):
                     failures.append(f"{prefix}.{key} must be positive")
