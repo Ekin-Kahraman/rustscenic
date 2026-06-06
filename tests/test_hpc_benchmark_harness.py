@@ -578,6 +578,56 @@ def test_real_multiome_harness_omits_empty_lsf_env(monkeypatch):
     assert env["lsf_requested_walltime"] == "08:00"
 
 
+def test_real_pbmc3k_grn_harness_omits_empty_lsf_env(monkeypatch):
+    module = _load_module(
+        "bench_real_pbmc3k_grn_benchmark_env",
+        ROOT / "validation/scaling/bench_real_pbmc3k_grn_scaling.py",
+    )
+    for key in (
+        "LSB_JOBID",
+        "LSB_QUEUE",
+        "LSB_DJOB_NUMPROC",
+        "RUSTSCENIC_LSF_PROJECT",
+        "RUSTSCENIC_LSF_QUEUE",
+        "RUSTSCENIC_LSF_CORES",
+        "RUSTSCENIC_LSF_MEM_MB",
+        "RUSTSCENIC_LSF_WALLTIME",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("RAYON_NUM_THREADS", "4")
+    monkeypatch.setenv("OMP_NUM_THREADS", "1")
+    monkeypatch.setenv("OPENBLAS_NUM_THREADS", "1")
+    monkeypatch.setenv("MKL_NUM_THREADS", "1")
+
+    env = module.benchmark_env()
+
+    assert env["rayon_num_threads"] == "4"
+    assert env["omp_num_threads"] == "1"
+    assert "lsf_project" not in env
+    assert "lsf_requested_queue" not in env
+    assert "lsf_requested_walltime" not in env
+
+    monkeypatch.setenv("LSB_JOBID", "123")
+    monkeypatch.setenv("LSB_QUEUE", "express")
+    monkeypatch.setenv("LSB_DJOB_NUMPROC", "4")
+    monkeypatch.setenv("RUSTSCENIC_LSF_PROJECT", "acc_DiseaseGeneCell")
+    monkeypatch.setenv("RUSTSCENIC_LSF_QUEUE", "express")
+    monkeypatch.setenv("RUSTSCENIC_LSF_CORES", "4")
+    monkeypatch.setenv("RUSTSCENIC_LSF_MEM_MB", "12000")
+    monkeypatch.setenv("RUSTSCENIC_LSF_WALLTIME", "08:00")
+
+    env = module.benchmark_env()
+
+    assert env["lsf_jobid"] == "123"
+    assert env["lsf_queue"] == "express"
+    assert env["lsf_cores"] == "4"
+    assert env["lsf_project"] == "acc_DiseaseGeneCell"
+    assert env["lsf_requested_queue"] == "express"
+    assert env["lsf_requested_cores"] == "4"
+    assert env["lsf_requested_mem_mb"] == "12000"
+    assert env["lsf_requested_walltime"] == "08:00"
+
+
 def test_real_multiome_harness_rejects_invalid_args(tmp_path):
     module = _load_module(
         "bench_real_multiome_args",

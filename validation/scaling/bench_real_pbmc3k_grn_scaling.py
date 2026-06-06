@@ -120,6 +120,32 @@ def configure_thread_env(threads: int) -> None:
     os.environ["MKL_NUM_THREADS"] = "1"
 
 
+def benchmark_env() -> dict[str, Any]:
+    env = {
+        "python": platform.python_version(),
+        "rustscenic": version("rustscenic"),
+        "scanpy": version("scanpy"),
+        "anndata": version("anndata"),
+        "host": platform.node(),
+        "rayon_num_threads": os.environ.get("RAYON_NUM_THREADS"),
+        "omp_num_threads": os.environ.get("OMP_NUM_THREADS"),
+        "openblas_num_threads": os.environ.get("OPENBLAS_NUM_THREADS"),
+        "mkl_num_threads": os.environ.get("MKL_NUM_THREADS"),
+    }
+    optional_env = {
+        "lsf_jobid": os.environ.get("LSB_JOBID"),
+        "lsf_queue": os.environ.get("LSB_QUEUE"),
+        "lsf_cores": os.environ.get("LSB_DJOB_NUMPROC"),
+        "lsf_project": os.environ.get("RUSTSCENIC_LSF_PROJECT"),
+        "lsf_requested_queue": os.environ.get("RUSTSCENIC_LSF_QUEUE"),
+        "lsf_requested_cores": os.environ.get("RUSTSCENIC_LSF_CORES"),
+        "lsf_requested_mem_mb": os.environ.get("RUSTSCENIC_LSF_MEM_MB"),
+        "lsf_requested_walltime": os.environ.get("RUSTSCENIC_LSF_WALLTIME"),
+    }
+    env.update({key: value for key, value in optional_env.items() if value})
+    return env
+
+
 def load_pbmc_rna(data_dir: Path):
     import rustscenic.data
 
@@ -222,20 +248,7 @@ def run_one(args: argparse.Namespace) -> dict[str, Any]:
         },
         "backend_execution": backend_execution_for_grn(grn),
         "env": {
-            "python": platform.python_version(),
-            "rustscenic": version("rustscenic"),
-            "scanpy": version("scanpy"),
-            "anndata": version("anndata"),
-            "host": platform.node(),
-            "rayon_num_threads": os.environ.get("RAYON_NUM_THREADS"),
-            "omp_num_threads": os.environ.get("OMP_NUM_THREADS"),
-            "openblas_num_threads": os.environ.get("OPENBLAS_NUM_THREADS"),
-            "mkl_num_threads": os.environ.get("MKL_NUM_THREADS"),
-            "lsf_project": os.environ.get("RUSTSCENIC_LSF_PROJECT"),
-            "lsf_requested_queue": os.environ.get("RUSTSCENIC_LSF_QUEUE"),
-            "lsf_requested_cores": os.environ.get("RUSTSCENIC_LSF_CORES"),
-            "lsf_requested_mem_mb": os.environ.get("RUSTSCENIC_LSF_MEM_MB"),
-            "lsf_requested_walltime": os.environ.get("RUSTSCENIC_LSF_WALLTIME"),
+            **benchmark_env(),
             "repo_state": repo_state(),
             "runtime_import": runtime_import_state(),
             "backend_capabilities": backend_capabilities(),
