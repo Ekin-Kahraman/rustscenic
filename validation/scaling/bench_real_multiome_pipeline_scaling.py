@@ -216,6 +216,7 @@ def run_child(args: argparse.Namespace, *, n_cells: int) -> dict[str, Any]:
         "shapes": record["shapes"],
         "cistarget_rankings": record["cistarget_rankings"],
         "region_cistarget_rankings": record["region_cistarget_rankings"],
+        "reference_fingerprints": record["reference_fingerprints"],
         "reference_sources": record["reference_sources"],
         "outputs": record["outputs"],
         "expected_tf_recovery": record.get("expected_tf_recovery"),

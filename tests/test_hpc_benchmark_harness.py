@@ -811,6 +811,10 @@ def test_real_multiome_scaling_child_row_carries_child_validation_fields(
         "matrix_inputs": _matrix_inputs_state(100),
         "cistarget_rankings": {"input_kind": "feather"},
         "region_cistarget_rankings": region_cistarget_rankings,
+        "reference_fingerprints": {
+            "motif_rankings": {"shape": [50, 1000]},
+            "gene_coords": {"shape": [1000, 3]},
+        },
         "reference_sources": _default_cached_reference_sources(tmp_path / "child"),
         "outputs": {"grn_edges": 1},
         "expected_tf_recovery": {"expected_tfs": [], "found": [], "missing": [], "fraction": None},
@@ -829,6 +833,7 @@ def test_real_multiome_scaling_child_row_carries_child_validation_fields(
 
     assert row["shapes"] == shapes
     assert row["region_cistarget_rankings"] == region_cistarget_rankings
+    assert row["reference_fingerprints"] == child_record["reference_fingerprints"]
 
 
 def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatch):
@@ -2924,6 +2929,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "shapes": child["shapes"],
                 "cistarget_rankings": child["cistarget_rankings"],
                 "region_cistarget_rankings": child["region_cistarget_rankings"],
+                "reference_fingerprints": child["reference_fingerprints"],
                 "reference_sources": child["reference_sources"],
                 "outputs": child["outputs"],
                 "expected_tf_recovery": child.get("expected_tf_recovery"),
@@ -3971,6 +3977,42 @@ def test_benchmark_artifact_validator_rejects_scaling_matrix_inputs_child_mismat
     )
 
     assert "runs[0].matrix_inputs must match child JSON" in failures
+
+
+def test_benchmark_artifact_validator_rejects_scaling_reference_fingerprint_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_reference_fingerprint_mismatch",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["reference_fingerprints"]["motif_rankings"][
+        "corner_sample_sha256"
+    ] = "f" * 64
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert "runs[0].reference_fingerprints must match child JSON" in failures
+
+
+def test_benchmark_artifact_validator_rejects_scaling_row_without_reference_fingerprints(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_reference_fingerprints",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    del record["runs"][0]["reference_fingerprints"]
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert "runs[0].reference_fingerprints must be an object" in failures
 
 
 def test_benchmark_artifact_validator_rejects_scaling_reference_download(tmp_path):

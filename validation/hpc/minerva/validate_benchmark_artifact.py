@@ -747,39 +747,49 @@ def _require_keys(record: dict[str, Any], keys: set[str], prefix: str) -> list[s
     return [f"{prefix}.{key} missing" for key in sorted(keys) if key not in record]
 
 
-def _reference_fingerprint_failures(record: dict[str, Any]) -> list[str]:
+def _reference_fingerprint_failures(
+    record: dict[str, Any],
+    prefix: str = "",
+) -> list[str]:
     failures: list[str] = []
     fingerprints = record.get("reference_fingerprints")
     shapes = record.get("shapes", {})
     if not isinstance(fingerprints, dict):
-        return ["reference_fingerprints must be an object"]
+        return [f"{_path(prefix, 'reference_fingerprints')} must be an object"]
     keys = ["motif_rankings", "gene_coords"]
     for optional_key in ("motif_annotations", "region_motif_rankings"):
         if optional_key in fingerprints:
             keys.append(optional_key)
     for key in keys:
         fp = fingerprints.get(key)
+        fp_path = _path(prefix, f"reference_fingerprints.{key}")
         if not isinstance(fp, dict):
-            failures.append(f"reference_fingerprints.{key} must be an object")
+            failures.append(f"{fp_path} must be an object")
             continue
         if not _shape2(fp.get("shape")):
-            failures.append(f"reference_fingerprints.{key}.shape must be [positive_rows, positive_cols]")
+            failures.append(f"{fp_path}.shape must be [positive_rows, positive_cols]")
         if not _sha256_hex(fp.get("corner_sample_sha256")):
-            failures.append(f"reference_fingerprints.{key}.corner_sample_sha256 must be sha256 hex")
+            failures.append(f"{fp_path}.corner_sample_sha256 must be sha256 hex")
         if not isinstance(fp.get("index_sample"), list) or not fp["index_sample"]:
-            failures.append(f"reference_fingerprints.{key}.index_sample must be a non-empty list")
+            failures.append(f"{fp_path}.index_sample must be a non-empty list")
         if not isinstance(fp.get("column_sample"), list) or not fp["column_sample"]:
-            failures.append(f"reference_fingerprints.{key}.column_sample must be a non-empty list")
+            failures.append(f"{fp_path}.column_sample must be a non-empty list")
         if not isinstance(fp.get("dtype_counts"), dict) or not fp["dtype_counts"]:
-            failures.append(f"reference_fingerprints.{key}.dtype_counts must be a non-empty object")
+            failures.append(f"{fp_path}.dtype_counts must be a non-empty object")
         if key in {"motif_rankings", "region_motif_rankings"}:
-            failures.extend(_file_backed_ranking_fingerprint_failures(fp, key))
+            failures.extend(
+                f"{prefix}.{failure}" if prefix else failure
+                for failure in _file_backed_ranking_fingerprint_failures(fp, key)
+            )
 
     if isinstance(shapes, dict):
         motif_shape = shapes.get("motif_rankings")
         motif_fp = fingerprints.get("motif_rankings")
         if isinstance(motif_fp, dict) and _shape2(motif_shape) and motif_fp.get("shape") != motif_shape:
-            failures.append("reference_fingerprints.motif_rankings.shape must match shapes.motif_rankings")
+            failures.append(
+                f"{_path(prefix, 'reference_fingerprints.motif_rankings.shape')} "
+                f"must match {_path(prefix, 'shapes.motif_rankings')}"
+            )
         annotations_shape = shapes.get("motif_annotations")
         annotations_fp = fingerprints.get("motif_annotations")
         if (
@@ -788,7 +798,8 @@ def _reference_fingerprint_failures(record: dict[str, Any]) -> list[str]:
             and annotations_fp.get("shape") != annotations_shape
         ):
             failures.append(
-                "reference_fingerprints.motif_annotations.shape must match shapes.motif_annotations"
+                f"{_path(prefix, 'reference_fingerprints.motif_annotations.shape')} "
+                f"must match {_path(prefix, 'shapes.motif_annotations')}"
             )
         region_shape = shapes.get("region_motif_rankings")
         region_fp = fingerprints.get("region_motif_rankings")
@@ -798,14 +809,17 @@ def _reference_fingerprint_failures(record: dict[str, Any]) -> list[str]:
             and region_fp.get("shape") != region_shape
         ):
             failures.append(
-                "reference_fingerprints.region_motif_rankings.shape must match "
-                "shapes.region_motif_rankings"
+                f"{_path(prefix, 'reference_fingerprints.region_motif_rankings.shape')} "
+                f"must match {_path(prefix, 'shapes.region_motif_rankings')}"
             )
         gene_rows = shapes.get("gene_coords_rows")
         gene_fp = fingerprints.get("gene_coords")
         if isinstance(gene_fp, dict) and _positive_int(gene_rows) and _shape2(gene_fp.get("shape")):
             if gene_fp["shape"][0] != gene_rows:
-                failures.append("reference_fingerprints.gene_coords.shape rows must match shapes.gene_coords_rows")
+                failures.append(
+                    f"{_path(prefix, 'reference_fingerprints.gene_coords.shape')} "
+                    f"rows must match {_path(prefix, 'shapes.gene_coords_rows')}"
+                )
     return failures
 
 
@@ -2058,6 +2072,7 @@ def _full_pipeline_scaling_row_child_failures(
         "shapes": child.get("shapes"),
         "cistarget_rankings": child.get("cistarget_rankings"),
         "region_cistarget_rankings": child.get("region_cistarget_rankings"),
+        "reference_fingerprints": child.get("reference_fingerprints"),
         "reference_sources": child.get("reference_sources"),
         "params": child.get("params"),
         "invocation": child.get("invocation"),
@@ -2391,6 +2406,7 @@ def _full_pipeline_scaling_row_failures(
         )
     )
     failures.extend(_matrix_input_failures(row, prefix))
+    failures.extend(_reference_fingerprint_failures(row, prefix))
     failures.extend(_cistarget_ranking_metadata_failures(row, prefix))
     failures.extend(_sparse_rna_backend_failures(row, prefix))
     failures.extend(_full_pipeline_scaling_reference_source_failures(row, prefix))
