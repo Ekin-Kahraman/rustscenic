@@ -5585,7 +5585,10 @@ def test_minerva_result_collector_discovers_latest_valid_benchmarks(tmp_path):
     assert full_row["valid"] is True
     assert full_row["cells"] == "200"
     assert full_row["cell_barcode_filter"] == "200/200"
-    assert full_row["outputs"] == "grn_edges=10, eregulon_rows=6, regulons=2"
+    assert full_row["outputs"] == (
+        "grn_edges=10, cistarget_rows=4, enhancer_links=5, "
+        "eregulon_rows=6, regulons=2"
+    )
     assert rows[1]["cells"] == "100..400"
     assert rows[1]["cell_barcode_filter"] == "100/100..400/400"
     assert rows[1]["peak_rss_gb"] == "1.25..2.45"
@@ -5721,7 +5724,10 @@ def test_minerva_result_collector_markdown_table_is_compact(tmp_path):
 
     assert table.startswith("| valid | benchmark | dataset | cells | barcode_filter |")
     assert "| yes | real_multiome_full_pipeline | pbmc3k | 100 | 100/100 |" in table
-    assert "grn_edges=10, eregulon_rows=6, regulons=2" in table
+    assert (
+        "grn_edges=10, cistarget_rows=4, enhancer_links=5, "
+        "eregulon_rows=6, regulons=2"
+    ) in table
 
 
 def test_minerva_launchers_validate_benchmark_artifacts_after_run():

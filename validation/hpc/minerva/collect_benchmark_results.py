@@ -183,7 +183,14 @@ def _output_summary(record: dict[str, Any]) -> str:
     outputs = record.get("outputs")
     if isinstance(outputs, dict):
         parts = []
-        for key in ("grn_edges", "eregulon_rows", "regulons"):
+        for key in (
+            "grn_edges",
+            "cistarget_rows",
+            "enhancer_links",
+            "eregulon_rows",
+            "regulons",
+            "pruned_regulons",
+        ):
             value = outputs.get(key)
             if isinstance(value, int) and not isinstance(value, bool):
                 parts.append(f"{key}={value}")
