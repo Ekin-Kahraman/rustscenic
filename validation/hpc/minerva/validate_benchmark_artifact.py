@@ -2330,6 +2330,10 @@ def _full_pipeline_scaling_row_failures(
         for key in ("cistarget_rows", "enhancer_links", "eregulon_rows", "eregulons"):
             if not _positive_int(outputs.get(key)):
                 failures.append(f"{prefix}.outputs.{key} must be positive")
+        if _motif_annotations_supplied(row) and not _positive_int(
+            outputs.get("pruned_regulons")
+        ):
+            failures.append(f"{prefix}.outputs.pruned_regulons must be positive")
         aucell_shape = outputs.get("aucell_shape")
         if (
             not isinstance(aucell_shape, list)
@@ -2588,6 +2592,10 @@ def validate_full_pipeline(
     for key in ("cistarget_rows", "enhancer_links", "eregulon_rows", "eregulons"):
         if not _positive_int(outputs.get(key)):
             failures.append(f"outputs.{key} must be positive")
+    if _motif_annotations_supplied(record) and not _positive_int(
+        outputs.get("pruned_regulons")
+    ):
+        failures.append("outputs.pruned_regulons must be positive")
     aucell_shape = outputs.get("aucell_shape")
     if (
         not isinstance(aucell_shape, list)

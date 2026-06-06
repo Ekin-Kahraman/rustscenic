@@ -4832,6 +4832,7 @@ def test_benchmark_artifact_validator_requires_region_peak_filter_with_annotatio
     )
     record["shapes"]["motif_annotations"] = [4, 2]
     record["shapes"]["region_motif_rankings"] = [8, 2000]
+    record["outputs"]["pruned_regulons"] = 1
     record["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
     record["backend_execution"]["pipeline_cistarget_pruning"] = {
         "engine": "rust",
@@ -4900,6 +4901,7 @@ def test_benchmark_artifact_validator_requires_pruning_when_annotations_supplied
         "full_pipeline.backend_execution.pipeline_cistarget_pruning must be an object"
         in failures
     )
+    assert "outputs.pruned_regulons must be positive" in failures
 
 
 def test_benchmark_artifact_validator_requires_scaling_pruning_when_annotations_supplied(tmp_path):
@@ -4909,6 +4911,8 @@ def test_benchmark_artifact_validator_requires_scaling_pruning_when_annotations_
     )
     record = _full_pipeline_scaling_record(tmp_path)
     record["params"]["motif_annotations"] = "motif_annotations.tsv"
+    for row in record["runs"]:
+        row["params"]["motif_annotations"] = "motif_annotations.tsv"
 
     failures = module.validate_record(record, require_clean=True)
 
@@ -4916,6 +4920,7 @@ def test_benchmark_artifact_validator_requires_scaling_pruning_when_annotations_
         "runs[0].backend_execution.pipeline_cistarget_pruning must be an object"
         in failures
     )
+    assert "runs[0].outputs.pruned_regulons must be positive" in failures
 
 
 def test_benchmark_artifact_validator_requires_scaling_region_peak_filter_with_annotations(tmp_path):
@@ -4929,6 +4934,7 @@ def test_benchmark_artifact_validator_requires_scaling_region_peak_filter_with_a
     for row in record["runs"]:
         row["params"]["motif_annotations"] = "motif_annotations.tsv"
         row["params"]["region_motif_rankings"] = "region_rankings.feather"
+        row["outputs"]["pruned_regulons"] = 1
         row["shapes"]["region_motif_rankings"] = [8, 2000]
         row["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
         row["backend_execution"]["pipeline_cistarget_pruning"] = {
