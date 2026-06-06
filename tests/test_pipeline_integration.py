@@ -820,6 +820,13 @@ def test_pipeline_skips_cistarget_rankings_io_when_no_candidate_regulons(
         fail_if_rankings_loaded,
     )
     monkeypatch.setattr(
+        rustscenic.aucell,
+        "score",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("AUCell should not score with no active regulons")
+        ),
+    )
+    monkeypatch.setattr(
         pipeline,
         "_coerce_motif_annotations",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(
@@ -841,10 +848,17 @@ def test_pipeline_skips_cistarget_rankings_io_when_no_candidate_regulons(
 
     assert result.n_candidate_regulons == 0
     assert result.n_regulons == 0
+    assert result.aucell_shape == [rna.n_obs, 0]
+    assert result.aucell_path.exists()
+    assert pd.read_parquet(result.aucell_path).shape == (rna.n_obs, 0)
     assert result.n_cistarget_rows is None
     assert result.cistarget_path is None
     assert result.cistarget_rankings == {}
     assert "cistarget_rankings_load" not in result.io_elapsed
+    assert result.backend_execution["aucell"] == {
+        "engine": "skipped",
+        "reason": "no active regulons to score",
+    }
     assert result.backend_execution["cistarget_projection_features"] == {
         "engine": "skipped",
         "reason": "no candidate regulon features to project",

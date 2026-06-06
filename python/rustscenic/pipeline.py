@@ -940,16 +940,20 @@ def run(
     log("[8/8] AUCell: per-cell regulon activity")
     t0 = time.perf_counter()
     active_regulon_pairs = list(iter_regulon_pairs(regulons))
-    auc = rustscenic.aucell.score(
-        adata_rna,
-        active_regulon_pairs,
-        top_frac=aucell_top_frac,
-    )
-    backend_execution["aucell"] = _rust_execution_from_attrs(
-        auc,
-        "aucell_score",
-        "aucell_score_sparse_csr",
-    )
+    if active_regulon_pairs:
+        auc = rustscenic.aucell.score(
+            adata_rna,
+            active_regulon_pairs,
+            top_frac=aucell_top_frac,
+        )
+        backend_execution["aucell"] = _rust_execution_from_attrs(
+            auc,
+            "aucell_score",
+            "aucell_score_sparse_csr",
+        )
+    else:
+        auc = pd.DataFrame(index=adata_rna.obs_names)
+        backend_execution["aucell"] = _skipped_execution("no active regulons to score")
     elapsed["aucell"] = time.perf_counter() - t0
     aucell_shape = [int(auc.shape[0]), int(auc.shape[1])]
     aucell_path = output_dir / "aucell.parquet"
