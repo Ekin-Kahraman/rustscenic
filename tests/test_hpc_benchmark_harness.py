@@ -2250,6 +2250,10 @@ def _backend_execution_state():
             "engine": "rust",
             "symbols": ["pipeline_candidate_regulons_from_grn"],
         },
+        "pipeline_cistarget_projection_features": {
+            "engine": "rust",
+            "symbols": ["pipeline_unique_regulon_features"],
+        },
         "pipeline_cistarget": {
             "engine": "rust",
             "symbols": ["cistarget_enrichment_from_projected_rankings_i32"],
@@ -3848,6 +3852,23 @@ def test_benchmark_artifact_validator_rejects_non_rust_full_pipeline_stage(tmp_p
         "full_pipeline.backend_execution.pipeline_enhancer.symbols must be a non-empty string list"
         in failures
     )
+
+
+def test_benchmark_artifact_validator_requires_cistarget_feature_projection_metadata(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_cistarget_projection_features",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["backend_execution"].pop("pipeline_cistarget_projection_features")
+    _sync_full_pipeline_manifest(record)
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_cistarget_projection_features "
+        "must be an object"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_incomplete_rust_stage_symbols(tmp_path):

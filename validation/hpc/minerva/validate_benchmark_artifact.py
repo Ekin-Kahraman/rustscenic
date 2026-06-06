@@ -93,6 +93,7 @@ REQUIRED_FULL_PIPELINE_RUST_EXECUTION = {
     "pipeline_topics",
     "pipeline_grn",
     "pipeline_candidate_regulons",
+    "pipeline_cistarget_projection_features",
     "pipeline_cistarget",
     "pipeline_enhancer",
     "pipeline_eregulon_peak_attribution",
