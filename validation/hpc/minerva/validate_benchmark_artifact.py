@@ -381,19 +381,26 @@ def _nonempty_str(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip())
 
 
-def _repo_failures(record: dict[str, Any], *, require_clean: bool) -> list[str]:
+def _repo_failures(
+    record: dict[str, Any],
+    *,
+    require_clean: bool,
+    prefix: str = "",
+) -> list[str]:
     failures: list[str] = []
     repo = record.get("repo_state")
     if not isinstance(repo, dict):
+        if prefix:
+            return [f"{_path(prefix, 'repo_state')} missing"]
         return ["missing repo_state"]
     if not repo.get("commit"):
-        failures.append("repo_state.commit missing")
+        failures.append(f"{_path(prefix, 'repo_state.commit')} missing")
     tracked_source_count = repo.get("tracked_source_count")
     if isinstance(tracked_source_count, int) and not isinstance(tracked_source_count, bool):
         if require_clean and tracked_source_count > 0:
-            failures.append("repo_state.tracked_source_count must be 0")
+            failures.append(f"{_path(prefix, 'repo_state.tracked_source_count')} must be 0")
     elif require_clean and repo.get("tracked_dirty") is not False:
-        failures.append("repo_state.tracked_dirty must be false")
+        failures.append(f"{_path(prefix, 'repo_state.tracked_dirty')} must be false")
     untracked_source_count = repo.get("untracked_source_count")
     if (
         require_clean
@@ -401,7 +408,7 @@ def _repo_failures(record: dict[str, Any], *, require_clean: bool) -> list[str]:
         and not isinstance(untracked_source_count, bool)
         and untracked_source_count > 0
     ):
-        failures.append("repo_state.untracked_source_count must be 0")
+        failures.append(f"{_path(prefix, 'repo_state.untracked_source_count')} must be 0")
     return failures
 
 
@@ -2078,6 +2085,12 @@ def _full_pipeline_scaling_row_child_failures(
         "region_cistarget_rankings": child.get("region_cistarget_rankings"),
         "reference_fingerprints": child.get("reference_fingerprints"),
         "reference_sources": child.get("reference_sources"),
+        "repo_state": child.get("repo_state"),
+        "runtime_import": child.get("runtime_import"),
+        "backend_capabilities": child.get("backend_capabilities"),
+        "python_hot_paths": child.get("python_hot_paths"),
+        "rustscenic": child.get("rustscenic"),
+        "input_hashes": child.get("input_hashes"),
         "params": child.get("params"),
         "invocation": child.get("invocation"),
         "write_integrated_adata": child.get("params", {}).get(
@@ -2266,6 +2279,7 @@ def _full_pipeline_scaling_row_failures(
     row: dict[str, Any],
     prefix: str,
     *,
+    require_clean: bool,
     require_motif_pruning: bool = False,
     require_region_cistarget: bool = False,
 ) -> list[str]:
@@ -2273,6 +2287,20 @@ def _full_pipeline_scaling_row_failures(
     n_cells = row.get("n_cells_actual")
     if not _positive_int(row.get("n_cells_requested")):
         failures.append(f"{prefix}.n_cells_requested must be positive")
+    failures.extend(_repo_failures(row, require_clean=require_clean, prefix=prefix))
+    failures.extend(_runtime_import_failures(row, prefix))
+    failures.extend(_backend_failures(row, prefix))
+    failures.extend(_python_hot_path_failures(row, prefix))
+    if not _nonempty_str(row.get("rustscenic")):
+        failures.append(f"{prefix}.rustscenic must be a non-empty string")
+    input_hashes = row.get("input_hashes")
+    if not isinstance(input_hashes, dict) or not input_hashes:
+        failures.append(f"{prefix}.input_hashes must be a non-empty object")
+    elif not all(
+        isinstance(key, str) and _nonempty_str(key) and _nonempty_str(value)
+        for key, value in input_hashes.items()
+    ):
+        failures.append(f"{prefix}.input_hashes keys and values must be non-empty strings")
     if "env" in row or "threads" in row:
         if not _positive_int(row.get("threads")):
             failures.append(f"{prefix}.threads must be positive when row env is present")
@@ -2906,6 +2934,7 @@ def validate_full_pipeline_scaling(
             _full_pipeline_scaling_row_failures(
                 row,
                 prefix,
+                require_clean=require_clean,
                 require_motif_pruning=require_motif_pruning,
                 require_region_cistarget=require_region_cistarget,
             )

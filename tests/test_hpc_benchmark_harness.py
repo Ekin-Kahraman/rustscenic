@@ -797,6 +797,16 @@ def test_real_multiome_scaling_child_row_carries_child_validation_fields(
         "shapes": shapes,
         "params": {"n_cells_requested": 100, "write_integrated_adata": False},
         "invocation": _invocation_state(),
+        "repo_state": _clean_repo_state(),
+        "runtime_import": _runtime_import_state(),
+        "backend_capabilities": _backend_capabilities(),
+        "python_hot_paths": _python_hot_paths_state(),
+        "rustscenic": "0.4.7",
+        "input_hashes": {
+            "rna_10x_h5_md5": "a",
+            "fragments_first_8mb_md5": "b",
+            "peaks_bed_md5": "c",
+        },
         "wall_s": {"setup": 1.0, "pipeline": 2.0, "end_to_end": 3.0},
         "peak_rss_gb": 1.25,
         "setup_peak_rss_gb": 0.75,
@@ -834,6 +844,10 @@ def test_real_multiome_scaling_child_row_carries_child_validation_fields(
     assert row["shapes"] == shapes
     assert row["region_cistarget_rankings"] == region_cistarget_rankings
     assert row["reference_fingerprints"] == child_record["reference_fingerprints"]
+    assert row["runtime_import"] == child_record["runtime_import"]
+    assert row["backend_capabilities"] == child_record["backend_capabilities"]
+    assert row["python_hot_paths"] == child_record["python_hot_paths"]
+    assert row["input_hashes"] == child_record["input_hashes"]
 
 
 def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatch):
@@ -2912,6 +2926,12 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "threads": child["params"]["threads"],
                 "params": child["params"],
                 "invocation": child["invocation"],
+                "repo_state": child["repo_state"],
+                "runtime_import": child["runtime_import"],
+                "backend_capabilities": child["backend_capabilities"],
+                "python_hot_paths": child["python_hot_paths"],
+                "rustscenic": child["rustscenic"],
+                "input_hashes": child["input_hashes"],
                 "json_path": str(child_path),
                 "output_dir": str(child_dir),
                 "wall_s": child["wall_s"],
@@ -3998,6 +4018,29 @@ def test_benchmark_artifact_validator_rejects_scaling_reference_fingerprint_mism
     assert "runs[0].reference_fingerprints must match child JSON" in failures
 
 
+def test_benchmark_artifact_validator_rejects_scaling_runtime_child_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_runtime_child_mismatch",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["runtime_import"]["extension_version"] = "0.4.6"
+    record["runs"][0]["backend_capabilities"]["missing_symbols"] = ["grn_infer"]
+    record["runs"][0]["python_hot_paths"]["violation_count"] = 1
+    record["runs"][0]["input_hashes"]["rna_10x_h5_md5"] = "different"
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=True,
+    )
+
+    assert "runs[0].runtime_import must match child JSON" in failures
+    assert "runs[0].backend_capabilities must match child JSON" in failures
+    assert "runs[0].python_hot_paths must match child JSON" in failures
+    assert "runs[0].input_hashes must match child JSON" in failures
+
+
 def test_benchmark_artifact_validator_rejects_scaling_row_without_reference_fingerprints(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_full_scaling_reference_fingerprints",
@@ -4013,6 +4056,32 @@ def test_benchmark_artifact_validator_rejects_scaling_row_without_reference_fing
     )
 
     assert "runs[0].reference_fingerprints must be an object" in failures
+
+
+def test_benchmark_artifact_validator_rejects_scaling_row_without_runtime_provenance(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_runtime_provenance",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    row = record["runs"][0]
+    del row["runtime_import"]
+    del row["backend_capabilities"]
+    del row["python_hot_paths"]
+    del row["input_hashes"]
+    row["rustscenic"] = ""
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert "runs[0].runtime_import missing" in failures
+    assert "runs[0].backend_capabilities missing" in failures
+    assert "runs[0].python_hot_paths missing" in failures
+    assert "runs[0].input_hashes must be a non-empty object" in failures
+    assert "runs[0].rustscenic must be a non-empty string" in failures
 
 
 def test_benchmark_artifact_validator_rejects_scaling_reference_download(tmp_path):
