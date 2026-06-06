@@ -1104,6 +1104,20 @@ class TestCistargetEdgeCases:
         assert len(out) == 0
         assert set(out.columns) == {"regulon", "motif", "auc", "nes"}
 
+    def test_all_dropped_regulons_preserve_rust_metadata(self, tiny_rankings):
+        out = cistarget.enrich(
+            tiny_rankings,
+            [("R_missing", ["not_in_rankings"])],
+            auc_threshold=0.0,
+        )
+
+        assert len(out) == 0
+        assert set(out.columns) == {"regulon", "motif", "auc", "nes"}
+        assert out.attrs["rust_backend"] == {
+            "engine": "rust",
+            "symbols": ["stage_prepare_regulon_indices_with_coverage"],
+        }
+
     def test_auc_threshold_filters(self, tiny_rankings):
         # Very high threshold should filter out everything
         regs = [("R1", ["g0", "g1", "g2"])]

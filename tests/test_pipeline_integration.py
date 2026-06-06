@@ -1899,6 +1899,68 @@ def test_pipeline_rust_execution_from_attrs_rejects_missing_metadata():
         _rust_execution_from_attrs(out, "grn_infer")
 
 
+def test_pipeline_keeps_cistarget_metadata_when_rankings_do_not_overlap(
+    tmp_path,
+    monkeypatch,
+):
+    import rustscenic.pipeline
+
+    cells = [f"cell{i}" for i in range(8)]
+    genes = ["TF1"] + [f"G{i}" for i in range(5)]
+    rna = ad.AnnData(
+        X=np.ones((len(cells), len(genes)), dtype=np.float32),
+        obs=pd.DataFrame(index=cells),
+        var=pd.DataFrame(index=genes),
+    )
+    rankings = pd.DataFrame(
+        np.array([[0, 1], [1, 0]], dtype=np.int32),
+        index=["MOTIF_A", "MOTIF_B"],
+        columns=["X_NOT_RNA", "Y_NOT_RNA"],
+    )
+
+    def fake_infer(*_args, **_kwargs):
+        out = pd.DataFrame(
+            {
+                "TF": ["TF1"] * 5,
+                "target": [f"G{i}" for i in range(5)],
+                "importance": [5.0, 4.0, 3.0, 2.0, 1.0],
+            }
+        )
+        out.attrs["rust_backend"] = {"engine": "rust", "symbols": ["grn_infer"]}
+        return out
+
+    def fake_score(expression, regulons, *, top_frac):
+        out = pd.DataFrame(
+            {"TF1_regulon": np.zeros(expression.n_obs, dtype=np.float32)},
+            index=expression.obs_names,
+        )
+        out.attrs["rust_backend"] = {"engine": "rust", "symbols": ["aucell_score"]}
+        return out
+
+    monkeypatch.setattr(rustscenic.grn, "infer", fake_infer)
+    monkeypatch.setattr(rustscenic.aucell, "score", fake_score)
+
+    result = rustscenic.pipeline.run(
+        rna,
+        tmp_path,
+        motif_rankings=rankings,
+        tfs=["TF1"],
+        grn_top_targets=5,
+        grn_n_estimators=2,
+        cistarget_auc_threshold=0.0,
+        verbose=False,
+        write_integrated_adata=False,
+    )
+
+    assert result.cistarget_path is not None
+    assert pd.read_parquet(result.cistarget_path).empty
+    assert result.n_cistarget_rows == 0
+    assert result.backend_execution["cistarget"] == {
+        "engine": "rust",
+        "symbols": ["stage_prepare_regulon_indices_with_coverage"],
+    }
+
+
 def test_pipeline_rust_execution_rejects_empty_symbols():
     import pytest
     from rustscenic.pipeline import _rust_execution

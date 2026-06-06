@@ -178,7 +178,12 @@ def _enrich_from_rank_array(
             f"columns: {gene_names[:3]}.",
             UserWarning, stacklevel=2,
         )
-        return pd.DataFrame(columns=["regulon", "motif", "auc", "nes"])
+        out = pd.DataFrame(columns=["regulon", "motif", "auc", "nes"])
+        out.attrs["rust_backend"] = {
+            "engine": "rust",
+            "symbols": ["stage_prepare_regulon_indices_with_coverage"],
+        }
+        return out
 
     out = _enrichment_rows_from_rankings(
         values,
