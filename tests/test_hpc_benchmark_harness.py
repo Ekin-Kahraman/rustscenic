@@ -392,18 +392,26 @@ def test_real_multiome_harness_records_invocation_state():
         "bench_real_multiome_scaling_invocation",
         ROOT / "validation/scaling/bench_real_multiome_pipeline_scaling.py",
     )
+    grn_scaling = _load_module(
+        "bench_real_grn_scaling_invocation",
+        ROOT / "validation/scaling/bench_real_pbmc3k_grn_scaling.py",
+    )
 
     state = module.invocation_state(["--dataset-name", "pbmc3k"])
     scaling_state = scaling.invocation_state(["--dataset-name", "pbmc3k"])
+    grn_state = grn_scaling.invocation_state(["--data-dir", "data"])
 
     assert state["script"].endswith("bench_real_multiome_pipeline.py")
     assert scaling_state["script"].endswith("bench_real_multiome_pipeline_scaling.py")
+    assert grn_state["script"].endswith("bench_real_pbmc3k_grn_scaling.py")
     assert state["argv"] == ["--dataset-name", "pbmc3k"]
+    assert grn_state["argv"] == ["--data-dir", "data"]
     assert state["command"][:2] == [state["python"], state["script"]]
     assert scaling_state["command"][:2] == [
         scaling_state["python"],
         scaling_state["script"],
     ]
+    assert grn_state["command"][:2] == [grn_state["python"], grn_state["script"]]
 
 
 def test_real_multiome_harness_does_not_reread_pipeline_outputs_for_counts():
@@ -2902,6 +2910,9 @@ def _grn_scaling_record():
         "dataset": "10x PBMC unsorted 3k multiome RNA post-QC",
         "repo_state": _clean_repo_state(),
         "runtime_import": _runtime_import_state(),
+        "invocation": _invocation_state(
+            "validation/scaling/bench_real_pbmc3k_grn_scaling.py"
+        ),
         "backend_capabilities": _backend_capabilities(),
         "python_hot_paths": _python_hot_paths_state(),
         "rustscenic": "0.4.7",
@@ -2983,6 +2994,23 @@ def test_benchmark_artifact_validator_rejects_bad_full_pipeline_invocation(tmp_p
         "full_pipeline.invocation.command must start with invocation python and script"
         in failures
     )
+
+
+def test_benchmark_artifact_validator_rejects_bad_grn_scaling_invocation():
+    module = _load_module(
+        "validate_benchmark_artifact_bad_grn_invocation",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _grn_scaling_record()
+    del record["invocation"]
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert "grn_scaling.invocation must be an object" in failures
 
 
 def test_benchmark_artifact_validator_accepts_projected_cistarget_rankings(tmp_path):

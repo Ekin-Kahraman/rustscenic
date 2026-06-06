@@ -89,6 +89,18 @@ def runtime_import_state() -> dict[str, Any]:
     }
 
 
+def invocation_state(argv: list[str] | None) -> dict[str, Any]:
+    script = Path(__file__).resolve()
+    args = [str(value) for value in (sys.argv[1:] if argv is None else argv)]
+    return {
+        "python": sys.executable,
+        "script": str(script),
+        "cwd": str(Path.cwd()),
+        "argv": args,
+        "command": [sys.executable, str(script), *args],
+    }
+
+
 def backend_execution_for_grn(grn) -> dict[str, Any]:
     backend = getattr(grn, "attrs", {}).get("rust_backend")
     if (
@@ -380,6 +392,7 @@ def coordinator(args: argparse.Namespace) -> dict[str, Any]:
         "dataset": "10x PBMC unsorted 3k multiome RNA post-QC",
         "repo_state": state,
         "runtime_import": runtime_import_state(),
+        "invocation": getattr(args, "_invocation", invocation_state(None)),
         "backend_capabilities": backend_capabilities(),
         "python_hot_paths": hot_path_state(),
         "rustscenic": version("rustscenic"),
@@ -480,6 +493,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    args._invocation = invocation_state(argv)
     validate_args(args)
     if args.run_one:
         configure_thread_env(args.threads)

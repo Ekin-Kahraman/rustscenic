@@ -2611,6 +2611,7 @@ def validate_full_pipeline(
 def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list[str]:
     failures = _repo_failures(record, require_clean=require_clean)
     failures.extend(_runtime_import_failures(record, "grn_scaling"))
+    failures.extend(_invocation_failures(record, "grn_scaling"))
     failures.extend(_backend_failures(record, "grn_scaling"))
     failures.extend(_python_hot_path_failures(record, "grn_scaling"))
     failures.extend(
@@ -2618,6 +2619,7 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
             record,
             {
                 "runtime_import",
+                "invocation",
                 "backend_capabilities",
                 "python_hot_paths",
                 "rustscenic",
