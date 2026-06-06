@@ -94,6 +94,7 @@ python validation/hpc/minerva/preflight_minerva.py \
   --require-thread-pins \
   --require-data-hashes \
   --require-reference-cache \
+  --require-full-pipeline-references \
   --require-rust-hot-paths \
   --require-clean
 

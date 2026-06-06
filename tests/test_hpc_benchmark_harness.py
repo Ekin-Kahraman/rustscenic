@@ -1659,6 +1659,85 @@ def test_minerva_preflight_requires_default_reference_cache(monkeypatch, tmp_pat
     ) in result["failures"]
 
 
+def test_minerva_preflight_requires_full_pipeline_references(monkeypatch, tmp_path):
+    module = _load_module(
+        "preflight_minerva_full_pipeline_references",
+        ROOT / "validation/hpc/minerva/preflight_minerva.py",
+    )
+    repo, env, data = _write_minerva_preflight_fixture(tmp_path)
+    monkeypatch.setattr(
+        module,
+        "_git_state",
+        lambda _repo: {
+            "commit": "abc123",
+            "commit_error": None,
+            "tracked_status_short": [],
+            "status_error": None,
+            "tracked_dirty": False,
+            "tracked_source_count": 0,
+            "tracked_source_sample": [],
+        },
+    )
+    monkeypatch.setattr(
+        module,
+        "_import_state",
+        lambda _python, _repo: {
+            "ok": True,
+            "python": str(env / "bin" / "python"),
+            "rustscenic_version": "0.4.7",
+            "package_version": "0.4.7",
+            "extension_version": "0.4.7",
+            "package_file": str(repo / "python" / "rustscenic" / "__init__.py"),
+            "package_under_repo": True,
+            "extension_file": str(repo / "python" / "rustscenic" / "_rustscenic.so"),
+            "extension_under_repo": True,
+            "extension_error": None,
+            "parse_error": None,
+            "stderr": "",
+        },
+    )
+    monkeypatch.setattr(module, "_backend_state", lambda _python, _repo: _preflight_backend_state())
+    monkeypatch.setattr(
+        module,
+        "_reference_cache_statuses",
+        lambda _args, *, python, repo: {
+            "ok": True,
+            "stderr": "",
+            "parse_error": None,
+            "motif_rankings": {
+                "needed": True,
+                "source": "default_cache",
+                "path": str(tmp_path / "missing_motifs.feather"),
+                "exists": False,
+            },
+            "gene_coords": {
+                "needed": True,
+                "source": "default_cache",
+                "path": str(tmp_path / "hs_gene_tss.parquet"),
+                "exists": True,
+                "type": "file",
+                "size_bytes": 128,
+            },
+        },
+    )
+    args = module.parse_args(
+        [
+            "--repo", str(repo),
+            "--env", str(env),
+            "--data-dir", str(data),
+            "--require-full-pipeline-references",
+        ]
+    )
+
+    result = module.preflight(args)
+
+    assert result["ok"] is False
+    assert (
+        "full pipeline reference motif_rankings must be available via "
+        "explicit path or default cache"
+    ) in result["failures"]
+
+
 def test_minerva_preflight_reports_default_reference_cache_paths(monkeypatch, tmp_path):
     module = _load_module(
         "preflight_minerva_reference_cache_paths",
@@ -5623,6 +5702,9 @@ def test_minerva_launchers_validate_benchmark_artifacts_after_run():
     assert "--require-reference-cache" in full
     assert "--require-reference-cache" in full_scaling
     assert "--require-reference-cache" not in grn
+    assert "--require-full-pipeline-references" in full
+    assert "--require-full-pipeline-references" in full_scaling
+    assert "--require-full-pipeline-references" not in grn
     assert "validation/hpc/minerva/prepare_reference_cache.py" in readme
     assert "--check-output-files" in full
     assert '--threads "${RAYON_NUM_THREADS}"' in full

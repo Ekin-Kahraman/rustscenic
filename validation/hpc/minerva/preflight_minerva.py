@@ -431,6 +431,16 @@ def preflight(args: argparse.Namespace) -> dict[str, Any]:
                 failures.append(
                     f"missing default reference cache {name}: {status.get('path')}"
                 )
+    if args.require_full_pipeline_references:
+        for name in ("motif_rankings", "gene_coords"):
+            explicit = checks["reference_tables"].get(name, {}).get("exists") is True
+            cache = checks["reference_caches"].get(name, {})
+            cached = cache.get("needed") is True and cache.get("exists") is True
+            if not (explicit or cached):
+                failures.append(
+                    f"full pipeline reference {name} must be available via "
+                    "explicit path or default cache"
+                )
     for group in ("benchmark_scripts", "lsf_scripts", "hpc_tools"):
         for name, status in checks[group].items():
             if not status["exists"]:
@@ -554,6 +564,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Fail if default motif rankings or gene-coordinate references are "
             "not already cached. Use for timed full-pipeline benchmarks so "
             "setup time cannot include first-use downloads."
+        ),
+    )
+    parser.add_argument(
+        "--require-full-pipeline-references",
+        action="store_true",
+        help=(
+            "Fail unless motif rankings and gene coordinates are available "
+            "through explicit paths or warmed default caches."
         ),
     )
     return parser.parse_args(argv)
