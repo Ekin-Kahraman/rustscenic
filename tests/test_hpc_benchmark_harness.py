@@ -2410,11 +2410,16 @@ def _full_pipeline_record(tmp_path: Path):
         "reference_fingerprints": {
             "motif_rankings": {
                 "shape": [50, 2000],
-                "index_name": None,
-                "index_sample": ["motif_a"],
+                "index_name": "motifs",
+                "index_sample": ["file-backed:not-loaded"],
                 "column_sample": ["gene_a"],
                 "dtype_counts": {"int32": 2000},
                 "corner_sample_sha256": "a" * 64,
+                "file_backed": True,
+                "format": "feather",
+                "metadata_read_columns": ["motifs"],
+                "path_name": "motif_rankings.feather",
+                "size_bytes": 1024,
             },
             "gene_coords": {
                 "shape": [1000, 3],
@@ -4673,6 +4678,30 @@ def test_benchmark_artifact_validator_rejects_missing_reference_fingerprints(tmp
         "reference_fingerprints.gene_coords.shape rows must match shapes.gene_coords_rows"
         in failures
     )
+
+
+def test_benchmark_artifact_validator_rejects_non_file_backed_motif_rankings(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_motif_rankings_file_backed",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    fp = record["reference_fingerprints"]["motif_rankings"]
+    fp["file_backed"] = False
+    fp.pop("path_name")
+    fp["metadata_read_columns"] = []
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "reference_fingerprints.motif_rankings.file_backed must be true" in failures
+    assert (
+        "reference_fingerprints.motif_rankings.path_name must be a non-empty string"
+        in failures
+    )
+    assert (
+        "reference_fingerprints.motif_rankings.metadata_read_columns must name "
+        "the one Feather column read for row counting"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_bad_reference_sources(tmp_path):
