@@ -35,6 +35,7 @@ HOT_PATH_PATTERNS = (
     ".iloc[",
     ".todense(",
     ".toarray(",
+    ".to_numpy(",
     ".where(",
     ".min()",
     ".max()",
@@ -135,6 +136,106 @@ ALLOWED_HITS = {
         "warn_if_likely_unnormalized(",
         "def warn_if_likely_unnormalized(X, *, max_threshold: float = 50.0, stacklevel: int = 2) -> None:",
     ): "public diagnostic helper only",
+    (
+        "_stage_utils.py",
+        ".to_numpy(",
+        "arr = values.to_numpy(copy=False)",
+    ): "central PyO3 boundary conversion helper",
+    (
+        "cistarget.py",
+        ".to_numpy(",
+        "rankings.to_numpy(copy=False),",
+    ): "ranking matrix handoff to Rust cistarget/pruning kernels",
+    (
+        "cistarget.py",
+        ".to_numpy(",
+        "ranking_values=rankings.to_numpy(copy=False),",
+    ): "ranking matrix handoff to Rust motif-pruning kernel",
+    (
+        "cistarget.py",
+        ".to_numpy(",
+        "auc_values = auc.to_numpy(copy=False)",
+    ): "numeric cistarget score handoff to Rust motif-pruning kernel",
+    (
+        "cistarget.py",
+        ".to_numpy(",
+        "nes_values = None if nes is None else nes.to_numpy(copy=False)",
+    ): "numeric cistarget score handoff to Rust motif-pruning kernel",
+    (
+        "cistarget.py",
+        ".to_numpy(",
+        "values = rankings.to_numpy(copy=False)",
+    ): "ranking matrix dtype dispatch before Rust cistarget kernel",
+    (
+        "enhancer.py",
+        ".to_numpy(",
+        'peak_starts = peaks["start"].to_numpy(dtype=np.int64, copy=False)',
+    ): "peak-coordinate vector handoff to Rust enhancer kernel",
+    (
+        "enhancer.py",
+        ".to_numpy(",
+        'peak_ends = peaks["end"].to_numpy(dtype=np.int64, copy=False)',
+    ): "peak-coordinate vector handoff to Rust enhancer kernel",
+    (
+        "enhancer.py",
+        ".to_numpy(",
+        'gene_tss_raw = genes_in_rna["tss"].to_numpy(dtype=np.int64)',
+    ): "gene-coordinate vector handoff to Rust enhancer kernel",
+    (
+        "enhancer.py",
+        ".to_numpy(",
+        'gene_names = genes_in_rna["gene"].to_numpy(dtype=object)[gene_order]',
+    ): "Rust-returned gene-order projection boundary",
+    (
+        "eregulon.py",
+        ".to_numpy(",
+        'enhancer_links["correlation"].to_numpy(dtype=np.float32, copy=False),',
+    ): "enhancer-link score vector handoff to Rust eRegulon kernel",
+    (
+        "eregulon.py",
+        ".to_numpy(",
+        "arr = values.to_numpy(copy=False)",
+    ): "numeric cistarget score handoff to Rust eRegulon kernel",
+    (
+        "pipeline.py",
+        ".to_numpy(",
+        "ranking_values = rankings_df.to_numpy(copy=False)",
+    ): "ranking matrix dtype dispatch before Rust cistarget kernel",
+    (
+        "pipeline.py",
+        ".to_numpy(",
+        'grn["importance"].to_numpy(dtype=np.float64, copy=False),',
+    ): "GRN importance vector handoff to Rust candidate-regulon kernel",
+    (
+        "pipeline.py",
+        ".to_numpy(",
+        "table.column(str(col)).combine_chunks().to_numpy(zero_copy_only=False)",
+    ): "file-backed ranking column materialisation after Rust column projection",
+    (
+        "pipeline.py",
+        ".to_numpy(",
+        "ranking_values = region_rankings.to_numpy(copy=False)",
+    ): "region ranking matrix handoff to Rust cistarget kernel",
+    (
+        "pipeline.py",
+        ".to_numpy(",
+        "arr = values.to_numpy(copy=False)",
+    ): "numeric cistarget score handoff to Rust region/eRegulon kernels",
+    (
+        "pipeline.py",
+        ".to_numpy(",
+        "rankings.to_numpy(copy=False)",
+    ): "ranking matrix handoff to Rust motif-pruning kernel",
+    (
+        "pipeline.py",
+        ".to_numpy(",
+        "auc.to_numpy(copy=False),",
+    ): "final AUCell output attachment boundary",
+    (
+        "preproc.py",
+        ".to_numpy(",
+        "clusters = cluster_per_barcode.to_numpy(dtype=np.int64)",
+    ): "cluster label vector handoff to Rust aggregation kernel",
 }
 
 

@@ -79,6 +79,23 @@ def test_hot_path_scan_rejects_concat_outside_allowlist(tmp_path):
     ]
 
 
+def test_hot_path_scan_rejects_unapproved_to_numpy_conversion(tmp_path):
+    package = tmp_path / "rustscenic"
+    package.mkdir()
+    (package / "__init__.py").write_text("")
+    (package / "stage.py").write_text(
+        "def bad(df):\n"
+        "    values = df.to_numpy(copy=False)\n"
+        "    return values\n"
+    )
+
+    violations = scan_python_hot_paths(package)
+
+    assert violations == [
+        "stage.py:2: values = df.to_numpy(copy=False)"
+    ]
+
+
 def test_hot_path_scan_pipeline_allowlist_is_exact_line_only(tmp_path):
     package = tmp_path / "rustscenic"
     package.mkdir()
