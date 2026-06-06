@@ -2530,7 +2530,8 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
         "pipeline_unique_regulon_features"
     ]
     assert result.backend_execution["cistarget_ranking_projection"]["symbols"] == [
-        "pipeline_project_ranking_columns"
+        "pipeline_project_ranking_columns",
+        "pipeline_pack_ranking_columns_i32",
     ]
     assert result.cistarget_rankings["mode"] == "projected_file"
     assert result.cistarget_rankings["projected"] is True
@@ -2556,7 +2557,8 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
     ]
     assert result.backend_execution["eregulon_peak_attribution"]["symbols"] == region_symbols
     assert result.backend_execution["region_cistarget_ranking_projection"]["symbols"] == [
-        "pipeline_project_ranking_columns"
+        "pipeline_project_ranking_columns",
+        "pipeline_pack_ranking_columns_i32",
     ]
     region_filter_symbols = region_symbols + [
         "pipeline_filter_cistarget_peak_rows_f32"
@@ -2574,7 +2576,8 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
         "pipeline_unique_regulon_features"
     ]
     assert manifest["backend_execution"]["cistarget_ranking_projection"]["symbols"] == [
-        "pipeline_project_ranking_columns"
+        "pipeline_project_ranking_columns",
+        "pipeline_pack_ranking_columns_i32",
     ]
     assert manifest["cistarget_rankings"] == result.cistarget_rankings
     assert (
@@ -2587,7 +2590,10 @@ def test_pipeline_run_uses_region_cistarget_when_supplied(tmp_path, monkeypatch)
     )
     assert (
         manifest["backend_execution"]["region_cistarget_ranking_projection"]["symbols"]
-        == ["pipeline_project_ranking_columns"]
+        == [
+            "pipeline_project_ranking_columns",
+            "pipeline_pack_ranking_columns_i32",
+        ]
     )
     assert (
         manifest["backend_execution"]["eregulon_peak_filter"]["symbols"]

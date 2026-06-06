@@ -244,6 +244,13 @@ REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
         "any_of": ({"aucell_score"}, {"aucell_score_sparse_csr"}),
     },
 }
+RANKING_PACKER_SYMBOLS = {
+    "pipeline_pack_ranking_columns_i16",
+    "pipeline_pack_ranking_columns_i32",
+    "pipeline_pack_ranking_columns_i64",
+    "pipeline_pack_ranking_columns_f32",
+    "pipeline_pack_ranking_columns_f64",
+}
 
 
 def _write_integrated_adata(record: dict[str, Any]) -> bool:
@@ -1092,12 +1099,21 @@ def _ranking_projection_backend_failures(
     execution = record.get("backend_execution")
     state = execution.get(stage) if isinstance(execution, dict) else None
     symbols = state.get("symbols") if isinstance(state, dict) else None
-    if isinstance(symbols, list) and "pipeline_project_ranking_columns" in symbols:
+    if not isinstance(symbols, list):
         return []
-    return [
-        f"{prefix}.backend_execution.{stage}.symbols must include "
-        f"'pipeline_project_ranking_columns' when {field}.mode is projected_file"
-    ]
+    symbol_set = {symbol for symbol in symbols if isinstance(symbol, str)}
+    if "pipeline_project_ranking_columns" not in symbol_set:
+        failures.append(
+            f"{prefix}.backend_execution.{stage}.symbols must include "
+            f"'pipeline_project_ranking_columns' when {field}.mode is projected_file"
+        )
+    if not (symbol_set & RANKING_PACKER_SYMBOLS):
+        failures.append(
+            f"{prefix}.backend_execution.{stage}.symbols must include a "
+            f"pipeline_pack_ranking_columns_* Rust symbol when {field}.mode "
+            "is projected_file"
+        )
+    return failures
 
 
 def _motif_annotation_pruning_failures(

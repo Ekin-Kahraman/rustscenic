@@ -122,6 +122,7 @@ class _RankingsArray:
     motif_names: list[str]
     feature_names: list[str]
     metadata: dict[str, int | str | None]
+    pack_symbol: str
 
 
 def run(
@@ -533,7 +534,7 @@ def run(
         )
         if cistarget_rankings.get("projected"):
             backend_execution["cistarget_ranking_projection"] = _rust_execution(
-                "pipeline_project_ranking_columns"
+                *_ranking_projection_symbols(rankings_array)
             )
         universe_note = (
             f" projected from {rank_universe_arg:,}-gene universe"
@@ -821,7 +822,7 @@ def run(
                 )
                 if region_cistarget_rankings.get("projected"):
                     backend_execution["region_cistarget_ranking_projection"] = (
-                        _rust_execution("pipeline_project_ranking_columns")
+                        _rust_execution(*_ranking_projection_symbols(region_rankings))
                     )
                 region_enrich, enriched_with_peaks = _region_cistarget_with_peak_ids(
                     region_rankings,
@@ -1346,6 +1347,7 @@ def _projected_rankings_array_with_metadata(
             "none of the current run's requested features were present in "
             f"the motif-ranking columns for {path.name}"
         )
+    pack_symbol = _ranking_pack_backend_symbol(np.dtype(arrays[0].dtype))
     values = _pack_projected_ranking_columns(arrays)
     if values.dtype == object or not np.issubdtype(values.dtype, np.number):
         raise TypeError("rankings must contain numeric rank values")
@@ -1354,6 +1356,33 @@ def _projected_rankings_array_with_metadata(
         motif_names=motif_names,
         feature_names=string_list(feature_cols),
         metadata=metadata,
+        pack_symbol=pack_symbol,
+    )
+
+
+def _ranking_projection_symbols(rankings) -> list[str]:
+    symbols = ["pipeline_project_ranking_columns"]
+    pack_symbol = getattr(rankings, "pack_symbol", None)
+    if isinstance(pack_symbol, str) and pack_symbol:
+        symbols.append(pack_symbol)
+    return symbols
+
+
+def _ranking_pack_backend_symbol(dtype: np.dtype) -> str:
+    dtype = np.dtype(dtype)
+    if dtype == np.dtype(np.int16):
+        return "pipeline_pack_ranking_columns_i16"
+    if dtype == np.dtype(np.int32):
+        return "pipeline_pack_ranking_columns_i32"
+    if dtype == np.dtype(np.int64):
+        return "pipeline_pack_ranking_columns_i64"
+    if dtype == np.dtype(np.float32):
+        return "pipeline_pack_ranking_columns_f32"
+    if dtype == np.dtype(np.float64):
+        return "pipeline_pack_ranking_columns_f64"
+    raise TypeError(
+        "projected ranking columns must be int16, int32, int64, float32, "
+        f"or float64, got {dtype}"
     )
 
 
@@ -1364,20 +1393,18 @@ def _pack_projected_ranking_columns(arrays: list[np.ndarray]) -> np.ndarray:
     dtype = np.dtype(arrays[0].dtype)
     if any(np.dtype(array.dtype) != dtype for array in arrays):
         raise TypeError("projected ranking columns must have the same dtype")
-    if dtype == np.dtype(np.int16):
+    symbol = _ranking_pack_backend_symbol(dtype)
+    if symbol == "pipeline_pack_ranking_columns_i16":
         return _pipeline_pack_ranking_columns_i16(arrays)
-    if dtype == np.dtype(np.int32):
+    if symbol == "pipeline_pack_ranking_columns_i32":
         return _pipeline_pack_ranking_columns_i32(arrays)
-    if dtype == np.dtype(np.int64):
+    if symbol == "pipeline_pack_ranking_columns_i64":
         return _pipeline_pack_ranking_columns_i64(arrays)
-    if dtype == np.dtype(np.float32):
+    if symbol == "pipeline_pack_ranking_columns_f32":
         return _pipeline_pack_ranking_columns_f32(arrays)
-    if dtype == np.dtype(np.float64):
+    if symbol == "pipeline_pack_ranking_columns_f64":
         return _pipeline_pack_ranking_columns_f64(arrays)
-    raise TypeError(
-        "projected ranking columns must be int16, int32, int64, float32, "
-        f"or float64, got {dtype}"
-    )
+    raise AssertionError(f"unhandled projected ranking packer {symbol!r}")
 
 
 def _read_arrow_ranking_table(path: Path, columns: list[str], *, kind: str):
