@@ -245,6 +245,11 @@ REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
         "any_of": ({"aucell_score"}, {"aucell_score_sparse_csr"}),
     },
 }
+ALLOWED_FULL_PIPELINE_BACKEND_EXECUTION_STAGES = (
+    set(REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS)
+    | REQUIRED_FULL_PIPELINE_RUST_EXECUTION
+    | {"pipeline_integrated_adata"}
+)
 RANKING_PACKER_SYMBOLS = {
     "pipeline_pack_ranking_columns_i16",
     "pipeline_pack_ranking_columns_i32",
@@ -603,6 +608,19 @@ def _backend_execution_symbol_failures(
                 f"from {{{options}}}"
             )
     return failures
+
+
+def _unknown_full_pipeline_backend_execution_failures(
+    record: dict[str, Any],
+    prefix: str,
+) -> list[str]:
+    execution = record.get("backend_execution")
+    if not isinstance(execution, dict):
+        return []
+    return [
+        f"{prefix}.backend_execution.{stage} is not a recognised full-pipeline stage"
+        for stage in sorted(set(execution) - ALLOWED_FULL_PIPELINE_BACKEND_EXECUTION_STAGES)
+    ]
 
 
 def _sparse_rna_backend_failures(
@@ -2300,6 +2318,7 @@ def _full_pipeline_scaling_row_failures(
             REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
         )
     )
+    failures.extend(_unknown_full_pipeline_backend_execution_failures(row, prefix))
     failures.extend(
         _cell_barcode_filter_failures(
             row,
@@ -2355,6 +2374,9 @@ def validate_full_pipeline(
             "full_pipeline",
             REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
         )
+    )
+    failures.extend(
+        _unknown_full_pipeline_backend_execution_failures(record, "full_pipeline")
     )
     failures.extend(_integrated_adata_execution_failures(record, "full_pipeline"))
     failures.extend(_motif_annotation_pruning_failures(record, "full_pipeline"))

@@ -2900,6 +2900,29 @@ def test_benchmark_artifact_validator_accepts_full_pipeline_record(tmp_path):
     assert failures == []
 
 
+def test_benchmark_artifact_validator_rejects_unknown_full_pipeline_backend_stage(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_unknown_backend_stage",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["backend_execution"]["pipeline_python_dataframe_merge"] = {
+        "engine": "python",
+        "symbols": ["pandas.merge"],
+    }
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "full_pipeline.backend_execution.pipeline_python_dataframe_merge "
+        "is not a recognised full-pipeline stage"
+    ) in failures
+
+
 def test_benchmark_artifact_validator_accepts_projected_cistarget_rankings(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_projected_cistarget",
@@ -3299,6 +3322,29 @@ def test_benchmark_artifact_validator_accepts_full_pipeline_scaling_record(tmp_p
     )
 
     assert failures == []
+
+
+def test_benchmark_artifact_validator_rejects_unknown_scaling_row_backend_stage(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_scaling_unknown_backend_stage",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["backend_execution"]["pipeline_python_dataframe_merge"] = {
+        "engine": "python",
+        "symbols": ["pandas.merge"],
+    }
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "runs[0].backend_execution.pipeline_python_dataframe_merge "
+        "is not a recognised full-pipeline stage"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_scaling_cell_count_design_mismatch(tmp_path):
