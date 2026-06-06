@@ -5184,6 +5184,15 @@ def test_minerva_result_collector_discovers_latest_valid_benchmarks(tmp_path):
         "peak_rss_slope_vs_cells=0.485, "
         "output_total_size_slope_vs_cells=0"
     )
+    assert rows[1]["elapsed_stage_scaling"] == (
+        "aucell=0, cistarget=0, enhancer=0"
+    )
+    assert rows[1]["rss_stage_scaling"] == (
+        "integrated_adata=0.485, aucell=0, candidate_regulons=0"
+    )
+    table = module.markdown_table(rows)
+    assert "elapsed_stage_scaling" in table
+    assert "rss_stage_scaling" in table
 
 
 def test_minerva_result_collector_reports_validation_failures(tmp_path):

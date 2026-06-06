@@ -273,6 +273,29 @@ def _scaling_summary(record: dict[str, Any]) -> str:
     return ", ".join(parts)
 
 
+def _stage_scaling_summary(record: dict[str, Any], key: str) -> str:
+    stage_scaling = record.get("stage_scaling")
+    if not isinstance(stage_scaling, dict):
+        return ""
+    slopes = stage_scaling.get(key)
+    if not isinstance(slopes, dict):
+        return ""
+    numeric = [
+        (stage, float(value))
+        for stage, value in slopes.items()
+        if isinstance(stage, str)
+        and isinstance(value, (int, float))
+        and not isinstance(value, bool)
+    ]
+    if not numeric:
+        return ""
+    numeric.sort(key=lambda item: (-abs(item[1]), item[0]))
+    return ", ".join(
+        f"{stage}={_format_number(value)}"
+        for stage, value in numeric[:3]
+    )
+
+
 def summarise_record(
     path: Path,
     record: dict[str, Any],
@@ -300,6 +323,14 @@ def summarise_record(
         "end_to_end_s": _wall(record),
         "peak_rss_gb": _peak_rss(record),
         "scaling": _scaling_summary(record),
+        "elapsed_stage_scaling": _stage_scaling_summary(
+            record,
+            "elapsed_per_stage_slope_vs_cells",
+        ),
+        "rss_stage_scaling": _stage_scaling_summary(
+            record,
+            "peak_rss_gb_per_stage_slope_vs_cells",
+        ),
         "outputs": _output_summary(record),
     }
 
@@ -378,6 +409,8 @@ def markdown_table(rows: list[dict[str, Any]]) -> str:
         ("peak_rss_gb", "rss_gb"),
         ("outputs", "outputs"),
         ("scaling", "scaling"),
+        ("elapsed_stage_scaling", "elapsed_stage_scaling"),
+        ("rss_stage_scaling", "rss_stage_scaling"),
         ("path", "path"),
     ]
     header = "| " + " | ".join(label for _, label in columns) + " |"
