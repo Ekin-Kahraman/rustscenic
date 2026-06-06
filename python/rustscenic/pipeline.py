@@ -469,10 +469,7 @@ def run(
     enriched_for_eregulons: pd.DataFrame | None = None
     cistarget_rankings: dict = {}
     region_cistarget_rankings: dict = {}
-    motif_annotations_df = (
-        _coerce_motif_annotations(motif_annotations)
-        if motif_annotations is not None and motif_rankings is not None else None
-    )
+    motif_annotations_df: pd.DataFrame | None = None
     if motif_rankings is not None:
         regulon_feature_names = _regulon_feature_names(candidate_regulon_pairs)
         backend_execution["cistarget_projection_features"] = (
@@ -589,7 +586,13 @@ def run(
             )
             mark_memory("cistarget")
 
-        if motif_annotations_df is not None and enriched is not None:
+        if (
+            motif_annotations is not None
+            and motif_rankings is not None
+            and enriched is not None
+            and not enriched.empty
+        ):
+            motif_annotations_df = _coerce_motif_annotations(motif_annotations)
             log("      pruning enriched motifs with motif annotations")
             # nes_threshold is applied inside enrich(), so `enriched` already
             # reflects it. Avoid passing it again to prune_* to keep the
@@ -845,7 +848,13 @@ def run(
                     "pipeline_expand_region_cistarget_rows_f32",
                     "pipeline_expand_region_cistarget_rows_f64",
                 )
-                if motif_annotations_df is not None and not region_enrich.empty:
+                if (
+                    motif_annotations is not None
+                    and motif_rankings is not None
+                    and not region_enrich.empty
+                ):
+                    if motif_annotations_df is None:
+                        motif_annotations_df = _coerce_motif_annotations(motif_annotations)
                     region_enrich = rustscenic.cistarget.prune_enriched_motifs(
                         region_enrich,
                         motif_annotations_df,

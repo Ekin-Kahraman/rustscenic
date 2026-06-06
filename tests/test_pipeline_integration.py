@@ -819,12 +819,20 @@ def test_pipeline_skips_cistarget_rankings_io_when_no_candidate_regulons(
         "_coerce_rankings_with_metadata",
         fail_if_rankings_loaded,
     )
+    monkeypatch.setattr(
+        pipeline,
+        "_coerce_motif_annotations",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("motif annotations should not load with no candidates")
+        ),
+    )
 
     result = pipeline.run(
         rna,
         tmp_path / "out",
         tfs=["TF_NOT_IN_DATA"],
         motif_rankings=tmp_path / "huge_rankings.feather",
+        motif_annotations=tmp_path / "huge_annotations.tsv",
         grn_n_estimators=5,
         grn_top_targets=10,
         verbose=False,
