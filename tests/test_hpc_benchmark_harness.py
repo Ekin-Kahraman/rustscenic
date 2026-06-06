@@ -3926,6 +3926,35 @@ def test_benchmark_artifact_validator_rejects_scaling_reference_download(tmp_pat
     assert "runs[0].reference_sources must match child JSON" in failures
 
 
+def test_benchmark_artifact_validator_rejects_scaling_optional_reference_cache(
+    tmp_path,
+):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_optional_reference_cache",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["reference_sources"]["region_motif_rankings"] = {
+        "source": "default_cache",
+        "path": str(tmp_path / "region_rankings.feather"),
+        "exists_before": True,
+        "exists_after": True,
+        "cache_exists_before": True,
+        "cache_exists_after": True,
+    }
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "runs[0].reference_sources.region_motif_rankings.source must be explicit_path "
+        "for full-pipeline scaling"
+    ) in failures
+
+
 def test_benchmark_artifact_validator_rejects_incomplete_scaling_row_without_child_check(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_full_scaling_incomplete_row",
@@ -4934,6 +4963,12 @@ def test_benchmark_artifact_validator_requires_scaling_region_peak_filter_with_a
     for row in record["runs"]:
         row["params"]["motif_annotations"] = "motif_annotations.tsv"
         row["params"]["region_motif_rankings"] = "region_rankings.feather"
+        row["reference_sources"]["motif_annotations"] = _explicit_reference_source(
+            tmp_path / "motif_annotations.tsv"
+        )
+        row["reference_sources"]["region_motif_rankings"] = _explicit_reference_source(
+            tmp_path / "region_rankings.feather"
+        )
         row["outputs"]["pruned_regulons"] = 1
         row["shapes"]["region_motif_rankings"] = [8, 2000]
         row["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()

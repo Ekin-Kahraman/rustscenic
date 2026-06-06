@@ -2103,17 +2103,31 @@ def _full_pipeline_scaling_reference_source_failures(
         return [f"{prefix}.reference_sources must be an object"]
 
     failures: list[str] = []
-    for key in ("motif_rankings", "gene_coords"):
+    source_policies = {
+        "motif_rankings": (
+            {"explicit_path", "default_cache"},
+            "explicit_path or default_cache",
+        ),
+        "gene_coords": (
+            {"explicit_path", "default_cache"},
+            "explicit_path or default_cache",
+        ),
+    }
+    if _motif_annotations_supplied(row) or "motif_annotations" in sources:
+        source_policies["motif_annotations"] = ({"explicit_path"}, "explicit_path")
+    if _region_motif_rankings_supplied(row) or "region_motif_rankings" in sources:
+        source_policies["region_motif_rankings"] = ({"explicit_path"}, "explicit_path")
+
+    for key, (allowed_sources, allowed_label) in source_policies.items():
         entry = sources.get(key)
         entry_prefix = f"{prefix}.reference_sources.{key}"
         if not isinstance(entry, dict):
             failures.append(f"{entry_prefix} must be an object")
             continue
         source = entry.get("source")
-        if source not in {"explicit_path", "default_cache"}:
+        if source not in allowed_sources:
             failures.append(
-                f"{entry_prefix}.source must be explicit_path or default_cache "
-                "for full-pipeline scaling"
+                f"{entry_prefix}.source must be {allowed_label} for full-pipeline scaling"
             )
         if not _nonempty_str(entry.get("path")):
             failures.append(f"{entry_prefix}.path must be a non-empty string")
