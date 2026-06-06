@@ -2757,6 +2757,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "n_cells_actual": n_cells,
                 "threads": child["params"]["threads"],
                 "params": child["params"],
+                "invocation": child["invocation"],
                 "json_path": str(child_path),
                 "output_dir": str(child_dir),
                 "wall_s": child["wall_s"],
@@ -3435,6 +3436,26 @@ def test_benchmark_artifact_validator_accepts_full_pipeline_scaling_record(tmp_p
     )
 
     assert failures == []
+
+
+def test_benchmark_artifact_validator_rejects_bad_full_pipeline_scaling_row_invocation(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_scaling_row_invocation",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_scaling_record(tmp_path)
+    record["runs"][0]["invocation"]["command"] = ["python"]
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert (
+        "runs[0].invocation.command must contain python, script, and arguments"
+        in failures
+    )
 
 
 def test_benchmark_artifact_validator_rejects_unknown_scaling_row_backend_stage(tmp_path):

@@ -198,6 +198,7 @@ def run_child(args: argparse.Namespace, *, n_cells: int) -> dict[str, Any]:
         "n_cells_actual": int(record["shapes"]["rna_post_qc"][0]),
         "threads": int(args.threads),
         "params": record["params"],
+        "invocation": record["invocation"],
         "json_path": str(out_json),
         "output_dir": str(out_dir),
         "wall_s": record["wall_s"],

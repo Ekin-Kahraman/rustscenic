@@ -2055,6 +2055,7 @@ def _full_pipeline_scaling_row_child_failures(
         "region_cistarget_rankings": child.get("region_cistarget_rankings"),
         "reference_sources": child.get("reference_sources"),
         "params": child.get("params"),
+        "invocation": child.get("invocation"),
         "write_integrated_adata": child.get("params", {}).get(
             "write_integrated_adata",
             True,
@@ -2850,6 +2851,7 @@ def validate_full_pipeline_scaling(
             for key in ("setup", "pipeline", "end_to_end"):
                 if not _positive_number(row["wall_s"].get(key)):
                     failures.append(f"{prefix}.wall_s.{key} must be positive")
+        failures.extend(_invocation_failures(row, prefix))
         if not _positive_number(row.get("peak_rss_gb")):
             failures.append(f"{prefix}.peak_rss_gb must be positive")
         failures.extend(
