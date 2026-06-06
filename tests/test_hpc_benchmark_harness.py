@@ -5326,6 +5326,29 @@ def test_benchmark_artifact_validator_rejects_bad_reference_sources(tmp_path):
     ) in failures
 
 
+def test_benchmark_artifact_validator_rejects_full_pipeline_reference_download(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_full_reference_download",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["reference_sources"]["motif_rankings"] = {
+        "source": "default_download",
+        "path": str(tmp_path / "motif_rankings.feather"),
+        "exists_before": False,
+        "exists_after": True,
+        "cache_exists_before": False,
+        "cache_exists_after": True,
+    }
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "reference_sources.motif_rankings.source must be explicit_path or "
+        "default_cache for timed full-pipeline benchmarks"
+    ) in failures
+
+
 def test_benchmark_artifact_validator_rejects_missing_output_summaries(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_output_summaries",

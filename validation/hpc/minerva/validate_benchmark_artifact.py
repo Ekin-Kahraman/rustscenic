@@ -809,7 +809,11 @@ def _reference_fingerprint_failures(record: dict[str, Any]) -> list[str]:
     return failures
 
 
-def _reference_source_failures(record: dict[str, Any]) -> list[str]:
+def _reference_source_failures(
+    record: dict[str, Any],
+    *,
+    allow_default_download: bool,
+) -> list[str]:
     failures: list[str] = []
     sources = record.get("reference_sources")
     fingerprints = record.get("reference_fingerprints", {})
@@ -839,6 +843,11 @@ def _reference_source_failures(record: dict[str, Any]) -> list[str]:
         if source not in {"explicit_path", "default_cache", "default_download"}:
             failures.append(
                 f"{prefix}.source must be explicit_path, default_cache, or default_download"
+            )
+        elif source == "default_download" and not allow_default_download:
+            failures.append(
+                f"{prefix}.source must be explicit_path or default_cache "
+                "for timed full-pipeline benchmarks"
             )
         if not _nonempty_str(entry.get("path")):
             failures.append(f"{prefix}.path must be a non-empty string")
@@ -2457,7 +2466,7 @@ def validate_full_pipeline(
     if not _nonempty_str(record.get("dataset_name")):
         failures.append("dataset_name must be a non-empty string")
     failures.extend(_reference_fingerprint_failures(record))
-    failures.extend(_reference_source_failures(record))
+    failures.extend(_reference_source_failures(record, allow_default_download=False))
     failures.extend(_cistarget_ranking_metadata_failures(record, "full_pipeline"))
     failures.extend(_expected_tf_recovery_failures(record, "full_pipeline"))
     failures.extend(_thread_budget_failures(record, "full_pipeline", params_key="threads"))
