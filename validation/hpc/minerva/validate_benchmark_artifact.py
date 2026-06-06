@@ -1851,14 +1851,14 @@ def _full_pipeline_wall_breakdown_failures(
         return failures
 
     compute = wall.get("pipeline_compute_stages")
-    io = wall.get("pipeline_io_stages", 0.0)
+    io = wall.get("pipeline_io_stages")
     unattributed = wall.get("pipeline_unattributed")
     if not _nonnegative_number(compute):
         failures.append(
             f"{_path(prefix, 'wall_s.pipeline_compute_stages')} must be non-negative"
         )
     io_elapsed = record.get("io_elapsed_per_stage")
-    if io_elapsed is not None and not _nonnegative_number(io):
+    if not _nonnegative_number(io):
         failures.append(
             f"{_path(prefix, 'wall_s.pipeline_io_stages')} must be non-negative"
         )
@@ -1889,32 +1889,29 @@ def _full_pipeline_wall_breakdown_failures(
                 "wall_s.pipeline"
             )
 
-    if io_elapsed is not None:
-        if not isinstance(io_elapsed, dict):
-            failures.append(f"{_path(prefix, 'io_elapsed_per_stage')} must be an object")
-        else:
-            io_values = []
-            for stage, value in io_elapsed.items():
-                if not _nonempty_str(stage):
-                    failures.append(
-                        f"{_path(prefix, 'io_elapsed_per_stage')} keys must be non-empty strings"
-                    )
-                    continue
-                if not _nonnegative_number(value):
-                    failures.append(
-                        f"{_path(prefix, f'io_elapsed_per_stage.{stage}')} must be non-negative"
-                    )
-                    continue
-                io_values.append(float(value))
-            if _nonnegative_number(io):
-                expected_io = round(sum(io_values), 3)
-                if abs(float(io) - expected_io) > 0.005:
-                    failures.append(
-                        f"{_path(prefix, 'wall_s.pipeline_io_stages')} must match "
-                        f"io_elapsed_per_stage sum: {io} != {expected_io}"
-                    )
+    if not isinstance(io_elapsed, dict):
+        failures.append(f"{_path(prefix, 'io_elapsed_per_stage')} must be an object")
     else:
-        io = 0.0
+        io_values = []
+        for stage, value in io_elapsed.items():
+            if not _nonempty_str(stage):
+                failures.append(
+                    f"{_path(prefix, 'io_elapsed_per_stage')} keys must be non-empty strings"
+                )
+                continue
+            if not _nonnegative_number(value):
+                failures.append(
+                    f"{_path(prefix, f'io_elapsed_per_stage.{stage}')} must be non-negative"
+                )
+                continue
+            io_values.append(float(value))
+        if _nonnegative_number(io):
+            expected_io = round(sum(io_values), 3)
+            if abs(float(io) - expected_io) > 0.005:
+                failures.append(
+                    f"{_path(prefix, 'wall_s.pipeline_io_stages')} must match "
+                    f"io_elapsed_per_stage sum: {io} != {expected_io}"
+                )
 
     if (
         _positive_number(wall.get("pipeline"))
@@ -1927,10 +1924,9 @@ def _full_pipeline_wall_breakdown_failures(
             3,
         )
         if abs(float(unattributed) - expected_unattributed) > 0.01:
-            io_note = " and IO stages" if io_elapsed is not None else ""
             failures.append(
                 f"{_path(prefix, 'wall_s.pipeline_unattributed')} must match "
-                f"pipeline minus compute stages{io_note}: "
+                "pipeline minus compute stages and IO stages: "
                 f"{unattributed} != {expected_unattributed}"
             )
     return failures
@@ -2440,6 +2436,7 @@ def validate_full_pipeline(
                 "setup_peak_rss_gb",
                 "peak_rss_gb",
                 "elapsed_per_stage",
+                "io_elapsed_per_stage",
                 "peak_rss_gb_per_stage",
                 "peak_rss_gb_delta_per_stage",
                 "outputs",

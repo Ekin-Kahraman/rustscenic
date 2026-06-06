@@ -2540,6 +2540,7 @@ def _full_pipeline_record(tmp_path: Path):
             "setup": 1.0,
             "pipeline": 2.0,
             "pipeline_compute_stages": 1.75,
+            "pipeline_io_stages": 0.0,
             "pipeline_unattributed": 0.25,
             "end_to_end": 3.0,
         },
@@ -2563,6 +2564,7 @@ def _full_pipeline_record(tmp_path: Path):
             "eregulons": 0.1,
             "aucell": 0.25,
         },
+        "io_elapsed_per_stage": {},
         "peak_rss_gb_per_stage": {
             "load_rna": 0.5,
             "preproc": 0.6,
@@ -2765,6 +2767,7 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "setup_peak_rss_gb": child["setup_peak_rss_gb"],
                 "setup_elapsed_s": child["setup_elapsed_s"],
                 "elapsed_per_stage": child["elapsed_per_stage"],
+                "io_elapsed_per_stage": child["io_elapsed_per_stage"],
                 "peak_rss_gb_per_stage": child["peak_rss_gb_per_stage"],
                 "peak_rss_gb_delta_per_stage": child["peak_rss_gb_delta_per_stage"],
                 "output_storage": child["output_storage"],
@@ -3253,7 +3256,8 @@ def test_benchmark_artifact_validator_rejects_bad_full_pipeline_wall_breakdown(t
         "0.5 != 1.75"
     ) in failures
     assert (
-        "wall_s.pipeline_unattributed must match pipeline minus compute stages: "
+        "wall_s.pipeline_unattributed must match pipeline minus compute stages "
+        "and IO stages: "
         "0.1 != 1.5"
     ) in failures
 
@@ -3295,6 +3299,25 @@ def test_benchmark_artifact_validator_accounts_for_pipeline_io_timing(tmp_path):
         "wall_s.pipeline_unattributed must match pipeline minus compute stages "
         "and IO stages: 0.15 != 0.05"
     ) in failures
+
+
+def test_benchmark_artifact_validator_requires_pipeline_io_timing(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_requires_pipeline_io_timing",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    del record["io_elapsed_per_stage"]
+    del record["wall_s"]["pipeline_io_stages"]
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert "full_pipeline.io_elapsed_per_stage missing" in failures
+    assert "wall_s.pipeline_io_stages must be non-negative" in failures
 
 
 def test_benchmark_artifact_validator_checks_output_storage_totals(tmp_path):
