@@ -474,116 +474,122 @@ def run(
         if motif_annotations is not None and motif_rankings is not None else None
     )
     if motif_rankings is not None:
-        import rustscenic.cistarget
         regulon_feature_names = _regulon_feature_names(candidate_regulon_pairs)
         backend_execution["cistarget_projection_features"] = (
             _rust_execution("pipeline_unique_regulon_features")
             if regulon_feature_names
             else _skipped_execution("no candidate regulon features to project")
         )
-        t_rankings = time.perf_counter()
-        ranking_features = _ranking_projection_features(
-            motif_rankings,
-            regulon_feature_names,
-        )
-        if ranking_features is None:
-            requested_feature_count = None
+        if not regulon_feature_names:
+            backend_execution["cistarget"] = _skipped_execution(
+                "no candidate regulon features to score"
+            )
+            log("      cistarget skipped: no candidate regulon features")
         else:
-            ranking_features = list(ranking_features)
-            requested_feature_count = len(ranking_features)
-        rankings_array = _projected_rankings_array_with_metadata(
-            motif_rankings,
-            feature_names=ranking_features,
-        )
-        if rankings_array is None:
-            rankings_df, rankings_metadata = _coerce_rankings_with_metadata(
+            import rustscenic.cistarget
+            t_rankings = time.perf_counter()
+            ranking_features = _ranking_projection_features(
+                motif_rankings,
+                regulon_feature_names,
+            )
+            if ranking_features is None:
+                requested_feature_count = None
+            else:
+                ranking_features = list(ranking_features)
+                requested_feature_count = len(ranking_features)
+            rankings_array = _projected_rankings_array_with_metadata(
                 motif_rankings,
                 feature_names=ranking_features,
             )
-            rank_universe_size = (
-                rankings_metadata.get("rank_universe_size")
-                if ranking_features is not None else None
+            if rankings_array is None:
+                rankings_df, rankings_metadata = _coerce_rankings_with_metadata(
+                    motif_rankings,
+                    feature_names=ranking_features,
+                )
+                rank_universe_size = (
+                    rankings_metadata.get("rank_universe_size")
+                    if ranking_features is not None else None
+                )
+                ranking_values = rankings_df.to_numpy(copy=False)
+                ranking_motif_names = string_list(rankings_df.index)
+                ranking_feature_names = string_list(rankings_df.columns)
+            else:
+                rankings_df = None
+                rankings_metadata = rankings_array.metadata
+                rank_universe_size = rankings_metadata.get("rank_universe_size")
+                ranking_values = rankings_array.values
+                ranking_motif_names = rankings_array.motif_names
+                ranking_feature_names = rankings_array.feature_names
+            io_elapsed["cistarget_rankings_load"] = (
+                io_elapsed.get("cistarget_rankings_load", 0.0)
+                + (time.perf_counter() - t_rankings)
             )
-            ranking_values = rankings_df.to_numpy(copy=False)
-            ranking_motif_names = string_list(rankings_df.index)
-            ranking_feature_names = string_list(rankings_df.columns)
-        else:
-            rankings_df = None
-            rankings_metadata = rankings_array.metadata
-            rank_universe_size = rankings_metadata.get("rank_universe_size")
-            ranking_values = rankings_array.values
-            ranking_motif_names = rankings_array.motif_names
-            ranking_feature_names = rankings_array.feature_names
-        io_elapsed["cistarget_rankings_load"] = (
-            io_elapsed.get("cistarget_rankings_load", 0.0)
-            + (time.perf_counter() - t_rankings)
-        )
-        loaded_feature_count = int(ranking_values.shape[1])
-        rank_universe_arg = (
-            rank_universe_size
-            if rank_universe_size is not None
-            and rank_universe_size > loaded_feature_count
-            else None
-        )
-        cistarget_rankings = _ranking_provenance(
-            motif_rankings,
-            loaded_columns=loaded_feature_count,
-            rank_universe_size=rank_universe_size,
-            requested_features=requested_feature_count,
-            motifs=len(ranking_motif_names),
-        )
-        if cistarget_rankings.get("projected"):
-            backend_execution["cistarget_ranking_projection"] = _rust_execution(
-                *_ranking_projection_symbols(rankings_array)
+            loaded_feature_count = int(ranking_values.shape[1])
+            rank_universe_arg = (
+                rank_universe_size
+                if rank_universe_size is not None
+                and rank_universe_size > loaded_feature_count
+                else None
             )
-        universe_note = (
-            f" projected from {rank_universe_arg:,}-gene universe"
-            if rank_universe_arg is not None else ""
-        )
-        log(
-            f"[6/8] cistarget: {len(ranking_motif_names):,} motifs × "
-            f"{loaded_feature_count:,} genes{universe_note}"
-        )
-        t0 = time.perf_counter()
-        if rankings_array is None:
-            enriched = rustscenic.cistarget.enrich(
-                rankings_df,
-                candidate_regulon_pairs,
-                top_frac=cistarget_top_frac,
-                auc_threshold=cistarget_auc_threshold,
-                nes_threshold=cistarget_nes_threshold,
-                rank_universe_size=rank_universe_arg,
+            cistarget_rankings = _ranking_provenance(
+                motif_rankings,
+                loaded_columns=loaded_feature_count,
+                rank_universe_size=rank_universe_size,
+                requested_features=requested_feature_count,
+                motifs=len(ranking_motif_names),
             )
-        else:
-            enriched = rustscenic.cistarget._enrich_from_rank_array(
-                ranking_values,
-                ranking_motif_names,
-                ranking_feature_names,
-                candidate_regulon_pairs,
-                top_frac=cistarget_top_frac,
-                auc_threshold=cistarget_auc_threshold,
-                nes_threshold=cistarget_nes_threshold,
-                rank_universe_size=rank_universe_arg,
+            if cistarget_rankings.get("projected"):
+                backend_execution["cistarget_ranking_projection"] = _rust_execution(
+                    *_ranking_projection_symbols(rankings_array)
+                )
+            universe_note = (
+                f" projected from {rank_universe_arg:,}-gene universe"
+                if rank_universe_arg is not None else ""
             )
-        backend_execution["cistarget"] = _rust_execution_from_attrs(
-            enriched,
-            "cistarget_enrichment_from_rankings_i32",
-        )
-        enriched_for_eregulons = enriched
-        elapsed["cistarget"] = time.perf_counter() - t0
-        n_cistarget_rows = int(len(enriched))
-        cistarget_path = output_dir / "cistarget_enriched.parquet"
-        time_io(
-            "cistarget_parquet_write",
-            lambda: enriched.to_parquet(cistarget_path, index=False),
-        )
-        log(
-            f"      {len(enriched):,} enriched pairs in {elapsed['cistarget']:.1f}s"
-            + (f" (nes_threshold={cistarget_nes_threshold})" if cistarget_nes_threshold is not None else "")
-        )
-        mark_memory("cistarget")
+            log(
+                f"[6/8] cistarget: {len(ranking_motif_names):,} motifs × "
+                f"{loaded_feature_count:,} genes{universe_note}"
+            )
+            t0 = time.perf_counter()
+            if rankings_array is None:
+                enriched = rustscenic.cistarget.enrich(
+                    rankings_df,
+                    candidate_regulon_pairs,
+                    top_frac=cistarget_top_frac,
+                    auc_threshold=cistarget_auc_threshold,
+                    nes_threshold=cistarget_nes_threshold,
+                    rank_universe_size=rank_universe_arg,
+                )
+            else:
+                enriched = rustscenic.cistarget._enrich_from_rank_array(
+                    ranking_values,
+                    ranking_motif_names,
+                    ranking_feature_names,
+                    candidate_regulon_pairs,
+                    top_frac=cistarget_top_frac,
+                    auc_threshold=cistarget_auc_threshold,
+                    nes_threshold=cistarget_nes_threshold,
+                    rank_universe_size=rank_universe_arg,
+                )
+            backend_execution["cistarget"] = _rust_execution_from_attrs(
+                enriched,
+                "cistarget_enrichment_from_rankings_i32",
+            )
+            enriched_for_eregulons = enriched
+            elapsed["cistarget"] = time.perf_counter() - t0
+            n_cistarget_rows = int(len(enriched))
+            cistarget_path = output_dir / "cistarget_enriched.parquet"
+            time_io(
+                "cistarget_parquet_write",
+                lambda: enriched.to_parquet(cistarget_path, index=False),
+            )
+            log(
+                f"      {len(enriched):,} enriched pairs in {elapsed['cistarget']:.1f}s"
+                + (f" (nes_threshold={cistarget_nes_threshold})" if cistarget_nes_threshold is not None else "")
+            )
+            mark_memory("cistarget")
 
-        if motif_annotations_df is not None:
+        if motif_annotations_df is not None and enriched is not None:
             log("      pruning enriched motifs with motif annotations")
             # nes_threshold is applied inside enrich(), so `enriched` already
             # reflects it. Avoid passing it again to prune_* to keep the

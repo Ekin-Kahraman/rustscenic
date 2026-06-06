@@ -789,6 +789,64 @@ def test_pipeline_run_without_motif_annotations_keeps_candidate_regulons(tmp_pat
     assert list(auc.columns) == list(active)
 
 
+def test_pipeline_skips_cistarget_rankings_io_when_no_candidate_regulons(
+    tmp_path,
+    monkeypatch,
+):
+    import anndata as ad
+    import numpy as np
+    import pandas as pd
+    import rustscenic.pipeline as pipeline
+
+    rng = np.random.default_rng(11)
+    genes = [f"G{i}" for i in range(8)]
+    rna = ad.AnnData(
+        X=rng.normal(size=(24, len(genes))).astype(np.float32),
+        obs=pd.DataFrame(index=[f"cell{i}" for i in range(24)]),
+        var=pd.DataFrame(index=genes),
+    )
+
+    def fail_if_rankings_loaded(*_args, **_kwargs):
+        raise AssertionError("cistarget rankings should not load with no candidates")
+
+    monkeypatch.setattr(
+        pipeline,
+        "_projected_rankings_array_with_metadata",
+        fail_if_rankings_loaded,
+    )
+    monkeypatch.setattr(
+        pipeline,
+        "_coerce_rankings_with_metadata",
+        fail_if_rankings_loaded,
+    )
+
+    result = pipeline.run(
+        rna,
+        tmp_path / "out",
+        tfs=["TF_NOT_IN_DATA"],
+        motif_rankings=tmp_path / "huge_rankings.feather",
+        grn_n_estimators=5,
+        grn_top_targets=10,
+        verbose=False,
+        write_integrated_adata=False,
+    )
+
+    assert result.n_candidate_regulons == 0
+    assert result.n_regulons == 0
+    assert result.n_cistarget_rows is None
+    assert result.cistarget_path is None
+    assert result.cistarget_rankings == {}
+    assert "cistarget_rankings_load" not in result.io_elapsed
+    assert result.backend_execution["cistarget_projection_features"] == {
+        "engine": "skipped",
+        "reason": "no candidate regulon features to project",
+    }
+    assert result.backend_execution["cistarget"] == {
+        "engine": "skipped",
+        "reason": "no candidate regulon features to score",
+    }
+
+
 def test_attribute_peaks_normalises_compound_regulon_names():
     from rustscenic.pipeline import _attribute_peaks_to_cistarget
 
