@@ -1067,8 +1067,53 @@ def _ranking_metadata_failures(
             shape_key=shape_key,
         )
     )
+    failures.extend(
+        _ranking_projection_required_failures(
+            record,
+            prefix,
+            field=field,
+            shape_key=shape_key,
+        )
+    )
 
     return failures
+
+
+def _ranking_projection_required_failures(
+    record: dict[str, Any],
+    prefix: str,
+    *,
+    field: str,
+    shape_key: str,
+) -> list[str]:
+    meta = record.get(field)
+    fingerprints = record.get("reference_fingerprints")
+    if not isinstance(meta, dict) or not isinstance(fingerprints, dict):
+        return []
+    fp = fingerprints.get(shape_key)
+    if not isinstance(fp, dict) or fp.get("file_backed") is not True:
+        return []
+
+    input_kind = meta.get("input_kind")
+    if input_kind == "dataframe":
+        return []
+
+    mode = meta.get("mode")
+    rank_universe_size = meta.get("rank_universe_size")
+    requested_features = meta.get("requested_features")
+    if (
+        _positive_int(rank_universe_size)
+        and _positive_int(requested_features)
+        and requested_features < rank_universe_size
+        and mode != "projected_file"
+    ):
+        return [
+            f"{prefix}.{field}.mode must be projected_file when "
+            f"{prefix}.reference_fingerprints.{shape_key}.file_backed is true "
+            f"and {prefix}.{field}.requested_features is smaller than "
+            f"{prefix}.{field}.rank_universe_size"
+        ]
+    return []
 
 
 def _ranking_reference_format_failures(

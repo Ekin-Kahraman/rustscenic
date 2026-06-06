@@ -2252,7 +2252,14 @@ def _backend_execution_state():
         },
         "pipeline_cistarget": {
             "engine": "rust",
-            "symbols": ["cistarget_enrichment_from_rankings_i32"],
+            "symbols": ["cistarget_enrichment_from_projected_rankings_i32"],
+        },
+        "pipeline_cistarget_ranking_projection": {
+            "engine": "rust",
+            "symbols": [
+                "pipeline_project_ranking_columns",
+                "pipeline_pack_ranking_columns_i32",
+            ],
         },
         "pipeline_enhancer": {
             "engine": "rust",
@@ -2433,11 +2440,11 @@ def _full_pipeline_record(tmp_path: Path):
         "reference_sources": _default_cached_reference_sources(tmp_path),
         "cistarget_rankings": {
             "input_kind": "feather",
-            "mode": "full_file",
-            "projected": False,
-            "loaded_columns": 2000,
+            "mode": "projected_file",
+            "projected": True,
+            "loaded_columns": 900,
             "rank_universe_size": 2000,
-            "requested_features": 2000,
+            "requested_features": 900,
             "motifs": 50,
         },
         "region_cistarget_rankings": {},
@@ -2869,6 +2876,38 @@ def test_benchmark_artifact_validator_accepts_projected_cistarget_rankings(tmp_p
     assert failures == []
 
 
+def test_benchmark_artifact_validator_rejects_full_file_when_projection_possible(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_requires_projected_cistarget",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["cistarget_rankings"] = {
+        "input_kind": "feather",
+        "mode": "full_file",
+        "projected": False,
+        "loaded_columns": 2000,
+        "rank_universe_size": 2000,
+        "requested_features": 900,
+        "motifs": 50,
+    }
+    record["backend_execution"]["pipeline_cistarget"] = {
+        "engine": "rust",
+        "symbols": ["cistarget_enrichment_from_rankings_i32"],
+    }
+    record["backend_execution"].pop("pipeline_cistarget_ranking_projection", None)
+    _sync_full_pipeline_manifest(record)
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.cistarget_rankings.mode must be projected_file when "
+        "full_pipeline.reference_fingerprints.motif_rankings.file_backed is true "
+        "and full_pipeline.cistarget_rankings.requested_features is smaller than "
+        "full_pipeline.cistarget_rankings.rank_universe_size"
+    ) in failures
+
+
 def test_benchmark_artifact_validator_rejects_missing_cistarget_rankings(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_missing_cistarget_rankings",
@@ -2917,6 +2956,10 @@ def test_benchmark_artifact_validator_rejects_projected_cistarget_without_projec
             "pipeline_pack_ranking_columns_i32",
         ],
     }
+    record["backend_execution"]["pipeline_cistarget"] = {
+        "engine": "rust",
+        "symbols": ["cistarget_enrichment_from_rankings_i32"],
+    }
     _sync_full_pipeline_manifest(record)
 
     failures = module.validate_record(record, require_clean=True)
@@ -2947,6 +2990,7 @@ def test_benchmark_artifact_validator_rejects_projected_cistarget_without_projec
         "engine": "rust",
         "symbols": ["cistarget_enrichment_from_projected_rankings_i32"],
     }
+    record["backend_execution"].pop("pipeline_cistarget_ranking_projection", None)
     _sync_full_pipeline_manifest(record)
 
     failures = module.validate_record(record, require_clean=True)
@@ -4122,6 +4166,64 @@ def test_benchmark_artifact_validator_accepts_region_motif_rankings_metadata(tmp
     _sync_full_pipeline_manifest(record)
 
     assert module.validate_record(record, require_clean=True) == []
+
+
+def test_benchmark_artifact_validator_rejects_full_region_file_when_projection_possible(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_requires_projected_region_rankings",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["params"]["region_motif_rankings"] = "region_rankings.feather"
+    record["setup_elapsed_s"]["region_motif_rankings_metadata"] = 0.02
+    record["reference_fingerprints"]["region_motif_rankings"] = {
+        "shape": [8, 2000],
+        "index_name": None,
+        "index_sample": ["file-backed:not-loaded"],
+        "column_sample": ["motif", "peak_1"],
+        "dtype_counts": {"int32": 2000},
+        "corner_sample_sha256": "d" * 64,
+        "file_backed": True,
+        "format": "feather",
+        "metadata_read_columns": ["motifs"],
+        "path_name": "region_rankings.feather",
+        "size_bytes": 1024,
+    }
+    record["reference_sources"]["region_motif_rankings"] = _explicit_reference_source(
+        tmp_path / "region_rankings.feather"
+    )
+    record["shapes"]["region_motif_rankings"] = [8, 2000]
+    record["region_cistarget_rankings"] = {
+        "input_kind": "feather",
+        "mode": "full_file",
+        "projected": False,
+        "loaded_columns": 2000,
+        "rank_universe_size": 2000,
+        "requested_features": 900,
+        "motifs": 8,
+    }
+    record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
+        "engine": "rust",
+        "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
+    }
+    record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
+        "engine": "rust",
+        "symbols": [
+            "cistarget_enrichment_from_rankings_i32",
+            "cistarget_region_attribution_peak_values_i32",
+            "pipeline_expand_region_cistarget_rows_f32",
+        ],
+    }
+    _sync_full_pipeline_manifest(record)
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.region_cistarget_rankings.mode must be projected_file when "
+        "full_pipeline.reference_fingerprints.region_motif_rankings.file_backed is true "
+        "and full_pipeline.region_cistarget_rankings.requested_features is smaller than "
+        "full_pipeline.region_cistarget_rankings.rank_universe_size"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_region_ranking_format_mismatch(tmp_path):
