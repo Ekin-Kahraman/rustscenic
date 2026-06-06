@@ -340,6 +340,7 @@ def test_real_multiome_harness_builds_compact_output_summaries(monkeypatch, tmp_
     assert summaries["top_enhancer_links"][0]["abs_correlation"] == 0.9
     assert summaries["top_eregulon_rows"][0]["tf"] == "TF1"
     assert summaries["summary_max_rows"] is None
+    assert summaries["summary_scope"] == "full_outputs"
 
     def fail_full_parquet_read(*_args, **_kwargs):
         raise AssertionError("bounded summaries must not call pd.read_parquet")
@@ -348,6 +349,7 @@ def test_real_multiome_harness_builds_compact_output_summaries(monkeypatch, tmp_
     bounded = module.output_summaries(result, n=1, max_rows=1)
 
     assert bounded["summary_max_rows"] == 1
+    assert bounded["summary_scope"] == "bounded_first_rows"
     assert bounded["top_grn_edges"] == [{"TF": "TF2", "target": "G2", "importance": 0.2}]
     assert bounded["top_cistarget_rows"][0]["motif"] == "m1"
 
@@ -2557,6 +2559,7 @@ def _full_pipeline_record(tmp_path: Path):
         "output_summaries": {
             "summary_rows": 10,
             "summary_max_rows": 1000,
+            "summary_scope": "bounded_first_rows",
             "active_regulons_sample": ["TF1_regulon"],
             "top_grn_edges": [{"TF": "TF1", "target": "G1", "importance": 0.9}],
             "top_cistarget_rows": [{"regulon": "TF1_regulon", "motif": "m1", "auc": 0.5}],
@@ -5041,11 +5044,16 @@ def test_benchmark_artifact_validator_rejects_missing_output_summaries(tmp_path)
     record = _full_pipeline_record(tmp_path)
     record["output_summaries"]["top_grn_edges"] = []
     record["output_summaries"]["top_enhancer_links"] = ["not-a-row"]
+    record["output_summaries"]["summary_scope"] = "full_outputs"
 
     failures = module.validate_record(record, require_clean=True)
 
     assert "output_summaries.top_grn_edges must be non-empty" in failures
     assert "output_summaries.top_enhancer_links rows must be objects" in failures
+    assert (
+        "output_summaries.summary_scope must be bounded_first_rows when "
+        "summary_max_rows is set"
+    ) in failures
 
 
 def test_benchmark_artifact_validator_accepts_grn_scaling_record():

@@ -378,6 +378,7 @@ def output_summaries(
         "top_enhancer_links": _records(enhancer, n=n),
         "top_eregulon_rows": _records(eregulons, n=n),
         "summary_max_rows": max_rows,
+        "summary_scope": "full_outputs" if max_rows is None else "bounded_first_rows",
     }
 
 

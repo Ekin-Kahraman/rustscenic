@@ -1300,6 +1300,21 @@ def _output_summary_failures(record: dict[str, Any]) -> list[str]:
     summary_max_rows = summaries.get("summary_max_rows")
     if summary_max_rows is not None and not _positive_int(summary_max_rows):
         failures.append("output_summaries.summary_max_rows must be a positive integer or null")
+    summary_scope = summaries.get("summary_scope")
+    if summary_scope not in {"full_outputs", "bounded_first_rows"}:
+        failures.append(
+            "output_summaries.summary_scope must be full_outputs or bounded_first_rows"
+        )
+    elif summary_scope == "full_outputs" and summary_max_rows is not None:
+        failures.append(
+            "output_summaries.summary_scope must be bounded_first_rows when "
+            "summary_max_rows is set"
+        )
+    elif summary_scope == "bounded_first_rows" and summary_max_rows is None:
+        failures.append(
+            "output_summaries.summary_scope must be full_outputs when "
+            "summary_max_rows is null"
+        )
 
     params = record.get("params")
     if isinstance(params, dict):
