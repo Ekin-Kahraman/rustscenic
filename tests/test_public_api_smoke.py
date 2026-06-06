@@ -101,11 +101,29 @@ def test_ensure_motif_rankings_cached_does_not_load_feather(tmp_path, monkeypatc
     monkeypatch.setattr(urllib.request, "urlretrieve", fake_urlretrieve)
     monkeypatch.setattr(pd, "read_feather", fail_if_loaded)
 
-    out = data._ensure_motif_rankings_cached(cache_dir=tmp_path, verbose=False)
+    out = data.motif_rankings_path(cache_dir=tmp_path, verbose=False)
 
     assert out == tmp_path / expected_name
     assert out.exists()
     assert calls and calls[0].endswith(expected_name)
+
+
+def test_motif_rankings_cache_path_is_public_no_io(tmp_path, monkeypatch):
+    import rustscenic.data as data
+    import urllib.request
+
+    expected_name = "hg38_10kbp_up_10kbp_down_full_tx_v10_clust.genes_vs_motifs.rankings.feather"
+
+    def fail_if_io(*_args, **_kwargs):
+        raise AssertionError("cache-path helper must not download or read data")
+
+    monkeypatch.setattr(urllib.request, "urlretrieve", fail_if_io)
+    monkeypatch.setattr(pd, "read_feather", fail_if_io)
+
+    out = data.motif_rankings_cache_path(cache_dir=tmp_path)
+
+    assert out == tmp_path / expected_name
+    assert not out.exists()
 
 
 def test_download_gene_coords_parses_gencode_gtf(tmp_path, monkeypatch):

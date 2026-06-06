@@ -439,10 +439,10 @@ def prepare_motif_rankings_input(
 
     import rustscenic.data
 
-    cache_path = rustscenic.data._motif_rankings_cache_path(species=species)
+    cache_path = rustscenic.data.motif_rankings_cache_path(species=species)
     cache_exists_before = cache_path.exists()
     print("[setup] downloading or loading cached motif rankings", flush=True)
-    cached_path = rustscenic.data._ensure_motif_rankings_cached(
+    cached_path = rustscenic.data.motif_rankings_path(
         species=species,
         verbose=not quiet,
     )

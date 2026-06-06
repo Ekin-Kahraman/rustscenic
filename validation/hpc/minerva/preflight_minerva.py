@@ -324,7 +324,7 @@ def _reference_cache_statuses(
             "            out['size_bytes'] = p.stat().st_size",
             "    return out",
             "",
-            f"motif_path = data._motif_rankings_cache_path(species={args.motif_species!r})",
+            f"motif_path = data.motif_rankings_cache_path(species={args.motif_species!r})",
             f"gene_paths = data._gene_coords_cache_paths(species={args.gene_species!r})",
             "print(json.dumps({",
             "    'motif_rankings': status(motif_path),",

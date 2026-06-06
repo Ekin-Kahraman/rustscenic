@@ -252,10 +252,10 @@ def test_real_multiome_harness_prepares_default_motif_cache_without_loading(
         }
     ).to_feather(cache_path)
 
-    monkeypatch.setattr(data, "_motif_rankings_cache_path", lambda *, species: cache_path)
+    monkeypatch.setattr(data, "motif_rankings_cache_path", lambda *, species: cache_path)
     monkeypatch.setattr(
         data,
-        "_ensure_motif_rankings_cached",
+        "motif_rankings_path",
         lambda *, species, verbose: cache_path,
     )
     monkeypatch.setattr(
@@ -1660,9 +1660,9 @@ def test_prepare_reference_cache_warms_without_loading_motif_rankings(monkeypatc
     gene_cache = tmp_path / "genes"
     calls: list[str] = []
 
-    def fake_ensure_motif_rankings_cached(*, species, cache_dir, verbose, **_kwargs):
+    def fake_motif_rankings_path(*, species, cache_dir, verbose, **_kwargs):
         calls.append("ensure_motif")
-        path = module.data._motif_rankings_cache_path(
+        path = module.data.motif_rankings_cache_path(
             species=species,
             cache_dir=cache_dir,
         )
@@ -1686,8 +1686,8 @@ def test_prepare_reference_cache_warms_without_loading_motif_rankings(monkeypatc
 
     monkeypatch.setattr(
         module.data,
-        "_ensure_motif_rankings_cached",
-        fake_ensure_motif_rankings_cached,
+        "motif_rankings_path",
+        fake_motif_rankings_path,
     )
     monkeypatch.setattr(module.data, "download_motif_rankings", fail_if_loaded)
     monkeypatch.setattr(module.data, "download_gene_coords", fake_download_gene_coords)

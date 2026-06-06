@@ -11,6 +11,10 @@ Public API:
         Bundled TF names. "hs" = human (1,839 TFs, HGNC), "mm" = mouse
         (1,721 TFs, MGI). Lists are from aertslab/pySCENIC resources/.
 
+    rustscenic.data.motif_rankings_path(species="hs", cache_dir=None) -> Path
+        Fetch + cache an aertslab motif ranking database (feather). Returns
+        the local file path without loading the ranking table into memory.
+
     rustscenic.data.download_motif_rankings(species, genome, version, cache_dir=None)
         Fetch + cache an aertslab motif ranking database (feather). Returns
         a pandas DataFrame with motifs as index, genes as columns.
@@ -146,6 +150,33 @@ def _motif_rankings_cache_path(
     return Path(cache_dir) / filename
 
 
+def motif_rankings_cache_path(
+    species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
+    genome: str | None = None,
+    motif_collection: str = "mc_v10_clust",
+    refseq_release: str = "refseq_r80",
+    region: str = "gene_based",
+    window: str = "10kbp_up_10kbp_down",
+    score_type: str = "rankings",
+    cache_dir: Path | None = None,
+    filename: str | None = None,
+    url: str | None = None,
+) -> Path:
+    """Return the expected local motif-ranking cache path without IO."""
+    return _motif_rankings_cache_path(
+        species=species,
+        genome=genome,
+        motif_collection=motif_collection,
+        refseq_release=refseq_release,
+        region=region,
+        window=window,
+        score_type=score_type,
+        cache_dir=cache_dir,
+        filename=filename,
+        url=url,
+    )
+
+
 def _motif_rankings_cache_target(
     species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
     genome: str | None = None,
@@ -247,6 +278,35 @@ def _ensure_motif_rankings_cached(
     return local_path
 
 
+def motif_rankings_path(
+    species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
+    genome: str | None = None,
+    motif_collection: str = "mc_v10_clust",
+    refseq_release: str = "refseq_r80",
+    region: str = "gene_based",
+    window: str = "10kbp_up_10kbp_down",
+    score_type: str = "rankings",
+    cache_dir: Path | None = None,
+    filename: str | None = None,
+    url: str | None = None,
+    verbose: bool = True,
+) -> Path:
+    """Fetch/cache motif rankings and return the local path without loading it."""
+    return _ensure_motif_rankings_cached(
+        species=species,
+        genome=genome,
+        motif_collection=motif_collection,
+        refseq_release=refseq_release,
+        region=region,
+        window=window,
+        score_type=score_type,
+        cache_dir=cache_dir,
+        filename=filename,
+        url=url,
+        verbose=verbose,
+    )
+
+
 def download_motif_rankings(
     species: Literal["hs", "mm", "human", "mouse", "hg38", "mm10"] = "hs",
     genome: str | None = None,
@@ -316,7 +376,7 @@ def download_motif_rankings(
     """
     import pandas as pd
 
-    local_path = _ensure_motif_rankings_cached(
+    local_path = motif_rankings_path(
         species=species,
         genome=genome,
         motif_collection=motif_collection,
@@ -489,4 +549,10 @@ def download_gene_coords(
     return out
 
 
-__all__ = ["tfs", "download_motif_rankings", "download_gene_coords"]
+__all__ = [
+    "tfs",
+    "motif_rankings_cache_path",
+    "motif_rankings_path",
+    "download_motif_rankings",
+    "download_gene_coords",
+]

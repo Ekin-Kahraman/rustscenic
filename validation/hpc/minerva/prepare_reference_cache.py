@@ -65,13 +65,13 @@ def prepare_references(
     references: dict[str, Any] = {}
 
     if not skip_motif_rankings:
-        motif_path = data._motif_rankings_cache_path(
+        motif_path = data.motif_rankings_cache_path(
             species=motif_species,
             cache_dir=motif_cache_dir,
         )
         before = file_state(motif_path)
         start = time.perf_counter()
-        cached_path = data._ensure_motif_rankings_cached(
+        cached_path = data.motif_rankings_path(
             species=motif_species,
             cache_dir=motif_cache_dir,
             verbose=verbose,
