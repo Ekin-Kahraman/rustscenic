@@ -1,0 +1,111 @@
+{
+    "release": "v0.4.7",
+    "smoke_type": "real_multiome_pipeline_run",
+    "rustscenic_version": "0.4.7",
+    "rustscenic_sha": "cc89cccfabf4026d0030d950753fa3995f4c483e",
+    "install_command": "pip install \"rustscenic[validation] @ git+https://github.com/Ekin-Kahraman/rustscenic@v0.4.7\"",
+    "api_call": "rustscenic.pipeline.run(rna=..., adata_atac=..., motif_rankings=motif_rankings_obj, ...)",
+    "dataset": {
+        "name": "human_kidney_20k",
+        "source": "10x Genomics Public Datasets",
+        "species": "human",
+        "tissue": "kidney (cancer)",
+        "rna_h5_md5": "313a3693c70fbe6dc705915d38ebaf03",
+        "atac_h5ad_md5_first_8mb": "56b941693798771f7b035b3daaba660a",
+        "peaks_bed_md5": "961670f61bb1a1142a8a1f93b6e40bd1"
+    },
+    "shapes": {
+        "rna_post_qc": [
+            21998,
+            29632
+        ],
+        "atac_subset_to_rna_cells": [
+            21998,
+            58178
+        ]
+    },
+    "wall_s": {
+        "setup": 4.46,
+        "pipeline_run_total": 5350.69
+    },
+    "peak_rss_gb": 9.02,
+    "outputs_non_empty": {
+        "grn": true,
+        "regulons": true,
+        "cistarget": true,
+        "enhancer_links": true,
+        "eregulons": true,
+        "integrated_adata": true
+    },
+    "headline_counts": {
+        "n_grn_edges": 3288274,
+        "n_regulons": 1694,
+        "n_cistarget_rows": 102910,
+        "n_enhancer_links": 270732,
+        "n_eregulons": 1694
+    },
+    "biological_sanity": {
+        "expected_tfs": [
+            "LMX1B",
+            "SOX17",
+            "NR3C1",
+            "POU2F1",
+            "HNF4A",
+            "MEF2A",
+            "NFE2L2",
+            "HNF1A",
+            "ZEB1",
+            "USF1",
+            "CTNNB1",
+            "FOXO4",
+            "GFI1",
+            "MEF2D"
+        ],
+        "found_in_regulons": [
+            "CTNNB1",
+            "FOXO4",
+            "GFI1",
+            "HNF1A",
+            "HNF4A",
+            "LMX1B",
+            "MEF2A",
+            "MEF2D",
+            "NFE2L2",
+            "NR3C1",
+            "POU2F1",
+            "SOX17",
+            "USF1",
+            "ZEB1"
+        ],
+        "missing_from_regulons": [],
+        "fraction_recovered": 1.0
+    },
+    "output_inventory": {
+        "grn_path": "out/grn.parquet",
+        "regulons_path": "out/regulons.json",
+        "cistarget_path": "out/cistarget_enriched.parquet",
+        "enhancer_links_path": "out/enhancer_links.parquet",
+        "eregulons_path": "out/eregulons.parquet"
+    },
+    "elapsed_per_stage": {
+        "preproc": 0.0,
+        "topics": 571.3751343539998,
+        "grn": 4320.131548685999,
+        "cistarget": 4.217158993000339,
+        "enhancer": 223.06316216800042,
+        "eregulons": 47.98389671699988,
+        "aucell": 4.542873095999312
+    },
+    "env": {
+        "python": "3.12.13",
+        "scanpy": "1.12.1",
+        "anndata": "0.12.16",
+        "os": "Linux 6.6.87.2-microsoft-standard-WSL2 x86_64",
+        "cpu": "x86_64",
+        "n_cpus": 16
+    },
+    "scope_notes": [
+        "The expected TFs were curated using Human Protein Atlas for kidney tissue and Enrichr TF perturbation data.",
+        "QC: cells filtered for 200-8000 detected genes and <10% MT-RNA content, retaining >21k high-quality cells for analysis."
+    ]
+}
