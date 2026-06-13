@@ -318,7 +318,7 @@ fn grn_infer<'py>(
         target_block_size,
     };
 
-    let adjacencies = py.allow_threads(|| {
+    let adjacencies = py.detach(|| {
         if let Some(expr_slice) = arr.as_slice() {
             infer_indices_with_overlap(expr_slice, n_cells, &gene_names, &tf_names, &cfg)
         } else {
@@ -404,7 +404,7 @@ fn grn_infer_sparse_csc<'py>(
         target_block_size,
     };
 
-    let adjacencies = py.allow_threads(|| {
+    let adjacencies = py.detach(|| {
         infer_indices_sparse_csc_with_overlap(
             &indptr,
             indices,
@@ -669,7 +669,7 @@ fn aucell_score<'py>(
         .zip(regulon_gene_indices)
         .collect();
 
-    let out: Vec<f32> = py.allow_threads(|| aucell_view(arr, &regulons, top_frac));
+    let out: Vec<f32> = py.detach(|| aucell_view(arr, &regulons, top_frac));
     let n_regulons = regulons.len();
 
     let arr2 = ndarray::Array2::from_shape_vec((n_cells, n_regulons), out).map_err(
@@ -760,7 +760,7 @@ fn aucell_score_sparse_csr<'py>(
         .into_iter()
         .zip(regulon_gene_indices)
         .collect();
-    let out = py.allow_threads(|| {
+    let out = py.detach(|| {
         aucell_sparse_csr(
             &row_ptr_usize,
             col_idx_raw,
@@ -793,7 +793,7 @@ fn stage_prepare_regulon_indices<'py>(
     regulon_genes: Vec<Vec<String>>,
 ) -> PyResult<StageRegulonIndexPyResult> {
     validate_regulon_name_gene_lengths(&regulon_names, &regulon_genes)?;
-    let prepared = py.allow_threads(|| {
+    let prepared = py.detach(|| {
         prepare_regulon_indices_and_coverage_rs(&gene_names, &regulon_names, &regulon_genes)
     });
 
@@ -818,7 +818,7 @@ fn stage_prepare_regulon_indices_with_coverage<'py>(
     regulon_genes: Vec<Vec<String>>,
 ) -> PyResult<StageRegulonIndexCoveragePyResult> {
     validate_regulon_name_gene_lengths(&regulon_names, &regulon_genes)?;
-    let prepared = py.allow_threads(|| {
+    let prepared = py.detach(|| {
         prepare_regulon_indices_and_coverage_rs(&gene_names, &regulon_names, &regulon_genes)
     });
 
@@ -843,8 +843,7 @@ fn stage_regulon_coverage_counts<'py>(
     gene_names: Vec<String>,
     regulon_genes: Vec<Vec<String>>,
 ) -> PyResult<StageRegulonCoveragePyResult> {
-    let (matched, total) =
-        py.allow_threads(|| regulon_coverage_counts_rs(&gene_names, &regulon_genes));
+    let (matched, total) = py.detach(|| regulon_coverage_counts_rs(&gene_names, &regulon_genes));
     Ok((
         PyArray1::from_vec(py, matched).unbind(),
         PyArray1::from_vec(py, total).unbind(),
@@ -1018,7 +1017,7 @@ macro_rules! cistarget_rankings_to_i32_pyfunction {
         ) -> PyResult<Py<PyArray2<i32>>> {
             let arr = rankings.as_array();
             let shape = (arr.shape()[0], arr.shape()[1]);
-            let converted = py.allow_threads(|| -> PyResult<Vec<i32>> {
+            let converted = py.detach(|| -> PyResult<Vec<i32>> {
                 let mut out = Vec::with_capacity(arr.len());
                 for value in arr.iter().copied() {
                     let value = value as f64;
@@ -1079,9 +1078,8 @@ where
         &regulon_gene_indices,
     )?;
     let n_regulons = regulon_names.len();
-    let auc = py.allow_threads(|| {
-        cistarget_auc_from_integer_rankings(arr, &regulon_gene_indices, top_frac)
-    });
+    let auc =
+        py.detach(|| cistarget_auc_from_integer_rankings(arr, &regulon_gene_indices, top_frac));
     let rows = cistarget_enrichment_rows_impl(
         &auc,
         n_motifs,
@@ -1124,7 +1122,7 @@ where
     )?;
     validate_projected_rank_universe(n_projected_genes, rank_universe_size)?;
     let n_regulons = regulon_names.len();
-    let auc = py.allow_threads(|| {
+    let auc = py.detach(|| {
         cistarget_auc_from_projected_integer_rankings(
             arr,
             &regulon_gene_indices,
@@ -1438,7 +1436,7 @@ fn topics_fit<'py>(
         .map_err(|_| pyo3::exceptions::PyValueError::new_err("counts must be contiguous"))?;
     let row_ptr = row_ptr_any_to_usize(row_ptr, col_idx.len(), counts.len())?;
     validate_topic_csr(&row_ptr, col_idx, counts, n_words, false)?;
-    let result = py.allow_threads(|| {
+    let result = py.detach(|| {
         online_vb_lda(
             &row_ptr, col_idx, counts, n_words, n_topics, alpha, eta, tau0, kappa, batch_size,
             n_passes, seed,
@@ -1500,7 +1498,7 @@ fn topics_fit_gibbs<'py>(
         .map_err(|_| pyo3::exceptions::PyValueError::new_err("counts must be contiguous"))?;
     let row_ptr = row_ptr_any_to_usize(row_ptr, col_idx.len(), counts.len())?;
     validate_topic_csr(&row_ptr, col_idx, counts, n_words, true)?;
-    let result = py.allow_threads(|| {
+    let result = py.detach(|| {
         if n_threads <= 1 {
             rustscenic_topics::gibbs::fit(
                 &row_ptr, col_idx, counts, n_words, n_topics, alpha, eta, n_iters, seed,
@@ -1555,7 +1553,7 @@ fn topics_npmi<'py>(
         .map_err(|_| pyo3::exceptions::PyValueError::new_err("col_idx must be contiguous"))?;
     let row_ptr = row_ptr_any_to_usize(row_ptr, col_idx.len(), col_idx.len())?;
     validate_topic_csr(&row_ptr, col_idx, &[], n_words, false)?;
-    let coh = py.allow_threads(|| topic_coherence_npmi_view(arr, top_n, &row_ptr, col_idx));
+    let coh = py.detach(|| topic_coherence_npmi_view(arr, top_n, &row_ptr, col_idx));
     Ok(PyArray1::from_vec(py, coh).unbind())
 }
 
@@ -1570,8 +1568,7 @@ fn topics_cell_assignment<'py>(
     cell_topic: PyReadonlyArray2<'py, f32>,
 ) -> PyResult<(Py<PyArray1<i64>>, usize, usize)> {
     let arr = cell_topic.as_array();
-    let (assignments, active_topics, empty_cells) =
-        py.allow_threads(|| topics_cell_assignment_impl(arr));
+    let (assignments, active_topics, empty_cells) = py.detach(|| topics_cell_assignment_impl(arr));
     Ok((
         PyArray1::from_vec(py, assignments).unbind(),
         active_topics,
@@ -1777,7 +1774,7 @@ macro_rules! specificity_rss_pyfunction {
                 )));
             }
 
-            let rss = py.allow_threads(|| {
+            let rss = py.detach(|| {
                 specificity_rss_impl(auc_arr, n_cells, n_regulons, group_codes, n_groups)
             });
             let arr = ndarray::Array2::from_shape_vec((n_groups, n_regulons), rss).map_err(
@@ -1874,7 +1871,7 @@ fn candidate_top_indices_impl<T: Copy + Into<f64> + Sync>(
     let n_topics = arr.shape()[0];
     let n_peaks = arr.shape()[1];
     let k = top_n.min(n_peaks);
-    let rows = py.allow_threads(|| candidate_top_index_rows(arr, k));
+    let rows = py.detach(|| candidate_top_index_rows(arr, k));
     let mut flat = Vec::with_capacity(n_topics * k);
     for row in rows {
         flat.extend(row.into_iter().map(|idx| idx as u64));
@@ -1929,7 +1926,7 @@ fn candidate_enhancers_impl<T: Copy + Into<f64> + Sync>(
     }
 
     let k = top_n.min(n_peaks);
-    let rows = py.allow_threads(|| candidate_top_index_rows(arr, k));
+    let rows = py.detach(|| candidate_top_index_rows(arr, k));
     let out = PyDict::new(py);
     for (topic_name, indices) in topic_names.iter().zip(rows) {
         let peaks = PyList::empty(py);
@@ -1973,7 +1970,7 @@ fn enhancer_parse_peak_names<'py>(
     py: Python<'py>,
     names: Vec<String>,
 ) -> PyResult<Option<EnhancerParsePeakNamesPyResult>> {
-    let parsed = py.allow_threads(|| parse_peak_names_impl(&names));
+    let parsed = py.detach(|| parse_peak_names_impl(&names));
     let Some((chroms, starts, ends)) = parsed else {
         return Ok(None);
     };
@@ -1991,7 +1988,7 @@ fn enhancer_normalise_chrom_codes<'py>(
     gene_chroms: Vec<String>,
     peak_chroms: Vec<String>,
 ) -> PyResult<EnhancerChromCodesPyResult> {
-    let (gene_norm, peak_norm, gene_codes, peak_codes) = py.allow_threads(|| {
+    let (gene_norm, peak_norm, gene_codes, peak_codes) = py.detach(|| {
         let gene_norm: Vec<String> = gene_chroms
             .iter()
             .map(|name| normalise_chrom_name(name))
@@ -2055,7 +2052,7 @@ fn enhancer_align_cell_indices<'py>(
     rna_cells: Vec<String>,
     atac_cells: Vec<String>,
 ) -> PyResult<EnhancerAlignCellIndicesPyResult> {
-    let (rna_indices, atac_indices) = py.allow_threads(|| {
+    let (rna_indices, atac_indices) = py.detach(|| {
         let mut atac_index_by_cell: HashMap<&str, usize> = HashMap::with_capacity(atac_cells.len());
         for (idx, cell) in atac_cells.iter().enumerate() {
             atac_index_by_cell.entry(cell.as_str()).or_insert(idx);
@@ -2162,7 +2159,7 @@ fn enhancer_match_gene_coords_to_rna<'py>(
         )));
     }
 
-    let (row_indices, source_cols) = py.allow_threads(|| {
+    let (row_indices, source_cols) = py.detach(|| {
         let mut rna_col_by_gene: HashMap<&str, usize> =
             HashMap::with_capacity(rna_gene_names.len());
         for (idx, gene) in rna_gene_names.iter().enumerate() {
@@ -2196,7 +2193,7 @@ fn enhancer_match_peak_coords_to_atac<'py>(
     atac_peak_names: Vec<String>,
     peak_coord_names: Vec<String>,
 ) -> PyResult<EnhancerPeakCoordMatchPyResult> {
-    let (row_indices, missing) = py.allow_threads(|| {
+    let (row_indices, missing) = py.detach(|| {
         let mut coord_row_by_peak: HashMap<&str, usize> =
             HashMap::with_capacity(peak_coord_names.len());
         for (idx, peak) in peak_coord_names.iter().enumerate() {
@@ -2255,7 +2252,7 @@ fn enhancer_prepare_gene_order<'py>(
             gene_source_cols.len()
         )));
     }
-    let (order, has_overlap, n_unique_source_cols) = py.allow_threads(|| {
+    let (order, has_overlap, n_unique_source_cols) = py.detach(|| {
         let mut order: Vec<usize> = (0..gene_chrom_codes.len()).collect();
         order.sort_by(|&a, &b| {
             gene_chrom_codes[a]
@@ -2391,7 +2388,7 @@ fn enhancer_link_pearson<'py>(
         atac_peak_cols,
     )?;
 
-    let mut links = py.allow_threads(|| {
+    let mut links = py.detach(|| {
         if let Some(rna_slice) = rna_arr.as_slice() {
             compute_enhancer_pearson_links(
                 rna_slice,
@@ -2556,7 +2553,7 @@ fn enhancer_link_pearson_sparse_rna<'py>(
         atac_peak_cols,
     )?;
 
-    let mut links = py.allow_threads(|| {
+    let mut links = py.detach(|| {
         compute_enhancer_pearson_links_sparse_rna(
             n_cells,
             &rna_indptr,
@@ -3313,7 +3310,7 @@ fn eregulon_assemble_from_slices<'py, T: Copy + Into<f64> + Sync>(
         enhancer_correlations.len(),
     )?;
 
-    let (mut eregulons, n_input_tfs) = py.allow_threads(|| {
+    let (mut eregulons, n_input_tfs) = py.detach(|| {
         assemble_eregulon_groups(
             grn_tfs,
             grn_targets,
@@ -3489,8 +3486,8 @@ fn eregulon_regulon_pairs_from_columns<'py>(
             features.len()
         )));
     }
-    let (names, feature_lists) = py
-        .allow_threads(|| build_regulon_pairs_from_columns(&groups, &features, suffix_with_index));
+    let (names, feature_lists) =
+        py.detach(|| build_regulon_pairs_from_columns(&groups, &features, suffix_with_index));
     let lists = PyList::empty(py);
     for values in feature_lists {
         lists.append(PyList::new(py, values.iter().map(|s| s.as_str()))?)?;
@@ -3571,7 +3568,7 @@ fn eregulon_assemble_summary_from_slices<'py, T: Copy + Into<f64> + Sync>(
         enhancer_correlations.len(),
     )?;
 
-    let (eregulons, n_input_tfs) = py.allow_threads(|| {
+    let (eregulons, n_input_tfs) = py.detach(|| {
         assemble_eregulon_groups(
             grn_tfs,
             grn_targets,
@@ -3946,7 +3943,7 @@ fn cistarget_region_attribution_impl<'py, T: Copy + PartialOrd + Send + Sync>(
         &enriched_regulons,
         &enriched_motifs,
     )?;
-    let (row_indices, peak_indices) = py.allow_threads(|| {
+    let (row_indices, peak_indices) = py.detach(|| {
         assemble_region_attribution(
             rankings,
             &motif_names,
@@ -3988,7 +3985,7 @@ fn cistarget_region_attribution_peak_values_impl<'py, T: Copy + PartialOrd + Sen
         &enriched_regulons,
         &enriched_motifs,
     )?;
-    let (row_indices, peak_indices) = py.allow_threads(|| {
+    let (row_indices, peak_indices) = py.detach(|| {
         assemble_region_attribution(
             rankings,
             &motif_names,
@@ -4028,7 +4025,7 @@ fn pipeline_expand_region_cistarget_rows_f32<'py>(
     let enriched_aucs = enriched_aucs
         .as_slice()
         .map_err(|_| pyo3::exceptions::PyValueError::new_err("enriched_aucs must be contiguous"))?;
-    let (regulons, motifs, peaks, aucs) = py.allow_threads(|| {
+    let (regulons, motifs, peaks, aucs) = py.detach(|| {
         expand_region_cistarget_rows(
             row_indices,
             &peak_ids,
@@ -4055,7 +4052,7 @@ fn pipeline_expand_region_cistarget_rows_f64<'py>(
     let enriched_aucs = enriched_aucs
         .as_slice()
         .map_err(|_| pyo3::exceptions::PyValueError::new_err("enriched_aucs must be contiguous"))?;
-    let (regulons, motifs, peaks, aucs) = py.allow_threads(|| {
+    let (regulons, motifs, peaks, aucs) = py.detach(|| {
         expand_region_cistarget_rows(
             row_indices,
             &peak_ids,
@@ -4256,7 +4253,7 @@ fn pipeline_match_atac_cell_indices<'py>(
     rna_cells: Vec<String>,
     atac_cells: Vec<String>,
 ) -> PyResult<PipelineCellIndexPyResult> {
-    let matched = py.allow_threads(|| {
+    let matched = py.detach(|| {
         let rna_set: HashSet<&str> = rna_cells.iter().map(|cell| cell.as_str()).collect();
         atac_cells
             .iter()
@@ -4288,7 +4285,7 @@ fn pipeline_attribute_peaks_to_cistarget_rows_f32<'py>(
     let enriched_aucs = enriched_aucs
         .as_slice()
         .map_err(|_| pyo3::exceptions::PyValueError::new_err("enriched_aucs must be contiguous"))?;
-    let (regulons, motifs, peaks, aucs) = py.allow_threads(|| {
+    let (regulons, motifs, peaks, aucs) = py.detach(|| {
         attribute_peaks_to_cistarget_rows(
             &enriched_regulons,
             enriched_motifs.as_deref(),
@@ -4317,7 +4314,7 @@ fn pipeline_attribute_peaks_to_cistarget_rows_f64<'py>(
     let enriched_aucs = enriched_aucs
         .as_slice()
         .map_err(|_| pyo3::exceptions::PyValueError::new_err("enriched_aucs must be contiguous"))?;
-    let (regulons, motifs, peaks, aucs) = py.allow_threads(|| {
+    let (regulons, motifs, peaks, aucs) = py.detach(|| {
         attribute_peaks_to_cistarget_rows(
             &enriched_regulons,
             enriched_motifs.as_deref(),
@@ -4556,7 +4553,7 @@ macro_rules! motif_annotation_prune_rows_filtered_pyfunction {
                 )));
             }
 
-            let (row_indices, tf_values, annotation_tf_values) = py.allow_threads(|| {
+            let (row_indices, tf_values, annotation_tf_values) = py.detach(|| {
                 motif_annotation_prune_rows_filtered(
                     &enriched_regulons,
                     &enriched_motifs,
@@ -4613,20 +4610,19 @@ fn cistarget_motif_annotation_prune_standard_rows_f32<'py>(
         })?),
         None => None,
     };
-    let (regulons, motifs, aucs, nes, tf_values, annotation_tf_values) =
-        py.allow_threads(|| {
-            motif_annotation_prune_standard_rows(
-                &enriched_regulons,
-                &enriched_motifs,
-                enriched_auc,
-                enriched_nes,
-                &annotation_motifs,
-                &annotation_tf_values,
-                auc_threshold,
-                nes_threshold,
-                case_sensitive,
-            )
-        })?;
+    let (regulons, motifs, aucs, nes, tf_values, annotation_tf_values) = py.detach(|| {
+        motif_annotation_prune_standard_rows(
+            &enriched_regulons,
+            &enriched_motifs,
+            enriched_auc,
+            enriched_nes,
+            &annotation_motifs,
+            &annotation_tf_values,
+            auc_threshold,
+            nes_threshold,
+            case_sensitive,
+        )
+    })?;
     motif_annotation_rows_to_py_f32(
         py,
         regulons,
@@ -4662,20 +4658,19 @@ fn cistarget_motif_annotation_prune_standard_rows_f64<'py>(
         })?),
         None => None,
     };
-    let (regulons, motifs, aucs, nes, tf_values, annotation_tf_values) =
-        py.allow_threads(|| {
-            motif_annotation_prune_standard_rows(
-                &enriched_regulons,
-                &enriched_motifs,
-                enriched_auc,
-                enriched_nes,
-                &annotation_motifs,
-                &annotation_tf_values,
-                auc_threshold,
-                nes_threshold,
-                case_sensitive,
-            )
-        })?;
+    let (regulons, motifs, aucs, nes, tf_values, annotation_tf_values) = py.detach(|| {
+        motif_annotation_prune_standard_rows(
+            &enriched_regulons,
+            &enriched_motifs,
+            enriched_auc,
+            enriched_nes,
+            &annotation_motifs,
+            &annotation_tf_values,
+            auc_threshold,
+            nes_threshold,
+            case_sensitive,
+        )
+    })?;
     motif_annotation_rows_to_py_f64(
         py,
         regulons,
@@ -4738,7 +4733,7 @@ fn pipeline_filter_cistarget_peak_rows_f32<'py>(
     let row_aucs = row_aucs
         .as_slice()
         .map_err(|_| pyo3::exceptions::PyValueError::new_err("row_aucs must be contiguous"))?;
-    let (regulons, motifs, peaks, aucs) = py.allow_threads(|| {
+    let (regulons, motifs, peaks, aucs) = py.detach(|| {
         filter_cistarget_peak_row_values(
             &row_regulons,
             &row_motifs,
@@ -4764,7 +4759,7 @@ fn pipeline_filter_cistarget_peak_rows_f64<'py>(
     let row_aucs = row_aucs
         .as_slice()
         .map_err(|_| pyo3::exceptions::PyValueError::new_err("row_aucs must be contiguous"))?;
-    let (regulons, motifs, peaks, aucs) = py.allow_threads(|| {
+    let (regulons, motifs, peaks, aucs) = py.detach(|| {
         filter_cistarget_peak_row_values(
             &row_regulons,
             &row_motifs,
@@ -5040,7 +5035,7 @@ macro_rules! prune_regulon_targets_pyfunction {
             min_genes: usize,
         ) -> PyResult<PrunedRegulonTargetsPyResult> {
             let rankings_arr = rankings.as_array();
-            let (names, genes) = py.allow_threads(|| -> PyResult<_> {
+            let (names, genes) = py.detach(|| -> PyResult<_> {
                 if $validate_finite {
                     for value in rankings_arr.iter().copied() {
                         if !(value as f64).is_finite() {
@@ -5103,7 +5098,7 @@ macro_rules! prune_regulon_targets_projected_pyfunction {
             let rankings_arr = rankings.as_array();
             let rank_cutoff_value = rank_cutoff as $rank_ty;
             let zero_value = 0 as $rank_ty;
-            let (names, genes) = py.allow_threads(|| -> PyResult<_> {
+            let (names, genes) = py.detach(|| -> PyResult<_> {
                 if $validate_finite {
                     for value in rankings_arr.iter().copied() {
                         if !(value as f64).is_finite() {
@@ -5160,7 +5155,7 @@ fn cistarget_prune_regulon_targets_unranked<'py>(
     pruned_regulons: Vec<String>,
     min_genes: usize,
 ) -> PyResult<PrunedRegulonTargetsPyResult> {
-    let (names, genes) = py.allow_threads(|| {
+    let (names, genes) = py.detach(|| {
         prune_regulon_targets_unranked_impl(
             &candidate_names,
             &candidate_genes,
@@ -5511,7 +5506,7 @@ fn pipeline_peak_regulons_and_features_from_edges<'py>(
             enhancer_peaks.len()
         )));
     }
-    let (names, peaks, features) = py.allow_threads(|| {
+    let (names, peaks, features) = py.detach(|| {
         build_peak_regulons_and_features_from_edges(
             &grn_tfs,
             &grn_targets,
@@ -5600,7 +5595,7 @@ fn pipeline_unique_regulon_features<'py>(
     py: Python<'py>,
     regulon_genes: Vec<Vec<String>>,
 ) -> PyResult<Py<PyList>> {
-    let features = py.allow_threads(|| build_unique_regulon_features(&regulon_genes));
+    let features = py.detach(|| build_unique_regulon_features(&regulon_genes));
     Ok(PyList::new(py, features.iter().map(String::as_str))?.unbind())
 }
 
@@ -5624,7 +5619,7 @@ fn pipeline_project_ranking_columns<'py>(
     requested_features: Vec<String>,
     motif_col: Option<String>,
 ) -> PyResult<PipelineRankingColumnProjectionPyResult> {
-    let (keep, examples) = py.allow_threads(|| {
+    let (keep, examples) = py.detach(|| {
         build_ranking_column_projection_names(&columns, &requested_features, motif_col.as_deref())
     });
     Ok((
@@ -5696,8 +5691,7 @@ macro_rules! pipeline_pack_ranking_columns_pyfunction {
                     )
                 })?);
             }
-            let (n_rows, n_cols, values) =
-                py.allow_threads(|| pack_ranking_column_slices(&slices))?;
+            let (n_rows, n_cols, values) = py.detach(|| pack_ranking_column_slices(&slices))?;
             let out = ndarray::Array2::from_shape_vec((n_rows, n_cols), values)
                 .map_err(|err| pyo3::exceptions::PyValueError::new_err(err.to_string()))?;
             Ok(PyArray2::from_owned_array(py, out).unbind())
@@ -5764,7 +5758,7 @@ fn pipeline_candidate_regulons_from_grn<'py>(
         )));
     }
 
-    let (names, target_lists) = py.allow_threads(|| {
+    let (names, target_lists) = py.detach(|| {
         build_candidate_regulons_from_grn(
             &grn_tfs,
             &grn_targets,
@@ -6217,7 +6211,7 @@ fn preproc_fragments_to_matrix<'py>(
     cell_barcodes: Option<Vec<String>>,
 ) -> PyResult<FragmentsToMatrixPyResult> {
     let (csr, barcodes, peak_names, fpc, tcc, total_fragment_records, median_fragments) = py
-        .allow_threads(|| -> anyhow::Result<_> {
+        .detach(|| -> anyhow::Result<_> {
             let fragments = read_fragments(&fragments_path)?;
             let qc = barcode_qc_counts(&fragments, fragments.n_barcodes() > 100_000);
             let peaks = read_peaks(&peaks_path)?;
@@ -6299,7 +6293,7 @@ fn preproc_peak_coords_for_names<'py>(
     peak_names: Vec<String>,
 ) -> PyResult<PreprocPeakCoordsPyResult> {
     let (ids, chroms, starts, ends) = py
-        .allow_threads(|| -> anyhow::Result<_> {
+        .detach(|| -> anyhow::Result<_> {
             let peaks = read_peaks(&peaks_path)?;
             let mut first_by_name: HashMap<&str, usize> = HashMap::with_capacity(peaks.name.len());
             for (idx, name) in peaks.name.iter().enumerate() {
@@ -6347,7 +6341,7 @@ fn preproc_insert_size_stats<'py>(
     fragments_path: PathBuf,
 ) -> PyResult<InsertSizeStatsPyResult> {
     let (barcodes, means, medians, counts, sub, mono, di) = py
-        .allow_threads(|| -> anyhow::Result<_> {
+        .detach(|| -> anyhow::Result<_> {
             let fragments = read_fragments(&fragments_path)?;
             let stats = preproc_insert_size_stats_fn(&fragments);
             let mut means = Vec::with_capacity(stats.len());
@@ -6395,7 +6389,7 @@ fn preproc_frip<'py>(
     peaks_path: PathBuf,
 ) -> PyResult<(Py<PyList>, Py<PyArray1<f32>>)> {
     let (barcodes, scores) = py
-        .allow_threads(|| -> anyhow::Result<_> {
+        .detach(|| -> anyhow::Result<_> {
             let fragments = read_fragments(&fragments_path)?;
             let peaks = read_peaks(&peaks_path)?;
             let scores = preproc_frip_fn(&fragments, &peaks);
@@ -6435,7 +6429,7 @@ fn preproc_tss_enrichment<'py>(
         .map(|(chrom, position)| TssSite { chrom, position })
         .collect();
     let (barcodes, scores) = py
-        .allow_threads(|| -> anyhow::Result<_> {
+        .detach(|| -> anyhow::Result<_> {
             let fragments = read_fragments(&fragments_path)?;
             let scores = preproc_tss_enrichment_fn(&fragments, &tss_sites);
             Ok((fragments.barcode_names, scores))
@@ -6570,7 +6564,7 @@ fn preproc_call_peaks_with_labels<'py>(
     cfg: &PeakCallingConfig,
 ) -> PyResult<CallPeaksPyResult> {
     let (chrom_names, starts, ends, names) = py
-        .allow_threads(|| -> anyhow::Result<_> {
+        .detach(|| -> anyhow::Result<_> {
             let fragments = read_fragments(&fragments_path)?;
             let aligned_labels;
             let labels: &[u32] = if let Some(cluster_barcodes) = cluster_barcodes {
@@ -6729,7 +6723,7 @@ macro_rules! gene_dedupe_dense_pyfunction {
             }
             let (unique_names, dst_by_src) = dedupe_gene_groups(&gene_names);
             let n_unique = unique_names.len();
-            let out = py.allow_threads(|| {
+            let out = py.detach(|| {
                 let mut out = ndarray::Array2::<$value_ty>::zeros((n_cells, n_unique));
                 for src in 0..n_genes {
                     let dst = dst_by_src[src];
@@ -6797,7 +6791,7 @@ macro_rules! gene_dedupe_sparse_csc_pyfunction {
             }
 
             let (unique_names, dst_by_src) = dedupe_gene_groups(&gene_names);
-            let (out_data, out_indices, out_indptr) = py.allow_threads(|| {
+            let (out_data, out_indices, out_indptr) = py.detach(|| {
                 dedupe_sparse_csc_columns::<$value_ty>(
                     &indptr,
                     indices,

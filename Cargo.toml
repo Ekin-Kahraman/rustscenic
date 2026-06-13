@@ -16,11 +16,11 @@ authors = ["Ekin Kahraman"]
 repository = "https://github.com/Ekin-Kahraman/rustscenic"
 
 [workspace.dependencies]
-pyo3 = { version = "0.24", features = ["extension-module"] }
-numpy = "0.24"
+pyo3 = { version = "0.29", features = ["extension-module"] }
+numpy = "0.29"
 rayon = "1.10"
 sprs = "0.11"
-ndarray = { version = "0.16", features = ["rayon"] }
+ndarray = { version = "0.17", features = ["rayon"] }
 anyhow = "1"
 thiserror = "2"
 serde = { version = "1", features = ["derive"] }
