@@ -94,8 +94,6 @@ def invocation_state(argv: list[str] | None) -> dict[str, Any]:
     return {
         "python": sys.executable,
         "script": str(script),
-        "cwd": str(Path.cwd()),
-        "argv": args,
         "command": [sys.executable, str(script), *args],
     }
 

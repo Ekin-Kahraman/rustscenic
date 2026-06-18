@@ -494,12 +494,9 @@ def _invocation_failures(record: dict[str, Any], prefix: str) -> list[str]:
         return [f"{prefix}.invocation must be an object"]
 
     failures: list[str] = []
-    for key in ("python", "script", "cwd"):
+    for key in ("python", "script"):
         if not _nonempty_str(invocation.get(key)):
             failures.append(f"{prefix}.invocation.{key} must be a non-empty string")
-    argv = invocation.get("argv")
-    if not isinstance(argv, list) or not all(isinstance(v, str) for v in argv):
-        failures.append(f"{prefix}.invocation.argv must be a string list")
     command = invocation.get("command")
     if (
         not isinstance(command, list)

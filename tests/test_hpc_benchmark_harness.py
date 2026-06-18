@@ -403,8 +403,6 @@ def test_real_multiome_harness_records_invocation_state():
     assert state["script"].endswith("bench_real_multiome_pipeline.py")
     assert scaling_state["script"].endswith("bench_real_multiome_pipeline_scaling.py")
     assert grn_state["script"].endswith("bench_real_pbmc3k_grn_scaling.py")
-    assert state["argv"] == ["--dataset-name", "pbmc3k"]
-    assert grn_state["argv"] == ["--data-dir", "data"]
     assert state["command"][:2] == [state["python"], state["script"]]
     assert scaling_state["command"][:2] == [
         scaling_state["python"],
@@ -2538,8 +2536,6 @@ def _invocation_state(script: str = "validation/scaling/bench_real_multiome_pipe
     return {
         "python": "/hpc/env/bin/python",
         "script": str(ROOT / script),
-        "cwd": str(ROOT),
-        "argv": ["--dataset-name", "pbmc3k"],
         "command": [
             "/hpc/env/bin/python",
             str(ROOT / script),
