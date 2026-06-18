@@ -123,8 +123,6 @@ def test_real_multiome_harness_records_sparse_matrix_profile():
         "storage": "sparse",
         "format": "csr",
         "dtype": "float32",
-        "nnz": 3,
-        "density": 0.5,
     }
 
 
@@ -527,8 +525,6 @@ def test_real_pbmc3k_grn_harness_records_sparse_matrix_profile():
         "storage": "sparse",
         "format": "csr",
         "dtype": "float32",
-        "nnz": 3,
-        "density": 0.33333333,
     }
 
 
@@ -2545,16 +2541,12 @@ def _matrix_inputs_state(n_cells: int = 100):
             "storage": "sparse",
             "format": "csr",
             "dtype": "float32",
-            "nnz": n_cells * 100,
-            "density": 0.1,
         },
         "atac_shared_cells": {
             "shape": [n_cells, 2000],
             "storage": "sparse",
             "format": "csr",
             "dtype": "float32",
-            "nnz": n_cells * 50,
-            "density": 0.025,
         },
     }
 
@@ -2566,8 +2558,6 @@ def _grn_matrix_inputs_state(n_cells: int = 100):
             "storage": "sparse",
             "format": "csr",
             "dtype": "float32",
-            "nnz": n_cells * 100,
-            "density": 0.1,
         },
     }
 
@@ -3914,7 +3904,7 @@ def test_benchmark_artifact_validator_rejects_scaling_matrix_inputs_child_mismat
         ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
     )
     record = _full_pipeline_scaling_record(tmp_path)
-    record["runs"][0]["matrix_inputs"]["rna_post_qc"]["nnz"] += 1
+    record["runs"][0]["matrix_inputs"]["rna_post_qc"]["format"] = "csc"
 
     failures = module.validate_record(
         record,
@@ -5272,10 +5262,7 @@ def test_benchmark_artifact_validator_rejects_invalid_matrix_inputs(tmp_path):
         "storage": "dense",
         "format": "ndarray",
         "dtype": "float32",
-        "nnz": 100,
-        "density": 0.1,
     }
-    dense_record["matrix_inputs"]["atac_shared_cells"]["density"] = 1.5
 
     dense_failures = module.validate_record(dense_record, require_clean=True)
 
@@ -5286,15 +5273,6 @@ def test_benchmark_artifact_validator_rejects_invalid_matrix_inputs(tmp_path):
     assert (
         "full_pipeline.matrix_inputs.rna_post_qc.storage must be 'sparse'"
     ) in dense_failures
-    assert (
-        "full_pipeline.matrix_inputs.rna_post_qc.nnz must be null for dense matrices"
-    ) in dense_failures
-    assert (
-        "full_pipeline.matrix_inputs.rna_post_qc.density must be null for dense matrices"
-    ) in dense_failures
-    assert (
-        "full_pipeline.matrix_inputs.atac_shared_cells.density must be in [0, 1]"
-    ) in dense_failures
 
 
 def test_benchmark_artifact_validator_rejects_scaling_row_matrix_mismatch(tmp_path):
@@ -5304,8 +5282,6 @@ def test_benchmark_artifact_validator_rejects_scaling_row_matrix_mismatch(tmp_pa
     )
     record = _full_pipeline_scaling_record(tmp_path)
     record["runs"][0]["matrix_inputs"]["rna_post_qc"]["storage"] = "dense"
-    record["runs"][0]["matrix_inputs"]["rna_post_qc"]["nnz"] = None
-    record["runs"][0]["matrix_inputs"]["rna_post_qc"]["density"] = None
 
     failures = module.validate_record(record, require_clean=True)
 
@@ -5494,8 +5470,6 @@ def test_benchmark_artifact_validator_rejects_grn_row_without_matrix_inputs():
     record = _grn_scaling_record()
     del record["subset_scaling"][0]["matrix_inputs"]
     record["thread_scaling"][0]["matrix_inputs"]["rna_post_qc"]["storage"] = "dense"
-    record["thread_scaling"][0]["matrix_inputs"]["rna_post_qc"]["nnz"] = None
-    record["thread_scaling"][0]["matrix_inputs"]["rna_post_qc"]["density"] = None
 
     failures = module.validate_record(record, require_clean=True)
 

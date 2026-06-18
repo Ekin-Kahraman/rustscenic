@@ -586,24 +586,17 @@ def matrix_profile(adata) -> dict[str, Any]:
     matrix = adata.X
     dtype = str(getattr(matrix, "dtype", "unknown"))
     if sp.issparse(matrix):
-        nnz = int(matrix.nnz)
-        total = rows * cols
-        density = 0.0 if total == 0 else round(nnz / total, 8)
         return {
             "shape": shape,
             "storage": "sparse",
             "format": matrix.getformat(),
             "dtype": dtype,
-            "nnz": nnz,
-            "density": density,
         }
     return {
         "shape": shape,
         "storage": "dense",
         "format": type(matrix).__name__,
         "dtype": dtype,
-        "nnz": None,
-        "density": None,
     }
 
 

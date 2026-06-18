@@ -352,20 +352,6 @@ def _matrix_input_failures(
         if not _nonempty_str(profile.get("dtype")):
             failures.append(f"{stage_prefix}.dtype must be a non-empty string")
 
-        nnz = profile.get("nnz")
-        density = profile.get("density")
-        if storage == "sparse":
-            if not _positive_int(nnz):
-                failures.append(f"{stage_prefix}.nnz must be positive for sparse matrices")
-            elif _shape2(shape) and nnz > int(shape[0]) * int(shape[1]):
-                failures.append(f"{stage_prefix}.nnz must be <= rows * columns")
-            if not _nonnegative_number(density) or density > 1:
-                failures.append(f"{stage_prefix}.density must be in [0, 1]")
-        elif storage == "dense":
-            if nnz is not None:
-                failures.append(f"{stage_prefix}.nnz must be null for dense matrices")
-            if density is not None:
-                failures.append(f"{stage_prefix}.density must be null for dense matrices")
     return failures
 
 

@@ -173,18 +173,12 @@ def matrix_profile(adata) -> dict[str, Any]:
             "storage": "sparse",
             "format": x.getformat(),
             "dtype": str(x.dtype),
-            "nnz": int(x.nnz),
-            "density": round(float(x.nnz) / float(x.shape[0] * x.shape[1]), 8)
-            if x.shape[0] and x.shape[1]
-            else 0.0,
         }
     return {
         "shape": [int(x.shape[0]), int(x.shape[1])],
         "storage": "dense",
         "format": "ndarray",
         "dtype": str(x.dtype),
-        "nnz": None,
-        "density": None,
     }
 
 
