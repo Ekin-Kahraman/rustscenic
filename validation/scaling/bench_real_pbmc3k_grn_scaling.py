@@ -119,11 +119,6 @@ def configure_thread_env(threads: int) -> None:
 
 def benchmark_env() -> dict[str, Any]:
     env = {
-        "python": platform.python_version(),
-        "rustscenic": version("rustscenic"),
-        "scanpy": version("scanpy"),
-        "anndata": version("anndata"),
-        "host": platform.node(),
         "rayon_num_threads": os.environ.get("RAYON_NUM_THREADS"),
         "omp_num_threads": os.environ.get("OMP_NUM_THREADS"),
         "openblas_num_threads": os.environ.get("OPENBLAS_NUM_THREADS"),
