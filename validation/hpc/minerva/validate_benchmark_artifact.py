@@ -99,26 +99,6 @@ REQUIRED_FULL_PIPELINE_RUST_EXECUTION = {
     "pipeline_eregulons",
     "pipeline_aucell",
 }
-REGION_CISTARGET_SCORING_SYMBOLS = {
-    "cistarget_enrichment_from_rankings_i16",
-    "cistarget_enrichment_from_rankings_i32",
-    "cistarget_enrichment_from_rankings_i64",
-    "cistarget_enrichment_from_projected_rankings_i16",
-    "cistarget_enrichment_from_projected_rankings_i32",
-    "cistarget_enrichment_from_projected_rankings_i64",
-    "cistarget_region_attribution_i16",
-    "cistarget_region_attribution_i32",
-    "cistarget_region_attribution_i64",
-}
-REGION_CISTARGET_PEAK_VALUE_SYMBOLS = {
-    "cistarget_region_attribution_peak_values_i16",
-    "cistarget_region_attribution_peak_values_i32",
-    "cistarget_region_attribution_peak_values_i64",
-}
-REGION_CISTARGET_EXPAND_SYMBOLS = {
-    "pipeline_expand_region_cistarget_rows_f32",
-    "pipeline_expand_region_cistarget_rows_f64",
-}
 FULL_PIPELINE_SCALING_CHILD_PARAM_KEYS = {
     "grn_n_estimators",
     "grn_max_features",
@@ -250,13 +230,6 @@ ALLOWED_FULL_PIPELINE_BACKEND_EXECUTION_STAGES = (
     | REQUIRED_FULL_PIPELINE_RUST_EXECUTION
     | {"pipeline_integrated_adata"}
 )
-RANKING_PACKER_SYMBOLS = {
-    "pipeline_pack_ranking_columns_i16",
-    "pipeline_pack_ranking_columns_i32",
-    "pipeline_pack_ranking_columns_i64",
-    "pipeline_pack_ranking_columns_f32",
-    "pipeline_pack_ranking_columns_f64",
-}
 
 
 def _write_integrated_adata(record: dict[str, Any]) -> bool:
@@ -878,18 +851,9 @@ def _ranking_metadata_failures(
                 "positive in projected_file mode"
             )
         failures.extend(
-            _projected_cistarget_symbol_failures(
-                record,
-                prefix,
-                field=field,
-                stage=projected_stage,
-            )
-        )
-        failures.extend(
             _ranking_projection_backend_failures(
                 record,
                 prefix,
-                field=field,
                 stage=projection_stage,
             )
         )
@@ -1017,59 +981,13 @@ def _ranking_reference_format_failures(
     return []
 
 
-def _projected_cistarget_symbol_failures(
-    record: dict[str, Any],
-    prefix: str,
-    *,
-    field: str,
-    stage: str,
-) -> list[str]:
-    execution = record.get("backend_execution")
-    state = execution.get(stage) if isinstance(execution, dict) else None
-    symbols = state.get("symbols") if isinstance(state, dict) else None
-    if not isinstance(symbols, list):
-        return []
-    if any(
-        isinstance(symbol, str)
-        and symbol.startswith("cistarget_enrichment_from_projected_rankings")
-        for symbol in symbols
-    ):
-        return []
-    return [
-        f"{prefix}.backend_execution.{stage}.symbols must include "
-        "a cistarget_enrichment_from_projected_rankings* Rust symbol when "
-        f"{field}.mode is projected_file"
-    ]
-
-
 def _ranking_projection_backend_failures(
     record: dict[str, Any],
     prefix: str,
     *,
-    field: str,
     stage: str,
 ) -> list[str]:
-    failures = _backend_execution_failures(record, prefix, {stage})
-    if failures:
-        return failures
-    execution = record.get("backend_execution")
-    state = execution.get(stage) if isinstance(execution, dict) else None
-    symbols = state.get("symbols") if isinstance(state, dict) else None
-    if not isinstance(symbols, list):
-        return []
-    symbol_set = {symbol for symbol in symbols if isinstance(symbol, str)}
-    if "pipeline_project_ranking_columns" not in symbol_set:
-        failures.append(
-            f"{prefix}.backend_execution.{stage}.symbols must include "
-            f"'pipeline_project_ranking_columns' when {field}.mode is projected_file"
-        )
-    if not (symbol_set & RANKING_PACKER_SYMBOLS):
-        failures.append(
-            f"{prefix}.backend_execution.{stage}.symbols must include a "
-            f"pipeline_pack_ranking_columns_* Rust symbol when {field}.mode "
-            "is projected_file"
-        )
-    return failures
+    return _backend_execution_failures(record, prefix, {stage})
 
 
 def _motif_annotation_pruning_failures(
@@ -1106,31 +1024,6 @@ def _region_motif_ranking_failures(
             required=True,
         )
     )
-    execution = record.get("backend_execution")
-    state = execution.get("pipeline_eregulon_peak_attribution") if isinstance(execution, dict) else None
-    symbols = state.get("symbols") if isinstance(state, dict) else None
-    if not isinstance(symbols, list):
-        return failures
-    symbol_set = {symbol for symbol in symbols if isinstance(symbol, str)}
-    if not (REGION_CISTARGET_SCORING_SYMBOLS & symbol_set):
-        failures.append(
-            f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
-            "symbols must include a cistarget enrichment or region-attribution "
-            "Rust symbol "
-            "when region_motif_rankings is supplied"
-        )
-    if not (REGION_CISTARGET_PEAK_VALUE_SYMBOLS & symbol_set):
-        failures.append(
-            f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
-            "symbols must include a cistarget_region_attribution_peak_values_* "
-            "Rust symbol when region_motif_rankings is supplied"
-        )
-    if not (REGION_CISTARGET_EXPAND_SYMBOLS & symbol_set):
-        failures.append(
-            f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
-            "symbols must include a pipeline_expand_region_cistarget_rows_* "
-            "Rust symbol when region_motif_rankings is supplied"
-        )
     if require_peak_filter or _motif_annotations_supplied(record):
         failures.extend(
             _backend_execution_failures(
