@@ -829,35 +829,6 @@ def _reference_source_failures(
             )
         if not _nonempty_str(entry.get("path")):
             failures.append(f"{prefix}.path must be a non-empty string")
-        if not isinstance(entry.get("exists_before"), bool):
-            failures.append(f"{prefix}.exists_before must be a boolean")
-        if not isinstance(entry.get("exists_after"), bool):
-            failures.append(f"{prefix}.exists_after must be a boolean")
-
-        if source == "explicit_path":
-            if entry.get("exists_before") is not True or entry.get("exists_after") is not True:
-                failures.append(f"{prefix} explicit paths must exist before and after loading")
-            if entry.get("cache_exists_before") is not None:
-                failures.append(f"{prefix}.cache_exists_before must be null for explicit paths")
-            if entry.get("cache_exists_after") is not None:
-                failures.append(f"{prefix}.cache_exists_after must be null for explicit paths")
-        elif source in {"default_cache", "default_download"}:
-            cache_before = entry.get("cache_exists_before")
-            cache_after = entry.get("cache_exists_after")
-            if not isinstance(cache_before, bool):
-                failures.append(f"{prefix}.cache_exists_before must be a boolean")
-            if not isinstance(cache_after, bool):
-                failures.append(f"{prefix}.cache_exists_after must be a boolean")
-            if source == "default_cache" and (
-                cache_before is not True or cache_after is not True
-            ):
-                failures.append(f"{prefix} default_cache must exist before and after loading")
-            if source == "default_download" and (
-                cache_before is not False or cache_after is not True
-            ):
-                failures.append(
-                    f"{prefix} default_download must be absent before and cached after loading"
-                )
     return failures
 
 

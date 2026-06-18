@@ -196,10 +196,6 @@ def explicit_reference_source(path: Path) -> dict[str, Any]:
     return {
         "source": "explicit_path",
         "path": str(path),
-        "exists_before": path.exists(),
-        "exists_after": path.exists(),
-        "cache_exists_before": None,
-        "cache_exists_after": None,
     }
 
 
@@ -208,14 +204,9 @@ def default_reference_source(
     *,
     cache_exists_before: bool,
 ) -> dict[str, Any]:
-    cache_exists_after = path.exists()
     return {
         "source": "default_cache" if cache_exists_before else "default_download",
         "path": str(path),
-        "exists_before": cache_exists_before,
-        "exists_after": cache_exists_after,
-        "cache_exists_before": cache_exists_before,
-        "cache_exists_after": cache_exists_after,
     }
 
 

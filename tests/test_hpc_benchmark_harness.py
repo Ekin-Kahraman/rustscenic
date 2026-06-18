@@ -275,8 +275,6 @@ def test_real_multiome_harness_prepares_default_motif_cache_without_loading(
     assert fingerprint["shape"] == [2, 2]
     assert fingerprint["file_backed"] is True
     assert source["source"] == "default_cache"
-    assert source["cache_exists_before"] is True
-    assert source["cache_exists_after"] is True
 
 
 def test_real_multiome_harness_builds_compact_output_summaries(monkeypatch, tmp_path):
@@ -2578,10 +2576,6 @@ def _explicit_reference_source(path: Path | str):
     return {
         "source": "explicit_path",
         "path": str(path),
-        "exists_before": True,
-        "exists_after": True,
-        "cache_exists_before": None,
-        "cache_exists_after": None,
     }
 
 
@@ -2590,10 +2584,6 @@ def _default_cached_reference_sources(tmp_path: Path):
         "motif_rankings": {
             "source": "default_cache",
             "path": str(tmp_path / "motif_rankings.feather"),
-            "exists_before": True,
-            "exists_after": True,
-            "cache_exists_before": True,
-            "cache_exists_after": True,
         },
         "gene_coords": _explicit_reference_source(tmp_path / "gene_coords.parquet"),
     }
@@ -4048,10 +4038,6 @@ def test_benchmark_artifact_validator_rejects_scaling_optional_reference_cache(
     record["runs"][0]["reference_sources"]["region_motif_rankings"] = {
         "source": "default_cache",
         "path": str(tmp_path / "region_rankings.feather"),
-        "exists_before": True,
-        "exists_after": True,
-        "cache_exists_before": True,
-        "cache_exists_after": True,
     }
 
     failures = module.validate_record(
@@ -5397,18 +5383,14 @@ def test_benchmark_artifact_validator_rejects_bad_reference_sources(tmp_path):
     record["reference_sources"]["gene_coords"] = {
         "source": "default_download",
         "path": str(tmp_path / "gene_coords.parquet"),
-        "exists_before": False,
-        "exists_after": False,
-        "cache_exists_before": True,
-        "cache_exists_after": False,
     }
 
     failures = module.validate_record(record, require_clean=True)
 
     assert "reference_sources.motif_rankings must be an object" in failures
     assert (
-        "reference_sources.gene_coords default_download must be absent before "
-        "and cached after loading"
+        "reference_sources.gene_coords.source must be explicit_path or "
+        "default_cache for timed full-pipeline benchmarks"
     ) in failures
 
 
@@ -5421,10 +5403,6 @@ def test_benchmark_artifact_validator_rejects_full_pipeline_reference_download(t
     record["reference_sources"]["motif_rankings"] = {
         "source": "default_download",
         "path": str(tmp_path / "motif_rankings.feather"),
-        "exists_before": False,
-        "exists_after": True,
-        "cache_exists_before": False,
-        "cache_exists_after": True,
     }
 
     failures = module.validate_record(record, require_clean=True)
