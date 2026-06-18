@@ -1387,6 +1387,98 @@ def _output_storage_failures(record: dict[str, Any]) -> list[str]:
     return failures
 
 
+REQUIRED_CORE_OUTPUT_KEYS = (
+    "atac_matrix_path",
+    "grn_path",
+    "regulons_path",
+    "candidate_regulons_path",
+    "aucell_path",
+    "topics_dir",
+    "cistarget_path",
+    "enhancer_links_path",
+    "eregulons_path",
+    "manifest_path",
+)
+
+_MANIFEST_TO_OUTPUT_KEYS = {
+    "n_grn_edges": "grn_edges",
+    "n_candidate_regulons": "candidate_regulons",
+    "n_regulons": "regulons",
+    "n_cistarget_rows": "cistarget_rows",
+    "n_enhancer_links": "enhancer_links",
+    "n_eregulon_rows": "eregulon_rows",
+    "n_eregulons": "eregulons",
+    "n_pruned_regulons": "pruned_regulons",
+}
+
+
+def _output_presence_failures(record: dict[str, Any], prefix: str) -> list[str]:
+    """Lean, path-free proof that every core output was written.
+
+    The writer records ``output_present`` as booleans (no absolute paths); this
+    requires the core outputs to be present and cross-checks that anything
+    flagged present also has a positive recorded size in ``output_storage``.
+    """
+    present = record.get("output_present")
+    if not isinstance(present, dict):
+        return [f"{prefix}.output_present must be an object"]
+    failures: list[str] = []
+    for key, value in sorted(present.items()):
+        if not isinstance(value, bool):
+            failures.append(f"{prefix}.output_present.{key} must be a boolean")
+    for key in REQUIRED_CORE_OUTPUT_KEYS:
+        if present.get(key) is not True:
+            failures.append(
+                f"{prefix}.output_present.{key} must be true (core output missing)"
+            )
+    storage = record.get("output_storage")
+    sizes = storage.get("artifact_size_bytes") if isinstance(storage, dict) else None
+    if isinstance(sizes, dict):
+        for key in REQUIRED_CORE_OUTPUT_KEYS:
+            if key == "manifest_path":
+                continue
+            if present.get(key) is True and key in sizes and not _positive_int(sizes[key]):
+                failures.append(
+                    f"{prefix}.output_storage.artifact_size_bytes.{key} "
+                    "must be positive for a present output"
+                )
+    return failures
+
+
+def _manifest_consistency_failures(record: dict[str, Any], prefix: str) -> list[str]:
+    """Cross-check the persisted manifest's counts against recorded outputs.
+
+    ``manifest_summary`` is read back by the writer from the on-disk
+    ``manifest.json`` (counts only, no paths), so a mismatch means the pipeline
+    persisted a manifest inconsistent with the in-memory result.
+    """
+    summary = record.get("manifest_summary")
+    if summary is None:
+        return [f"{prefix}.manifest_summary missing (pipeline manifest unreadable)"]
+    if not isinstance(summary, dict):
+        return [f"{prefix}.manifest_summary must be an object"]
+    outputs = record.get("outputs")
+    if not isinstance(outputs, dict):
+        return []
+    failures: list[str] = []
+    for manifest_key, output_key in _MANIFEST_TO_OUTPUT_KEYS.items():
+        if manifest_key in summary and output_key in outputs:
+            if summary[manifest_key] != outputs[output_key]:
+                failures.append(
+                    f"{prefix}.manifest_summary.{manifest_key} must match "
+                    f"outputs.{output_key}: {summary[manifest_key]} != {outputs[output_key]}"
+                )
+    if (
+        summary.get("aucell_shape") is not None
+        and outputs.get("aucell_shape") is not None
+        and summary["aucell_shape"] != outputs["aucell_shape"]
+    ):
+        failures.append(
+            f"{prefix}.manifest_summary.aucell_shape must match outputs.aucell_shape"
+        )
+    return failures
+
+
 def _log_log_slope(rows: list[dict[str, Any]], x_key: str, y_key: str) -> float | None:
     usable = [row for row in rows if row.get(x_key) and row.get(y_key)]
     if len(usable) < 2:
@@ -1583,7 +1675,9 @@ def _full_pipeline_scaling_row_child_failures(
         "setup_elapsed_s": child.get("setup_elapsed_s"),
         "elapsed_per_stage": child.get("elapsed_per_stage"),
         "peak_rss_gb_per_stage": child.get("peak_rss_gb_per_stage"),
+        "output_present": child.get("output_present"),
         "output_storage": child.get("output_storage"),
+        "manifest_summary": child.get("manifest_summary"),
         "outputs": child.get("outputs"),
         "expected_tf_recovery": child.get("expected_tf_recovery"),
         "backend_execution": child.get("backend_execution"),
@@ -1945,6 +2039,8 @@ def _full_pipeline_scaling_row_failures(
                 require_peak_filter=require_motif_pruning,
             )
         )
+    failures.extend(_output_presence_failures(row, prefix))
+    failures.extend(_manifest_consistency_failures(row, prefix))
     return failures
 
 
@@ -1998,6 +2094,8 @@ def validate_full_pipeline(
                 "outputs",
                 "expected_tf_recovery",
                 "output_summaries",
+                "output_present",
+                "manifest_summary",
                 "env",
             },
             "full_pipeline",
@@ -2151,6 +2249,8 @@ def validate_full_pipeline(
             failures.append("outputs.aucell_shape regulons must equal outputs.regulons")
 
     failures.extend(_output_storage_failures(record))
+    failures.extend(_output_presence_failures(record, "full_pipeline"))
+    failures.extend(_manifest_consistency_failures(record, "full_pipeline"))
     return failures
 
 

@@ -2738,7 +2738,10 @@ def _full_pipeline_record(tmp_path: Path):
             "top_enhancer_links": [{"peak_id": "p1", "gene": "G1", "correlation": 0.7}],
             "top_eregulon_rows": [{"tf": "TF1", "enhancer": "p1", "target_gene": "G1"}],
         },
-        "output_inventory": output_inventory,
+        "output_present": {
+            key: bool(isinstance(info, dict) and info.get("exists") is True)
+            for key, info in output_inventory.items()
+        },
         "output_storage": _output_storage_from_inventory(output_inventory),
         "env": {
             "python": "3.13.0",
@@ -2769,59 +2772,25 @@ def _output_storage_from_inventory(output_inventory: dict) -> dict:
     }
 
 
-def _sync_full_pipeline_manifest(record: dict) -> None:
-    info = record["output_inventory"]["manifest_path"]
-    path = Path(info["path"])
-    manifest_backend = {
-        key.removeprefix("pipeline_"): value
-        for key, value in record["backend_execution"].items()
-        if key.startswith("pipeline_")
+def _manifest_summary_from_outputs(outputs: dict) -> dict:
+    summary = {
+        "n_grn_edges": outputs["grn_edges"],
+        "n_candidate_regulons": outputs["candidate_regulons"],
+        "n_regulons": outputs["regulons"],
+        "n_cistarget_rows": outputs["cistarget_rows"],
+        "n_enhancer_links": outputs["enhancer_links"],
+        "n_eregulon_rows": outputs["eregulon_rows"],
+        "n_eregulons": outputs["eregulons"],
+        "aucell_shape": outputs["aucell_shape"],
     }
-    inventory = record["output_inventory"]
-    outputs = record["outputs"]
-    shapes = record["shapes"]
-    path.write_text(
-        json.dumps(
-            {
-                "output_dir": str(path.parent),
-                "atac_matrix_path": inventory["atac_matrix_path"]["path"],
-                "grn_path": inventory["grn_path"]["path"],
-                "regulons_path": inventory["regulons_path"]["path"],
-                "candidate_regulons_path": inventory["candidate_regulons_path"]["path"],
-                "aucell_path": inventory["aucell_path"]["path"],
-                "topics_dir": inventory["topics_dir"]["path"],
-                "cistarget_path": inventory["cistarget_path"]["path"],
-                "enhancer_links_path": inventory["enhancer_links_path"]["path"],
-                "eregulons_path": inventory["eregulons_path"]["path"],
-                "integrated_adata_path": (
-                    inventory.get("integrated_adata_path", {}).get("path")
-                ),
-                "elapsed": record["elapsed_per_stage"],
-                "memory": record["peak_rss_gb_per_stage"],
-                "n_cells": shapes["rna_post_qc"][0],
-                "n_grn_edges": outputs["grn_edges"],
-                "n_regulons": outputs["regulons"],
-                "n_candidate_regulons": outputs["candidate_regulons"],
-                "n_pruned_regulons": outputs.get("pruned_regulons"),
-                "n_cistarget_rows": outputs["cistarget_rows"],
-                "n_enhancer_links": outputs["enhancer_links"],
-                "n_eregulon_rows": outputs["eregulon_rows"],
-                "n_eregulons": outputs["eregulons"],
-                "aucell_shape": outputs["aucell_shape"],
-                "regulon_source": "candidate_grn_top_targets",
-                "backend_execution": manifest_backend,
-                "cell_barcode_filter": record.get("cell_barcode_filter"),
-                "matrix_inputs": record.get("matrix_inputs"),
-                "cistarget_rankings": record.get("cistarget_rankings"),
-                "region_cistarget_rankings": record.get("region_cistarget_rankings"),
-            }
-        )
-    )
-    info["size_bytes"] = path.stat().st_size
-    if "output_storage" in record:
-        record["output_storage"] = _output_storage_from_inventory(
-            record["output_inventory"]
-        )
+    if outputs.get("pruned_regulons") is not None:
+        summary["n_pruned_regulons"] = outputs["pruned_regulons"]
+    return summary
+
+
+def _sync_full_pipeline_manifest(record: dict) -> None:
+    """Keep manifest_summary consistent with outputs after a fixture mutation."""
+    record["manifest_summary"] = _manifest_summary_from_outputs(record["outputs"])
 
 
 def _projected_region_cistarget_rankings_state() -> dict:
@@ -2891,7 +2860,9 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "setup_elapsed_s": child["setup_elapsed_s"],
                 "elapsed_per_stage": child["elapsed_per_stage"],
                 "peak_rss_gb_per_stage": child["peak_rss_gb_per_stage"],
+                "output_present": child["output_present"],
                 "output_storage": child["output_storage"],
+                "manifest_summary": child["manifest_summary"],
                 "backend_execution": child["backend_execution"],
                 "cell_barcode_filter": child["cell_barcode_filter"],
                 "matrix_inputs": child["matrix_inputs"],
@@ -3411,6 +3382,76 @@ def test_benchmark_artifact_validator_checks_output_storage_totals(tmp_path):
     )
 
 
+def test_benchmark_artifact_validator_requires_core_outputs_present(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_output_present",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["output_present"]["grn_path"] = False
+    record["output_present"]["regulons_path"] = False
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.output_present.grn_path must be true (core output missing)"
+        in failures
+    )
+    assert (
+        "full_pipeline.output_present.regulons_path must be true (core output missing)"
+        in failures
+    )
+
+
+def test_benchmark_artifact_validator_requires_output_present_object(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_output_present_missing",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    del record["output_present"]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "full_pipeline.output_present must be an object" in failures
+
+
+def test_benchmark_artifact_validator_rejects_manifest_outputs_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_manifest_summary_mismatch",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    # Mutate a recorded output count without re-syncing the manifest summary:
+    # the persisted manifest must stay consistent with the in-memory result.
+    record["outputs"]["grn_edges"] += 1
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert any(
+        failure.startswith(
+            "full_pipeline.manifest_summary.n_grn_edges must match outputs.grn_edges:"
+        )
+        for failure in failures
+    )
+
+
+def test_benchmark_artifact_validator_requires_manifest_summary(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_manifest_summary_missing",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["manifest_summary"] = None
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.manifest_summary missing (pipeline manifest unreadable)"
+        in failures
+    )
+
+
 def test_benchmark_artifact_validator_rejects_python_io_in_compute_timing(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_python_io_compute_timing",
@@ -3454,7 +3495,7 @@ def test_benchmark_artifact_validator_accepts_compute_profile_without_integrated
     )
     record = _full_pipeline_record(tmp_path)
     record["params"]["write_integrated_adata"] = False
-    record["output_inventory"].pop("integrated_adata_path")
+    record["output_present"].pop("integrated_adata_path", None)
     record["peak_rss_gb_per_stage"].pop("integrated_adata")
     record["backend_execution"]["pipeline_integrated_adata"] = {
         "engine": "skipped",

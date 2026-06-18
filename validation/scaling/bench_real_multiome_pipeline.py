@@ -192,6 +192,40 @@ def output_storage(inventory: dict[str, dict[str, Any] | None]) -> dict[str, Any
     }
 
 
+def manifest_summary(manifest_path: str | Path | None) -> dict[str, Any] | None:
+    """Path-free count summary read back from the persisted pipeline manifest.
+
+    Lets the validator cross-check the recorded ``outputs`` against what the
+    pipeline independently wrote to ``manifest.json``, without leaking absolute
+    paths into the artefact. Returns ``None`` when the manifest is absent or
+    unreadable so the validator flags it.
+    """
+    if manifest_path is None:
+        return None
+    try:
+        manifest = json.loads(Path(manifest_path).read_text())
+    except (OSError, ValueError):
+        return None
+    if not isinstance(manifest, dict):
+        return None
+    count_keys = (
+        "n_grn_edges",
+        "n_candidate_regulons",
+        "n_regulons",
+        "n_cistarget_rows",
+        "n_enhancer_links",
+        "n_eregulon_rows",
+        "n_eregulons",
+        "n_pruned_regulons",
+    )
+    summary: dict[str, Any] = {
+        key: manifest[key] for key in count_keys if manifest.get(key) is not None
+    }
+    if manifest.get("aucell_shape") is not None:
+        summary["aucell_shape"] = manifest["aucell_shape"]
+    return summary
+
+
 def explicit_reference_source(path: Path) -> dict[str, Any]:
     return {
         "source": "explicit_path",
@@ -881,6 +915,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         outputs["pruned_regulons"] = int(result.n_pruned_regulons)
 
     inventory = {k: file_info(v) for k, v in artefact_paths.items()}
+    output_present = {
+        key: bool(isinstance(info, dict) and info.get("exists") is True)
+        for key, info in inventory.items()
+    }
+    manifest_evidence = manifest_summary(artefact_paths["manifest_path"])
 
     peak_rss_by_stage = {
         k: round(float(v), 6) for k, v in result.memory.items()
@@ -963,7 +1002,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             n=args.summary_rows,
             max_rows=args.summary_max_rows,
         ),
+        "output_present": output_present,
         "output_storage": output_storage(inventory),
+        "manifest_summary": manifest_evidence,
         "env": benchmark_env(),
     }
     args.out_json.write_text(json.dumps(record, indent=2) + "\n")
