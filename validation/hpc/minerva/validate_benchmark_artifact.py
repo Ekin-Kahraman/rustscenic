@@ -2026,7 +2026,6 @@ def _full_pipeline_scaling_row_child_failures(
         "elapsed_per_stage": child.get("elapsed_per_stage"),
         "io_elapsed_per_stage": child.get("io_elapsed_per_stage"),
         "peak_rss_gb_per_stage": child.get("peak_rss_gb_per_stage"),
-        "peak_rss_gb_delta_per_stage": child.get("peak_rss_gb_delta_per_stage"),
         "output_storage": child.get("output_storage"),
         "outputs": child.get("outputs"),
         "expected_tf_recovery": child.get("expected_tf_recovery"),
@@ -2326,17 +2325,6 @@ def _full_pipeline_scaling_row_failures(
             f"{prefix}.unknown peak_rss_gb_per_stage.{stage}"
             for stage in sorted(unknown)
         )
-    memory_delta = row.get("peak_rss_gb_delta_per_stage")
-    if not isinstance(memory_delta, dict):
-        failures.append(f"{prefix}.peak_rss_gb_delta_per_stage must be an object")
-    elif isinstance(memory, dict):
-        failures.extend(
-            _peak_rss_delta_failures(
-                memory,
-                memory_delta,
-                prefix=f"{prefix}.peak_rss_gb_delta_per_stage",
-            )
-        )
     failures.extend(_full_pipeline_wall_breakdown_failures(row, prefix))
     failures.extend(_compute_elapsed_backend_failures(row, prefix))
 
@@ -2466,7 +2454,6 @@ def validate_full_pipeline(
                 "elapsed_per_stage",
                 "io_elapsed_per_stage",
                 "peak_rss_gb_per_stage",
-                "peak_rss_gb_delta_per_stage",
                 "outputs",
                 "expected_tf_recovery",
                 "output_summaries",
@@ -2505,7 +2492,6 @@ def validate_full_pipeline(
     setup_elapsed = record.get("setup_elapsed_s", {})
     elapsed = record.get("elapsed_per_stage", {})
     memory = record.get("peak_rss_gb_per_stage", {})
-    memory_delta = record.get("peak_rss_gb_delta_per_stage", {})
     if not isinstance(setup_elapsed, dict):
         failures.append("setup_elapsed_s must be an object")
     else:
@@ -2535,8 +2521,6 @@ def validate_full_pipeline(
         failures.append("elapsed_per_stage must be an object")
     if not isinstance(memory, dict):
         failures.append("peak_rss_gb_per_stage must be an object")
-    if not isinstance(memory_delta, dict):
-        failures.append("peak_rss_gb_delta_per_stage must be an object")
     if isinstance(elapsed, dict):
         missing = REQUIRED_FULL_PIPELINE_ELAPSED_STAGES - set(elapsed)
         failures.extend(f"elapsed_per_stage.{stage} missing" for stage in sorted(missing))
@@ -2560,15 +2544,6 @@ def validate_full_pipeline(
                 failures.append(f"peak_rss_gb_per_stage.{stage} must be positive")
         unknown = set(memory) - FULL_PIPELINE_STAGES - OPTIONAL_FULL_PIPELINE_MEMORY_STAGES
         failures.extend(f"unknown peak_rss_gb_per_stage.{stage}" for stage in sorted(unknown))
-    if isinstance(memory, dict) and isinstance(memory_delta, dict):
-        failures.extend(
-            _peak_rss_delta_failures(
-                memory,
-                memory_delta,
-                prefix="peak_rss_gb_delta_per_stage",
-            )
-        )
-
     outputs = record.get("outputs", {})
     shapes = record.get("shapes", {})
     params = record.get("params", {})
@@ -3037,10 +3012,6 @@ def _stage_scaling_failures(record: dict[str, Any], runs: list[dict[str, Any]]) 
             runs,
             field="peak_rss_gb_per_stage",
         ),
-        "peak_rss_gb_delta_per_stage_slope_vs_cells": _stage_slopes_from_runs(
-            runs,
-            field="peak_rss_gb_delta_per_stage",
-        ),
     }
     for key, expected_slopes in expected.items():
         actual = stage_scaling.get(key)
@@ -3098,41 +3069,6 @@ def _stage_slopes_from_runs(
         )
         for stage in stages
     }
-
-
-def _peak_rss_delta_failures(
-    memory: dict[str, Any],
-    memory_delta: dict[str, Any],
-    *,
-    prefix: str,
-) -> list[str]:
-    expected = _peak_rss_delta_per_stage(memory)
-    failures: list[str] = []
-    if set(memory_delta) != set(expected):
-        failures.append(
-            f"{prefix} stages must match peak_rss_gb_per_stage: "
-            f"{sorted(memory_delta)} != {sorted(expected)}"
-        )
-    for stage, expected_delta in expected.items():
-        actual = memory_delta.get(stage)
-        if actual != expected_delta:
-            failures.append(
-                f"{prefix}.{stage} must match peak_rss_gb_per_stage: "
-                f"{actual} != {expected_delta}"
-            )
-    return failures
-
-
-def _peak_rss_delta_per_stage(memory: dict[str, Any]) -> dict[str, float]:
-    deltas: dict[str, float] = {}
-    previous_peak = 0.0
-    for stage, value in memory.items():
-        if not _finite_number(value):
-            continue
-        current = float(value)
-        deltas[str(stage)] = round(max(0.0, current - previous_peak), 6)
-        previous_peak = max(previous_peak, current)
-    return deltas
 
 
 def validate_record(

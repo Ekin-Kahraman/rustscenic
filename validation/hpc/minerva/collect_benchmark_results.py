@@ -338,10 +338,6 @@ def summarise_record(
             record,
             "peak_rss_gb_per_stage_slope_vs_cells",
         ),
-        "rss_delta_stage_scaling": _stage_scaling_summary(
-            record,
-            "peak_rss_gb_delta_per_stage_slope_vs_cells",
-        ),
         "outputs": _output_summary(record),
     }
 
@@ -422,7 +418,6 @@ def markdown_table(rows: list[dict[str, Any]]) -> str:
         ("scaling", "scaling"),
         ("elapsed_stage_scaling", "elapsed_stage_scaling"),
         ("rss_stage_scaling", "rss_stage_scaling"),
-        ("rss_delta_stage_scaling", "rss_delta_stage_scaling"),
         ("path", "path"),
     ]
     header = "| " + " | ".join(label for _, label in columns) + " |"
