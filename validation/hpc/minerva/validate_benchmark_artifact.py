@@ -1669,16 +1669,6 @@ def _pipeline_manifest_failures(record: dict[str, Any]) -> list[str]:
             record_key="peak_rss_gb_per_stage",
         )
     )
-    if "io_elapsed_per_stage" in record:
-        failures.extend(
-            _pipeline_manifest_stage_metric_failures(
-                record,
-                manifest,
-                manifest_key="io_elapsed",
-                record_key="io_elapsed_per_stage",
-            )
-        )
-
     manifest_execution = manifest.get("backend_execution")
     benchmark_execution = record.get("backend_execution")
     if not isinstance(manifest_execution, dict):
@@ -1844,7 +1834,6 @@ def _full_pipeline_wall_breakdown_failures(
         failures.append(
             f"{_path(prefix, 'wall_s.pipeline_compute_stages')} must be non-negative"
         )
-    io_elapsed = record.get("io_elapsed_per_stage")
     if not _nonnegative_number(io):
         failures.append(
             f"{_path(prefix, 'wall_s.pipeline_io_stages')} must be non-negative"
@@ -1875,30 +1864,6 @@ def _full_pipeline_wall_breakdown_failures(
                 f"{_path(prefix, 'wall_s.pipeline_compute_stages')} must not exceed "
                 "wall_s.pipeline"
             )
-
-    if not isinstance(io_elapsed, dict):
-        failures.append(f"{_path(prefix, 'io_elapsed_per_stage')} must be an object")
-    else:
-        io_values = []
-        for stage, value in io_elapsed.items():
-            if not _nonempty_str(stage):
-                failures.append(
-                    f"{_path(prefix, 'io_elapsed_per_stage')} keys must be non-empty strings"
-                )
-                continue
-            if not _nonnegative_number(value):
-                failures.append(
-                    f"{_path(prefix, f'io_elapsed_per_stage.{stage}')} must be non-negative"
-                )
-                continue
-            io_values.append(float(value))
-        if _nonnegative_number(io):
-            expected_io = round(sum(io_values), 3)
-            if abs(float(io) - expected_io) > 0.005:
-                failures.append(
-                    f"{_path(prefix, 'wall_s.pipeline_io_stages')} must match "
-                    f"io_elapsed_per_stage sum: {io} != {expected_io}"
-                )
 
     if (
         _positive_number(wall.get("pipeline"))
@@ -2024,7 +1989,6 @@ def _full_pipeline_scaling_row_child_failures(
         "setup_peak_rss_gb": child.get("setup_peak_rss_gb"),
         "setup_elapsed_s": child.get("setup_elapsed_s"),
         "elapsed_per_stage": child.get("elapsed_per_stage"),
-        "io_elapsed_per_stage": child.get("io_elapsed_per_stage"),
         "peak_rss_gb_per_stage": child.get("peak_rss_gb_per_stage"),
         "output_storage": child.get("output_storage"),
         "outputs": child.get("outputs"),
@@ -2452,7 +2416,6 @@ def validate_full_pipeline(
                 "setup_peak_rss_gb",
                 "peak_rss_gb",
                 "elapsed_per_stage",
-                "io_elapsed_per_stage",
                 "peak_rss_gb_per_stage",
                 "outputs",
                 "expected_tf_recovery",

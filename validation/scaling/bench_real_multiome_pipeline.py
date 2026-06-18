@@ -953,9 +953,6 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "setup_peak_rss_gb": round(setup_peak_rss_gb, 6),
         "peak_rss_gb": round(peak_rss_gb(), 6),
         "elapsed_per_stage": {k: round(float(v), 6) for k, v in result.elapsed.items()},
-        "io_elapsed_per_stage": {
-            k: round(float(v), 6) for k, v in result.io_elapsed.items()
-        },
         "peak_rss_gb_per_stage": peak_rss_by_stage,
         "outputs": outputs,
         "expected_tf_recovery": {

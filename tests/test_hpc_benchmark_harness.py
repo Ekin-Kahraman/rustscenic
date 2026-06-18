@@ -421,7 +421,6 @@ def test_real_multiome_harness_does_not_reread_pipeline_outputs_for_counts():
     assert '"pipeline_compute_stages": round(pipeline_compute_stage_wall, 3)' in source
     assert '"pipeline_io_stages": round(pipeline_io_stage_wall, 3)' in source
     assert '"pipeline_unattributed": round(pipeline_unattributed_wall, 3)' in source
-    assert '"io_elapsed_per_stage"' in source
     assert '"end_to_end": round(end_to_end_wall, 3)' in source
     assert '"setup_elapsed_s"' in source
 
@@ -858,7 +857,6 @@ def test_real_multiome_scaling_child_row_carries_child_validation_fields(
         "setup_peak_rss_gb": 0.75,
         "setup_elapsed_s": {"load_rna_qc": 0.1},
         "elapsed_per_stage": {"grn": 1.0},
-        "io_elapsed_per_stage": {"write_outputs": 0.1},
         "peak_rss_gb_per_stage": {"grn": 1.0},
         "output_storage": {"total_size_gb": 0.001},
         "backend_execution": {"pipeline_grn": {"engine": "rust", "symbols": ["grn_infer"]}},
@@ -942,7 +940,6 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
             "setup_peak_rss_gb": 0.8,
             "setup_elapsed_s": {"load_rna_qc": 0.1, "fragments_to_matrix": 0.9},
             "elapsed_per_stage": {},
-            "io_elapsed_per_stage": {"fixture_write": 0.25},
             "peak_rss_gb_per_stage": {},
             "reference_sources": _default_cached_reference_sources(tmp_path / "one"),
             "outputs": {"grn_edges": 1},
@@ -964,7 +961,6 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
             "setup_peak_rss_gb": 1.0,
             "setup_elapsed_s": {"load_rna_qc": 0.2, "fragments_to_matrix": 1.8},
             "elapsed_per_stage": {},
-            "io_elapsed_per_stage": {"fixture_write": 0.5},
             "peak_rss_gb_per_stage": {},
             "reference_sources": _default_cached_reference_sources(tmp_path / "two"),
             "outputs": {"grn_edges": 1},
@@ -2759,7 +2755,6 @@ def _full_pipeline_record(tmp_path: Path):
             "eregulons": 0.1,
             "aucell": 0.25,
         },
-        "io_elapsed_per_stage": {},
         "peak_rss_gb_per_stage": {
             "load_rna": 0.5,
             "preproc": 0.6,
@@ -2857,7 +2852,6 @@ def _sync_full_pipeline_manifest(record: dict) -> None:
                     inventory.get("integrated_adata_path", {}).get("path")
                 ),
                 "elapsed": record["elapsed_per_stage"],
-                "io_elapsed": record.get("io_elapsed_per_stage", {}),
                 "memory": record["peak_rss_gb_per_stage"],
                 "n_cells": shapes["rna_post_qc"][0],
                 "n_grn_edges": outputs["grn_edges"],
@@ -2951,7 +2945,6 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "setup_peak_rss_gb": child["setup_peak_rss_gb"],
                 "setup_elapsed_s": child["setup_elapsed_s"],
                 "elapsed_per_stage": child["elapsed_per_stage"],
-                "io_elapsed_per_stage": child["io_elapsed_per_stage"],
                 "peak_rss_gb_per_stage": child["peak_rss_gb_per_stage"],
                 "output_storage": child["output_storage"],
                 "backend_execution": child["backend_execution"],
@@ -3437,10 +3430,6 @@ def test_benchmark_artifact_validator_accounts_for_pipeline_io_timing(tmp_path):
         ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
     )
     record = _full_pipeline_record(tmp_path)
-    record["io_elapsed_per_stage"] = {
-        "grn_parquet_write": 0.04,
-        "aucell_parquet_write": 0.06,
-    }
     record["wall_s"]["pipeline_io_stages"] = 0.1
     record["wall_s"]["pipeline_unattributed"] = 0.15
     _sync_full_pipeline_manifest(record)
@@ -3461,10 +3450,6 @@ def test_benchmark_artifact_validator_accounts_for_pipeline_io_timing(tmp_path):
     )
 
     assert (
-        "wall_s.pipeline_io_stages must match io_elapsed_per_stage sum: "
-        "0.2 != 0.1"
-    ) in failures
-    assert (
         "wall_s.pipeline_unattributed must match pipeline minus compute stages "
         "and IO stages: 0.15 != 0.05"
     ) in failures
@@ -3476,7 +3461,6 @@ def test_benchmark_artifact_validator_requires_pipeline_io_timing(tmp_path):
         ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
     )
     record = _full_pipeline_record(tmp_path)
-    del record["io_elapsed_per_stage"]
     del record["wall_s"]["pipeline_io_stages"]
 
     failures = module.validate_record(
@@ -3485,7 +3469,6 @@ def test_benchmark_artifact_validator_requires_pipeline_io_timing(tmp_path):
         check_output_files=False,
     )
 
-    assert "full_pipeline.io_elapsed_per_stage missing" in failures
     assert "wall_s.pipeline_io_stages must be non-negative" in failures
 
 
