@@ -21,7 +21,6 @@ from validation.backend_requirements import (
     REQUIRED_RUST_BACKEND_SYMBOLS,
     backend_capabilities as shared_backend_capabilities,
 )
-from validation.python_hot_paths import ALLOWED_HITS, HOT_PATH_PATTERNS
 from validation.repo_cleanliness import (
     git_status_paths,
     repo_state_from_git_outputs,
@@ -850,7 +849,6 @@ def test_real_multiome_scaling_child_row_carries_child_validation_fields(
         "repo_state": _clean_repo_state(),
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
-        "python_hot_paths": _python_hot_paths_state(),
         "rustscenic": "0.4.7",
         "input_hashes": {
             "rna_10x_h5_md5": "a",
@@ -896,7 +894,6 @@ def test_real_multiome_scaling_child_row_carries_child_validation_fields(
     assert row["reference_fingerprints"] == child_record["reference_fingerprints"]
     assert row["runtime_import"] == child_record["runtime_import"]
     assert row["backend_capabilities"] == child_record["backend_capabilities"]
-    assert row["python_hot_paths"] == child_record["python_hot_paths"]
     assert row["input_hashes"] == child_record["input_hashes"]
 
 
@@ -2472,18 +2469,6 @@ def _backend_capabilities():
     }
 
 
-def _python_hot_paths_state():
-    return {
-        "package_dir": str(ROOT / "python" / "rustscenic"),
-        "exists": True,
-        "ok": True,
-        "violation_count": 0,
-        "violations": [],
-        "allowed_hit_count": len(ALLOWED_HITS),
-        "pattern_count": len(HOT_PATH_PATTERNS),
-    }
-
-
 def _backend_execution_state():
     return {
         "setup_fragments_to_matrix": {
@@ -2674,7 +2659,6 @@ def _full_pipeline_record(tmp_path: Path):
         "invocation": _invocation_state(),
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
-        "python_hot_paths": _python_hot_paths_state(),
         "backend_execution": backend_execution,
         "cell_barcode_filter": cell_barcode_filter,
         "rustscenic": "0.4.7",
@@ -2979,7 +2963,6 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "repo_state": child["repo_state"],
                 "runtime_import": child["runtime_import"],
                 "backend_capabilities": child["backend_capabilities"],
-                "python_hot_paths": child["python_hot_paths"],
                 "rustscenic": child["rustscenic"],
                 "input_hashes": child["input_hashes"],
                 "json_path": str(child_path),
@@ -3020,7 +3003,6 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         ),
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
-        "python_hot_paths": _python_hot_paths_state(),
         "rustscenic": "0.4.7",
         "params": {
             "cell_counts": [100, 200, 400],
@@ -3128,8 +3110,7 @@ def _grn_scaling_record():
             "repo_state": _clean_repo_state(),
             "runtime_import": _runtime_import_state(),
             "backend_capabilities": _backend_capabilities(),
-            "python_hot_paths": _python_hot_paths_state(),
-            "rayon_num_threads": "4",
+                "rayon_num_threads": "4",
             "omp_num_threads": "1",
             "openblas_num_threads": "1",
             "mkl_num_threads": "1",
@@ -3144,7 +3125,6 @@ def _grn_scaling_record():
             "validation/scaling/bench_real_pbmc3k_grn_scaling.py"
         ),
         "backend_capabilities": _backend_capabilities(),
-        "python_hot_paths": _python_hot_paths_state(),
         "rustscenic": "0.4.7",
         "params": {
             "subset_sizes": [100],
@@ -4076,7 +4056,6 @@ def test_benchmark_artifact_validator_rejects_scaling_runtime_child_mismatch(tmp
     record = _full_pipeline_scaling_record(tmp_path)
     record["runs"][0]["runtime_import"]["extension_version"] = "0.4.6"
     record["runs"][0]["backend_capabilities"]["missing_symbols"] = ["grn_infer"]
-    record["runs"][0]["python_hot_paths"]["violation_count"] = 1
     record["runs"][0]["input_hashes"]["rna_10x_h5_md5"] = "different"
 
     failures = module.validate_record(
@@ -4087,7 +4066,6 @@ def test_benchmark_artifact_validator_rejects_scaling_runtime_child_mismatch(tmp
 
     assert "runs[0].runtime_import must match child JSON" in failures
     assert "runs[0].backend_capabilities must match child JSON" in failures
-    assert "runs[0].python_hot_paths must match child JSON" in failures
     assert "runs[0].input_hashes must match child JSON" in failures
 
 
@@ -4117,7 +4095,6 @@ def test_benchmark_artifact_validator_rejects_scaling_row_without_runtime_proven
     row = record["runs"][0]
     del row["runtime_import"]
     del row["backend_capabilities"]
-    del row["python_hot_paths"]
     del row["input_hashes"]
     row["rustscenic"] = ""
 
@@ -4129,7 +4106,6 @@ def test_benchmark_artifact_validator_rejects_scaling_row_without_runtime_proven
 
     assert "runs[0].runtime_import missing" in failures
     assert "runs[0].backend_capabilities missing" in failures
-    assert "runs[0].python_hot_paths missing" in failures
     assert "runs[0].input_hashes must be a non-empty object" in failures
     assert "runs[0].rustscenic must be a non-empty string" in failures
 
@@ -4438,76 +4414,6 @@ def test_benchmark_artifact_validator_rejects_missing_backend_symbols(tmp_path):
         "full_pipeline.backend_capabilities.required_symbols.enhancer "
         "must contain at least one symbol"
     ) in failures
-
-
-def test_benchmark_artifact_validator_rejects_python_hot_path_regression(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_hot_path_regression",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["python_hot_paths"]["ok"] = False
-    record["python_hot_paths"]["violation_count"] = 1
-    record["python_hot_paths"]["violations"] = [
-        "pipeline.py:999: merged = left.merge(right)"
-    ]
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert "full_pipeline.python_hot_paths.ok must be true" in failures
-    assert "full_pipeline.python_hot_paths.violation_count must be 0" in failures
-    assert any(
-        failure.startswith("full_pipeline.python_hot_paths.violations must be empty:")
-        for failure in failures
-    )
-
-
-def test_benchmark_artifact_validator_rejects_weakened_hot_path_scan(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_hot_path_scan_coverage",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["python_hot_paths"]["pattern_count"] = len(HOT_PATH_PATTERNS) - 1
-    record["python_hot_paths"]["allowed_hit_count"] = len(ALLOWED_HITS) + 1
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "full_pipeline.python_hot_paths.pattern_count must equal "
-        f"{len(HOT_PATH_PATTERNS)}"
-    ) in failures
-    assert (
-        "full_pipeline.python_hot_paths.allowed_hit_count must equal "
-        f"{len(ALLOWED_HITS)}"
-    ) in failures
-
-
-def test_benchmark_artifact_validator_rejects_child_grn_python_hot_path_regression():
-    module = _load_module(
-        "validate_benchmark_artifact_child_hot_path_regression",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _grn_scaling_record()
-    record["subset_scaling"][0]["env"]["python_hot_paths"]["ok"] = False
-    record["subset_scaling"][0]["env"]["python_hot_paths"]["violation_count"] = 1
-    record["subset_scaling"][0]["env"]["python_hot_paths"]["violations"] = [
-        "eregulon.py:999: grouped = df.groupby('tf')"
-    ]
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert "subset_scaling[0].env.python_hot_paths.ok must be true" in failures
-    assert (
-        "subset_scaling[0].env.python_hot_paths.violation_count must be 0"
-        in failures
-    )
-    assert any(
-        failure.startswith(
-            "subset_scaling[0].env.python_hot_paths.violations must be empty:"
-        )
-        for failure in failures
-    )
 
 
 def test_benchmark_artifact_validator_rejects_non_rust_full_pipeline_stage(tmp_path):

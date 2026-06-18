@@ -25,7 +25,6 @@ if str(REPO_ROOT) not in sys.path:
 
 from validation.backend_requirements import backend_capabilities
 from validation.hpc.minerva.validate_benchmark_artifact import validate_record
-from validation.python_hot_paths import hot_path_state
 from validation.scaling.bench_real_multiome_pipeline import (
     DEFAULT_SUMMARY_MAX_ROWS,
     benchmark_env,
@@ -202,7 +201,6 @@ def run_child(args: argparse.Namespace, *, n_cells: int) -> dict[str, Any]:
         "repo_state": record["repo_state"],
         "runtime_import": record["runtime_import"],
         "backend_capabilities": record["backend_capabilities"],
-        "python_hot_paths": record["python_hot_paths"],
         "rustscenic": record["rustscenic"],
         "input_hashes": record["input_hashes"],
         "json_path": str(out_json),
@@ -293,7 +291,6 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
         "invocation": getattr(args, "_invocation", invocation_state(None)),
         "runtime_import": runtime_import_state(),
         "backend_capabilities": backend_capabilities(),
-        "python_hot_paths": hot_path_state(),
         "rustscenic": version("rustscenic"),
         "params": {
             "cell_counts": args.cell_counts,

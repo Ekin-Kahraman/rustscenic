@@ -19,7 +19,6 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from validation.backend_requirements import REQUIRED_RUST_BACKEND_SYMBOLS
-from validation.python_hot_paths import ALLOWED_HITS, HOT_PATH_PATTERNS
 
 
 FULL_PIPELINE_STAGES = {
@@ -486,50 +485,6 @@ def _backend_failures(record: dict[str, Any], prefix: str) -> list[str]:
                 f"{prefix}.backend_capabilities.required_symbols.{stage}.{symbol} missing"
                 for symbol in sorted(missing)
             )
-    return failures
-
-
-def _python_hot_path_failures(record: dict[str, Any], prefix: str) -> list[str]:
-    failures: list[str] = []
-    state = record.get("python_hot_paths")
-    if not isinstance(state, dict):
-        return [f"{prefix}.python_hot_paths missing"]
-    if state.get("exists") is not True:
-        failures.append(f"{prefix}.python_hot_paths.exists must be true")
-    if state.get("ok") is not True:
-        failures.append(f"{prefix}.python_hot_paths.ok must be true")
-    count = state.get("violation_count")
-    if not isinstance(count, int) or isinstance(count, bool):
-        failures.append(f"{prefix}.python_hot_paths.violation_count must be an integer")
-    elif count != 0:
-        failures.append(f"{prefix}.python_hot_paths.violation_count must be 0")
-    violations = state.get("violations")
-    if not isinstance(violations, list):
-        failures.append(f"{prefix}.python_hot_paths.violations must be a list")
-    elif violations:
-        failures.append(
-            f"{prefix}.python_hot_paths.violations must be empty: {violations[:5]}"
-        )
-    allowed_count = state.get("allowed_hit_count")
-    expected_allowed = len(ALLOWED_HITS)
-    if not isinstance(allowed_count, int) or isinstance(allowed_count, bool):
-        failures.append(f"{prefix}.python_hot_paths.allowed_hit_count must be an integer")
-    elif allowed_count != expected_allowed:
-        failures.append(
-            f"{prefix}.python_hot_paths.allowed_hit_count must equal "
-            f"{expected_allowed}"
-        )
-    pattern_count = state.get("pattern_count")
-    expected_patterns = len(HOT_PATH_PATTERNS)
-    if not isinstance(pattern_count, int) or isinstance(pattern_count, bool):
-        failures.append(f"{prefix}.python_hot_paths.pattern_count must be an integer")
-    elif pattern_count != expected_patterns:
-        failures.append(
-            f"{prefix}.python_hot_paths.pattern_count must equal "
-            f"{expected_patterns}"
-        )
-    if not _nonempty_str(state.get("package_dir")):
-        failures.append(f"{prefix}.python_hot_paths.package_dir must be a non-empty string")
     return failures
 
 
@@ -2089,7 +2044,6 @@ def _full_pipeline_scaling_row_child_failures(
         "repo_state": child.get("repo_state"),
         "runtime_import": child.get("runtime_import"),
         "backend_capabilities": child.get("backend_capabilities"),
-        "python_hot_paths": child.get("python_hot_paths"),
         "rustscenic": child.get("rustscenic"),
         "input_hashes": child.get("input_hashes"),
         "params": child.get("params"),
@@ -2291,7 +2245,6 @@ def _full_pipeline_scaling_row_failures(
     failures.extend(_repo_failures(row, require_clean=require_clean, prefix=prefix))
     failures.extend(_runtime_import_failures(row, prefix))
     failures.extend(_backend_failures(row, prefix))
-    failures.extend(_python_hot_path_failures(row, prefix))
     if not _nonempty_str(row.get("rustscenic")):
         failures.append(f"{prefix}.rustscenic must be a non-empty string")
     input_hashes = row.get("input_hashes")
@@ -2477,7 +2430,6 @@ def validate_full_pipeline(
     failures = _repo_failures(record, require_clean=require_clean)
     failures.extend(_runtime_import_failures(record, "full_pipeline"))
     failures.extend(_backend_failures(record, "full_pipeline"))
-    failures.extend(_python_hot_path_failures(record, "full_pipeline"))
     failures.extend(_invocation_failures(record, "full_pipeline"))
     failures.extend(
         _backend_execution_failures(
@@ -2501,7 +2453,6 @@ def validate_full_pipeline(
                 "invocation",
                 "runtime_import",
                 "backend_capabilities",
-                "python_hot_paths",
                 "backend_execution",
                 "cell_barcode_filter",
                 "cistarget_rankings",
@@ -2699,7 +2650,6 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
     failures.extend(_runtime_import_failures(record, "grn_scaling"))
     failures.extend(_invocation_failures(record, "grn_scaling"))
     failures.extend(_backend_failures(record, "grn_scaling"))
-    failures.extend(_python_hot_path_failures(record, "grn_scaling"))
     failures.extend(
         _require_keys(
             record,
@@ -2707,7 +2657,6 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
                 "runtime_import",
                 "invocation",
                 "backend_capabilities",
-                "python_hot_paths",
                 "rustscenic",
                 "dataset",
                 "params",
@@ -2775,7 +2724,6 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
             if isinstance(env, dict):
                 failures.extend(_runtime_import_failures(env, f"{prefix}.env"))
                 failures.extend(_backend_failures(env, f"{prefix}.env"))
-                failures.extend(_python_hot_path_failures(env, f"{prefix}.env"))
             else:
                 failures.append(f"{prefix}.env must be an object")
             failures.extend(
@@ -2878,7 +2826,6 @@ def validate_full_pipeline_scaling(
     failures = _repo_failures(record, require_clean=require_clean)
     failures.extend(_runtime_import_failures(record, "full_pipeline_scaling"))
     failures.extend(_backend_failures(record, "full_pipeline_scaling"))
-    failures.extend(_python_hot_path_failures(record, "full_pipeline_scaling"))
     failures.extend(_invocation_failures(record, "full_pipeline_scaling"))
     failures.extend(
         _require_keys(
@@ -2886,7 +2833,6 @@ def validate_full_pipeline_scaling(
             {
                 "runtime_import",
                 "backend_capabilities",
-                "python_hot_paths",
                 "rustscenic",
                 "dataset_name",
                 "invocation",

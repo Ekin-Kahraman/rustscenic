@@ -39,7 +39,6 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from validation.backend_requirements import backend_capabilities
-from validation.python_hot_paths import hot_path_state
 from validation.process_memory import peak_rss_gb
 from validation.repo_cleanliness import repo_state_from_git_outputs
 
@@ -916,7 +915,6 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "invocation": getattr(args, "_invocation", invocation_state(None)),
         "runtime_import": runtime_import_state(),
         "backend_capabilities": backend_capabilities(),
-        "python_hot_paths": hot_path_state(),
         "backend_execution": backend_execution_for_benchmark(result),
         "cell_barcode_filter": cell_barcode_filter,
         "rustscenic": version("rustscenic"),
