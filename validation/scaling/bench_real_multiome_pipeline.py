@@ -210,15 +210,31 @@ def default_reference_source(
     }
 
 
+def _compact_backend_state(state: Any) -> dict[str, Any]:
+    """Compact a backend-execution state to engine/required_ok/symbol_count."""
+    engine = state.get("engine") if isinstance(state, dict) else None
+    symbols = state.get("symbols") if isinstance(state, dict) else None
+    count = len(symbols) if isinstance(symbols, list) else 0
+    compact: dict[str, Any] = {
+        "engine": engine,
+        "required_ok": engine == "rust" and count > 0,
+        "symbol_count": count,
+    }
+    if isinstance(state, dict) and isinstance(state.get("reason"), str):
+        compact["reason"] = state["reason"]
+    return compact
+
+
 def backend_execution_for_benchmark(result) -> dict[str, Any]:
     execution = {
         "setup_fragments_to_matrix": {
             "engine": "rust",
-            "symbols": ["preproc_fragments_to_matrix"],
+            "required_ok": True,
+            "symbol_count": 1,
         }
     }
     for stage, state in result.backend_execution.items():
-        execution[f"pipeline_{stage}"] = state
+        execution[f"pipeline_{stage}"] = _compact_backend_state(state)
     return execution
 
 

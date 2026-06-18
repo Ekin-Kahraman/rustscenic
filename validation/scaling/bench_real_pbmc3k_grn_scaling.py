@@ -106,8 +106,21 @@ def backend_execution_for_grn(grn) -> dict[str, Any]:
         and isinstance(backend.get("symbols"), list)
         and all(isinstance(symbol, str) and symbol for symbol in backend["symbols"])
     ):
-        return {"grn": {"engine": "rust", "symbols": list(backend["symbols"])}}
-    return {"grn": {"engine": "unknown", "reason": "missing GRN Rust backend metadata"}}
+        return {
+            "grn": {
+                "engine": "rust",
+                "required_ok": True,
+                "symbol_count": len(backend["symbols"]),
+            }
+        }
+    return {
+        "grn": {
+            "engine": "unknown",
+            "required_ok": False,
+            "symbol_count": 0,
+            "reason": "missing GRN Rust backend metadata",
+        }
+    }
 
 
 def configure_thread_env(threads: int) -> None:

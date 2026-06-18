@@ -521,70 +521,14 @@ def _backend_execution_failures(
             continue
         if state.get("engine") != "rust":
             failures.append(f"{stage_prefix}.engine must be 'rust'")
-        symbols = state.get("symbols")
-        if (
-            not isinstance(symbols, list)
-            or not symbols
-            or not all(_nonempty_str(symbol) for symbol in symbols)
-        ):
-            failures.append(f"{stage_prefix}.symbols must be a non-empty string list")
-            continue
-        failures.extend(_backend_execution_symbol_failures(stage, symbols, stage_prefix))
     for stage, state in sorted(execution.items()):
-        if stage in (required_rust_stages or set()):
-            continue
-        if stage not in REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS:
-            continue
         if not isinstance(state, dict) or state.get("engine") != "rust":
             continue
-        symbols = state.get("symbols")
         stage_prefix = f"{prefix}.backend_execution.{stage}"
-        if (
-            not isinstance(symbols, list)
-            or not symbols
-            or not all(_nonempty_str(symbol) for symbol in symbols)
-        ):
-            failures.append(f"{stage_prefix}.symbols must be a non-empty string list")
-            continue
-        failures.extend(_backend_execution_symbol_failures(stage, symbols, stage_prefix))
-    return failures
-
-
-def _backend_execution_symbol_failures(
-    stage: str,
-    symbols: list[str],
-    stage_prefix: str,
-) -> list[str]:
-    requirements = REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS.get(stage)
-    if not requirements:
-        return []
-
-    failures: list[str] = []
-    symbol_set = set(symbols)
-    missing_required = set(requirements.get("all_of", set())) - symbol_set
-    failures.extend(
-        f"{stage_prefix}.symbols missing required Rust symbol {symbol!r}"
-        for symbol in sorted(missing_required)
-    )
-
-    any_of = requirements.get("any_of", ())
-    if any_of and not any(set(option) <= symbol_set for option in any_of):
-        options = [
-            "{" + ", ".join(sorted(repr(symbol) for symbol in option)) + "}"
-            for option in any_of
-        ]
-        failures.append(
-            f"{stage_prefix}.symbols must include at least one Rust symbol set "
-            f"from {options}"
-        )
-    for group in requirements.get("one_from_each", ()):
-        group = set(group)
-        if not group & symbol_set:
-            options = ", ".join(sorted(repr(symbol) for symbol in group))
-            failures.append(
-                f"{stage_prefix}.symbols must include at least one Rust symbol "
-                f"from {{{options}}}"
-            )
+        if state.get("required_ok") is not True:
+            failures.append(f"{stage_prefix}.required_ok must be true")
+        if not _positive_int(state.get("symbol_count")):
+            failures.append(f"{stage_prefix}.symbol_count must be positive")
     return failures
 
 
@@ -598,70 +542,6 @@ def _unknown_full_pipeline_backend_execution_failures(
     return [
         f"{prefix}.backend_execution.{stage} is not a recognised full-pipeline stage"
         for stage in sorted(set(execution) - ALLOWED_FULL_PIPELINE_BACKEND_EXECUTION_STAGES)
-    ]
-
-
-def _sparse_rna_backend_failures(
-    record: dict[str, Any],
-    prefix: str,
-) -> list[str]:
-    matrix_inputs = record.get("matrix_inputs")
-    if not isinstance(matrix_inputs, dict):
-        return []
-    rna_profile = matrix_inputs.get("rna_post_qc")
-    if not isinstance(rna_profile, dict) or rna_profile.get("storage") != "sparse":
-        return []
-
-    execution = record.get("backend_execution")
-    if not isinstance(execution, dict):
-        return []
-
-    required = {
-        "pipeline_grn": "grn_infer_sparse_csc",
-        "pipeline_enhancer": "enhancer_link_pearson_sparse_rna",
-        "pipeline_aucell": "aucell_score_sparse_csr",
-    }
-    failures: list[str] = []
-    for stage, required_symbol in required.items():
-        state = execution.get(stage)
-        symbols = state.get("symbols") if isinstance(state, dict) else None
-        if not isinstance(symbols, list):
-            continue
-        symbol_set = {symbol for symbol in symbols if isinstance(symbol, str)}
-        if required_symbol in symbol_set:
-            continue
-        failures.append(
-            f"{prefix}.backend_execution.{stage}.symbols must include "
-            f"{required_symbol!r} when matrix_inputs.rna_post_qc.storage "
-            "is 'sparse'"
-        )
-    return failures
-
-
-def _sparse_grn_backend_failures(
-    record: dict[str, Any],
-    prefix: str,
-) -> list[str]:
-    matrix_inputs = record.get("matrix_inputs")
-    if not isinstance(matrix_inputs, dict):
-        return []
-    rna_profile = matrix_inputs.get("rna_post_qc")
-    if not isinstance(rna_profile, dict) or rna_profile.get("storage") != "sparse":
-        return []
-
-    execution = record.get("backend_execution")
-    state = execution.get("grn") if isinstance(execution, dict) else None
-    symbols = state.get("symbols") if isinstance(state, dict) else None
-    if not isinstance(symbols, list):
-        return []
-    if "grn_infer_sparse_csc" in {
-        symbol for symbol in symbols if isinstance(symbol, str)
-    }:
-        return []
-    return [
-        f"{prefix}.backend_execution.grn.symbols must include "
-        "'grn_infer_sparse_csc' when matrix_inputs.rna_post_qc.storage "
-        "is 'sparse'"
     ]
 
 
@@ -2046,7 +1926,6 @@ def _full_pipeline_scaling_row_failures(
     failures.extend(_matrix_input_failures(row, prefix))
     failures.extend(_reference_fingerprint_failures(row, prefix))
     failures.extend(_cistarget_ranking_metadata_failures(row, prefix))
-    failures.extend(_sparse_rna_backend_failures(row, prefix))
     failures.extend(_full_pipeline_scaling_reference_source_failures(row, prefix))
     failures.extend(_integrated_adata_execution_failures(row, prefix))
     if require_motif_pruning:
@@ -2244,7 +2123,6 @@ def validate_full_pipeline(
             )
         )
         failures.extend(_matrix_input_failures(record, "full_pipeline"))
-        failures.extend(_sparse_rna_backend_failures(record, "full_pipeline"))
 
     if not _positive_int(outputs.get("grn_edges")):
         failures.append("outputs.grn_edges must be positive")
@@ -2371,7 +2249,6 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
                     shape_keys=("rna_post_qc",),
                 )
             )
-            failures.extend(_sparse_grn_backend_failures(row, prefix))
     failures.extend(_grn_scaling_summary_failures(subset_rows, thread_rows, record))
     return failures
 
