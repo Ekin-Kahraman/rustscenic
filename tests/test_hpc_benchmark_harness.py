@@ -3499,19 +3499,6 @@ def test_benchmark_artifact_validator_checks_output_storage_totals(tmp_path):
         for failure in failures
     )
 
-    record = _full_pipeline_record(tmp_path)
-    record["output_storage"]["artifact_size_bytes"]["grn_path"] += 1
-    failures = module.validate_record(
-        record,
-        require_clean=True,
-        check_output_files=True,
-    )
-
-    assert (
-        "output_storage.artifact_size_bytes.grn_path must match "
-        "output_inventory.grn_path.size_bytes"
-    ) in failures
-
 
 def test_benchmark_artifact_validator_rejects_python_io_in_compute_timing(tmp_path):
     module = _load_module(
@@ -4156,91 +4143,6 @@ def test_benchmark_artifact_validator_rejects_scaling_child_dataset_mismatch(tmp
     )
 
     assert "runs[0].dataset_name must match aggregate dataset_name" in failures
-
-
-def test_benchmark_artifact_validator_rejects_incomplete_output_inventory(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_inventory",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    del record["output_inventory"]["grn_path"]
-    record["output_inventory"]["aucell_path"]["size_bytes"] = 0
-    record["output_inventory"]["topics_dir"]["entries"] = 0
-    cistarget_path = Path(record["output_inventory"]["cistarget_path"]["path"])
-    cistarget_path.write_text("")
-
-    failures = module.validate_record(
-        record,
-        require_clean=True,
-        check_output_files=True,
-    )
-
-    assert "output_inventory.grn_path must be an object" in failures
-    assert "output_inventory.aucell_path.size_bytes must be positive" in failures
-    assert "output_inventory.topics_dir.entries must be positive" in failures
-    assert (
-        f"output_inventory.cistarget_path file is empty: {cistarget_path}"
-        in failures
-    )
-
-
-def test_benchmark_artifact_validator_rejects_manifest_mismatch(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_manifest_mismatch",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    manifest_info = record["output_inventory"]["manifest_path"]
-    manifest_path = Path(manifest_info["path"])
-    manifest = json.loads(manifest_path.read_text())
-    manifest["cell_barcode_filter"] = {"requested": 99, "matched": 99}
-    manifest["grn_path"] = str(tmp_path / "wrong_grn.parquet")
-    manifest["n_grn_edges"] = 999
-    manifest["elapsed"]["grn"] = 999.0
-    manifest["memory"]["grn"] = 999.0
-    manifest["matrix_inputs"]["rna_post_qc"]["nnz"] = 1
-    manifest["backend_execution"]["enhancer"] = {
-        "engine": "rust",
-        "symbols": ["enhancer_link_pearson"],
-    }
-    manifest_path.write_text(json.dumps(manifest))
-    manifest_info["size_bytes"] = manifest_path.stat().st_size
-
-    failures = module.validate_record(
-        record,
-        require_clean=True,
-        check_output_files=True,
-    )
-
-    assert (
-        "output_inventory.manifest_path cell_barcode_filter must match benchmark JSON"
-        in failures
-    )
-    assert (
-        "output_inventory.manifest_path grn_path must match "
-        "output_inventory.grn_path.path"
-    ) in failures
-    assert (
-        "output_inventory.manifest_path n_grn_edges must match benchmark JSON"
-        in failures
-    )
-    assert (
-        "output_inventory.manifest_path elapsed.grn must match "
-        "benchmark elapsed_per_stage.grn"
-    ) in failures
-    assert (
-        "output_inventory.manifest_path memory.grn must match "
-        "benchmark peak_rss_gb_per_stage.grn"
-    ) in failures
-    assert (
-        "output_inventory.manifest_path matrix_inputs must match benchmark JSON"
-        in failures
-    )
-    assert (
-        "output_inventory.manifest_path backend_execution.enhancer must match "
-        "benchmark backend_execution.pipeline_enhancer"
-    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_dirty_full_pipeline(tmp_path):

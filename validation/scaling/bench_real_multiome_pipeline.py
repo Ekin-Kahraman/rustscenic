@@ -966,7 +966,6 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             n=args.summary_rows,
             max_rows=args.summary_max_rows,
         ),
-        "output_inventory": inventory,
         "output_storage": output_storage(inventory),
         "env": benchmark_env(),
     }

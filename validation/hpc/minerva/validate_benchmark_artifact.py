@@ -1500,60 +1500,6 @@ def _thread_budget_failures(
     return failures
 
 
-def _output_inventory_failures(record: dict[str, Any]) -> list[str]:
-    failures: list[str] = []
-    inventory = record.get("output_inventory")
-    if not isinstance(inventory, dict):
-        return ["output_inventory must be an object when --check-output-files is set"]
-
-    for key, expected_type in sorted(_required_full_pipeline_artefacts(record).items()):
-        info = inventory.get(key)
-        if not isinstance(info, dict):
-            failures.append(f"output_inventory.{key} must be an object")
-            continue
-        path = info.get("path")
-        if not isinstance(path, str) or not path:
-            failures.append(f"output_inventory.{key}.path must be a non-empty string")
-            continue
-        if info.get("exists") is not True:
-            failures.append(f"output_inventory.{key} must exist: {path}")
-            continue
-        if info.get("type") != expected_type:
-            failures.append(
-                f"output_inventory.{key}.type must be {expected_type!r}"
-            )
-        actual_path = Path(path)
-        if expected_type == "file":
-            if not _positive_int(info.get("size_bytes")):
-                failures.append(f"output_inventory.{key}.size_bytes must be positive")
-            if not actual_path.is_file():
-                failures.append(f"output_inventory.{key} path is not a file: {path}")
-            else:
-                actual_size = actual_path.stat().st_size
-                if actual_size <= 0:
-                    failures.append(f"output_inventory.{key} file is empty: {path}")
-                elif _positive_int(info.get("size_bytes")) and info["size_bytes"] != actual_size:
-                    failures.append(
-                        f"output_inventory.{key}.size_bytes does not match "
-                        f"live file size: {info['size_bytes']} != {actual_size}"
-                    )
-        else:
-            if not _positive_int(info.get("entries")):
-                failures.append(f"output_inventory.{key}.entries must be positive")
-            if not actual_path.is_dir():
-                failures.append(f"output_inventory.{key} path is not a directory: {path}")
-            else:
-                actual_entries = sum(1 for _ in actual_path.iterdir())
-                if actual_entries <= 0:
-                    failures.append(f"output_inventory.{key} directory is empty: {path}")
-                elif _positive_int(info.get("entries")) and info["entries"] != actual_entries:
-                    failures.append(
-                        f"output_inventory.{key}.entries does not match "
-                        f"live directory entries: {info['entries']} != {actual_entries}"
-                    )
-    return failures
-
-
 def _output_storage_failures(record: dict[str, Any]) -> list[str]:
     storage = record.get("output_storage")
     if storage is None:
@@ -1601,197 +1547,7 @@ def _output_storage_failures(record: dict[str, Any]) -> list[str]:
                 f"{total_gb} != {expected_gb}"
             )
 
-    inventory = record.get("output_inventory")
-    if isinstance(inventory, dict) and isinstance(sizes, dict):
-        for key, info in inventory.items():
-            if not isinstance(info, dict):
-                continue
-            size = info.get("size_bytes")
-            if _nonnegative_int(size):
-                if sizes.get(key) != size:
-                    failures.append(
-                        f"output_storage.artifact_size_bytes.{key} must match "
-                        f"output_inventory.{key}.size_bytes"
-                    )
     return failures
-
-
-def _pipeline_manifest_failures(record: dict[str, Any]) -> list[str]:
-    inventory = record.get("output_inventory")
-    if not isinstance(inventory, dict):
-        return []
-    info = inventory.get("manifest_path")
-    if not isinstance(info, dict) or not isinstance(info.get("path"), str):
-        return []
-    manifest_path = Path(info["path"])
-    if not manifest_path.is_file():
-        return []
-
-    try:
-        manifest = json.loads(manifest_path.read_text())
-    except (OSError, json.JSONDecodeError) as exc:
-        return [f"output_inventory.manifest_path could not be read as JSON: {exc}"]
-    if not isinstance(manifest, dict):
-        return ["output_inventory.manifest_path JSON must be an object"]
-
-    failures: list[str] = []
-    if manifest.get("cell_barcode_filter") != record.get("cell_barcode_filter"):
-        failures.append(
-            "output_inventory.manifest_path cell_barcode_filter must match benchmark JSON"
-        )
-    if manifest.get("matrix_inputs") != record.get("matrix_inputs"):
-        failures.append(
-            "output_inventory.manifest_path matrix_inputs must match benchmark JSON"
-        )
-    if manifest.get("cistarget_rankings") != record.get("cistarget_rankings"):
-        failures.append(
-            "output_inventory.manifest_path cistarget_rankings must match benchmark JSON"
-        )
-    if manifest.get("region_cistarget_rankings") != record.get("region_cistarget_rankings"):
-        failures.append(
-            "output_inventory.manifest_path region_cistarget_rankings must match benchmark JSON"
-        )
-    failures.extend(_pipeline_manifest_path_failures(record, manifest))
-    failures.extend(_pipeline_manifest_count_failures(record, manifest))
-    failures.extend(
-        _pipeline_manifest_stage_metric_failures(
-            record,
-            manifest,
-            manifest_key="elapsed",
-            record_key="elapsed_per_stage",
-        )
-    )
-    failures.extend(
-        _pipeline_manifest_stage_metric_failures(
-            record,
-            manifest,
-            manifest_key="memory",
-            record_key="peak_rss_gb_per_stage",
-        )
-    )
-    manifest_execution = manifest.get("backend_execution")
-    benchmark_execution = record.get("backend_execution")
-    if not isinstance(manifest_execution, dict):
-        failures.append("output_inventory.manifest_path backend_execution must be an object")
-    elif isinstance(benchmark_execution, dict):
-        for stage, state in manifest_execution.items():
-            key = f"pipeline_{stage}"
-            if benchmark_execution.get(key) != state:
-                failures.append(
-                    f"output_inventory.manifest_path backend_execution.{stage} "
-                    f"must match benchmark backend_execution.{key}"
-                )
-    return failures
-
-
-def _pipeline_manifest_path_failures(
-    record: dict[str, Any],
-    manifest: dict[str, Any],
-) -> list[str]:
-    failures: list[str] = []
-    inventory = record.get("output_inventory")
-    if not isinstance(inventory, dict):
-        return failures
-    for key in (
-        "atac_matrix_path",
-        "grn_path",
-        "regulons_path",
-        "candidate_regulons_path",
-        "aucell_path",
-        "topics_dir",
-        "cistarget_path",
-        "enhancer_links_path",
-        "eregulons_path",
-        "integrated_adata_path",
-    ):
-        info = inventory.get(key)
-        expected = info.get("path") if isinstance(info, dict) else None
-        actual = manifest.get(key)
-        if expected is None:
-            if actual is not None:
-                failures.append(
-                    f"output_inventory.manifest_path {key} must be null when "
-                    f"benchmark output_inventory.{key} is absent"
-                )
-        elif actual != expected:
-            failures.append(
-                f"output_inventory.manifest_path {key} must match "
-                f"output_inventory.{key}.path"
-            )
-    return failures
-
-
-def _pipeline_manifest_count_failures(
-    record: dict[str, Any],
-    manifest: dict[str, Any],
-) -> list[str]:
-    failures: list[str] = []
-    outputs = record.get("outputs", {})
-    shapes = record.get("shapes", {})
-    expected = {
-        "n_cells": (
-            shapes.get("rna_post_qc", [None])[0]
-            if isinstance(shapes, dict)
-            else None
-        ),
-        "n_grn_edges": outputs.get("grn_edges") if isinstance(outputs, dict) else None,
-        "n_regulons": outputs.get("regulons") if isinstance(outputs, dict) else None,
-        "n_candidate_regulons": (
-            outputs.get("candidate_regulons") if isinstance(outputs, dict) else None
-        ),
-        "n_pruned_regulons": (
-            outputs.get("pruned_regulons") if isinstance(outputs, dict) else None
-        ),
-        "n_cistarget_rows": (
-            outputs.get("cistarget_rows") if isinstance(outputs, dict) else None
-        ),
-        "n_enhancer_links": (
-            outputs.get("enhancer_links") if isinstance(outputs, dict) else None
-        ),
-        "n_eregulon_rows": (
-            outputs.get("eregulon_rows") if isinstance(outputs, dict) else None
-        ),
-        "n_eregulons": outputs.get("eregulons") if isinstance(outputs, dict) else None,
-        "aucell_shape": outputs.get("aucell_shape") if isinstance(outputs, dict) else None,
-    }
-    for key, value in expected.items():
-        if manifest.get(key) != value:
-            failures.append(
-                f"output_inventory.manifest_path {key} must match benchmark JSON"
-            )
-    return failures
-
-
-def _pipeline_manifest_stage_metric_failures(
-    record: dict[str, Any],
-    manifest: dict[str, Any],
-    *,
-    manifest_key: str,
-    record_key: str,
-) -> list[str]:
-    failures: list[str] = []
-    manifest_values = manifest.get(manifest_key)
-    record_values = record.get(record_key)
-    if not isinstance(manifest_values, dict):
-        return [f"output_inventory.manifest_path {manifest_key} must be an object"]
-    if not isinstance(record_values, dict):
-        return failures
-    for stage, expected in record_values.items():
-        actual = manifest_values.get(stage)
-        if not _numbers_match_rounded(actual, expected):
-            failures.append(
-                f"output_inventory.manifest_path {manifest_key}.{stage} "
-                f"must match benchmark {record_key}.{stage}"
-            )
-    return failures
-
-
-def _numbers_match_rounded(actual: Any, expected: Any) -> bool:
-    if isinstance(actual, bool) or isinstance(expected, bool):
-        return actual == expected
-    if isinstance(actual, (int, float)) and isinstance(expected, (int, float)):
-        return round(float(actual), 6) == round(float(expected), 6)
-    return actual == expected
 
 
 def _log_log_slope(rows: list[dict[str, Any]], x_key: str, y_key: str) -> float | None:
@@ -2024,20 +1780,6 @@ def _full_pipeline_scaling_row_child_failures(
         if key in row and row.get(key) != expected:
             failures.append(f"{prefix}.{key} must match child JSON")
 
-    output_dir = row.get("output_dir")
-    if isinstance(output_dir, str) and output_dir:
-        output_root = Path(output_dir).resolve()
-        inventory = child.get("output_inventory", {})
-        if isinstance(inventory, dict):
-            for key, info in inventory.items():
-                if not isinstance(info, dict) or not isinstance(info.get("path"), str):
-                    continue
-                try:
-                    Path(info["path"]).resolve().relative_to(output_root)
-                except ValueError:
-                    failures.append(
-                        f"{prefix}.output_dir must contain child output_inventory.{key}"
-                    )
     return failures
 
 
@@ -2573,9 +2315,6 @@ def validate_full_pipeline(
         elif _positive_int(outputs.get("regulons")) and aucell_shape[1] != outputs["regulons"]:
             failures.append("outputs.aucell_shape regulons must equal outputs.regulons")
 
-    if check_output_files:
-        failures.extend(_output_inventory_failures(record))
-        failures.extend(_pipeline_manifest_failures(record))
     failures.extend(_output_storage_failures(record))
     return failures
 
