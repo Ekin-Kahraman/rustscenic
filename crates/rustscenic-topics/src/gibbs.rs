@@ -514,12 +514,11 @@ pub fn fit_par(
         w_eta,
     };
 
-    let mut snap_n_kw = vec![0u32; n_topics * n_words];
-    let mut snap_n_k = vec![0u32; n_topics];
-
     for iter in 0..n_iters {
-        snap_n_kw.copy_from_slice(&n_kw);
-        snap_n_k.copy_from_slice(&n_k);
+        // n_kw/n_k are frozen during the parallel sweep (mutated only by
+        // prime_counts before the loop and merge_deltas after the join), so the
+        // workers read them directly. The previous per-sweep snapshot was a
+        // redundant memcpy of an unchanged buffer on the critical path.
         threads.par_iter_mut().enumerate().for_each(|(t_idx, ts)| {
             // Mix (seed, iter, t_idx) into a 64-bit-uniform stream.
             // Plain wrapping_add with a 32-bit stride (0x9E3779B9) leaves
@@ -532,7 +531,7 @@ pub fn fit_par(
                 seed.wrapping_add((iter as u64).wrapping_mul(0xBF58476D1CE4E5B9))
                     .wrapping_add((t_idx as u64).wrapping_mul(0x9E3779B97F4A7C15)),
             );
-            run_thread_sweep(ts, &snap_n_kw, &snap_n_k, &params, rng_seed);
+            run_thread_sweep(ts, &n_kw, &n_k, &params, rng_seed);
         });
         merge_deltas(&mut n_kw, &mut n_k, &threads, n_topics, n_words);
     }

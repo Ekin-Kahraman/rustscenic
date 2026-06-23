@@ -106,41 +106,41 @@ fn build_cell_peak_matrix_inner(
     // Replaces the previous `for c in 0..n_chroms { fragments.iter().filter ... }`
     // pattern (O(n_chroms × n_fragments)). Now O(n_fragments + n_peaks)
     // upfront, plus the per-chrom sort/sweep.
-    let mut frags_by_chrom: Vec<Vec<usize>> = (0..n_chroms).map(|_| Vec::new()).collect();
+    let mut frags_by_chrom: Vec<Vec<u32>> = (0..n_chroms).map(|_| Vec::new()).collect();
     for (i, &cc) in fragments.chrom_idx.iter().enumerate() {
-        frags_by_chrom[cc as usize].push(i);
+        frags_by_chrom[cc as usize].push(i as u32);
     }
-    let mut peaks_by_chrom: Vec<Vec<usize>> = (0..n_chroms).map(|_| Vec::new()).collect();
+    let mut peaks_by_chrom: Vec<Vec<u32>> = (0..n_chroms).map(|_| Vec::new()).collect();
     for (i, &m) in peak_chrom_aligned.iter().enumerate() {
         if let Some(c) = m {
-            peaks_by_chrom[c as usize].push(i);
+            peaks_by_chrom[c as usize].push(i as u32);
         }
     }
 
     for c in 0..n_chroms as u32 {
-        let frag_rows = &frags_by_chrom[c as usize];
-        let peak_rows = &peaks_by_chrom[c as usize];
-        if frag_rows.is_empty() || peak_rows.is_empty() {
+        // Sort the pre-bucketed per-chrom index slices IN PLACE (u32, half the
+        // footprint of usize; no per-chrom clone). Each bucket is consumed once
+        // this iteration and not reused, so mutating it is safe.
+        let frags_sorted = &mut frags_by_chrom[c as usize];
+        frags_sorted.sort_by_key(|&i| fragments.start[i as usize]);
+        let peaks_sorted = &mut peaks_by_chrom[c as usize];
+        peaks_sorted.sort_by_key(|&i| peaks.start[i as usize]);
+        if frags_sorted.is_empty() || peaks_sorted.is_empty() {
             continue;
         }
-
-        // Sort by start (still per-chrom, but on the pre-bucketed slice)
-        let mut frags_sorted: Vec<usize> = frag_rows.clone();
-        frags_sorted.sort_by_key(|&i| fragments.start[i]);
-        let mut peaks_sorted: Vec<usize> = peak_rows.clone();
-        peaks_sorted.sort_by_key(|&i| peaks.start[i]);
 
         // Sorted-sweep: for each peak, find overlapping fragments.
         // Because we sorted both by start, we can keep a "first candidate
         // fragment" pointer that only moves forward as peaks advance.
         let mut first_candidate = 0_usize;
-        for &p in &peaks_sorted {
+        for &p in peaks_sorted.iter() {
+            let p = p as usize;
             let p_start = peaks.start[p];
             let p_end = peaks.end[p];
 
             // Advance first_candidate past fragments that end before peak starts.
             while first_candidate < frags_sorted.len()
-                && fragments.end[frags_sorted[first_candidate]] <= p_start
+                && fragments.end[frags_sorted[first_candidate] as usize] <= p_start
             {
                 first_candidate += 1;
             }
@@ -148,6 +148,7 @@ fn build_cell_peak_matrix_inner(
             // Walk forward from first_candidate, stop when fragment starts
             // are past peak end.
             for &f in frags_sorted.iter().skip(first_candidate) {
+                let f = f as usize;
                 let f_start = fragments.start[f];
                 if f_start >= p_end {
                     break;
