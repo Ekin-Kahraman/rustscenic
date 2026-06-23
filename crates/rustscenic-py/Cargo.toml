@@ -21,3 +21,4 @@ numpy = { workspace = true }
 ndarray = { workspace = true }
 anyhow = { workspace = true }
 rayon = { workspace = true }
+mimalloc = "0.1"

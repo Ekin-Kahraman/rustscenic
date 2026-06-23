@@ -765,6 +765,11 @@ def run(
                 f"{elapsed['enhancer']:.1f}s"
             )
             mark_memory("enhancer")
+        # The ATAC matrix is persisted to disk (atac_h5ad_write) and is not used
+        # past the enhancer stage; free it AND its alias here so an idle ~2GB
+        # hold cannot inflate peak RSS through the eRegulon/final-write tail.
+        # (del adata_atac alone is a no-op while adata_atac_for_link aliases it.)
+        del adata_atac, adata_atac_for_link
     elif have_atac and gene_coords is None:
         log("[7/8] enhancer: skipped (no gene_coords supplied)")
     else:
