@@ -1,7 +1,7 @@
 //! Histogram binning for fast split finding.
 //!
 //! Each feature is pre-binned into at most 255 buckets using quantile cut-points.
-//! A node-level histogram of (sum_y, sum_y_sq, count) across bins lets us score
+//! A node-level histogram of (sum_y, count) across bins lets us score
 //! every candidate threshold in O(bins) rather than O(n) per feature per split.
 //!
 //! This is the LightGBM trick. Semantics remain sklearn-compatible up to
@@ -229,7 +229,6 @@ fn assign_bins_from_values(values: &[f32], bin_col: &mut [u8], n_bins_slot: &mut
 #[derive(Clone)]
 pub struct NodeHist {
     pub sum_y: Vec<f32>,
-    pub sum_y_sq: Vec<f32>,
     pub count: Vec<u32>,
 }
 
@@ -237,7 +236,6 @@ impl NodeHist {
     pub fn zeros(n_bins: usize) -> Self {
         Self {
             sum_y: vec![0.0; n_bins],
-            sum_y_sq: vec![0.0; n_bins],
             count: vec![0; n_bins],
         }
     }
@@ -245,7 +243,6 @@ impl NodeHist {
     pub fn clear(&mut self, n_bins: usize) {
         let n_bins = n_bins.min(self.count.len());
         self.sum_y[..n_bins].fill(0.0);
-        self.sum_y_sq[..n_bins].fill(0.0);
         self.count[..n_bins].fill(0);
     }
 
@@ -271,7 +268,6 @@ impl NodeHist {
             debug_assert!(b < self.count.len());
             unsafe {
                 *self.sum_y.get_unchecked_mut(b) += yv;
-                *self.sum_y_sq.get_unchecked_mut(b) += yv * yv;
                 *self.count.get_unchecked_mut(b) += 1;
             }
         }
@@ -290,11 +286,15 @@ impl NodeHist {
             return None;
         }
         let total_s: f32 = self.sum_y[..n_bins].iter().sum();
-        let total_sq: f32 = self.sum_y_sq[..n_bins].iter().sum();
-        let parent_var = total_sq - (total_s * total_s) / (total_n as f32);
+        // Gain = parent_var - (left_var + right_var). Expanding the
+        // sum-of-squared-deviations form, every sum_y_sq term cancels
+        // algebraically, leaving this equivalent -- and strictly more stable, no
+        // catastrophic cancellation -- reduced form. sum_y_sq is therefore not
+        // tracked in the histogram at all (removes one mul + one RMW per sample
+        // from the hottest inner loop).
+        let total_term = (total_s * total_s) / (total_n as f32);
 
         let mut left_s = 0.0_f32;
-        let mut left_sq = 0.0_f32;
         let mut left_n: u32 = 0;
         let mut best_gain = 0.0_f32;
         let mut best_bin = 0usize;
@@ -303,7 +303,6 @@ impl NodeHist {
         // Candidate split: between bin k and bin k+1
         for k in 0..n_bins - 1 {
             left_s += self.sum_y[k];
-            left_sq += self.sum_y_sq[k];
             left_n += self.count[k];
             if left_n == 0 {
                 continue;
@@ -312,11 +311,10 @@ impl NodeHist {
             if right_n == 0 {
                 break;
             }
-            let l_var = left_sq - (left_s * left_s) / (left_n as f32);
             let r_s = total_s - left_s;
-            let r_sq = total_sq - left_sq;
-            let r_var = r_sq - (r_s * r_s) / (right_n as f32);
-            let gain = parent_var - (l_var + r_var);
+            let gain = (left_s * left_s) / (left_n as f32)
+                + (r_s * r_s) / (right_n as f32)
+                - total_term;
             if gain > best_gain {
                 best_gain = gain;
                 best_bin = k;

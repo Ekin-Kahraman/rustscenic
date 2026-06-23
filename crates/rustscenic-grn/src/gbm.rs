@@ -152,7 +152,9 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
         }
         debug_assert_eq!(inbag_pos, scratch.sample_idx.len());
 
-        scratch.tree_scratch.gain_touched.sort_unstable();
+        // gain_touched holds strictly distinct feature ids (deduped via the
+        // gain_marks epoch), each writing an independent importances[f] slot
+        // exactly once, so accumulation order is irrelevant -- no sort needed.
         for &f in &scratch.tree_scratch.gain_touched {
             scratch.importances[f] += scratch.gains_buf[f];
             scratch.gains_buf[f] = 0.0;
