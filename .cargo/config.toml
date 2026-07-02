@@ -1,7 +1,0 @@
-# Build the x86_64 Linux artefact (the Minerva / HPC target) with a modern
-# microarchitecture baseline so the GRN histogram/split and matrix hot loops
-# can use AVX2. This is IEEE-FP-identical (no fast-math), so numeric output is
-# unchanged. Scoped to the Linux target ONLY -- local macOS/aarch64 builds are
-# unaffected, and the determinism/parity tests gate any drift.
-[target.x86_64-unknown-linux-gnu]
-rustflags = ["-C", "target-cpu=x86-64-v3"]
