@@ -62,15 +62,6 @@ pub fn aucell_view(
         "top_frac must be in (0, 1]"
     );
 
-    // Reject NaN in expression - silent corruption via partial_cmp tie-breaks.
-    if expression.iter().any(|v| v.is_nan()) {
-        panic!(
-            "expression matrix contains NaN values - AUCell ranking is undefined. \
-            Filter upstream (scanpy.pp.normalize_total + sc.pp.log1p on raw count \
-            matrices, or drop rows with all-zero expression first)."
-        );
-    }
-
     // ctxcore.recovery.derive_rank_cutoff semantics (preserves R-SCENIC values):
     //   rank_cutoff = round(auc_threshold * n_genes) - 1
     // This is a 1-off-by-one that the Aertslab ctxcore bakes in for R
@@ -83,30 +74,57 @@ pub fn aucell_view(
         return Vec::new();
     }
     let mut out = vec![0.0_f32; n_cells * n_regulons];
+    let rank_cutoff_u32 = rank_cutoff as u32;
 
+    // Per-worker scratch reused across cells (avoids two n_genes allocations per
+    // cell). `order` is refilled 0..n_genes and `rank` reset to MAX each cell.
     out.par_chunks_mut(n_regulons)
         .enumerate()
-        .for_each(|(cell_idx, cell_out)| {
+        .for_each_init(
+            || (vec![0u32; n_genes], vec![u32::MAX; n_genes]),
+            |(order, rank), (cell_idx, cell_out)| {
             let row = expression.row(cell_idx);
-            // Argsort descending by expression. Tie-break: lower gene index first
-            // (deterministic across runs).
-            let mut order: Vec<u32> = (0..n_genes as u32).collect();
-            order.sort_unstable_by(|&a, &b| {
+            // NaN rejection fused into the parallel body (was a serial full-matrix
+            // prescan). Every row is visited, so any NaN still fails fast; Rayon
+            // propagates the panic. Undefined partial_cmp tie-breaks avoided.
+            for &v in row.iter() {
+                if v.is_nan() {
+                    panic!(
+                        "expression matrix contains NaN values - AUCell ranking is undefined. \
+                        Filter upstream (scanpy.pp.normalize_total + sc.pp.log1p on raw count \
+                        matrices, or drop rows with all-zero expression first)."
+                    );
+                }
+            }
+            // Descending argsort tie-broken by lower gene index. Only the top
+            // `rank_cutoff` genes can contribute to any AUC, so partition them in
+            // O(n_genes) via select_nth then sort only that prefix (O(K log K)).
+            // The comparator is a strict total order, so the top-K set and their
+            // internal order are identical to a full sort's positions 0..K-1;
+            // genes beyond K keep rank u32::MAX (>= cutoff) and contribute nothing.
+            let cmp = |&a: &u32, &b: &u32| {
                 let va = row[a as usize];
                 let vb = row[b as usize];
-                // descending: b.cmp(a)
                 match vb.partial_cmp(&va) {
                     Some(std::cmp::Ordering::Equal) | None => a.cmp(&b),
                     Some(ord) => ord,
                 }
-            });
-            // Build rank array: rank[gene] = position (0-based) in sorted order
-            let mut rank = vec![u32::MAX; n_genes];
-            for (pos, &g) in order.iter().enumerate() {
-                rank[g as usize] = pos as u32;
+            };
+            for (i, o) in order.iter_mut().enumerate() {
+                *o = i as u32;
+            }
+            rank.fill(u32::MAX);
+            if rank_cutoff > 0 {
+                if rank_cutoff < n_genes {
+                    order.select_nth_unstable_by(rank_cutoff, cmp);
+                }
+                let top = &mut order[..rank_cutoff];
+                top.sort_unstable_by(cmp);
+                for (pos, &g) in top.iter().enumerate() {
+                    rank[g as usize] = pos as u32;
+                }
             }
 
-            let rank_cutoff_u32 = rank_cutoff as u32;
             for (r_idx, (_, gene_set)) in regulons.iter().enumerate() {
                 // ctxcore.recovery.weighted_auc1d: filter ranks < rank_cutoff,
                 // then Riemann-sum the staircase recovery curve up to rank_cutoff.
@@ -188,12 +206,22 @@ pub fn aucell_sparse_csr(
 
     out.par_chunks_mut(n_regulons)
         .enumerate()
-        .for_each(|(cell_idx, cell_out)| {
+        .for_each_init(
+            || {
+                (
+                    Vec::<(u32, f32)>::new(),
+                    Vec::<(u32, f32)>::new(),
+                    Vec::<u32>::new(),
+                    vec![0_u64; n_regulons],
+                )
+            },
+            |(positives, negatives, nonzero_genes, auc_sums), (cell_idx, cell_out)| {
+            positives.clear();
+            negatives.clear();
+            nonzero_genes.clear();
+            auc_sums.fill(0);
             let start = row_ptr[cell_idx];
             let end = row_ptr[cell_idx + 1];
-            let mut positives: Vec<(u32, f32)> = Vec::new();
-            let mut negatives: Vec<(u32, f32)> = Vec::new();
-            let mut nonzero_genes: Vec<u32> = Vec::new();
 
             for k in start..end {
                 let gene = col_idx[k] as u32;
@@ -206,9 +234,17 @@ pub fn aucell_sparse_csr(
                     nonzero_genes.push(gene);
                 }
             }
-            positives.sort_unstable_by(compare_sparse_entry_desc);
+            // Only the first rank_cutoff positives (desc order) are consumed, so
+            // partition them in O(p) via select_nth then sort just that prefix.
+            // The comparator is a strict total order, so the consumed prefix is
+            // identical to a full sort's first rank_cutoff entries.
+            if positives.len() > rank_cutoff {
+                positives.select_nth_unstable_by(rank_cutoff, compare_sparse_entry_desc);
+                positives[..rank_cutoff].sort_unstable_by(compare_sparse_entry_desc);
+            } else {
+                positives.sort_unstable_by(compare_sparse_entry_desc);
+            }
 
-            let mut auc_sums = vec![0_u64; n_regulons];
             let mut rank = 0_u32;
 
             for &(gene, _) in positives.iter().take(rank_cutoff) {
@@ -217,7 +253,7 @@ pub fn aucell_sparse_csr(
                     rank,
                     rank_cutoff_u32,
                     &memberships,
-                    &mut auc_sums,
+                    auc_sums,
                 );
                 rank += 1;
             }
@@ -238,7 +274,7 @@ pub fn aucell_sparse_csr(
                         rank,
                         rank_cutoff_u32,
                         &memberships,
-                        &mut auc_sums,
+                        auc_sums,
                     );
                     rank += 1;
                     if rank >= rank_cutoff_u32 {
@@ -255,7 +291,7 @@ pub fn aucell_sparse_csr(
                         rank,
                         rank_cutoff_u32,
                         &memberships,
-                        &mut auc_sums,
+                        auc_sums,
                     );
                     rank += 1;
                     if rank >= rank_cutoff_u32 {
