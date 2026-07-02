@@ -294,31 +294,53 @@ impl NodeHist {
         // from the hottest inner loop).
         let total_term = (total_s * total_s) / (total_n as f32);
 
-        let mut left_s = 0.0_f32;
-        let mut left_n: u32 = 0;
+        let n_splits = n_bins - 1;
+
+        // Pass 1: inclusive prefix sums of (sum_y, count). The f32 accumulation
+        // order is identical to the original running-sum loop, so left_s_arr[k]
+        // equals the old `left_s` at iteration k exactly.
+        let mut left_s_arr = [0.0_f32; MAX_BINS];
+        let mut left_n_arr = [0u32; MAX_BINS];
+        let mut acc_s = 0.0_f32;
+        let mut acc_n = 0u32;
+        for k in 0..n_splits {
+            acc_s += self.sum_y[k];
+            acc_n += self.count[k];
+            left_s_arr[k] = acc_s;
+            left_n_arr[k] = acc_n;
+        }
+
+        // Pass 2: branch-free per-candidate gain. The division is unconditional
+        // so it autovectorises to _mm256_div_ps on x86-64-v3 (IEEE divide is
+        // bit-identical scalar-vs-SIMD, no reassociation). Empty-child candidates
+        // (left_n==0 or right_n==0) produce NaN and are masked to -inf via a
+        // branchless select, reproducing the original `continue`/`break` skips.
+        let mut gains = [0.0_f32; MAX_BINS];
+        for k in 0..n_splits {
+            let left_n = left_n_arr[k];
+            let right_n = total_n - left_n;
+            let left_s = left_s_arr[k];
+            let r_s = total_s - left_s;
+            let g = (left_s * left_s) / (left_n as f32)
+                + (r_s * r_s) / (right_n as f32)
+                - total_term;
+            gains[k] = if left_n != 0 && right_n != 0 {
+                g
+            } else {
+                f32::NEG_INFINITY
+            };
+        }
+
+        // Pass 3: argmax with the original tie-break - strict `>` so the lowest
+        // bin wins on ties, best seeded at 0.0 so only positive gains count.
         let mut best_gain = 0.0_f32;
         let mut best_bin = 0usize;
         let mut best_left_n = 0u32;
-
-        // Candidate split: between bin k and bin k+1
-        for k in 0..n_bins - 1 {
-            left_s += self.sum_y[k];
-            left_n += self.count[k];
-            if left_n == 0 {
-                continue;
-            }
-            let right_n = total_n - left_n;
-            if right_n == 0 {
-                break;
-            }
-            let r_s = total_s - left_s;
-            let gain = (left_s * left_s) / (left_n as f32)
-                + (r_s * r_s) / (right_n as f32)
-                - total_term;
-            if gain > best_gain {
-                best_gain = gain;
+        for k in 0..n_splits {
+            if gains[k] > best_gain {
+                best_gain = gains[k];
                 best_bin = k;
-                best_left_n = left_n;
+                best_left_n = left_n_arr[k];
             }
         }
 
