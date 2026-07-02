@@ -71,6 +71,17 @@ pub fn aucell_view(
     let rank_cutoff = (rank_cutoff_raw - 1).max(0) as usize;
     let n_regulons = regulons.len();
     if n_regulons == 0 {
+        // No regulons means the per-cell parallel body below never runs, so the
+        // fused NaN check would be skipped. Reject NaN here to preserve the
+        // original top-of-function behaviour and stay consistent with the
+        // sparse path (which rejects NaN before its own zero-regulon return).
+        if expression.iter().any(|v| v.is_nan()) {
+            panic!(
+                "expression matrix contains NaN values - AUCell ranking is undefined. \
+                Filter upstream (scanpy.pp.normalize_total + sc.pp.log1p on raw count \
+                matrices, or drop rows with all-zero expression first)."
+            );
+        }
         return Vec::new();
     }
     let mut out = vec![0.0_f32; n_cells * n_regulons];
@@ -355,6 +366,15 @@ mod tests {
         let expr = vec![1.0_f32; 10 * 5];
         let out = aucell(&expr, 10, 5, &[], 0.2);
         assert!(out.is_empty());
+    }
+
+    #[test]
+    #[should_panic(expected = "contains NaN")]
+    fn dense_rejects_nan_even_with_no_regulons() {
+        // Regression: the fused per-cell NaN scan must still fire on the
+        // zero-regulon early-return path (matches the original + sparse path).
+        let expr = vec![f32::NAN, 1.0, 2.0, 3.0];
+        let _ = aucell(&expr, 2, 2, &[], 0.5);
     }
 
     #[test]
