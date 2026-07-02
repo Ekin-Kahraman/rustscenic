@@ -687,6 +687,7 @@ dependencies = [
  "anyhow",
  "flate2",
  "rayon",
+ "rustc-hash",
  "tempfile",
  "thiserror",
 ]
