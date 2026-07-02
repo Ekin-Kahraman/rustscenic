@@ -108,7 +108,7 @@ pub fn fit(
     for (i, &(d, w)) in tokens.iter().enumerate() {
         let k = z[i] as usize;
         n_dk[d as usize * n_topics + k] += 1;
-        n_kw[k * n_words + w as usize] += 1;
+        n_kw[w as usize * n_topics + k] += 1;
         n_k[k] += 1;
     }
 
@@ -125,14 +125,14 @@ pub fn fit(
 
             // Remove current token's contribution
             n_dk[d_off + cur] -= 1;
-            n_kw[cur * n_words + w_us] -= 1;
+            n_kw[w_us * n_topics + cur] -= 1;
             n_k[cur] -= 1;
 
             // Compute unnormalised P(z = k') for each k'
             let mut total = 0.0_f64;
             for k in 0..n_topics {
                 let nd = n_dk[d_off + k] as f64 + alpha_f64;
-                let nw = n_kw[k * n_words + w_us] as f64 + eta_f64;
+                let nw = n_kw[w_us * n_topics + k] as f64 + eta_f64;
                 let nk = n_k[k] as f64 + w_eta;
                 let val = nd * nw / nk;
                 p[k] = val;
@@ -153,7 +153,7 @@ pub fn fit(
 
             // Add new token contribution
             n_dk[d_off + new_k] += 1;
-            n_kw[new_k * n_words + w_us] += 1;
+            n_kw[w_us * n_topics + new_k] += 1;
             n_k[new_k] += 1;
             z[i] = new_k as u32;
         }
@@ -190,7 +190,7 @@ pub fn fit(
             continue;
         }
         for w in 0..n_words {
-            beta[k * n_words + w] = ((n_kw[k * n_words + w] as f64 + eta_f64) / row_sum) as f32;
+            beta[k * n_words + w] = ((n_kw[w * n_topics + k] as f64 + eta_f64) / row_sum) as f32;
         }
     }
 
@@ -302,7 +302,7 @@ fn prime_counts(
         for (i, &(local_d, w)) in ts.tokens.iter().enumerate() {
             let k = ts.z[i] as usize;
             ts.n_dk[local_d as usize * n_topics + k] += 1;
-            n_kw[k * n_words + w as usize] += 1;
+            n_kw[w as usize * n_topics + k] += 1;
             n_k[k] += 1;
         }
     }
@@ -313,7 +313,6 @@ fn prime_counts(
 /// `run_thread_sweep` under the clippy `too_many_arguments` limit.
 struct SweepParams {
     n_topics: usize,
-    n_words: usize,
     alpha_f64: f64,
     eta_f64: f64,
     w_eta: f64,
@@ -332,7 +331,6 @@ fn run_thread_sweep(
     rng_seed: u64,
 ) {
     let n_topics = params.n_topics;
-    let n_words = params.n_words;
     let alpha_f64 = params.alpha_f64;
     let eta_f64 = params.eta_f64;
     let w_eta = params.w_eta;
@@ -354,13 +352,13 @@ fn run_thread_sweep(
         let cur = ts.z[i] as usize;
 
         ts.n_dk[local_d_off + cur] -= 1;
-        ts.d_kw[cur * n_words + w_us] -= 1;
+        ts.d_kw[w_us * n_topics + cur] -= 1;
         ts.d_k[cur] -= 1;
 
         let mut total = 0.0_f64;
         for k in 0..n_topics {
             let nd = ts.n_dk[local_d_off + k] as f64 + alpha_f64;
-            let nw_global = snap_n_kw[k * n_words + w_us] as i32 + ts.d_kw[k * n_words + w_us];
+            let nw_global = snap_n_kw[w_us * n_topics + k] as i32 + ts.d_kw[w_us * n_topics + k];
             let nk_global = snap_n_k[k] as i32 + ts.d_k[k];
             let nw = nw_global.max(0) as f64 + eta_f64;
             let nk = nk_global.max(0) as f64 + w_eta;
@@ -381,7 +379,7 @@ fn run_thread_sweep(
         }
 
         ts.n_dk[local_d_off + new_k] += 1;
-        ts.d_kw[new_k * n_words + w_us] += 1;
+        ts.d_kw[w_us * n_topics + new_k] += 1;
         ts.d_k[new_k] += 1;
         ts.z[i] = new_k as u32;
     }
@@ -400,17 +398,21 @@ fn merge_deltas(
     n_k: &mut [u32],
     threads: &[ThreadState],
     n_topics: usize,
-    n_words: usize,
+    _n_words: usize,
 ) {
-    n_kw.par_chunks_mut(n_words)
+    // n_kw / d_kw are word-major ([w * n_topics + k]); parallelise over words so
+    // each worker owns one contiguous n_topics-length column. i32 delta sums are
+    // exact and order-independent, so the merged counts are bit-identical to the
+    // topic-major merge - only the storage layout changed.
+    n_kw.par_chunks_mut(n_topics)
         .enumerate()
-        .for_each(|(k, row)| {
-            for w in 0..n_words {
-                let mut total: i32 = row[w] as i32;
+        .for_each(|(w, col)| {
+            for k in 0..n_topics {
+                let mut total: i32 = col[k] as i32;
                 for ts in threads {
-                    total += ts.d_kw[k * n_words + w];
+                    total += ts.d_kw[w * n_topics + k];
                 }
-                row[w] = total.max(0) as u32;
+                col[k] = total.max(0) as u32;
             }
         });
     for k in 0..n_topics {
@@ -508,7 +510,6 @@ pub fn fit_par(
     let w_eta = n_words as f64 * eta_f64;
     let params = SweepParams {
         n_topics,
-        n_words,
         alpha_f64,
         eta_f64,
         w_eta,
@@ -549,7 +550,7 @@ pub fn fit_par(
             continue;
         }
         for w in 0..n_words {
-            beta[k * n_words + w] = ((n_kw[k * n_words + w] as f64 + eta_f64) / row_sum) as f32;
+            beta[k * n_words + w] = ((n_kw[w * n_topics + k] as f64 + eta_f64) / row_sum) as f32;
         }
     }
 

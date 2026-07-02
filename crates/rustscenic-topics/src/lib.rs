@@ -175,7 +175,7 @@ pub fn online_vb_lda(
                                 let nw = doc_counts[i] as f64;
                                 let mut max_log = f64::NEG_INFINITY;
                                 for k in 0..n_topics {
-                                    let lp = elog_theta[k] + elog_beta[k * n_words + w];
+                                    let lp = elog_theta[k] + elog_beta[w * n_topics + k];
                                     buf[k] = lp;
                                     if lp > max_log {
                                         max_log = lp;
@@ -215,7 +215,7 @@ pub fn online_vb_lda(
                             let nw = doc_counts[i] as f64;
                             let mut max_log = f64::NEG_INFINITY;
                             for k in 0..n_topics {
-                                let lp = elog_theta[k] + elog_beta[k * n_words + w];
+                                let lp = elog_theta[k] + elog_beta[w * n_topics + k];
                                 buf[k] = lp;
                                 if lp > max_log {
                                     max_log = lp;
@@ -293,7 +293,7 @@ pub fn online_vb_lda(
                     let nw = doc_counts[i] as f64;
                     let mut max_log = f64::NEG_INFINITY;
                     for k in 0..n_topics {
-                        let lp = elog_theta[k] + elog_beta[k * n_words + w];
+                        let lp = elog_theta[k] + elog_beta[w * n_topics + k];
                         buf[k] = lp;
                         if lp > max_log {
                             max_log = lp;
@@ -362,18 +362,28 @@ fn update_elog_theta(gamma: &[f64], out: &mut [f64]) {
     }
 }
 
-fn update_elog_beta(lambda: &[f64], out: &mut [f64], _n_topics: usize, n_words: usize, _eta: f64) {
-    // Topic rows are independent; parallelise over them. Within-row sum order is
-    // unchanged, so the result is bit-identical to the serial loop. Removes a
-    // K*W serial section sandwiched between the parallel E-steps.
-    out.par_chunks_mut(n_words).enumerate().for_each(|(k, out_row)| {
+fn update_elog_beta(lambda: &[f64], out: &mut [f64], n_topics: usize, n_words: usize, _eta: f64) {
+    // `out` is stored WORD-MAJOR: out[w * n_topics + k] = digamma(lambda[k,w]) -
+    // digamma(sum_w' lambda[k,w']). The E-step reads all K topics for a fixed
+    // word, so word-major makes that a contiguous K-element read (was K strided
+    // cache lines). The stored value at each (k,w) is unchanged, so every
+    // downstream read is bit-identical; only its address changed.
+    //
+    // Per-topic digamma(row_sum) is computed first (same lambda-row sum order as
+    // before, so d_sum[k] is bit-identical), then words are written in parallel.
+    let mut d_sum = vec![0.0_f64; n_topics];
+    for k in 0..n_topics {
         let lam_row = &lambda[k * n_words..(k + 1) * n_words];
         let sum: f64 = lam_row.iter().sum();
-        let d_sum = digamma(sum);
-        for (o, &lam) in out_row.iter_mut().zip(lam_row.iter()) {
-            *o = digamma(lam) - d_sum;
-        }
-    });
+        d_sum[k] = digamma(sum);
+    }
+    out.par_chunks_mut(n_topics)
+        .enumerate()
+        .for_each(|(w, out_col)| {
+            for k in 0..n_topics {
+                out_col[k] = digamma(lambda[k * n_words + w]) - d_sum[k];
+            }
+        });
 }
 
 /// Topic coherence NPMI - higher = better. Useful as an intrinsic quality metric
