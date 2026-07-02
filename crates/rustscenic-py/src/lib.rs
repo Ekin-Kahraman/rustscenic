@@ -6732,9 +6732,13 @@ macro_rules! gene_dedupe_dense_pyfunction {
             let n_unique = unique_names.len();
             let out = py.detach(|| {
                 let mut out = ndarray::Array2::<$value_ty>::zeros((n_cells, n_unique));
-                for src in 0..n_genes {
-                    let dst = dst_by_src[src];
-                    for row in 0..n_cells {
+                // Row-outer / src-inner: `arr[(row, src)]` is now contiguous in src
+                // (row-major friendly) and the scatter touches only the current
+                // output row. Each output cell still accumulates its sources in
+                // ascending-src order, so the result is bit-identical.
+                for row in 0..n_cells {
+                    for src in 0..n_genes {
+                        let dst = dst_by_src[src];
                         out[(row, dst)] += arr[(row, src)];
                     }
                 }
