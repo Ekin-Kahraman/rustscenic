@@ -89,11 +89,9 @@ pub fn aucell_view(
 
     // Per-worker scratch reused across cells (avoids two n_genes allocations per
     // cell). `order` is refilled 0..n_genes and `rank` reset to MAX each cell.
-    out.par_chunks_mut(n_regulons)
-        .enumerate()
-        .for_each_init(
-            || (vec![0u32; n_genes], vec![u32::MAX; n_genes]),
-            |(order, rank), (cell_idx, cell_out)| {
+    out.par_chunks_mut(n_regulons).enumerate().for_each_init(
+        || (vec![0u32; n_genes], vec![u32::MAX; n_genes]),
+        |(order, rank), (cell_idx, cell_out)| {
             let row = expression.row(cell_idx);
             // NaN rejection fused into the parallel body (was a serial full-matrix
             // prescan). Every row is visited, so any NaN still fails fast; Rayon
@@ -159,7 +157,8 @@ pub fn aucell_view(
                 let norm = (auc_sum as f64) / (max_auc as f64);
                 cell_out[r_idx] = norm.clamp(0.0, 1.0) as f32;
             }
-        });
+        },
+    );
 
     out
 }
@@ -215,18 +214,16 @@ pub fn aucell_sparse_csr(
         .map(|&len| (rank_cutoff as u64 + 1) * len)
         .collect();
 
-    out.par_chunks_mut(n_regulons)
-        .enumerate()
-        .for_each_init(
-            || {
-                (
-                    Vec::<(u32, f32)>::new(),
-                    Vec::<(u32, f32)>::new(),
-                    Vec::<u32>::new(),
-                    vec![0_u64; n_regulons],
-                )
-            },
-            |(positives, negatives, nonzero_genes, auc_sums), (cell_idx, cell_out)| {
+    out.par_chunks_mut(n_regulons).enumerate().for_each_init(
+        || {
+            (
+                Vec::<(u32, f32)>::new(),
+                Vec::<(u32, f32)>::new(),
+                Vec::<u32>::new(),
+                vec![0_u64; n_regulons],
+            )
+        },
+        |(positives, negatives, nonzero_genes, auc_sums), (cell_idx, cell_out)| {
             positives.clear();
             negatives.clear();
             nonzero_genes.clear();
@@ -320,7 +317,8 @@ pub fn aucell_sparse_csr(
                     cell_out[r_idx] = norm.clamp(0.0, 1.0) as f32;
                 }
             }
-        });
+        },
+    );
 
     out
 }

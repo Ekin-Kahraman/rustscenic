@@ -321,9 +321,8 @@ impl NodeHist {
             let right_n = total_n - left_n;
             let left_s = left_s_arr[k];
             let r_s = total_s - left_s;
-            let g = (left_s * left_s) / (left_n as f32)
-                + (r_s * r_s) / (right_n as f32)
-                - total_term;
+            let g =
+                (left_s * left_s) / (left_n as f32) + (r_s * r_s) / (right_n as f32) - total_term;
             gains[k] = if left_n != 0 && right_n != 0 {
                 g
             } else {
