@@ -4,13 +4,6 @@ use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict, PyList};
 use rayon::prelude::*;
 
-/// mimalloc as the global allocator. The GRN and topics kernels allocate
-/// per-tree and per-worker scratch under heavy Rayon parallelism; mimalloc's
-/// per-thread heaps avoid the glibc-malloc lock contention that erodes
-/// multi-core scaling on the GRN hot path. Output-identical.
-#[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
-
 use rustscenic_aucell::{aucell_sparse_csr, aucell_view};
 use rustscenic_grn::{
     infer_indices_sparse_csc_with_overlap, infer_indices_view_with_overlap,

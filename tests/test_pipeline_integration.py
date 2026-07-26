@@ -1323,6 +1323,7 @@ def test_region_rankings_helper_keeps_strided_integer_buffers():
         values,
         index=["motif_a", "motif_b", "motif_c"],
         columns=["p0", "p1", "p2", "p3"],
+        copy=False,
     )
     rankings_arg, kernel, cutoff = _region_rankings_kernel_arg(rankings, rank_cutoff=2)
 
@@ -1359,6 +1360,7 @@ def test_region_rankings_helper_keeps_int32_buffers_without_downcast():
         values,
         index=["motif_a", "motif_b", "motif_c"],
         columns=["p0", "p1", "p2", "p3"],
+        copy=False,
     )
     rankings_arg, kernel, cutoff = _region_rankings_kernel_arg(rankings, rank_cutoff=2)
 
@@ -1389,6 +1391,7 @@ def test_region_rankings_helper_keeps_int64_buffers_without_downcast():
         values,
         index=["motif_a", "motif_b", "motif_c"],
         columns=["p0", "p1", "p2", "p3"],
+        copy=False,
     )
     rankings_arg, kernel, cutoff = _region_rankings_kernel_arg(rankings, rank_cutoff=2)
 
@@ -1419,6 +1422,7 @@ def test_region_rankings_helper_converts_float_rankings_in_rust(monkeypatch):
         values,
         index=["motif_a", "motif_b", "motif_c"],
         columns=["p0", "p1", "p2", "p3"],
+        copy=False,
     )
 
     def fake_to_i32(values_arg):
@@ -1452,6 +1456,7 @@ def test_region_cistarget_attribution_passes_full_rankings_to_rust(monkeypatch):
         values,
         index=["motif_a", "motif_b"],
         columns=["p0", "unused_peak", "p1"],
+        copy=False,
     )
     captured = {}
 

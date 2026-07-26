@@ -37,6 +37,8 @@ docs/specs/
 # that don't belong in a public repo.
 AGENTS.md
 rustscenic_meeting_brief.txt
+# Local outreach, collaborator, and HPC operations material.
+outreach/
 validation/real_multiome/
 validation/multi_dataset/
 validation/real_multiome_v036/

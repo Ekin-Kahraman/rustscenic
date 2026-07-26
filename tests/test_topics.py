@@ -107,6 +107,7 @@ class TestTopicsCorrectness:
                 values,
                 index=["c0", "c1", "c2"],
                 columns=["Topic_0", "Topic_1"],
+                copy=False,
             ),
             topic_peak=pd.DataFrame([[0.5], [0.5]], index=["Topic_0", "Topic_1"]),
             n_topics=2,
