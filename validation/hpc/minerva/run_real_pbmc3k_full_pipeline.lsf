@@ -38,6 +38,7 @@ REGION_MOTIF_RANKINGS="${REGION_MOTIF_RANKINGS:-}"
 GENE_COORDS="${GENE_COORDS:-}"
 SUMMARY_MAX_ROWS="${SUMMARY_MAX_ROWS:-1000}"
 SKIP_INTEGRATED_ADATA="${SKIP_INTEGRATED_ADATA:-0}"
+GRN_N_ESTIMATORS="${GRN_N_ESTIMATORS:-100}"
 REFERENCE_TABLE_ARGS=()
 if [[ -n "${MOTIF_RANKINGS}" ]]; then
   REFERENCE_TABLE_ARGS+=(--motif-rankings "${MOTIF_RANKINGS}")
@@ -110,7 +111,9 @@ python validation/hpc/minerva/preflight_minerva.py \
   "${BENCHMARK_ARGS[@]}" \
   --expected-tfs SPI1 PAX5 GATA3 TBX21 EBF1 IRF8 TCF7 RUNX3 \
   --threads "${RAYON_NUM_THREADS}" \
-  --grn-n-estimators 100 \
+  --grn-n-estimators "${GRN_N_ESTIMATORS}" \
+  --grn-early-stop-mode arboreto \
+  --grn-regulon-polarities both \
   --topics-n-topics 10 \
   --topics-n-passes 3 \
   --cistarget-nes-threshold 3.0 \

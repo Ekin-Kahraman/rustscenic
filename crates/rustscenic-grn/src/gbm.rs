@@ -4,16 +4,18 @@
 //! n_estimators=5000, learning_rate=0.01, max_features=0.1,
 //! subsample=0.9, max_depth=3.
 //!
-//! Early stopping mirrors arboreto's `EarlyStopMonitor` (window=25):
-//! if in-bag `MSE[i] >= MSE[i-window]`, stop. Disabled with window=0.
+//! The default early stop mirrors arboreto's `EarlyStopMonitor`: stop when the
+//! mean of the trailing `window` scikit-learn-style OOB improvements is
+//! strictly negative.  The historical in-bag two-point rule remains available
+//! through [`crate::EarlyStopMode::LegacyInbag`]. Disabled with window=0.
 //!
 //! `exclude_feature` is passed through to the tree builder so targets that are
 //! themselves TFs don't include their own expression column as a predictor.
 
 use crate::histogram::{BinnedMatrix, NodeHist, MAX_BINS};
-use crate::rng::{subsample_rows_into, TargetRng};
+use crate::rng::{subsample_rows_fixed_into, subsample_rows_into, TargetRng};
 use crate::tree::{fit_tree_with_scratch, predict_binned, Tree, TreeScratch};
-use crate::GrnConfig;
+use crate::{EarlyStopMode, GrnConfig};
 
 /// Worker-local buffers reused across target genes.
 ///
@@ -30,7 +32,7 @@ pub struct GbmScratch {
     tree: Tree,
     gains_buf: Vec<f32>,
     tree_scratch: TreeScratch,
-    mse_history: Vec<f32>,
+    monitor_history: Vec<f32>,
 }
 
 impl GbmScratch {
@@ -46,7 +48,7 @@ impl GbmScratch {
             },
             gains_buf: vec![0.0; n_features],
             tree_scratch: TreeScratch::new(n_features),
-            mse_history: Vec::with_capacity(n_estimators),
+            monitor_history: Vec::with_capacity(n_estimators),
         }
     }
 
@@ -65,10 +67,10 @@ impl GbmScratch {
                 .reserve(n_samples - self.sample_idx.capacity());
         }
         self.tree.nodes.clear();
-        self.mse_history.clear();
-        if self.mse_history.capacity() < n_estimators {
-            self.mse_history
-                .reserve(n_estimators - self.mse_history.capacity());
+        self.monitor_history.clear();
+        if self.monitor_history.capacity() < n_estimators {
+            self.monitor_history
+                .reserve(n_estimators - self.monitor_history.capacity());
         }
     }
 }
@@ -81,7 +83,9 @@ pub fn fit_and_importances_binned(
     exclude_feature: Option<usize>,
 ) -> Vec<f32> {
     let mut scratch = GbmScratch::new(binned.n_samples, binned.n_features, cfg.n_estimators);
-    fit_and_importances_binned_with_scratch(binned, y, cfg, exclude_feature, &mut scratch).to_vec()
+    fit_and_importances_binned_with_scratch(binned, y, cfg, exclude_feature, &mut scratch)
+        .0
+        .to_vec()
 }
 
 /// Same as [`fit_and_importances_binned`], but reuses caller-owned buffers.
@@ -91,7 +95,7 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
     cfg: &GrnConfig,
     exclude_feature: Option<usize>,
     scratch: &'a mut GbmScratch,
-) -> &'a [f32] {
+) -> (&'a [f32], usize) {
     let n_samples = binned.n_samples;
     let n_features = binned.n_features;
     scratch.prepare(n_samples, n_features, cfg.n_estimators);
@@ -110,11 +114,22 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
     let window = cfg.early_stop_window;
 
     let mut n_fit = 0usize;
+    let mut previous_oob_score: Option<f32> = None;
 
     for i in 0..cfg.n_estimators {
         scratch.sample_idx.clear();
-        if (cfg.subsample - 1.0).abs() < 1e-6 {
+        if cfg.subsample == 1.0 {
             scratch.sample_idx.extend(0..n_samples);
+        } else if cfg.early_stop_mode == EarlyStopMode::Arboreto {
+            let n_inbag = ((cfg.subsample * n_samples as f32) as usize)
+                .max(1)
+                .min(n_samples);
+            subsample_rows_fixed_into(
+                rng_state.inner_mut(),
+                n_samples,
+                n_inbag,
+                &mut scratch.sample_idx,
+            );
         } else {
             let tree_rng = rng_state.inner_mut();
             subsample_rows_into(tree_rng, n_samples, cfg.subsample, &mut scratch.sample_idx);
@@ -140,14 +155,25 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
         );
 
         let mut mse_inbag = 0.0_f32;
+        let mut oob_score_before = 0.0_f32;
+        let mut oob_score_after = 0.0_f32;
+        let mut n_oob = 0usize;
         let mut inbag_pos = 0usize;
         for (k, p) in scratch.predictions.iter_mut().enumerate().take(n_samples) {
+            let old_residual = scratch.residuals[k];
             *p += cfg.learning_rate * predict_binned(&scratch.tree, binned, k);
             scratch.residuals[k] = y[k] - *p;
             if inbag_pos < scratch.sample_idx.len() && scratch.sample_idx[inbag_pos] == k {
                 let d = scratch.residuals[k];
                 mse_inbag += d * d;
                 inbag_pos += 1;
+            } else if cfg.early_stop_mode == EarlyStopMode::Arboreto {
+                if i == 0 {
+                    oob_score_before += old_residual * old_residual;
+                }
+                let d = scratch.residuals[k];
+                oob_score_after += d * d;
+                n_oob += 1;
             }
         }
         debug_assert_eq!(inbag_pos, scratch.sample_idx.len());
@@ -160,13 +186,28 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
             scratch.gains_buf[f] = 0.0;
         }
 
-        mse_inbag /= scratch.sample_idx.len() as f32;
-        scratch.mse_history.push(mse_inbag);
-        n_fit = i + 1;
+        n_fit += 1;
 
-        if window > 0 && scratch.mse_history.len() > window {
-            let past = scratch.mse_history[scratch.mse_history.len() - 1 - window];
-            if mse_inbag >= past {
+        if cfg.early_stop_mode == EarlyStopMode::Arboreto {
+            if cfg.subsample < 1.0 && n_oob > 0 {
+                let current_oob_score = oob_score_after / n_oob as f32;
+                let prior_score = if i == 0 {
+                    oob_score_before / n_oob as f32
+                } else {
+                    previous_oob_score.unwrap_or(current_oob_score)
+                };
+                scratch
+                    .monitor_history
+                    .push(prior_score - current_oob_score);
+                previous_oob_score = Some(current_oob_score);
+                if should_stop(&scratch.monitor_history, window, EarlyStopMode::Arboreto) {
+                    break;
+                }
+            }
+        } else {
+            mse_inbag /= scratch.sample_idx.len() as f32;
+            scratch.monitor_history.push(mse_inbag);
+            if should_stop(&scratch.monitor_history, window, EarlyStopMode::LegacyInbag) {
                 break;
             }
         }
@@ -182,7 +223,23 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
     for v in &mut scratch.importances {
         *v *= n_fit as f32;
     }
-    &scratch.importances
+    (&scratch.importances, n_fit)
+}
+
+fn should_stop(history: &[f32], window: usize, mode: EarlyStopMode) -> bool {
+    if window == 0 {
+        return false;
+    }
+    match mode {
+        EarlyStopMode::Arboreto => {
+            history.len() >= window
+                && history[history.len() - window..].iter().sum::<f32>() / (window as f32) < 0.0
+        }
+        EarlyStopMode::LegacyInbag => {
+            history.len() > window
+                && history[history.len() - 1] >= history[history.len() - 1 - window]
+        }
+    }
 }
 
 fn hash_y(y: &[f32]) -> usize {
@@ -221,6 +278,7 @@ mod tests {
             subsample: 0.9,
             max_depth: 3,
             early_stop_window: 25,
+            early_stop_mode: EarlyStopMode::Arboreto,
             seed: 42,
             target_block_size: 0,
         };
@@ -256,6 +314,7 @@ mod tests {
             subsample: 1.0,
             max_depth: 3,
             early_stop_window: 0,
+            early_stop_mode: EarlyStopMode::Arboreto,
             seed: 7,
             target_block_size: 0,
         };
@@ -263,5 +322,24 @@ mod tests {
         assert_eq!(imp[0], 0.0, "excluded feature must have zero importance");
         // Since feature 0 was excluded, some gain must go elsewhere
         assert!(imp[1] + imp[2] > 0.0);
+    }
+
+    #[test]
+    fn arboreto_monitor_uses_strict_trailing_window_mean() {
+        let positive = vec![0.2, -0.1, -0.1];
+        assert!(!should_stop(&positive, 3, EarlyStopMode::Arboreto));
+        let negative = vec![0.1, -0.1, -0.2];
+        assert!(should_stop(&negative, 3, EarlyStopMode::Arboreto));
+        assert!(!should_stop(&negative[..2], 3, EarlyStopMode::Arboreto));
+        assert!(should_stop(&[-0.01], 1, EarlyStopMode::Arboreto));
+        assert!(!should_stop(&[0.0], 1, EarlyStopMode::Arboreto));
+        assert!(!should_stop(&negative, 0, EarlyStopMode::Arboreto));
+    }
+
+    #[test]
+    fn legacy_monitor_keeps_two_point_semantics() {
+        let history = vec![5.0, 4.0, 3.0, 5.0];
+        assert!(should_stop(&history, 3, EarlyStopMode::LegacyInbag));
+        assert!(!should_stop(&history[..3], 3, EarlyStopMode::LegacyInbag));
     }
 }

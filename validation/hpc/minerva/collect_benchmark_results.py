@@ -314,6 +314,7 @@ def summarise_record(
         record,
         require_clean=require_clean,
         check_output_files=check_output_files,
+        artifact_path=path,
     )
     repo = record.get("repo_state", {})
     return {

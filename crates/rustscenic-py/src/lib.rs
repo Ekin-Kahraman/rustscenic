@@ -6,8 +6,11 @@ use rayon::prelude::*;
 
 use rustscenic_aucell::{aucell_sparse_csr, aucell_view};
 use rustscenic_grn::{
+    correlation::{
+        correlations_dense_view, correlations_sparse_csc, regulations_from_correlations,
+    },
     infer_indices_sparse_csc_with_overlap, infer_indices_view_with_overlap,
-    infer_indices_with_overlap, GrnConfig, IndexedAdjacency, TfOverlapSummary,
+    infer_indices_with_overlap, EarlyStopMode, GrnConfig, IndexedAdjacency, TfOverlapSummary,
 };
 use rustscenic_preproc::{
     build_cell_peak_matrix, build_cell_peak_matrix_for_barcodes, call_peaks_from_pseudobulks,
@@ -27,7 +30,9 @@ type GrnInferFilteredPyResult = (
     usize,
     Py<PyList>,
     f32,
+    Py<PyDict>,
 );
+type GrnCorrelationPyResult = (Py<PyArray1<f64>>, Py<PyArray1<i8>>);
 type AucellPyResult = (Py<PyArray2<f32>>, f32);
 type TopicFitPyResult = (Py<PyArray2<f32>>, Py<PyArray2<f32>>);
 type StageRegulonIndexPyResult = (Py<PyList>, Py<PyList>, usize);
@@ -274,6 +279,7 @@ struct PreparedRegulonIndices {
     subsample = 0.9,
     max_depth = 3,
     early_stop_window = 25,
+    early_stop_mode = "arboreto",
     seed = 777,
     target_block_size = 0,
     top_targets_per_tf = None,
@@ -291,6 +297,7 @@ fn grn_infer<'py>(
     subsample: f32,
     max_depth: usize,
     early_stop_window: usize,
+    early_stop_mode: &str,
     seed: u64,
     target_block_size: usize,
     top_targets_per_tf: Option<usize>,
@@ -307,6 +314,7 @@ fn grn_infer<'py>(
         )));
     }
     let expression_max = validate_finite_array2_max(arr, "expression matrix")?;
+    let early_stop_mode = parse_early_stop_mode(early_stop_mode)?;
     let cfg = GrnConfig {
         n_estimators,
         learning_rate,
@@ -314,6 +322,7 @@ fn grn_infer<'py>(
         subsample,
         max_depth,
         early_stop_window,
+        early_stop_mode,
         seed,
         target_block_size,
     };
@@ -351,6 +360,7 @@ fn grn_infer<'py>(
     subsample = 0.9,
     max_depth = 3,
     early_stop_window = 25,
+    early_stop_mode = "arboreto",
     seed = 777,
     target_block_size = 0,
     top_targets_per_tf = None,
@@ -372,6 +382,7 @@ fn grn_infer_sparse_csc<'py>(
     subsample: f32,
     max_depth: usize,
     early_stop_window: usize,
+    early_stop_mode: &str,
     seed: u64,
     target_block_size: usize,
     top_targets_per_tf: Option<usize>,
@@ -393,6 +404,7 @@ fn grn_infer_sparse_csc<'py>(
     let indptr = row_ptr_any_to_usize(indptr, indices.len(), data.len())?;
     let expression_max = validate_csc_arrays(&indptr, indices, data, n_cells, n_genes)?;
 
+    let early_stop_mode = parse_early_stop_mode(early_stop_mode)?;
     let cfg = GrnConfig {
         n_estimators,
         learning_rate,
@@ -400,6 +412,7 @@ fn grn_infer_sparse_csc<'py>(
         subsample,
         max_depth,
         early_stop_window,
+        early_stop_mode,
         seed,
         target_block_size,
     };
@@ -451,6 +464,12 @@ fn grn_edges_to_py(
     let imp: Vec<f32> = adjacencies.iter().map(|a| a.importance).collect();
     let imp_arr = PyArray1::from_vec(py, imp);
     let missing_examples = PyList::new(py, tf_overlap.missing_examples.iter().map(String::as_str))?;
+    let fit_summary = PyDict::new(py);
+    fit_summary.set_item("target_count", tf_overlap.fit_summary.target_count)?;
+    fit_summary.set_item("fitted_trees_min", tf_overlap.fit_summary.minimum)?;
+    fit_summary.set_item("fitted_trees_max", tf_overlap.fit_summary.maximum)?;
+    fit_summary.set_item("fitted_trees_mean", tf_overlap.fit_summary.mean)?;
+    fit_summary.set_item("fitted_trees_median", tf_overlap.fit_summary.median)?;
     Ok((
         tfs.unbind(),
         targets.unbind(),
@@ -459,7 +478,163 @@ fn grn_edges_to_py(
         tf_overlap.present_input_count,
         missing_examples.unbind(),
         expression_max,
+        fit_summary.unbind(),
     ))
+}
+
+fn parse_early_stop_mode(value: &str) -> PyResult<EarlyStopMode> {
+    match value {
+        "arboreto" => Ok(EarlyStopMode::Arboreto),
+        "legacy_inbag" => Ok(EarlyStopMode::LegacyInbag),
+        _ => Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "early_stop_mode must be 'arboreto' or 'legacy_inbag', got {value:?}"
+        ))),
+    }
+}
+
+#[pyfunction]
+#[pyo3(signature = (
+    expression,
+    tf_indices,
+    target_indices,
+    rho_threshold = 0.03,
+    mask_dropouts = false,
+))]
+fn grn_correlations_dense<'py>(
+    py: Python<'py>,
+    expression: PyReadonlyArray2<'py, f32>,
+    tf_indices: PyReadonlyArray1<'py, i64>,
+    target_indices: PyReadonlyArray1<'py, i64>,
+    rho_threshold: f64,
+    mask_dropouts: bool,
+) -> PyResult<GrnCorrelationPyResult> {
+    let arr = expression.as_array();
+    validate_finite_array2_max(arr, "expression matrix")?;
+    let pairs = correlation_pairs_from_arrays(
+        tf_indices.as_slice().map_err(|_| {
+            pyo3::exceptions::PyValueError::new_err("tf_indices must be contiguous")
+        })?,
+        target_indices.as_slice().map_err(|_| {
+            pyo3::exceptions::PyValueError::new_err("target_indices must be contiguous")
+        })?,
+        arr.shape()[1],
+        rho_threshold,
+    )?;
+    let rhos = py.detach(|| correlations_dense_view(arr, &pairs, mask_dropouts));
+    let regulations = regulations_from_correlations(&rhos, rho_threshold);
+    Ok((
+        PyArray1::from_vec(py, rhos).unbind(),
+        PyArray1::from_vec(py, regulations).unbind(),
+    ))
+}
+
+#[pyfunction]
+#[pyo3(signature = (
+    indptr,
+    indices,
+    data,
+    n_cells,
+    n_genes,
+    tf_indices,
+    target_indices,
+    rho_threshold = 0.03,
+    mask_dropouts = false,
+))]
+#[allow(clippy::too_many_arguments)]
+fn grn_correlations_sparse_csc<'py>(
+    py: Python<'py>,
+    indptr: &Bound<'py, PyAny>,
+    indices: PyReadonlyArray1<'py, i32>,
+    data: PyReadonlyArray1<'py, f32>,
+    n_cells: usize,
+    n_genes: usize,
+    tf_indices: PyReadonlyArray1<'py, i64>,
+    target_indices: PyReadonlyArray1<'py, i64>,
+    rho_threshold: f64,
+    mask_dropouts: bool,
+) -> PyResult<GrnCorrelationPyResult> {
+    let indices = indices
+        .as_slice()
+        .map_err(|_| pyo3::exceptions::PyValueError::new_err("indices must be contiguous"))?;
+    let data = data
+        .as_slice()
+        .map_err(|_| pyo3::exceptions::PyValueError::new_err("data must be contiguous"))?;
+    let indptr = row_ptr_any_to_usize(indptr, indices.len(), data.len())?;
+    validate_csc_arrays(&indptr, indices, data, n_cells, n_genes)?;
+    for gene in 0..n_genes {
+        if indices[indptr[gene]..indptr[gene + 1]]
+            .windows(2)
+            .any(|rows| rows[0] >= rows[1])
+        {
+            return Err(pyo3::exceptions::PyValueError::new_err(
+                "CSC row indices must be sorted and unique within each gene column",
+            ));
+        }
+    }
+    let pairs = correlation_pairs_from_arrays(
+        tf_indices.as_slice().map_err(|_| {
+            pyo3::exceptions::PyValueError::new_err("tf_indices must be contiguous")
+        })?,
+        target_indices.as_slice().map_err(|_| {
+            pyo3::exceptions::PyValueError::new_err("target_indices must be contiguous")
+        })?,
+        n_genes,
+        rho_threshold,
+    )?;
+    let rhos = py.detach(|| {
+        correlations_sparse_csc(
+            &indptr,
+            indices,
+            data,
+            n_cells,
+            n_genes,
+            &pairs,
+            mask_dropouts,
+        )
+    });
+    let regulations = regulations_from_correlations(&rhos, rho_threshold);
+    Ok((
+        PyArray1::from_vec(py, rhos).unbind(),
+        PyArray1::from_vec(py, regulations).unbind(),
+    ))
+}
+
+fn correlation_pairs_from_arrays(
+    tf_indices: &[i64],
+    target_indices: &[i64],
+    n_genes: usize,
+    rho_threshold: f64,
+) -> PyResult<Vec<(usize, usize)>> {
+    if !rho_threshold.is_finite() || rho_threshold <= 0.0 {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "rho_threshold must be finite and greater than zero, got {rho_threshold}"
+        )));
+    }
+    if tf_indices.len() != target_indices.len() {
+        return Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "tf_indices and target_indices must have equal length, got {} and {}",
+            tf_indices.len(),
+            target_indices.len()
+        )));
+    }
+    tf_indices
+        .iter()
+        .zip(target_indices)
+        .enumerate()
+        .map(|(edge, (&tf_idx, &target_idx))| {
+            if tf_idx < 0
+                || target_idx < 0
+                || tf_idx as usize >= n_genes
+                || target_idx as usize >= n_genes
+            {
+                Err(pyo3::exceptions::PyValueError::new_err(format!(
+                    "edge {edge} has out-of-range gene indices ({tf_idx}, {target_idx}) for {n_genes} genes"
+                )))
+            } else {
+                Ok((tf_idx as usize, target_idx as usize))
+            }
+        })
+        .collect()
 }
 
 fn validate_csc_arrays(
@@ -3691,6 +3866,13 @@ fn assemble_eregulon_groups<'a, T: Copy + Into<f64>>(
     cistarget_auc_threshold: f64,
     use_grn_intersection: bool,
 ) -> (Vec<ERegulonRows<'a>>, usize) {
+    let preserve_polarity = if use_grn_intersection {
+        grn_tfs.iter().any(|tf| regulon_polarity_rs(tf).is_some())
+    } else {
+        cistarget_regulons
+            .iter()
+            .any(|tf| regulon_polarity_rs(tf).is_some())
+    };
     let mut ct_by_tf: HashMap<String, CtTfRows<'_>> = HashMap::new();
     for ((regulon, peak), auc) in cistarget_regulons
         .iter()
@@ -3701,7 +3883,7 @@ fn assemble_eregulon_groups<'a, T: Copy + Into<f64>>(
         if !auc.is_finite() || auc < cistarget_auc_threshold {
             continue;
         }
-        let tf = tf_from_regulon_name_rs(regulon);
+        let tf = eregulon_tf_key_rs(regulon, preserve_polarity);
         ct_by_tf.entry(tf).or_default().push(peak.as_str(), auc);
     }
     let n_input_tfs = ct_by_tf.len();
@@ -3836,6 +4018,25 @@ fn tf_from_regulon_name_rs(name: &str) -> String {
         if tf.len() == prev_len {
             return tf.to_string();
         }
+    }
+}
+
+fn regulon_polarity_rs(name: &str) -> Option<&'static str> {
+    let name = name.trim();
+    if name.ends_with("_repressor") || name.ends_with("(-)") {
+        Some("repressor")
+    } else if name.ends_with("_activator") || name.ends_with("(+)") {
+        Some("activator")
+    } else {
+        None
+    }
+}
+
+fn eregulon_tf_key_rs(name: &str, preserve_polarity: bool) -> String {
+    let bare_tf = tf_from_regulon_name_rs(name);
+    match (preserve_polarity, regulon_polarity_rs(name)) {
+        (true, Some(polarity)) => format!("{bare_tf}_{polarity}"),
+        _ => bare_tf,
     }
 }
 
@@ -4412,10 +4613,14 @@ fn attribute_peaks_to_cistarget_rows<T: Copy>(
         )));
     }
 
+    let preserve_polarity = regulon_names
+        .iter()
+        .chain(enriched_regulons)
+        .any(|name| regulon_polarity_rs(name).is_some());
     let mut tf_target_tfs = Vec::new();
     let mut tf_target_genes = Vec::new();
     for (regulon_name, targets) in regulon_names.iter().zip(regulon_targets) {
-        let tf = tf_from_regulon_name_rs(regulon_name);
+        let tf = eregulon_tf_key_rs(regulon_name, preserve_polarity);
         for target in targets {
             tf_target_tfs.push(tf.clone());
             tf_target_genes.push(target.clone());
@@ -4423,7 +4628,7 @@ fn attribute_peaks_to_cistarget_rows<T: Copy>(
     }
     let enriched_tfs: Vec<String> = enriched_regulons
         .iter()
-        .map(|name| tf_from_regulon_name_rs(name))
+        .map(|name| eregulon_tf_key_rs(name, preserve_polarity))
         .collect();
     let (row_indices, peak_indices) = assemble_gene_peak_attribution(
         &enriched_tfs,
@@ -6948,6 +7153,8 @@ fn _rustscenic(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add("__version__", env!("CARGO_PKG_VERSION"))?;
     m.add_function(wrap_pyfunction!(grn_infer, m)?)?;
     m.add_function(wrap_pyfunction!(grn_infer_sparse_csc, m)?)?;
+    m.add_function(wrap_pyfunction!(grn_correlations_dense, m)?)?;
+    m.add_function(wrap_pyfunction!(grn_correlations_sparse_csc, m)?)?;
     m.add_function(wrap_pyfunction!(pipeline_candidate_regulons_from_grn, m)?)?;
     m.add_function(wrap_pyfunction!(aucell_score, m)?)?;
     m.add_function(wrap_pyfunction!(aucell_score_sparse_csr, m)?)?;

@@ -72,6 +72,9 @@ fn build_cell_peak_matrix_inner(
     peaks: &PeakTable,
     barcode_filter: Option<&HashSet<&str>>,
 ) -> (CsrMatrix, Vec<String>, Vec<String>) {
+    assert_u32_indexable("fragments", fragments.len());
+    assert_u32_indexable("peaks", peaks.len());
+    assert_u32_indexable("barcodes", fragments.n_barcodes());
     let n_peaks = peaks.len();
     let mut barcode_row: Vec<Option<u32>> = vec![None; fragments.n_barcodes()];
     let mut barcode_names = Vec::new();
@@ -194,12 +197,26 @@ fn build_cell_peak_matrix_inner(
     (csr, barcode_names, peaks.name.clone())
 }
 
+fn assert_u32_indexable(label: &str, len: usize) {
+    assert!(
+        len <= u32::MAX as usize,
+        "{label} count {len} exceeds RustScenic preprocessing's u32 index limit"
+    );
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::fragments::read_fragments_from;
     use crate::peaks::read_peaks_from;
     use std::io::Cursor;
+
+    #[cfg(target_pointer_width = "64")]
+    #[test]
+    #[should_panic(expected = "exceeds RustScenic preprocessing's u32 index limit")]
+    fn rejects_dimensions_that_would_wrap_u32_indices() {
+        assert_u32_indexable("fragments", u32::MAX as usize + 1);
+    }
 
     // Fragments: AAA has 2 overlapping peak1, 1 overlapping peak2. BBB has 1 overlapping peak2.
     const FRAGS: &str = "\

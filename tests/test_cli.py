@@ -78,8 +78,13 @@ def test_pipeline_cli_forwards_full_multiome_stage_options(tmp_path, monkeypatch
             "--gene-coords", str(tmp_path / "gene_coords.parquet"),
             "--grn-n-estimators", "17",
             "--grn-max-features", "0.25",
+            "--grn-early-stop-window", "13",
+            "--grn-early-stop-mode", "legacy_inbag",
             "--grn-target-block-size", "11",
             "--grn-top-targets", "9",
+            "--grn-regulon-polarities", "activating",
+            "--grn-rho-threshold", "0.07",
+            "--grn-rho-mask-dropouts",
             "--aucell-top-frac", "0.2",
             "--topics-n-topics", "7",
             "--topics-n-passes", "3",
@@ -111,8 +116,13 @@ def test_pipeline_cli_forwards_full_multiome_stage_options(tmp_path, monkeypatch
     assert captured["gene_coords"] == Path(tmp_path / "gene_coords.parquet")
     assert captured["grn_n_estimators"] == 17
     assert captured["grn_max_features"] == 0.25
+    assert captured["grn_early_stop_window"] == 13
+    assert captured["grn_early_stop_mode"] == "legacy_inbag"
     assert captured["grn_target_block_size"] == 11
     assert captured["grn_top_targets"] == 9
+    assert captured["grn_regulon_polarities"] == "activating"
+    assert captured["grn_rho_threshold"] == 0.07
+    assert captured["grn_rho_mask_dropouts"] is True
     assert captured["aucell_top_frac"] == 0.2
     assert captured["topics_n_topics"] == 7
     assert captured["topics_n_passes"] == 3
@@ -148,6 +158,62 @@ def test_pipeline_cli_rejects_adata_atac_with_fragments(tmp_path, capsys):
 
     assert rc == 2
     assert "--adata-atac cannot be combined" in capsys.readouterr().err
+
+
+def test_add_cor_cli_emits_signed_adjacencies(tmp_path):
+    import numpy as np
+    import rustscenic.cli
+
+    expression_path = tmp_path / "expression.csv"
+    pd.DataFrame(
+        {
+            "TF": [0.0, 1.0, 2.0, 3.0],
+            "up": [0.0, 2.0, 4.0, 6.0],
+            "down": [3.0, 2.0, 1.0, 0.0],
+        },
+        index=["c0", "c1", "c2", "c3"],
+    ).to_csv(expression_path)
+    adjacency_path = tmp_path / "grn.parquet"
+    pd.DataFrame(
+        {
+            "TF": ["TF", "TF"],
+            "target": ["up", "down"],
+            "importance": [2.0, 1.0],
+        }
+    ).to_parquet(adjacency_path, index=False)
+    output_path = tmp_path / "signed.parquet"
+
+    rc = rustscenic.cli.main(
+        [
+            "add-cor",
+            "--expression", str(expression_path),
+            "--adjacencies", str(adjacency_path),
+            "--output", str(output_path),
+        ]
+    )
+
+    assert rc == 0
+    out = pd.read_parquet(output_path)
+    assert out["regulation"].tolist() == [1, -1]
+    np.testing.assert_allclose(out["rho"], [1.0, -1.0], atol=1e-12)
+
+    auc_path = tmp_path / "signed_auc.parquet"
+    rc = rustscenic.cli.main(
+        [
+            "aucell",
+            "--expression", str(expression_path),
+            "--regulons", str(output_path),
+            "--output", str(auc_path),
+            "--top-frac", "0.75",
+            "--top-n-targets", "2",
+            "--min-genes", "1",
+        ]
+    )
+    assert rc == 0
+    assert pd.read_parquet(auc_path).columns.tolist() == [
+        "TF_activator",
+        "TF_repressor",
+    ]
 
 
 def test_doctor_cli_reports_backend_capabilities(monkeypatch, capsys):
@@ -272,8 +338,22 @@ def test_pipeline_cli_runs_full_multiome_smoke(tmp_path):
     assert manifest["backend_execution"]["preproc"]["engine"] == "rust"
     assert manifest["backend_execution"]["topics"]["engine"] == "rust"
     assert manifest["backend_execution"]["grn"]["engine"] == "rust"
+    assert manifest["backend_execution"]["grn_correlation"]["engine"] == "rust"
+    assert manifest["grn_fit"]["early_stop_mode"] == "arboreto"
+    assert manifest["grn_fit"]["target_count"] == len(genes)
+    assert manifest["grn_correlation"]["method"] == "pearson"
     assert manifest["backend_execution"]["cistarget"]["engine"] == "rust"
     assert manifest["backend_execution"]["enhancer"]["engine"] == "rust"
     assert manifest["backend_execution"]["eregulons"]["engine"] == "rust"
     assert manifest["backend_execution"]["aucell"]["engine"] == "rust"
     assert manifest["backend_execution"]["integrated_adata"]["engine"] == "skipped"
+    candidates = json.loads((out / "candidate_regulons.json").read_text())
+    assert candidates
+    assert all(
+        name.endswith(("_activator", "_repressor")) for name in candidates
+    )
+    assert {int(v) for v in pd.read_parquet(out / "grn.parquet")["regulation"]} <= {
+        -1,
+        0,
+        1,
+    }

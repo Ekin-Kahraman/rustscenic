@@ -19,14 +19,13 @@ grn = rustscenic.grn.infer(
     n_estimators=500,
     seed=777,
 )
-
-regulons = [
-    (
-        f"{tf}_regulon",
-        grn[grn["TF"] == tf].nlargest(50, "importance")["target"].tolist(),
-    )
-    for tf in grn["TF"].unique()
-]
+signed_grn = rustscenic.grn.add_correlation(grn, adata, rho_threshold=0.03)
+regulons = rustscenic.grn.build_regulons(
+    signed_grn,
+    top_targets_per_tf=50,
+    min_targets=10,
+    include_repressors=True,
+)
 
 auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
 auc.to_parquet("aucell.parquet")
@@ -42,9 +41,14 @@ rustscenic grn \
   --tfs tfs.txt \
   --output grn.parquet
 
+rustscenic add-cor \
+  --expression data.h5ad \
+  --adjacencies grn.parquet \
+  --output signed-grn.parquet
+
 rustscenic aucell \
   --expression data.h5ad \
-  --regulons grn.parquet \
+  --regulons signed-grn.parquet \
   --output auc.parquet
 ```
 

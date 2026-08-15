@@ -39,6 +39,7 @@ GENE_COORDS="${GENE_COORDS:-}"
 SUMMARY_MAX_ROWS="${SUMMARY_MAX_ROWS:-1000}"
 SKIP_INTEGRATED_ADATA="${SKIP_INTEGRATED_ADATA:-0}"
 CELL_COUNTS="${CELL_COUNTS:-500 1000 2000 2767}"
+GRN_N_ESTIMATORS="${GRN_N_ESTIMATORS:-100}"
 read -r -a CELL_COUNT_ARGS <<< "${CELL_COUNTS}"
 REFERENCE_TABLE_ARGS=()
 if [[ -n "${MOTIF_RANKINGS}" ]]; then
@@ -114,7 +115,9 @@ python validation/hpc/minerva/preflight_minerva.py \
   --cell-counts "${CELL_COUNT_ARGS[@]}" \
   --threads "${RAYON_NUM_THREADS}" \
   --expected-tfs SPI1 PAX5 GATA3 TBX21 EBF1 IRF8 TCF7 RUNX3 \
-  --grn-n-estimators 100 \
+  --grn-n-estimators "${GRN_N_ESTIMATORS}" \
+  --grn-early-stop-mode arboreto \
+  --grn-regulon-polarities both \
   --topics-n-topics 10 \
   --topics-n-passes 3 \
   --cistarget-nes-threshold 3.0 \

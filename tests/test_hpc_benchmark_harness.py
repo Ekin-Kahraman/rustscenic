@@ -227,7 +227,7 @@ def test_real_multiome_harness_prepares_explicit_motif_rankings_without_loading(
     assert fingerprint["shape"] == [2, 2]
     assert fingerprint["file_backed"] is True
     assert source["source"] == "explicit_path"
-    assert source["path"] == str(path)
+    assert source["path"] == "external:motifs.feather"
 
 
 def test_real_multiome_harness_prepares_default_motif_cache_without_loading(
@@ -405,6 +405,130 @@ def test_real_multiome_harness_records_invocation_state():
         scaling_state["script"],
     ]
     assert grn_state["command"][:2] == [grn_state["python"], grn_state["script"]]
+    for invocation in (state, scaling_state, grn_state):
+        assert not invocation["python"].startswith("/")
+        assert not invocation["script"].startswith("/")
+
+
+def test_portable_path_provenance_rejects_absolute_json_strings(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_portable_paths",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _grn_scaling_record()
+    record["path_policy"] = "portable"
+    record["invocation"]["script"] = str(tmp_path / "private.py")
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert any(
+        "absolute path forbidden by path_policy at $.invocation.script" in failure
+        for failure in failures
+    )
+
+
+def test_portable_path_provenance_handles_windows_and_embedded_paths():
+    module = _load_module(
+        "path_provenance_cross_platform",
+        ROOT / "validation/path_provenance.py",
+    )
+
+    assert module.portable_path(r"C:\\Users\\name\\data.h5", ROOT) == (
+        "external:data.h5"
+    )
+    assert module.absolute_path_strings(
+        {"error": "failed opening /Users/name/private/data.h5"}
+    ) == ["$.error"]
+    assert module.absolute_path_strings(
+        {
+            "quoted": "failed opening '/Users/name/private/data.h5'",
+            "uri": "failed opening file:///Users/name/private/data.h5",
+            "windows": r"failed opening C:\Users\name\private\data.h5",
+        }
+    ) == ["$.quoted", "$.uri", "$.windows"]
+
+
+def test_portable_backend_execution_requires_supported_kernel_identity():
+    module = _load_module(
+        "validate_benchmark_kernel_identity",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = {
+        "path_policy": "portable",
+        "backend_execution": {
+            "grn": {
+                "engine": "rust",
+                "required_ok": True,
+                "symbol_count": 1,
+                "symbols": ["definitely_not_a_rustscenic_kernel"],
+            }
+        },
+    }
+
+    failures = module._backend_execution_failures(record, "grn", {"grn"})
+    assert "grn.backend_execution.grn.symbols missing required kernels" in failures[0]
+    assert any("supported kernel set" in failure for failure in failures)
+
+    record["backend_execution"]["grn"] = {
+        "engine": "rust",
+        "required_ok": True,
+        "symbol_count": 2,
+        "symbols": ["gene_duplicate_summary", "grn_infer_sparse_csc"],
+    }
+    assert module._backend_execution_failures(record, "grn", {"grn"}) == []
+
+
+def test_portable_output_inventory_is_checked_against_artefact_directory(tmp_path):
+    module = _load_module(
+        "validate_benchmark_output_filesystem",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    output = tmp_path / "run_outputs" / "grn.parquet"
+    output.parent.mkdir()
+    output.write_bytes(b"valid-output")
+    artifact = tmp_path / "run.json"
+    record = {
+        "benchmark": "real_multiome_full_pipeline",
+        "path_policy": "portable",
+        "output_inventory": {
+            "grn_path": {
+                "path": "run_outputs/grn.parquet",
+                "exists": True,
+                "type": "file",
+                "size_bytes": len(b"valid-output"),
+            }
+        },
+    }
+
+    assert module._output_filesystem_failures(record, artifact) == []
+    output.unlink()
+    assert module._output_filesystem_failures(record, artifact) == [
+        "full_pipeline.output_inventory.grn_path is missing: "
+        "run_outputs/grn.parquet"
+    ]
+
+
+def test_grn_scaling_lsf_allocation_may_cover_lower_thread_points():
+    module = _load_module(
+        "validate_benchmark_artifact_grn_lsf_superset",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _grn_scaling_record()
+    for row in record["subset_scaling"] + record["thread_scaling"]:
+        row["threads"] = 4
+        row["env"]["rayon_num_threads"] = "4"
+        row["env"]["lsf_cores"] = "16"
+        row["env"]["lsf_requested_cores"] = "16"
+
+    assert module.validate_record(record, require_clean=True) == []
+
+    record["thread_scaling"][0]["env"]["lsf_cores"] = "2"
+    failures = module.validate_record(record, require_clean=True)
+    assert any("lsf_cores must cover params.threads" in failure for failure in failures)
 
 
 def test_real_multiome_harness_does_not_reread_pipeline_outputs_for_counts():
@@ -453,11 +577,13 @@ def test_real_multiome_harness_prefixes_pipeline_backend_execution():
             "engine": "rust",
             "required_ok": True,
             "symbol_count": 1,
+            "symbols": ["preproc_fragments_to_matrix"],
         },
         "pipeline_grn": {
             "engine": "rust",
             "required_ok": True,
             "symbol_count": 2,
+            "symbols": ["gene_duplicate_summary", "grn_infer"],
         },
         "pipeline_integrated_adata": {
             "engine": "python_io",
@@ -1032,12 +1158,19 @@ def test_real_multiome_scaling_coordinator_validates_final_aggregate(tmp_path, m
     )
     calls = []
 
-    def fake_validate_record(payload, *, require_clean, check_output_files):
+    def fake_validate_record(
+        payload,
+        *,
+        require_clean,
+        check_output_files,
+        artifact_path=None,
+    ):
         calls.append(
             {
                 "benchmark": payload["benchmark"],
                 "require_clean": require_clean,
                 "check_output_files": check_output_files,
+                "artifact_path": artifact_path,
                 "runs": len(payload["runs"]),
             }
         )
@@ -1054,6 +1187,7 @@ def test_real_multiome_scaling_coordinator_validates_final_aggregate(tmp_path, m
             "benchmark": "real_multiome_full_pipeline_scaling",
             "require_clean": False,
             "check_output_files": True,
+            "artifact_path": args.out_json,
             "runs": 1,
         }
     ]
@@ -1347,7 +1481,7 @@ def test_grn_scaling_rejects_ambiguous_or_invalid_args(tmp_path):
         (["--thread-cells", "0"], "--thread-cells must be positive"),
         (["--n-estimators", "0"], "--n-estimators must be positive"),
         (["--max-depth", "0"], "--max-depth must be positive"),
-        (["--early-stop-window", "0"], "--early-stop-window must be positive"),
+        (["--early-stop-window", "-1"], "--early-stop-window must be non-negative"),
         (["--target-block-size", "0"], "--target-block-size must be positive"),
         (["--learning-rate", "0"], "--learning-rate must be positive"),
         (["--max-features", "1.5"], "--max-features must be in (0, 1]"),
@@ -2467,6 +2601,9 @@ def _backend_execution_state():
         "setup_fragments_to_matrix": {"engine": "rust", "required_ok": True, "symbol_count": 1},
         "pipeline_topics": {"engine": "rust", "required_ok": True, "symbol_count": 1},
         "pipeline_grn": {"engine": "rust", "required_ok": True, "symbol_count": 2},
+        "pipeline_grn_correlation": {
+            "engine": "rust", "required_ok": True, "symbol_count": 1,
+        },
         "pipeline_candidate_regulons": {"engine": "rust", "required_ok": True, "symbol_count": 1},
         "pipeline_cistarget_projection_features": {
             "engine": "rust", "required_ok": True, "symbol_count": 1,
@@ -2644,7 +2781,12 @@ def _full_pipeline_record(tmp_path: Path):
             "n_cells_requested": 100,
             "grn_n_estimators": 100,
             "grn_max_features": 0.1,
+            "grn_early_stop_window": 25,
+            "grn_early_stop_mode": "arboreto",
             "grn_target_block_size": None,
+            "grn_regulon_polarities": "both",
+            "grn_rho_threshold": 0.03,
+            "grn_rho_mask_dropouts": False,
             "topics_n_topics": 10,
             "topics_n_passes": 3,
             "topics_method": "vb",
@@ -2897,7 +3039,12 @@ def _full_pipeline_scaling_record(tmp_path: Path):
             "cell_counts": [100, 200, 400],
             "grn_n_estimators": 100,
             "grn_max_features": 0.1,
+            "grn_early_stop_window": 25,
+            "grn_early_stop_mode": "arboreto",
             "grn_target_block_size": None,
+            "grn_regulon_polarities": "both",
+            "grn_rho_threshold": 0.03,
+            "grn_rho_mask_dropouts": False,
             "topics_n_topics": 10,
             "topics_n_passes": 3,
             "topics_method": "vb",
@@ -3478,6 +3625,21 @@ def test_benchmark_artifact_validator_accepts_compute_profile_without_integrated
     )
 
     assert failures == []
+
+
+def test_benchmark_artifact_validator_accepts_explicit_unsigned_legacy_mode(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_unsigned_grn",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["params"]["grn_regulon_polarities"] = "unsigned"
+    record["backend_execution"]["pipeline_grn_correlation"] = {
+        "engine": "skipped",
+        "reason": "grn_regulon_polarities='unsigned'",
+    }
+
+    assert module.validate_record(record, require_clean=True) == []
 
 
 def test_benchmark_artifact_validator_rejects_bad_expected_tf_recovery(tmp_path):
@@ -4979,10 +5141,7 @@ def test_benchmark_artifact_validator_rejects_grn_thread_budget_mismatch():
         "subset_scaling[0].env.rayon_num_threads must match params.threads: 8 != 4"
         in failures
     )
-    assert (
-        "subset_scaling[0].env.lsf_cores must match params.threads: 8 != 4"
-        in failures
-    )
+    assert not any("subset_scaling[0].env.lsf_cores" in failure for failure in failures)
     assert (
         "thread_scaling[0].env.mkl_num_threads must be '1' for reproducible CPU benchmarking"
         in failures

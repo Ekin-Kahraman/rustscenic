@@ -19,6 +19,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from validation.backend_requirements import REQUIRED_RUST_BACKEND_SYMBOLS
+from validation.path_provenance import absolute_path_strings
 
 
 FULL_PIPELINE_STAGES = {
@@ -48,11 +49,13 @@ REQUIRED_FULL_PIPELINE_ELAPSED_STAGES = {
 }
 OPTIONAL_FULL_PIPELINE_ELAPSED_STAGES = {
     "cistarget_pruning",
+    "grn_correlation",
 }
 COMPUTE_ELAPSED_BACKEND_STAGES = {
     "preproc": ("setup_fragments_to_matrix",),
     "topics": ("pipeline_topics",),
     "grn": ("pipeline_grn",),
+    "grn_correlation": ("pipeline_grn_correlation",),
     "cistarget": ("pipeline_cistarget",),
     "cistarget_pruning": ("pipeline_cistarget_pruning",),
     "enhancer": ("pipeline_enhancer",),
@@ -91,6 +94,7 @@ REQUIRED_FULL_PIPELINE_RUST_EXECUTION = {
     "setup_fragments_to_matrix",
     "pipeline_topics",
     "pipeline_grn",
+    "pipeline_grn_correlation",
     "pipeline_candidate_regulons",
     "pipeline_cistarget_projection_features",
     "pipeline_cistarget",
@@ -102,7 +106,12 @@ REQUIRED_FULL_PIPELINE_RUST_EXECUTION = {
 FULL_PIPELINE_SCALING_CHILD_PARAM_KEYS = {
     "grn_n_estimators",
     "grn_max_features",
+    "grn_early_stop_window",
+    "grn_early_stop_mode",
     "grn_target_block_size",
+    "grn_regulon_polarities",
+    "grn_rho_threshold",
+    "grn_rho_mask_dropouts",
     "topics_n_topics",
     "topics_n_passes",
     "topics_method",
@@ -138,6 +147,9 @@ REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
     "pipeline_grn": {
         "all_of": {"gene_duplicate_summary"},
         "any_of": ({"grn_infer"}, {"grn_infer_sparse_csc"}),
+    },
+    "pipeline_grn_correlation": {
+        "any_of": ({"grn_correlations_dense"}, {"grn_correlations_sparse_csc"}),
     },
     "pipeline_candidate_regulons": {
         "all_of": {"pipeline_candidate_regulons_from_grn"},
@@ -480,6 +492,8 @@ def _backend_execution_failures(
     record: dict[str, Any],
     prefix: str,
     required_rust_stages: set[str] | None = None,
+    *,
+    require_symbols: bool = False,
 ) -> list[str]:
     execution = record.get("backend_execution")
     if not isinstance(execution, dict):
@@ -502,6 +516,69 @@ def _backend_execution_failures(
             failures.append(f"{stage_prefix}.required_ok must be true")
         if not _positive_int(state.get("symbol_count")):
             failures.append(f"{stage_prefix}.symbol_count must be positive")
+        symbols = state.get("symbols")
+        enforce_symbols = record.get("path_policy") == "portable" or require_symbols
+        if enforce_symbols:
+            if (
+                not isinstance(symbols, list)
+                or not symbols
+                or not all(_nonempty_str(symbol) for symbol in symbols)
+            ):
+                failures.append(
+                    f"{stage_prefix}.symbols must identify executed Rust kernels"
+                )
+            elif len(symbols) != state.get("symbol_count"):
+                failures.append(
+                    f"{stage_prefix}.symbol_count must match symbols length"
+                )
+            else:
+                present = set(symbols)
+                requirements = REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS.get(stage, {})
+                missing = set(requirements.get("all_of", set())) - present
+                if missing:
+                    failures.append(
+                        f"{stage_prefix}.symbols missing required kernels: "
+                        f"{sorted(missing)}"
+                    )
+                alternatives = requirements.get("any_of", ())
+                if alternatives and not any(option <= present for option in alternatives):
+                    failures.append(
+                        f"{stage_prefix}.symbols must contain one supported kernel set"
+                    )
+                for group in requirements.get("one_from_each", ()):
+                    if not present.intersection(group):
+                        failures.append(
+                            f"{stage_prefix}.symbols must contain a kernel from "
+                            f"{sorted(group)}"
+                        )
+    return failures
+
+
+def _required_full_pipeline_rust_execution(record: dict[str, Any]) -> set[str]:
+    required = set(REQUIRED_FULL_PIPELINE_RUST_EXECUTION)
+    params = record.get("params")
+    if isinstance(params, dict) and params.get("grn_regulon_polarities") == "unsigned":
+        required.discard("pipeline_grn_correlation")
+    return required
+
+
+def _grn_correlation_execution_failures(
+    record: dict[str, Any],
+    prefix: str,
+) -> list[str]:
+    params = record.get("params")
+    if not isinstance(params, dict) or params.get("grn_regulon_polarities") != "unsigned":
+        return []
+    execution = record.get("backend_execution")
+    state = execution.get("pipeline_grn_correlation") if isinstance(execution, dict) else None
+    stage_prefix = f"{prefix}.backend_execution.pipeline_grn_correlation"
+    if not isinstance(state, dict):
+        return [f"{stage_prefix} must record the explicit unsigned skip"]
+    failures: list[str] = []
+    if state.get("engine") != "skipped":
+        failures.append(f"{stage_prefix}.engine must be 'skipped' for unsigned mode")
+    if not _nonempty_str(state.get("reason")):
+        failures.append(f"{stage_prefix}.reason must be a non-empty string")
     return failures
 
 
@@ -1151,6 +1228,7 @@ def _thread_budget_failures(
     prefix: str,
     *,
     params_key: str,
+    allow_allocated_superset: bool = False,
 ) -> list[str]:
     failures: list[str] = []
     params = record.get("params")
@@ -1196,9 +1274,14 @@ def _thread_budget_failures(
         else:
             if actual_cores <= 0:
                 failures.append(f"{prefix}.env.lsf_cores must be positive")
-            elif actual_cores != expected_threads:
+            elif (
+                actual_cores < expected_threads
+                if allow_allocated_superset
+                else actual_cores != expected_threads
+            ):
+                relation = "cover" if allow_allocated_superset else "match"
                 failures.append(
-                    f"{prefix}.env.lsf_cores must match params.{params_key}: "
+                    f"{prefix}.env.lsf_cores must {relation} params.{params_key}: "
                     f"{actual_cores} != {expected_threads}"
                 )
     requested_cores = env.get("lsf_requested_cores")
@@ -1210,9 +1293,14 @@ def _thread_budget_failures(
         else:
             if requested <= 0:
                 failures.append(f"{prefix}.env.lsf_requested_cores must be positive")
-            elif requested != expected_threads:
+            elif (
+                requested < expected_threads
+                if allow_allocated_superset
+                else requested != expected_threads
+            ):
+                relation = "cover" if allow_allocated_superset else "match"
                 failures.append(
-                    f"{prefix}.env.lsf_requested_cores must match params.{params_key}: "
+                    f"{prefix}.env.lsf_requested_cores must {relation} params.{params_key}: "
                     f"{requested} != {expected_threads}"
                 )
     requested_mem = env.get("lsf_requested_mem_mb")
@@ -1763,6 +1851,7 @@ def _full_pipeline_scaling_row_failures(
     require_clean: bool,
     require_motif_pruning: bool = False,
     require_region_cistarget: bool = False,
+    require_kernel_symbols: bool = False,
 ) -> list[str]:
     failures: list[str] = []
     n_cells = row.get("n_cells_actual")
@@ -1892,9 +1981,11 @@ def _full_pipeline_scaling_row_failures(
         _backend_execution_failures(
             row,
             prefix,
-            REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
+            _required_full_pipeline_rust_execution(row),
+            require_symbols=require_kernel_symbols,
         )
     )
+    failures.extend(_grn_correlation_execution_failures(row, prefix))
     failures.extend(_unknown_full_pipeline_backend_execution_failures(row, prefix))
     failures.extend(
         _cell_barcode_filter_failures(
@@ -1951,9 +2042,10 @@ def validate_full_pipeline(
         _backend_execution_failures(
             record,
             "full_pipeline",
-            REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
+            _required_full_pipeline_rust_execution(record),
         )
     )
+    failures.extend(_grn_correlation_execution_failures(record, "full_pipeline"))
     failures.extend(
         _unknown_full_pipeline_backend_execution_failures(record, "full_pipeline")
     )
@@ -2194,7 +2286,14 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
             for key in ("grn_wall_s", "peak_rss_gb"):
                 if not _positive_number(row.get(key)):
                     failures.append(f"{prefix}.{key} must be positive")
-            failures.extend(_thread_budget_failures(row, prefix, params_key="threads"))
+            failures.extend(
+                _thread_budget_failures(
+                    row,
+                    prefix,
+                    params_key="threads",
+                    allow_allocated_superset=True,
+                )
+            )
             env = row.get("env", {})
             child_repo = env.get("repo_state") if isinstance(env, dict) else None
             child_tracked_source_count = (
@@ -2233,6 +2332,7 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
                     row,
                     prefix,
                     required_rust_stages={"grn"},
+                    require_symbols=record.get("path_policy") == "portable",
                 )
             )
             failures.extend(
@@ -2393,10 +2493,20 @@ def validate_full_pipeline_scaling(
                 require_clean=require_clean,
                 require_motif_pruning=require_motif_pruning,
                 require_region_cistarget=require_region_cistarget,
+                require_kernel_symbols=record.get("path_policy") == "portable",
             )
         )
 
-        if check_output_files and isinstance(row.get("json_path"), str):
+        # Portable aggregate artefacts intentionally contain no host paths.
+        # Their child rows embed output-presence, manifest, and storage
+        # evidence, and each child is validated against the live filesystem
+        # before aggregation. Legacy artefacts may still carry resolvable
+        # child JSON paths and can be re-opened here.
+        if (
+            check_output_files
+            and record.get("path_policy") != "portable"
+            and isinstance(row.get("json_path"), str)
+        ):
             child_path = Path(row["json_path"])
             if not child_path.exists():
                 failures.append(f"{prefix}.json_path does not exist: {child_path}")
@@ -2605,23 +2715,158 @@ def validate_record(
     *,
     require_clean: bool = True,
     check_output_files: bool = False,
+    artifact_path: Path | None = None,
 ) -> list[str]:
+    portability_failures: list[str] = []
+    if record.get("path_policy") == "portable":
+        portability_failures = [
+            f"absolute path forbidden by path_policy at {path}"
+            for path in absolute_path_strings(record)
+        ]
     benchmark = record.get("benchmark")
+    filesystem_failures = (
+        _output_filesystem_failures(record, artifact_path)
+        if check_output_files and artifact_path is not None
+        else []
+    )
     if benchmark == "real_multiome_full_pipeline":
-        return validate_full_pipeline(
+        return portability_failures + filesystem_failures + validate_full_pipeline(
             record,
             require_clean=require_clean,
             check_output_files=check_output_files,
         )
     if benchmark == "real_multiome_full_pipeline_scaling":
-        return validate_full_pipeline_scaling(
+        return portability_failures + filesystem_failures + validate_full_pipeline_scaling(
             record,
             require_clean=require_clean,
             check_output_files=check_output_files,
         )
     if benchmark == "real_pbmc3k_grn_scaling":
-        return validate_grn_scaling(record, require_clean=require_clean)
-    return [f"unknown benchmark: {benchmark!r}"]
+        return portability_failures + filesystem_failures + validate_grn_scaling(
+            record, require_clean=require_clean
+        )
+    return portability_failures + [f"unknown benchmark: {benchmark!r}"]
+
+
+def _output_filesystem_failures(
+    record: dict[str, Any],
+    artifact_path: Path,
+) -> list[str]:
+    """Validate portable output inventories relative to their JSON artefact."""
+    if record.get("path_policy") != "portable":
+        return []
+    benchmark = record.get("benchmark")
+    if benchmark == "real_multiome_full_pipeline":
+        return _inventory_filesystem_failures(
+            record.get("output_inventory"),
+            artifact_path.parent,
+            "full_pipeline.output_inventory",
+        )
+    if benchmark == "real_multiome_full_pipeline_scaling":
+        failures: list[str] = []
+        runs = record.get("runs")
+        if not isinstance(runs, list):
+            return failures
+        for index, row in enumerate(runs):
+            if not isinstance(row, dict):
+                continue
+            prefix = f"runs[{index}]"
+            failures.extend(
+                _inventory_filesystem_failures(
+                    row.get("output_inventory"),
+                    artifact_path.parent,
+                    f"{prefix}.output_inventory",
+                )
+            )
+            child_label = row.get("json_path")
+            child = _portable_output_path(
+                child_label,
+                artifact_path.parent,
+                f"{prefix}.json_path",
+                failures,
+            )
+            if child is not None and not child.is_file():
+                failures.append(f"{prefix}.json_path file is missing: {child_label}")
+        return failures
+    return []
+
+
+def _inventory_filesystem_failures(
+    inventory: Any,
+    base_dir: Path,
+    prefix: str,
+) -> list[str]:
+    if not isinstance(inventory, dict):
+        return [f"{prefix} must be an object for --check-output-files"]
+    failures: list[str] = []
+    for key, info in sorted(inventory.items()):
+        if info is None:
+            continue
+        item_prefix = f"{prefix}.{key}"
+        if not isinstance(info, dict):
+            failures.append(f"{item_prefix} must be an object or null")
+            continue
+        path = _portable_output_path(info.get("path"), base_dir, item_prefix, failures)
+        if path is None:
+            continue
+        expected_exists = info.get("exists")
+        if expected_exists is True and not path.exists():
+            failures.append(f"{item_prefix} is missing: {info.get('path')}")
+            continue
+        if expected_exists is False:
+            if path.exists():
+                failures.append(f"{item_prefix} unexpectedly exists: {info.get('path')}")
+            continue
+        if expected_exists is not True:
+            failures.append(f"{item_prefix}.exists must be boolean")
+            continue
+        expected_type = info.get("type")
+        if expected_type == "file" and not path.is_file():
+            failures.append(f"{item_prefix} must be a file")
+            continue
+        if expected_type == "dir" and not path.is_dir():
+            failures.append(f"{item_prefix} must be a directory")
+            continue
+        if expected_type not in {"file", "dir"}:
+            failures.append(f"{item_prefix}.type must be 'file' or 'dir'")
+            continue
+        expected_size = info.get("size_bytes")
+        actual_size = (
+            path.stat().st_size
+            if path.is_file()
+            else sum(child.stat().st_size for child in path.rglob("*") if child.is_file())
+        )
+        if isinstance(expected_size, int) and actual_size != expected_size:
+            failures.append(
+                f"{item_prefix}.size_bytes changed: {actual_size} != {expected_size}"
+            )
+    return failures
+
+
+def _portable_output_path(
+    label: Any,
+    base_dir: Path,
+    prefix: str,
+    failures: list[str],
+) -> Path | None:
+    if not _nonempty_str(label):
+        failures.append(f"{prefix}.path must be a non-empty string")
+        return None
+    if label.startswith("external:"):
+        failures.append(f"{prefix}.path is not resolvable from the artefact: {label}")
+        return None
+    path = Path(label)
+    if path.is_absolute():
+        failures.append(f"{prefix}.path must be relative")
+        return None
+    base = base_dir.resolve()
+    resolved = (base / path).resolve()
+    try:
+        resolved.relative_to(base)
+    except ValueError:
+        failures.append(f"{prefix}.path escapes the artefact directory: {label}")
+        return None
+    return resolved
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -2641,6 +2886,7 @@ def main(argv: list[str] | None = None) -> int:
             record,
             require_clean=not args.allow_dirty,
             check_output_files=args.check_output_files,
+            artifact_path=path,
         )
         status = "ok" if not failures else "failed"
         print(json.dumps({"path": str(path), "status": status, "failures": failures}, indent=2))

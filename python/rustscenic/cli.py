@@ -68,6 +68,7 @@ def cmd_grn(args: argparse.Namespace) -> int:
         n_estimators=args.n_estimators, learning_rate=args.learning_rate,
         max_features=args.max_features, subsample=args.subsample,
         max_depth=args.max_depth, early_stop_window=args.early_stop_window,
+        early_stop_mode=args.early_stop_mode,
         seed=args.seed, target_block_size=args.target_block_size,
     )
     wall = time.monotonic() - t0
@@ -78,9 +79,56 @@ def cmd_grn(args: argparse.Namespace) -> int:
         "n_cells": int(n_cells), "n_genes": int(len(gene_names)),
         "n_tfs_used": len(tfs_in), "seed": args.seed,
         "rustscenic_version": __version__, "stage": "grn",
+        "grn_fit": dict(out.attrs.get("grn_fit", {})),
     }
     output_path.with_suffix(".json").write_text(json.dumps(meta, indent=2))
     print(f"wrote {output_path}  ({len(out)} edges, wall {wall:.1f}s)", file=sys.stderr)
+    return 0
+
+
+def cmd_add_cor(args: argparse.Namespace) -> int:
+    """Add Pearson correlation and SCENIC polarity to GRN adjacencies."""
+    from . import grn as rs_grn
+    import pandas as pd
+
+    expr_path = Path(args.expression)
+    adjacency_path = Path(args.adjacencies)
+    for path, label in ((expr_path, "expression"), (adjacency_path, "adjacencies")):
+        if not path.exists():
+            print(f"error: {label} file not found: {path}", file=sys.stderr)
+            return 2
+    expression, _, _ = _load_expression(expr_path)
+    suffix = adjacency_path.suffix.lower()
+    if suffix == ".parquet":
+        adjacencies = pd.read_parquet(adjacency_path)
+    elif suffix in {".tsv", ".txt", ".csv"}:
+        adjacencies = pd.read_csv(
+            adjacency_path,
+            sep="\t" if suffix in {".tsv", ".txt"} else ",",
+        )
+    else:
+        print(
+            f"error: unsupported adjacency format {suffix}. "
+            "Use .parquet, .tsv, .txt, or .csv",
+            file=sys.stderr,
+        )
+        return 2
+    out = rs_grn.add_correlation(
+        adjacencies,
+        expression,
+        rho_threshold=args.rho_threshold,
+        mask_dropouts=args.mask_dropouts,
+    )
+    output_path = Path(args.output)
+    _save(out, output_path)
+    counts = out.attrs.get("correlation", {})
+    print(
+        "wrote "
+        f"{output_path} ({counts.get('activating_edges', 0)} activating, "
+        f"{counts.get('repressing_edges', 0)} repressing, "
+        f"{counts.get('indeterminate_edges', 0)} indeterminate)",
+        file=sys.stderr,
+    )
     return 0
 
 
@@ -88,6 +136,7 @@ def cmd_aucell(args: argparse.Namespace) -> int:
     from . import __version__
     from . import aucell as rs_aucell
     from .pipeline import _candidate_regulons_from_grn
+    from .grn import build_regulons as _build_signed_regulons
     import pandas as pd
 
     expr_path = Path(args.expression)
@@ -99,8 +148,8 @@ def cmd_aucell(args: argparse.Namespace) -> int:
     # Regulons expected as TSV: regulon_name\tgene1,gene2,...  OR  regulon_name\tgene  (long form)
     # Accept either format; auto-detect by checking first line.
     regulons: list[tuple[str, list[str]]] = []
-    # Load by extension - the common workflow is `rustscenic grn --output grn.parquet`
-    # followed by `rustscenic aucell --regulons grn.parquet`.
+    # Load by extension. Signed add-cor output is detected automatically;
+    # unsigned inference output keeps the historical candidate path.
     if reg_path.suffix.lower() == ".parquet":
         df = pd.read_parquet(reg_path)
         if not {"TF", "target", "importance"}.issubset(df.columns):
@@ -108,13 +157,17 @@ def cmd_aucell(args: argparse.Namespace) -> int:
                   f"(missing TF/target/importance columns). Got: {df.columns.tolist()}",
                   file=sys.stderr)
             return 2
-        regulons.extend(
-            _candidate_regulons_from_grn(
+        try:
+            adjacency_regulons = _regulons_from_adjacencies(
                 df,
-                top_targets=args.top_n_targets,
-                min_targets=args.min_genes,
-            ).items()
-        )
+                args,
+                unsigned_builder=_candidate_regulons_from_grn,
+                signed_builder=_build_signed_regulons,
+            )
+        except ValueError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        regulons.extend(adjacency_regulons.items())
     else:
         lines = reg_path.read_text().splitlines()
         if not lines:
@@ -124,13 +177,17 @@ def cmd_aucell(args: argparse.Namespace) -> int:
         if "TF" in header and "target" in header and "importance" in header:
             # GRN-adjacencies TSV/CSV
             df = pd.read_csv(reg_path, sep="\t" if reg_path.suffix == ".tsv" else ",")
-            regulons.extend(
-                _candidate_regulons_from_grn(
+            try:
+                adjacency_regulons = _regulons_from_adjacencies(
                     df,
-                    top_targets=args.top_n_targets,
-                    min_targets=args.min_genes,
-                ).items()
-            )
+                    args,
+                    unsigned_builder=_candidate_regulons_from_grn,
+                    signed_builder=_build_signed_regulons,
+                )
+            except ValueError as exc:
+                print(f"error: {exc}", file=sys.stderr)
+                return 2
+            regulons.extend(adjacency_regulons.items())
         else:
             # Plain regulons TSV: name\tgene,gene,...
             grouped: dict[str, list[str]] = {}
@@ -170,6 +227,28 @@ def cmd_aucell(args: argparse.Namespace) -> int:
     output_path.with_suffix(".json").write_text(json.dumps(meta, indent=2))
     print(f"wrote {output_path}  ({auc.shape[0]}x{auc.shape[1]}, wall {wall:.1f}s)", file=sys.stderr)
     return 0
+
+
+def _regulons_from_adjacencies(df, args, *, unsigned_builder, signed_builder):
+    mode = args.regulon_polarities
+    has_regulation = "regulation" in df.columns
+    if mode in {"both", "activating"} and not has_regulation:
+        raise ValueError(
+            f"--regulon-polarities {mode} requires a signed adjacency table; "
+            "run `rustscenic add-cor` first"
+        )
+    if has_regulation and mode != "unsigned":
+        return signed_builder(
+            df,
+            top_targets_per_tf=args.top_n_targets,
+            min_targets=args.min_genes,
+            include_repressors=mode in {"auto", "both"},
+        )
+    return unsigned_builder(
+        df,
+        top_targets=args.top_n_targets,
+        min_targets=args.min_genes,
+    )
 
 
 def cmd_topics(args: argparse.Namespace) -> int:
@@ -272,8 +351,13 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
         gene_coords=Path(args.gene_coords) if args.gene_coords else None,
         grn_n_estimators=args.grn_n_estimators,
         grn_max_features=args.grn_max_features,
+        grn_early_stop_window=args.grn_early_stop_window,
+        grn_early_stop_mode=args.grn_early_stop_mode,
         grn_target_block_size=args.grn_target_block_size,
         grn_top_targets=args.grn_top_targets,
+        grn_regulon_polarities=args.grn_regulon_polarities,
+        grn_rho_threshold=args.grn_rho_threshold,
+        grn_rho_mask_dropouts=args.grn_rho_mask_dropouts,
         aucell_top_frac=args.aucell_top_frac,
         topics_n_topics=args.topics_n_topics,
         topics_n_passes=args.topics_n_passes,
@@ -318,12 +402,33 @@ def main(argv: list[str] | None = None) -> int:
     pg.add_argument("--max-features", type=float, default=0.1); pg.add_argument("--subsample", type=float, default=0.9)
     pg.add_argument("--max-depth", type=int, default=3); pg.add_argument("--early-stop-window", type=int, default=25)
     pg.add_argument(
+        "--early-stop-mode",
+        choices=["arboreto", "legacy_inbag"],
+        default="arboreto",
+        help="OOB arboreto semantics (default) or historical RustScenic in-bag rule.",
+    )
+    pg.add_argument(
         "--target-block-size",
         type=int,
         default=None,
-        help="Target genes materialised together for GRN fitting. Default: adaptive.",
+        help="Compatibility option; flat target scheduling ignores this value.",
     )
     pg.set_defaults(func=cmd_grn)
+
+    pac = sub.add_parser(
+        "add-cor",
+        help="Add TF-target correlation and activator/repressor polarity to a GRN",
+    )
+    pac.add_argument("--expression", required=True)
+    pac.add_argument("--adjacencies", required=True)
+    pac.add_argument("--output", required=True)
+    pac.add_argument("--rho-threshold", type=float, default=0.03)
+    pac.add_argument(
+        "--mask-dropouts",
+        action="store_true",
+        help="Compute each correlation only over cells where both genes are non-zero.",
+    )
+    pac.set_defaults(func=cmd_add_cor)
 
     pa = sub.add_parser("aucell", help="Regulon activity scoring (AUCell replacement)")
     pa.add_argument("--expression", required=True)
@@ -333,6 +438,15 @@ def main(argv: list[str] | None = None) -> int:
                     help="When regulons input is a grn output, keep top-N targets per TF (default 50)")
     pa.add_argument("--min-genes", type=int, default=10,
                     help="Drop regulons with fewer than this many genes (default 10)")
+    pa.add_argument(
+        "--regulon-polarities",
+        choices=["auto", "both", "activating", "unsigned"],
+        default="auto",
+        help=(
+            "Auto-detect signed GRN regulation (default), require both or "
+            "activating signed regulons, or explicitly use legacy unsigned output."
+        ),
+    )
     pa.set_defaults(func=cmd_aucell)
 
     pt = sub.add_parser("topics", help="Topic modeling (pycisTopic LDA replacement, online VB)")
@@ -374,13 +488,27 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument("--gene-coords", default=None, help="Optional: gene coordinate table with gene/chrom/tss columns")
     pp.add_argument("--grn-n-estimators", type=int, default=500)
     pp.add_argument("--grn-max-features", type=float, default=0.1)
+    pp.add_argument("--grn-early-stop-window", type=int, default=25)
+    pp.add_argument(
+        "--grn-early-stop-mode",
+        choices=["arboreto", "legacy_inbag"],
+        default="arboreto",
+    )
     pp.add_argument(
         "--grn-target-block-size",
         type=int,
         default=None,
-        help="Target genes materialised together during GRN. Default: adaptive.",
+        help="Compatibility option; flat target scheduling ignores this value.",
     )
     pp.add_argument("--grn-top-targets", type=int, default=50)
+    pp.add_argument(
+        "--grn-regulon-polarities",
+        choices=["both", "activating", "unsigned"],
+        default="both",
+        help="Signed activator+repressor regulons (default), activating only, or legacy unsigned.",
+    )
+    pp.add_argument("--grn-rho-threshold", type=float, default=0.03)
+    pp.add_argument("--grn-rho-mask-dropouts", action="store_true")
     pp.add_argument("--aucell-top-frac", type=float, default=0.05)
     pp.add_argument("--topics-n-topics", type=int, default=30)
     pp.add_argument("--topics-n-passes", type=int, default=3)

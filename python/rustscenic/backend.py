@@ -6,7 +6,12 @@ from typing import Any
 
 
 REQUIRED_RUST_BACKEND_SYMBOLS: dict[str, list[str]] = {
-    "grn": ["grn_infer", "grn_infer_sparse_csc"],
+    "grn": [
+        "grn_infer",
+        "grn_infer_sparse_csc",
+        "grn_correlations_dense",
+        "grn_correlations_sparse_csc",
+    ],
     "aucell": ["aucell_score", "aucell_score_sparse_csr"],
     "topics": ["topics_fit", "topics_fit_gibbs", "topics_npmi", "topics_cell_assignment"],
     "cistarget": [

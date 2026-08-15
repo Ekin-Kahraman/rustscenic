@@ -4,7 +4,8 @@
 //! - sklearn `GradientBoostingRegressor` with squared-error loss
 //! - n_estimators=5000, learning_rate=0.01, max_features=0.1, subsample=0.9,
 //!   max_depth=3 (sklearn defaults inherited by arboreto's SGBM_KWARGS)
-//! - arboreto's EarlyStopMonitor (window=25) halts when train MSE stalls
+//! - arboreto's EarlyStopMonitor (window=25) halts when the trailing mean of
+//!   scikit-learn-style OOB improvements becomes negative
 //! - Feature importance = sklearn-normalized split gains × n_estimators_fit
 //!   (per arboreto/core.py:168)
 //!
@@ -21,6 +22,7 @@
 //! with pyscenic - fine-edge disagreement does not propagate to regulon
 //! activity. See `validation/parity_v0310/grn_parity_pbmc3k_full.json`.
 
+pub mod correlation;
 pub mod gbm;
 pub mod histogram;
 pub mod rng;
@@ -29,6 +31,7 @@ pub mod tree;
 use ndarray::ArrayView2;
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::histogram::BinnedMatrix;
 
@@ -48,7 +51,7 @@ pub struct IndexedAdjacency {
     pub importance: f32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TfOverlapSummary {
     /// Number of supplied TF names present in the expression gene list.
     ///
@@ -57,6 +60,60 @@ pub struct TfOverlapSummary {
     pub present_input_count: usize,
     /// First missing TF names in input order, capped for concise warnings.
     pub missing_examples: Vec<String>,
+    /// Fitted-tree distribution over target-gene regressions.
+    pub fit_summary: GrnFitSummary,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct GrnFitSummary {
+    pub target_count: usize,
+    pub minimum: usize,
+    pub maximum: usize,
+    pub mean: f64,
+    pub median: f64,
+}
+
+impl Default for GrnFitSummary {
+    fn default() -> Self {
+        Self {
+            target_count: 0,
+            minimum: 0,
+            maximum: 0,
+            mean: 0.0,
+            median: 0.0,
+        }
+    }
+}
+
+impl GrnFitSummary {
+    fn from_counts(counts: &[usize]) -> Self {
+        if counts.is_empty() {
+            return Self::default();
+        }
+        let mut sorted = counts.to_vec();
+        sorted.sort_unstable();
+        let middle = sorted.len() / 2;
+        let median = if sorted.len() & 1 == 0 {
+            (sorted[middle - 1] as f64 + sorted[middle] as f64) / 2.0
+        } else {
+            sorted[middle] as f64
+        };
+        Self {
+            target_count: sorted.len(),
+            minimum: sorted[0],
+            maximum: sorted[sorted.len() - 1],
+            mean: sorted.iter().sum::<usize>() as f64 / sorted.len() as f64,
+            median,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EarlyStopMode {
+    /// Match arboreto's monitor over scikit-learn-style OOB improvements.
+    Arboreto,
+    /// Historical RustScenic two-point comparison of in-bag MSE.
+    LegacyInbag,
 }
 
 struct ResolvedTfCols {
@@ -72,6 +129,7 @@ pub struct GrnConfig {
     pub subsample: f32,
     pub max_depth: usize,
     pub early_stop_window: usize,
+    pub early_stop_mode: EarlyStopMode,
     pub seed: u64,
     /// Retained for API compatibility. No longer affects execution: targets are
     /// fit in a single flat parallel pass over all genes (no blocking).
@@ -87,6 +145,7 @@ impl Default for GrnConfig {
             subsample: 0.9,
             max_depth: 3,
             early_stop_window: 25,
+            early_stop_mode: EarlyStopMode::Arboreto,
             seed: 777,
             target_block_size: 0,
         }
@@ -147,7 +206,7 @@ pub fn infer_indices_with_overlap(
 
     let resolved = resolve_tf_cols_with_summary(gene_names, tf_names);
     let tf_cols = resolved.cols;
-    let summary = resolved.summary;
+    let mut summary = resolved.summary;
     if tf_cols.is_empty() {
         return (Vec::new(), summary);
     }
@@ -163,7 +222,7 @@ pub fn infer_indices_with_overlap(
         .map(|(tf_col, &gene_idx)| (gene_idx, tf_col))
         .collect();
 
-    let all_edges = fit_all_targets(
+    let (all_edges, fitted_tree_counts) = fit_all_targets(
         &binned_all,
         n_cells,
         n_genes,
@@ -177,6 +236,7 @@ pub fn infer_indices_with_overlap(
             }
         },
     );
+    summary.fit_summary = GrnFitSummary::from_counts(&fitted_tree_counts);
     (all_edges, summary)
 }
 
@@ -207,7 +267,7 @@ pub fn infer_indices_view_with_overlap(
 
     let resolved = resolve_tf_cols_with_summary(gene_names, tf_names);
     let tf_cols = resolved.cols;
-    let summary = resolved.summary;
+    let mut summary = resolved.summary;
     if tf_cols.is_empty() {
         return (Vec::new(), summary);
     }
@@ -219,7 +279,7 @@ pub fn infer_indices_view_with_overlap(
         .map(|(tf_col, &gene_idx)| (gene_idx, tf_col))
         .collect();
 
-    let all_edges = fit_all_targets(
+    let (all_edges, fitted_tree_counts) = fit_all_targets(
         &binned_all,
         n_cells,
         n_genes,
@@ -232,6 +292,7 @@ pub fn infer_indices_view_with_overlap(
             }
         },
     );
+    summary.fit_summary = GrnFitSummary::from_counts(&fitted_tree_counts);
     (all_edges, summary)
 }
 
@@ -281,7 +342,7 @@ pub fn infer_indices_sparse_csc_with_overlap(
 
     let resolved = resolve_tf_cols_with_summary(gene_names, tf_names);
     let tf_cols = resolved.cols;
-    let summary = resolved.summary;
+    let mut summary = resolved.summary;
     if tf_cols.is_empty() {
         return (Vec::new(), summary);
     }
@@ -294,7 +355,7 @@ pub fn infer_indices_sparse_csc_with_overlap(
         .map(|(tf_col, &gene_idx)| (gene_idx, tf_col))
         .collect();
 
-    let all_edges = fit_all_targets(
+    let (all_edges, fitted_tree_counts) = fit_all_targets(
         &binned_all,
         n_cells,
         n_genes,
@@ -310,6 +371,7 @@ pub fn infer_indices_sparse_csc_with_overlap(
             }
         },
     );
+    summary.fit_summary = GrnFitSummary::from_counts(&fitted_tree_counts);
     (all_edges, summary)
 }
 
@@ -333,11 +395,17 @@ fn fit_all_targets<F>(
     gene_to_tf_col: &HashMap<usize, usize>,
     cfg: &GrnConfig,
     gather_target: F,
-) -> Vec<IndexedAdjacency>
+) -> (Vec<IndexedAdjacency>, Vec<usize>)
 where
     F: Fn(usize, &mut [f32]) + Sync,
 {
-    (0..n_genes)
+    // Keep fitted-tree telemetry out of the edge result itself. Collecting a
+    // Vec of per-target edge Vecs before flattening retains the full edge set
+    // once in those buffers and again in the final output, which is material
+    // at atlas scale. Each target owns exactly one relaxed atomic write; the
+    // Rayon flattening path can therefore stream edge buffers as before.
+    let fitted_tree_counts: Vec<AtomicUsize> = (0..n_genes).map(|_| AtomicUsize::new(0)).collect();
+    let all_edges = (0..n_genes)
         .into_par_iter()
         .map_init(
             || {
@@ -353,27 +421,34 @@ where
                 // fit time so the self column cannot absorb the split gain.
                 let exclude_self = gene_to_tf_col.get(&target_idx).copied();
 
-                gbm::fit_and_importances_binned_with_scratch(
+                let (importances, fitted_trees) = gbm::fit_and_importances_binned_with_scratch(
                     binned_all,
                     target_buf.as_slice(),
                     cfg,
                     exclude_self,
                     gbm_scratch,
-                )
-                .iter()
-                .copied()
-                .enumerate()
-                .filter(|(_, imp)| *imp > 0.0)
-                .map(|(i, imp)| IndexedAdjacency {
-                    tf_idx: tf_cols[i],
-                    target_idx,
-                    importance: imp,
-                })
-                .collect::<Vec<_>>()
+                );
+                fitted_tree_counts[target_idx].store(fitted_trees, Ordering::Relaxed);
+                importances
+                    .iter()
+                    .copied()
+                    .enumerate()
+                    .filter(|(_, imp)| *imp > 0.0)
+                    .map(|(i, imp)| IndexedAdjacency {
+                        tf_idx: tf_cols[i],
+                        target_idx,
+                        importance: imp,
+                    })
+                    .collect::<Vec<_>>()
             },
         )
         .flatten_iter()
-        .collect()
+        .collect();
+    let fitted_tree_counts = fitted_tree_counts
+        .iter()
+        .map(|count| count.load(Ordering::Relaxed))
+        .collect();
+    (all_edges, fitted_tree_counts)
 }
 
 fn resolve_tf_cols_with_summary(gene_names: &[String], tf_names: &[String]) -> ResolvedTfCols {
@@ -403,6 +478,7 @@ fn resolve_tf_cols_with_summary(gene_names: &[String], tf_names: &[String]) -> R
         summary: TfOverlapSummary {
             present_input_count,
             missing_examples,
+            fit_summary: GrnFitSummary::default(),
         },
     }
 }

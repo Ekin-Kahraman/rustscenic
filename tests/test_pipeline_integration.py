@@ -42,6 +42,27 @@ N_MOTIFS = 12
 SEED = 0
 
 
+@pytest.mark.parametrize(
+    ("kwargs", "message"),
+    [
+        ({"grn_early_stop_mode": "unknown"}, "grn_early_stop_mode"),
+        ({"grn_early_stop_window": -1}, "grn_early_stop_window"),
+        ({"grn_top_targets": 0}, "grn_top_targets"),
+        ({"grn_rho_threshold": 0.0}, "grn_rho_threshold"),
+        ({"grn_rho_threshold": np.nan}, "grn_rho_threshold"),
+    ],
+)
+def test_pipeline_rejects_invalid_grn_configuration_before_writing(
+    tmp_path, kwargs, message
+):
+    import rustscenic.pipeline
+
+    output_dir = tmp_path / "must_not_exist"
+    with pytest.raises(ValueError, match=message):
+        rustscenic.pipeline.run(None, output_dir, verbose=False, **kwargs)
+    assert not output_dir.exists()
+
+
 def _simulate_multiome():
     """Generate matched RNA + ATAC AnnDatas driven by 3 latent programmes.
 
@@ -738,6 +759,7 @@ def test_pipeline_run_with_motif_annotations_scores_pruned_regulons(tmp_path):
         motif_annotations=annotations,
         grn_n_estimators=10,
         grn_top_targets=10,
+        grn_regulon_polarities="unsigned",
         cistarget_top_frac=1.0,
         cistarget_auc_threshold=0.0,
         verbose=False,
@@ -752,7 +774,7 @@ def test_pipeline_run_with_motif_annotations_scores_pruned_regulons(tmp_path):
     assert set(active) == {"TF_A_regulon"}
     assert active == pruned
     assert list(auc.columns) == ["TF_A_regulon"]
-    assert result.regulon_source == "motif_annotation_pruned"
+    assert result.regulon_source == "motif_annotation_pruned_unsigned"
     assert result.n_candidate_regulons == 2
     assert result.n_pruned_regulons == 1
     assert result.backend_execution["cistarget_pruning"]["symbols"] == [
@@ -792,6 +814,7 @@ def test_pipeline_run_without_motif_annotations_keeps_candidate_regulons(tmp_pat
         motif_annotations=None,
         grn_n_estimators=10,
         grn_top_targets=10,
+        grn_regulon_polarities="unsigned",
         cistarget_top_frac=1.0,
         cistarget_auc_threshold=0.0,
         verbose=False,
@@ -910,6 +933,35 @@ def test_attribute_peaks_normalises_compound_regulon_names():
     ]
 
 
+def test_attribute_peaks_keeps_signed_regulon_programmes_distinct():
+    from rustscenic.pipeline import _attribute_peaks_to_cistarget
+
+    enriched = pd.DataFrame(
+        {
+            "regulon": ["SPI1_activator", "SPI1_repressor"],
+            "motif": ["m1", "m1"],
+            "auc": np.asarray([0.2, 0.2], dtype=np.float32),
+        }
+    )
+    enhancer_links = pd.DataFrame(
+        {
+            "gene": ["GENE_A", "GENE_B"],
+            "peak_id": ["peak_a", "peak_b"],
+        }
+    )
+    regulons = {
+        "SPI1_activator": ["GENE_A"],
+        "SPI1_repressor": ["GENE_B"],
+    }
+
+    out = _attribute_peaks_to_cistarget(enriched, enhancer_links, regulons)
+
+    assert list(zip(out["regulon"], out["peak_id"], strict=True)) == [
+        ("SPI1_activator", "peak_a"),
+        ("SPI1_repressor", "peak_b"),
+    ]
+
+
 def test_pipeline_run_warns_when_motif_annotations_supplied_without_rankings(tmp_path):
     """``motif_annotations`` without ``motif_rankings`` is a silent-fail
     trap: pruning needs both, so the annotations would be ignored and the
@@ -941,6 +993,7 @@ def test_pipeline_run_warns_when_motif_annotations_supplied_without_rankings(tmp
             motif_annotations=annotations,
             grn_n_estimators=10,
             grn_top_targets=10,
+            grn_regulon_polarities="unsigned",
             verbose=False,
         )
 
@@ -997,7 +1050,9 @@ def test_pipeline_run_warns_and_falls_back_when_pruning_removes_all_regulons(tmp
     assert relevant, "expected UserWarning that pruning removed all regulons"
     auc = pd.read_parquet(result.aucell_path)
     assert auc.shape[1] > 0, "AUCell must not be empty after pruning fallback"
-    assert result.regulon_source == "candidate_grn_top_targets_after_failed_pruning"
+    assert result.regulon_source == (
+        "candidate_grn_activator_repressor_after_failed_pruning"
+    )
     assert result.n_pruned_regulons == 0
     assert result.n_regulons == result.n_candidate_regulons
     assert result.pruned_regulons_path is None, (
@@ -1076,7 +1131,9 @@ def test_pipeline_run_fallback_removes_stale_pruned_regulons_json(tmp_path):
     assert any("removed all" in str(w.message) for w in caught), (
         "expected the fallback warning on run 2"
     )
-    assert result2.regulon_source == "candidate_grn_top_targets_after_failed_pruning"
+    assert result2.regulon_source == (
+        "candidate_grn_activator_repressor_after_failed_pruning"
+    )
     assert result2.pruned_regulons_path is None
     assert not pruned_path.exists(), (
         "stale pruned_regulons.json from run 1 must be removed when run 2 "
@@ -1885,6 +1942,7 @@ def test_pipeline_grn_top_targets_below_ten_still_builds_candidates(tmp_path, mo
         tfs=["TF1"],
         grn_top_targets=5,
         grn_n_estimators=2,
+        grn_regulon_polarities="unsigned",
         verbose=False,
     )
 
@@ -1952,6 +2010,7 @@ def test_pipeline_keeps_cistarget_metadata_when_rankings_do_not_overlap(
         tfs=["TF1"],
         grn_top_targets=5,
         grn_n_estimators=2,
+        grn_regulon_polarities="unsigned",
         cistarget_auc_threshold=0.0,
         verbose=False,
         write_integrated_adata=False,
@@ -2471,6 +2530,7 @@ def test_pipeline_records_skipped_peak_attribution_when_cistarget_empty(
         motif_rankings=rankings,
         gene_coords=gene_coords,
         grn_top_targets=3,
+        grn_regulon_polarities="unsigned",
         topics_n_topics=2,
         topics_n_passes=1,
         eregulon_min_target_genes=1,

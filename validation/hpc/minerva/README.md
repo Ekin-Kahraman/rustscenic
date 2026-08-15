@@ -13,13 +13,17 @@ and the Python environment is:
 /sc/arion/work/kahrae01/rustscenic/envs/rustscenic-v047
 ```
 
-Submit from the repo root on Minerva:
+Prepare from the documented environment and repo on Minerva:
 
 ```bash
+cd /sc/arion/projects/DiseaseGeneCell/Huang_lab_projects/rustscenic/repo
+. /sc/arion/work/kahrae01/rustscenic/envs/rustscenic-v047/bin/activate
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
-export RAYON_NUM_THREADS="${LSB_DJOB_NUMPROC:-4}"
+export RAYON_NUM_THREADS=4
+export PYTHONNOUSERSITE=1
+python -m maturin develop --release
 python validation/hpc/minerva/prepare_real_pbmc3k_data.py
 python validation/hpc/minerva/prepare_reference_cache.py
 python validation/hpc/minerva/preflight_minerva.py \
@@ -28,11 +32,28 @@ python validation/hpc/minerva/preflight_minerva.py \
   --require-thread-pins \
   --require-data-hashes \
   --require-reference-cache \
+  --require-full-pipeline-references \
   --require-rust-hot-paths
 bsub < validation/hpc/minerva/run_real_pbmc3k_full_pipeline.lsf
 bsub < validation/hpc/minerva/run_real_pbmc3k_full_pipeline_scaling.lsf
 bsub < validation/hpc/minerva/run_real_pbmc3k_grn_scaling.lsf
 ```
+
+The launchers default to `GRN_N_ESTIMATORS=100`, which is a harness smoke and
+scaling configuration rather than the 5,000-estimator production GRN. For the
+production correctness run, submit exactly:
+
+```bash
+export GRN_N_ESTIMATORS=5000
+export SKIP_INTEGRATED_ADATA=0
+bsub < validation/hpc/minerva/run_real_pbmc3k_full_pipeline.lsf
+bsub < validation/hpc/minerva/run_real_pbmc3k_grn_scaling.lsf
+```
+
+All jobs request `span[hosts=1]`. A plain Python process is shared-memory and
+must not be spread across LSF hosts. GRN scaling child points set Rayon to
+1/2/4/8/16 within the 16-core allocation, while BLAS and OpenMP remain pinned
+to one.
 
 Optional full-pipeline profiling knobs can be exported before `bsub`:
 
@@ -83,6 +104,9 @@ fail immediately if source files differ from HEAD or untracked source files are
 present. The launchers also validate completed result JSON before printing
 `RESULT_JSON=...`, then print a compact collector table for the just-finished
 artefact, so incomplete, stale-backend or dirty-source artefacts fail the job.
+Benchmark JSON uses portable path labels: repo files are relative and external
+inputs are recorded by basename plus content hashes. Absolute personal or
+cluster paths are rejected by the artefact validator.
 
 Re-run validation manually before copying numbers into docs:
 
