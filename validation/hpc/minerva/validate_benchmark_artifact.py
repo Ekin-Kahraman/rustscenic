@@ -19,7 +19,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from validation.backend_requirements import REQUIRED_RUST_BACKEND_SYMBOLS
-from validation.python_hot_paths import ALLOWED_HITS, HOT_PATH_PATTERNS
+from validation.path_provenance import absolute_path_strings
 
 
 FULL_PIPELINE_STAGES = {
@@ -49,11 +49,13 @@ REQUIRED_FULL_PIPELINE_ELAPSED_STAGES = {
 }
 OPTIONAL_FULL_PIPELINE_ELAPSED_STAGES = {
     "cistarget_pruning",
+    "grn_correlation",
 }
 COMPUTE_ELAPSED_BACKEND_STAGES = {
     "preproc": ("setup_fragments_to_matrix",),
     "topics": ("pipeline_topics",),
     "grn": ("pipeline_grn",),
+    "grn_correlation": ("pipeline_grn_correlation",),
     "cistarget": ("pipeline_cistarget",),
     "cistarget_pruning": ("pipeline_cistarget_pruning",),
     "enhancer": ("pipeline_enhancer",),
@@ -92,6 +94,7 @@ REQUIRED_FULL_PIPELINE_RUST_EXECUTION = {
     "setup_fragments_to_matrix",
     "pipeline_topics",
     "pipeline_grn",
+    "pipeline_grn_correlation",
     "pipeline_candidate_regulons",
     "pipeline_cistarget_projection_features",
     "pipeline_cistarget",
@@ -100,30 +103,15 @@ REQUIRED_FULL_PIPELINE_RUST_EXECUTION = {
     "pipeline_eregulons",
     "pipeline_aucell",
 }
-REGION_CISTARGET_SCORING_SYMBOLS = {
-    "cistarget_enrichment_from_rankings_i16",
-    "cistarget_enrichment_from_rankings_i32",
-    "cistarget_enrichment_from_rankings_i64",
-    "cistarget_enrichment_from_projected_rankings_i16",
-    "cistarget_enrichment_from_projected_rankings_i32",
-    "cistarget_enrichment_from_projected_rankings_i64",
-    "cistarget_region_attribution_i16",
-    "cistarget_region_attribution_i32",
-    "cistarget_region_attribution_i64",
-}
-REGION_CISTARGET_PEAK_VALUE_SYMBOLS = {
-    "cistarget_region_attribution_peak_values_i16",
-    "cistarget_region_attribution_peak_values_i32",
-    "cistarget_region_attribution_peak_values_i64",
-}
-REGION_CISTARGET_EXPAND_SYMBOLS = {
-    "pipeline_expand_region_cistarget_rows_f32",
-    "pipeline_expand_region_cistarget_rows_f64",
-}
 FULL_PIPELINE_SCALING_CHILD_PARAM_KEYS = {
     "grn_n_estimators",
     "grn_max_features",
+    "grn_early_stop_window",
+    "grn_early_stop_mode",
     "grn_target_block_size",
+    "grn_regulon_polarities",
+    "grn_rho_threshold",
+    "grn_rho_mask_dropouts",
     "topics_n_topics",
     "topics_n_passes",
     "topics_method",
@@ -159,6 +147,9 @@ REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS = {
     "pipeline_grn": {
         "all_of": {"gene_duplicate_summary"},
         "any_of": ({"grn_infer"}, {"grn_infer_sparse_csc"}),
+    },
+    "pipeline_grn_correlation": {
+        "any_of": ({"grn_correlations_dense"}, {"grn_correlations_sparse_csc"}),
     },
     "pipeline_candidate_regulons": {
         "all_of": {"pipeline_candidate_regulons_from_grn"},
@@ -251,13 +242,6 @@ ALLOWED_FULL_PIPELINE_BACKEND_EXECUTION_STAGES = (
     | REQUIRED_FULL_PIPELINE_RUST_EXECUTION
     | {"pipeline_integrated_adata"}
 )
-RANKING_PACKER_SYMBOLS = {
-    "pipeline_pack_ranking_columns_i16",
-    "pipeline_pack_ranking_columns_i32",
-    "pipeline_pack_ranking_columns_i64",
-    "pipeline_pack_ranking_columns_f32",
-    "pipeline_pack_ranking_columns_f64",
-}
 
 
 def _write_integrated_adata(record: dict[str, Any]) -> bool:
@@ -353,20 +337,6 @@ def _matrix_input_failures(
         if not _nonempty_str(profile.get("dtype")):
             failures.append(f"{stage_prefix}.dtype must be a non-empty string")
 
-        nnz = profile.get("nnz")
-        density = profile.get("density")
-        if storage == "sparse":
-            if not _positive_int(nnz):
-                failures.append(f"{stage_prefix}.nnz must be positive for sparse matrices")
-            elif _shape2(shape) and nnz > int(shape[0]) * int(shape[1]):
-                failures.append(f"{stage_prefix}.nnz must be <= rows * columns")
-            if not _nonnegative_number(density) or density > 1:
-                failures.append(f"{stage_prefix}.density must be in [0, 1]")
-        elif storage == "dense":
-            if nnz is not None:
-                failures.append(f"{stage_prefix}.nnz must be null for dense matrices")
-            if density is not None:
-                failures.append(f"{stage_prefix}.density must be null for dense matrices")
     return failures
 
 
@@ -489,62 +459,15 @@ def _backend_failures(record: dict[str, Any], prefix: str) -> list[str]:
     return failures
 
 
-def _python_hot_path_failures(record: dict[str, Any], prefix: str) -> list[str]:
-    failures: list[str] = []
-    state = record.get("python_hot_paths")
-    if not isinstance(state, dict):
-        return [f"{prefix}.python_hot_paths missing"]
-    if state.get("exists") is not True:
-        failures.append(f"{prefix}.python_hot_paths.exists must be true")
-    if state.get("ok") is not True:
-        failures.append(f"{prefix}.python_hot_paths.ok must be true")
-    count = state.get("violation_count")
-    if not isinstance(count, int) or isinstance(count, bool):
-        failures.append(f"{prefix}.python_hot_paths.violation_count must be an integer")
-    elif count != 0:
-        failures.append(f"{prefix}.python_hot_paths.violation_count must be 0")
-    violations = state.get("violations")
-    if not isinstance(violations, list):
-        failures.append(f"{prefix}.python_hot_paths.violations must be a list")
-    elif violations:
-        failures.append(
-            f"{prefix}.python_hot_paths.violations must be empty: {violations[:5]}"
-        )
-    allowed_count = state.get("allowed_hit_count")
-    expected_allowed = len(ALLOWED_HITS)
-    if not isinstance(allowed_count, int) or isinstance(allowed_count, bool):
-        failures.append(f"{prefix}.python_hot_paths.allowed_hit_count must be an integer")
-    elif allowed_count != expected_allowed:
-        failures.append(
-            f"{prefix}.python_hot_paths.allowed_hit_count must equal "
-            f"{expected_allowed}"
-        )
-    pattern_count = state.get("pattern_count")
-    expected_patterns = len(HOT_PATH_PATTERNS)
-    if not isinstance(pattern_count, int) or isinstance(pattern_count, bool):
-        failures.append(f"{prefix}.python_hot_paths.pattern_count must be an integer")
-    elif pattern_count != expected_patterns:
-        failures.append(
-            f"{prefix}.python_hot_paths.pattern_count must equal "
-            f"{expected_patterns}"
-        )
-    if not _nonempty_str(state.get("package_dir")):
-        failures.append(f"{prefix}.python_hot_paths.package_dir must be a non-empty string")
-    return failures
-
-
 def _invocation_failures(record: dict[str, Any], prefix: str) -> list[str]:
     invocation = record.get("invocation")
     if not isinstance(invocation, dict):
         return [f"{prefix}.invocation must be an object"]
 
     failures: list[str] = []
-    for key in ("python", "script", "cwd"):
+    for key in ("python", "script"):
         if not _nonempty_str(invocation.get(key)):
             failures.append(f"{prefix}.invocation.{key} must be a non-empty string")
-    argv = invocation.get("argv")
-    if not isinstance(argv, list) or not all(isinstance(v, str) for v in argv):
-        failures.append(f"{prefix}.invocation.argv must be a string list")
     command = invocation.get("command")
     if (
         not isinstance(command, list)
@@ -569,6 +492,8 @@ def _backend_execution_failures(
     record: dict[str, Any],
     prefix: str,
     required_rust_stages: set[str] | None = None,
+    *,
+    require_symbols: bool = False,
 ) -> list[str]:
     execution = record.get("backend_execution")
     if not isinstance(execution, dict):
@@ -583,70 +508,77 @@ def _backend_execution_failures(
             continue
         if state.get("engine") != "rust":
             failures.append(f"{stage_prefix}.engine must be 'rust'")
-        symbols = state.get("symbols")
-        if (
-            not isinstance(symbols, list)
-            or not symbols
-            or not all(_nonempty_str(symbol) for symbol in symbols)
-        ):
-            failures.append(f"{stage_prefix}.symbols must be a non-empty string list")
-            continue
-        failures.extend(_backend_execution_symbol_failures(stage, symbols, stage_prefix))
     for stage, state in sorted(execution.items()):
-        if stage in (required_rust_stages or set()):
-            continue
-        if stage not in REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS:
-            continue
         if not isinstance(state, dict) or state.get("engine") != "rust":
             continue
-        symbols = state.get("symbols")
         stage_prefix = f"{prefix}.backend_execution.{stage}"
-        if (
-            not isinstance(symbols, list)
-            or not symbols
-            or not all(_nonempty_str(symbol) for symbol in symbols)
-        ):
-            failures.append(f"{stage_prefix}.symbols must be a non-empty string list")
-            continue
-        failures.extend(_backend_execution_symbol_failures(stage, symbols, stage_prefix))
+        if state.get("required_ok") is not True:
+            failures.append(f"{stage_prefix}.required_ok must be true")
+        if not _positive_int(state.get("symbol_count")):
+            failures.append(f"{stage_prefix}.symbol_count must be positive")
+        symbols = state.get("symbols")
+        enforce_symbols = record.get("path_policy") == "portable" or require_symbols
+        if enforce_symbols:
+            if (
+                not isinstance(symbols, list)
+                or not symbols
+                or not all(_nonempty_str(symbol) for symbol in symbols)
+            ):
+                failures.append(
+                    f"{stage_prefix}.symbols must identify executed Rust kernels"
+                )
+            elif len(symbols) != state.get("symbol_count"):
+                failures.append(
+                    f"{stage_prefix}.symbol_count must match symbols length"
+                )
+            else:
+                present = set(symbols)
+                requirements = REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS.get(stage, {})
+                missing = set(requirements.get("all_of", set())) - present
+                if missing:
+                    failures.append(
+                        f"{stage_prefix}.symbols missing required kernels: "
+                        f"{sorted(missing)}"
+                    )
+                alternatives = requirements.get("any_of", ())
+                if alternatives and not any(option <= present for option in alternatives):
+                    failures.append(
+                        f"{stage_prefix}.symbols must contain one supported kernel set"
+                    )
+                for group in requirements.get("one_from_each", ()):
+                    if not present.intersection(group):
+                        failures.append(
+                            f"{stage_prefix}.symbols must contain a kernel from "
+                            f"{sorted(group)}"
+                        )
     return failures
 
 
-def _backend_execution_symbol_failures(
-    stage: str,
-    symbols: list[str],
-    stage_prefix: str,
+def _required_full_pipeline_rust_execution(record: dict[str, Any]) -> set[str]:
+    required = set(REQUIRED_FULL_PIPELINE_RUST_EXECUTION)
+    params = record.get("params")
+    if isinstance(params, dict) and params.get("grn_regulon_polarities") == "unsigned":
+        required.discard("pipeline_grn_correlation")
+    return required
+
+
+def _grn_correlation_execution_failures(
+    record: dict[str, Any],
+    prefix: str,
 ) -> list[str]:
-    requirements = REQUIRED_FULL_PIPELINE_RUST_STAGE_SYMBOLS.get(stage)
-    if not requirements:
+    params = record.get("params")
+    if not isinstance(params, dict) or params.get("grn_regulon_polarities") != "unsigned":
         return []
-
+    execution = record.get("backend_execution")
+    state = execution.get("pipeline_grn_correlation") if isinstance(execution, dict) else None
+    stage_prefix = f"{prefix}.backend_execution.pipeline_grn_correlation"
+    if not isinstance(state, dict):
+        return [f"{stage_prefix} must record the explicit unsigned skip"]
     failures: list[str] = []
-    symbol_set = set(symbols)
-    missing_required = set(requirements.get("all_of", set())) - symbol_set
-    failures.extend(
-        f"{stage_prefix}.symbols missing required Rust symbol {symbol!r}"
-        for symbol in sorted(missing_required)
-    )
-
-    any_of = requirements.get("any_of", ())
-    if any_of and not any(set(option) <= symbol_set for option in any_of):
-        options = [
-            "{" + ", ".join(sorted(repr(symbol) for symbol in option)) + "}"
-            for option in any_of
-        ]
-        failures.append(
-            f"{stage_prefix}.symbols must include at least one Rust symbol set "
-            f"from {options}"
-        )
-    for group in requirements.get("one_from_each", ()):
-        group = set(group)
-        if not group & symbol_set:
-            options = ", ".join(sorted(repr(symbol) for symbol in group))
-            failures.append(
-                f"{stage_prefix}.symbols must include at least one Rust symbol "
-                f"from {{{options}}}"
-            )
+    if state.get("engine") != "skipped":
+        failures.append(f"{stage_prefix}.engine must be 'skipped' for unsigned mode")
+    if not _nonempty_str(state.get("reason")):
+        failures.append(f"{stage_prefix}.reason must be a non-empty string")
     return failures
 
 
@@ -660,70 +592,6 @@ def _unknown_full_pipeline_backend_execution_failures(
     return [
         f"{prefix}.backend_execution.{stage} is not a recognised full-pipeline stage"
         for stage in sorted(set(execution) - ALLOWED_FULL_PIPELINE_BACKEND_EXECUTION_STAGES)
-    ]
-
-
-def _sparse_rna_backend_failures(
-    record: dict[str, Any],
-    prefix: str,
-) -> list[str]:
-    matrix_inputs = record.get("matrix_inputs")
-    if not isinstance(matrix_inputs, dict):
-        return []
-    rna_profile = matrix_inputs.get("rna_post_qc")
-    if not isinstance(rna_profile, dict) or rna_profile.get("storage") != "sparse":
-        return []
-
-    execution = record.get("backend_execution")
-    if not isinstance(execution, dict):
-        return []
-
-    required = {
-        "pipeline_grn": "grn_infer_sparse_csc",
-        "pipeline_enhancer": "enhancer_link_pearson_sparse_rna",
-        "pipeline_aucell": "aucell_score_sparse_csr",
-    }
-    failures: list[str] = []
-    for stage, required_symbol in required.items():
-        state = execution.get(stage)
-        symbols = state.get("symbols") if isinstance(state, dict) else None
-        if not isinstance(symbols, list):
-            continue
-        symbol_set = {symbol for symbol in symbols if isinstance(symbol, str)}
-        if required_symbol in symbol_set:
-            continue
-        failures.append(
-            f"{prefix}.backend_execution.{stage}.symbols must include "
-            f"{required_symbol!r} when matrix_inputs.rna_post_qc.storage "
-            "is 'sparse'"
-        )
-    return failures
-
-
-def _sparse_grn_backend_failures(
-    record: dict[str, Any],
-    prefix: str,
-) -> list[str]:
-    matrix_inputs = record.get("matrix_inputs")
-    if not isinstance(matrix_inputs, dict):
-        return []
-    rna_profile = matrix_inputs.get("rna_post_qc")
-    if not isinstance(rna_profile, dict) or rna_profile.get("storage") != "sparse":
-        return []
-
-    execution = record.get("backend_execution")
-    state = execution.get("grn") if isinstance(execution, dict) else None
-    symbols = state.get("symbols") if isinstance(state, dict) else None
-    if not isinstance(symbols, list):
-        return []
-    if "grn_infer_sparse_csc" in {
-        symbol for symbol in symbols if isinstance(symbol, str)
-    }:
-        return []
-    return [
-        f"{prefix}.backend_execution.grn.symbols must include "
-        "'grn_infer_sparse_csc' when matrix_inputs.rna_post_qc.storage "
-        "is 'sparse'"
     ]
 
 
@@ -877,35 +745,6 @@ def _reference_source_failures(
             )
         if not _nonempty_str(entry.get("path")):
             failures.append(f"{prefix}.path must be a non-empty string")
-        if not isinstance(entry.get("exists_before"), bool):
-            failures.append(f"{prefix}.exists_before must be a boolean")
-        if not isinstance(entry.get("exists_after"), bool):
-            failures.append(f"{prefix}.exists_after must be a boolean")
-
-        if source == "explicit_path":
-            if entry.get("exists_before") is not True or entry.get("exists_after") is not True:
-                failures.append(f"{prefix} explicit paths must exist before and after loading")
-            if entry.get("cache_exists_before") is not None:
-                failures.append(f"{prefix}.cache_exists_before must be null for explicit paths")
-            if entry.get("cache_exists_after") is not None:
-                failures.append(f"{prefix}.cache_exists_after must be null for explicit paths")
-        elif source in {"default_cache", "default_download"}:
-            cache_before = entry.get("cache_exists_before")
-            cache_after = entry.get("cache_exists_after")
-            if not isinstance(cache_before, bool):
-                failures.append(f"{prefix}.cache_exists_before must be a boolean")
-            if not isinstance(cache_after, bool):
-                failures.append(f"{prefix}.cache_exists_after must be a boolean")
-            if source == "default_cache" and (
-                cache_before is not True or cache_after is not True
-            ):
-                failures.append(f"{prefix} default_cache must exist before and after loading")
-            if source == "default_download" and (
-                cache_before is not False or cache_after is not True
-            ):
-                failures.append(
-                    f"{prefix} default_download must be absent before and cached after loading"
-                )
     return failures
 
 
@@ -1089,18 +928,9 @@ def _ranking_metadata_failures(
                 "positive in projected_file mode"
             )
         failures.extend(
-            _projected_cistarget_symbol_failures(
-                record,
-                prefix,
-                field=field,
-                stage=projected_stage,
-            )
-        )
-        failures.extend(
             _ranking_projection_backend_failures(
                 record,
                 prefix,
-                field=field,
                 stage=projection_stage,
             )
         )
@@ -1228,59 +1058,13 @@ def _ranking_reference_format_failures(
     return []
 
 
-def _projected_cistarget_symbol_failures(
-    record: dict[str, Any],
-    prefix: str,
-    *,
-    field: str,
-    stage: str,
-) -> list[str]:
-    execution = record.get("backend_execution")
-    state = execution.get(stage) if isinstance(execution, dict) else None
-    symbols = state.get("symbols") if isinstance(state, dict) else None
-    if not isinstance(symbols, list):
-        return []
-    if any(
-        isinstance(symbol, str)
-        and symbol.startswith("cistarget_enrichment_from_projected_rankings")
-        for symbol in symbols
-    ):
-        return []
-    return [
-        f"{prefix}.backend_execution.{stage}.symbols must include "
-        "a cistarget_enrichment_from_projected_rankings* Rust symbol when "
-        f"{field}.mode is projected_file"
-    ]
-
-
 def _ranking_projection_backend_failures(
     record: dict[str, Any],
     prefix: str,
     *,
-    field: str,
     stage: str,
 ) -> list[str]:
-    failures = _backend_execution_failures(record, prefix, {stage})
-    if failures:
-        return failures
-    execution = record.get("backend_execution")
-    state = execution.get(stage) if isinstance(execution, dict) else None
-    symbols = state.get("symbols") if isinstance(state, dict) else None
-    if not isinstance(symbols, list):
-        return []
-    symbol_set = {symbol for symbol in symbols if isinstance(symbol, str)}
-    if "pipeline_project_ranking_columns" not in symbol_set:
-        failures.append(
-            f"{prefix}.backend_execution.{stage}.symbols must include "
-            f"'pipeline_project_ranking_columns' when {field}.mode is projected_file"
-        )
-    if not (symbol_set & RANKING_PACKER_SYMBOLS):
-        failures.append(
-            f"{prefix}.backend_execution.{stage}.symbols must include a "
-            f"pipeline_pack_ranking_columns_* Rust symbol when {field}.mode "
-            "is projected_file"
-        )
-    return failures
+    return _backend_execution_failures(record, prefix, {stage})
 
 
 def _motif_annotation_pruning_failures(
@@ -1317,31 +1101,6 @@ def _region_motif_ranking_failures(
             required=True,
         )
     )
-    execution = record.get("backend_execution")
-    state = execution.get("pipeline_eregulon_peak_attribution") if isinstance(execution, dict) else None
-    symbols = state.get("symbols") if isinstance(state, dict) else None
-    if not isinstance(symbols, list):
-        return failures
-    symbol_set = {symbol for symbol in symbols if isinstance(symbol, str)}
-    if not (REGION_CISTARGET_SCORING_SYMBOLS & symbol_set):
-        failures.append(
-            f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
-            "symbols must include a cistarget enrichment or region-attribution "
-            "Rust symbol "
-            "when region_motif_rankings is supplied"
-        )
-    if not (REGION_CISTARGET_PEAK_VALUE_SYMBOLS & symbol_set):
-        failures.append(
-            f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
-            "symbols must include a cistarget_region_attribution_peak_values_* "
-            "Rust symbol when region_motif_rankings is supplied"
-        )
-    if not (REGION_CISTARGET_EXPAND_SYMBOLS & symbol_set):
-        failures.append(
-            f"{prefix}.backend_execution.pipeline_eregulon_peak_attribution."
-            "symbols must include a pipeline_expand_region_cistarget_rows_* "
-            "Rust symbol when region_motif_rankings is supplied"
-        )
     if require_peak_filter or _motif_annotations_supplied(record):
         failures.extend(
             _backend_execution_failures(
@@ -1469,6 +1228,7 @@ def _thread_budget_failures(
     prefix: str,
     *,
     params_key: str,
+    allow_allocated_superset: bool = False,
 ) -> list[str]:
     failures: list[str] = []
     params = record.get("params")
@@ -1514,9 +1274,14 @@ def _thread_budget_failures(
         else:
             if actual_cores <= 0:
                 failures.append(f"{prefix}.env.lsf_cores must be positive")
-            elif actual_cores != expected_threads:
+            elif (
+                actual_cores < expected_threads
+                if allow_allocated_superset
+                else actual_cores != expected_threads
+            ):
+                relation = "cover" if allow_allocated_superset else "match"
                 failures.append(
-                    f"{prefix}.env.lsf_cores must match params.{params_key}: "
+                    f"{prefix}.env.lsf_cores must {relation} params.{params_key}: "
                     f"{actual_cores} != {expected_threads}"
                 )
     requested_cores = env.get("lsf_requested_cores")
@@ -1528,9 +1293,14 @@ def _thread_budget_failures(
         else:
             if requested <= 0:
                 failures.append(f"{prefix}.env.lsf_requested_cores must be positive")
-            elif requested != expected_threads:
+            elif (
+                requested < expected_threads
+                if allow_allocated_superset
+                else requested != expected_threads
+            ):
+                relation = "cover" if allow_allocated_superset else "match"
                 failures.append(
-                    f"{prefix}.env.lsf_requested_cores must match params.{params_key}: "
+                    f"{prefix}.env.lsf_requested_cores must {relation} params.{params_key}: "
                     f"{requested} != {expected_threads}"
                 )
     requested_mem = env.get("lsf_requested_mem_mb")
@@ -1545,60 +1315,6 @@ def _thread_budget_failures(
     for key in ("lsf_project", "lsf_requested_queue", "lsf_requested_walltime"):
         if key in env and not _nonempty_str(env.get(key)):
             failures.append(f"{prefix}.env.{key} must be a non-empty string when present")
-    return failures
-
-
-def _output_inventory_failures(record: dict[str, Any]) -> list[str]:
-    failures: list[str] = []
-    inventory = record.get("output_inventory")
-    if not isinstance(inventory, dict):
-        return ["output_inventory must be an object when --check-output-files is set"]
-
-    for key, expected_type in sorted(_required_full_pipeline_artefacts(record).items()):
-        info = inventory.get(key)
-        if not isinstance(info, dict):
-            failures.append(f"output_inventory.{key} must be an object")
-            continue
-        path = info.get("path")
-        if not isinstance(path, str) or not path:
-            failures.append(f"output_inventory.{key}.path must be a non-empty string")
-            continue
-        if info.get("exists") is not True:
-            failures.append(f"output_inventory.{key} must exist: {path}")
-            continue
-        if info.get("type") != expected_type:
-            failures.append(
-                f"output_inventory.{key}.type must be {expected_type!r}"
-            )
-        actual_path = Path(path)
-        if expected_type == "file":
-            if not _positive_int(info.get("size_bytes")):
-                failures.append(f"output_inventory.{key}.size_bytes must be positive")
-            if not actual_path.is_file():
-                failures.append(f"output_inventory.{key} path is not a file: {path}")
-            else:
-                actual_size = actual_path.stat().st_size
-                if actual_size <= 0:
-                    failures.append(f"output_inventory.{key} file is empty: {path}")
-                elif _positive_int(info.get("size_bytes")) and info["size_bytes"] != actual_size:
-                    failures.append(
-                        f"output_inventory.{key}.size_bytes does not match "
-                        f"live file size: {info['size_bytes']} != {actual_size}"
-                    )
-        else:
-            if not _positive_int(info.get("entries")):
-                failures.append(f"output_inventory.{key}.entries must be positive")
-            if not actual_path.is_dir():
-                failures.append(f"output_inventory.{key} path is not a directory: {path}")
-            else:
-                actual_entries = sum(1 for _ in actual_path.iterdir())
-                if actual_entries <= 0:
-                    failures.append(f"output_inventory.{key} directory is empty: {path}")
-                elif _positive_int(info.get("entries")) and info["entries"] != actual_entries:
-                    failures.append(
-                        f"output_inventory.{key}.entries does not match "
-                        f"live directory entries: {info['entries']} != {actual_entries}"
-                    )
     return failures
 
 
@@ -1649,207 +1365,99 @@ def _output_storage_failures(record: dict[str, Any]) -> list[str]:
                 f"{total_gb} != {expected_gb}"
             )
 
-    inventory = record.get("output_inventory")
-    if isinstance(inventory, dict) and isinstance(sizes, dict):
-        for key, info in inventory.items():
-            if not isinstance(info, dict):
+    return failures
+
+
+REQUIRED_CORE_OUTPUT_KEYS = (
+    "atac_matrix_path",
+    "grn_path",
+    "regulons_path",
+    "candidate_regulons_path",
+    "aucell_path",
+    "topics_dir",
+    "cistarget_path",
+    "enhancer_links_path",
+    "eregulons_path",
+    "manifest_path",
+)
+
+_MANIFEST_TO_OUTPUT_KEYS = {
+    "n_grn_edges": "grn_edges",
+    "n_candidate_regulons": "candidate_regulons",
+    "n_regulons": "regulons",
+    "n_cistarget_rows": "cistarget_rows",
+    "n_enhancer_links": "enhancer_links",
+    "n_eregulon_rows": "eregulon_rows",
+    "n_eregulons": "eregulons",
+    "n_pruned_regulons": "pruned_regulons",
+}
+
+
+def _output_presence_failures(record: dict[str, Any], prefix: str) -> list[str]:
+    """Lean, path-free proof that every core output was written.
+
+    The writer records ``output_present`` as booleans (no absolute paths); this
+    requires the core outputs to be present and cross-checks that anything
+    flagged present also has a positive recorded size in ``output_storage``.
+    """
+    present = record.get("output_present")
+    if not isinstance(present, dict):
+        return [f"{prefix}.output_present must be an object"]
+    failures: list[str] = []
+    for key, value in sorted(present.items()):
+        if not isinstance(value, bool):
+            failures.append(f"{prefix}.output_present.{key} must be a boolean")
+    for key in REQUIRED_CORE_OUTPUT_KEYS:
+        if present.get(key) is not True:
+            failures.append(
+                f"{prefix}.output_present.{key} must be true (core output missing)"
+            )
+    storage = record.get("output_storage")
+    sizes = storage.get("artifact_size_bytes") if isinstance(storage, dict) else None
+    if isinstance(sizes, dict):
+        for key in REQUIRED_CORE_OUTPUT_KEYS:
+            if key == "manifest_path":
                 continue
-            size = info.get("size_bytes")
-            if _nonnegative_int(size):
-                if sizes.get(key) != size:
-                    failures.append(
-                        f"output_storage.artifact_size_bytes.{key} must match "
-                        f"output_inventory.{key}.size_bytes"
-                    )
-    return failures
-
-
-def _pipeline_manifest_failures(record: dict[str, Any]) -> list[str]:
-    inventory = record.get("output_inventory")
-    if not isinstance(inventory, dict):
-        return []
-    info = inventory.get("manifest_path")
-    if not isinstance(info, dict) or not isinstance(info.get("path"), str):
-        return []
-    manifest_path = Path(info["path"])
-    if not manifest_path.is_file():
-        return []
-
-    try:
-        manifest = json.loads(manifest_path.read_text())
-    except (OSError, json.JSONDecodeError) as exc:
-        return [f"output_inventory.manifest_path could not be read as JSON: {exc}"]
-    if not isinstance(manifest, dict):
-        return ["output_inventory.manifest_path JSON must be an object"]
-
-    failures: list[str] = []
-    if manifest.get("cell_barcode_filter") != record.get("cell_barcode_filter"):
-        failures.append(
-            "output_inventory.manifest_path cell_barcode_filter must match benchmark JSON"
-        )
-    if manifest.get("matrix_inputs") != record.get("matrix_inputs"):
-        failures.append(
-            "output_inventory.manifest_path matrix_inputs must match benchmark JSON"
-        )
-    if manifest.get("cistarget_rankings") != record.get("cistarget_rankings"):
-        failures.append(
-            "output_inventory.manifest_path cistarget_rankings must match benchmark JSON"
-        )
-    if manifest.get("region_cistarget_rankings") != record.get("region_cistarget_rankings"):
-        failures.append(
-            "output_inventory.manifest_path region_cistarget_rankings must match benchmark JSON"
-        )
-    failures.extend(_pipeline_manifest_path_failures(record, manifest))
-    failures.extend(_pipeline_manifest_count_failures(record, manifest))
-    failures.extend(
-        _pipeline_manifest_stage_metric_failures(
-            record,
-            manifest,
-            manifest_key="elapsed",
-            record_key="elapsed_per_stage",
-        )
-    )
-    failures.extend(
-        _pipeline_manifest_stage_metric_failures(
-            record,
-            manifest,
-            manifest_key="memory",
-            record_key="peak_rss_gb_per_stage",
-        )
-    )
-    if "io_elapsed_per_stage" in record:
-        failures.extend(
-            _pipeline_manifest_stage_metric_failures(
-                record,
-                manifest,
-                manifest_key="io_elapsed",
-                record_key="io_elapsed_per_stage",
-            )
-        )
-
-    manifest_execution = manifest.get("backend_execution")
-    benchmark_execution = record.get("backend_execution")
-    if not isinstance(manifest_execution, dict):
-        failures.append("output_inventory.manifest_path backend_execution must be an object")
-    elif isinstance(benchmark_execution, dict):
-        for stage, state in manifest_execution.items():
-            key = f"pipeline_{stage}"
-            if benchmark_execution.get(key) != state:
+            if present.get(key) is True and key in sizes and not _positive_int(sizes[key]):
                 failures.append(
-                    f"output_inventory.manifest_path backend_execution.{stage} "
-                    f"must match benchmark backend_execution.{key}"
+                    f"{prefix}.output_storage.artifact_size_bytes.{key} "
+                    "must be positive for a present output"
                 )
     return failures
 
 
-def _pipeline_manifest_path_failures(
-    record: dict[str, Any],
-    manifest: dict[str, Any],
-) -> list[str]:
+def _manifest_consistency_failures(record: dict[str, Any], prefix: str) -> list[str]:
+    """Cross-check the persisted manifest's counts against recorded outputs.
+
+    ``manifest_summary`` is read back by the writer from the on-disk
+    ``manifest.json`` (counts only, no paths), so a mismatch means the pipeline
+    persisted a manifest inconsistent with the in-memory result.
+    """
+    summary = record.get("manifest_summary")
+    if summary is None:
+        return [f"{prefix}.manifest_summary missing (pipeline manifest unreadable)"]
+    if not isinstance(summary, dict):
+        return [f"{prefix}.manifest_summary must be an object"]
+    outputs = record.get("outputs")
+    if not isinstance(outputs, dict):
+        return []
     failures: list[str] = []
-    inventory = record.get("output_inventory")
-    if not isinstance(inventory, dict):
-        return failures
-    for key in (
-        "atac_matrix_path",
-        "grn_path",
-        "regulons_path",
-        "candidate_regulons_path",
-        "aucell_path",
-        "topics_dir",
-        "cistarget_path",
-        "enhancer_links_path",
-        "eregulons_path",
-        "integrated_adata_path",
+    for manifest_key, output_key in _MANIFEST_TO_OUTPUT_KEYS.items():
+        if manifest_key in summary and output_key in outputs:
+            if summary[manifest_key] != outputs[output_key]:
+                failures.append(
+                    f"{prefix}.manifest_summary.{manifest_key} must match "
+                    f"outputs.{output_key}: {summary[manifest_key]} != {outputs[output_key]}"
+                )
+    if (
+        summary.get("aucell_shape") is not None
+        and outputs.get("aucell_shape") is not None
+        and summary["aucell_shape"] != outputs["aucell_shape"]
     ):
-        info = inventory.get(key)
-        expected = info.get("path") if isinstance(info, dict) else None
-        actual = manifest.get(key)
-        if expected is None:
-            if actual is not None:
-                failures.append(
-                    f"output_inventory.manifest_path {key} must be null when "
-                    f"benchmark output_inventory.{key} is absent"
-                )
-        elif actual != expected:
-            failures.append(
-                f"output_inventory.manifest_path {key} must match "
-                f"output_inventory.{key}.path"
-            )
+        failures.append(
+            f"{prefix}.manifest_summary.aucell_shape must match outputs.aucell_shape"
+        )
     return failures
-
-
-def _pipeline_manifest_count_failures(
-    record: dict[str, Any],
-    manifest: dict[str, Any],
-) -> list[str]:
-    failures: list[str] = []
-    outputs = record.get("outputs", {})
-    shapes = record.get("shapes", {})
-    expected = {
-        "n_cells": (
-            shapes.get("rna_post_qc", [None])[0]
-            if isinstance(shapes, dict)
-            else None
-        ),
-        "n_grn_edges": outputs.get("grn_edges") if isinstance(outputs, dict) else None,
-        "n_regulons": outputs.get("regulons") if isinstance(outputs, dict) else None,
-        "n_candidate_regulons": (
-            outputs.get("candidate_regulons") if isinstance(outputs, dict) else None
-        ),
-        "n_pruned_regulons": (
-            outputs.get("pruned_regulons") if isinstance(outputs, dict) else None
-        ),
-        "n_cistarget_rows": (
-            outputs.get("cistarget_rows") if isinstance(outputs, dict) else None
-        ),
-        "n_enhancer_links": (
-            outputs.get("enhancer_links") if isinstance(outputs, dict) else None
-        ),
-        "n_eregulon_rows": (
-            outputs.get("eregulon_rows") if isinstance(outputs, dict) else None
-        ),
-        "n_eregulons": outputs.get("eregulons") if isinstance(outputs, dict) else None,
-        "aucell_shape": outputs.get("aucell_shape") if isinstance(outputs, dict) else None,
-    }
-    for key, value in expected.items():
-        if manifest.get(key) != value:
-            failures.append(
-                f"output_inventory.manifest_path {key} must match benchmark JSON"
-            )
-    return failures
-
-
-def _pipeline_manifest_stage_metric_failures(
-    record: dict[str, Any],
-    manifest: dict[str, Any],
-    *,
-    manifest_key: str,
-    record_key: str,
-) -> list[str]:
-    failures: list[str] = []
-    manifest_values = manifest.get(manifest_key)
-    record_values = record.get(record_key)
-    if not isinstance(manifest_values, dict):
-        return [f"output_inventory.manifest_path {manifest_key} must be an object"]
-    if not isinstance(record_values, dict):
-        return failures
-    for stage, expected in record_values.items():
-        actual = manifest_values.get(stage)
-        if not _numbers_match_rounded(actual, expected):
-            failures.append(
-                f"output_inventory.manifest_path {manifest_key}.{stage} "
-                f"must match benchmark {record_key}.{stage}"
-            )
-    return failures
-
-
-def _numbers_match_rounded(actual: Any, expected: Any) -> bool:
-    if isinstance(actual, bool) or isinstance(expected, bool):
-        return actual == expected
-    if isinstance(actual, (int, float)) and isinstance(expected, (int, float)):
-        return round(float(actual), 6) == round(float(expected), 6)
-    return actual == expected
 
 
 def _log_log_slope(rows: list[dict[str, Any]], x_key: str, y_key: str) -> float | None:
@@ -1892,7 +1500,6 @@ def _full_pipeline_wall_breakdown_failures(
         failures.append(
             f"{_path(prefix, 'wall_s.pipeline_compute_stages')} must be non-negative"
         )
-    io_elapsed = record.get("io_elapsed_per_stage")
     if not _nonnegative_number(io):
         failures.append(
             f"{_path(prefix, 'wall_s.pipeline_io_stages')} must be non-negative"
@@ -1923,30 +1530,6 @@ def _full_pipeline_wall_breakdown_failures(
                 f"{_path(prefix, 'wall_s.pipeline_compute_stages')} must not exceed "
                 "wall_s.pipeline"
             )
-
-    if not isinstance(io_elapsed, dict):
-        failures.append(f"{_path(prefix, 'io_elapsed_per_stage')} must be an object")
-    else:
-        io_values = []
-        for stage, value in io_elapsed.items():
-            if not _nonempty_str(stage):
-                failures.append(
-                    f"{_path(prefix, 'io_elapsed_per_stage')} keys must be non-empty strings"
-                )
-                continue
-            if not _nonnegative_number(value):
-                failures.append(
-                    f"{_path(prefix, f'io_elapsed_per_stage.{stage}')} must be non-negative"
-                )
-                continue
-            io_values.append(float(value))
-        if _nonnegative_number(io):
-            expected_io = round(sum(io_values), 3)
-            if abs(float(io) - expected_io) > 0.005:
-                failures.append(
-                    f"{_path(prefix, 'wall_s.pipeline_io_stages')} must match "
-                    f"io_elapsed_per_stage sum: {io} != {expected_io}"
-                )
 
     if (
         _positive_number(wall.get("pipeline"))
@@ -2072,10 +1655,10 @@ def _full_pipeline_scaling_row_child_failures(
         "setup_peak_rss_gb": child.get("setup_peak_rss_gb"),
         "setup_elapsed_s": child.get("setup_elapsed_s"),
         "elapsed_per_stage": child.get("elapsed_per_stage"),
-        "io_elapsed_per_stage": child.get("io_elapsed_per_stage"),
         "peak_rss_gb_per_stage": child.get("peak_rss_gb_per_stage"),
-        "peak_rss_gb_delta_per_stage": child.get("peak_rss_gb_delta_per_stage"),
+        "output_present": child.get("output_present"),
         "output_storage": child.get("output_storage"),
+        "manifest_summary": child.get("manifest_summary"),
         "outputs": child.get("outputs"),
         "expected_tf_recovery": child.get("expected_tf_recovery"),
         "backend_execution": child.get("backend_execution"),
@@ -2089,7 +1672,6 @@ def _full_pipeline_scaling_row_child_failures(
         "repo_state": child.get("repo_state"),
         "runtime_import": child.get("runtime_import"),
         "backend_capabilities": child.get("backend_capabilities"),
-        "python_hot_paths": child.get("python_hot_paths"),
         "rustscenic": child.get("rustscenic"),
         "input_hashes": child.get("input_hashes"),
         "params": child.get("params"),
@@ -2110,20 +1692,6 @@ def _full_pipeline_scaling_row_child_failures(
         if key in row and row.get(key) != expected:
             failures.append(f"{prefix}.{key} must match child JSON")
 
-    output_dir = row.get("output_dir")
-    if isinstance(output_dir, str) and output_dir:
-        output_root = Path(output_dir).resolve()
-        inventory = child.get("output_inventory", {})
-        if isinstance(inventory, dict):
-            for key, info in inventory.items():
-                if not isinstance(info, dict) or not isinstance(info.get("path"), str):
-                    continue
-                try:
-                    Path(info["path"]).resolve().relative_to(output_root)
-                except ValueError:
-                    failures.append(
-                        f"{prefix}.output_dir must contain child output_inventory.{key}"
-                    )
     return failures
 
 
@@ -2283,6 +1851,7 @@ def _full_pipeline_scaling_row_failures(
     require_clean: bool,
     require_motif_pruning: bool = False,
     require_region_cistarget: bool = False,
+    require_kernel_symbols: bool = False,
 ) -> list[str]:
     failures: list[str] = []
     n_cells = row.get("n_cells_actual")
@@ -2291,7 +1860,6 @@ def _full_pipeline_scaling_row_failures(
     failures.extend(_repo_failures(row, require_clean=require_clean, prefix=prefix))
     failures.extend(_runtime_import_failures(row, prefix))
     failures.extend(_backend_failures(row, prefix))
-    failures.extend(_python_hot_path_failures(row, prefix))
     if not _nonempty_str(row.get("rustscenic")):
         failures.append(f"{prefix}.rustscenic must be a non-empty string")
     input_hashes = row.get("input_hashes")
@@ -2376,17 +1944,6 @@ def _full_pipeline_scaling_row_failures(
             f"{prefix}.unknown peak_rss_gb_per_stage.{stage}"
             for stage in sorted(unknown)
         )
-    memory_delta = row.get("peak_rss_gb_delta_per_stage")
-    if not isinstance(memory_delta, dict):
-        failures.append(f"{prefix}.peak_rss_gb_delta_per_stage must be an object")
-    elif isinstance(memory, dict):
-        failures.extend(
-            _peak_rss_delta_failures(
-                memory,
-                memory_delta,
-                prefix=f"{prefix}.peak_rss_gb_delta_per_stage",
-            )
-        )
     failures.extend(_full_pipeline_wall_breakdown_failures(row, prefix))
     failures.extend(_compute_elapsed_backend_failures(row, prefix))
 
@@ -2424,9 +1981,11 @@ def _full_pipeline_scaling_row_failures(
         _backend_execution_failures(
             row,
             prefix,
-            REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
+            _required_full_pipeline_rust_execution(row),
+            require_symbols=require_kernel_symbols,
         )
     )
+    failures.extend(_grn_correlation_execution_failures(row, prefix))
     failures.extend(_unknown_full_pipeline_backend_execution_failures(row, prefix))
     failures.extend(
         _cell_barcode_filter_failures(
@@ -2445,7 +2004,6 @@ def _full_pipeline_scaling_row_failures(
     failures.extend(_matrix_input_failures(row, prefix))
     failures.extend(_reference_fingerprint_failures(row, prefix))
     failures.extend(_cistarget_ranking_metadata_failures(row, prefix))
-    failures.extend(_sparse_rna_backend_failures(row, prefix))
     failures.extend(_full_pipeline_scaling_reference_source_failures(row, prefix))
     failures.extend(_integrated_adata_execution_failures(row, prefix))
     if require_motif_pruning:
@@ -2465,6 +2023,8 @@ def _full_pipeline_scaling_row_failures(
                 require_peak_filter=require_motif_pruning,
             )
         )
+    failures.extend(_output_presence_failures(row, prefix))
+    failures.extend(_manifest_consistency_failures(row, prefix))
     return failures
 
 
@@ -2477,15 +2037,15 @@ def validate_full_pipeline(
     failures = _repo_failures(record, require_clean=require_clean)
     failures.extend(_runtime_import_failures(record, "full_pipeline"))
     failures.extend(_backend_failures(record, "full_pipeline"))
-    failures.extend(_python_hot_path_failures(record, "full_pipeline"))
     failures.extend(_invocation_failures(record, "full_pipeline"))
     failures.extend(
         _backend_execution_failures(
             record,
             "full_pipeline",
-            REQUIRED_FULL_PIPELINE_RUST_EXECUTION,
+            _required_full_pipeline_rust_execution(record),
         )
     )
+    failures.extend(_grn_correlation_execution_failures(record, "full_pipeline"))
     failures.extend(
         _unknown_full_pipeline_backend_execution_failures(record, "full_pipeline")
     )
@@ -2501,7 +2061,6 @@ def validate_full_pipeline(
                 "invocation",
                 "runtime_import",
                 "backend_capabilities",
-                "python_hot_paths",
                 "backend_execution",
                 "cell_barcode_filter",
                 "cistarget_rankings",
@@ -2516,12 +2075,12 @@ def validate_full_pipeline(
                 "setup_peak_rss_gb",
                 "peak_rss_gb",
                 "elapsed_per_stage",
-                "io_elapsed_per_stage",
                 "peak_rss_gb_per_stage",
-                "peak_rss_gb_delta_per_stage",
                 "outputs",
                 "expected_tf_recovery",
                 "output_summaries",
+                "output_present",
+                "manifest_summary",
                 "env",
             },
             "full_pipeline",
@@ -2557,7 +2116,6 @@ def validate_full_pipeline(
     setup_elapsed = record.get("setup_elapsed_s", {})
     elapsed = record.get("elapsed_per_stage", {})
     memory = record.get("peak_rss_gb_per_stage", {})
-    memory_delta = record.get("peak_rss_gb_delta_per_stage", {})
     if not isinstance(setup_elapsed, dict):
         failures.append("setup_elapsed_s must be an object")
     else:
@@ -2587,8 +2145,6 @@ def validate_full_pipeline(
         failures.append("elapsed_per_stage must be an object")
     if not isinstance(memory, dict):
         failures.append("peak_rss_gb_per_stage must be an object")
-    if not isinstance(memory_delta, dict):
-        failures.append("peak_rss_gb_delta_per_stage must be an object")
     if isinstance(elapsed, dict):
         missing = REQUIRED_FULL_PIPELINE_ELAPSED_STAGES - set(elapsed)
         failures.extend(f"elapsed_per_stage.{stage} missing" for stage in sorted(missing))
@@ -2612,15 +2168,6 @@ def validate_full_pipeline(
                 failures.append(f"peak_rss_gb_per_stage.{stage} must be positive")
         unknown = set(memory) - FULL_PIPELINE_STAGES - OPTIONAL_FULL_PIPELINE_MEMORY_STAGES
         failures.extend(f"unknown peak_rss_gb_per_stage.{stage}" for stage in sorted(unknown))
-    if isinstance(memory, dict) and isinstance(memory_delta, dict):
-        failures.extend(
-            _peak_rss_delta_failures(
-                memory,
-                memory_delta,
-                prefix="peak_rss_gb_delta_per_stage",
-            )
-        )
-
     outputs = record.get("outputs", {})
     shapes = record.get("shapes", {})
     params = record.get("params", {})
@@ -2659,7 +2206,6 @@ def validate_full_pipeline(
             )
         )
         failures.extend(_matrix_input_failures(record, "full_pipeline"))
-        failures.extend(_sparse_rna_backend_failures(record, "full_pipeline"))
 
     if not _positive_int(outputs.get("grn_edges")):
         failures.append("outputs.grn_edges must be positive")
@@ -2687,10 +2233,9 @@ def validate_full_pipeline(
         elif _positive_int(outputs.get("regulons")) and aucell_shape[1] != outputs["regulons"]:
             failures.append("outputs.aucell_shape regulons must equal outputs.regulons")
 
-    if check_output_files:
-        failures.extend(_output_inventory_failures(record))
-        failures.extend(_pipeline_manifest_failures(record))
     failures.extend(_output_storage_failures(record))
+    failures.extend(_output_presence_failures(record, "full_pipeline"))
+    failures.extend(_manifest_consistency_failures(record, "full_pipeline"))
     return failures
 
 
@@ -2699,7 +2244,6 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
     failures.extend(_runtime_import_failures(record, "grn_scaling"))
     failures.extend(_invocation_failures(record, "grn_scaling"))
     failures.extend(_backend_failures(record, "grn_scaling"))
-    failures.extend(_python_hot_path_failures(record, "grn_scaling"))
     failures.extend(
         _require_keys(
             record,
@@ -2707,7 +2251,6 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
                 "runtime_import",
                 "invocation",
                 "backend_capabilities",
-                "python_hot_paths",
                 "rustscenic",
                 "dataset",
                 "params",
@@ -2743,7 +2286,14 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
             for key in ("grn_wall_s", "peak_rss_gb"):
                 if not _positive_number(row.get(key)):
                     failures.append(f"{prefix}.{key} must be positive")
-            failures.extend(_thread_budget_failures(row, prefix, params_key="threads"))
+            failures.extend(
+                _thread_budget_failures(
+                    row,
+                    prefix,
+                    params_key="threads",
+                    allow_allocated_superset=True,
+                )
+            )
             env = row.get("env", {})
             child_repo = env.get("repo_state") if isinstance(env, dict) else None
             child_tracked_source_count = (
@@ -2775,7 +2325,6 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
             if isinstance(env, dict):
                 failures.extend(_runtime_import_failures(env, f"{prefix}.env"))
                 failures.extend(_backend_failures(env, f"{prefix}.env"))
-                failures.extend(_python_hot_path_failures(env, f"{prefix}.env"))
             else:
                 failures.append(f"{prefix}.env must be an object")
             failures.extend(
@@ -2783,6 +2332,7 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
                     row,
                     prefix,
                     required_rust_stages={"grn"},
+                    require_symbols=record.get("path_policy") == "portable",
                 )
             )
             failures.extend(
@@ -2792,7 +2342,6 @@ def validate_grn_scaling(record: dict[str, Any], *, require_clean: bool) -> list
                     shape_keys=("rna_post_qc",),
                 )
             )
-            failures.extend(_sparse_grn_backend_failures(row, prefix))
     failures.extend(_grn_scaling_summary_failures(subset_rows, thread_rows, record))
     return failures
 
@@ -2878,7 +2427,6 @@ def validate_full_pipeline_scaling(
     failures = _repo_failures(record, require_clean=require_clean)
     failures.extend(_runtime_import_failures(record, "full_pipeline_scaling"))
     failures.extend(_backend_failures(record, "full_pipeline_scaling"))
-    failures.extend(_python_hot_path_failures(record, "full_pipeline_scaling"))
     failures.extend(_invocation_failures(record, "full_pipeline_scaling"))
     failures.extend(
         _require_keys(
@@ -2886,7 +2434,6 @@ def validate_full_pipeline_scaling(
             {
                 "runtime_import",
                 "backend_capabilities",
-                "python_hot_paths",
                 "rustscenic",
                 "dataset_name",
                 "invocation",
@@ -2946,10 +2493,20 @@ def validate_full_pipeline_scaling(
                 require_clean=require_clean,
                 require_motif_pruning=require_motif_pruning,
                 require_region_cistarget=require_region_cistarget,
+                require_kernel_symbols=record.get("path_policy") == "portable",
             )
         )
 
-        if check_output_files and isinstance(row.get("json_path"), str):
+        # Portable aggregate artefacts intentionally contain no host paths.
+        # Their child rows embed output-presence, manifest, and storage
+        # evidence, and each child is validated against the live filesystem
+        # before aggregation. Legacy artefacts may still carry resolvable
+        # child JSON paths and can be re-opened here.
+        if (
+            check_output_files
+            and record.get("path_policy") != "portable"
+            and isinstance(row.get("json_path"), str)
+        ):
             child_path = Path(row["json_path"])
             if not child_path.exists():
                 failures.append(f"{prefix}.json_path does not exist: {child_path}")
@@ -3094,10 +2651,6 @@ def _stage_scaling_failures(record: dict[str, Any], runs: list[dict[str, Any]]) 
             runs,
             field="peak_rss_gb_per_stage",
         ),
-        "peak_rss_gb_delta_per_stage_slope_vs_cells": _stage_slopes_from_runs(
-            runs,
-            field="peak_rss_gb_delta_per_stage",
-        ),
     }
     for key, expected_slopes in expected.items():
         actual = stage_scaling.get(key)
@@ -3157,63 +2710,163 @@ def _stage_slopes_from_runs(
     }
 
 
-def _peak_rss_delta_failures(
-    memory: dict[str, Any],
-    memory_delta: dict[str, Any],
-    *,
-    prefix: str,
-) -> list[str]:
-    expected = _peak_rss_delta_per_stage(memory)
-    failures: list[str] = []
-    if set(memory_delta) != set(expected):
-        failures.append(
-            f"{prefix} stages must match peak_rss_gb_per_stage: "
-            f"{sorted(memory_delta)} != {sorted(expected)}"
-        )
-    for stage, expected_delta in expected.items():
-        actual = memory_delta.get(stage)
-        if actual != expected_delta:
-            failures.append(
-                f"{prefix}.{stage} must match peak_rss_gb_per_stage: "
-                f"{actual} != {expected_delta}"
-            )
-    return failures
-
-
-def _peak_rss_delta_per_stage(memory: dict[str, Any]) -> dict[str, float]:
-    deltas: dict[str, float] = {}
-    previous_peak = 0.0
-    for stage, value in memory.items():
-        if not _finite_number(value):
-            continue
-        current = float(value)
-        deltas[str(stage)] = round(max(0.0, current - previous_peak), 6)
-        previous_peak = max(previous_peak, current)
-    return deltas
-
-
 def validate_record(
     record: dict[str, Any],
     *,
     require_clean: bool = True,
     check_output_files: bool = False,
+    artifact_path: Path | None = None,
 ) -> list[str]:
+    portability_failures: list[str] = []
+    if record.get("path_policy") == "portable":
+        portability_failures = [
+            f"absolute path forbidden by path_policy at {path}"
+            for path in absolute_path_strings(record)
+        ]
     benchmark = record.get("benchmark")
+    filesystem_failures = (
+        _output_filesystem_failures(record, artifact_path)
+        if check_output_files and artifact_path is not None
+        else []
+    )
     if benchmark == "real_multiome_full_pipeline":
-        return validate_full_pipeline(
+        return portability_failures + filesystem_failures + validate_full_pipeline(
             record,
             require_clean=require_clean,
             check_output_files=check_output_files,
         )
     if benchmark == "real_multiome_full_pipeline_scaling":
-        return validate_full_pipeline_scaling(
+        return portability_failures + filesystem_failures + validate_full_pipeline_scaling(
             record,
             require_clean=require_clean,
             check_output_files=check_output_files,
         )
     if benchmark == "real_pbmc3k_grn_scaling":
-        return validate_grn_scaling(record, require_clean=require_clean)
-    return [f"unknown benchmark: {benchmark!r}"]
+        return portability_failures + filesystem_failures + validate_grn_scaling(
+            record, require_clean=require_clean
+        )
+    return portability_failures + [f"unknown benchmark: {benchmark!r}"]
+
+
+def _output_filesystem_failures(
+    record: dict[str, Any],
+    artifact_path: Path,
+) -> list[str]:
+    """Validate portable output inventories relative to their JSON artefact."""
+    if record.get("path_policy") != "portable":
+        return []
+    benchmark = record.get("benchmark")
+    if benchmark == "real_multiome_full_pipeline":
+        return _inventory_filesystem_failures(
+            record.get("output_inventory"),
+            artifact_path.parent,
+            "full_pipeline.output_inventory",
+        )
+    if benchmark == "real_multiome_full_pipeline_scaling":
+        failures: list[str] = []
+        runs = record.get("runs")
+        if not isinstance(runs, list):
+            return failures
+        for index, row in enumerate(runs):
+            if not isinstance(row, dict):
+                continue
+            prefix = f"runs[{index}]"
+            failures.extend(
+                _inventory_filesystem_failures(
+                    row.get("output_inventory"),
+                    artifact_path.parent,
+                    f"{prefix}.output_inventory",
+                )
+            )
+            child_label = row.get("json_path")
+            child = _portable_output_path(
+                child_label,
+                artifact_path.parent,
+                f"{prefix}.json_path",
+                failures,
+            )
+            if child is not None and not child.is_file():
+                failures.append(f"{prefix}.json_path file is missing: {child_label}")
+        return failures
+    return []
+
+
+def _inventory_filesystem_failures(
+    inventory: Any,
+    base_dir: Path,
+    prefix: str,
+) -> list[str]:
+    if not isinstance(inventory, dict):
+        return [f"{prefix} must be an object for --check-output-files"]
+    failures: list[str] = []
+    for key, info in sorted(inventory.items()):
+        if info is None:
+            continue
+        item_prefix = f"{prefix}.{key}"
+        if not isinstance(info, dict):
+            failures.append(f"{item_prefix} must be an object or null")
+            continue
+        path = _portable_output_path(info.get("path"), base_dir, item_prefix, failures)
+        if path is None:
+            continue
+        expected_exists = info.get("exists")
+        if expected_exists is True and not path.exists():
+            failures.append(f"{item_prefix} is missing: {info.get('path')}")
+            continue
+        if expected_exists is False:
+            if path.exists():
+                failures.append(f"{item_prefix} unexpectedly exists: {info.get('path')}")
+            continue
+        if expected_exists is not True:
+            failures.append(f"{item_prefix}.exists must be boolean")
+            continue
+        expected_type = info.get("type")
+        if expected_type == "file" and not path.is_file():
+            failures.append(f"{item_prefix} must be a file")
+            continue
+        if expected_type == "dir" and not path.is_dir():
+            failures.append(f"{item_prefix} must be a directory")
+            continue
+        if expected_type not in {"file", "dir"}:
+            failures.append(f"{item_prefix}.type must be 'file' or 'dir'")
+            continue
+        expected_size = info.get("size_bytes")
+        actual_size = (
+            path.stat().st_size
+            if path.is_file()
+            else sum(child.stat().st_size for child in path.rglob("*") if child.is_file())
+        )
+        if isinstance(expected_size, int) and actual_size != expected_size:
+            failures.append(
+                f"{item_prefix}.size_bytes changed: {actual_size} != {expected_size}"
+            )
+    return failures
+
+
+def _portable_output_path(
+    label: Any,
+    base_dir: Path,
+    prefix: str,
+    failures: list[str],
+) -> Path | None:
+    if not _nonempty_str(label):
+        failures.append(f"{prefix}.path must be a non-empty string")
+        return None
+    if label.startswith("external:"):
+        failures.append(f"{prefix}.path is not resolvable from the artefact: {label}")
+        return None
+    path = Path(label)
+    if path.is_absolute():
+        failures.append(f"{prefix}.path must be relative")
+        return None
+    base = base_dir.resolve()
+    resolved = (base / path).resolve()
+    try:
+        resolved.relative_to(base)
+    except ValueError:
+        failures.append(f"{prefix}.path escapes the artefact directory: {label}")
+        return None
+    return resolved
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -3233,6 +2886,7 @@ def main(argv: list[str] | None = None) -> int:
             record,
             require_clean=not args.allow_dirty,
             check_output_files=args.check_output_files,
+            artifact_path=path,
         )
         status = "ok" if not failures else "failed"
         print(json.dumps({"path": str(path), "status": status, "failures": failures}, indent=2))

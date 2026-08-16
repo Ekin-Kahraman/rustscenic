@@ -73,6 +73,7 @@ class TestCistargetCorrectness:
             values,
             index=["m0", "m1", "m2"],
             columns=[f"g{i}" for i in range(base.shape[1])],
+            copy=False,
         )
         rankings_arg, kernel, projected = cistarget._rankings_kernel_arg(
             rankings.to_numpy(copy=False)
@@ -131,6 +132,7 @@ class TestCistargetCorrectness:
             values,
             index=["m0", "m1", "m2"],
             columns=[f"g{i}" for i in range(base.shape[1])],
+            copy=False,
         )
         rankings_arg, kernel, projected = cistarget._rankings_kernel_arg(
             rankings.to_numpy(copy=False)
@@ -171,6 +173,7 @@ class TestCistargetCorrectness:
             values,
             index=["m0", "m1", "m2"],
             columns=[f"g{i}" for i in range(base.shape[1])],
+            copy=False,
         )
         seen = {}
 
@@ -798,6 +801,7 @@ class TestCistargetCorrectness:
             values,
             index=["M1", "M2"],
             columns=["g0", "g1", "g2", "g3"],
+            copy=False,
         )
         rankings_arg, _ = cistarget._prune_rankings_kernel_arg(rankings)
 
@@ -842,6 +846,7 @@ class TestCistargetCorrectness:
             values,
             index=["M1", "M2"],
             columns=["g0", "g1", "g2", "g3"],
+            copy=False,
         )
         rankings_arg, kernel = cistarget._prune_rankings_kernel_arg(rankings)
 
@@ -888,6 +893,7 @@ class TestCistargetCorrectness:
             values,
             index=["M1", "M2"],
             columns=["g0", "g1", "g2", "g3"],
+            copy=False,
         )
         rankings_arg, kernel = cistarget._prune_rankings_kernel_arg(rankings)
 
@@ -934,6 +940,7 @@ class TestCistargetCorrectness:
             values,
             index=["M1", "M2"],
             columns=["g0", "g1", "g2", "g3"],
+            copy=False,
         )
         rankings_arg, kernel = cistarget._prune_rankings_kernel_arg(rankings)
 

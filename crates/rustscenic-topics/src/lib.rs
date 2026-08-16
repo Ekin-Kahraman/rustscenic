@@ -165,16 +165,17 @@ pub fn online_vb_lda(
                         }
                         let mut elog_theta = vec![0.0_f64; n_topics];
                         let mut buf = vec![0.0_f64; n_topics];
+                        let mut gamma_new = vec![alpha as f64; n_topics];
 
                         for _iter in 0..50 {
                             update_elog_theta(&gamma_d, &mut elog_theta);
-                            let mut gamma_new = vec![alpha as f64; n_topics];
+                            gamma_new.fill(alpha as f64);
                             for (i, &w) in doc_cols.iter().enumerate() {
                                 let w = w as usize;
                                 let nw = doc_counts[i] as f64;
                                 let mut max_log = f64::NEG_INFINITY;
                                 for k in 0..n_topics {
-                                    let lp = elog_theta[k] + elog_beta[k * n_words + w];
+                                    let lp = elog_theta[k] + elog_beta[w * n_topics + k];
                                     buf[k] = lp;
                                     if lp > max_log {
                                         max_log = lp;
@@ -199,7 +200,7 @@ pub fn online_vb_lda(
                                 .map(|(a, b)| (a - b).abs())
                                 .sum::<f64>()
                                 / n_topics as f64;
-                            gamma_d = gamma_new;
+                            gamma_d.copy_from_slice(&gamma_new);
                             if delta < 1e-3 {
                                 break;
                             }
@@ -214,7 +215,7 @@ pub fn online_vb_lda(
                             let nw = doc_counts[i] as f64;
                             let mut max_log = f64::NEG_INFINITY;
                             for k in 0..n_topics {
-                                let lp = elog_theta[k] + elog_beta[k * n_words + w];
+                                let lp = elog_theta[k] + elog_beta[w * n_topics + k];
                                 buf[k] = lp;
                                 if lp > max_log {
                                     max_log = lp;
@@ -282,16 +283,17 @@ pub fn online_vb_lda(
                 *g = (alpha as f64 + 1.0 + 0.1 * z).max(0.01);
             }
             let mut elog_theta = vec![0.0_f64; n_topics];
+            let mut buf = vec![0.0_f64; n_topics];
+            let mut gamma_new = vec![alpha as f64; n_topics];
             for _iter in 0..100 {
                 update_elog_theta(&gamma_d, &mut elog_theta);
-                let mut gamma_new = vec![alpha as f64; n_topics];
+                gamma_new.fill(alpha as f64);
                 for (i, &w) in doc_cols.iter().enumerate() {
                     let w = w as usize;
                     let nw = doc_counts[i] as f64;
                     let mut max_log = f64::NEG_INFINITY;
-                    let mut buf = vec![0.0_f64; n_topics];
                     for k in 0..n_topics {
-                        let lp = elog_theta[k] + elog_beta[k * n_words + w];
+                        let lp = elog_theta[k] + elog_beta[w * n_topics + k];
                         buf[k] = lp;
                         if lp > max_log {
                             max_log = lp;
@@ -316,7 +318,7 @@ pub fn online_vb_lda(
                     .map(|(a, b)| (a - b).abs())
                     .sum::<f64>()
                     / n_topics as f64;
-                gamma_d = gamma_new;
+                gamma_d.copy_from_slice(&gamma_new);
                 if delta < 1e-5 {
                     break;
                 }
@@ -361,16 +363,27 @@ fn update_elog_theta(gamma: &[f64], out: &mut [f64]) {
 }
 
 fn update_elog_beta(lambda: &[f64], out: &mut [f64], n_topics: usize, n_words: usize, _eta: f64) {
+    // `out` is stored WORD-MAJOR: out[w * n_topics + k] = digamma(lambda[k,w]) -
+    // digamma(sum_w' lambda[k,w']). The E-step reads all K topics for a fixed
+    // word, so word-major makes that a contiguous K-element read (was K strided
+    // cache lines). The stored value at each (k,w) is unchanged, so every
+    // downstream read is bit-identical; only its address changed.
+    //
+    // Per-topic digamma(row_sum) is computed first (same lambda-row sum order as
+    // before, so d_sum[k] is bit-identical), then words are written in parallel.
+    let mut d_sum = vec![0.0_f64; n_topics];
     for k in 0..n_topics {
-        let mut sum = 0.0_f64;
-        for w in 0..n_words {
-            sum += lambda[k * n_words + w];
-        }
-        let d_sum = digamma(sum);
-        for w in 0..n_words {
-            out[k * n_words + w] = digamma(lambda[k * n_words + w]) - d_sum;
-        }
+        let lam_row = &lambda[k * n_words..(k + 1) * n_words];
+        let sum: f64 = lam_row.iter().sum();
+        d_sum[k] = digamma(sum);
     }
+    out.par_chunks_mut(n_topics)
+        .enumerate()
+        .for_each(|(w, out_col)| {
+            for k in 0..n_topics {
+                out_col[k] = digamma(lambda[k * n_words + w]) - d_sum[k];
+            }
+        });
 }
 
 /// Topic coherence NPMI - higher = better. Useful as an intrinsic quality metric

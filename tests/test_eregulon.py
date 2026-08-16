@@ -90,6 +90,46 @@ def test_builds_eregulons_for_both_tfs():
     assert "PAX5" in tfs
 
 
+def test_signed_activator_and_repressor_paths_remain_distinct():
+    grn = pd.DataFrame(
+        {
+            "TF": ["SPI1", "SPI1"],
+            "target": ["GENE_A", "GENE_B"],
+            "importance": [2.0, 1.0],
+            "regulation": [1, -1],
+            "rho": [0.8, -0.7],
+        }
+    )
+    cistarget = pd.DataFrame(
+        {
+            "regulon": ["SPI1_activator", "SPI1_repressor"],
+            "motif": ["SPI1_motif", "SPI1_motif"],
+            "peak_id": ["peak_1", "peak_2"],
+            "auc": [0.2, 0.2],
+        }
+    )
+    enhancer = pd.DataFrame(
+        {
+            "peak_id": ["peak_1", "peak_2"],
+            "gene": ["GENE_A", "GENE_B"],
+            "correlation": [0.5, 0.5],
+        }
+    )
+
+    eregs = build_eregulons(
+        grn,
+        cistarget,
+        enhancer,
+        min_target_genes=1,
+        min_enhancer_links=1,
+    )
+
+    assert {e.tf: e.target_genes for e in eregs} == {
+        "SPI1_activator": ["GENE_A"],
+        "SPI1_repressor": ["GENE_B"],
+    }
+
+
 def test_regulons_from_dataframe_groups_unique_features_in_rust():
     table = pd.DataFrame(
         {

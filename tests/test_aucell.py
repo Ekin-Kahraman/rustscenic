@@ -58,6 +58,7 @@ class TestAucellCorrectness:
             values,
             index=[f"c{i}" for i in range(values.shape[0])],
             columns=[f"g{i}" for i in range(values.shape[1])],
+            copy=False,
         )
         seen = {}
 

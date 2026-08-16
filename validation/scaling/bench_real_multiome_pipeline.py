@@ -39,8 +39,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from validation.backend_requirements import backend_capabilities
-from validation.python_hot_paths import hot_path_state
 from validation.process_memory import peak_rss_gb
+from validation.path_provenance import portable_argv, portable_path
 from validation.repo_cleanliness import repo_state_from_git_outputs
 
 
@@ -134,30 +134,34 @@ def runtime_import_state() -> dict[str, Any]:
     return {
         "package_version": package_version,
         "extension_version": extension_version,
-        "package_file": package_file,
+        "package_file": portable_path(package_file, REPO_ROOT),
         "package_under_repo": _path_under(package_file, REPO_ROOT),
-        "extension_file": extension_file,
+        "extension_file": portable_path(extension_file, REPO_ROOT),
         "extension_under_repo": _path_under(extension_file, REPO_ROOT),
         "extension_error": extension_error,
     }
 
 
-def file_info(path: str | Path | None) -> dict[str, Any] | None:
+def file_info(
+    path: str | Path | None,
+    *,
+    portable_root: Path = REPO_ROOT,
+) -> dict[str, Any] | None:
     if path is None:
         return None
     p = Path(path)
     if not p.exists():
-        return {"path": str(p), "exists": False}
+        return {"path": portable_path(p.resolve(), portable_root.resolve()), "exists": False}
     if p.is_dir():
         return {
-            "path": str(p),
+            "path": portable_path(p.resolve(), portable_root.resolve()),
             "exists": True,
             "type": "dir",
             "entries": len(list(p.iterdir())),
             "size_bytes": path_size_bytes(p),
         }
     return {
-        "path": str(p),
+        "path": portable_path(p.resolve(), portable_root.resolve()),
         "exists": True,
         "type": "file",
         "size_bytes": p.stat().st_size,
@@ -193,29 +197,44 @@ def output_storage(inventory: dict[str, dict[str, Any] | None]) -> dict[str, Any
     }
 
 
-def peak_rss_delta_per_stage(memory: dict[str, Any]) -> dict[str, float]:
-    """Return per-stage increases from cumulative peak-RSS marks."""
-    deltas: dict[str, float] = {}
-    previous_peak = 0.0
-    for stage, value in memory.items():
-        try:
-            current = float(value)
-        except (TypeError, ValueError):
-            continue
-        delta = max(0.0, current - previous_peak)
-        deltas[str(stage)] = round(delta, 6)
-        previous_peak = max(previous_peak, current)
-    return deltas
+def manifest_summary(manifest_path: str | Path | None) -> dict[str, Any] | None:
+    """Path-free count summary read back from the persisted pipeline manifest.
+
+    Lets the validator cross-check the recorded ``outputs`` against what the
+    pipeline independently wrote to ``manifest.json``, without leaking absolute
+    paths into the artefact. Returns ``None`` when the manifest is absent or
+    unreadable so the validator flags it.
+    """
+    if manifest_path is None:
+        return None
+    try:
+        manifest = json.loads(Path(manifest_path).read_text())
+    except (OSError, ValueError):
+        return None
+    if not isinstance(manifest, dict):
+        return None
+    count_keys = (
+        "n_grn_edges",
+        "n_candidate_regulons",
+        "n_regulons",
+        "n_cistarget_rows",
+        "n_enhancer_links",
+        "n_eregulon_rows",
+        "n_eregulons",
+        "n_pruned_regulons",
+    )
+    summary: dict[str, Any] = {
+        key: manifest[key] for key in count_keys if manifest.get(key) is not None
+    }
+    if manifest.get("aucell_shape") is not None:
+        summary["aucell_shape"] = manifest["aucell_shape"]
+    return summary
 
 
 def explicit_reference_source(path: Path) -> dict[str, Any]:
     return {
         "source": "explicit_path",
-        "path": str(path),
-        "exists_before": path.exists(),
-        "exists_after": path.exists(),
-        "cache_exists_before": None,
-        "cache_exists_after": None,
+        "path": portable_path(path, REPO_ROOT),
     }
 
 
@@ -224,26 +243,40 @@ def default_reference_source(
     *,
     cache_exists_before: bool,
 ) -> dict[str, Any]:
-    cache_exists_after = path.exists()
     return {
         "source": "default_cache" if cache_exists_before else "default_download",
-        "path": str(path),
-        "exists_before": cache_exists_before,
-        "exists_after": cache_exists_after,
-        "cache_exists_before": cache_exists_before,
-        "cache_exists_after": cache_exists_after,
+        "path": portable_path(path, REPO_ROOT),
     }
+
+
+def _compact_backend_state(state: Any) -> dict[str, Any]:
+    """Compact a backend-execution state to engine/required_ok/symbol_count."""
+    engine = state.get("engine") if isinstance(state, dict) else None
+    symbols = state.get("symbols") if isinstance(state, dict) else None
+    count = len(symbols) if isinstance(symbols, list) else 0
+    compact: dict[str, Any] = {
+        "engine": engine,
+        "required_ok": engine == "rust" and count > 0,
+        "symbol_count": count,
+    }
+    if isinstance(symbols, list):
+        compact["symbols"] = list(symbols)
+    if isinstance(state, dict) and isinstance(state.get("reason"), str):
+        compact["reason"] = state["reason"]
+    return compact
 
 
 def backend_execution_for_benchmark(result) -> dict[str, Any]:
     execution = {
         "setup_fragments_to_matrix": {
             "engine": "rust",
+            "required_ok": True,
+            "symbol_count": 1,
             "symbols": ["preproc_fragments_to_matrix"],
         }
     }
     for stage, state in result.backend_execution.items():
-        execution[f"pipeline_{stage}"] = state
+        execution[f"pipeline_{stage}"] = _compact_backend_state(state)
     return execution
 
 
@@ -611,32 +644,22 @@ def matrix_profile(adata) -> dict[str, Any]:
     matrix = adata.X
     dtype = str(getattr(matrix, "dtype", "unknown"))
     if sp.issparse(matrix):
-        nnz = int(matrix.nnz)
-        total = rows * cols
-        density = 0.0 if total == 0 else round(nnz / total, 8)
         return {
             "shape": shape,
             "storage": "sparse",
             "format": matrix.getformat(),
             "dtype": dtype,
-            "nnz": nnz,
-            "density": density,
         }
     return {
         "shape": shape,
         "storage": "dense",
         "format": type(matrix).__name__,
         "dtype": dtype,
-        "nnz": None,
-        "density": None,
     }
 
 
 def benchmark_env() -> dict[str, Any]:
     env = {
-        "python": platform.python_version(),
-        "platform": platform.platform(),
-        "host": platform.node(),
         "rayon_num_threads": os.environ.get("RAYON_NUM_THREADS"),
         "omp_num_threads": os.environ.get("OMP_NUM_THREADS"),
         "openblas_num_threads": os.environ.get("OPENBLAS_NUM_THREADS"),
@@ -659,12 +682,12 @@ def benchmark_env() -> dict[str, Any]:
 def invocation_state(argv: list[str] | None) -> dict[str, Any]:
     script = Path(__file__).resolve()
     args = [str(value) for value in (sys.argv[1:] if argv is None else argv)]
+    python = Path(sys.executable).name
+    portable_script = portable_path(script, REPO_ROOT)
     return {
-        "python": sys.executable,
-        "script": str(script),
-        "cwd": str(Path.cwd()),
-        "argv": args,
-        "command": [sys.executable, str(script), *args],
+        "python": python,
+        "script": portable_script,
+        "command": [python, portable_script, *portable_argv(args, REPO_ROOT)],
     }
 
 
@@ -809,7 +832,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         tfs=tfs,
         grn_n_estimators=args.grn_n_estimators,
         grn_max_features=args.grn_max_features,
+        grn_early_stop_window=args.grn_early_stop_window,
+        grn_early_stop_mode=args.grn_early_stop_mode,
         grn_target_block_size=args.grn_target_block_size,
+        grn_regulon_polarities=args.grn_regulon_polarities,
+        grn_rho_threshold=args.grn_rho_threshold,
+        grn_rho_mask_dropouts=args.grn_rho_mask_dropouts,
         topics_n_topics=args.topics_n_topics,
         topics_n_passes=args.topics_n_passes,
         topics_method=args.topics_method,
@@ -901,7 +929,15 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     if result.n_pruned_regulons is not None:
         outputs["pruned_regulons"] = int(result.n_pruned_regulons)
 
-    inventory = {k: file_info(v) for k, v in artefact_paths.items()}
+    inventory = {
+        key: file_info(path, portable_root=args.out_json.parent)
+        for key, path in artefact_paths.items()
+    }
+    output_present = {
+        key: bool(isinstance(info, dict) and info.get("exists") is True)
+        for key, info in inventory.items()
+    }
+    manifest_evidence = manifest_summary(artefact_paths["manifest_path"])
 
     peak_rss_by_stage = {
         k: round(float(v), 6) for k, v in result.memory.items()
@@ -909,6 +945,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
     record = {
         "benchmark": "real_multiome_full_pipeline",
+        "path_policy": "portable",
         "dataset_name": args.dataset_name,
         "run_id": args.run_id,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
@@ -916,7 +953,6 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "invocation": getattr(args, "_invocation", invocation_state(None)),
         "runtime_import": runtime_import_state(),
         "backend_capabilities": backend_capabilities(),
-        "python_hot_paths": hot_path_state(),
         "backend_execution": backend_execution_for_benchmark(result),
         "cell_barcode_filter": cell_barcode_filter,
         "rustscenic": version("rustscenic"),
@@ -933,7 +969,12 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "n_cells_requested": args.n_cells,
             "grn_n_estimators": args.grn_n_estimators,
             "grn_max_features": args.grn_max_features,
+            "grn_early_stop_window": args.grn_early_stop_window,
+            "grn_early_stop_mode": args.grn_early_stop_mode,
             "grn_target_block_size": args.grn_target_block_size,
+            "grn_regulon_polarities": args.grn_regulon_polarities,
+            "grn_rho_threshold": args.grn_rho_threshold,
+            "grn_rho_mask_dropouts": args.grn_rho_mask_dropouts,
             "topics_n_topics": args.topics_n_topics,
             "topics_n_passes": args.topics_n_passes,
             "topics_method": args.topics_method,
@@ -941,8 +982,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             "topics_n_threads": args.topics_n_threads,
             "threads": args.threads,
             "rayon_num_threads": env_positive_int("RAYON_NUM_THREADS"),
-            "motif_annotations": str(args.motif_annotations) if args.motif_annotations else None,
-            "region_motif_rankings": str(args.region_motif_rankings) if args.region_motif_rankings else None,
+            "motif_annotations": portable_path(args.motif_annotations, REPO_ROOT),
+            "region_motif_rankings": portable_path(args.region_motif_rankings, REPO_ROOT),
             "cistarget_top_frac": args.cistarget_top_frac,
             "cistarget_auc_threshold": args.cistarget_auc_threshold,
             "cistarget_nes_threshold": args.cistarget_nes_threshold,
@@ -972,11 +1013,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         "setup_peak_rss_gb": round(setup_peak_rss_gb, 6),
         "peak_rss_gb": round(peak_rss_gb(), 6),
         "elapsed_per_stage": {k: round(float(v), 6) for k, v in result.elapsed.items()},
-        "io_elapsed_per_stage": {
-            k: round(float(v), 6) for k, v in result.io_elapsed.items()
-        },
         "peak_rss_gb_per_stage": peak_rss_by_stage,
-        "peak_rss_gb_delta_per_stage": peak_rss_delta_per_stage(peak_rss_by_stage),
         "outputs": outputs,
         "expected_tf_recovery": {
             "expected_tfs": expected,
@@ -989,8 +1026,10 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             n=args.summary_rows,
             max_rows=args.summary_max_rows,
         ),
+        "output_present": output_present,
         "output_inventory": inventory,
         "output_storage": output_storage(inventory),
+        "manifest_summary": manifest_evidence,
         "env": benchmark_env(),
     }
     args.out_json.write_text(json.dumps(record, indent=2) + "\n")
@@ -1018,6 +1057,10 @@ def validate_args(args: argparse.Namespace) -> None:
     for name, value in positive_int_fields.items():
         if value <= 0:
             raise SystemExit(f"--{name.replace('_', '-')} must be positive")
+    if args.grn_early_stop_window < 0:
+        raise SystemExit("--grn-early-stop-window must be non-negative")
+    if args.grn_rho_threshold <= 0:
+        raise SystemExit("--grn-rho-threshold must be positive")
     if args.grn_target_block_size is not None and args.grn_target_block_size <= 0:
         raise SystemExit("--grn-target-block-size must be positive when set")
     if args.summary_max_rows is not None and args.summary_max_rows <= 0:
@@ -1066,7 +1109,20 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--threads", type=int, default=4)
     parser.add_argument("--grn-n-estimators", type=int, default=100)
     parser.add_argument("--grn-max-features", type=float, default=0.1)
+    parser.add_argument("--grn-early-stop-window", type=int, default=25)
+    parser.add_argument(
+        "--grn-early-stop-mode",
+        choices=("arboreto", "legacy_inbag"),
+        default="arboreto",
+    )
     parser.add_argument("--grn-target-block-size", type=int, default=None)
+    parser.add_argument(
+        "--grn-regulon-polarities",
+        choices=("both", "activating", "unsigned"),
+        default="both",
+    )
+    parser.add_argument("--grn-rho-threshold", type=float, default=0.03)
+    parser.add_argument("--grn-rho-mask-dropouts", action="store_true")
     parser.add_argument("--topics-n-topics", type=int, default=10)
     parser.add_argument("--topics-n-passes", type=int, default=3)
     parser.add_argument("--topics-method", choices=["vb", "gibbs"], default="vb")

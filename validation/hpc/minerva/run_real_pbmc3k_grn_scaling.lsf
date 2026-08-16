@@ -30,6 +30,7 @@ ENV=/sc/arion/work/kahrae01/rustscenic/envs/rustscenic-v047
 REPO="${PROJECT}/repo"
 DATA_DIR="${REPO}/validation/real_multiome_v036"
 OUT_JSON="${PROJECT}/results/real_pbmc3k_grn_scaling_$(date +%Y%m%d_%H%M%S).json"
+GRN_N_ESTIMATORS="${GRN_N_ESTIMATORS:-100}"
 
 mkdir -p "${PROJECT}/logs" "${PROJECT}/results" "${TMPDIR}"
 
@@ -72,11 +73,12 @@ python validation/hpc/minerva/preflight_minerva.py \
   --subset-threads 4 \
   --thread-cells 1000 \
   --thread-counts 1 2 4 8 16 \
-  --n-estimators 100 \
+  --n-estimators "${GRN_N_ESTIMATORS}" \
   --max-features 0.1 \
   --subsample 0.9 \
   --max-depth 3 \
   --early-stop-window 25 \
+  --early-stop-mode arboreto \
   --seed 777 \
   --require-clean
 

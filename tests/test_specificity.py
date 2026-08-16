@@ -64,6 +64,7 @@ def test_rss_accepts_strided_auc_without_python_contiguity_copy(monkeypatch):
         values,
         index=[f"c{i}" for i in range(6)],
         columns=[f"TF{i}" for i in range(4)],
+        copy=False,
     )
 
     def fake_rss(auc_arg, group_codes, n_groups):
@@ -90,6 +91,7 @@ def test_rss_uses_float32_auc_without_upcast_copy(monkeypatch):
         values,
         index=[f"c{i}" for i in range(6)],
         columns=[f"TF{i}" for i in range(4)],
+        copy=False,
     )
 
     def fake_rss(auc_arg, group_codes, n_groups):
@@ -277,6 +279,7 @@ def test_candidate_enhancers_accepts_strided_weights_without_python_contiguity_c
         weights,
         index=[f"topic_{i}" for i in range(3)],
         columns=[f"peak_{i}" for i in range(10)],
+        copy=False,
     )
 
     def fake_candidate_enhancers(weights_arg, topic_names, peak_names, top_n):
@@ -307,6 +310,7 @@ def test_candidate_enhancers_uses_float32_weights_without_upcast_copy(monkeypatc
         weights,
         index=[f"topic_{i}" for i in range(3)],
         columns=[f"peak_{i}" for i in range(10)],
+        copy=False,
     )
 
     def fake_candidate_enhancers(weights_arg, topic_names, peak_names, top_n):

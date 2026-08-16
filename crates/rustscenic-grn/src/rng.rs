@@ -72,6 +72,28 @@ pub fn subsample_rows_into(rng: &mut impl RngCore, n: usize, frac: f32, out: &mu
     }
 }
 
+/// Fill `out` with exactly `k` uniformly sampled row indices in sorted order.
+///
+/// scikit-learn's stochastic gradient boosting uses a fixed in-bag count of
+/// `max(1, floor(subsample * n_samples))` on every round.  Sequential
+/// selection keeps that contract without allocating a second `n_samples`
+/// permutation buffer per Rayon worker.
+pub fn subsample_rows_fixed_into(rng: &mut impl RngCore, n: usize, k: usize, out: &mut Vec<usize>) {
+    out.clear();
+    let mut needed = k.min(n);
+    for i in 0..n {
+        if needed == 0 {
+            break;
+        }
+        let remaining = n - i;
+        if rng.gen_range(0..remaining) < needed {
+            out.push(i);
+            needed -= 1;
+        }
+    }
+    debug_assert_eq!(out.len(), k.min(n));
+}
+
 /// Module-level `rand` helper matching numpy's integer generation range style.
 pub fn uniform_u32(rng: &mut impl RngCore) -> u32 {
     rng.next_u32()
@@ -124,5 +146,15 @@ mod tests {
         let s = subsample_rows(&mut rng, 10_000, 0.9);
         let frac = s.len() as f32 / 10_000.0;
         assert!((frac - 0.9).abs() < 0.02, "subsample ~0.9, got {}", frac);
+    }
+
+    #[test]
+    fn fixed_subsample_has_exact_size_and_sorted_unique_rows() {
+        let mut rng = StdRng::seed_from_u64(9);
+        let mut out = Vec::new();
+        subsample_rows_fixed_into(&mut rng, 101, 90, &mut out);
+        assert_eq!(out.len(), 90);
+        assert!(out.windows(2).all(|pair| pair[0] < pair[1]));
+        assert!(out.iter().all(|&row| row < 101));
     }
 }

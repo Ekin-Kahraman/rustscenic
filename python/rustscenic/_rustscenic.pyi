@@ -22,11 +22,12 @@ def grn_infer(
     subsample: float = 0.9,
     max_depth: int = 3,
     early_stop_window: int = 25,
+    early_stop_mode: str = "arboreto",
     seed: int = 777,
     target_block_size: int = 0,
     top_targets_per_tf: int | None = None,
     min_importance: float | None = None,
-) -> tuple[list[str], list[str], npt.NDArray[np.float32], int, int, list[str], float]:
+) -> tuple[list[str], list[str], npt.NDArray[np.float32], int, int, list[str], float, dict[str, int | float]]:
     """Infer (TF, target, importance) edges from an expression matrix.
 
     Returns filtered edge arrays, raw fitted edge count, TF overlap metadata,
@@ -48,12 +49,37 @@ def grn_infer_sparse_csc(
     subsample: float = 0.9,
     max_depth: int = 3,
     early_stop_window: int = 25,
+    early_stop_mode: str = "arboreto",
     seed: int = 777,
     target_block_size: int = 0,
     top_targets_per_tf: int | None = None,
     min_importance: float | None = None,
-) -> tuple[list[str], list[str], npt.NDArray[np.float32], int, int, list[str], float]:
+) -> tuple[list[str], list[str], npt.NDArray[np.float32], int, int, list[str], float, dict[str, int | float]]:
     """Infer sparse GRN edges and TF overlap metadata without full densification."""
+
+
+def grn_correlations_dense(
+    expression: npt.NDArray[np.float32],
+    tf_indices: npt.NDArray[np.int64],
+    target_indices: npt.NDArray[np.int64],
+    rho_threshold: float = 0.03,
+    mask_dropouts: bool = False,
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.int8]]:
+    """Return Pearson rho and {-1, 0, 1} regulation for selected edges."""
+
+
+def grn_correlations_sparse_csc(
+    indptr: npt.NDArray[np.int32] | npt.NDArray[np.int64] | npt.NDArray[np.uint64],
+    indices: npt.NDArray[np.int32],
+    data: npt.NDArray[np.float32],
+    n_cells: int,
+    n_genes: int,
+    tf_indices: npt.NDArray[np.int64],
+    target_indices: npt.NDArray[np.int64],
+    rho_threshold: float = 0.03,
+    mask_dropouts: bool = False,
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.int8]]:
+    """Sparse CSC Pearson rho and regulation without dense materialisation."""
 
 
 def pipeline_candidate_regulons_from_grn(

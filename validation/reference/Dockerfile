@@ -21,6 +21,7 @@ RUN pip install --no-cache-dir \
     numpy==1.26.4 \
     pandas==2.1.4 \
     scipy==1.13.1 \
+    scikit-learn==1.7.2 \
     dask==2024.1.1 \
     "distributed==2024.1.1" \
     lightgbm==4.6.0 \

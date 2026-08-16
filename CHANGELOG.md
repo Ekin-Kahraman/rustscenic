@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+### Scientific correctness
+
+- Fixed issue #95 by replacing the default GRN early-stop rule with arboreto's
+  strict trailing-window OOB-improvement monitor. `early_stop_mode="arboreto"`
+  is the default; `"legacy_inbag"` retains the historical RustScenic rule and
+  a zero window disables stopping. GRN results and pipeline manifests expose
+  fitted-tree summaries.
+- Fixed issue #96 by adding deterministic dense and sparse TF-target Pearson
+  correlation kernels, `regulation`/`rho` GRN columns, and separate
+  `<TF>_activator` and `<TF>_repressor` regulons through cisTarget, eRegulon and
+  AUCell. `grn_regulon_polarities="both"` is the pipeline default;
+  `"activating"` and explicit legacy `"unsigned"` modes are documented.
+- Added the `rustscenic add-cor` CLI and public
+  `rustscenic.grn.add_correlation` / `build_regulons` APIs.
+- Rust callers constructing `GrnConfig` must set `early_stop_mode` or use
+  `..GrnConfig::default()`; `TfOverlapSummary` now also exposes
+  `fit_summary`. This is the documented Rust-API migration required by #95.
+
+### HPC validation
+
+- Made benchmark JSON path-free with portable repo-relative/external labels,
+  added validator coverage, and fixed GRN thread-scaling validation so child
+  Rayon pools may use any value up to the one-host LSF allocation while BLAS
+  and OpenMP remain pinned to one.
+- Added PBMC3k fitted-tree/parity evidence and audited real-data issue evidence
+  for #94, #85 and #69 without treating collaborator reports as presumed bugs.
+
 ### Licence
 
 - Changed the project licence for future releases from MIT to Apache-2.0 to use

@@ -5,7 +5,9 @@ parquet identical in schema to arboreto's grnboost2 output.
 Argv: <h5ad_path> <tf_list_path> <output_parquet> <output_meta_json>
 """
 from __future__ import annotations
+import argparse
 import json
+import os
 import sys
 import time
 import resource
@@ -17,7 +19,14 @@ import rustscenic
 import rustscenic.grn
 
 
-def main(h5ad: str, tfs: str, out_parquet: str, out_meta: str) -> int:
+def main(
+    h5ad: str,
+    tfs: str,
+    out_parquet: str,
+    out_meta: str,
+    *,
+    early_stop_mode: str = "arboreto",
+) -> int:
     adata = ad.read_h5ad(h5ad)
     tf_list = [t.strip() for t in Path(tfs).read_text().splitlines() if t.strip()]
     tf_list = [t for t in tf_list if t in adata.var_names]
@@ -29,6 +38,7 @@ def main(h5ad: str, tfs: str, out_parquet: str, out_meta: str) -> int:
         adata,
         tf_names=tf_list,
         n_estimators=5000,           # MATCH reference (arboreto default)
+        early_stop_mode=early_stop_mode,
         seed=777,
         verbose=False,
     )
@@ -47,9 +57,15 @@ def main(h5ad: str, tfs: str, out_parquet: str, out_meta: str) -> int:
         "n_cells": int(adata.n_obs),
         "n_genes": int(adata.n_vars),
         "n_estimators": 5000,
+        "early_stop_mode": early_stop_mode,
+        "grn_fit": dict(grn.attrs.get("grn_fit", {})),
         "seed": 777,
-        "input_h5ad": h5ad,
-        "input_tfs": tfs,
+        "input_h5ad": Path(h5ad).name,
+        "input_tfs": Path(tfs).name,
+        "rayon_num_threads": os.environ.get("RAYON_NUM_THREADS"),
+        "omp_num_threads": os.environ.get("OMP_NUM_THREADS"),
+        "openblas_num_threads": os.environ.get("OPENBLAS_NUM_THREADS"),
+        "mkl_num_threads": os.environ.get("MKL_NUM_THREADS"),
     }
     Path(out_meta).write_text(json.dumps(meta, indent=2))
     print(json.dumps(meta, indent=2), flush=True)
@@ -57,6 +73,23 @@ def main(h5ad: str, tfs: str, out_parquet: str, out_meta: str) -> int:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 5:
-        sys.exit("usage: run_rustscenic_grn_pbmc3k.py <h5ad> <tfs> <out_parquet> <out_meta>")
-    sys.exit(main(*sys.argv[1:]))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("h5ad")
+    parser.add_argument("tfs")
+    parser.add_argument("out_parquet")
+    parser.add_argument("out_meta")
+    parser.add_argument(
+        "--early-stop-mode",
+        choices=("arboreto", "legacy_inbag"),
+        default="arboreto",
+    )
+    cli_args = parser.parse_args()
+    sys.exit(
+        main(
+            cli_args.h5ad,
+            cli_args.tfs,
+            cli_args.out_parquet,
+            cli_args.out_meta,
+            early_stop_mode=cli_args.early_stop_mode,
+        )
+    )

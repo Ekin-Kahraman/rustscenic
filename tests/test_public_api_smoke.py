@@ -323,7 +323,7 @@ def test_pipeline_run_rna_only_smoke(tmp_path):
     assert result.aucell_path is not None and result.aucell_path.exists()
     assert result.integrated_adata_path is not None and result.integrated_adata_path.exists()
     assert pd.read_parquet(result.grn_path).shape[0] > 0
-    assert pd.read_parquet(result.aucell_path).shape == (80, 3)
+    assert pd.read_parquet(result.aucell_path).shape == (80, 6)
 
 
 def test_quickstart_synthetic_fallback_runs(monkeypatch, capsys):

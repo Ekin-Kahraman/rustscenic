@@ -37,6 +37,7 @@ from rustscenic._rustscenic import (
 from rustscenic._stage_utils import (
     require_columns as _require_columns,
     string_list,
+    tf_from_regulon_name,
 )
 
 
@@ -94,9 +95,12 @@ def build_eregulons(
     Parameters
     ----------
     grn
-        ``rustscenic.grn.infer`` output. Columns: ``['TF', 'target',
-        'importance']``. Pass ``None`` to skip GRN filtering (accept
-        any enhancer-linked gene as a target).
+        ``rustscenic.grn.infer`` or ``rustscenic.grn.add_correlation`` output.
+        Signed input is detected from the ``regulation`` column: neutral edges
+        are excluded and bare TF names are converted to the matching
+        ``<TF>_activator`` / ``<TF>_repressor`` keys before intersection.
+        Pass ``None`` to skip GRN filtering (accept any enhancer-linked gene
+        as a target).
     cistarget
         ``rustscenic.cistarget.enrich`` output with at minimum the
         columns ``['regulon', 'motif', 'auc']`` and - critically -
@@ -186,8 +190,7 @@ def _build_eregulon_objects(
     peak_col = _find_peak_column(cistarget)
 
     if use_grn_intersection:
-        grn_tfs = string_list(grn["TF"])
-        grn_targets = string_list(grn["target"])
+        grn_tfs, grn_targets = _grn_tf_target_columns(grn)
     else:
         grn_tfs = []
         grn_targets = []
@@ -266,8 +269,7 @@ def _build_eregulons_dataframe(
     peak_col = _find_peak_column(cistarget)
 
     if use_grn_intersection:
-        grn_tfs = string_list(grn["TF"])
-        grn_targets = string_list(grn["target"])
+        grn_tfs, grn_targets = _grn_tf_target_columns(grn)
     else:
         grn_tfs = []
         grn_targets = []
@@ -329,6 +331,35 @@ def _cistarget_auc_arg(values: pd.Series) -> np.ndarray:
     if not np.issubdtype(arr.dtype, np.number):
         raise TypeError("cistarget['auc'] must contain numeric values")
     return arr.astype(np.float64, copy=False)
+
+
+def _grn_tf_target_columns(grn: pd.DataFrame) -> tuple[list[str], list[str]]:
+    """Return Rust-ready TF/target keys without losing signed GRN polarity."""
+    tfs = string_list(grn["TF"])
+    targets = string_list(grn["target"])
+    if "regulation" not in grn.columns:
+        return tfs, targets
+
+    regulation = np.asarray(grn["regulation"].array)
+    signed_tfs: list[str] = []
+    signed_targets: list[str] = []
+    for edge, (tf, target, value) in enumerate(
+        zip(tfs, targets, regulation, strict=True)
+    ):
+        if value == 0:
+            continue
+        if value == 1:
+            suffix = "activator"
+        elif value == -1:
+            suffix = "repressor"
+        else:
+            raise ValueError(
+                "grn['regulation'] must contain only -1, 0, or 1; "
+                f"edge {edge} has {value!r}"
+            )
+        signed_tfs.append(f"{tf_from_regulon_name(tf)}_{suffix}")
+        signed_targets.append(target)
+    return signed_tfs, signed_targets
 
 
 def _eregulon_assemble_arg(values: np.ndarray):

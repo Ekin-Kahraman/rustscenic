@@ -25,7 +25,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from validation.backend_requirements import backend_capabilities
 from validation.hpc.minerva.validate_benchmark_artifact import validate_record
-from validation.python_hot_paths import hot_path_state
+from validation.path_provenance import portable_argv, portable_path
 from validation.scaling.bench_real_multiome_pipeline import (
     DEFAULT_SUMMARY_MAX_ROWS,
     benchmark_env,
@@ -40,12 +40,12 @@ CHILD_SCRIPT = REPO_ROOT / "validation/scaling/bench_real_multiome_pipeline.py"
 def invocation_state(argv: list[str] | None) -> dict[str, Any]:
     script = Path(__file__).resolve()
     args = [str(value) for value in (sys.argv[1:] if argv is None else argv)]
+    python = Path(sys.executable).name
+    portable_script = portable_path(script, REPO_ROOT)
     return {
-        "python": sys.executable,
-        "script": str(script),
-        "cwd": str(Path.cwd()),
-        "argv": args,
-        "command": [sys.executable, str(script), *args],
+        "python": python,
+        "script": portable_script,
+        "command": [python, portable_script, *portable_argv(args, REPO_ROOT)],
     }
 
 
@@ -96,6 +96,14 @@ def child_cmd(
         str(args.grn_n_estimators),
         "--grn-max-features",
         str(args.grn_max_features),
+        "--grn-early-stop-window",
+        str(args.grn_early_stop_window),
+        "--grn-early-stop-mode",
+        args.grn_early_stop_mode,
+        "--grn-regulon-polarities",
+        args.grn_regulon_polarities,
+        "--grn-rho-threshold",
+        str(args.grn_rho_threshold),
         "--topics-n-topics",
         str(args.topics_n_topics),
         "--topics-n-passes",
@@ -128,6 +136,8 @@ def child_cmd(
     ]
     if args.grn_target_block_size is not None:
         cmd.extend(["--grn-target-block-size", str(args.grn_target_block_size)])
+    if args.grn_rho_mask_dropouts:
+        cmd.append("--grn-rho-mask-dropouts")
     if args.motif_rankings is not None:
         cmd.extend(["--motif-rankings", str(args.motif_rankings)])
     if args.motif_annotations is not None:
@@ -187,6 +197,7 @@ def run_child(args: argparse.Namespace, *, n_cells: int) -> dict[str, Any]:
         record,
         require_clean=args.require_clean,
         check_output_files=True,
+        artifact_path=out_json,
     )
     if failures:
         raise RuntimeError(
@@ -202,20 +213,20 @@ def run_child(args: argparse.Namespace, *, n_cells: int) -> dict[str, Any]:
         "repo_state": record["repo_state"],
         "runtime_import": record["runtime_import"],
         "backend_capabilities": record["backend_capabilities"],
-        "python_hot_paths": record["python_hot_paths"],
         "rustscenic": record["rustscenic"],
         "input_hashes": record["input_hashes"],
-        "json_path": str(out_json),
-        "output_dir": str(out_dir),
+        "json_path": portable_path(out_json.resolve(), args.out_json.parent.resolve()),
+        "output_dir": portable_path(out_dir.resolve(), args.out_json.parent.resolve()),
         "wall_s": record["wall_s"],
         "peak_rss_gb": record["peak_rss_gb"],
         "setup_peak_rss_gb": record["setup_peak_rss_gb"],
         "setup_elapsed_s": record["setup_elapsed_s"],
         "elapsed_per_stage": record["elapsed_per_stage"],
-        "io_elapsed_per_stage": record.get("io_elapsed_per_stage", {}),
         "peak_rss_gb_per_stage": record["peak_rss_gb_per_stage"],
-        "peak_rss_gb_delta_per_stage": record["peak_rss_gb_delta_per_stage"],
+        "output_present": record.get("output_present", {}),
+        "output_inventory": record.get("output_inventory", {}),
         "output_storage": record.get("output_storage", {}),
+        "manifest_summary": record.get("manifest_summary"),
         "backend_execution": record["backend_execution"],
         "cell_barcode_filter": record["cell_barcode_filter"],
         "matrix_inputs": record["matrix_inputs"],
@@ -286,6 +297,7 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
     ]
     return {
         "benchmark": "real_multiome_full_pipeline_scaling",
+        "path_policy": "portable",
         "dataset_name": args.dataset_name,
         "run_prefix": args.run_prefix,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
@@ -293,14 +305,18 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
         "invocation": getattr(args, "_invocation", invocation_state(None)),
         "runtime_import": runtime_import_state(),
         "backend_capabilities": backend_capabilities(),
-        "python_hot_paths": hot_path_state(),
         "rustscenic": version("rustscenic"),
         "params": {
             "cell_counts": args.cell_counts,
             "threads": args.threads,
             "grn_n_estimators": args.grn_n_estimators,
             "grn_max_features": args.grn_max_features,
+            "grn_early_stop_window": args.grn_early_stop_window,
+            "grn_early_stop_mode": args.grn_early_stop_mode,
             "grn_target_block_size": args.grn_target_block_size,
+            "grn_regulon_polarities": args.grn_regulon_polarities,
+            "grn_rho_threshold": args.grn_rho_threshold,
+            "grn_rho_mask_dropouts": args.grn_rho_mask_dropouts,
             "topics_n_topics": args.topics_n_topics,
             "topics_n_passes": args.topics_n_passes,
             "topics_method": args.topics_method,
@@ -309,8 +325,8 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
             "cistarget_top_frac": args.cistarget_top_frac,
             "cistarget_auc_threshold": args.cistarget_auc_threshold,
             "cistarget_nes_threshold": args.cistarget_nes_threshold,
-            "motif_annotations": str(args.motif_annotations) if args.motif_annotations else None,
-            "region_motif_rankings": str(args.region_motif_rankings) if args.region_motif_rankings else None,
+            "motif_annotations": portable_path(args.motif_annotations, REPO_ROOT),
+            "region_motif_rankings": portable_path(args.region_motif_rankings, REPO_ROOT),
             "enhancer_max_distance": args.enhancer_max_distance,
             "enhancer_min_abs_corr": args.enhancer_min_abs_corr,
             "eregulon_min_target_genes": args.eregulon_min_target_genes,
@@ -368,10 +384,6 @@ def aggregate_payload(args: argparse.Namespace, runs: list[dict[str, Any]]) -> d
             "peak_rss_gb_per_stage_slope_vs_cells": _stage_slopes(
                 runs,
                 field="peak_rss_gb_per_stage",
-            ),
-            "peak_rss_gb_delta_per_stage_slope_vs_cells": _stage_slopes(
-                runs,
-                field="peak_rss_gb_delta_per_stage",
             ),
         },
         "env": benchmark_env(),
@@ -435,6 +447,7 @@ def coordinator(args: argparse.Namespace) -> dict[str, Any]:
         payload,
         require_clean=args.require_clean,
         check_output_files=True,
+        artifact_path=args.out_json,
     )
     if failures:
         raise RuntimeError(
@@ -465,6 +478,10 @@ def validate_args(args: argparse.Namespace) -> None:
     for name, value in positive_int_fields.items():
         if value <= 0:
             raise SystemExit(f"--{name.replace('_', '-')} must be positive")
+    if args.grn_early_stop_window < 0:
+        raise SystemExit("--grn-early-stop-window must be non-negative")
+    if args.grn_rho_threshold <= 0:
+        raise SystemExit("--grn-rho-threshold must be positive")
     if args.grn_target_block_size is not None and args.grn_target_block_size <= 0:
         raise SystemExit("--grn-target-block-size must be positive when set")
     if args.summary_max_rows is not None and args.summary_max_rows <= 0:
@@ -510,7 +527,20 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--expected-tfs", nargs="*", default=[])
     parser.add_argument("--grn-n-estimators", type=int, default=100)
     parser.add_argument("--grn-max-features", type=float, default=0.1)
+    parser.add_argument("--grn-early-stop-window", type=int, default=25)
+    parser.add_argument(
+        "--grn-early-stop-mode",
+        choices=("arboreto", "legacy_inbag"),
+        default="arboreto",
+    )
     parser.add_argument("--grn-target-block-size", type=int, default=None)
+    parser.add_argument(
+        "--grn-regulon-polarities",
+        choices=("both", "activating", "unsigned"),
+        default="both",
+    )
+    parser.add_argument("--grn-rho-threshold", type=float, default=0.03)
+    parser.add_argument("--grn-rho-mask-dropouts", action="store_true")
     parser.add_argument("--topics-n-topics", type=int, default=10)
     parser.add_argument("--topics-n-passes", type=int, default=3)
     parser.add_argument("--topics-method", choices=["vb", "gibbs"], default="vb")

@@ -34,6 +34,21 @@ def per_tf_topn(df: pd.DataFrame, n: int) -> dict[str, list[str]]:
     return out
 
 
+def fitted_tree_summary(df: pd.DataFrame) -> dict[str, float | int | None]:
+    """Recover fitted tree counts from arboreto's denormalised importances."""
+    if df.empty:
+        return {"targets": 0, "total": 0, "mean": None, "median": None, "p95": None, "max": None}
+    counts = df.groupby("target", sort=False)["importance"].sum().round().astype(int)
+    return {
+        "targets": int(len(counts)),
+        "total": int(counts.sum()),
+        "mean": round(float(counts.mean()), 3),
+        "median": round(float(counts.median()), 3),
+        "p95": round(float(counts.quantile(0.95)), 3),
+        "max": int(counts.max()),
+    }
+
+
 def main(rust_path: str, pyscenic_path: str, out_path: str) -> int:
     rust = pd.read_parquet(rust_path)
     pys = pd.read_parquet(pyscenic_path)
@@ -106,14 +121,16 @@ def main(rust_path: str, pyscenic_path: str, out_path: str) -> int:
 
     out = {
         "rustscenic": {
-            "path": str(Path(rust_path).resolve()),
+            "path_name": Path(rust_path).name,
             "n_edges": rust_n,
             "n_tfs": len(rust_tfs),
+            "fitted_trees": fitted_tree_summary(rust),
         },
         "pyscenic": {
-            "path": str(Path(pyscenic_path).resolve()),
+            "path_name": Path(pyscenic_path).name,
             "n_edges": pys_n,
             "n_tfs": len(pys_tfs),
+            "fitted_trees": fitted_tree_summary(pys),
         },
         "shared_tfs": len(shared_tfs),
         "shared_edges": len(shared),

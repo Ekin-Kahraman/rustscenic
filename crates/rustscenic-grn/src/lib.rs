@@ -4,7 +4,8 @@
 //! - sklearn `GradientBoostingRegressor` with squared-error loss
 //! - n_estimators=5000, learning_rate=0.01, max_features=0.1, subsample=0.9,
 //!   max_depth=3 (sklearn defaults inherited by arboreto's SGBM_KWARGS)
-//! - arboreto's EarlyStopMonitor (window=25) halts when train MSE stalls
+//! - arboreto's EarlyStopMonitor (window=25) halts when the trailing mean of
+//!   scikit-learn-style OOB improvements becomes negative
 //! - Feature importance = sklearn-normalized split gains × n_estimators_fit
 //!   (per arboreto/core.py:168)
 //!
@@ -21,6 +22,7 @@
 //! with pyscenic - fine-edge disagreement does not propagate to regulon
 //! activity. See `validation/parity_v0310/grn_parity_pbmc3k_full.json`.
 
+pub mod correlation;
 pub mod gbm;
 pub mod histogram;
 pub mod rng;
@@ -29,22 +31,9 @@ pub mod tree;
 use ndarray::ArrayView2;
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::histogram::BinnedMatrix;
-
-/// Default target genes materialised together for GRN fitting.
-///
-/// The expression matrix arrives row-major (cells × genes). Extracting one
-/// target at a time is a cache-hostile stride of `n_genes` floats for every
-/// target. At atlas shapes, that repeats a TLB/cache miss pattern tens of
-/// thousands of times. Blocking targets scans each row once per target window,
-/// copies contiguous source values, and fits from compact column-major targets.
-const DEFAULT_TARGET_BLOCK_SIZE: usize = 256;
-
-/// Keep each target window under this budget by default. Wider blocks expose
-/// enough independent target fits to keep high-core machines busy, then shrink
-/// automatically once cell counts make the response block memory-heavy.
-const TARGET_BLOCK_BYTE_BUDGET: usize = 128 * 1024 * 1024;
 
 #[derive(Debug, Clone)]
 pub struct Adjacency {
@@ -62,7 +51,7 @@ pub struct IndexedAdjacency {
     pub importance: f32,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct TfOverlapSummary {
     /// Number of supplied TF names present in the expression gene list.
     ///
@@ -71,6 +60,60 @@ pub struct TfOverlapSummary {
     pub present_input_count: usize,
     /// First missing TF names in input order, capped for concise warnings.
     pub missing_examples: Vec<String>,
+    /// Fitted-tree distribution over target-gene regressions.
+    pub fit_summary: GrnFitSummary,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct GrnFitSummary {
+    pub target_count: usize,
+    pub minimum: usize,
+    pub maximum: usize,
+    pub mean: f64,
+    pub median: f64,
+}
+
+impl Default for GrnFitSummary {
+    fn default() -> Self {
+        Self {
+            target_count: 0,
+            minimum: 0,
+            maximum: 0,
+            mean: 0.0,
+            median: 0.0,
+        }
+    }
+}
+
+impl GrnFitSummary {
+    fn from_counts(counts: &[usize]) -> Self {
+        if counts.is_empty() {
+            return Self::default();
+        }
+        let mut sorted = counts.to_vec();
+        sorted.sort_unstable();
+        let middle = sorted.len() / 2;
+        let median = if sorted.len() & 1 == 0 {
+            (sorted[middle - 1] as f64 + sorted[middle] as f64) / 2.0
+        } else {
+            sorted[middle] as f64
+        };
+        Self {
+            target_count: sorted.len(),
+            minimum: sorted[0],
+            maximum: sorted[sorted.len() - 1],
+            mean: sorted.iter().sum::<usize>() as f64 / sorted.len() as f64,
+            median,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EarlyStopMode {
+    /// Match arboreto's monitor over scikit-learn-style OOB improvements.
+    Arboreto,
+    /// Historical RustScenic two-point comparison of in-bag MSE.
+    LegacyInbag,
 }
 
 struct ResolvedTfCols {
@@ -86,9 +129,10 @@ pub struct GrnConfig {
     pub subsample: f32,
     pub max_depth: usize,
     pub early_stop_window: usize,
+    pub early_stop_mode: EarlyStopMode,
     pub seed: u64,
-    /// Target block width for materialising response vectors. `0` uses the
-    /// adaptive default, capped at `DEFAULT_TARGET_BLOCK_SIZE`.
+    /// Retained for API compatibility. No longer affects execution: targets are
+    /// fit in a single flat parallel pass over all genes (no blocking).
     pub target_block_size: usize,
 }
 
@@ -101,6 +145,7 @@ impl Default for GrnConfig {
             subsample: 0.9,
             max_depth: 3,
             early_stop_window: 25,
+            early_stop_mode: EarlyStopMode::Arboreto,
             seed: 777,
             target_block_size: 0,
         }
@@ -161,7 +206,7 @@ pub fn infer_indices_with_overlap(
 
     let resolved = resolve_tf_cols_with_summary(gene_names, tf_names);
     let tf_cols = resolved.cols;
-    let summary = resolved.summary;
+    let mut summary = resolved.summary;
     if tf_cols.is_empty() {
         return (Vec::new(), summary);
     }
@@ -177,40 +222,21 @@ pub fn infer_indices_with_overlap(
         .map(|(tf_col, &gene_idx)| (gene_idx, tf_col))
         .collect();
 
-    let mut all_edges = Vec::new();
-    let target_block_size = resolve_target_block_size(cfg, n_cells);
-    let mut target_block = Vec::with_capacity(target_block_size * n_cells);
-    for block_start in (0..n_genes).step_by(target_block_size) {
-        let block_end = (block_start + target_block_size).min(n_genes);
-        let block_width = block_end - block_start;
-        target_block.resize(block_width * n_cells, 0.0_f32);
-
-        // Materialise the target window as column-major:
-        // target_block[local_target * n_cells + cell].
-        //
-        // Source reads are contiguous within each row; downstream GBM reads each
-        // target's response vector contiguously. This directly attacks the
-        // row-major strided target extraction cliff observed on the 91k atlas.
-        for c in 0..n_cells {
-            let row_base = c * n_genes + block_start;
-            let row = &expression[row_base..row_base + block_width];
-            for (local_idx, &v) in row.iter().enumerate() {
-                target_block[local_idx * n_cells + c] = v;
+    let (all_edges, fitted_tree_counts) = fit_all_targets(
+        &binned_all,
+        n_cells,
+        n_genes,
+        &tf_cols,
+        &gene_to_tf_col,
+        cfg,
+        |target_idx, buf| {
+            // Row-major source: gather this target's response column once.
+            for (c, slot) in buf.iter_mut().enumerate() {
+                *slot = expression[c * n_genes + target_idx];
             }
-        }
-
-        let block_edges = fit_target_block(
-            &binned_all,
-            &target_block,
-            n_cells,
-            block_start,
-            block_width,
-            &tf_cols,
-            &gene_to_tf_col,
-            cfg,
-        );
-        all_edges.extend(block_edges);
-    }
+        },
+    );
+    summary.fit_summary = GrnFitSummary::from_counts(&fitted_tree_counts);
     (all_edges, summary)
 }
 
@@ -241,7 +267,7 @@ pub fn infer_indices_view_with_overlap(
 
     let resolved = resolve_tf_cols_with_summary(gene_names, tf_names);
     let tf_cols = resolved.cols;
-    let summary = resolved.summary;
+    let mut summary = resolved.summary;
     if tf_cols.is_empty() {
         return (Vec::new(), summary);
     }
@@ -253,32 +279,20 @@ pub fn infer_indices_view_with_overlap(
         .map(|(tf_col, &gene_idx)| (gene_idx, tf_col))
         .collect();
 
-    let mut all_edges = Vec::new();
-    let target_block_size = resolve_target_block_size(cfg, n_cells);
-    let mut target_block = Vec::with_capacity(target_block_size * n_cells);
-    for block_start in (0..n_genes).step_by(target_block_size) {
-        let block_end = (block_start + target_block_size).min(n_genes);
-        let block_width = block_end - block_start;
-        target_block.resize(block_width * n_cells, 0.0_f32);
-
-        for c in 0..n_cells {
-            for local_idx in 0..block_width {
-                target_block[local_idx * n_cells + c] = expression[(c, block_start + local_idx)];
+    let (all_edges, fitted_tree_counts) = fit_all_targets(
+        &binned_all,
+        n_cells,
+        n_genes,
+        &tf_cols,
+        &gene_to_tf_col,
+        cfg,
+        |target_idx, buf| {
+            for (c, slot) in buf.iter_mut().enumerate() {
+                *slot = expression[(c, target_idx)];
             }
-        }
-
-        let block_edges = fit_target_block(
-            &binned_all,
-            &target_block,
-            n_cells,
-            block_start,
-            block_width,
-            &tf_cols,
-            &gene_to_tf_col,
-            cfg,
-        );
-        all_edges.extend(block_edges);
-    }
+        },
+    );
+    summary.fit_summary = GrnFitSummary::from_counts(&fitted_tree_counts);
     (all_edges, summary)
 }
 
@@ -328,7 +342,7 @@ pub fn infer_indices_sparse_csc_with_overlap(
 
     let resolved = resolve_tf_cols_with_summary(gene_names, tf_names);
     let tf_cols = resolved.cols;
-    let summary = resolved.summary;
+    let mut summary = resolved.summary;
     if tf_cols.is_empty() {
         return (Vec::new(), summary);
     }
@@ -341,88 +355,100 @@ pub fn infer_indices_sparse_csc_with_overlap(
         .map(|(tf_col, &gene_idx)| (gene_idx, tf_col))
         .collect();
 
-    let mut all_edges = Vec::new();
-    let target_block_size = resolve_target_block_size(cfg, n_cells);
-    let mut target_block = Vec::with_capacity(target_block_size * n_cells);
-    let mut written_offsets = Vec::new();
-    for block_start in (0..n_genes).step_by(target_block_size) {
-        let block_end = (block_start + target_block_size).min(n_genes);
-        let block_width = block_end - block_start;
-        target_block.resize(block_width * n_cells, 0.0_f32);
-        written_offsets.clear();
-
-        for target_idx in block_start..block_end {
-            let local_idx = target_idx - block_start;
+    let (all_edges, fitted_tree_counts) = fit_all_targets(
+        &binned_all,
+        n_cells,
+        n_genes,
+        &tf_cols,
+        &gene_to_tf_col,
+        cfg,
+        |target_idx, buf| {
+            // Sparse CSC column: zero then accumulate nonzeros (preserves the
+            // previous += semantics for duplicate row entries in a column).
+            buf.fill(0.0);
             for p in indptr[target_idx]..indptr[target_idx + 1] {
-                let row = indices[p] as usize;
-                let offset = local_idx * n_cells + row;
-                target_block[offset] += data[p];
-                written_offsets.push(offset);
+                buf[indices[p] as usize] += data[p];
             }
-        }
-
-        let block_edges = fit_target_block(
-            &binned_all,
-            &target_block,
-            n_cells,
-            block_start,
-            block_width,
-            &tf_cols,
-            &gene_to_tf_col,
-            cfg,
-        );
-        all_edges.extend(block_edges);
-        for &offset in &written_offsets {
-            target_block[offset] = 0.0;
-        }
-    }
+        },
+    );
+    summary.fit_summary = GrnFitSummary::from_counts(&fitted_tree_counts);
     (all_edges, summary)
 }
 
-#[allow(clippy::too_many_arguments)]
-fn fit_target_block(
+/// Fit every target gene in a SINGLE flat parallel pass.
+///
+/// Replaces the previous per-block `into_par_iter` + `collect()` barrier (one
+/// hard synchronisation per ~256-gene block). Under early stopping the per-block
+/// makespan serialised on the slowest straggler, and that tail grew with core
+/// count -- the root cause of the 0.96@4c -> 0.71@16c thread-scaling decay. A
+/// flat loop over `0..n_genes` exposes all targets to one Rayon split with no
+/// barriers; each task gathers its own response column into a per-worker
+/// `n_cells` buffer (O(n_cells), amortised against the GBM compute) instead of a
+/// shared 128MB transpose window. Output is identical: targets are independent,
+/// the RNG is keyed on `hash_y(y)` (order-independent), and `collect()`
+/// preserves `0..n_genes` order exactly as the old block concatenation did.
+fn fit_all_targets<F>(
     binned_all: &BinnedMatrix,
-    target_block: &[f32],
     n_cells: usize,
-    block_start: usize,
-    block_width: usize,
+    n_genes: usize,
     tf_cols: &[usize],
     gene_to_tf_col: &HashMap<usize, usize>,
     cfg: &GrnConfig,
-) -> Vec<IndexedAdjacency> {
-    (0..block_width)
+    gather_target: F,
+) -> (Vec<IndexedAdjacency>, Vec<usize>)
+where
+    F: Fn(usize, &mut [f32]) + Sync,
+{
+    // Keep fitted-tree telemetry out of the edge result itself. Collecting a
+    // Vec of per-target edge Vecs before flattening retains the full edge set
+    // once in those buffers and again in the final output, which is material
+    // at atlas scale. Each target owns exactly one relaxed atomic write; the
+    // Rayon flattening path can therefore stream edge buffers as before.
+    let fitted_tree_counts: Vec<AtomicUsize> = (0..n_genes).map(|_| AtomicUsize::new(0)).collect();
+    let all_edges = (0..n_genes)
         .into_par_iter()
         .map_init(
-            || gbm::GbmScratch::new(n_cells, tf_cols.len(), cfg.n_estimators),
-            |gbm_scratch, local_idx| {
-                let target_idx = block_start + local_idx;
-                let target_expr = &target_block[local_idx * n_cells..(local_idx + 1) * n_cells];
+            || {
+                (
+                    gbm::GbmScratch::new(n_cells, tf_cols.len(), cfg.n_estimators),
+                    vec![0.0_f32; n_cells],
+                )
+            },
+            |(gbm_scratch, target_buf), target_idx| {
+                gather_target(target_idx, target_buf.as_mut_slice());
 
                 // If this target is itself one of the TFs, drop that column at
                 // fit time so the self column cannot absorb the split gain.
                 let exclude_self = gene_to_tf_col.get(&target_idx).copied();
 
-                gbm::fit_and_importances_binned_with_scratch(
+                let (importances, fitted_trees) = gbm::fit_and_importances_binned_with_scratch(
                     binned_all,
-                    target_expr,
+                    target_buf.as_slice(),
                     cfg,
                     exclude_self,
                     gbm_scratch,
-                )
-                .iter()
-                .copied()
-                .enumerate()
-                .filter(|(_, imp)| *imp > 0.0)
-                .map(|(i, imp)| IndexedAdjacency {
-                    tf_idx: tf_cols[i],
-                    target_idx,
-                    importance: imp,
-                })
-                .collect::<Vec<_>>()
+                );
+                fitted_tree_counts[target_idx].store(fitted_trees, Ordering::Relaxed);
+                importances
+                    .iter()
+                    .copied()
+                    .enumerate()
+                    .filter(|(_, imp)| *imp > 0.0)
+                    .map(|(i, imp)| IndexedAdjacency {
+                        tf_idx: tf_cols[i],
+                        target_idx,
+                        importance: imp,
+                    })
+                    .collect::<Vec<_>>()
             },
         )
         .flatten_iter()
-        .collect()
+        .collect();
+    let fitted_tree_counts = fitted_tree_counts
+        .iter()
+        .map(|count| count.load(Ordering::Relaxed))
+        .collect();
+    (all_edges, fitted_tree_counts)
 }
 
 fn resolve_tf_cols_with_summary(gene_names: &[String], tf_names: &[String]) -> ResolvedTfCols {
@@ -452,51 +478,14 @@ fn resolve_tf_cols_with_summary(gene_names: &[String], tf_names: &[String]) -> R
         summary: TfOverlapSummary {
             present_input_count,
             missing_examples,
+            fit_summary: GrnFitSummary::default(),
         },
     }
-}
-
-fn resolve_target_block_size(cfg: &GrnConfig, n_cells: usize) -> usize {
-    if cfg.target_block_size > 0 {
-        return cfg.target_block_size;
-    }
-    if n_cells == 0 {
-        return DEFAULT_TARGET_BLOCK_SIZE;
-    }
-
-    let per_target_bytes = n_cells.saturating_mul(std::mem::size_of::<f32>());
-    let mut block_size = DEFAULT_TARGET_BLOCK_SIZE;
-    while block_size > 1 && per_target_bytes.saturating_mul(block_size) > TARGET_BLOCK_BYTE_BUDGET {
-        block_size /= 2;
-    }
-    block_size.max(1)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn adaptive_target_block_size_preserves_default_for_mid_sized_inputs() {
-        let cfg = GrnConfig::default();
-        assert_eq!(resolve_target_block_size(&cfg, 100_000), 256);
-    }
-
-    #[test]
-    fn adaptive_target_block_size_shrinks_for_high_cell_counts() {
-        let cfg = GrnConfig::default();
-        assert_eq!(resolve_target_block_size(&cfg, 200_000), 128);
-        assert_eq!(resolve_target_block_size(&cfg, 500_000), 64);
-    }
-
-    #[test]
-    fn explicit_target_block_size_overrides_adaptive_default() {
-        let cfg = GrnConfig {
-            target_block_size: 7,
-            ..GrnConfig::default()
-        };
-        assert_eq!(resolve_target_block_size(&cfg, 500_000), 7);
-    }
 
     #[test]
     fn tf_overlap_summary_counts_input_names_and_caps_missing_examples() {

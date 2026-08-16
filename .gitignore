@@ -26,6 +26,9 @@ validation/kamath/*.h5ad
 validation/kamath_da/kamath_da_neurons.h5ad
 validation/kamath_da/kamath_da_cells_15k.h5ad
 validation/kamath_da/*_grn_kamath*.parquet
+# Scratch cell-subset experiment (~23MB binaries), superseded by the canonical
+# parity_v0310 evidence. Kept locally, untracked.
+validation/kamath_da/tmp_cell_subset_test/
 !python/rustscenic/data/
 examples/out/
 site/
@@ -34,6 +37,8 @@ docs/specs/
 # that don't belong in a public repo.
 AGENTS.md
 rustscenic_meeting_brief.txt
+# Local outreach, collaborator, and HPC operations material.
+outreach/
 validation/real_multiome/
 validation/multi_dataset/
 validation/real_multiome_v036/

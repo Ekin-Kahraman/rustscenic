@@ -93,7 +93,7 @@ impl FragmentTable {
     fn intern_barcode(
         &mut self,
         name: &str,
-        lookup: &mut std::collections::HashMap<String, u32>,
+        lookup: &mut rustc_hash::FxHashMap<String, u32>,
     ) -> u32 {
         if let Some(&idx) = lookup.get(name) {
             return idx;
@@ -126,15 +126,39 @@ pub fn read_fragments<P: AsRef<Path>>(path: P) -> Result<FragmentTable> {
 
 /// Parse from any `Read`. Separated for testability.
 pub fn read_fragments_from<R: Read>(reader: R) -> Result<FragmentTable> {
-    let buffered = BufReader::with_capacity(1 << 20, reader);
+    let mut buffered = BufReader::with_capacity(1 << 20, reader);
     let mut table = FragmentTable::default();
-    let mut barcode_lookup = std::collections::HashMap::with_capacity(1 << 16);
+    // FxHashMap: 3-5x faster than SipHash on short barcode strings, hit once per
+    // fragment record. Bit-identical - barcode indices are assigned by insertion
+    // order (barcode_names.len()), independent of the hash function.
+    let mut barcode_lookup =
+        rustc_hash::FxHashMap::with_capacity_and_hasher(1 << 16, Default::default());
 
-    for (line_no, line) in buffered.lines().enumerate() {
-        let line = line.with_context(|| format!("read line {}", line_no + 1))?;
-        if line.is_empty() || line.starts_with('#') {
+    // Read into a reused byte buffer instead of `.lines()`, which heap-allocates
+    // a fresh String per record (hundreds of millions on a real fragments file).
+    // Values are still parsed via str::parse after one UTF-8 validation, so the
+    // parsed FragmentTable is byte-identical to the old path.
+    let mut buf: Vec<u8> = Vec::with_capacity(256);
+    let mut line_no = 0usize;
+    loop {
+        buf.clear();
+        let n = buffered
+            .read_until(b'\n', &mut buf)
+            .with_context(|| format!("read line {}", line_no + 1))?;
+        if n == 0 {
+            break;
+        }
+        // Strip the trailing newline (and a CR for CRLF inputs), matching the
+        // newline handling that `.lines()` performed.
+        while matches!(buf.last(), Some(b'\n') | Some(b'\r')) {
+            buf.pop();
+        }
+        if buf.is_empty() || buf[0] == b'#' {
+            line_no += 1;
             continue;
         }
+        let line = std::str::from_utf8(&buf)
+            .with_context(|| format!("line {}: invalid UTF-8", line_no + 1))?;
 
         let mut fields = line.split('\t');
         let chrom = fields
@@ -178,6 +202,7 @@ pub fn read_fragments_from<R: Read>(reader: R) -> Result<FragmentTable> {
         table.end.push(end);
         table.barcode_idx.push(barcode_idx);
         table.count.push(count);
+        line_no += 1;
     }
 
     Ok(table)

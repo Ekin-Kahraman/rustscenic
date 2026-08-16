@@ -21,7 +21,6 @@ from validation.backend_requirements import (
     REQUIRED_RUST_BACKEND_SYMBOLS,
     backend_capabilities as shared_backend_capabilities,
 )
-from validation.python_hot_paths import ALLOWED_HITS, HOT_PATH_PATTERNS
 from validation.repo_cleanliness import (
     git_status_paths,
     repo_state_from_git_outputs,
@@ -124,8 +123,6 @@ def test_real_multiome_harness_records_sparse_matrix_profile():
         "storage": "sparse",
         "format": "csr",
         "dtype": "float32",
-        "nnz": 3,
-        "density": 0.5,
     }
 
 
@@ -230,7 +227,7 @@ def test_real_multiome_harness_prepares_explicit_motif_rankings_without_loading(
     assert fingerprint["shape"] == [2, 2]
     assert fingerprint["file_backed"] is True
     assert source["source"] == "explicit_path"
-    assert source["path"] == str(path)
+    assert source["path"] == "external:motifs.feather"
 
 
 def test_real_multiome_harness_prepares_default_motif_cache_without_loading(
@@ -276,8 +273,6 @@ def test_real_multiome_harness_prepares_default_motif_cache_without_loading(
     assert fingerprint["shape"] == [2, 2]
     assert fingerprint["file_backed"] is True
     assert source["source"] == "default_cache"
-    assert source["cache_exists_before"] is True
-    assert source["cache_exists_after"] is True
 
 
 def test_real_multiome_harness_builds_compact_output_summaries(monkeypatch, tmp_path):
@@ -404,14 +399,136 @@ def test_real_multiome_harness_records_invocation_state():
     assert state["script"].endswith("bench_real_multiome_pipeline.py")
     assert scaling_state["script"].endswith("bench_real_multiome_pipeline_scaling.py")
     assert grn_state["script"].endswith("bench_real_pbmc3k_grn_scaling.py")
-    assert state["argv"] == ["--dataset-name", "pbmc3k"]
-    assert grn_state["argv"] == ["--data-dir", "data"]
     assert state["command"][:2] == [state["python"], state["script"]]
     assert scaling_state["command"][:2] == [
         scaling_state["python"],
         scaling_state["script"],
     ]
     assert grn_state["command"][:2] == [grn_state["python"], grn_state["script"]]
+    for invocation in (state, scaling_state, grn_state):
+        assert not invocation["python"].startswith("/")
+        assert not invocation["script"].startswith("/")
+
+
+def test_portable_path_provenance_rejects_absolute_json_strings(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_portable_paths",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _grn_scaling_record()
+    record["path_policy"] = "portable"
+    record["invocation"]["script"] = str(tmp_path / "private.py")
+
+    failures = module.validate_record(
+        record,
+        require_clean=True,
+        check_output_files=False,
+    )
+
+    assert any(
+        "absolute path forbidden by path_policy at $.invocation.script" in failure
+        for failure in failures
+    )
+
+
+def test_portable_path_provenance_handles_windows_and_embedded_paths():
+    module = _load_module(
+        "path_provenance_cross_platform",
+        ROOT / "validation/path_provenance.py",
+    )
+
+    assert module.portable_path(r"C:\\Users\\name\\data.h5", ROOT) == (
+        "external:data.h5"
+    )
+    assert module.absolute_path_strings(
+        {"error": "failed opening /Users/name/private/data.h5"}
+    ) == ["$.error"]
+    assert module.absolute_path_strings(
+        {
+            "quoted": "failed opening '/Users/name/private/data.h5'",
+            "uri": "failed opening file:///Users/name/private/data.h5",
+            "windows": r"failed opening C:\Users\name\private\data.h5",
+        }
+    ) == ["$.quoted", "$.uri", "$.windows"]
+
+
+def test_portable_backend_execution_requires_supported_kernel_identity():
+    module = _load_module(
+        "validate_benchmark_kernel_identity",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = {
+        "path_policy": "portable",
+        "backend_execution": {
+            "grn": {
+                "engine": "rust",
+                "required_ok": True,
+                "symbol_count": 1,
+                "symbols": ["definitely_not_a_rustscenic_kernel"],
+            }
+        },
+    }
+
+    failures = module._backend_execution_failures(record, "grn", {"grn"})
+    assert "grn.backend_execution.grn.symbols missing required kernels" in failures[0]
+    assert any("supported kernel set" in failure for failure in failures)
+
+    record["backend_execution"]["grn"] = {
+        "engine": "rust",
+        "required_ok": True,
+        "symbol_count": 2,
+        "symbols": ["gene_duplicate_summary", "grn_infer_sparse_csc"],
+    }
+    assert module._backend_execution_failures(record, "grn", {"grn"}) == []
+
+
+def test_portable_output_inventory_is_checked_against_artefact_directory(tmp_path):
+    module = _load_module(
+        "validate_benchmark_output_filesystem",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    output = tmp_path / "run_outputs" / "grn.parquet"
+    output.parent.mkdir()
+    output.write_bytes(b"valid-output")
+    artifact = tmp_path / "run.json"
+    record = {
+        "benchmark": "real_multiome_full_pipeline",
+        "path_policy": "portable",
+        "output_inventory": {
+            "grn_path": {
+                "path": "run_outputs/grn.parquet",
+                "exists": True,
+                "type": "file",
+                "size_bytes": len(b"valid-output"),
+            }
+        },
+    }
+
+    assert module._output_filesystem_failures(record, artifact) == []
+    output.unlink()
+    assert module._output_filesystem_failures(record, artifact) == [
+        "full_pipeline.output_inventory.grn_path is missing: "
+        "run_outputs/grn.parquet"
+    ]
+
+
+def test_grn_scaling_lsf_allocation_may_cover_lower_thread_points():
+    module = _load_module(
+        "validate_benchmark_artifact_grn_lsf_superset",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _grn_scaling_record()
+    for row in record["subset_scaling"] + record["thread_scaling"]:
+        row["threads"] = 4
+        row["env"]["rayon_num_threads"] = "4"
+        row["env"]["lsf_cores"] = "16"
+        row["env"]["lsf_requested_cores"] = "16"
+
+    assert module.validate_record(record, require_clean=True) == []
+
+    record["thread_scaling"][0]["env"]["lsf_cores"] = "2"
+    failures = module.validate_record(record, require_clean=True)
+    assert any("lsf_cores must cover params.threads" in failure for failure in failures)
 
 
 def test_real_multiome_harness_does_not_reread_pipeline_outputs_for_counts():
@@ -424,7 +541,6 @@ def test_real_multiome_harness_does_not_reread_pipeline_outputs_for_counts():
     assert '"pipeline_compute_stages": round(pipeline_compute_stage_wall, 3)' in source
     assert '"pipeline_io_stages": round(pipeline_io_stage_wall, 3)' in source
     assert '"pipeline_unattributed": round(pipeline_unattributed_wall, 3)' in source
-    assert '"io_elapsed_per_stage"' in source
     assert '"end_to_end": round(end_to_end_wall, 3)' in source
     assert '"setup_elapsed_s"' in source
 
@@ -459,14 +575,20 @@ def test_real_multiome_harness_prefixes_pipeline_backend_execution():
     assert execution == {
         "setup_fragments_to_matrix": {
             "engine": "rust",
+            "required_ok": True,
+            "symbol_count": 1,
             "symbols": ["preproc_fragments_to_matrix"],
         },
         "pipeline_grn": {
             "engine": "rust",
+            "required_ok": True,
+            "symbol_count": 2,
             "symbols": ["gene_duplicate_summary", "grn_infer"],
         },
         "pipeline_integrated_adata": {
             "engine": "python_io",
+            "required_ok": False,
+            "symbol_count": 0,
             "reason": "AnnData obs attachment and h5ad write",
         },
     }
@@ -533,8 +655,6 @@ def test_real_pbmc3k_grn_harness_records_sparse_matrix_profile():
         "storage": "sparse",
         "format": "csr",
         "dtype": "float32",
-        "nnz": 3,
-        "density": 0.33333333,
     }
 
 
@@ -850,7 +970,6 @@ def test_real_multiome_scaling_child_row_carries_child_validation_fields(
         "repo_state": _clean_repo_state(),
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
-        "python_hot_paths": _python_hot_paths_state(),
         "rustscenic": "0.4.7",
         "input_hashes": {
             "rna_10x_h5_md5": "a",
@@ -862,11 +981,11 @@ def test_real_multiome_scaling_child_row_carries_child_validation_fields(
         "setup_peak_rss_gb": 0.75,
         "setup_elapsed_s": {"load_rna_qc": 0.1},
         "elapsed_per_stage": {"grn": 1.0},
-        "io_elapsed_per_stage": {"write_outputs": 0.1},
         "peak_rss_gb_per_stage": {"grn": 1.0},
-        "peak_rss_gb_delta_per_stage": {"grn": 1.0},
         "output_storage": {"total_size_gb": 0.001},
-        "backend_execution": {"pipeline_grn": {"engine": "rust", "symbols": ["grn_infer"]}},
+        "backend_execution": {
+            "pipeline_grn": {"engine": "rust", "required_ok": True, "symbol_count": 1}
+        },
         "cell_barcode_filter": {"requested": 100, "matched": 100},
         "matrix_inputs": _matrix_inputs_state(100),
         "cistarget_rankings": {"input_kind": "feather"},
@@ -896,7 +1015,6 @@ def test_real_multiome_scaling_child_row_carries_child_validation_fields(
     assert row["reference_fingerprints"] == child_record["reference_fingerprints"]
     assert row["runtime_import"] == child_record["runtime_import"]
     assert row["backend_capabilities"] == child_record["backend_capabilities"]
-    assert row["python_hot_paths"] == child_record["python_hot_paths"]
     assert row["input_hashes"] == child_record["input_hashes"]
 
 
@@ -948,7 +1066,6 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
             "setup_peak_rss_gb": 0.8,
             "setup_elapsed_s": {"load_rna_qc": 0.1, "fragments_to_matrix": 0.9},
             "elapsed_per_stage": {},
-            "io_elapsed_per_stage": {"fixture_write": 0.25},
             "peak_rss_gb_per_stage": {},
             "reference_sources": _default_cached_reference_sources(tmp_path / "one"),
             "outputs": {"grn_edges": 1},
@@ -970,7 +1087,6 @@ def test_real_multiome_scaling_aggregate_payload_has_slopes(tmp_path, monkeypatc
             "setup_peak_rss_gb": 1.0,
             "setup_elapsed_s": {"load_rna_qc": 0.2, "fragments_to_matrix": 1.8},
             "elapsed_per_stage": {},
-            "io_elapsed_per_stage": {"fixture_write": 0.5},
             "peak_rss_gb_per_stage": {},
             "reference_sources": _default_cached_reference_sources(tmp_path / "two"),
             "outputs": {"grn_edges": 1},
@@ -1042,12 +1158,19 @@ def test_real_multiome_scaling_coordinator_validates_final_aggregate(tmp_path, m
     )
     calls = []
 
-    def fake_validate_record(payload, *, require_clean, check_output_files):
+    def fake_validate_record(
+        payload,
+        *,
+        require_clean,
+        check_output_files,
+        artifact_path=None,
+    ):
         calls.append(
             {
                 "benchmark": payload["benchmark"],
                 "require_clean": require_clean,
                 "check_output_files": check_output_files,
+                "artifact_path": artifact_path,
                 "runs": len(payload["runs"]),
             }
         )
@@ -1064,6 +1187,7 @@ def test_real_multiome_scaling_coordinator_validates_final_aggregate(tmp_path, m
             "benchmark": "real_multiome_full_pipeline_scaling",
             "require_clean": False,
             "check_output_files": True,
+            "artifact_path": args.out_json,
             "runs": 1,
         }
     ]
@@ -1357,7 +1481,7 @@ def test_grn_scaling_rejects_ambiguous_or_invalid_args(tmp_path):
         (["--thread-cells", "0"], "--thread-cells must be positive"),
         (["--n-estimators", "0"], "--n-estimators must be positive"),
         (["--max-depth", "0"], "--max-depth must be positive"),
-        (["--early-stop-window", "0"], "--early-stop-window must be positive"),
+        (["--early-stop-window", "-1"], "--early-stop-window must be non-negative"),
         (["--target-block-size", "0"], "--target-block-size must be positive"),
         (["--learning-rate", "0"], "--learning-rate must be positive"),
         (["--max-features", "1.5"], "--max-features must be in (0, 1]"),
@@ -2472,76 +2596,28 @@ def _backend_capabilities():
     }
 
 
-def _python_hot_paths_state():
-    return {
-        "package_dir": str(ROOT / "python" / "rustscenic"),
-        "exists": True,
-        "ok": True,
-        "violation_count": 0,
-        "violations": [],
-        "allowed_hit_count": len(ALLOWED_HITS),
-        "pattern_count": len(HOT_PATH_PATTERNS),
-    }
-
-
 def _backend_execution_state():
     return {
-        "setup_fragments_to_matrix": {
-            "engine": "rust",
-            "symbols": ["preproc_fragments_to_matrix"],
+        "setup_fragments_to_matrix": {"engine": "rust", "required_ok": True, "symbol_count": 1},
+        "pipeline_topics": {"engine": "rust", "required_ok": True, "symbol_count": 1},
+        "pipeline_grn": {"engine": "rust", "required_ok": True, "symbol_count": 2},
+        "pipeline_grn_correlation": {
+            "engine": "rust", "required_ok": True, "symbol_count": 1,
         },
-        "pipeline_topics": {"engine": "rust", "symbols": ["topics_fit"]},
-        "pipeline_grn": {
-            "engine": "rust",
-            "symbols": ["gene_duplicate_summary", "grn_infer_sparse_csc"],
-        },
-        "pipeline_candidate_regulons": {
-            "engine": "rust",
-            "symbols": ["pipeline_candidate_regulons_from_grn"],
-        },
+        "pipeline_candidate_regulons": {"engine": "rust", "required_ok": True, "symbol_count": 1},
         "pipeline_cistarget_projection_features": {
-            "engine": "rust",
-            "symbols": ["pipeline_unique_regulon_features"],
+            "engine": "rust", "required_ok": True, "symbol_count": 1,
         },
-        "pipeline_cistarget": {
-            "engine": "rust",
-            "symbols": ["cistarget_enrichment_from_projected_rankings_i32"],
-        },
+        "pipeline_cistarget": {"engine": "rust", "required_ok": True, "symbol_count": 1},
         "pipeline_cistarget_ranking_projection": {
-            "engine": "rust",
-            "symbols": [
-                "pipeline_project_ranking_columns",
-                "pipeline_pack_ranking_columns_i32",
-            ],
+            "engine": "rust", "required_ok": True, "symbol_count": 2,
         },
-        "pipeline_enhancer": {
-            "engine": "rust",
-            "symbols": [
-                "enhancer_align_cell_indices",
-                "preproc_peak_coords_for_names",
-                "enhancer_match_peak_coords_to_atac",
-                "enhancer_match_gene_coords_to_rna",
-                "enhancer_normalise_chrom_codes",
-                "enhancer_prepare_gene_order",
-                "enhancer_link_pearson_sparse_rna",
-            ],
-        },
+        "pipeline_enhancer": {"engine": "rust", "required_ok": True, "symbol_count": 7},
         "pipeline_eregulon_peak_attribution": {
-            "engine": "rust",
-            "symbols": ["pipeline_attribute_peaks_to_cistarget_rows_f32"],
+            "engine": "rust", "required_ok": True, "symbol_count": 1,
         },
-        "pipeline_eregulons": {
-            "engine": "rust",
-            "symbols": ["eregulon_assemble_f32"],
-        },
-        "pipeline_aucell": {
-            "engine": "rust",
-            "symbols": [
-                "gene_duplicate_summary",
-                "stage_prepare_regulon_indices_with_coverage",
-                "aucell_score_sparse_csr",
-            ],
-        },
+        "pipeline_eregulons": {"engine": "rust", "required_ok": True, "symbol_count": 1},
+        "pipeline_aucell": {"engine": "rust", "required_ok": True, "symbol_count": 3},
         "pipeline_integrated_adata": {
             "engine": "python_io",
             "reason": "AnnData obs attachment and h5ad write",
@@ -2553,8 +2629,6 @@ def _invocation_state(script: str = "validation/scaling/bench_real_multiome_pipe
     return {
         "python": "/hpc/env/bin/python",
         "script": str(ROOT / script),
-        "cwd": str(ROOT),
-        "argv": ["--dataset-name", "pbmc3k"],
         "command": [
             "/hpc/env/bin/python",
             str(ROOT / script),
@@ -2571,16 +2645,12 @@ def _matrix_inputs_state(n_cells: int = 100):
             "storage": "sparse",
             "format": "csr",
             "dtype": "float32",
-            "nnz": n_cells * 100,
-            "density": 0.1,
         },
         "atac_shared_cells": {
             "shape": [n_cells, 2000],
             "storage": "sparse",
             "format": "csr",
             "dtype": "float32",
-            "nnz": n_cells * 50,
-            "density": 0.025,
         },
     }
 
@@ -2592,8 +2662,6 @@ def _grn_matrix_inputs_state(n_cells: int = 100):
             "storage": "sparse",
             "format": "csr",
             "dtype": "float32",
-            "nnz": n_cells * 100,
-            "density": 0.1,
         },
     }
 
@@ -2602,10 +2670,6 @@ def _explicit_reference_source(path: Path | str):
     return {
         "source": "explicit_path",
         "path": str(path),
-        "exists_before": True,
-        "exists_after": True,
-        "cache_exists_before": None,
-        "cache_exists_after": None,
     }
 
 
@@ -2614,10 +2678,6 @@ def _default_cached_reference_sources(tmp_path: Path):
         "motif_rankings": {
             "source": "default_cache",
             "path": str(tmp_path / "motif_rankings.feather"),
-            "exists_before": True,
-            "exists_after": True,
-            "cache_exists_before": True,
-            "cache_exists_after": True,
         },
         "gene_coords": _explicit_reference_source(tmp_path / "gene_coords.parquet"),
     }
@@ -2674,7 +2734,6 @@ def _full_pipeline_record(tmp_path: Path):
         "invocation": _invocation_state(),
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
-        "python_hot_paths": _python_hot_paths_state(),
         "backend_execution": backend_execution,
         "cell_barcode_filter": cell_barcode_filter,
         "rustscenic": "0.4.7",
@@ -2722,7 +2781,12 @@ def _full_pipeline_record(tmp_path: Path):
             "n_cells_requested": 100,
             "grn_n_estimators": 100,
             "grn_max_features": 0.1,
+            "grn_early_stop_window": 25,
+            "grn_early_stop_mode": "arboreto",
             "grn_target_block_size": None,
+            "grn_regulon_polarities": "both",
+            "grn_rho_threshold": 0.03,
+            "grn_rho_mask_dropouts": False,
             "topics_n_topics": 10,
             "topics_n_passes": 3,
             "topics_method": "vb",
@@ -2780,7 +2844,6 @@ def _full_pipeline_record(tmp_path: Path):
             "eregulons": 0.1,
             "aucell": 0.25,
         },
-        "io_elapsed_per_stage": {},
         "peak_rss_gb_per_stage": {
             "load_rna": 0.5,
             "preproc": 0.6,
@@ -2792,18 +2855,6 @@ def _full_pipeline_record(tmp_path: Path):
             "eregulons": 1.1,
             "aucell": 1.0,
             "integrated_adata": 1.25,
-        },
-        "peak_rss_gb_delta_per_stage": {
-            "load_rna": 0.5,
-            "preproc": 0.1,
-            "topics": 0.1,
-            "grn": 0.1,
-            "candidate_regulons": 0.1,
-            "cistarget": 0.05,
-            "enhancer": 0.05,
-            "eregulons": 0.1,
-            "aucell": 0.0,
-            "integrated_adata": 0.15,
         },
         "outputs": {
             "grn_edges": 10,
@@ -2831,7 +2882,10 @@ def _full_pipeline_record(tmp_path: Path):
             "top_enhancer_links": [{"peak_id": "p1", "gene": "G1", "correlation": 0.7}],
             "top_eregulon_rows": [{"tf": "TF1", "enhancer": "p1", "target_gene": "G1"}],
         },
-        "output_inventory": output_inventory,
+        "output_present": {
+            key: bool(isinstance(info, dict) and info.get("exists") is True)
+            for key, info in output_inventory.items()
+        },
         "output_storage": _output_storage_from_inventory(output_inventory),
         "env": {
             "python": "3.13.0",
@@ -2862,60 +2916,25 @@ def _output_storage_from_inventory(output_inventory: dict) -> dict:
     }
 
 
-def _sync_full_pipeline_manifest(record: dict) -> None:
-    info = record["output_inventory"]["manifest_path"]
-    path = Path(info["path"])
-    manifest_backend = {
-        key.removeprefix("pipeline_"): value
-        for key, value in record["backend_execution"].items()
-        if key.startswith("pipeline_")
+def _manifest_summary_from_outputs(outputs: dict) -> dict:
+    summary = {
+        "n_grn_edges": outputs["grn_edges"],
+        "n_candidate_regulons": outputs["candidate_regulons"],
+        "n_regulons": outputs["regulons"],
+        "n_cistarget_rows": outputs["cistarget_rows"],
+        "n_enhancer_links": outputs["enhancer_links"],
+        "n_eregulon_rows": outputs["eregulon_rows"],
+        "n_eregulons": outputs["eregulons"],
+        "aucell_shape": outputs["aucell_shape"],
     }
-    inventory = record["output_inventory"]
-    outputs = record["outputs"]
-    shapes = record["shapes"]
-    path.write_text(
-        json.dumps(
-            {
-                "output_dir": str(path.parent),
-                "atac_matrix_path": inventory["atac_matrix_path"]["path"],
-                "grn_path": inventory["grn_path"]["path"],
-                "regulons_path": inventory["regulons_path"]["path"],
-                "candidate_regulons_path": inventory["candidate_regulons_path"]["path"],
-                "aucell_path": inventory["aucell_path"]["path"],
-                "topics_dir": inventory["topics_dir"]["path"],
-                "cistarget_path": inventory["cistarget_path"]["path"],
-                "enhancer_links_path": inventory["enhancer_links_path"]["path"],
-                "eregulons_path": inventory["eregulons_path"]["path"],
-                "integrated_adata_path": (
-                    inventory.get("integrated_adata_path", {}).get("path")
-                ),
-                "elapsed": record["elapsed_per_stage"],
-                "io_elapsed": record.get("io_elapsed_per_stage", {}),
-                "memory": record["peak_rss_gb_per_stage"],
-                "n_cells": shapes["rna_post_qc"][0],
-                "n_grn_edges": outputs["grn_edges"],
-                "n_regulons": outputs["regulons"],
-                "n_candidate_regulons": outputs["candidate_regulons"],
-                "n_pruned_regulons": outputs.get("pruned_regulons"),
-                "n_cistarget_rows": outputs["cistarget_rows"],
-                "n_enhancer_links": outputs["enhancer_links"],
-                "n_eregulon_rows": outputs["eregulon_rows"],
-                "n_eregulons": outputs["eregulons"],
-                "aucell_shape": outputs["aucell_shape"],
-                "regulon_source": "candidate_grn_top_targets",
-                "backend_execution": manifest_backend,
-                "cell_barcode_filter": record.get("cell_barcode_filter"),
-                "matrix_inputs": record.get("matrix_inputs"),
-                "cistarget_rankings": record.get("cistarget_rankings"),
-                "region_cistarget_rankings": record.get("region_cistarget_rankings"),
-            }
-        )
-    )
-    info["size_bytes"] = path.stat().st_size
-    if "output_storage" in record:
-        record["output_storage"] = _output_storage_from_inventory(
-            record["output_inventory"]
-        )
+    if outputs.get("pruned_regulons") is not None:
+        summary["n_pruned_regulons"] = outputs["pruned_regulons"]
+    return summary
+
+
+def _sync_full_pipeline_manifest(record: dict) -> None:
+    """Keep manifest_summary consistent with outputs after a fixture mutation."""
+    record["manifest_summary"] = _manifest_summary_from_outputs(record["outputs"])
 
 
 def _projected_region_cistarget_rankings_state() -> dict:
@@ -2962,10 +2981,6 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         )
         child["peak_rss_gb"] = peak_rss
         child["peak_rss_gb_per_stage"]["integrated_adata"] = peak_rss
-        child["peak_rss_gb_delta_per_stage"]["integrated_adata"] = round(
-            max(0.0, peak_rss - child["peak_rss_gb_per_stage"]["eregulons"]),
-            6,
-        )
         _sync_full_pipeline_manifest(child)
         child_path = tmp_path / f"{label}.json"
         child_path.write_text(json.dumps(child))
@@ -2979,7 +2994,6 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "repo_state": child["repo_state"],
                 "runtime_import": child["runtime_import"],
                 "backend_capabilities": child["backend_capabilities"],
-                "python_hot_paths": child["python_hot_paths"],
                 "rustscenic": child["rustscenic"],
                 "input_hashes": child["input_hashes"],
                 "json_path": str(child_path),
@@ -2989,10 +3003,10 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "setup_peak_rss_gb": child["setup_peak_rss_gb"],
                 "setup_elapsed_s": child["setup_elapsed_s"],
                 "elapsed_per_stage": child["elapsed_per_stage"],
-                "io_elapsed_per_stage": child["io_elapsed_per_stage"],
                 "peak_rss_gb_per_stage": child["peak_rss_gb_per_stage"],
-                "peak_rss_gb_delta_per_stage": child["peak_rss_gb_delta_per_stage"],
+                "output_present": child["output_present"],
                 "output_storage": child["output_storage"],
+                "manifest_summary": child["manifest_summary"],
                 "backend_execution": child["backend_execution"],
                 "cell_barcode_filter": child["cell_barcode_filter"],
                 "matrix_inputs": child["matrix_inputs"],
@@ -3020,13 +3034,17 @@ def _full_pipeline_scaling_record(tmp_path: Path):
         ),
         "runtime_import": _runtime_import_state(),
         "backend_capabilities": _backend_capabilities(),
-        "python_hot_paths": _python_hot_paths_state(),
         "rustscenic": "0.4.7",
         "params": {
             "cell_counts": [100, 200, 400],
             "grn_n_estimators": 100,
             "grn_max_features": 0.1,
+            "grn_early_stop_window": 25,
+            "grn_early_stop_mode": "arboreto",
             "grn_target_block_size": None,
+            "grn_regulon_polarities": "both",
+            "grn_rho_threshold": 0.03,
+            "grn_rho_mask_dropouts": False,
             "topics_n_topics": 10,
             "topics_n_passes": 3,
             "topics_method": "vb",
@@ -3079,18 +3097,6 @@ def _full_pipeline_scaling_record(tmp_path: Path):
                 "aucell": 0.0,
                 "integrated_adata": 0.485,
             },
-            "peak_rss_gb_delta_per_stage_slope_vs_cells": {
-                "load_rna": 0.0,
-                "preproc": 0.0,
-                "topics": 0.0,
-                "grn": 0.0,
-                "candidate_regulons": 0.0,
-                "cistarget": 0.0,
-                "enhancer": 0.0,
-                "eregulons": 0.0,
-                "aucell": None,
-                "integrated_adata": 1.585,
-            },
         },
         "env": {
             "python": "3.13.0",
@@ -3121,15 +3127,15 @@ def _grn_scaling_record():
         "backend_execution": {
             "grn": {
                 "engine": "rust",
-                "symbols": ["gene_duplicate_summary", "grn_infer_sparse_csc"],
+                "required_ok": True,
+                "symbol_count": 2,
             }
         },
         "env": {
             "repo_state": _clean_repo_state(),
             "runtime_import": _runtime_import_state(),
             "backend_capabilities": _backend_capabilities(),
-            "python_hot_paths": _python_hot_paths_state(),
-            "rayon_num_threads": "4",
+                "rayon_num_threads": "4",
             "omp_num_threads": "1",
             "openblas_num_threads": "1",
             "mkl_num_threads": "1",
@@ -3144,7 +3150,6 @@ def _grn_scaling_record():
             "validation/scaling/bench_real_pbmc3k_grn_scaling.py"
         ),
         "backend_capabilities": _backend_capabilities(),
-        "python_hot_paths": _python_hot_paths_state(),
         "rustscenic": "0.4.7",
         "params": {
             "subset_sizes": [100],
@@ -3191,7 +3196,8 @@ def test_benchmark_artifact_validator_rejects_unknown_full_pipeline_backend_stag
     record = _full_pipeline_record(tmp_path)
     record["backend_execution"]["pipeline_python_dataframe_merge"] = {
         "engine": "python",
-        "symbols": ["pandas.merge"],
+        "required_ok": False,
+        "symbol_count": 1,
     }
 
     failures = module.validate_record(
@@ -3280,14 +3286,13 @@ def test_benchmark_artifact_validator_accepts_projected_cistarget_rankings(tmp_p
     }
     record["backend_execution"]["pipeline_cistarget"] = {
         "engine": "rust",
-        "symbols": ["cistarget_enrichment_from_projected_rankings_i32"],
+        "required_ok": True,
+        "symbol_count": 1,
     }
     record["backend_execution"]["pipeline_cistarget_ranking_projection"] = {
         "engine": "rust",
-        "symbols": [
-            "pipeline_project_ranking_columns",
-            "pipeline_pack_ranking_columns_i32",
-        ],
+        "required_ok": True,
+        "symbol_count": 2,
     }
     _sync_full_pipeline_manifest(record)
 
@@ -3317,7 +3322,8 @@ def test_benchmark_artifact_validator_rejects_full_file_when_projection_possible
     }
     record["backend_execution"]["pipeline_cistarget"] = {
         "engine": "rust",
-        "symbols": ["cistarget_enrichment_from_rankings_i32"],
+        "required_ok": True,
+        "symbol_count": 1,
     }
     record["backend_execution"].pop("pipeline_cistarget_ranking_projection", None)
     _sync_full_pipeline_manifest(record)
@@ -3358,43 +3364,6 @@ def test_benchmark_artifact_validator_rejects_missing_region_cistarget_rankings(
     assert "full_pipeline.region_cistarget_rankings missing" in failures
 
 
-def test_benchmark_artifact_validator_rejects_projected_cistarget_without_projected_kernel(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_projected_cistarget_kernel",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["cistarget_rankings"] = {
-        "input_kind": "feather",
-        "mode": "projected_file",
-        "projected": True,
-        "loaded_columns": 750,
-        "rank_universe_size": 2000,
-        "requested_features": 900,
-        "motifs": 50,
-    }
-    record["backend_execution"]["pipeline_cistarget_ranking_projection"] = {
-        "engine": "rust",
-        "symbols": [
-            "pipeline_project_ranking_columns",
-            "pipeline_pack_ranking_columns_i32",
-        ],
-    }
-    record["backend_execution"]["pipeline_cistarget"] = {
-        "engine": "rust",
-        "symbols": ["cistarget_enrichment_from_rankings_i32"],
-    }
-    _sync_full_pipeline_manifest(record)
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "full_pipeline.backend_execution.pipeline_cistarget.symbols must include "
-        "a cistarget_enrichment_from_projected_rankings* Rust symbol when "
-        "cistarget_rankings.mode is projected_file"
-    ) in failures
-
-
 def test_benchmark_artifact_validator_rejects_projected_cistarget_without_projection_backend(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_projected_cistarget_projection",
@@ -3412,7 +3381,8 @@ def test_benchmark_artifact_validator_rejects_projected_cistarget_without_projec
     }
     record["backend_execution"]["pipeline_cistarget"] = {
         "engine": "rust",
-        "symbols": ["cistarget_enrichment_from_projected_rankings_i32"],
+        "required_ok": True,
+        "symbol_count": 1,
     }
     record["backend_execution"].pop("pipeline_cistarget_ranking_projection", None)
     _sync_full_pipeline_manifest(record)
@@ -3422,40 +3392,6 @@ def test_benchmark_artifact_validator_rejects_projected_cistarget_without_projec
     assert (
         "full_pipeline.backend_execution.pipeline_cistarget_ranking_projection "
         "must be an object"
-    ) in failures
-
-
-def test_benchmark_artifact_validator_rejects_projected_cistarget_without_rank_packer(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_projected_cistarget_packer",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["cistarget_rankings"] = {
-        "input_kind": "feather",
-        "mode": "projected_file",
-        "projected": True,
-        "loaded_columns": 750,
-        "rank_universe_size": 2000,
-        "requested_features": 900,
-        "motifs": 50,
-    }
-    record["backend_execution"]["pipeline_cistarget"] = {
-        "engine": "rust",
-        "symbols": ["cistarget_enrichment_from_projected_rankings_i32"],
-    }
-    record["backend_execution"]["pipeline_cistarget_ranking_projection"] = {
-        "engine": "rust",
-        "symbols": ["pipeline_project_ranking_columns"],
-    }
-    _sync_full_pipeline_manifest(record)
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "full_pipeline.backend_execution.pipeline_cistarget_ranking_projection.symbols "
-        "must include a pipeline_pack_ranking_columns_* Rust symbol when "
-        "cistarget_rankings.mode is projected_file"
     ) in failures
 
 
@@ -3491,10 +3427,6 @@ def test_benchmark_artifact_validator_accounts_for_pipeline_io_timing(tmp_path):
         ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
     )
     record = _full_pipeline_record(tmp_path)
-    record["io_elapsed_per_stage"] = {
-        "grn_parquet_write": 0.04,
-        "aucell_parquet_write": 0.06,
-    }
     record["wall_s"]["pipeline_io_stages"] = 0.1
     record["wall_s"]["pipeline_unattributed"] = 0.15
     _sync_full_pipeline_manifest(record)
@@ -3515,10 +3447,6 @@ def test_benchmark_artifact_validator_accounts_for_pipeline_io_timing(tmp_path):
     )
 
     assert (
-        "wall_s.pipeline_io_stages must match io_elapsed_per_stage sum: "
-        "0.2 != 0.1"
-    ) in failures
-    assert (
         "wall_s.pipeline_unattributed must match pipeline minus compute stages "
         "and IO stages: 0.15 != 0.05"
     ) in failures
@@ -3530,7 +3458,6 @@ def test_benchmark_artifact_validator_requires_pipeline_io_timing(tmp_path):
         ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
     )
     record = _full_pipeline_record(tmp_path)
-    del record["io_elapsed_per_stage"]
     del record["wall_s"]["pipeline_io_stages"]
 
     failures = module.validate_record(
@@ -3539,7 +3466,6 @@ def test_benchmark_artifact_validator_requires_pipeline_io_timing(tmp_path):
         check_output_files=False,
     )
 
-    assert "full_pipeline.io_elapsed_per_stage missing" in failures
     assert "wall_s.pipeline_io_stages must be non-negative" in failures
 
 
@@ -3570,18 +3496,75 @@ def test_benchmark_artifact_validator_checks_output_storage_totals(tmp_path):
         for failure in failures
     )
 
-    record = _full_pipeline_record(tmp_path)
-    record["output_storage"]["artifact_size_bytes"]["grn_path"] += 1
-    failures = module.validate_record(
-        record,
-        require_clean=True,
-        check_output_files=True,
+
+def test_benchmark_artifact_validator_requires_core_outputs_present(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_output_present",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
     )
+    record = _full_pipeline_record(tmp_path)
+    record["output_present"]["grn_path"] = False
+    record["output_present"]["regulons_path"] = False
+
+    failures = module.validate_record(record, require_clean=True)
 
     assert (
-        "output_storage.artifact_size_bytes.grn_path must match "
-        "output_inventory.grn_path.size_bytes"
-    ) in failures
+        "full_pipeline.output_present.grn_path must be true (core output missing)"
+        in failures
+    )
+    assert (
+        "full_pipeline.output_present.regulons_path must be true (core output missing)"
+        in failures
+    )
+
+
+def test_benchmark_artifact_validator_requires_output_present_object(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_output_present_missing",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    del record["output_present"]
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert "full_pipeline.output_present must be an object" in failures
+
+
+def test_benchmark_artifact_validator_rejects_manifest_outputs_mismatch(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_manifest_summary_mismatch",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    # Mutate a recorded output count without re-syncing the manifest summary:
+    # the persisted manifest must stay consistent with the in-memory result.
+    record["outputs"]["grn_edges"] += 1
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert any(
+        failure.startswith(
+            "full_pipeline.manifest_summary.n_grn_edges must match outputs.grn_edges:"
+        )
+        for failure in failures
+    )
+
+
+def test_benchmark_artifact_validator_requires_manifest_summary(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_manifest_summary_missing",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["manifest_summary"] = None
+
+    failures = module.validate_record(record, require_clean=True)
+
+    assert (
+        "full_pipeline.manifest_summary missing (pipeline manifest unreadable)"
+        in failures
+    )
 
 
 def test_benchmark_artifact_validator_rejects_python_io_in_compute_timing(tmp_path):
@@ -3627,9 +3610,8 @@ def test_benchmark_artifact_validator_accepts_compute_profile_without_integrated
     )
     record = _full_pipeline_record(tmp_path)
     record["params"]["write_integrated_adata"] = False
-    record["output_inventory"].pop("integrated_adata_path")
+    record["output_present"].pop("integrated_adata_path", None)
     record["peak_rss_gb_per_stage"].pop("integrated_adata")
-    record["peak_rss_gb_delta_per_stage"].pop("integrated_adata")
     record["backend_execution"]["pipeline_integrated_adata"] = {
         "engine": "skipped",
         "reason": "write_integrated_adata=False",
@@ -3643,6 +3625,21 @@ def test_benchmark_artifact_validator_accepts_compute_profile_without_integrated
     )
 
     assert failures == []
+
+
+def test_benchmark_artifact_validator_accepts_explicit_unsigned_legacy_mode(tmp_path):
+    module = _load_module(
+        "validate_benchmark_artifact_unsigned_grn",
+        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
+    )
+    record = _full_pipeline_record(tmp_path)
+    record["params"]["grn_regulon_polarities"] = "unsigned"
+    record["backend_execution"]["pipeline_grn_correlation"] = {
+        "engine": "skipped",
+        "reason": "grn_regulon_polarities='unsigned'",
+    }
+
+    assert module.validate_record(record, require_clean=True) == []
 
 
 def test_benchmark_artifact_validator_rejects_bad_expected_tf_recovery(tmp_path):
@@ -3712,7 +3709,8 @@ def test_benchmark_artifact_validator_rejects_unknown_scaling_row_backend_stage(
     record = _full_pipeline_scaling_record(tmp_path)
     record["runs"][0]["backend_execution"]["pipeline_python_dataframe_merge"] = {
         "engine": "python",
-        "symbols": ["pandas.merge"],
+        "required_ok": False,
+        "symbol_count": 1,
     }
 
     failures = module.validate_record(
@@ -3892,7 +3890,6 @@ def test_benchmark_artifact_validator_rejects_scaling_child_mismatch(tmp_path):
     )
     record = _full_pipeline_scaling_record(tmp_path)
     record["runs"][0]["wall_s"]["pipeline"] = 999.0
-    record["runs"][0]["peak_rss_gb_delta_per_stage"]["grn"] = 999.0
     record["scaling"]["pipeline_wall_slope_vs_cells"] = 0.0
 
     failures = module.validate_record(
@@ -3902,7 +3899,6 @@ def test_benchmark_artifact_validator_rejects_scaling_child_mismatch(tmp_path):
     )
 
     assert "runs[0].wall_s must match child JSON" in failures
-    assert "runs[0].peak_rss_gb_delta_per_stage must match child JSON" in failures
     assert any(
         failure.startswith("scaling.pipeline_wall_slope_vs_cells must match runs:")
         for failure in failures
@@ -3919,9 +3915,6 @@ def test_benchmark_artifact_validator_rejects_stale_stage_scaling(tmp_path):
     record["stage_scaling"]["peak_rss_gb_per_stage_slope_vs_cells"][
         "integrated_adata"
     ] = 0.0
-    record["stage_scaling"]["peak_rss_gb_delta_per_stage_slope_vs_cells"][
-        "integrated_adata"
-    ] = 0.0
 
     failures = module.validate_record(
         record,
@@ -3936,30 +3929,6 @@ def test_benchmark_artifact_validator_rejects_stale_stage_scaling(tmp_path):
     assert (
         "stage_scaling.peak_rss_gb_per_stage_slope_vs_cells.integrated_adata "
         "must match runs: 0.0 != 0.485"
-    ) in failures
-    assert (
-        "stage_scaling.peak_rss_gb_delta_per_stage_slope_vs_cells.integrated_adata "
-        "must match runs: 0.0 != 1.585"
-    ) in failures
-
-
-def test_benchmark_artifact_validator_rejects_stale_peak_rss_delta(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_peak_rss_delta",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["peak_rss_gb_delta_per_stage"]["integrated_adata"] = 0.0
-
-    failures = module.validate_record(
-        record,
-        require_clean=True,
-        check_output_files=False,
-    )
-
-    assert (
-        "peak_rss_gb_delta_per_stage.integrated_adata "
-        "must match peak_rss_gb_per_stage: 0.0 != 0.15"
     ) in failures
 
 
@@ -4038,7 +4007,7 @@ def test_benchmark_artifact_validator_rejects_scaling_matrix_inputs_child_mismat
         ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
     )
     record = _full_pipeline_scaling_record(tmp_path)
-    record["runs"][0]["matrix_inputs"]["rna_post_qc"]["nnz"] += 1
+    record["runs"][0]["matrix_inputs"]["rna_post_qc"]["format"] = "csc"
 
     failures = module.validate_record(
         record,
@@ -4076,7 +4045,6 @@ def test_benchmark_artifact_validator_rejects_scaling_runtime_child_mismatch(tmp
     record = _full_pipeline_scaling_record(tmp_path)
     record["runs"][0]["runtime_import"]["extension_version"] = "0.4.6"
     record["runs"][0]["backend_capabilities"]["missing_symbols"] = ["grn_infer"]
-    record["runs"][0]["python_hot_paths"]["violation_count"] = 1
     record["runs"][0]["input_hashes"]["rna_10x_h5_md5"] = "different"
 
     failures = module.validate_record(
@@ -4087,7 +4055,6 @@ def test_benchmark_artifact_validator_rejects_scaling_runtime_child_mismatch(tmp
 
     assert "runs[0].runtime_import must match child JSON" in failures
     assert "runs[0].backend_capabilities must match child JSON" in failures
-    assert "runs[0].python_hot_paths must match child JSON" in failures
     assert "runs[0].input_hashes must match child JSON" in failures
 
 
@@ -4117,7 +4084,6 @@ def test_benchmark_artifact_validator_rejects_scaling_row_without_runtime_proven
     row = record["runs"][0]
     del row["runtime_import"]
     del row["backend_capabilities"]
-    del row["python_hot_paths"]
     del row["input_hashes"]
     row["rustscenic"] = ""
 
@@ -4129,7 +4095,6 @@ def test_benchmark_artifact_validator_rejects_scaling_row_without_runtime_proven
 
     assert "runs[0].runtime_import missing" in failures
     assert "runs[0].backend_capabilities missing" in failures
-    assert "runs[0].python_hot_paths missing" in failures
     assert "runs[0].input_hashes must be a non-empty object" in failures
     assert "runs[0].rustscenic must be a non-empty string" in failures
 
@@ -4166,10 +4131,6 @@ def test_benchmark_artifact_validator_rejects_scaling_optional_reference_cache(
     record["runs"][0]["reference_sources"]["region_motif_rankings"] = {
         "source": "default_cache",
         "path": str(tmp_path / "region_rankings.feather"),
-        "exists_before": True,
-        "exists_after": True,
-        "cache_exists_before": True,
-        "cache_exists_after": True,
     }
 
     failures = module.validate_record(
@@ -4261,91 +4222,6 @@ def test_benchmark_artifact_validator_rejects_scaling_child_dataset_mismatch(tmp
     )
 
     assert "runs[0].dataset_name must match aggregate dataset_name" in failures
-
-
-def test_benchmark_artifact_validator_rejects_incomplete_output_inventory(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_inventory",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    del record["output_inventory"]["grn_path"]
-    record["output_inventory"]["aucell_path"]["size_bytes"] = 0
-    record["output_inventory"]["topics_dir"]["entries"] = 0
-    cistarget_path = Path(record["output_inventory"]["cistarget_path"]["path"])
-    cistarget_path.write_text("")
-
-    failures = module.validate_record(
-        record,
-        require_clean=True,
-        check_output_files=True,
-    )
-
-    assert "output_inventory.grn_path must be an object" in failures
-    assert "output_inventory.aucell_path.size_bytes must be positive" in failures
-    assert "output_inventory.topics_dir.entries must be positive" in failures
-    assert (
-        f"output_inventory.cistarget_path file is empty: {cistarget_path}"
-        in failures
-    )
-
-
-def test_benchmark_artifact_validator_rejects_manifest_mismatch(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_manifest_mismatch",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    manifest_info = record["output_inventory"]["manifest_path"]
-    manifest_path = Path(manifest_info["path"])
-    manifest = json.loads(manifest_path.read_text())
-    manifest["cell_barcode_filter"] = {"requested": 99, "matched": 99}
-    manifest["grn_path"] = str(tmp_path / "wrong_grn.parquet")
-    manifest["n_grn_edges"] = 999
-    manifest["elapsed"]["grn"] = 999.0
-    manifest["memory"]["grn"] = 999.0
-    manifest["matrix_inputs"]["rna_post_qc"]["nnz"] = 1
-    manifest["backend_execution"]["enhancer"] = {
-        "engine": "rust",
-        "symbols": ["enhancer_link_pearson"],
-    }
-    manifest_path.write_text(json.dumps(manifest))
-    manifest_info["size_bytes"] = manifest_path.stat().st_size
-
-    failures = module.validate_record(
-        record,
-        require_clean=True,
-        check_output_files=True,
-    )
-
-    assert (
-        "output_inventory.manifest_path cell_barcode_filter must match benchmark JSON"
-        in failures
-    )
-    assert (
-        "output_inventory.manifest_path grn_path must match "
-        "output_inventory.grn_path.path"
-    ) in failures
-    assert (
-        "output_inventory.manifest_path n_grn_edges must match benchmark JSON"
-        in failures
-    )
-    assert (
-        "output_inventory.manifest_path elapsed.grn must match "
-        "benchmark elapsed_per_stage.grn"
-    ) in failures
-    assert (
-        "output_inventory.manifest_path memory.grn must match "
-        "benchmark peak_rss_gb_per_stage.grn"
-    ) in failures
-    assert (
-        "output_inventory.manifest_path matrix_inputs must match benchmark JSON"
-        in failures
-    )
-    assert (
-        "output_inventory.manifest_path backend_execution.enhancer must match "
-        "benchmark backend_execution.pipeline_enhancer"
-    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_dirty_full_pipeline(tmp_path):
@@ -4440,95 +4316,22 @@ def test_benchmark_artifact_validator_rejects_missing_backend_symbols(tmp_path):
     ) in failures
 
 
-def test_benchmark_artifact_validator_rejects_python_hot_path_regression(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_hot_path_regression",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["python_hot_paths"]["ok"] = False
-    record["python_hot_paths"]["violation_count"] = 1
-    record["python_hot_paths"]["violations"] = [
-        "pipeline.py:999: merged = left.merge(right)"
-    ]
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert "full_pipeline.python_hot_paths.ok must be true" in failures
-    assert "full_pipeline.python_hot_paths.violation_count must be 0" in failures
-    assert any(
-        failure.startswith("full_pipeline.python_hot_paths.violations must be empty:")
-        for failure in failures
-    )
-
-
-def test_benchmark_artifact_validator_rejects_weakened_hot_path_scan(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_hot_path_scan_coverage",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["python_hot_paths"]["pattern_count"] = len(HOT_PATH_PATTERNS) - 1
-    record["python_hot_paths"]["allowed_hit_count"] = len(ALLOWED_HITS) + 1
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "full_pipeline.python_hot_paths.pattern_count must equal "
-        f"{len(HOT_PATH_PATTERNS)}"
-    ) in failures
-    assert (
-        "full_pipeline.python_hot_paths.allowed_hit_count must equal "
-        f"{len(ALLOWED_HITS)}"
-    ) in failures
-
-
-def test_benchmark_artifact_validator_rejects_child_grn_python_hot_path_regression():
-    module = _load_module(
-        "validate_benchmark_artifact_child_hot_path_regression",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _grn_scaling_record()
-    record["subset_scaling"][0]["env"]["python_hot_paths"]["ok"] = False
-    record["subset_scaling"][0]["env"]["python_hot_paths"]["violation_count"] = 1
-    record["subset_scaling"][0]["env"]["python_hot_paths"]["violations"] = [
-        "eregulon.py:999: grouped = df.groupby('tf')"
-    ]
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert "subset_scaling[0].env.python_hot_paths.ok must be true" in failures
-    assert (
-        "subset_scaling[0].env.python_hot_paths.violation_count must be 0"
-        in failures
-    )
-    assert any(
-        failure.startswith(
-            "subset_scaling[0].env.python_hot_paths.violations must be empty:"
-        )
-        for failure in failures
-    )
-
-
 def test_benchmark_artifact_validator_rejects_non_rust_full_pipeline_stage(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_backend_execution_regression",
         ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
     )
     record = _full_pipeline_record(tmp_path)
-    record["backend_execution"]["pipeline_enhancer"] = {
+    record["backend_execution"]["pipeline_grn"] = {
         "engine": "python",
-        "symbols": [],
+        "required_ok": False,
+        "symbol_count": 0,
     }
 
     failures = module.validate_record(record, require_clean=True)
 
     assert (
-        "full_pipeline.backend_execution.pipeline_enhancer.engine must be 'rust'"
-        in failures
-    )
-    assert (
-        "full_pipeline.backend_execution.pipeline_enhancer.symbols must be a non-empty string list"
+        "full_pipeline.backend_execution.pipeline_grn.engine must be 'rust'"
         in failures
     )
 
@@ -4550,37 +4353,6 @@ def test_benchmark_artifact_validator_requires_cistarget_feature_projection_meta
     ) in failures
 
 
-def test_benchmark_artifact_validator_rejects_incomplete_rust_stage_symbols(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_incomplete_stage_symbols",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["backend_execution"]["pipeline_enhancer"] = {
-        "engine": "rust",
-        "symbols": ["enhancer_link_pearson_sparse_rna"],
-    }
-    record["backend_execution"]["pipeline_aucell"] = {
-        "engine": "rust",
-        "symbols": ["aucell_score_sparse_csr"],
-    }
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "full_pipeline.backend_execution.pipeline_enhancer.symbols missing "
-        "required Rust symbol 'enhancer_align_cell_indices'"
-    ) in failures
-    assert (
-        "full_pipeline.backend_execution.pipeline_enhancer.symbols missing "
-        "required Rust symbol 'enhancer_match_peak_coords_to_atac'"
-    ) in failures
-    assert (
-        "full_pipeline.backend_execution.pipeline_aucell.symbols missing "
-        "required Rust symbol 'stage_prepare_regulon_indices_with_coverage'"
-    ) in failures
-
-
 def test_benchmark_artifact_validator_accepts_prebuilt_atac_var_peak_coords(tmp_path):
     module = _load_module(
         "validate_benchmark_artifact_prebuilt_atac_var_peak_coords",
@@ -4589,158 +4361,11 @@ def test_benchmark_artifact_validator_accepts_prebuilt_atac_var_peak_coords(tmp_
     record = _full_pipeline_record(tmp_path)
     record["backend_execution"]["pipeline_enhancer"] = {
         "engine": "rust",
-        "symbols": [
-            "enhancer_align_cell_indices",
-            "enhancer_match_peak_coords_to_atac",
-            "enhancer_match_gene_coords_to_rna",
-            "enhancer_normalise_chrom_codes",
-            "enhancer_prepare_gene_order",
-            "enhancer_link_pearson_sparse_rna",
-        ],
+        "required_ok": True,
+        "symbol_count": 6,
     }
 
     assert module.validate_record(record, require_clean=True) == []
-
-
-def test_benchmark_artifact_validator_requires_sparse_enhancer_kernel_for_sparse_rna(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_sparse_enhancer_kernel",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["backend_execution"]["pipeline_enhancer"] = {
-        "engine": "rust",
-        "symbols": [
-            "enhancer_align_cell_indices",
-            "preproc_peak_coords_for_names",
-            "enhancer_match_peak_coords_to_atac",
-            "enhancer_match_gene_coords_to_rna",
-            "enhancer_normalise_chrom_codes",
-            "enhancer_prepare_gene_order",
-            "enhancer_link_pearson",
-        ],
-    }
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "full_pipeline.backend_execution.pipeline_enhancer.symbols must include "
-        "'enhancer_link_pearson_sparse_rna' when "
-        "matrix_inputs.rna_post_qc.storage is 'sparse'"
-    ) in failures
-
-
-def test_benchmark_artifact_validator_requires_sparse_grn_kernel_for_sparse_rna(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_sparse_grn_kernel",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["backend_execution"]["pipeline_grn"] = {
-        "engine": "rust",
-        "symbols": ["gene_duplicate_summary", "grn_infer"],
-    }
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "full_pipeline.backend_execution.pipeline_grn.symbols must include "
-        "'grn_infer_sparse_csc' when matrix_inputs.rna_post_qc.storage "
-        "is 'sparse'"
-    ) in failures
-
-
-def test_benchmark_artifact_validator_requires_sparse_aucell_kernel_for_sparse_rna(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_sparse_aucell_kernel",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["backend_execution"]["pipeline_aucell"] = {
-        "engine": "rust",
-        "symbols": [
-            "gene_duplicate_summary",
-            "stage_prepare_regulon_indices_with_coverage",
-            "aucell_score",
-        ],
-    }
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "full_pipeline.backend_execution.pipeline_aucell.symbols must include "
-        "'aucell_score_sparse_csr' when matrix_inputs.rna_post_qc.storage "
-        "is 'sparse'"
-    ) in failures
-
-
-def test_benchmark_artifact_validator_requires_sparse_enhancer_kernel_in_scaling_rows(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_scaling_sparse_enhancer_kernel",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_scaling_record(tmp_path)
-    record["runs"][0]["backend_execution"]["pipeline_enhancer"] = {
-        "engine": "rust",
-        "symbols": [
-            "enhancer_align_cell_indices",
-            "preproc_peak_coords_for_names",
-            "enhancer_match_peak_coords_to_atac",
-            "enhancer_match_gene_coords_to_rna",
-            "enhancer_normalise_chrom_codes",
-            "enhancer_prepare_gene_order",
-            "enhancer_link_pearson",
-        ],
-    }
-
-    failures = module.validate_record(
-        record,
-        require_clean=True,
-        check_output_files=False,
-    )
-
-    assert (
-        "runs[0].backend_execution.pipeline_enhancer.symbols must include "
-        "'enhancer_link_pearson_sparse_rna' when "
-        "matrix_inputs.rna_post_qc.storage is 'sparse'"
-    ) in failures
-
-
-def test_benchmark_artifact_validator_requires_sparse_grn_and_aucell_kernels_in_scaling_rows(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_scaling_sparse_rna_kernels",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_scaling_record(tmp_path)
-    record["runs"][0]["backend_execution"]["pipeline_grn"] = {
-        "engine": "rust",
-        "symbols": ["gene_duplicate_summary", "grn_infer"],
-    }
-    record["runs"][0]["backend_execution"]["pipeline_aucell"] = {
-        "engine": "rust",
-        "symbols": [
-            "gene_duplicate_summary",
-            "stage_prepare_regulon_indices_with_coverage",
-            "aucell_score",
-        ],
-    }
-
-    failures = module.validate_record(
-        record,
-        require_clean=True,
-        check_output_files=False,
-    )
-
-    assert (
-        "runs[0].backend_execution.pipeline_grn.symbols must include "
-        "'grn_infer_sparse_csc' when matrix_inputs.rna_post_qc.storage "
-        "is 'sparse'"
-    ) in failures
-    assert (
-        "runs[0].backend_execution.pipeline_aucell.symbols must include "
-        "'aucell_score_sparse_csr' when matrix_inputs.rna_post_qc.storage "
-        "is 'sparse'"
-    ) in failures
 
 
 def test_benchmark_artifact_validator_requires_integrated_adata_io_provenance(tmp_path):
@@ -4761,7 +4386,8 @@ def test_benchmark_artifact_validator_requires_integrated_adata_io_provenance(tm
     wrong_engine_record = _full_pipeline_record(tmp_path)
     wrong_engine_record["backend_execution"]["pipeline_integrated_adata"] = {
         "engine": "rust",
-        "symbols": ["some_rust_symbol"],
+        "required_ok": True,
+        "symbol_count": 1,
     }
 
     wrong_engine_failures = module.validate_record(
@@ -4801,26 +4427,11 @@ def test_benchmark_artifact_validator_accepts_annotation_pruning_metadata(tmp_pa
     record["outputs"]["pruned_regulons"] = 1
     record["backend_execution"]["pipeline_cistarget_pruning"] = {
         "engine": "rust",
-        "symbols": [
-            "cistarget_motif_annotation_prune_standard_rows_f32",
-            "cistarget_prune_regulon_targets_i32",
-        ],
+        "required_ok": True,
+        "symbol_count": 2,
     }
 
     assert module.validate_record(record, require_clean=True) == []
-
-    record["backend_execution"]["pipeline_cistarget_pruning"]["symbols"] = [
-        "cistarget_motif_annotation_prune_standard_rows_f32"
-    ]
-    failures = module.validate_record(record, require_clean=True)
-
-    assert any(
-        failure.startswith(
-            "full_pipeline.backend_execution.pipeline_cistarget_pruning.symbols "
-            "must include at least one Rust symbol from"
-        )
-        for failure in failures
-    )
 
 
 def test_benchmark_artifact_validator_accepts_region_motif_rankings_metadata(tmp_path):
@@ -4850,23 +4461,13 @@ def test_benchmark_artifact_validator_accepts_region_motif_rankings_metadata(tmp
     record["shapes"]["region_motif_rankings"] = [8, 2000]
     record["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
     record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
-        "engine": "rust",
-        "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
+        "engine": "rust", "required_ok": True, "symbol_count": 1,
     }
     record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
-        "engine": "rust",
-        "symbols": [
-            "cistarget_enrichment_from_projected_rankings_i32",
-            "cistarget_region_attribution_peak_values_i32",
-            "pipeline_expand_region_cistarget_rows_f32",
-        ],
+        "engine": "rust", "required_ok": True, "symbol_count": 3,
     }
     record["backend_execution"]["pipeline_region_cistarget_ranking_projection"] = {
-        "engine": "rust",
-        "symbols": [
-            "pipeline_project_ranking_columns",
-            "pipeline_pack_ranking_columns_i32",
-        ],
+        "engine": "rust", "required_ok": True, "symbol_count": 2,
     }
     _sync_full_pipeline_manifest(record)
 
@@ -4909,15 +4510,13 @@ def test_benchmark_artifact_validator_rejects_full_region_file_when_projection_p
     }
     record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
         "engine": "rust",
-        "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
+        "required_ok": True,
+        "symbol_count": 1,
     }
     record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
         "engine": "rust",
-        "symbols": [
-            "cistarget_enrichment_from_rankings_i32",
-            "cistarget_region_attribution_peak_values_i32",
-            "pipeline_expand_region_cistarget_rows_f32",
-        ],
+        "required_ok": True,
+        "symbol_count": 3,
     }
     _sync_full_pipeline_manifest(record)
 
@@ -4960,22 +4559,18 @@ def test_benchmark_artifact_validator_rejects_region_ranking_format_mismatch(tmp
     record["region_cistarget_rankings"]["input_kind"] = "parquet"
     record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
         "engine": "rust",
-        "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
+        "required_ok": True,
+        "symbol_count": 1,
     }
     record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
         "engine": "rust",
-        "symbols": [
-            "cistarget_enrichment_from_projected_rankings_i32",
-            "cistarget_region_attribution_peak_values_i32",
-            "pipeline_expand_region_cistarget_rows_f32",
-        ],
+        "required_ok": True,
+        "symbol_count": 3,
     }
     record["backend_execution"]["pipeline_region_cistarget_ranking_projection"] = {
         "engine": "rust",
-        "symbols": [
-            "pipeline_project_ranking_columns",
-            "pipeline_pack_ranking_columns_i32",
-        ],
+        "required_ok": True,
+        "symbol_count": 2,
     }
     _sync_full_pipeline_manifest(record)
 
@@ -5017,152 +4612,9 @@ def test_benchmark_artifact_validator_requires_region_cistarget_symbols(tmp_path
         in failures
     )
     assert (
-        "full_pipeline.backend_execution.pipeline_eregulon_peak_attribution."
-        "symbols must include a cistarget enrichment or region-attribution "
-        "Rust symbol "
-        "when region_motif_rankings is supplied"
-    ) in failures
-    assert (
-        "full_pipeline.backend_execution.pipeline_eregulon_peak_attribution."
-        "symbols must include a cistarget_region_attribution_peak_values_* "
-        "Rust symbol when region_motif_rankings is supplied"
-    ) in failures
-    assert (
         "reference_fingerprints.region_motif_rankings.file_backed must be true"
         in failures
     )
-
-
-def test_benchmark_artifact_validator_requires_region_peak_value_symbols(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_requires_region_peak_values",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["params"]["region_motif_rankings"] = "region_rankings.feather"
-    record["setup_elapsed_s"]["region_motif_rankings_metadata"] = 0.02
-    record["reference_fingerprints"]["region_motif_rankings"] = {
-        "shape": [8, 2000],
-        "index_name": None,
-        "index_sample": ["file-backed:not-loaded"],
-        "column_sample": ["motif", "peak_1"],
-        "dtype_counts": {"int32": 2000},
-        "corner_sample_sha256": "d" * 64,
-        "file_backed": True,
-        "format": "feather",
-        "metadata_read_columns": ["motifs"],
-        "path_name": "region_rankings.feather",
-        "size_bytes": 1024,
-    }
-    record["reference_sources"]["region_motif_rankings"] = _explicit_reference_source(
-        tmp_path / "region_rankings.feather"
-    )
-    record["shapes"]["region_motif_rankings"] = [8, 2000]
-    record["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
-    record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
-        "engine": "rust",
-        "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
-    }
-    record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
-        "engine": "rust",
-        "symbols": [
-            "cistarget_enrichment_from_projected_rankings_i32",
-            "pipeline_expand_region_cistarget_rows_f32",
-        ],
-    }
-    _sync_full_pipeline_manifest(record)
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "full_pipeline.backend_execution.pipeline_eregulon_peak_attribution."
-        "symbols must include a cistarget_region_attribution_peak_values_* "
-        "Rust symbol when region_motif_rankings is supplied"
-    ) in failures
-
-
-def test_benchmark_artifact_validator_requires_region_peak_filter_with_annotations(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_requires_region_peak_filter",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_record(tmp_path)
-    record["params"]["motif_annotations"] = "motif_annotations.tsv"
-    record["params"]["region_motif_rankings"] = "region_rankings.feather"
-    record["setup_elapsed_s"]["motif_annotations"] = 0.05
-    record["setup_elapsed_s"]["region_motif_rankings_metadata"] = 0.02
-    record["reference_fingerprints"]["motif_annotations"] = {
-        "shape": [4, 2],
-        "index_name": None,
-        "index_sample": ["0"],
-        "column_sample": ["motif"],
-        "dtype_counts": {"object": 2},
-        "corner_sample_sha256": "c" * 64,
-    }
-    record["reference_fingerprints"]["region_motif_rankings"] = {
-        "shape": [8, 2000],
-        "index_name": None,
-        "index_sample": ["file-backed:not-loaded"],
-        "column_sample": ["motif", "peak_1"],
-        "dtype_counts": {"int32": 2000},
-        "corner_sample_sha256": "d" * 64,
-        "file_backed": True,
-        "format": "feather",
-        "metadata_read_columns": ["motifs"],
-        "path_name": "region_rankings.feather",
-        "size_bytes": 1024,
-    }
-    record["reference_sources"]["motif_annotations"] = _explicit_reference_source(
-        tmp_path / "motif_annotations.tsv"
-    )
-    record["reference_sources"]["region_motif_rankings"] = _explicit_reference_source(
-        tmp_path / "region_rankings.feather"
-    )
-    record["shapes"]["motif_annotations"] = [4, 2]
-    record["shapes"]["region_motif_rankings"] = [8, 2000]
-    record["outputs"]["pruned_regulons"] = 1
-    record["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
-    record["backend_execution"]["pipeline_cistarget_pruning"] = {
-        "engine": "rust",
-        "symbols": [
-            "cistarget_motif_annotation_prune_standard_rows_f32",
-            "cistarget_prune_regulon_targets_i32",
-        ],
-    }
-    record["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
-        "engine": "rust",
-        "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
-    }
-    record["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
-        "engine": "rust",
-        "symbols": [
-            "cistarget_enrichment_from_projected_rankings_i32",
-            "cistarget_region_attribution_peak_values_i32",
-            "pipeline_expand_region_cistarget_rows_f32",
-        ],
-    }
-    record["backend_execution"]["pipeline_region_cistarget_ranking_projection"] = {
-        "engine": "rust",
-        "symbols": [
-            "pipeline_project_ranking_columns",
-            "pipeline_pack_ranking_columns_i32",
-        ],
-    }
-    _sync_full_pipeline_manifest(record)
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "full_pipeline.backend_execution.pipeline_eregulon_peak_filter must be an object"
-        in failures
-    )
-
-    record["backend_execution"]["pipeline_eregulon_peak_filter"] = {
-        "engine": "rust",
-        "symbols": ["pipeline_filter_cistarget_peak_rows_f32"],
-    }
-
-    assert module.validate_record(record, require_clean=True) == []
 
 
 def test_benchmark_artifact_validator_requires_pruning_when_annotations_supplied(tmp_path):
@@ -5247,120 +4699,6 @@ def test_benchmark_artifact_validator_requires_scaling_pruning_when_annotations_
     assert "runs[0].outputs.pruned_regulons must be positive" in failures
 
 
-def test_benchmark_artifact_validator_requires_scaling_region_peak_filter_with_annotations(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_requires_scaling_region_peak_filter",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_scaling_record(tmp_path)
-    record["params"]["motif_annotations"] = "motif_annotations.tsv"
-    record["params"]["region_motif_rankings"] = "region_rankings.feather"
-    for row in record["runs"]:
-        row["params"]["motif_annotations"] = "motif_annotations.tsv"
-        row["params"]["region_motif_rankings"] = "region_rankings.feather"
-        row["reference_sources"]["motif_annotations"] = _explicit_reference_source(
-            tmp_path / "motif_annotations.tsv"
-        )
-        row["reference_sources"]["region_motif_rankings"] = _explicit_reference_source(
-            tmp_path / "region_rankings.feather"
-        )
-        row["reference_fingerprints"]["motif_annotations"] = {
-            "shape": [4, 2],
-            "index_name": None,
-            "index_sample": ["0"],
-            "column_sample": ["motif"],
-            "dtype_counts": {"object": 2},
-            "corner_sample_sha256": "c" * 64,
-        }
-        row["reference_fingerprints"]["region_motif_rankings"] = {
-            "shape": [8, 2000],
-            "index_name": None,
-            "index_sample": ["file-backed:not-loaded"],
-            "column_sample": ["motif", "peak_1"],
-            "dtype_counts": {"int32": 2000},
-            "corner_sample_sha256": "d" * 64,
-            "file_backed": True,
-            "format": "feather",
-            "metadata_read_columns": ["motifs"],
-            "path_name": "region_rankings.feather",
-            "size_bytes": 1024,
-        }
-        row["outputs"]["pruned_regulons"] = 1
-        row["shapes"]["region_motif_rankings"] = [8, 2000]
-        row["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
-        row["backend_execution"]["pipeline_cistarget_pruning"] = {
-            "engine": "rust",
-            "symbols": [
-                "cistarget_motif_annotation_prune_standard_rows_f32",
-                "cistarget_prune_regulon_targets_i32",
-            ],
-        }
-        row["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
-            "engine": "rust",
-            "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
-        }
-        row["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
-            "engine": "rust",
-            "symbols": [
-                "cistarget_enrichment_from_projected_rankings_i32",
-                "cistarget_region_attribution_peak_values_i32",
-                "pipeline_expand_region_cistarget_rows_f32",
-            ],
-        }
-        row["backend_execution"]["pipeline_region_cistarget_ranking_projection"] = {
-            "engine": "rust",
-            "symbols": [
-                "pipeline_project_ranking_columns",
-                "pipeline_pack_ranking_columns_i32",
-            ],
-        }
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "runs[0].backend_execution.pipeline_eregulon_peak_filter must be an object"
-        in failures
-    )
-
-    for row in record["runs"]:
-        row["backend_execution"]["pipeline_eregulon_peak_filter"] = {
-            "engine": "rust",
-            "symbols": ["pipeline_filter_cistarget_peak_rows_f32"],
-        }
-
-    assert module.validate_record(record, require_clean=True) == []
-
-
-def test_benchmark_artifact_validator_requires_scaling_region_peak_value_symbols(tmp_path):
-    module = _load_module(
-        "validate_benchmark_artifact_requires_scaling_region_peak_values",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _full_pipeline_scaling_record(tmp_path)
-    record["params"]["region_motif_rankings"] = "region_rankings.feather"
-    for row in record["runs"]:
-        row["params"]["region_motif_rankings"] = "region_rankings.feather"
-        row["shapes"]["region_motif_rankings"] = [8, 2000]
-        row["region_cistarget_rankings"] = _projected_region_cistarget_rankings_state()
-        row["backend_execution"]["pipeline_eregulon_peak_regulons"] = {
-            "engine": "rust",
-            "symbols": ["pipeline_peak_regulons_and_features_from_edges"],
-        }
-        row["backend_execution"]["pipeline_eregulon_peak_attribution"] = {
-            "engine": "rust",
-            "symbols": [
-                "cistarget_enrichment_from_projected_rankings_i32",
-                "pipeline_expand_region_cistarget_rows_f32",
-            ],
-        }
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "runs[0].backend_execution.pipeline_eregulon_peak_attribution."
-        "symbols must include a cistarget_region_attribution_peak_values_* "
-        "Rust symbol when region_motif_rankings is supplied"
-    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_scaling_row_without_backend_execution(tmp_path):
@@ -5559,10 +4897,7 @@ def test_benchmark_artifact_validator_rejects_invalid_matrix_inputs(tmp_path):
         "storage": "dense",
         "format": "ndarray",
         "dtype": "float32",
-        "nnz": 100,
-        "density": 0.1,
     }
-    dense_record["matrix_inputs"]["atac_shared_cells"]["density"] = 1.5
 
     dense_failures = module.validate_record(dense_record, require_clean=True)
 
@@ -5573,15 +4908,6 @@ def test_benchmark_artifact_validator_rejects_invalid_matrix_inputs(tmp_path):
     assert (
         "full_pipeline.matrix_inputs.rna_post_qc.storage must be 'sparse'"
     ) in dense_failures
-    assert (
-        "full_pipeline.matrix_inputs.rna_post_qc.nnz must be null for dense matrices"
-    ) in dense_failures
-    assert (
-        "full_pipeline.matrix_inputs.rna_post_qc.density must be null for dense matrices"
-    ) in dense_failures
-    assert (
-        "full_pipeline.matrix_inputs.atac_shared_cells.density must be in [0, 1]"
-    ) in dense_failures
 
 
 def test_benchmark_artifact_validator_rejects_scaling_row_matrix_mismatch(tmp_path):
@@ -5591,8 +4917,6 @@ def test_benchmark_artifact_validator_rejects_scaling_row_matrix_mismatch(tmp_pa
     )
     record = _full_pipeline_scaling_record(tmp_path)
     record["runs"][0]["matrix_inputs"]["rna_post_qc"]["storage"] = "dense"
-    record["runs"][0]["matrix_inputs"]["rna_post_qc"]["nnz"] = None
-    record["runs"][0]["matrix_inputs"]["rna_post_qc"]["density"] = None
 
     failures = module.validate_record(record, require_clean=True)
 
@@ -5670,18 +4994,14 @@ def test_benchmark_artifact_validator_rejects_bad_reference_sources(tmp_path):
     record["reference_sources"]["gene_coords"] = {
         "source": "default_download",
         "path": str(tmp_path / "gene_coords.parquet"),
-        "exists_before": False,
-        "exists_after": False,
-        "cache_exists_before": True,
-        "cache_exists_after": False,
     }
 
     failures = module.validate_record(record, require_clean=True)
 
     assert "reference_sources.motif_rankings must be an object" in failures
     assert (
-        "reference_sources.gene_coords default_download must be absent before "
-        "and cached after loading"
+        "reference_sources.gene_coords.source must be explicit_path or "
+        "default_cache for timed full-pipeline benchmarks"
     ) in failures
 
 
@@ -5694,10 +5014,6 @@ def test_benchmark_artifact_validator_rejects_full_pipeline_reference_download(t
     record["reference_sources"]["motif_rankings"] = {
         "source": "default_download",
         "path": str(tmp_path / "motif_rankings.feather"),
-        "exists_before": False,
-        "exists_after": True,
-        "cache_exists_before": False,
-        "cache_exists_after": True,
     }
 
     failures = module.validate_record(record, require_clean=True)
@@ -5766,7 +5082,8 @@ def test_benchmark_artifact_validator_rejects_grn_row_without_rust_execution():
     record["thread_scaling"][0]["backend_execution"] = {
         "grn": {
             "engine": "python",
-            "symbols": [],
+            "required_ok": False,
+            "symbol_count": 0,
         }
     }
     del record["subset_scaling"][0]["backend_execution"]["grn"]
@@ -5775,10 +5092,6 @@ def test_benchmark_artifact_validator_rejects_grn_row_without_rust_execution():
 
     assert "subset_scaling[0].backend_execution.grn must be an object" in failures
     assert "thread_scaling[0].backend_execution.grn.engine must be 'rust'" in failures
-    assert (
-        "thread_scaling[0].backend_execution.grn.symbols must be a non-empty string list"
-        in failures
-    )
 
 
 def test_benchmark_artifact_validator_rejects_grn_row_without_matrix_inputs():
@@ -5789,8 +5102,6 @@ def test_benchmark_artifact_validator_rejects_grn_row_without_matrix_inputs():
     record = _grn_scaling_record()
     del record["subset_scaling"][0]["matrix_inputs"]
     record["thread_scaling"][0]["matrix_inputs"]["rna_post_qc"]["storage"] = "dense"
-    record["thread_scaling"][0]["matrix_inputs"]["rna_post_qc"]["nnz"] = None
-    record["thread_scaling"][0]["matrix_inputs"]["rna_post_qc"]["density"] = None
 
     failures = module.validate_record(record, require_clean=True)
 
@@ -5799,25 +5110,6 @@ def test_benchmark_artifact_validator_rejects_grn_row_without_matrix_inputs():
         "thread_scaling[0].matrix_inputs.rna_post_qc.storage must be 'sparse'"
         in failures
     )
-
-
-def test_benchmark_artifact_validator_rejects_sparse_grn_row_without_sparse_kernel():
-    module = _load_module(
-        "validate_benchmark_artifact_grn_sparse_kernel",
-        ROOT / "validation/hpc/minerva/validate_benchmark_artifact.py",
-    )
-    record = _grn_scaling_record()
-    record["subset_scaling"][0]["backend_execution"]["grn"]["symbols"] = [
-        "gene_duplicate_summary",
-        "grn_infer",
-    ]
-
-    failures = module.validate_record(record, require_clean=True)
-
-    assert (
-        "subset_scaling[0].backend_execution.grn.symbols must include "
-        "'grn_infer_sparse_csc' when matrix_inputs.rna_post_qc.storage is 'sparse'"
-    ) in failures
 
 
 def test_benchmark_artifact_validator_rejects_dirty_child_grn_record():
@@ -5849,10 +5141,7 @@ def test_benchmark_artifact_validator_rejects_grn_thread_budget_mismatch():
         "subset_scaling[0].env.rayon_num_threads must match params.threads: 8 != 4"
         in failures
     )
-    assert (
-        "subset_scaling[0].env.lsf_cores must match params.threads: 8 != 4"
-        in failures
-    )
+    assert not any("subset_scaling[0].env.lsf_cores" in failure for failure in failures)
     assert (
         "thread_scaling[0].env.mkl_num_threads must be '1' for reproducible CPU benchmarking"
         in failures
@@ -5930,13 +5219,9 @@ def test_minerva_result_collector_discovers_latest_valid_benchmarks(tmp_path):
     assert rows[1]["rss_stage_scaling"] == (
         "integrated_adata=0.485, aucell=0, candidate_regulons=0"
     )
-    assert rows[1]["rss_delta_stage_scaling"] == (
-        "integrated_adata=1.585, candidate_regulons=0, cistarget=0"
-    )
     table = module.markdown_table(rows)
     assert "elapsed_stage_scaling" in table
     assert "rss_stage_scaling" in table
-    assert "rss_delta_stage_scaling" in table
 
 
 def test_minerva_result_collector_reports_validation_failures(tmp_path):

@@ -102,7 +102,9 @@ class PipelineResult:
     n_eregulon_rows: int | None = None
     n_eregulons: int | None = None
     aucell_shape: list[int] | None = None
-    regulon_source: str = "candidate_grn_top_targets"
+    regulon_source: str = "candidate_grn_activator_repressor"
+    grn_fit: dict = field(default_factory=dict)
+    grn_correlation: dict = field(default_factory=dict)
     backend_execution: dict = field(default_factory=dict)
     matrix_inputs: dict = field(default_factory=dict)
     cistarget_rankings: dict = field(default_factory=dict)
@@ -139,8 +141,13 @@ def run(
     gene_coords: str | Path | pd.DataFrame | None = None,
     grn_n_estimators: int = 500,
     grn_max_features: float = 0.1,
+    grn_early_stop_window: int = 25,
+    grn_early_stop_mode: str = "arboreto",
     grn_target_block_size: int | None = None,
     grn_top_targets: int = 50,
+    grn_regulon_polarities: str = "both",
+    grn_rho_threshold: float = 0.03,
+    grn_rho_mask_dropouts: bool = False,
     aucell_top_frac: float = 0.05,
     topics_n_topics: int = 30,
     topics_n_passes: int = 3,
@@ -232,11 +239,17 @@ def run(
         ``0.1`` matches arboreto/SCENIC defaults. Lower values can be
         much faster on high-TF datasets, but change edge rankings and
         should be treated as a speed/quality tradeoff.
+    grn_early_stop_mode
+        ``"arboreto"`` (default) uses the trailing mean of OOB improvements.
+        ``"legacy_inbag"`` reproduces historical RustScenic early stopping.
+    grn_regulon_polarities
+        ``"both"`` (default) computes TF-target Pearson correlations and
+        emits separate ``<TF>_activator`` and ``<TF>_repressor`` regulons.
+        ``"activating"`` keeps only positive-correlation regulons.
+        ``"unsigned"`` is the explicit legacy path and skips
+        dichotomisation.
     grn_target_block_size
-        Optional target block width passed through to
-        ``rustscenic.grn.infer``. ``None`` uses the adaptive default,
-        which shrinks the block at high cell counts to reduce
-        memory-bandwidth pressure.
+        Retained for API compatibility. Flat GRN scheduling ignores the value.
     write_integrated_adata
         Write ``rna_with_regulons.h5ad`` with AUCell scores attached to
         ``obs``. Default ``True`` preserves the full end-to-end artifact.
@@ -252,6 +265,34 @@ def run(
     import anndata as ad
     import rustscenic.aucell
     import rustscenic.grn
+
+    grn_regulon_polarities = str(grn_regulon_polarities)
+    if grn_regulon_polarities not in {"both", "activating", "unsigned"}:
+        raise ValueError(
+            "grn_regulon_polarities must be 'both', 'activating', or "
+            f"'unsigned', got {grn_regulon_polarities!r}"
+        )
+    grn_early_stop_mode = str(grn_early_stop_mode)
+    if grn_early_stop_mode not in {"arboreto", "legacy_inbag"}:
+        raise ValueError(
+            "grn_early_stop_mode must be 'arboreto' or 'legacy_inbag', "
+            f"got {grn_early_stop_mode!r}"
+        )
+    grn_early_stop_window = int(grn_early_stop_window)
+    if grn_early_stop_window < 0:
+        raise ValueError("grn_early_stop_window must be non-negative")
+    grn_top_targets = int(grn_top_targets)
+    if grn_top_targets < 1:
+        raise ValueError(f"grn_top_targets must be >= 1, got {grn_top_targets}")
+    grn_rho_threshold = float(grn_rho_threshold)
+    if (
+        grn_regulon_polarities != "unsigned"
+        and (not np.isfinite(grn_rho_threshold) or grn_rho_threshold <= 0.0)
+    ):
+        raise ValueError(
+            "grn_rho_threshold must be finite and greater than zero for "
+            f"signed regulons, got {grn_rho_threshold}"
+        )
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -418,6 +459,8 @@ def run(
         tf_names=tf_list,
         n_estimators=grn_n_estimators,
         max_features=grn_max_features,
+        early_stop_window=grn_early_stop_window,
+        early_stop_mode=grn_early_stop_mode,
         target_block_size=grn_target_block_size,
         seed=seed,
         verbose=False,
@@ -428,6 +471,47 @@ def run(
         "grn_infer",
         "grn_infer_sparse_csc",
     )
+    grn_fit = dict(grn.attrs.get("grn_fit", {}))
+    if grn_regulon_polarities == "unsigned":
+        grn_correlation = {}
+        backend_execution["grn_correlation"] = _skipped_execution(
+            "grn_regulon_polarities='unsigned'"
+        )
+        regulon_source = "candidate_grn_top_targets"
+        grn_regulon_edges = grn
+        log("      correlation split disabled explicitly (unsigned regulons)")
+    else:
+        t_corr = time.perf_counter()
+        grn = rustscenic.grn.add_correlation(
+            grn,
+            adata_rna,
+            rho_threshold=grn_rho_threshold,
+            mask_dropouts=grn_rho_mask_dropouts,
+        )
+        elapsed["grn_correlation"] = time.perf_counter() - t_corr
+        backend_execution["grn_correlation"] = _rust_execution_from_attrs(
+            grn,
+            "grn_correlations_dense",
+            "grn_correlations_sparse_csc",
+        )
+        grn_correlation = dict(grn.attrs.get("correlation", {}))
+        regulon_source = (
+            "candidate_grn_activator_repressor"
+            if grn_regulon_polarities == "both"
+            else "candidate_grn_activator"
+        )
+        grn_regulon_edges = grn[
+            grn["regulation"] != 0
+            if grn_regulon_polarities == "both"
+            else grn["regulation"] > 0
+        ]
+        log(
+            "      Pearson split in "
+            f"{elapsed['grn_correlation']:.1f}s: "
+            f"{grn_correlation.get('activating_edges', 0):,} activating, "
+            f"{grn_correlation.get('repressing_edges', 0):,} repressing, "
+            f"{grn_correlation.get('indeterminate_edges', 0):,} indeterminate"
+        )
     n_grn_edges = int(len(grn))
     grn_path = output_dir / "grn.parquet"
     time_io("grn_parquet_write", lambda: grn.to_parquet(grn_path, index=False))
@@ -435,15 +519,21 @@ def run(
     mark_memory("grn")
 
     # ---- 4. build candidate regulons ----
-    if grn_top_targets < 1:
-        raise ValueError(f"grn_top_targets must be >= 1, got {grn_top_targets}")
     log(f"[5/8] candidate regulons: top-{grn_top_targets} targets per TF")
     min_targets_for_candidate = min(10, grn_top_targets)
-    candidate_regulons = _candidate_regulons_from_grn(
-        grn,
-        top_targets=grn_top_targets,
-        min_targets=min_targets_for_candidate,
-    )
+    if grn_regulon_polarities == "unsigned":
+        candidate_regulons = _candidate_regulons_from_grn(
+            grn_regulon_edges,
+            top_targets=grn_top_targets,
+            min_targets=min_targets_for_candidate,
+        )
+    else:
+        candidate_regulons = rustscenic.grn.build_regulons(
+            grn_regulon_edges,
+            top_targets_per_tf=grn_top_targets,
+            min_targets=min_targets_for_candidate,
+            include_repressors=grn_regulon_polarities == "both",
+        )
     backend_execution["candidate_regulons"] = _rust_execution(
         "pipeline_candidate_regulons_from_grn"
     )
@@ -454,7 +544,6 @@ def run(
     )
     candidate_regulon_pairs = list(iter_regulon_pairs(candidate_regulons))
     regulons = dict(candidate_regulons)
-    regulon_source = "candidate_grn_top_targets"
     pruned_regulons_path = None
     n_pruned_regulons: int | None = None
     log(
@@ -642,7 +731,7 @@ def run(
                 )
                 regulons = pruned_regulons
                 enriched_for_eregulons = pruned_enriched
-                regulon_source = "motif_annotation_pruned"
+                regulon_source = f"motif_annotation_pruned_{grn_regulon_polarities}"
                 log(
                     f"      {len(pruned_regulons)} pruned regulons from "
                     f"{len(pruned_enriched)} annotation-supported motif rows"
@@ -669,7 +758,7 @@ def run(
                     UserWarning,
                     stacklevel=2,
                 )
-                regulon_source = "candidate_grn_top_targets_after_failed_pruning"
+                regulon_source = f"{regulon_source}_after_failed_pruning"
                 # Remove any pruned_regulons.json left over from a prior
                 # successful-pruning run on the same output_dir. The
                 # PipelineResult and manifest already report None for the
@@ -765,6 +854,11 @@ def run(
                 f"{elapsed['enhancer']:.1f}s"
             )
             mark_memory("enhancer")
+        # The ATAC matrix is persisted to disk (atac_h5ad_write) and is not used
+        # past the enhancer stage; free it AND its alias here so an idle ~2GB
+        # hold cannot inflate peak RSS through the eRegulon/final-write tail.
+        # (del adata_atac alone is a no-op while adata_atac_for_link aliases it.)
+        del adata_atac, adata_atac_for_link
     elif have_atac and gene_coords is None:
         log("[7/8] enhancer: skipped (no gene_coords supplied)")
     else:
@@ -788,7 +882,7 @@ def run(
             import rustscenic.cistarget
             log("      using region-based cistarget for exact peak attribution")
             peak_regulons, needed_peaks = _peak_regulons_and_projection_features(
-                grn, enhancer_links
+                grn_regulon_edges, enhancer_links
             )
             backend_execution["eregulon_peak_regulons"] = _rust_execution(
                 "pipeline_peak_regulons_and_features_from_edges"
@@ -910,7 +1004,7 @@ def run(
                     "pipeline_attribute_peaks_to_cistarget_rows_f64",
                 )
         eregulons_df = rustscenic.eregulon.build_eregulons_dataframe(
-            grn,
+            _eregulon_grn_from_regulons(regulons),
             enriched_with_peaks,
             enhancer_links,
             min_target_genes=eregulon_min_target_genes,
@@ -1002,6 +1096,8 @@ def run(
         n_eregulons=n_eregulons,
         aucell_shape=aucell_shape,
         regulon_source=regulon_source,
+        grn_fit=grn_fit,
+        grn_correlation=grn_correlation,
         backend_execution=backend_execution,
         matrix_inputs=matrix_inputs,
         cistarget_rankings=cistarget_rankings,
@@ -1064,6 +1160,23 @@ def _candidate_regulons_from_grn(
     return dict(zip(names, target_lists, strict=True))
 
 
+def _eregulon_grn_from_regulons(
+    regulons: dict[str, list[str]],
+) -> pd.DataFrame:
+    """Compact signed target table for eRegulon intersection."""
+    rows: list[tuple[str, str]] = []
+    for name, targets in regulons.items():
+        bare_tf = tf_from_regulon_name(name)
+        if name.endswith("_activator") or name.endswith("(+)"):
+            tf_key = f"{bare_tf}_activator"
+        elif name.endswith("_repressor") or name.endswith("(-)"):
+            tf_key = f"{bare_tf}_repressor"
+        else:
+            tf_key = bare_tf
+        rows.extend((tf_key, target) for target in targets)
+    return pd.DataFrame(rows, columns=["TF", "target"])
+
+
 def _peak_regulons_from_edges(
     grn: pd.DataFrame,
     enhancer_links: pd.DataFrame,
@@ -1076,13 +1189,24 @@ def _peak_regulons_and_projection_features(
     grn: pd.DataFrame,
     enhancer_links: pd.DataFrame,
 ) -> tuple[list[tuple[str, list[str]]], list[str]]:
-    names, peaks, features = _pipeline_peak_regulons_and_features(
-        string_list(grn["TF"]),
-        string_list(grn["target"]),
-        string_list(enhancer_links["gene"]),
-        string_list(enhancer_links["peak_id"]),
+    def build(frame: pd.DataFrame, suffix: str | None):
+        names, peaks, features = _pipeline_peak_regulons_and_features(
+            string_list(frame["TF"]),
+            string_list(frame["target"]),
+            string_list(enhancer_links["gene"]),
+            string_list(enhancer_links["peak_id"]),
+        )
+        if suffix is not None:
+            names = [f"{name[:-len('_regulon')]}_{suffix}" for name in names]
+        return list(zip(names, peaks, strict=True)), list(features)
+
+    if "regulation" not in grn.columns:
+        return build(grn, None)
+    activating, activating_features = build(grn[grn["regulation"] > 0], "activator")
+    repressing, repressing_features = build(grn[grn["regulation"] < 0], "repressor")
+    return activating + repressing, sorted(
+        set(activating_features).union(repressing_features)
     )
-    return list(zip(names, peaks, strict=True)), list(features)
 
 
 def _coerce_adata(rna):

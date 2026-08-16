@@ -16,6 +16,7 @@ nav:
   - Installation: installation.md
   - Quickstart: quickstart.md
   - API Map: api.md
+  - HPC operation: hpc.md
   - Benchmarks: benchmarks.md
   - Validation: validation.md
   - Lab Adoption: adoption.md

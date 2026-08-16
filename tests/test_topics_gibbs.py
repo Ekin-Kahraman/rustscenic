@@ -282,6 +282,7 @@ def test_coherence_npmi_passes_numpy_csr_buffers_to_extension(monkeypatch):
             topic_values,
             index=["Topic_0", "Topic_1"],
             columns=peaks,
+            copy=False,
         ),
         n_topics=2,
     )

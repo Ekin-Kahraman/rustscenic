@@ -21,7 +21,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from validation.backend_requirements import backend_capabilities
-from validation.python_hot_paths import hot_path_state
+from validation.path_provenance import portable_argv, portable_path
 from validation.process_memory import peak_rss_gb
 from validation.repo_cleanliness import repo_state_from_git_outputs
 
@@ -81,9 +81,9 @@ def runtime_import_state() -> dict[str, Any]:
     return {
         "package_version": package_version,
         "extension_version": extension_version,
-        "package_file": package_file,
+        "package_file": portable_path(package_file, REPO_ROOT),
         "package_under_repo": _path_under(package_file, REPO_ROOT),
-        "extension_file": extension_file,
+        "extension_file": portable_path(extension_file, REPO_ROOT),
         "extension_under_repo": _path_under(extension_file, REPO_ROOT),
         "extension_error": extension_error,
     }
@@ -92,12 +92,12 @@ def runtime_import_state() -> dict[str, Any]:
 def invocation_state(argv: list[str] | None) -> dict[str, Any]:
     script = Path(__file__).resolve()
     args = [str(value) for value in (sys.argv[1:] if argv is None else argv)]
+    python = Path(sys.executable).name
+    portable_script = portable_path(script, REPO_ROOT)
     return {
-        "python": sys.executable,
-        "script": str(script),
-        "cwd": str(Path.cwd()),
-        "argv": args,
-        "command": [sys.executable, str(script), *args],
+        "python": python,
+        "script": portable_script,
+        "command": [python, portable_script, *portable_argv(args, REPO_ROOT)],
     }
 
 
@@ -109,8 +109,22 @@ def backend_execution_for_grn(grn) -> dict[str, Any]:
         and isinstance(backend.get("symbols"), list)
         and all(isinstance(symbol, str) and symbol for symbol in backend["symbols"])
     ):
-        return {"grn": {"engine": "rust", "symbols": list(backend["symbols"])}}
-    return {"grn": {"engine": "unknown", "reason": "missing GRN Rust backend metadata"}}
+        return {
+            "grn": {
+                "engine": "rust",
+                "required_ok": True,
+                "symbol_count": len(backend["symbols"]),
+                "symbols": list(backend["symbols"]),
+            }
+        }
+    return {
+        "grn": {
+            "engine": "unknown",
+            "required_ok": False,
+            "symbol_count": 0,
+            "reason": "missing GRN Rust backend metadata",
+        }
+    }
 
 
 def configure_thread_env(threads: int) -> None:
@@ -122,11 +136,6 @@ def configure_thread_env(threads: int) -> None:
 
 def benchmark_env() -> dict[str, Any]:
     env = {
-        "python": platform.python_version(),
-        "rustscenic": version("rustscenic"),
-        "scanpy": version("scanpy"),
-        "anndata": version("anndata"),
-        "host": platform.node(),
         "rayon_num_threads": os.environ.get("RAYON_NUM_THREADS"),
         "omp_num_threads": os.environ.get("OMP_NUM_THREADS"),
         "openblas_num_threads": os.environ.get("OPENBLAS_NUM_THREADS"),
@@ -176,18 +185,12 @@ def matrix_profile(adata) -> dict[str, Any]:
             "storage": "sparse",
             "format": x.getformat(),
             "dtype": str(x.dtype),
-            "nnz": int(x.nnz),
-            "density": round(float(x.nnz) / float(x.shape[0] * x.shape[1]), 8)
-            if x.shape[0] and x.shape[1]
-            else 0.0,
         }
     return {
         "shape": [int(x.shape[0]), int(x.shape[1])],
         "storage": "dense",
         "format": "ndarray",
         "dtype": str(x.dtype),
-        "nnz": None,
-        "density": None,
     }
 
 
@@ -218,6 +221,7 @@ def run_one(args: argparse.Namespace) -> dict[str, Any]:
         subsample=args.subsample,
         max_depth=args.max_depth,
         early_stop_window=args.early_stop_window,
+        early_stop_mode=args.early_stop_mode,
         target_block_size=args.target_block_size,
         seed=args.seed,
         verbose=False,
@@ -238,6 +242,8 @@ def run_one(args: argparse.Namespace) -> dict[str, Any]:
         "subsample": float(args.subsample),
         "max_depth": int(args.max_depth),
         "early_stop_window": int(args.early_stop_window),
+        "early_stop_mode": args.early_stop_mode,
+        "grn_fit": dict(grn.attrs.get("grn_fit", {})),
         "target_block_size": args.target_block_size,
         "load_qc_wall_s": round(load_wall, 3),
         "grn_wall_s": round(grn_wall, 3),
@@ -252,7 +258,6 @@ def run_one(args: argparse.Namespace) -> dict[str, Any]:
             "repo_state": repo_state(),
             "runtime_import": runtime_import_state(),
             "backend_capabilities": backend_capabilities(),
-            "python_hot_paths": hot_path_state(),
         },
     }
     return out
@@ -320,6 +325,8 @@ def child_cmd(args: argparse.Namespace, *, n_cells: int, threads: int, run_kind:
         str(args.max_depth),
         "--early-stop-window",
         str(args.early_stop_window),
+        "--early-stop-mode",
+        args.early_stop_mode,
         "--seed",
         str(args.seed),
     ]
@@ -403,12 +410,12 @@ def coordinator(args: argparse.Namespace) -> dict[str, Any]:
 
     payload = {
         "benchmark": "real_pbmc3k_grn_scaling",
+        "path_policy": "portable",
         "dataset": "10x PBMC unsorted 3k multiome RNA post-QC",
         "repo_state": state,
         "runtime_import": runtime_import_state(),
         "invocation": getattr(args, "_invocation", invocation_state(None)),
         "backend_capabilities": backend_capabilities(),
-        "python_hot_paths": hot_path_state(),
         "rustscenic": version("rustscenic"),
         "params": {
             "subset_sizes": args.subset_sizes,
@@ -421,6 +428,7 @@ def coordinator(args: argparse.Namespace) -> dict[str, Any]:
             "subsample": args.subsample,
             "max_depth": args.max_depth,
             "early_stop_window": args.early_stop_window,
+            "early_stop_mode": args.early_stop_mode,
             "target_block_size": args.target_block_size,
             "seed": args.seed,
         },
@@ -462,13 +470,14 @@ def validate_args(args: argparse.Namespace) -> None:
         "thread_cells",
         "n_estimators",
         "max_depth",
-        "early_stop_window",
         "n_cells",
         "threads",
     ):
         _require_positive_int(name, int(getattr(args, name)))
     if args.target_block_size is not None:
         _require_positive_int("target_block_size", int(args.target_block_size))
+    if args.early_stop_window < 0:
+        raise SystemExit("--early-stop-window must be non-negative")
     if args.learning_rate <= 0:
         raise SystemExit("--learning-rate must be positive")
     if not (0 < args.max_features <= 1):
@@ -491,6 +500,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--subsample", type=float, default=0.9)
     parser.add_argument("--max-depth", type=int, default=3)
     parser.add_argument("--early-stop-window", type=int, default=25)
+    parser.add_argument(
+        "--early-stop-mode",
+        choices=("arboreto", "legacy_inbag"),
+        default="arboreto",
+    )
     parser.add_argument("--target-block-size", type=int, default=None)
     parser.add_argument("--seed", type=int, default=777)
     parser.add_argument(

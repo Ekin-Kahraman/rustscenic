@@ -18,7 +18,8 @@ assembly.
 - Motif ranking databases are external inputs because public databases can be
   hundreds of megabytes to tens of gigabytes.
 - GRN edge rankings are independently implemented and can differ from arboreto
-  at fine grain; downstream cell-level agreement is stronger.
+  at fine grain because RustScenic uses an independent histogram-tree builder;
+  the early-stop monitor and fitted-tree distribution are validated separately.
 - Topic modelling ships both Online VB and collapsed Gibbs paths. The Gibbs path
   is the stronger sparse scATAC option at larger topic counts.
 - Larger real multiome runs and repeated measurements on a second machine are

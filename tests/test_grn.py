@@ -84,7 +84,7 @@ class TestGrnEdgeCases:
             seen["indptr_dtype"] = indptr.dtype
             seen["indices_dtype"] = indices.dtype
             seen["data_dtype"] = data.dtype
-            return [], [], np.asarray([], dtype=np.float32), 0, 2, [], 1.0
+            return [], [], np.asarray([], dtype=np.float32), 0, 2, [], 1.0, {}
 
         monkeypatch.setattr(grn, "_grn_infer_sparse_csc", fake_sparse)
 
@@ -116,7 +116,7 @@ class TestGrnEdgeCases:
             raise AssertionError("sparse finite/negative validation should happen in Rust")
 
         def fake_sparse(_indptr, _indices, _data, *_args):
-            return [], [], np.asarray([], dtype=np.float32), 0, 2, [], 1.0
+            return [], [], np.asarray([], dtype=np.float32), 0, 2, [], 1.0, {}
 
         monkeypatch.setattr(grn.np, "min", fail_min)
         monkeypatch.setattr(grn, "_grn_infer_sparse_csc", fake_sparse)
@@ -168,12 +168,13 @@ class TestGrnEdgeCases:
             values,
             index=[f"c{i}" for i in range(values.shape[0])],
             columns=[f"g{i}" for i in range(values.shape[1])],
+            copy=False,
         )
         seen = {}
 
         def fake_grn(expression_arg, *_args):
             seen["expression"] = expression_arg
-            return [], [], np.asarray([], dtype=np.float32), 0, 2, [], 1.0
+            return [], [], np.asarray([], dtype=np.float32), 0, 2, [], 1.0, {}
 
         monkeypatch.setattr(grn, "_grn_infer", fake_grn)
 
@@ -191,7 +192,7 @@ class TestGrnEdgeCases:
 
         def fake_grn(expression_arg, *_args):
             seen["shape"] = expression_arg.shape
-            return [], [], np.asarray([], dtype=np.float32), 0, 1, [], 1.0
+            return [], [], np.asarray([], dtype=np.float32), 0, 1, [], 1.0, {}
 
         monkeypatch.setattr(grn, "_grn_infer", fake_grn)
 
@@ -217,7 +218,7 @@ class TestGrnEdgeCases:
             raise AssertionError("dense finite validation should happen in Rust")
 
         def fake_grn(_expression_arg, *_args):
-            return [], [], np.asarray([], dtype=np.float32), 0, 2, [], 1.0
+            return [], [], np.asarray([], dtype=np.float32), 0, 2, [], 1.0, {}
 
         monkeypatch.setattr(grn.np, "isfinite", fail_isfinite)
         monkeypatch.setattr(grn, "_grn_infer", fake_grn)
@@ -225,6 +226,38 @@ class TestGrnEdgeCases:
         out = grn.infer(df, tf_names=["g0", "g1"], n_estimators=5, verbose=False)
 
         assert out.empty
+
+    def test_rejects_unknown_early_stop_mode(self, small_expr):
+        with pytest.raises(ValueError, match="early_stop_mode"):
+            grn.infer(
+                small_expr,
+                tf_names=["g0", "g1"],
+                n_estimators=5,
+                early_stop_mode="mystery",
+                verbose=False,
+            )
+
+    @pytest.mark.parametrize(
+        ("kwargs", "message"),
+        [
+            ({"n_estimators": 0}, "n_estimators"),
+            ({"learning_rate": 0.0}, "learning_rate"),
+            ({"max_features": 0.0}, "max_features"),
+            ({"max_features": 1.1}, "max_features"),
+            ({"subsample": 0.0}, "subsample"),
+            ({"subsample": 1.1}, "subsample"),
+            ({"max_depth": 0}, "max_depth"),
+            ({"early_stop_window": -1}, "early_stop_window"),
+        ],
+    )
+    def test_rejects_invalid_fit_configuration(self, small_expr, kwargs, message):
+        with pytest.raises(ValueError, match=message):
+            grn.infer(
+                small_expr,
+                tf_names=["g0", "g1"],
+                verbose=False,
+                **kwargs,
+            )
 
     def test_dense_grn_uses_rust_tf_overlap_metadata_for_warnings(self, monkeypatch, rng):
         values = rng.random((60, 8)).astype(np.float32)
@@ -243,6 +276,7 @@ class TestGrnEdgeCases:
                 1,
                 ["missing_a", "missing_b"],
                 1.0,
+                {},
             )
 
         monkeypatch.setattr(grn, "_grn_infer", fake_grn)
@@ -350,6 +384,207 @@ class TestGrnDeterminism:
         a_s = a.sort_values(["TF", "target"]).reset_index(drop=True)
         b_s = b.sort_values(["TF", "target"]).reset_index(drop=True)
         assert not a_s.equals(b_s)
+
+
+class TestGrnEarlyStopping:
+    def test_fit_summary_records_public_mode_and_bounds(self, small_expr):
+        out = grn.infer(
+            small_expr,
+            tf_names=["g0", "g1", "g2"],
+            n_estimators=17,
+            early_stop_window=3,
+            early_stop_mode="arboreto",
+            seed=12,
+            verbose=False,
+        )
+
+        fit = out.attrs["grn_fit"]
+        assert fit["early_stop_mode"] == "arboreto"
+        assert fit["early_stop_window"] == 3
+        assert fit["n_estimators_ceiling"] == 17
+        assert fit["target_count"] == small_expr.shape[1]
+        assert 1 <= fit["fitted_trees_min"] <= fit["fitted_trees_max"] <= 17
+
+    def test_arboreto_mode_without_oob_reaches_estimator_ceiling(self, small_expr):
+        out = grn.infer(
+            small_expr,
+            tf_names=["g0", "g1"],
+            n_estimators=8,
+            subsample=1.0,
+            early_stop_window=2,
+            early_stop_mode="arboreto",
+            verbose=False,
+        )
+
+        assert out.attrs["grn_fit"]["fitted_trees_min"] == 8
+        assert out.attrs["grn_fit"]["fitted_trees_max"] == 8
+
+    def test_subsample_just_below_one_still_uses_oob_monitor(self, small_expr):
+        out = grn.infer(
+            small_expr,
+            tf_names=["g0", "g1"],
+            n_estimators=20,
+            subsample=0.9999995,
+            early_stop_window=1,
+            early_stop_mode="arboreto",
+            seed=42,
+            verbose=False,
+        )
+
+        assert out.attrs["grn_fit"]["fitted_trees_min"] < 20
+
+    def test_legacy_mode_is_explicit_and_deterministic(self, small_expr):
+        kwargs = dict(
+            tf_names=["g0", "g1"],
+            n_estimators=30,
+            early_stop_window=3,
+            early_stop_mode="legacy_inbag",
+            seed=42,
+            verbose=False,
+        )
+        first = grn.infer(small_expr, **kwargs)
+        second = grn.infer(small_expr, **kwargs)
+
+        assert first.attrs["grn_fit"]["early_stop_mode"] == "legacy_inbag"
+        pd.testing.assert_frame_equal(first, second)
+        assert first.attrs["grn_fit"] == second.attrs["grn_fit"]
+
+
+class TestGrnCorrelation:
+    @staticmethod
+    def expression_frame():
+        return pd.DataFrame(
+            {
+                "TF": [0.0, 1.0, 2.0, 3.0, 4.0],
+                "POS": [0.0, 2.0, 4.0, 6.0, 8.0],
+                "NEG": [4.0, 3.0, 2.0, 1.0, 0.0],
+                "CONST": [1.0] * 5,
+            }
+        )
+
+    @staticmethod
+    def adjacencies():
+        return pd.DataFrame(
+            {
+                "TF": ["TF", "TF", "TF"],
+                "target": ["POS", "NEG", "CONST"],
+                "importance": [3.0, 2.0, 1.0],
+            }
+        )
+
+    def test_add_correlation_classifies_both_polarities_and_neutral(self):
+        out = grn.add_correlation(self.adjacencies(), self.expression_frame())
+
+        assert list(out.columns) == ["TF", "target", "importance", "regulation", "rho"]
+        np.testing.assert_allclose(out.loc[:1, "rho"], [1.0, -1.0], atol=1e-12)
+        assert np.isnan(out.loc[2, "rho"])
+        assert out["regulation"].tolist() == [1, -1, 0]
+        assert out.attrs["correlation"] == {
+            "method": "pearson",
+            "rho_threshold": 0.03,
+            "mask_dropouts": False,
+            "activating_edges": 1,
+            "repressing_edges": 1,
+            "indeterminate_edges": 1,
+        }
+
+    @pytest.mark.parametrize("mask_dropouts", [False, True])
+    def test_sparse_and_dense_correlation_match(self, mask_dropouts):
+        import anndata as ad
+        import scipy.sparse as sp
+
+        dense = self.expression_frame()
+        sparse = ad.AnnData(
+            X=sp.csr_matrix(dense.to_numpy(dtype=np.float32)),
+            var=pd.DataFrame(index=dense.columns),
+        )
+        expected = grn.add_correlation(
+            self.adjacencies(), dense, mask_dropouts=mask_dropouts
+        )
+        actual = grn.add_correlation(
+            self.adjacencies(), sparse, mask_dropouts=mask_dropouts
+        )
+
+        pd.testing.assert_frame_equal(expected, actual)
+        assert "grn_correlations_sparse_csc" in actual.attrs["rust_backend"]["symbols"]
+
+    def test_dropout_mask_ignores_explicit_sparse_zeros(self):
+        import anndata as ad
+        import scipy.sparse as sp
+
+        dense = self.expression_frame()
+        sparse_values = sp.csc_matrix(dense.to_numpy(dtype=np.float32))
+        sparse_values[0, 0] = 0.0
+        sparse_values[0, 1] = 0.0
+        assert np.any(sparse_values.data == 0.0)
+        sparse = ad.AnnData(
+            X=sparse_values,
+            var=pd.DataFrame(index=dense.columns),
+        )
+
+        expected = grn.add_correlation(
+            self.adjacencies(), dense, mask_dropouts=True
+        )
+        actual = grn.add_correlation(
+            self.adjacencies(), sparse, mask_dropouts=True
+        )
+
+        pd.testing.assert_frame_equal(expected, actual)
+
+    def test_missing_expression_gene_is_actionable(self):
+        adjacencies = self.adjacencies().copy()
+        adjacencies.loc[0, "target"] = "MISSING"
+        with pytest.raises(ValueError, match="missing from the expression matrix"):
+            grn.add_correlation(adjacencies, self.expression_frame())
+
+    def test_build_regulons_is_signed_deterministic_and_excludes_neutral(self):
+        correlated = pd.DataFrame(
+            {
+                "TF": ["TF_B", "TF_A", "TF_A", "TF_B", "TF_A"],
+                "target": ["b_pos", "a_neg", "a_pos", "b_neg", "neutral"],
+                "importance": [3.0, 4.0, 5.0, 2.0, 100.0],
+                "regulation": [1, -1, 1, -1, 0],
+            }
+        )
+
+        out = grn.build_regulons(
+            correlated, top_targets_per_tf=5, min_targets=1
+        )
+
+        assert out == {
+            "TF_A_activator": ["a_pos"],
+            "TF_B_activator": ["b_pos"],
+            "TF_A_repressor": ["a_neg"],
+            "TF_B_repressor": ["b_neg"],
+        }
+        assert "neutral" not in {gene for genes in out.values() for gene in genes}
+        assert grn.build_regulons(
+            correlated,
+            top_targets_per_tf=5,
+            min_targets=1,
+            include_repressors=False,
+        ) == {
+            "TF_A_activator": ["a_pos"],
+            "TF_B_activator": ["b_pos"],
+        }
+
+    @pytest.mark.parametrize("invalid", [2, -2, np.nan, pd.NA, True, "1"])
+    def test_build_regulons_rejects_invalid_regulation(self, invalid):
+        correlated = pd.DataFrame(
+            {
+                "TF": ["TF_A"],
+                "target": ["target"],
+                "importance": [1.0],
+                "regulation": [invalid],
+            }
+        )
+
+        with pytest.raises(ValueError, match="only -1, 0, or 1"):
+            grn.build_regulons(
+                correlated,
+                top_targets_per_tf=1,
+                min_targets=1,
+            )
 
 
 class TestGrnTruncationKnobs:

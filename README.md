@@ -99,11 +99,13 @@ adata = ad.read_h5ad("rna.h5ad")
 tfs = rustscenic.data.tfs("hs")
 
 grn = rustscenic.grn.infer(adata, tf_names=tfs, n_estimators=5000, seed=777)
-
-regulons = [
-    (f"{tf}_regulon", grn[grn["TF"] == tf].nlargest(50, "importance")["target"].tolist())
-    for tf in grn["TF"].unique()
-]
+signed_grn = rustscenic.grn.add_correlation(grn, adata, rho_threshold=0.03)
+regulons = rustscenic.grn.build_regulons(
+    signed_grn,
+    top_targets_per_tf=50,
+    min_targets=10,
+    include_repressors=True,
+)
 auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
 ```
 
@@ -112,7 +114,8 @@ Command line:
 ```bash
 rustscenic pipeline --rna data.h5ad --tfs tfs.txt --output out/
 rustscenic grn --expression rna.h5ad --tfs tfs.txt --output grn.parquet
-rustscenic aucell --expression rna.h5ad --regulons grn.parquet --output aucell.parquet
+rustscenic add-cor --expression rna.h5ad --adjacencies grn.parquet --output signed-grn.parquet
+rustscenic aucell --expression rna.h5ad --regulons signed-grn.parquet --output aucell.parquet
 rustscenic topics --expression atac.h5ad --output topics.parquet --n-topics 30
 rustscenic cistarget --rankings rankings.feather --regulons regulons.tsv --output motifs.parquet
 ```
@@ -141,6 +144,11 @@ lives in [site_docs/benchmarks.md](site_docs/benchmarks.md) and
 - GRN, gene AUCell and eRegulon edge agreement are not claimed to be
   bit-identical to SCENIC+; see [Benchmarks](site_docs/benchmarks.md) for the
   parity metrics.
+- `grn.infer` defaults to arboreto-compatible trailing-window OOB stopping.
+  Use `early_stop_mode="legacy_inbag"` only to reproduce historical
+  RustScenic stopping behaviour. The pipeline defaults to separate activator
+  and repressor regulons; `grn_regulon_polarities="unsigned"` is the explicit
+  compatibility path.
 - Larger repeated real-data runs and second-machine measurements are the next
   benchmark tier.
 
@@ -149,6 +157,7 @@ lives in [site_docs/benchmarks.md](site_docs/benchmarks.md) and
 - [Installation](site_docs/installation.md)
 - [Quickstart](site_docs/quickstart.md)
 - [API map](site_docs/api.md)
+- [HPC operation](site_docs/hpc.md)
 - [Benchmarks](site_docs/benchmarks.md)
 - [Validation](site_docs/validation.md)
 - [Scope](site_docs/limitations.md)
