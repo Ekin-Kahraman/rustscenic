@@ -29,7 +29,7 @@ agreement under the benchmark search space, not score-level identity.
 | Question | Evidence |
 | --- | --- |
 | Is it faster on tested real data? | Yes: `11x` to `52x` faster than SCENIC+ across the real-data core E2E rows below. |
-| Is memory measured? | Yes: every row records peak RSS; the 100k-cell four-stage scale check peaked at `6.34 GB` RSS. |
+| Is memory measured? | Yes: every comparison row records peak RSS; a separate historical RustScenic `v0.3.2` synthetic 100k-cell scale check peaked at `7.09 GB` RSS. |
 | Is the comparison reproducible? | Yes: the benchmark harness, summary JSON, command templates, seed, hardware and Python versions are committed. |
 | Is output agreement checked? | Yes: saved signatures report Jaccard and Pearson checks for TF-to-gene, region-to-gene, eRegulons and AUCell. |
 | Is it full SCENIC+ parity? | Not yet: this is the shared matrix-level output path; gene AUCell and eRegulon-edge parity remain explicit targets. |
@@ -77,14 +77,28 @@ For the human brain GEM-X row, including data preparation:
 ## Memory Scaling
 
 The core E2E rows above show comparable or lower memory against SCENIC+ on
-small real-data subsets. The stronger memory result comes from the atlas-scale
-stage check archived in `validation/VALIDATION_SUMMARY.md`: a 100k-cell,
-20,292-gene four-stage run peaked at 6.34 GB RSS, while legacy pySCENIC reports
-exceed 40 GB on similar workloads.
+small real-data subsets. The committed atlas-scale result is a historical
+RustScenic `v0.3.2` synthetic execution check starting from constructed RNA
+and ATAC matrices. It covers
+topics, GRN, regulon construction, cisTarget, enhancer linking, eRegulon
+assembly and AUCell, but not raw-fragment preprocessing. The GRN uses 30 TFs
+and 20 estimators, so this is not a default-parameter or full-TF memory claim.
+The original record did not capture hardware or environment details and has
+not been rerun under v0.5.0, so it is not evidence of current-release memory.
 
-| Workload | RustScenic peak RSS | Reference context |
+The separate collaborator monolith is real-data validation with a much larger
+regulatory search space. Its higher RSS is reported beside the synthetic run
+to prevent the two scopes being conflated; it is not a controlled comparison.
+
+| Workload | RustScenic peak RSS | Scope |
 | --- | ---: | --- |
-| 100k cells x 20,292 genes, GRN + AUCell + topics + cisTarget | 6.34 GB | legacy pySCENIC reports exceed 40 GB on similar workloads |
+| Historical RustScenic v0.3.2 synthetic 100k cells x 15k genes + 50k peaks, seven stages, 30 TFs, 20 GRN estimators | 7.09 GB | Commit `bf1be27`; seed 42; 762.6 s compute; hardware not recorded; no v0.5.0 or reference-memory claim |
+| Real human brain GEM-X monolith, 8,215 post-QC cells x 32,808 genes + 123,089 peaks | 24.99 GB | RustScenic 0.4.6 collaborator run; 1,693 regulons and 4.31 million GRN edges; not directly comparable with the synthetic row |
+
+The synthetic command and result are committed as
+`validation/scaling/bench_e2e_100k_synthetic.py` and
+`validation/scaling/e2e_100k_synthetic.json`. The real-data provenance is in
+`validation/community/human_brain_10k_v0.4.6.json`.
 
 ## Validation
 

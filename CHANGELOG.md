@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+No changes yet.
+
+## 0.5.0 - 2026-08-25
+
+### Migration from 0.4.x
+
+- GRN early stopping now defaults to the arboreto-style trailing-window OOB
+  monitor. Set `early_stop_mode="legacy_inbag"` only to reproduce the earlier
+  RustScenic rule.
+- Regulon construction now preserves activator and repressor polarity by
+  default. Use the documented `"unsigned"` compatibility mode when an older
+  unsigned workflow is required.
+- This and future releases use Apache-2.0. Published 0.4.x and earlier release
+  artefacts remain available under MIT.
+
 ### Scientific correctness
 
 - Fixed issue #95 by replacing the default GRN early-stop rule with arboreto's

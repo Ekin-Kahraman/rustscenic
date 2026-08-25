@@ -18,18 +18,18 @@ pip install rustscenic
 | Signal | Evidence |
 | --- | --- |
 | Built | Cross-platform Rust and Python CI, docs build, release smoke checks and nightly real-data validation workflows. |
-| Released | Current release `v0.4.7`; PyPI package with Python 3.10 to 3.13 release wheels plus source distribution. |
-| Benchmarked | `11x` to `52x` faster than SCENIC+ in tested real-data core E2E rows; commands, hardware, runtime, memory and output checks are committed. |
-| Memory-scaled | `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads. |
+| Released | Current release `v0.5.0`; PyPI package with Python 3.10 to 3.13 release wheels plus source distribution. |
+| Benchmarked | `11x` to `52x` faster than SCENIC+ on sampled real-data inputs in a single-machine output-path benchmark; commands, hardware, runtime, memory and output checks are committed. |
+| Historical scale evidence | RustScenic `v0.3.2` synthetic 100k-cell seven-stage scale check peaked at `7.09 GB` RSS; a v0.5.0 rerun is pending. |
 | Lab-validated | Huang Lab collaborator artefacts include a 10x human brain GEM-X full monolith run recovering `16/17` expected brain TFs. |
 
 ## Highlights
 
 | Feature | Status |
 | --- | --- |
-| Tested real-data speedup | `11x` to `52x` vs SCENIC+ in core E2E rows |
-| Memory scaling | `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads |
-| Current release | `v0.4.7` |
+| Tested real-data speedup | `11x` to `52x` vs SCENIC+ on sampled inputs in a single-machine output-path benchmark |
+| Memory scaling | Historical `v0.3.2` synthetic 100k-cell scale check peaked at `7.09 GB` RSS; provenance, limitations and the separate real-data monolith are reported in [Benchmarks](benchmarks.md#memory-scaling) |
+| Current release | `v0.5.0` |
 | Python support | 3.10 to 3.13 |
 | Core install | `pip install rustscenic` |
 | Runtime model | CPU-first Rust kernels |

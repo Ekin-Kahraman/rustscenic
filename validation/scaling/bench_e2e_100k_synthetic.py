@@ -1,14 +1,14 @@
-"""Full 6-stage end-to-end pipeline at 100k synthetic multiome.
+"""Seven-stage analysis scale check on a 100k-cell synthetic multiome.
 
 Closes the named credibility gap from `docs/what-rustscenic-is.md`:
 "100k-cell atlas end-to-end is unmeasured for the full ATAC + RNA pipeline."
 
-The script synthesises a 100,000 × 30,000 (RNA) + 100,000 × 50,000 (ATAC)
+The script synthesises a 100,000 × 15,000 (RNA) + 100,000 × 50,000 (ATAC)
 multiome dataset where 30 latent programmes drive correlated patches of
 expression and accessibility, then runs every stage rustscenic ships:
 
     1. topics (Gibbs, 8-thread AD-LDA)         on the ATAC matrix
-    2. GRN inference                            on RNA + 50 TFs
+    2. GRN inference                            on RNA + 30 TFs
     3. regulon construction (top-N targets/TF)
     4. cistarget motif enrichment              against synthetic motif rankings
     5. enhancer→gene linking                   from peak-gene Pearson
@@ -28,10 +28,14 @@ Setup:
 from __future__ import annotations
 
 import json
+import platform
 import resource
+import subprocess
 import sys
 import time
 import warnings
+from datetime import datetime, timezone
+from importlib.metadata import version
 from pathlib import Path
 
 import anndata as ad
@@ -142,6 +146,19 @@ def _peak_id_from_name(peak_names):
     return out
 
 
+def _source_sha() -> str | None:
+    try:
+        return subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=Path(__file__).resolve().parents[2],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
 def main() -> int:
     n_cells = 100_000
     n_genes = 15_000   # 100k × 15k dense RNA = 6 GB; full 30k OOMs at peak
@@ -191,7 +208,7 @@ def main() -> int:
     mark("after_topics")
 
     # ---- 2. GRN ----
-    print("\n[2/7] GRN inference — 50 TFs over 100k cells", flush=True)
+    print(f"\n[2/7] GRN inference — {len(tfs)} TFs over 100k cells", flush=True)
     import rustscenic.grn
     t0 = time.monotonic()
     with warnings.catch_warnings():
@@ -311,7 +328,27 @@ def main() -> int:
     print(f"AUCell shape:    {auc.shape}", flush=True)
 
     record = {
+        "benchmark_kind": "synthetic_scale_check",
+        "claim_scope": (
+            "Seven-stage execution-scale evidence; not a default-parameter, "
+            "full-TF, raw-fragment-preprocessing or reference-memory comparison."
+        ),
+        "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+        "rustscenic_version": version("rustscenic"),
+        "rustscenic_sha": _source_sha(),
+        "command": "python validation/scaling/bench_e2e_100k_synthetic.py",
+        "environment": {
+            "python": platform.python_version(),
+            "platform": platform.platform(),
+            "machine": platform.machine(),
+            "processor": platform.processor(),
+        },
+        "repetitions": 1,
+        "warmup": "none; fresh synthetic construction and one measured run",
         "n_cells": n_cells, "n_genes": n_genes, "n_peaks": n_peaks, "K": K,
+        "seed": 42,
+        "n_grn_estimators": 20,
+        "raw_fragment_preprocessing_included": False,
         "elapsed": elapsed,
         "rss_marks": rss_marks,
         "unique_topics": unique,

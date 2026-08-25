@@ -12,7 +12,7 @@ output sanity check.
 
 | Signal | Evidence |
 | --- | --- |
-| Released package | `v0.4.7` is the current GitHub release and PyPI package. |
+| Released package | `v0.5.0` is the current GitHub release and PyPI package. |
 | Controlled benchmark path | `validation/head_to_head/head_to_head_summary.json` records machine, seed, Python versions, runtime, peak RSS and output signatures. |
 | Lab validation | Huang Lab collaborator artefacts include Kamath dopaminergic neurons and 10x human brain GEM-X multiome runs. |
 | Full monolith real-data run | Human brain GEM-X `v0.4.6` artefact completed GRN, regulons, cisTarget, enhancer links and eRegulons on 8,215 post-QC cells and 123,089 peaks. |

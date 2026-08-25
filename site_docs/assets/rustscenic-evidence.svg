@@ -13,7 +13,7 @@
 
     <rect x="314" y="118" width="246" height="116" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
     <text x="336" y="154" font-size="15" font-weight="760" fill="#334155">RELEASED</text>
-    <text x="336" y="184" font-size="28" font-weight="780" fill="#111827">v0.4.7</text>
+    <text x="336" y="184" font-size="28" font-weight="780" fill="#111827">v0.5.0</text>
     <text x="336" y="210" font-size="14" fill="#4b5563">PyPI wheels, Python 3.10 to 3.13</text>
 
     <rect x="588" y="118" width="246" height="116" rx="8" fill="#f0fdf4" stroke="#16a34a"/>

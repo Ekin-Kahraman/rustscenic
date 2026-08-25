@@ -1,8 +1,25 @@
 {
+  "benchmark_kind": "synthetic_scale_check",
+  "claim_scope": "Historical RustScenic v0.3.2 seven-stage execution-scale evidence; not a v0.5.0, default-parameter, full-TF, raw-fragment-preprocessing or reference-memory comparison.",
+  "record_committed_date": "2026-04-27",
+  "rustscenic_version": "0.3.2",
+  "rustscenic_sha": "bf1be27ef2cd4f8d3e3b2508eef3678ac64d3999",
+  "command": "python validation/scaling/bench_e2e_100k_synthetic.py",
+  "environment": {
+    "status": "not recorded by the original v0.3.2 benchmark script",
+    "hardware": null,
+    "python": null,
+    "platform": null
+  },
+  "repetitions": 1,
+  "warmup": "not recorded by the original v0.3.2 benchmark script",
   "n_cells": 100000,
   "n_genes": 15000,
   "n_peaks": 50000,
   "K": 30,
+  "seed": 42,
+  "n_grn_estimators": 20,
+  "raw_fragment_preprocessing_included": false,
   "elapsed": {
     "build": 240.5,
     "topics": 487.5,

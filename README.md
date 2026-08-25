@@ -31,9 +31,9 @@
 
 ## Highlights
 
-- `11x` to `52x` faster than SCENIC+ in tested real-data core E2E rows
-- `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads
-- Current release: `v0.4.7`
+- `11x` to `52x` faster than SCENIC+ on sampled real-data inputs in a single-machine output-path benchmark
+- Historical `v0.3.2` synthetic 100k-cell seven-stage scale check peaked at `7.09 GB` RSS; this has not yet been rerun for v0.5.0
+- Current release: `v0.5.0`
 - `pip install rustscenic`, with Python 3.10 to 3.13 release wheels
 - Huang Lab collaborator run recovered `16/17` expected brain TFs on 10x human brain GEM-X data
 - Rust implementations for the matrix-heavy regulatory-network stages
@@ -45,6 +45,17 @@
 ```bash
 pip install rustscenic
 ```
+
+## Migrating from 0.4.x
+
+- GRN early stopping now defaults to the arboreto-style trailing-window OOB
+  monitor. Set `early_stop_mode="legacy_inbag"` only when reproducing the
+  earlier RustScenic rule.
+- Regulon construction now preserves activator and repressor polarity by
+  default. Use the documented `"unsigned"` compatibility mode for an older
+  unsigned workflow.
+- RustScenic 0.5.0 and later use Apache-2.0. Published 0.4.x and earlier
+  artefacts remain under MIT.
 
 ## Benchmark Evidence
 

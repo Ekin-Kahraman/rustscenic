@@ -21,9 +21,9 @@ Use these when introducing the package to a lab or collaborator:
 
 | Proof point | Evidence |
 | --- | --- |
-| Released | `v0.4.7` on PyPI, with Python 3.10 to 3.13 release wheels. |
-| Faster tested path | `11x` to `52x` faster than SCENIC+ in controlled real-data core E2E rows. |
-| Lower atlas-scale memory pressure | `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads. |
+| Released | `v0.5.0` on PyPI, with Python 3.10 to 3.13 release wheels. |
+| Faster tested path | `11x` to `52x` faster than SCENIC+ on sampled real-data inputs in a single-machine output-path benchmark. |
+| Historical atlas-scale check | RustScenic `v0.3.2` synthetic 100k-cell seven-stage run peaked at `7.09 GB` RSS; it is not a v0.5.0, default-parameter or reference-memory result. |
 | Lab artefact | Collaborator human brain GEM-X full monolith run recovered 16 of 17 expected brain TFs. |
 
 ## Minimal Adoption Test
