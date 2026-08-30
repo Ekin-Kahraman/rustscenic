@@ -27,7 +27,7 @@ pub struct GbmScratch {
     importances: Vec<f32>,
     predictions: Vec<f32>,
     residuals: Vec<f32>,
-    sample_idx: Vec<usize>,
+    sample_idx: Vec<u32>,
     hist_buf: NodeHist,
     tree: Tree,
     gains_buf: Vec<f32>,
@@ -37,6 +37,10 @@ pub struct GbmScratch {
 
 impl GbmScratch {
     pub fn new(n_samples: usize, n_features: usize, n_estimators: usize) -> Self {
+        assert!(
+            u32::try_from(n_samples).is_ok(),
+            "GRN supports at most 2^32-1 cells"
+        );
         Self {
             importances: vec![0.0; n_features],
             predictions: vec![0.0; n_samples],
@@ -119,7 +123,9 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
     for i in 0..cfg.n_estimators {
         scratch.sample_idx.clear();
         if cfg.subsample == 1.0 {
-            scratch.sample_idx.extend(0..n_samples);
+            scratch
+                .sample_idx
+                .extend((0..n_samples).map(|row| row as u32));
         } else if cfg.early_stop_mode == EarlyStopMode::Arboreto {
             let n_inbag = ((cfg.subsample * n_samples as f32) as usize)
                 .max(1)
@@ -163,7 +169,7 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
             let old_residual = scratch.residuals[k];
             *p += cfg.learning_rate * predict_binned(&scratch.tree, binned, k);
             scratch.residuals[k] = y[k] - *p;
-            if inbag_pos < scratch.sample_idx.len() && scratch.sample_idx[inbag_pos] == k {
+            if inbag_pos < scratch.sample_idx.len() && scratch.sample_idx[inbag_pos] as usize == k {
                 let d = scratch.residuals[k];
                 mse_inbag += d * d;
                 inbag_pos += 1;

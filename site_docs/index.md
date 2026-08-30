@@ -20,7 +20,7 @@ pip install rustscenic
 | Built | Cross-platform Rust and Python CI, docs build, release smoke checks and nightly real-data validation workflows. |
 | Released | Current release `v0.5.0`; PyPI package with Python 3.10 to 3.13 release wheels plus source distribution. |
 | Benchmarked | `11x` to `52x` faster than SCENIC+ on sampled real-data inputs in a single-machine output-path benchmark; commands, hardware, runtime, memory and output checks are committed. |
-| Historical scale evidence | RustScenic `v0.3.2` synthetic 100k-cell seven-stage scale check peaked at `7.09 GB` RSS; a v0.5.0 rerun is pending. |
+| Current scale evidence | RustScenic `v0.5.0` completed a real 1.306-million-cell RNA GRN and a controlled 200k-cell seven-stage synthetic run on IFB; scope and limits are reported in [Benchmarks](benchmarks.md#memory-scaling). |
 | Lab-validated | Huang Lab collaborator artefacts include a 10x human brain GEM-X full monolith run recovering `16/17` expected brain TFs. |
 
 ## Highlights
@@ -28,7 +28,7 @@ pip install rustscenic
 | Feature | Status |
 | --- | --- |
 | Tested real-data speedup | `11x` to `52x` vs SCENIC+ on sampled inputs in a single-machine output-path benchmark |
-| Memory scaling | Historical `v0.3.2` synthetic 100k-cell scale check peaked at `7.09 GB` RSS; provenance, limitations and the separate real-data monolith are reported in [Benchmarks](benchmarks.md#memory-scaling) |
+| Memory scaling | Current controlled 100k/200k seven-stage process high-water marks were 21.21/42.31 GB; this is synthetic execution-scale evidence, not a real-atlas memory promise |
 | Current release | `v0.5.0` |
 | Python support | 3.10 to 3.13 |
 | Core install | `pip install rustscenic` |

@@ -20,6 +20,18 @@ multi-host allocation wastes hosts and does not increase throughput. In GRN
 thread-scaling jobs, child points may use fewer Rayon threads than the job's
 allocated ceiling. Nested BLAS/OpenMP pools must remain at one.
 
+For Gibbs topics, pass `topics_n_threads` no larger than the allocation and
+record it with the seed. Parallel AD-LDA is reproducible at a fixed thread
+count, but changing the count changes the partition and can change the fitted
+posterior mode. Hold it fixed for biological comparisons.
+
+On the audited 10x human-brain ATAC matrix (5,000 cells x 130,127 peaks, K=30,
+100 sweeps), eight threads were 1.81x faster than four; sixteen threads did not
+improve on eight and reached a different posterior. Start Gibbs topics at eight
+threads on comparable data and scale only with a dataset-specific check. GRN
+on real PBMC3k retained 88% parallel efficiency at sixteen threads, so sixteen
+is the measured starting point for GRN-heavy RNA runs.
+
 Rebuild immediately before a preflight when testing local source. Package and
 extension version strings alone cannot distinguish a stale same-version shared
 library:
@@ -34,6 +46,9 @@ python -m rustscenic doctor --pretty
 - Sparse RNA and ATAC matrices stay sparse across the production kernels.
 - GRN memory is bounded by the binned expression matrix and per-Rayon-worker
   scratch buffers. More Rayon threads increase scratch memory.
+- Parallel Gibbs adds approximately
+  `topics_n_threads × n_topics × n_peaks × 4 bytes` for thread-local topic-word
+  deltas, in addition to the sparse matrix, token assignments and outputs.
 - Correlation dichotomisation operates on requested TF-target pairs without a
   dense edge-by-cell matrix. Sparse CSC inputs use column intersections.
 - Motif ranking parquet/feather inputs are projected to the required features;
@@ -49,6 +64,13 @@ Start with measured pilot memory and leave headroom for the input matrices,
 external ranking projection and final writes. The audited 44,222-cell cortex
 report used 16.8 GB peak RSS, but its input shapes and stages are not a universal
 memory formula.
+
+The 0.5.0 IFB tests reached 1.2 million cells for a fixed 300-gene/30-TF GRN
+at 4.2 GB process peak RSS, and the synthetic seven-stage 200k-cell run used a
+42.31 GB in-process high-water mark. Neither number predicts a real
+1.2-million-cell full-gene multiome. For a new atlas, run the exact input at
+100k, 200k, 400k and 800k cells and attempt all cells only after the measured
+memory curve leaves safe headroom for motif data and final writes.
 
 ## Scientific configuration
 

@@ -32,7 +32,11 @@
 ## Highlights
 
 - `11x` to `52x` faster than SCENIC+ on sampled real-data inputs in a single-machine output-path benchmark
-- Historical `v0.3.2` synthetic 100k-cell seven-stage scale check peaked at `7.09 GB` RSS; this has not yet been rerun for v0.5.0
+- Current `v0.5.0` IFB checks reached a 1.2-million-cell fixed-schema GRN and
+  a controlled 200k-cell seven-stage synthetic run; scope and memory are
+  reported in the [IFB validation record](validation/scaling/IFB_SCALE_2026-08-28.md)
+- Historical `v0.3.2` synthetic 100k-cell seven-stage scale check peaked at
+  `7.09 GB` RSS; it is retained as historical evidence, not a v0.5.0 result
 - Current release: `v0.5.0`
 - `pip install rustscenic`, with Python 3.10 to 3.13 release wheels
 - Huang Lab collaborator run recovered `16/17` expected brain TFs on 10x human brain GEM-X data

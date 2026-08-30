@@ -82,7 +82,15 @@ rustscenic.topics.fit_gibbs(atac_adata, n_topics=30, n_threads=8)
 ```
 
 Use Online VB for smaller or faster exploratory runs. Use collapsed Gibbs for
-higher topic diversity at larger `K`.
+higher topic diversity at larger `K`. Parallel Gibbs is deterministic for a
+fixed seed and thread count, but changing `n_threads` changes the AD-LDA
+partition and can change the fitted posterior mode. Record and hold the thread
+count fixed for biological comparisons; do not assume linear speedup beyond
+the measured range. `pipeline.run` records the chosen method, seed, passes or
+iterations, thread count, active argmax topics and empty cells in
+`manifest.json`. A fit where fewer than half of the requested topics carry a
+cell argmax emits a collapse warning and should not be interpreted without a
+Gibbs rerun or other topic-quality evidence.
 
 ## ATAC Preprocessing
 

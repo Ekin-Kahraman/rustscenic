@@ -111,10 +111,11 @@ haven't validated yet:
    topics on the same 1500 × 98k benchmark, mean pairwise top-20
    peak overlap 0.005 vs VB's 0.373, intrinsic top-10 NPMI +0.031
    vs VB's +0.012 (~2.7× higher coherence), at only 1.2× the
-   serial wall-clock. AD-LDA parallel path (`n_threads=N`,
-   shipped) gives 2.56× speedup at 8 threads on real PBMC ATAC
-   with quality preserved (NPMI within sampling variance). Same
-   algorithm class as Mallet, no Java required. Outstanding for
+   serial wall-clock. On the current real human-brain check, four, eight and
+   sixteen threads took 462.8, 255.1 and 257.5 seconds at 5k cells; an
+   eight-thread repeat reproduced the assignment hash exactly, while changing
+   thread count changed the fitted posterior. Same algorithm class as Mallet,
+   no Java required. Outstanding for
    v0.4: extrinsic NPMI head-to-head against an actual Mallet run
    on the same corpus.
 2. **SCENIC+ eRegulons need real-reference parity numbers next**:
@@ -132,21 +133,17 @@ haven't validated yet:
    density-window / iterative-overlap-rejection, validated on
    synthetic recovery. We have not yet benchmarked against MACS2 on
    real ENCODE data. F1 vs MACS2 broadPeak is on the v0.3 list.
-5. **100k to 200k-cell end-to-end** is now measured on synthetic data.
-   Full 7-stage pipeline (topics → GRN → regulons → cistarget →
-   enhancer → eRegulon → AUCell):
-   - 100k × 15k RNA + 100k × 50k ATAC: **762 s (12.7 min), 7.09 GB
-     peak RSS** (`bench_e2e_100k_synthetic.py`).
-   - 200k × 8k RNA + 200k × 30k ATAC: **1009 s (16.8 min), 7.44 GB
-     peak RSS** (`bench_e2e_200k_synthetic.py`).
-
-   Reference scenicplus stack reports > 40 GB at comparable scale as
-   reported context, not a controlled head-to-head. The 200k step required a sparse-aware
-   rewrite of `enhancer.link_peaks_to_genes` (ATAC stays `csc` instead
-   of densifying); shipped in the same commit. Real 100k+ multiome
-   E2E (not synthetic) is the next step. The earlier 91k microglia
-   GRN cliff was fixed by target blocking + worker-local scratch
-   (5k→91.8k slope: 1.81 → 1.15).
+5. **100k to 200k-cell end-to-end** is now measured under a controlled
+   current-release synthetic configuration. Full seven-stage compute on the
+   same IFB node took 1,312.8 and 2,708.2 seconds, a 2.063-fold increase for
+   two-fold cells; process peak RSS was 21.21 and 42.31 GB. Both runs recovered
+   30/30 topics and 30 eRegulons and passed finite, normalisation, non-empty and
+   shape gates. This is not raw-fragment, full-TF/default-GRN or biological
+   evidence. A separate production-parameter 300-gene GRN curve reached 1.2
+   million cells with wall-time slope 1.134. Real 100k+ multiome E2E remains
+   the next step. Historical target-blocked microglia numbers do not describe
+   the current flat target scheduler; current IFB evidence is recorded in
+   `validation/scaling/IFB_SCALE_2026-08-28.md`.
 6. **Windows build**: covered by CI and release-wheel jobs for x64.
 7. **PyPI live since v0.4.0** (May 2026): `pip install rustscenic`.
    Trusted-publisher OIDC from `release.yml`; five platform wheels +

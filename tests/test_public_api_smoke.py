@@ -292,6 +292,12 @@ def test_synthetic_grn_scaling_curve_cli_smoke(tmp_path):
     assert [r["n_cells"] for r in payload["results"]] == [120, 240]
     assert payload["params"]["target_block_size"] == 4
     assert all(r["target_block_size"] == 4 for r in payload["results"])
+    assert all(r["threads"] == 8 for r in payload["results"])
+    assert all(r["early_stop_mode"] == "arboreto" for r in payload["results"])
+    assert all(len(r["output_sha256"]) == 64 for r in payload["results"])
+    assert all(payload["correctness_checks"].values())
+    assert payload["path_policy"] == "portable"
+    assert len(payload["harness_sha256"]) == 64
     assert "wall_slope" in payload
     assert payload["passed"] is True
 

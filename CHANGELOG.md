@@ -2,7 +2,25 @@
 
 ## Unreleased
 
-No changes yet.
+### Documentation
+
+- Clarified that parallel Gibbs/AD-LDA is reproducible at fixed seed and thread
+  count, while changing the thread count can change the posterior mode and
+  should not be treated as a purely computational setting. Removed stale
+  near-linear-speedup wording; scaling claims now require measured workload
+  evidence.
+- Pipeline manifests now record the topic method, iteration/pass count, seed,
+  thread count, active argmax-topic count and empty-cell count. Severely
+  collapsed fits emit an actionable warning instead of remaining silent; the
+  manifest also records the Rust topic-assignment kernel used for this check.
+- Hardened the atlas-scale benchmark harnesses with bounded sparse synthetic
+  construction, nested row-prefix GRN inputs, portable source/harness
+  provenance and explicit output invariants. Added the clean-commit IFB
+  validation record through a 1.2-million-cell fixed-schema GRN and a
+  200,000-cell seven-stage scale check.
+- Halved internal GRN row-index storage and removed the duplicated document ID
+  from every parallel Gibbs token, preserving byte-identical PBMC3k and topic
+  outputs while reducing worker scratch memory.
 
 ## 0.5.0 - 2026-08-25
 

@@ -25,31 +25,32 @@ python validation/scaling/bench_synthetic_grn_curve.py \
     --sizes 25000 50000 100000 200000 \
     --n-genes 500 \
     --n-tfs 30 \
-    --n-estimators 20 \
-    --max-slope 1.30
-
-# Force a target block size when comparing cache/RSS behaviour.
-# Omit this flag to use rustscenic's adaptive default.
-python validation/scaling/bench_synthetic_grn_curve.py \
-    --sizes 50000 100000 200000 \
-    --n-genes 300 \
-    --n-tfs 30 \
-    --n-estimators 10 \
-    --target-block-size 32 \
+    --n-estimators 5000 \
+    --early-stop-mode arboreto \
+    --threads 16 \
     --max-slope 1.30
 ```
 
 Each cell count runs in a fresh subprocess so `ru_maxrss` reports a clean
 per-size peak rather than the cumulative peak across the whole benchmark.
 
+Current RustScenic 0.5.0 IFB evidence, including a 1.2-million-cell GRN curve,
+a controlled 100k-to-200k seven-stage comparison, production PBMC3k thread
+scaling and real human-brain ATAC topics, is recorded in
+[`IFB_SCALE_2026-08-28.md`](IFB_SCALE_2026-08-28.md).
+
+The real-RNA GRN gate on the official 10x 1.3-million-mouse-brain dataset,
+including a same-node pinned arboreto comparison, is recorded in
+[`IFB_REAL_RNA_GRN_2026-08-28.md`](IFB_REAL_RNA_GRN_2026-08-28.md).
+
 `bench_synthetic_grn_curve.py` is the portable high-cell-count gate when
 you want a fresh linearity check without a local `.h5ad`. It holds genes,
 TFs and estimators fixed, varies only `n_cells`, writes JSON with the
 overall log-log wall-time slope and segment slopes, and can fail with
-`--max-slope` when scaling becomes too super-linear. `--target-block-size`
-lets atlas runs compare explicit GRN response-block widths against the
-adaptive default, which keeps target blocks smaller once cell counts are
-large enough for memory bandwidth to dominate.
+`--max-slope` when scaling becomes too super-linear. It runs every point in a
+fresh process with an explicit Rayon budget and BLAS/OpenMP fixed to one
+thread. `--target-block-size` remains accepted for API compatibility but the
+flat GRN scheduler no longer blocks targets, so it does not affect execution.
 
 ## Results
 
@@ -127,8 +128,8 @@ Interpretation after audit: the cliff was not explained by allocator
 churn alone. The dominant issue was row-major strided target extraction:
 the old loop pulled one target gene at a time from a cells × genes dense
 matrix, so each target caused a cache/TLB-hostile pass with stride
-`n_genes`. Target blocking now materialises 64 consecutive targets at a
-time into a compact column-major buffer.
+`n_genes`. The historical target-blocking experiment below materialised 64
+consecutive targets at a time into a compact column-major buffer.
 
 Post-scratch sanity on the same atlas, before re-running the expensive
 40k/80k/91.8k points:
@@ -140,8 +141,8 @@ Post-scratch sanity on the same atlas, before re-running the expensive
 | 20,000 | 230.3 s | 125.7 s | 1.83× |
 
 The 5k→20k post-scratch slope was **1.09**, but a later 40k/80k/91.8k
-rerun showed scratch-only did not fix atlas scale. Target blocking is the
-actual atlas fix:
+rerun showed scratch-only did not fix atlas scale. Target blocking was the
+configuration that fixed that historical atlas run:
 
 | n_cells | original GRN | scratch-only GRN | target-blocked GRN | speedup vs original |
 |---:|---:|---:|---:|---:|
@@ -154,7 +155,11 @@ actual atlas fix:
 
 Post target-blocking slope across 5k→91.8k is **1.15**. The old
 40k→80k segment was slope 3.01; target blocking reduces it to 1.35.
-That is a substantial fix, not perfect linearity.
+That was a substantial fix, not perfect linearity. The current release instead
+uses one flat per-target Rayon pass to remove block barriers and stragglers;
+`target_block_size` is inert. Do not attribute the historical target-blocked
+numbers to the current scheduler. Current-release IFB measurements are recorded
+in `IFB_SCALE_2026-08-28.md`.
 
 ## Scaling summary
 
@@ -223,8 +228,10 @@ on a machine where the algorithm is O(n):
 (1) is hardware pressure, not a semantic bug. (3) was reduced by PR #12
 inside each tree, and later by worker-local GBM scratch buffers. The
 microglia 91k run exposed a larger memory-layout issue: one strided
-row-major pass per target gene. Target blocking fixes the biggest part
-of that by copying 64 target genes at a time into column-major buffers.
+row-major pass per target gene. The historical target-blocking scheduler
+addressed it with a 64-target transpose window. The current flat scheduler
+trades that window for barrier-free per-target execution and reusable
+per-worker response buffers, so it requires its own measured scaling evidence.
 
 ## CI regression test
 
@@ -286,13 +293,11 @@ Attempted locally (2026-04-22):
   inside 43 minutes before abort. Memory-bound at ~5 GB RSS with
   5–7 cores active, clearly paging.
 
-Both are hardware ceilings, not fix regressions, but the later 91k
-microglia run shows that sufficient RAM alone does not guarantee
-near-linear GRN wall-clock. Re-run the 50k+ curve after each GRN
-allocator/cache optimisation before making atlas-scale speed claims.
-
-Planned: re-run at 10k, 30k, 50k, 100k, 200k, 300k on Hali or Minerva
-once access lands. This is the gating data point for Kuan's proposed
-cellxgene sweep (hundreds of cell types × 30–100k each) - need to
-measure the per-cell-type cost after the worker-local buffer reuse
-patch before committing Minerva time.
+Both were historical laptop hardware ceilings, not fix regressions, but the
+later 91k microglia run showed that sufficient RAM alone does not guarantee
+near-linear wall-clock. The current flat scheduler has now been measured on
+IFB through 1.2 million cells at fixed GRN schema and through 200,000 cells for
+the seven-stage synthetic path; see `IFB_SCALE_2026-08-28.md`. The remaining
+gate is the actual 1.2-million-cell spatial object, which must be checkpointed
+from a real 100k subset because its gene count, sparsity and output sizes are
+not represented by the fixed-schema curve.

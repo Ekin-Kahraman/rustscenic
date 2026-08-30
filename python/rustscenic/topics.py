@@ -78,6 +78,38 @@ def _topic_assignment_indices(cell_topic: pd.DataFrame) -> tuple[np.ndarray, int
     return np.asarray(assignment_idx, dtype=np.int64), int(active_topics), int(empty_cells)
 
 
+def assignment_summary(cell_topic: pd.DataFrame) -> dict[str, int]:
+    """Summarise topic usage with the Rust assignment kernel.
+
+    Returns active argmax-topic and empty-cell counts without materialising a
+    Python boolean mask over the cells-by-topics matrix.
+    """
+    _, active_topics, empty_cells = _topic_assignment_indices(cell_topic)
+    return {
+        "active_argmax_topics": active_topics,
+        "empty_cells": empty_cells,
+    }
+
+
+def _warn_on_topic_collapse(active_topics: int, n_topics: int, method: str) -> None:
+    if active_topics >= (n_topics + 1) // 2:
+        return
+    import warnings
+
+    recommendation = (
+        "For sparse scATAC at K >= 30, retry with fit_gibbs and record a "
+        "fixed n_threads value."
+        if method == "vb"
+        else "Increase n_iters and validate coherence before interpretation."
+    )
+    warnings.warn(
+        f"topic model collapse: only {active_topics} of {n_topics} topics "
+        f"carry any cell argmax assignment. {recommendation}",
+        UserWarning,
+        stacklevel=3,
+    )
+
+
 def fit(
     expression,
     *,
@@ -128,7 +160,8 @@ def fit(
     if eta is None:
         eta = 1.0 / n_topics
 
-    import sys, time
+    import sys
+    import time
     n_docs = len(row_ptr) - 1
     nnz = len(col_idx)
     if verbose:
@@ -153,6 +186,7 @@ def fit(
     cell_topic.attrs["rust_backend"] = backend_execution
     topic_peak.attrs["rust_backend"] = backend_execution
     _, unique, _ = _topic_assignment_indices(cell_topic)
+    _warn_on_topic_collapse(unique, n_topics, "vb")
     if verbose:
         print(
             f"[rustscenic.topics] done in {wall:.1f}s - "
@@ -208,10 +242,12 @@ def fit_gibbs(
     n_threads
         ``1`` (default): bit-deterministic serial sampler. ``>1``:
         AD-LDA (Newman et al. 2009) parallel sampler - partitions docs
-        across threads, near-linear speedup on atlas-scale corpora at
-        the cost of small cross-thread staleness within a sweep
-        (perplexity gap is well within sampling variance per Newman
-        2009 §4). Recommended for K ≥ 30 runs over 50k+ cells.
+        across threads. Results are reproducible at fixed ``seed`` and
+        ``n_threads``. Changing the thread count changes the partition and
+        stochastic trajectory and may reach a different posterior mode, so
+        keep it fixed when comparing biological outputs. Speedup is workload
+        dependent and often saturates once topic-word reads become
+        memory-bandwidth bound.
 
     Returns
     -------
@@ -220,6 +256,8 @@ def fit_gibbs(
     """
     if not isinstance(n_topics, int) or n_topics < 1:
         raise ValueError(f"n_topics must be a positive integer, got {n_topics!r}")
+    if n_threads > 1 and n_topics > 65_535:
+        raise ValueError("parallel Gibbs supports at most 65,535 topics")
     if n_iters < 1:
         raise ValueError(f"n_iters must be >= 1, got {n_iters}")
     if n_threads < 1:
@@ -233,7 +271,8 @@ def fit_gibbs(
     if eta is None:
         eta = 0.01
 
-    import sys, time
+    import sys
+    import time
     n_docs = len(row_ptr) - 1
     nnz = len(col_idx)
     if verbose:
@@ -258,6 +297,7 @@ def fit_gibbs(
     cell_topic.attrs["rust_backend"] = backend_execution
     topic_peak.attrs["rust_backend"] = backend_execution
     _, unique, _ = _topic_assignment_indices(cell_topic)
+    _warn_on_topic_collapse(unique, n_topics, "gibbs")
     if verbose:
         print(
             f"[rustscenic.topics] Gibbs done in {wall:.1f}s - "

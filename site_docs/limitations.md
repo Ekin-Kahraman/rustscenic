@@ -21,7 +21,9 @@ assembly.
   at fine grain because RustScenic uses an independent histogram-tree builder;
   the early-stop monitor and fitted-tree distribution are validated separately.
 - Topic modelling ships both Online VB and collapsed Gibbs paths. The Gibbs path
-  is the stronger sparse scATAC option at larger topic counts.
+  is the stronger sparse scATAC option at larger topic counts. Parallel AD-LDA
+  is reproducible at a fixed thread count, but thread count is part of the model
+  configuration because changing it can change the fitted posterior mode.
 - Larger real multiome runs and repeated measurements on a second machine are
   the next benchmark tier.
 - Full workflow coverage from raw fragments plus external motif databases is in
