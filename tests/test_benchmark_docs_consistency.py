@@ -1,6 +1,7 @@
+import ast
 import json
+import re
 from pathlib import Path
-
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -30,15 +31,25 @@ def test_public_docs_keep_benchmark_claims_scoped():
     assert "`11x` to `52x`" in readme
     assert "`11x` to `52x`" in index
     assert "range from 11x to 52x" in benchmarks
-    assert "`6.34 GB` peak RSS on a 100k-cell four-stage scale check" in readme
-    assert "legacy pySCENIC reports exceed `40 GB`" in readme
+    for document in (readme, index, benchmarks):
+        assert "6.34 GB" not in document
+        assert "reports exceed" not in document
+        assert "71.49 GB" in document
+        assert "v0.5.0" in document
+    assert "1.3 million mouse-brain cells" in readme
+    assert "2,095 selected genes" in readme
+    assert "release candidate" in readme
+    assert "21.4%" in readme
+    assert "Icahn School of Medicine at Mount Sinai" in readme
     assert "Huang Lab collaborator run recovered `16/17`" in readme
     assert "Memory scaling" in index
-    assert "6.34 GB RSS" in benchmarks
-    assert "legacy pySCENIC reports exceed 40 GB" in benchmarks
+    assert "24.99 GB" in benchmarks
+    assert "not comparable" in benchmarks
+    assert "Synthetic seven-stage" in benchmarks
+    assert "not model convergence" in benchmarks
     assert "Lower peak RSS than SCENIC+" not in readme
     normalised_benchmarks = " ".join(benchmarks.split())
-    assert "algorithm-identical kernel benchmark" in normalised_benchmarks
+    assert "different methods for enhancer linking" in normalised_benchmarks
     assert "edge-set agreement" in benchmarks
     assert "## Unreleased" in changelog
     assert "collaborator lab validation" in changelog
@@ -59,6 +70,25 @@ def test_human_brain_external_validation_is_scoped():
     assert "Huang Lab collaborator run recovered `16/17`" in readme
     assert "Huang Lab collaborator artefacts" in validation
     assert "16 of 17 expected brain TFs recovered" in validation
-    assert "Collaborator human brain GEM-X full monolith run recovered 16 of 17" in adoption
+    assert "Collaborator human brain workflow recovered 16 of 17" in adoption
     assert "not a SCENIC+ head-to-head row" in validation
     assert "Huang Lab collaborator run recovered `16/17`" in readme
+
+
+def test_quickstarts_use_published_api_and_explain_candidate_gene_sets():
+    for path in (ROOT / "README.md", ROOT / "site_docs/quickstart.md"):
+        document = path.read_text()
+        assert "v0.4.7" in document
+        assert "candidate" in document
+        blocks = re.findall(r"```python\n(.*?)```", document, re.DOTALL)
+        assert blocks
+        for block in blocks:
+            calls = {
+                node.func.attr
+                for node in ast.walk(ast.parse(block))
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+            }
+            assert {"infer", "score"} <= calls
+            assert not {"add_correlation", "build_regulons"} & calls
+    api = (ROOT / "site_docs/api.md").read_text()
+    assert "not in the published v0.4.7 package" in api

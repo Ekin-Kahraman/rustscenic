@@ -4,9 +4,8 @@ RustScenic validation tracks implementation agreement, runtime, memory and
 real-data usability against established SCENIC ecosystem outputs where a fair
 comparison is possible.
 
-The standard is publication-minded: every serious claim should point to a
-dataset, command, version, hardware context, runtime, memory measurement and
-output sanity check.
+Each result should identify its dataset, command, software version, hardware,
+runtime, memory use and biological checks.
 
 ## Credibility Snapshot
 
@@ -15,8 +14,8 @@ output sanity check.
 | Released package | `v0.4.7` is the current GitHub release and PyPI package. |
 | Controlled benchmark path | `validation/head_to_head/head_to_head_summary.json` records machine, seed, Python versions, runtime, peak RSS and output signatures. |
 | Lab validation | Huang Lab collaborator artefacts include Kamath dopaminergic neurons and 10x human brain GEM-X multiome runs. |
-| Full monolith real-data run | Human brain GEM-X `v0.4.6` artefact completed GRN, regulons, cisTarget, enhancer links and eRegulons on 8,215 post-QC cells and 123,089 peaks. |
-| Biological sanity check | The full monolith human brain run recovered 16 of 17 expected brain TFs. |
+| Multi-stage real-data run | Human brain GEM-X `v0.4.6` artefact completed GRN, regulons, cisTarget, enhancer links and eRegulons on 8,215 post-QC cells and 123,089 peaks. |
+| Biological sanity check | The multi-stage human brain run recovered 16 of 17 expected brain TFs. |
 | CI coverage | Audit, docs, release and nightly real-data validation workflows keep the public evidence path checked. |
 
 ## Headline Results
@@ -41,7 +40,7 @@ hardware, command, version, runtime, memory and output signatures.
 | Tier | Dataset | Source | Evidence | Caveat |
 | --- | --- | --- | --- | --- |
 | Committed collaborator adoption artefact | Kamath et al. 2022 midbrain dopaminergic neurons | [issue #68](https://github.com/Ekin-Kahraman/rustscenic/issues/68), [PR #71](https://github.com/Ekin-Kahraman/rustscenic/pull/71), [JSON](https://github.com/Ekin-Kahraman/rustscenic/blob/main/validation/community/kamath_da_grn.json) | RustScenic `0.4.0` on Google Colab completed GRN plus cisTarget: 266,805 GRN edges, 9 regulons, 174,019 cisTarget rows, 9 of 9 expected DA-neuron TFs recovered. | Not a full multiome E2E run. AUCell, enhancer links and eRegulons were out of scope; 3 of 9 regulons had low expression-matrix gene overlap. |
-| Committed collaborator adoption artefact | 10x Multiome GEM-X 10k human brain, full monolith run | [issue #80](https://github.com/Ekin-Kahraman/rustscenic/issues/80), [JSON](https://github.com/Ekin-Kahraman/rustscenic/blob/main/validation/community/human_brain_10k_v0.4.6.json) | RustScenic `0.4.6` completed GRN, regulons, cisTarget, enhancer links and eRegulons on 8,215 post-QC cells and 123,089 peaks: 4,314,539 GRN edges, 108,736 cisTarget rows, 927,002 enhancer links, 16 of 17 expected brain TFs recovered, peak RSS 24.99 GB, total pipeline runtime 54.9 min. | Collaborator real-data run, not a SCENIC+ head-to-head row. Used preprocessed ATAC `.h5ad`; `fragments_to_matrix` was skipped. Microglial cells were filtered before analysis. |
+| Committed collaborator adoption artefact | 10x Multiome GEM-X 10k human brain, multi-stage run | [issue #80](https://github.com/Ekin-Kahraman/rustscenic/issues/80), [JSON](https://github.com/Ekin-Kahraman/rustscenic/blob/main/validation/community/human_brain_10k_v0.4.6.json) | RustScenic `0.4.6` completed GRN, regulons, cisTarget, enhancer links and eRegulons on 8,215 post-QC cells and 123,089 peaks: 4,314,539 GRN edges, 108,736 cisTarget rows, 927,002 enhancer links, 16 of 17 expected brain TFs recovered, peak RSS 24.99 GB, total pipeline runtime 54.9 min. | Collaborator real-data run, not a SCENIC+ head-to-head row. Used preprocessed ATAC `.h5ad`; `fragments_to_matrix` was skipped. Microglial cells were filtered before analysis. |
 | Committed collaborator adoption artefact | 10x Multiome GEM-X 10k human brain | [issue #70](https://github.com/Ekin-Kahraman/rustscenic/issues/70), [PR #74](https://github.com/Ekin-Kahraman/rustscenic/pull/74), [JSON](https://github.com/Ekin-Kahraman/rustscenic/blob/main/validation/community/human_brain_10k_v0.4.1.json) | RustScenic `0.4.1` completed GRN, AUCell and topics on 8,215 post-QC cells and 123,089 peaks: 4,293,902 GRN edges, 1,748 regulons, peak RSS 9.08 GB. | cisTarget, enhancer links and eRegulons were not run. Biological sanity is a top-regulon signal after immune-cell subsetting, not full cell-type enrichment. |
 | Issue-linked report | 10x lymphoma 14k | [issue #69](https://github.com/Ekin-Kahraman/rustscenic/issues/69) | RustScenic `0.4.1` completed GRN, AUCell and topics on 14,039 post-QC cells; review notes 1,663 regulons and B-cell regulators including `POU2F2`, `PAX5`, `MEF2B`, `SPIB`, `EBF1` and `BCL11A`. | JSON is attached to the issue but not committed in-repo. Low ARI is treated as expected for a mostly homogeneous sample, so this is adoption evidence only. |
 | Issue-linked report | Human cortex 44k | [issue #85](https://github.com/Ekin-Kahraman/rustscenic/issues/85) | RustScenic `0.4.7` completed the reported pipeline on 44,222 RNA/ATAC cells in 6,651 s with 16.8 GB maximum RSS. | Not a scaling baseline: one non-MPI process was allocated across six hosts and exceeded the per-host thread allocation. Zero eRegulons is incomplete biological output and needs a correctly packed rerun. |
@@ -59,8 +58,9 @@ for public performance claims.
   agreement.
 - Some real-data biological checks currently use expected TF recovery by name;
   cell-type enrichment checks are part of the next validation tier.
-- The next benchmark tier adds more real multiome datasets, repeated runs and a
-  second machine.
+- The [v0.5.0 candidate benchmarks](benchmarks.md#memory-scaling) add million-cell
+  RNA execution and repeated memory measurements. These do not replace broader
+  biological validation of complete RNA/chromatin workflows.
 
 ## Where To Look
 

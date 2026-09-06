@@ -1,11 +1,13 @@
 # RustScenic
 
-Faster, memory-efficient regulatory-network analysis for single-cell and multiome
-data.
+Fast, memory-efficient gene-regulation analysis for single-cell data.
 
-RustScenic provides Rust kernels for GRN inference, regulon activity, motif
-enrichment, topic modelling, enhancer links and eRegulons through a Python API.
-It is CPU-first, installable from PyPI and designed for reproducible local runs.
+Infer gene networks and score their activity using RNA and chromatin-accessibility
+data. RustScenic is a Python package accelerated with Rust; it runs on CPUs
+without requiring a GPU.
+
+Created and maintained by Ekin Kahraman, developed in collaboration with the
+Kuan-Lin Huang Lab at the Icahn School of Medicine at Mount Sinai.
 
 ```bash
 pip install rustscenic
@@ -17,24 +19,24 @@ pip install rustscenic
 
 | Signal | Evidence |
 | --- | --- |
-| Built | Cross-platform Rust and Python CI, docs build, release smoke checks and nightly real-data validation workflows. |
+| Built | Automated tests, installation checks and real-data validation workflows for the Rust and Python package. |
 | Released | Current release `v0.4.7`; PyPI package with Python 3.10 to 3.13 release wheels plus source distribution. |
-| Benchmarked | `11x` to `52x` faster than SCENIC+ in tested real-data core E2E rows; commands, hardware, runtime, memory and output checks are committed. |
-| Memory-scaled | `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads. |
-| Lab-validated | Huang Lab collaborator artefacts include a 10x human brain GEM-X full monolith run recovering `16/17` expected brain TFs. |
+| Benchmarked | `11x` to `52x` faster than SCENIC+ for selected analysis stages on sampled real-data inputs, measured on one machine. |
+| Scale tested | Gene-network inference on 1.3 million mouse-brain cells in under 47 minutes, at 4.28 GB peak analysis memory on 16 CPU cores. v0.5.0 candidate; preparation separately peaked at 71.49 GB. [Scope and evidence](benchmarks.md#memory-scaling). |
+| Collaborator-tested | A Huang Lab human brain workflow recovered `16/17` expected brain transcription factors. This is a biological check, not proof of every inferred connection. |
 
 ## Highlights
 
 | Feature | Status |
 | --- | --- |
-| Tested real-data speedup | `11x` to `52x` vs SCENIC+ in core E2E rows |
-| Memory scaling | `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads |
+| Tested real-data speedup | `11x` to `52x` vs SCENIC+ for selected stages on sampled data |
+| Memory scaling | v0.5.0 candidate: about 81% less peak physical memory than arboreto in a controlled 20,000-cell comparison |
 | Current release | `v0.4.7` |
 | Python support | 3.10 to 3.13 |
 | Core install | `pip install rustscenic` |
-| Runtime model | CPU-first Rust kernels |
+| Runtime model | Runs on CPUs; Rust handles the intensive calculations |
 | Core path dependencies avoided | Java, dask, CUDA, Snakemake |
-| Evidence | Controlled benchmarks plus committed collaborator real-data artefacts |
+| Evidence | Benchmarks and collaborator test records linked from this site |
 
 ## Benchmark Snapshot
 
@@ -44,6 +46,9 @@ pip install rustscenic
 | Human brain GEM-X region-to-gene edge-set Jaccard | `1.000` |
 | Human brain GEM-X region AUCell mean Pearson | `0.823` |
 | cisTarget AUC kernel agreement vs `ctxcore.recovery.aucs` | Pearson `1.0000` |
+
+v0.5.0 is not yet published on PyPI. Its million-cell benchmark uses prepared
+RNA and 2,095 selected genes; it is not a complete spatial workflow.
 
 The full benchmark matrix includes dataset shape, command path, hardware,
 runtime, memory and validation metrics. Start with [Benchmarks](benchmarks.md).
