@@ -9,7 +9,6 @@ import re
 import sys
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SEMVER = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 CONCEPT_DOI = "10.5281/zenodo.20246040"
