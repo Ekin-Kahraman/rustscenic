@@ -11,7 +11,7 @@ RustScenic is worth testing if one of these problems is blocking your analysis:
   modern Python stack.
 - AUCell, cisTarget, enhancer linking or GRN inference is becoming a runtime or
   memory bottleneck.
-- You need deterministic CPU execution under a fixed seed.
+- You need reproducible CPU runs with recorded seeds, thread counts and settings.
 - You want a single Python package covering GRN, AUCell, motif support, topics,
   enhancer links and eRegulons.
 
@@ -22,9 +22,9 @@ Use these when introducing the package to a lab or collaborator:
 | Proof point | Evidence |
 | --- | --- |
 | Released | `v0.4.7` on PyPI, with Python 3.10 to 3.13 release wheels. |
-| Faster tested path | `11x` to `52x` faster than SCENIC+ in controlled real-data core E2E rows. |
-| Lower atlas-scale memory pressure | `6.34 GB` peak RSS on a 100k-cell four-stage scale check; legacy pySCENIC reports exceed `40 GB` on similar workloads. |
-| Lab artefact | Collaborator human brain GEM-X full monolith run recovered 16 of 17 expected brain TFs. |
+| Faster tested path | `11x` to `52x` faster than SCENIC+ for selected stages on sampled data, measured on one machine. |
+| Memory measurement | v0.5.0 candidate: about 81% less peak physical memory than arboreto in a controlled 20,000-cell comparison. See [benchmark scope](benchmarks.md#memory-scaling). |
+| Lab artefact | Collaborator human brain workflow recovered 16 of 17 expected brain transcription factors. |
 
 ## Minimal Adoption Test
 
@@ -35,7 +35,8 @@ pip install rustscenic
 python -m rustscenic.quickstart
 ```
 
-Then run your own AnnData object through GRN plus AUCell:
+Then infer a gene network from your own AnnData object. The
+[quickstart](quickstart.md) adds activity scoring:
 
 ```python
 import anndata as ad
