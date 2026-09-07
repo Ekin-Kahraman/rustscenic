@@ -98,6 +98,13 @@ to prevent the two scopes being conflated; it is not a controlled comparison.
 | Historical RustScenic v0.3.2 synthetic 100k cells x 15k genes + 50k peaks, seven stages, 30 TFs, 20 GRN estimators | 7.09 GB | Commit `bf1be27`; seed 42; 762.6 s compute; hardware not recorded; no v0.5.0 or reference-memory claim |
 | Real human brain GEM-X monolith, 8,215 post-QC cells x 32,808 genes + 123,089 peaks | 24.99 GB | RustScenic 0.4.6 collaborator run; 1,693 regulons and 4.31 million GRN edges; not directly comparable with the synthetic row |
 
+The real 1.306-million-cell `4.28 GB` figure is execution on prepared RNA, not
+end-to-end memory from the original count file. Separate full-data preparation
+took 7m18s and peaked at `71.49 GB`. The compact Gibbs-token audit reduced
+median peak memory from 1,668.2 to 1,312.0 MB (`21.4%`) with byte-identical
+outputs across three baseline and three optimised runs. This short five-sweep
+ATAC benchmark measures storage efficiency, not topic convergence.
+
 The synthetic command and result are committed as
 `validation/scaling/bench_e2e_100k_synthetic.py` and
 `validation/scaling/e2e_100k_synthetic.json`. The current IFB provenance is in

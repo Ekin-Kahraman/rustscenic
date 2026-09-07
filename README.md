@@ -10,6 +10,11 @@
 </p>
 
 <p align="center">
+  Developed in collaboration with the Kuan-Lin Huang Lab at the
+  Icahn School of Medicine at Mount Sinai.
+</p>
+
+<p align="center">
   <a href="https://ekin-kahraman.github.io/rustscenic/">Documentation</a> |
   <a href="site_docs/benchmarks.md">Benchmarks</a> |
   <a href="site_docs/validation.md">Validation</a> |
@@ -31,18 +36,23 @@
 
 ## Highlights
 
+- Real **1,306,127-cell RNA GRN** in `46m42s` at `4.28 GB` execution peak
+  memory on 16 CPU cores: 2,095 selected genes, 256 TFs, 5,000-tree ceiling
+  ([IFB benchmark](validation/scaling/IFB_REAL_RNA_GRN_2026-08-28.md)).
+- **3.325x faster; 5.27x lower peak physical memory** than arboreto in a
+  controlled same-node 20k-cell GRN comparison using the same inputs and parameters.
+- **21.4% lower topic-model peak memory**, with byte-identical outputs across
+  three baseline and three optimised real mouse-brain ATAC runs
+  ([memory audit](validation/scaling/IFB_SCALE_2026-08-28.md#compact-gibbs-token-audit)).
 - `11x` to `52x` faster than SCENIC+ on sampled real-data inputs in a single-machine output-path benchmark
-- Current `v0.5.0` IFB checks reached a 1.2-million-cell fixed-schema GRN and
-  a controlled 200k-cell seven-stage synthetic run; scope and memory are
-  reported in the [IFB validation record](validation/scaling/IFB_SCALE_2026-08-28.md)
-- Historical `v0.3.2` synthetic 100k-cell seven-stage scale check peaked at
-  `7.09 GB` RSS; it is retained as historical evidence, not a v0.5.0 result
-- Current release: `v0.5.0`
-- `pip install rustscenic`, with Python 3.10 to 3.13 release wheels
 - Huang Lab collaborator run recovered `16/17` expected brain TFs on 10x human brain GEM-X data
-- Rust implementations for the matrix-heavy regulatory-network stages
-- Core path runs without Java, dask, CUDA or Snakemake
-- Benchmark artefacts include commands, hardware, runtime, memory and output checks
+
+The million-cell figure measures execution on prepared RNA; separate full-data
+preparation peaked at `71.49 GB`. Benchmark records include commands, hardware,
+parameters and output checks. These are measured workloads, not universal speedups.
+
+Current release: `v0.5.0`. Python 3.10 to 3.13; Linux, macOS and Windows wheels.
+Core analysis runs without Java, dask, CUDA or Snakemake.
 
 ## Installation
 
@@ -164,8 +174,8 @@ lives in [site_docs/benchmarks.md](site_docs/benchmarks.md) and
   RustScenic stopping behaviour. The pipeline defaults to separate activator
   and repressor regulons; `grn_regulon_polarities="unsigned"` is the explicit
   compatibility path.
-- Larger repeated real-data runs and second-machine measurements are the next
-  benchmark tier.
+- Complete million-cell spatial workflows and an atlas-wide CELLxGENE resource
+  remain outside the validated release scope.
 
 ## Documentation
 
@@ -184,5 +194,6 @@ workflow, cite the exact release used. GitHub citation metadata is in
 [CITATION.cff](CITATION.cff). Zenodo concept DOI:
 [10.5281/zenodo.20246040](https://doi.org/10.5281/zenodo.20246040).
 
-RustScenic is created and maintained by Ekin Kahraman. See [AUTHORS.md](AUTHORS.md)
-for attribution.
+RustScenic is created and maintained by Ekin Kahraman, developed in collaboration
+with the [Kuan-Lin Huang Lab](https://profiles.icahn.mssm.edu/kuan-lin-huang) at the
+Icahn School of Medicine at Mount Sinai. See [AUTHORS.md](AUTHORS.md) for attribution.

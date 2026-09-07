@@ -2,7 +2,27 @@
 
 ## Unreleased
 
-### Documentation
+No changes yet.
+
+## 0.5.0 - 2026-09-07
+
+### Performance and scale
+
+- Real 1,306,127-cell mouse-brain RNA GRN completed in 46m42s at 4.28 GB
+  execution peak memory with 2,095 genes, 256 TFs and 16 CPU cores. Separate
+  full-data preparation peaked at 71.49 GB; this is not a full spatial or
+  SCENIC+ workflow measurement.
+- Controlled same-node 20k-cell GRN comparison measured 3.325x faster execution
+  and 5.27x lower peak physical memory than arboreto. Fitted-tree totals
+  differed by 0.094%; fine edge rankings are not identical.
+- Compact Gibbs token storage reduced peak memory by 21.4% in repeated real
+  mouse-brain ATAC runs with byte-identical outputs. GRN internal row-index
+  storage was also halved, preserving byte-identical PBMC3k output.
+- Controlled synthetic 100k-to-200k seven-stage runs used 1.995x peak memory
+  and 2.063x analysis time for twice the cells; commands, parameters and
+  output invariants are recorded in the IFB validation artefacts.
+
+### Reproducibility and diagnostics
 
 - Clarified that parallel Gibbs/AD-LDA is reproducible at fixed seed and thread
   count, while changing the thread count can change the posterior mode and
@@ -18,11 +38,6 @@
   provenance and explicit output invariants. Added the clean-commit IFB
   validation record through a 1.2-million-cell fixed-schema GRN and a
   200,000-cell seven-stage scale check.
-- Halved internal GRN row-index storage and removed the duplicated document ID
-  from every parallel Gibbs token, preserving byte-identical PBMC3k and topic
-  outputs while reducing worker scratch memory.
-
-## 0.5.0 - 2026-08-25
 
 ### Migration from 0.4.x
 

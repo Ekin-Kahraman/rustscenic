@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -35,7 +34,10 @@ def test_public_docs_keep_benchmark_claims_scoped():
     assert "sampled real-data inputs in a single-machine output-path benchmark" in readme
     assert "sampled real-data inputs in a single-machine output-path benchmark" in index
     assert "range from 11x to 52x" in benchmarks
-    assert "Historical `v0.3.2` synthetic 100k-cell seven-stage scale check" in readme
+    assert "1,306,127-cell RNA GRN" in readme
+    assert "preparation peaked at `71.49 GB`" in readme
+    assert "21.4%" in readme
+    assert "Icahn School of Medicine at Mount Sinai" in readme
     assert "legacy pySCENIC reports exceed `40 GB`" not in readme
     assert "Huang Lab collaborator run recovered `16/17`" in readme
     assert "Memory scaling" in index
@@ -48,7 +50,7 @@ def test_public_docs_keep_benchmark_claims_scoped():
     assert "algorithm-identical kernel benchmark" in normalised_benchmarks
     assert "edge-set agreement" in benchmarks
     assert "## Unreleased" in changelog
-    assert "## 0.5.0 - 2026-08-25" in changelog
+    assert "## 0.5.0 - 2026-09-07" in changelog
     assert "### Migration from 0.4.x" in changelog
     assert "collaborator lab validation" in changelog
     assert scaling["benchmark_kind"] == "synthetic_scale_check"

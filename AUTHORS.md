@@ -2,6 +2,11 @@
 
 rustscenic was created by Ekin Kahraman, who is the lead developer and maintainer of the software.
 
+The project is developed in collaboration with the Kuan-Lin Huang Lab at the
+Icahn School of Medicine at Mount Sinai. Lab collaborator validation is recorded
+in `validation/community/`; this attribution does not imply institutional
+endorsement or transfer software authorship.
+
 ## Current authors
 
 - Ekin Kahraman: project creator, core architecture, Rust and Python implementation, validation framework, benchmarks, releases, documentation.

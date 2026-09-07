@@ -7,6 +7,9 @@ RustScenic provides Rust kernels for GRN inference, regulon activity, motif
 enrichment, topic modelling, enhancer links and eRegulons through a Python API.
 It is CPU-first, installable from PyPI and designed for reproducible local runs.
 
+Created and maintained by Ekin Kahraman, developed in collaboration with the
+Kuan-Lin Huang Lab at the Icahn School of Medicine at Mount Sinai.
+
 ```bash
 pip install rustscenic
 ```
@@ -20,7 +23,7 @@ pip install rustscenic
 | Built | Cross-platform Rust and Python CI, docs build, release smoke checks and nightly real-data validation workflows. |
 | Released | Current release `v0.5.0`; PyPI package with Python 3.10 to 3.13 release wheels plus source distribution. |
 | Benchmarked | `11x` to `52x` faster than SCENIC+ on sampled real-data inputs in a single-machine output-path benchmark; commands, hardware, runtime, memory and output checks are committed. |
-| Current scale evidence | RustScenic `v0.5.0` completed a real 1.306-million-cell RNA GRN and a controlled 200k-cell seven-stage synthetic run on IFB; scope and limits are reported in [Benchmarks](benchmarks.md#memory-scaling). |
+| Current scale evidence | Real 1,306,127-cell RNA GRN in `46m42s`, `4.28 GB` execution peak, 16 CPU cores; 2,095 genes and 256 TFs. Separate full-data preparation peaked at `71.49 GB`. [Benchmark scope](benchmarks.md#memory-scaling). |
 | Lab-validated | Huang Lab collaborator artefacts include a 10x human brain GEM-X full monolith run recovering `16/17` expected brain TFs. |
 
 ## Highlights
@@ -40,6 +43,8 @@ pip install rustscenic
 
 | Result | Value |
 | --- | ---: |
+| Controlled same-node 20k-cell GRN vs arboreto | `3.325x` faster; `5.27x` lower peak physical memory |
+| Compact topic storage, real mouse-brain ATAC | `21.4%` lower peak memory; byte-identical outputs |
 | Human brain GEM-X 2k total runtime | RustScenic `11.89 s`; reference `150.36 s` |
 | Human brain GEM-X region-to-gene edge-set Jaccard | `1.000` |
 | Human brain GEM-X region AUCell mean Pearson | `0.823` |

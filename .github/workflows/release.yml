@@ -188,6 +188,7 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v6
       - uses: actions/download-artifact@v8
         with:
           path: dist
@@ -195,4 +196,5 @@ jobs:
       - uses: softprops/action-gh-release@v3
         with:
           files: dist/*
-          generate_release_notes: true
+          body_path: docs/releases/${{ github.ref_name }}.md
+          generate_release_notes: false

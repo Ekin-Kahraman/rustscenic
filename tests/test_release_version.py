@@ -42,6 +42,18 @@ def test_release_metadata_matches_v050():
     assert validate_repository(ROOT, tag="v0.5.0") == "0.5.0"
 
 
+def test_release_publishes_reviewed_notes_with_benchmark_scope():
+    workflow = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+    notes = (ROOT / "docs/releases/v0.5.0.md").read_text(encoding="utf-8")
+    assert "body_path: docs/releases/${{ github.ref_name }}.md" in workflow
+    assert "actions/checkout@v6" in workflow.split("  github-release:", 1)[1]
+    assert "generate_release_notes: false" in workflow
+    assert "1,306,127 real cells" in notes
+    assert "71.49 GB" in notes
+    assert "21.4%" in notes
+    assert "does not include the unfinished CELLxGENE" in notes
+
+
 def test_every_release_upload_fails_when_its_build_output_is_missing():
     workflow = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
     assert workflow.count("if-no-files-found: error") == 4
