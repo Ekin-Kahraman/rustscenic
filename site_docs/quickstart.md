@@ -1,8 +1,12 @@
 # Quickstart
 
-This example starts with an AnnData RNA matrix and produces a GRN plus per-cell
-regulon activity scores. It is the shortest path from install to a useful
-RustScenic output.
+This example uses **v0.5.0**. It starts with an
+AnnData RNA matrix, infers a gene network and scores candidate gene sets in
+each cell. The sets are not motif-filtered or split by correlation sign.
+
+To separate target sets by correlation sign, use `add_correlation`,
+`build_regulons` or `add-cor`; see the [API map](api.md). They are not required
+for the basic example below.
 
 ```python
 import anndata as ad
@@ -17,15 +21,14 @@ grn = rustscenic.grn.infer(
     adata,
     tf_names=tfs,
     n_estimators=500,
+    top_targets_per_tf=50,
     seed=777,
 )
-signed_grn = rustscenic.grn.add_correlation(grn, adata, rho_threshold=0.03)
-regulons = rustscenic.grn.build_regulons(
-    signed_grn,
-    top_targets_per_tf=50,
-    min_targets=10,
-    include_repressors=True,
-)
+regulons = {
+    tf: group["target"].tolist()
+    for tf, group in grn.groupby("TF")
+    if len(group) >= 10
+}
 
 auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
 auc.to_parquet("aucell.parquet")
@@ -41,14 +44,9 @@ rustscenic grn \
   --tfs tfs.txt \
   --output grn.parquet
 
-rustscenic add-cor \
-  --expression data.h5ad \
-  --adjacencies grn.parquet \
-  --output signed-grn.parquet
-
 rustscenic aucell \
   --expression data.h5ad \
-  --regulons signed-grn.parquet \
+  --regulons grn.parquet \
   --output auc.parquet
 ```
 

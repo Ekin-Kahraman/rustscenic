@@ -1,11 +1,11 @@
 # Benchmarks
 
-This page is the evidence behind the README claim. It keeps the marketing line
-separate from the measurement detail: same inputs, fixed seed, stated hardware,
-runtime, memory and output agreement.
+This page records what was measured, on which data and hardware, and how the
+results compare with established tools. Speed and memory results apply to the
+stated workloads; they are not universal guarantees.
 
-RustScenic is benchmarked against SCENIC+ on the shared matrix-level regulatory
-output path:
+The SCENIC+ comparison starts with prepared RNA and chromatin-accessibility
+matrices and tests the following analysis stages:
 
 ```text
 RNA + ATAC + cistromes
@@ -15,11 +15,12 @@ RNA + ATAC + cistromes
   -> gene and region AUCell
 ```
 
-This page does not benchmark raw fragment parsing, topic modelling, motif
-database construction, or full workflow scheduling. Those are separate stages.
+The SCENIC+ comparison excludes raw fragment processing, topic modelling,
+motif-database construction and workflow scheduling. The separate memory
+studies below have their own workloads and parameters.
 
-This is a practical output-path benchmark, not an algorithm-identical kernel
-benchmark. RustScenic enhancer linking uses correlation over the fixed search
+The tools use different methods for enhancer linking; this is a workflow
+comparison, not a timing comparison of identical algorithms. RustScenic enhancer linking uses correlation over the fixed search
 space. The SCENIC+ reference row uses GBM plus Pearson scoring for
 region-to-gene links. Region-to-gene Jaccard below therefore means edge-set
 agreement under the benchmark search space, not score-level identity.
@@ -28,8 +29,8 @@ agreement under the benchmark search space, not score-level identity.
 
 | Question | Evidence |
 | --- | --- |
-| Is it faster on tested real data? | Yes: `11x` to `52x` faster than SCENIC+ across the real-data core E2E rows below. |
-| Is memory measured? | Yes: every comparison row records peak RSS; a separate historical RustScenic `v0.3.2` synthetic 100k-cell scale check peaked at `7.09 GB` RSS. |
+| Is it faster on tested real data? | Yes: `11x` to `52x` faster than SCENIC+ across the sampled real-data workloads below. |
+| Is memory measured? | Yes: each row records peak process memory (RSS). The separate scale studies below distinguish analysis memory from data preparation. |
 | Is the comparison reproducible? | Yes: the benchmark harness, summary JSON, command templates, seed, hardware and Python versions are committed. |
 | Is output agreement checked? | Yes: saved signatures report Jaccard and Pearson checks for TF-to-gene, region-to-gene, eRegulons and AUCell. |
 | Is it full SCENIC+ parity? | Not yet: this is the shared matrix-level output path; gene AUCell and eRegulon-edge parity remain explicit targets. |
@@ -76,42 +77,23 @@ For the human brain GEM-X row, including data preparation:
 
 ## Memory Scaling
 
-The core E2E rows above show comparable or lower memory against SCENIC+ on
-small real-data subsets. Current-release execution scale was measured on IFB
-from constructed RNA and ATAC matrices. It covers topics, GRN, regulon
-construction, cisTarget, enhancer linking, eRegulon assembly and AUCell, but
-not raw-fragment preprocessing. The GRN uses 30 TFs and 20 estimators, so this
-is not a default-parameter or full-TF memory claim, and it is not a real-atlas
-memory claim.
+The newer measurements below were made on the **v0.5.0 release candidate**.
+Full commands and results are in the
+[real-RNA benchmark](https://github.com/Ekin-Kahraman/rustscenic/blob/0c8eb00539e3860c78e452c8661cc2735c169386/validation/scaling/IFB_REAL_RNA_GRN_2026-08-28.md)
+and [scaling/memory audit](https://github.com/Ekin-Kahraman/rustscenic/blob/0c8eb00539e3860c78e452c8661cc2735c169386/validation/scaling/IFB_SCALE_2026-08-28.md).
 
-The separate collaborator monolith is real-data validation with a much larger
-regulatory search space. Its higher RSS is reported beside the synthetic run
-to prevent the two scopes being conflated; it is not a controlled comparison.
+| Workload | Measured result | Scope |
+| --- | --- | --- |
+| Gene-network inference on 1,306,127 mouse-brain cells | 46m42s; 4.28 GB peak analysis memory | Prepared RNA, 2,095 genes, 256 transcription factors, 16 CPU cores. Separate full-data preparation took 7m18s and peaked at 71.49 GB. |
+| Controlled 20,000-cell comparison with arboreto | 3.325x faster; 188.9 MB versus 995.5 MB peak physical memory (about 81% less) | Same hardware and inputs; fitted-tree counts differed by 0.094%. Network rankings are not identical. |
+| Topic-model storage on mouse-brain chromatin data | 1,668.2 to 1,312.0 MB median peak memory: 21.4% less | Three baseline and three optimised runs; unchanged output files. Five sampling sweeps test storage, not model convergence. |
+| Synthetic seven-stage workflow, 100,000 to 200,000 cells | 1.995x peak memory and 2.063x analysis time for twice the cells | Synthetic inputs with 30 transcription factors and a 20-tree limit; not a full-scale biological analysis. |
 
-| Workload | RustScenic peak RSS | Scope |
-| --- | ---: | --- |
-| RustScenic v0.5.0 real 10x mouse-brain RNA, 1,306,127 cells x 2,095 selected genes | 4.28 GB | 46m42s GRN; 256 TFs; production 5,000-tree ceiling; signed regulons and finite AUCell output |
-| RustScenic v0.5.0 versus arboreto 0.1.6, same real 20k-cell prefix | 0.189 GB PSS versus 0.996 GB | Same-node 2,095-gene/256-TF comparison; RustScenic was 3.325x faster in this Xeon observation; fitted-tree totals differed by 0.094% |
-| RustScenic v0.5.0 controlled synthetic 100k cells x 15k genes + 50k peaks | 21.21 GB | 1,312.8 s seven-stage compute; 100 Gibbs sweeps; clean `f8f605cc`; one IFB observation |
-| RustScenic v0.5.0 controlled synthetic 200k cells x 15k genes + 50k peaks | 42.31 GB | 2,708.2 s seven-stage compute; same node and configuration; all output gates passed |
-| RustScenic v0.5.0 synthetic 1.2m-cell GRN | 4.20 GB | Fixed 300-gene/30-TF schema, production 5,000-tree ceiling and arboreto stopping; not a full-gene or full-pipeline claim |
-| Historical RustScenic v0.3.2 synthetic 100k cells x 15k genes + 50k peaks, seven stages, 30 TFs, 20 GRN estimators | 7.09 GB | Commit `bf1be27`; seed 42; 762.6 s compute; hardware not recorded; no v0.5.0 or reference-memory claim |
-| Real human brain GEM-X monolith, 8,215 post-QC cells x 32,808 genes + 123,089 peaks | 24.99 GB | RustScenic 0.4.6 collaborator run; 1,693 regulons and 4.31 million GRN edges; not directly comparable with the synthetic row |
-
-The real 1.306-million-cell `4.28 GB` figure is execution on prepared RNA, not
-end-to-end memory from the original count file. Separate full-data preparation
-took 7m18s and peaked at `71.49 GB`. The compact Gibbs-token audit reduced
-median peak memory from 1,668.2 to 1,312.0 MB (`21.4%`) with byte-identical
-outputs across three baseline and three optimised runs. This short five-sweep
-ATAC benchmark measures storage efficiency, not topic convergence.
-
-The synthetic command and result are committed as
-`validation/scaling/bench_e2e_100k_synthetic.py` and
-`validation/scaling/e2e_100k_synthetic.json`. The current IFB provenance is in
-`validation/scaling/IFB_SCALE_2026-08-28.md`. The real-RNA GRN and arboreto
-comparison is in `validation/scaling/IFB_REAL_RNA_GRN_2026-08-28.md`; the
-real-data monolith provenance is in
-`validation/community/human_brain_10k_v0.4.6.json`.
+The earlier comparison with memory figures from unrelated pySCENIC reports is
+retired: different workloads cannot establish a controlled memory advantage.
+A separate collaborator human-brain workflow used 24.99 GB on 8,215 cells; it
+included more stages and is not comparable with the million-cell RNA-only run.
+No complete million-cell spatial or atlas-wide CELLxGENE workflow is claimed.
 
 ## Validation
 
@@ -140,19 +122,18 @@ Interpretation:
 
 The benchmark set supports a direct message:
 
-- RustScenic is substantially faster than SCENIC+ on the tested CPU matrix-level
-  E2E workloads.
+- RustScenic is faster than SCENIC+ on the selected stages and sampled inputs tested here.
 - The package runs this path without Java, dask, CUDA, or a Snakemake stack.
 - Peak memory is lower or comparable in the tested real-data rows.
 - The clearest current strength is faster local execution with a single modern
   Python install.
 
-The strongest public claim today is faster, CPU-first multiome regulatory-network
-analysis with tested core E2E speedups and a simpler installation path.
+The evidence supports faster execution on the stated workloads, alongside
+explicit checks of biological output agreement. It does not establish identical
+results or equivalent scientific performance for every stage.
 
-The next benchmark tier is aimed at larger real multiome inputs, repeated runs
-and full workflow coverage, so the headline can move from core E2E performance
-to broader external validation.
+Further validation should cover complete RNA/chromatin workflows and independent
+biological datasets.
 
 ## Reproduce
 

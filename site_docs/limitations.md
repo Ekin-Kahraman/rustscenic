@@ -21,17 +21,15 @@ assembly.
   at fine grain because RustScenic uses an independent histogram-tree builder;
   the early-stop monitor and fitted-tree distribution are validated separately.
 - Topic modelling ships both Online VB and collapsed Gibbs paths. The Gibbs path
-  is the stronger sparse scATAC option at larger topic counts. Parallel AD-LDA
-  is reproducible at a fixed thread count, but thread count is part of the model
-  configuration because changing it can change the fitted posterior mode.
-- Larger real multiome runs and repeated measurements on a second machine are
-  the next benchmark tier.
+  is the stronger sparse scATAC option at larger topic counts.
+- The million-cell benchmark measures RNA gene-network inference, not a complete
+  spatial or RNA/chromatin workflow. Preparation memory is reported separately.
 - Full workflow coverage from raw fragments plus external motif databases is in
   active validation.
 
 ## Positioning
 
-The strongest current message is direct: RustScenic gives a faster, deterministic
-regulatory-network compute path with a much simpler install than the legacy
-stack, and with measured head-to-head speedups on the tested real-data core E2E
-rows.
+RustScenic combines gene-regulation analysis stages in a CPU-based Python
+package. Benchmarks show faster execution on the stated workloads; output
+agreement varies by stage. Reproducibility requires the same input, version,
+seed, thread count and settings.

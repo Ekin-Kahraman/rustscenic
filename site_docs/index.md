@@ -1,11 +1,10 @@
 # RustScenic
 
-Faster, memory-efficient regulatory-network analysis for single-cell and multiome
-data.
+Fast, memory-efficient gene-regulation analysis for single-cell data.
 
-RustScenic provides Rust kernels for GRN inference, regulon activity, motif
-enrichment, topic modelling, enhancer links and eRegulons through a Python API.
-It is CPU-first, installable from PyPI and designed for reproducible local runs.
+Infer gene networks and score their activity using RNA and chromatin-accessibility
+data. RustScenic is a Python package accelerated with Rust; it runs on CPUs
+without requiring a GPU.
 
 Created and maintained by Ekin Kahraman, developed in collaboration with the
 Kuan-Lin Huang Lab at the Icahn School of Medicine at Mount Sinai.
@@ -20,35 +19,36 @@ pip install rustscenic
 
 | Signal | Evidence |
 | --- | --- |
-| Built | Cross-platform Rust and Python CI, docs build, release smoke checks and nightly real-data validation workflows. |
-| Released | Current release `v0.5.0`; PyPI package with Python 3.10 to 3.13 release wheels plus source distribution. |
-| Benchmarked | `11x` to `52x` faster than SCENIC+ on sampled real-data inputs in a single-machine output-path benchmark; commands, hardware, runtime, memory and output checks are committed. |
-| Current scale evidence | Real 1,306,127-cell RNA GRN in `46m42s`, `4.28 GB` execution peak, 16 CPU cores; 2,095 genes and 256 TFs. Separate full-data preparation peaked at `71.49 GB`. [Benchmark scope](benchmarks.md#memory-scaling). |
-| Lab-validated | Huang Lab collaborator artefacts include a 10x human brain GEM-X full monolith run recovering `16/17` expected brain TFs. |
+| Built | Automated tests, installation checks and real-data validation workflows for the Rust and Python package. |
+| Released | Current release `v0.5.0`; Python 3.10 to 3.13 release wheels plus source distribution. |
+| Benchmarked | `11x` to `52x` faster than SCENIC+ for selected analysis stages on sampled real-data inputs, measured on one machine. |
+| Scale tested | Gene-network inference on 1.3 million mouse-brain cells in under 47 minutes, at 4.28 GB peak analysis memory on 16 CPU cores. v0.5.0 candidate; preparation separately peaked at 71.49 GB. [Scope and evidence](benchmarks.md#memory-scaling). |
+| Collaborator-tested | A Huang Lab human brain workflow recovered `16/17` expected brain transcription factors. This is a biological check, not proof of every inferred connection. |
 
 ## Highlights
 
 | Feature | Status |
 | --- | --- |
-| Tested real-data speedup | `11x` to `52x` vs SCENIC+ on sampled inputs in a single-machine output-path benchmark |
-| Memory scaling | Current controlled 100k/200k seven-stage process high-water marks were 21.21/42.31 GB; this is synthetic execution-scale evidence, not a real-atlas memory promise |
+| Tested real-data speedup | `11x` to `52x` vs SCENIC+ for selected stages on sampled data |
+| Memory scaling | v0.5.0 candidate: about 81% less peak physical memory than arboreto in a controlled 20,000-cell comparison |
 | Current release | `v0.5.0` |
 | Python support | 3.10 to 3.13 |
 | Core install | `pip install rustscenic` |
-| Runtime model | CPU-first Rust kernels |
+| Runtime model | Runs on CPUs; Rust handles the intensive calculations |
 | Core path dependencies avoided | Java, dask, CUDA, Snakemake |
-| Evidence | Controlled benchmarks plus committed collaborator real-data artefacts |
+| Evidence | Benchmarks and collaborator test records linked from this site |
 
 ## Benchmark Snapshot
 
 | Result | Value |
 | --- | ---: |
-| Controlled same-node 20k-cell GRN vs arboreto | `3.325x` faster; `5.27x` lower peak physical memory |
-| Compact topic storage, real mouse-brain ATAC | `21.4%` lower peak memory; byte-identical outputs |
 | Human brain GEM-X 2k total runtime | RustScenic `11.89 s`; reference `150.36 s` |
 | Human brain GEM-X region-to-gene edge-set Jaccard | `1.000` |
 | Human brain GEM-X region AUCell mean Pearson | `0.823` |
 | cisTarget AUC kernel agreement vs `ctxcore.recovery.aucs` | Pearson `1.0000` |
+
+The v0.5.0 benchmarks were measured on the release candidate. The million-cell
+run uses prepared RNA and 2,095 selected genes; it is not a complete spatial workflow.
 
 The full benchmark matrix includes dataset shape, command path, hardware,
 runtime, memory and validation metrics. Start with [Benchmarks](benchmarks.md).

@@ -1,13 +1,17 @@
 # Installation
 
-RustScenic is designed to install like a normal Python package. The point is to
-avoid turning regulatory-network analysis into a dependency-management project.
+Install RustScenic as a Python package. Prebuilt packages are available for
+Linux, macOS and Windows; a GPU is not required.
 
 ## Standard Install
 
 ```bash
 pip install rustscenic
 ```
+
+This documentation targets **v0.5.0**. The [quickstart](quickstart.md) starts
+with network inference and activity scoring; the [API map](api.md) covers
+the correlation helpers and other analysis stages.
 
 Supported Python versions: `3.10` to `3.13`.
 

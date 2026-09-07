@@ -3,6 +3,10 @@
 RustScenic exposes the workflow as small Python calls. Each stage can be used
 alone, or combined through `rustscenic.pipeline.run`.
 
+**Version note:** this page describes v0.5.0. The correlation helpers,
+`early_stop_mode`, and pipeline polarity options require v0.5.0 or later.
+Start with the [quickstart](quickstart.md) for a basic workflow.
+
 ## RNA Regulatory Network
 
 ```python

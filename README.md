@@ -1,17 +1,17 @@
 <h1 align="center">RustScenic</h1>
 
 <p align="center">
-  <strong>Faster, memory-efficient regulatory-network analysis for single-cell and multiome data.</strong>
+  <strong>Fast, memory-efficient gene-regulation analysis for single-cell data.</strong>
 </p>
 
 <p align="center">
-  Rust kernels for GRN inference, regulon activity, motif enrichment, topic modelling,
-  enhancer links and eRegulons. Python API. CPU-first. One install.
+  Infer gene networks and score their activity using RNA and chromatin-accessibility data.
+  A Python package accelerated with Rust. Runs on CPUs; no GPU required.
 </p>
 
 <p align="center">
-  Developed in collaboration with the Kuan-Lin Huang Lab at the
-  Icahn School of Medicine at Mount Sinai.
+  Created and maintained by Ekin Kahraman, developed in collaboration with the
+  Kuan-Lin Huang Lab at the Icahn School of Medicine at Mount Sinai.
 </p>
 
 <p align="center">
@@ -36,22 +36,22 @@
 
 ## Highlights
 
-- Real **1,306,127-cell RNA GRN** in `46m42s` at `4.28 GB` execution peak
-  memory on 16 CPU cores: 2,095 selected genes, 256 TFs, 5,000-tree ceiling
-  ([IFB benchmark](validation/scaling/IFB_REAL_RNA_GRN_2026-08-28.md)).
-- **3.325x faster; 5.27x lower peak physical memory** than arboreto in a
-  controlled same-node 20k-cell GRN comparison using the same inputs and parameters.
-- **21.4% lower topic-model peak memory**, with byte-identical outputs across
-  three baseline and three optimised real mouse-brain ATAC runs
-  ([memory audit](validation/scaling/IFB_SCALE_2026-08-28.md#compact-gibbs-token-audit)).
-- `11x` to `52x` faster than SCENIC+ on sampled real-data inputs in a single-machine output-path benchmark
-- Huang Lab collaborator run recovered `16/17` expected brain TFs on 10x human brain GEM-X data
+- Gene-network inference on **1.3 million mouse-brain cells** in under 47 minutes,
+  with **4.28 GB** peak memory during analysis on 16 CPU cores
+  ([v0.5.0 benchmark](https://github.com/Ekin-Kahraman/rustscenic/blob/0c8eb00539e3860c78e452c8661cc2735c169386/validation/scaling/IFB_REAL_RNA_GRN_2026-08-28.md)).
+- **3.3x faster with about 81% less peak physical memory than arboreto** in a
+  controlled 20,000-cell gene-network comparison on the same hardware.
+- **21.4% lower topic-model peak memory**, with unchanged output files in repeated
+  mouse-brain tests ([v0.5.0 memory audit](https://github.com/Ekin-Kahraman/rustscenic/blob/0c8eb00539e3860c78e452c8661cc2735c169386/validation/scaling/IFB_SCALE_2026-08-28.md#compact-gibbs-token-audit)).
+- `11x` to `52x` faster than SCENIC+ for selected analysis stages on sampled real-data inputs, measured on one machine.
+- Huang Lab collaborator run recovered `16/17` expected brain transcription factors in human brain data.
 
-The million-cell figure measures execution on prepared RNA; separate full-data
-preparation peaked at `71.49 GB`. Benchmark records include commands, hardware,
-parameters and output checks. These are measured workloads, not universal speedups.
+The first three results were measured on the **v0.5.0 release candidate**.
+The million-cell run used prepared RNA and 2,095 selected genes;
+separate full-data preparation peaked at **71.49 GB**. These measurements do not
+describe a complete million-cell spatial workflow.
 
-Current release: `v0.5.0`. Python 3.10 to 3.13; Linux, macOS and Windows wheels.
+Current release: `v0.5.0`. Python 3.10 to 3.13; Linux, macOS and Windows.
 Core analysis runs without Java, dask, CUDA or Snakemake.
 
 ## Installation
@@ -60,25 +60,22 @@ Core analysis runs without Java, dask, CUDA or Snakemake.
 pip install rustscenic
 ```
 
-## Migrating from 0.4.x
+## Upgrading from 0.4.x
 
-- GRN early stopping now defaults to the arboreto-style trailing-window OOB
-  monitor. Set `early_stop_mode="legacy_inbag"` only when reproducing the
-  earlier RustScenic rule.
-- Regulon construction now preserves activator and repressor polarity by
-  default. Use the documented `"unsigned"` compatibility mode for an older
-  unsigned workflow.
-- RustScenic 0.5.0 and later use Apache-2.0. Published 0.4.x and earlier
-  artefacts remain under MIT.
+v0.5.0 reduces memory use and adds separate positively and negatively correlated
+target sets. Gene-network fitting now follows arboreto's stopping rule; use
+`early_stop_mode="legacy_inbag"` only to reproduce the previous behaviour.
+See the [release notes](docs/releases/v0.5.0.md) for compatibility options and
+the change to Apache-2.0. Earlier published releases remain under MIT.
 
 ## Benchmark Evidence
 
-Core E2E comparison on the same matrix-level regulatory path: TF-to-gene,
-region-to-gene, eRegulons, gene AUCell and region AUCell.
+The SCENIC+ comparison starts from prepared matrices and measures gene-network
+inference, enhancer links and activity scores. It excludes raw-data processing,
+topic modelling and motif-database construction.
 
-This is a practical output-path benchmark against SCENIC+. It is not a claim
-that every internal stage uses the same estimator: RustScenic enhancer linking
-uses correlation over the fixed search space, while SCENIC+ uses GBM plus
+The tools use different methods for enhancer linking: RustScenic
+uses correlation over the fixed search space, while SCENIC+ uses boosted trees plus
 Pearson scoring for region-to-gene links.
 
 Machine: Apple M5 laptop, 16 GB RAM, macOS arm64, 4 CPU threads. RustScenic
@@ -114,6 +111,10 @@ Full commands, hardware, validation metrics and output signatures are in
 
 ## Quick Start
 
+This example uses **v0.5.0**. It builds candidate
+gene sets from network edges and scores their activity; these sets have not
+been filtered for motif support or split by positive and negative correlation.
+
 ```python
 import anndata as ad
 import rustscenic.aucell
@@ -123,14 +124,14 @@ import rustscenic.grn
 adata = ad.read_h5ad("rna.h5ad")
 tfs = rustscenic.data.tfs("hs")
 
-grn = rustscenic.grn.infer(adata, tf_names=tfs, n_estimators=5000, seed=777)
-signed_grn = rustscenic.grn.add_correlation(grn, adata, rho_threshold=0.03)
-regulons = rustscenic.grn.build_regulons(
-    signed_grn,
-    top_targets_per_tf=50,
-    min_targets=10,
-    include_repressors=True,
+grn = rustscenic.grn.infer(
+    adata, tf_names=tfs, n_estimators=5000, top_targets_per_tf=50, seed=777
 )
+regulons = {
+    tf: group["target"].tolist()
+    for tf, group in grn.groupby("TF")
+    if len(group) >= 10
+}
 auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
 ```
 
@@ -139,14 +140,18 @@ Command line:
 ```bash
 rustscenic pipeline --rna data.h5ad --tfs tfs.txt --output out/
 rustscenic grn --expression rna.h5ad --tfs tfs.txt --output grn.parquet
-rustscenic add-cor --expression rna.h5ad --adjacencies grn.parquet --output signed-grn.parquet
-rustscenic aucell --expression rna.h5ad --regulons signed-grn.parquet --output aucell.parquet
+rustscenic aucell --expression rna.h5ad --regulons grn.parquet --output aucell.parquet
 rustscenic topics --expression atac.h5ad --output topics.parquet --n-topics 30
 rustscenic cistarget --rankings rankings.feather --regulons regulons.tsv --output motifs.parquet
 ```
 
 See [examples/pbmc3k_end_to_end.py](examples/pbmc3k_end_to_end.py) for a small
 real-data RNA example.
+
+v0.5.0 also provides `add_correlation`, `build_regulons`, and
+`rustscenic add-cor` to separate target sets by correlation sign.
+See the [API map](site_docs/api.md) for those features. A correlation sign is
+not experimental proof of activation or repression.
 
 ## Validation
 
@@ -155,7 +160,7 @@ real-data RNA example.
 | cisTarget kernel | Pearson `1.0000` against `ctxcore.recovery.aucs`; mean absolute difference about `2.4e-5`. |
 | AUCell parity | Ziegler 2021 airway atlas mean per-cell Pearson `0.984`; `91.7%` of cells above `0.95`. |
 | Human brain GEM-X benchmark | Region-to-gene Jaccard `1.000`; region AUCell mean Pearson `0.823`. |
-| Collaborator lab artefact | 10x human brain multiome full monolith run recovered `16/17` expected brain TFs. |
+| Collaborator analysis | A human brain RNA/chromatin workflow recovered `16/17` expected brain transcription factors. |
 | Open parity targets | Gene AUCell Pearson `0.386` and eRegulon edge Jaccard `0.161` on the human brain GEM-X row. |
 
 Validation artefacts live under [validation/](validation/). Public interpretation
@@ -164,18 +169,18 @@ lives in [site_docs/benchmarks.md](site_docs/benchmarks.md) and
 
 ## Current Boundaries
 
-- The headline benchmark is the core matrix-level E2E path, not every possible
-  raw-fragment and motif-database workflow.
+- The SCENIC+ speedups cover selected analysis stages, not every possible
+  raw-data and motif-database workflow.
 - GRN, gene AUCell and eRegulon edge agreement are not claimed to be
   bit-identical to SCENIC+; see [Benchmarks](site_docs/benchmarks.md) for the
   parity metrics.
-- `grn.infer` defaults to arboreto-compatible trailing-window OOB stopping.
+- v0.5.0 changes `grn.infer` to arboreto-compatible early stopping.
   Use `early_stop_mode="legacy_inbag"` only to reproduce historical
   RustScenic stopping behaviour. The pipeline defaults to separate activator
   and repressor regulons; `grn_regulon_polarities="unsigned"` is the explicit
   compatibility path.
 - Complete million-cell spatial workflows and an atlas-wide CELLxGENE resource
-  remain outside the validated release scope.
+  remain outside the validated scope.
 
 ## Documentation
 
@@ -194,6 +199,5 @@ workflow, cite the exact release used. GitHub citation metadata is in
 [CITATION.cff](CITATION.cff). Zenodo concept DOI:
 [10.5281/zenodo.20246040](https://doi.org/10.5281/zenodo.20246040).
 
-RustScenic is created and maintained by Ekin Kahraman, developed in collaboration
-with the [Kuan-Lin Huang Lab](https://profiles.icahn.mssm.edu/kuan-lin-huang) at the
-Icahn School of Medicine at Mount Sinai. See [AUTHORS.md](AUTHORS.md) for attribution.
+RustScenic is created and maintained by Ekin Kahraman. See [AUTHORS.md](AUTHORS.md)
+for attribution.
