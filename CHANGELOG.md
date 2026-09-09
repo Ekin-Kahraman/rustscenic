@@ -4,7 +4,7 @@
 
 No changes yet.
 
-## 0.5.0 - 2026-09-07
+## 0.5.0 - 2026-09-09
 
 ### Performance and scale
 

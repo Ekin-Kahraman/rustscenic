@@ -52,7 +52,7 @@ def test_public_docs_keep_benchmark_claims_scoped():
     assert "different methods for enhancer linking" in normalised_benchmarks
     assert "edge-set agreement" in benchmarks
     assert "## Unreleased" in changelog
-    assert "## 0.5.0 - 2026-09-07" in changelog
+    assert "## 0.5.0 - 2026-09-09" in changelog
     assert "## Upgrading from 0.4.x" in readme
     assert "collaborator lab validation" in changelog
 
