@@ -21,6 +21,7 @@ PBMC at v0.2.0) and start from the cells × peaks AnnData.
 Reports per-stage wall-clock + the global peak RSS. The intent is to
 prove every stage connects at 100k scale, not to claim arbitrary speed
 records.
+Peak-memory measurements require Linux or macOS; data helpers are portable.
 
 Setup:
   python validation/scaling/bench_e2e_100k_synthetic.py
@@ -32,7 +33,6 @@ import hashlib
 import json
 import os
 import platform
-import resource
 import subprocess
 import sys
 import time
@@ -258,6 +258,8 @@ def main() -> int:
     rss_marks: list = []
 
     def mark(label: str):
+        import resource
+
         rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         if sys.platform == "darwin":
             rss_gb = rss / (1024 ** 3)

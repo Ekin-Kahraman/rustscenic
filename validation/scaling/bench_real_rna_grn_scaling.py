@@ -24,6 +24,7 @@ Run production-parameter GRN checkpoints in fresh processes::
 
 This is execution and numerical-invariant evidence. It is not a substitute
 for cell-type-aware biological validation on the collaborator's dataset.
+Peak-memory measurements require Linux or macOS; data helpers are portable.
 """
 from __future__ import annotations
 
@@ -32,7 +33,6 @@ import hashlib
 import json
 import os
 import platform
-import resource
 import subprocess
 import sys
 import time
@@ -63,6 +63,8 @@ def sha256_file(path: Path) -> str:
 
 
 def peak_rss_mb() -> float:
+    import resource
+
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     return rss / (1024**2) if sys.platform == "darwin" else rss / 1024
 

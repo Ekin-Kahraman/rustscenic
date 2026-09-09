@@ -4,6 +4,7 @@ The coordinator builds a cell-called peak matrix once from 10x fragments,
 then runs each topic-model point in a fresh child process.  Fresh processes
 are required because Rayon reads ``RAYON_NUM_THREADS`` when its global pool is
 first initialised.  The resulting JSON contains no absolute paths.
+Peak-memory measurements require Linux or macOS; comparison helpers are portable.
 
 Example
 -------
@@ -26,7 +27,6 @@ import hashlib
 import json
 import os
 import platform
-import resource
 import subprocess
 import sys
 import time
@@ -86,6 +86,8 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _rss_gb() -> float:
+    import resource
+
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     return rss / (1024**3) if sys.platform == "darwin" else rss / (1024**2)
 

@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+import builtins
+import runpy
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
+import pytest
 import scipy.sparse as sp
 
 from validation.scaling import bench_synthetic_grn_curve as grn_curve
@@ -17,6 +22,30 @@ from validation.scaling.bench_e2e_100k_synthetic import (
 )
 from validation.scaling.bench_real_atac_topics_scaling import _thread_comparisons
 from validation.scaling.bench_synthetic_grn_curve import synthetic_expression
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        "bench_real_rna_grn_scaling.py",
+        "bench_real_atac_topics_scaling.py",
+        "bench_e2e_100k_synthetic.py",
+    ],
+)
+def test_portable_benchmark_helpers_import_without_unix_resource(
+    monkeypatch, filename: str
+) -> None:
+    original_import = builtins.__import__
+
+    def import_without_resource(name, *args, **kwargs):
+        if name == "resource":
+            raise ModuleNotFoundError("resource is unavailable on Windows")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", import_without_resource)
+    path = Path(__file__).resolve().parents[1] / "validation" / "scaling" / filename
+    namespace = runpy.run_path(str(path))
+    assert namespace["__name__"] == "<run_path>"
 
 
 def test_synthetic_multiome_builder_constructs_bounded_csr() -> None:
