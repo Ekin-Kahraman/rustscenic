@@ -3,6 +3,7 @@ from __future__ import annotations
 import builtins
 import runpy
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
@@ -46,6 +47,20 @@ def test_portable_benchmark_helpers_import_without_unix_resource(
     path = Path(__file__).resolve().parents[1] / "validation" / "scaling" / filename
     namespace = runpy.run_path(str(path))
     assert namespace["__name__"] == "<run_path>"
+
+
+@pytest.mark.parametrize("peak_field", ["peak_rss", "peak_wset"])
+def test_windows_rna_memory_uses_peak_not_current_rss(monkeypatch, peak_field) -> None:
+    import psutil
+
+    memory = SimpleNamespace(rss=1024**2, **{peak_field: 7 * 1024**2})
+    with monkeypatch.context() as patch:
+        patch.setattr(real_rna.sys, "platform", "win32")
+        patch.setattr(
+            psutil, "Process", lambda: SimpleNamespace(memory_info=lambda: memory)
+        )
+        result = real_rna.peak_rss_mb()
+    assert result == 7.0
 
 
 def test_synthetic_multiome_builder_constructs_bounded_csr() -> None:

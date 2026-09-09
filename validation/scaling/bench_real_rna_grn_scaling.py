@@ -24,7 +24,7 @@ Run production-parameter GRN checkpoints in fresh processes::
 
 This is execution and numerical-invariant evidence. It is not a substitute
 for cell-type-aware biological validation on the collaborator's dataset.
-Peak-memory measurements require Linux or macOS; data helpers are portable.
+Peak-memory measurements use the OS high-water mark; Windows requires psutil.
 """
 from __future__ import annotations
 
@@ -63,6 +63,16 @@ def sha256_file(path: Path) -> str:
 
 
 def peak_rss_mb() -> float:
+    if sys.platform == "win32":
+        import psutil
+
+        memory = psutil.Process().memory_info()
+        # psutil renamed peak_wset to peak_rss; both denote PeakWorkingSetSize.
+        peak = getattr(memory, "peak_rss", None)
+        if peak is None:
+            peak = memory.peak_wset
+        return peak / (1024**2)
+
     import resource
 
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
