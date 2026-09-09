@@ -77,8 +77,8 @@ For the human brain GEM-X row, including data preparation:
 
 ## Memory Scaling
 
-The newer measurements below use the **v0.5.0 release candidate**, not the
-current PyPI release. Full commands and results are in the
+The newer measurements below were made on the **v0.5.0 release candidate**.
+Full commands and results are in the
 [real-RNA benchmark](https://github.com/Ekin-Kahraman/rustscenic/blob/0c8eb00539e3860c78e452c8661cc2735c169386/validation/scaling/IFB_REAL_RNA_GRN_2026-08-28.md)
 and [scaling/memory audit](https://github.com/Ekin-Kahraman/rustscenic/blob/0c8eb00539e3860c78e452c8661cc2735c169386/validation/scaling/IFB_SCALE_2026-08-28.md).
 

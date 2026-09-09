@@ -29,9 +29,11 @@
 //! - `fit_par`: AD-LDA (Newman et al. 2009) - partition documents
 //!   across Rayon workers, each thread mutates a per-thread delta on
 //!   `n_kw`/`n_k` while sampling, deltas are merged at sweep
-//!   boundaries. Quality matches serial at typical thread counts;
-//!   wall-clock scales near-linearly. Recommended for K ≥ 30 atlas
-//!   runs (50k+ cells).
+//!   boundaries. Runs are reproducible at a fixed thread count, but changing
+//!   the thread count changes both the partition and stochastic trajectory
+//!   and can reach a different posterior mode. Treat `n_threads` as part of
+//!   the model configuration. Speedup is workload dependent and commonly
+//!   saturates when the shared topic-word reads become memory-bandwidth bound.
 
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -207,8 +209,9 @@ pub fn fit(
 /// the sampling-probabilities scratch).
 struct ThreadState {
     docs: Vec<usize>,
-    tokens: Vec<(u32, u32)>, // (local_doc_idx, word)
-    z: Vec<u32>,
+    words: Vec<u32>, // document identity is implicit in offsets
+    doc_token_offsets: Vec<usize>,
+    z: Vec<u16>,         // topic count is guarded at 65,535 on the parallel path
     n_dk: Vec<u32>,      // (docs.len() × n_topics), row-major
     d_kw: Vec<i32>,      // (n_topics × n_words), reused each sweep
     d_k: Vec<i32>,       // n_topics, reused each sweep
@@ -257,20 +260,23 @@ fn init_thread_states(
     let mut master_rng = StdRng::seed_from_u64(seed);
     let mut out: Vec<ThreadState> = Vec::with_capacity(partition.len());
     for docs in partition {
-        let mut tokens: Vec<(u32, u32)> = Vec::new();
-        for (local_d, &gd) in docs.iter().enumerate() {
+        let mut words = Vec::new();
+        let mut doc_token_offsets = Vec::with_capacity(docs.len() + 1);
+        doc_token_offsets.push(0);
+        for &gd in &docs {
             let s = row_ptr[gd];
             let e = row_ptr[gd + 1];
             for i in s..e {
                 let w = col_idx[i] as u32;
                 let c = counts[i] as usize;
                 for _ in 0..c {
-                    tokens.push((local_d as u32, w));
+                    words.push(w);
                 }
             }
+            doc_token_offsets.push(words.len());
         }
-        let z: Vec<u32> = (0..tokens.len())
-            .map(|_| master_rng.gen_range(0..n_topics as u32))
+        let z: Vec<u16> = (0..words.len())
+            .map(|_| master_rng.gen_range(0..n_topics as u32) as u16)
             .collect();
         let n_dk = vec![0u32; docs.len() * n_topics];
         let d_kw = vec![0i32; n_topics * n_words];
@@ -278,7 +284,8 @@ fn init_thread_states(
         let p_scratch = vec![0.0_f64; n_topics];
         out.push(ThreadState {
             docs,
-            tokens,
+            words,
+            doc_token_offsets,
             z,
             n_dk,
             d_kw,
@@ -299,11 +306,14 @@ fn prime_counts(
     let mut n_kw = vec![0u32; n_topics * n_words];
     let mut n_k = vec![0u32; n_topics];
     for ts in threads.iter_mut() {
-        for (i, &(local_d, w)) in ts.tokens.iter().enumerate() {
-            let k = ts.z[i] as usize;
-            ts.n_dk[local_d as usize * n_topics + k] += 1;
-            n_kw[w as usize * n_topics + k] += 1;
-            n_k[k] += 1;
+        for local_d in 0..ts.docs.len() {
+            for i in ts.doc_token_offsets[local_d]..ts.doc_token_offsets[local_d + 1] {
+                let k = ts.z[i] as usize;
+                let w = ts.words[i] as usize;
+                ts.n_dk[local_d * n_topics + k] += 1;
+                n_kw[w * n_topics + k] += 1;
+                n_k[k] += 1;
+            }
         }
     }
     (n_kw, n_k)
@@ -345,43 +355,45 @@ fn run_thread_sweep(
 
     let mut rng = StdRng::seed_from_u64(rng_seed);
 
-    for i in 0..ts.tokens.len() {
-        let (local_d, w) = ts.tokens[i];
-        let local_d_off = local_d as usize * n_topics;
-        let w_us = w as usize;
-        let cur = ts.z[i] as usize;
+    for local_d in 0..ts.docs.len() {
+        let local_d_off = local_d * n_topics;
+        for i in ts.doc_token_offsets[local_d]..ts.doc_token_offsets[local_d + 1] {
+            let w_us = ts.words[i] as usize;
+            let cur = ts.z[i] as usize;
 
-        ts.n_dk[local_d_off + cur] -= 1;
-        ts.d_kw[w_us * n_topics + cur] -= 1;
-        ts.d_k[cur] -= 1;
+            ts.n_dk[local_d_off + cur] -= 1;
+            ts.d_kw[w_us * n_topics + cur] -= 1;
+            ts.d_k[cur] -= 1;
 
-        let mut total = 0.0_f64;
-        for k in 0..n_topics {
-            let nd = ts.n_dk[local_d_off + k] as f64 + alpha_f64;
-            let nw_global = snap_n_kw[w_us * n_topics + k] as i32 + ts.d_kw[w_us * n_topics + k];
-            let nk_global = snap_n_k[k] as i32 + ts.d_k[k];
-            let nw = nw_global.max(0) as f64 + eta_f64;
-            let nk = nk_global.max(0) as f64 + w_eta;
-            let val = nd * nw / nk;
-            ts.p_scratch[k] = val;
-            total += val;
-        }
-
-        let r: f64 = rng.gen::<f64>() * total;
-        let mut acc = 0.0_f64;
-        let mut new_k = n_topics - 1;
-        for k in 0..n_topics {
-            acc += ts.p_scratch[k];
-            if r <= acc {
-                new_k = k;
-                break;
+            let mut total = 0.0_f64;
+            for k in 0..n_topics {
+                let nd = ts.n_dk[local_d_off + k] as f64 + alpha_f64;
+                let nw_global =
+                    snap_n_kw[w_us * n_topics + k] as i32 + ts.d_kw[w_us * n_topics + k];
+                let nk_global = snap_n_k[k] as i32 + ts.d_k[k];
+                let nw = nw_global.max(0) as f64 + eta_f64;
+                let nk = nk_global.max(0) as f64 + w_eta;
+                let val = nd * nw / nk;
+                ts.p_scratch[k] = val;
+                total += val;
             }
-        }
 
-        ts.n_dk[local_d_off + new_k] += 1;
-        ts.d_kw[w_us * n_topics + new_k] += 1;
-        ts.d_k[new_k] += 1;
-        ts.z[i] = new_k as u32;
+            let r: f64 = rng.gen::<f64>() * total;
+            let mut acc = 0.0_f64;
+            let mut new_k = n_topics - 1;
+            for k in 0..n_topics {
+                acc += ts.p_scratch[k];
+                if r <= acc {
+                    new_k = k;
+                    break;
+                }
+            }
+
+            ts.n_dk[local_d_off + new_k] += 1;
+            ts.d_kw[w_us * n_topics + new_k] += 1;
+            ts.d_k[new_k] += 1;
+            ts.z[i] = new_k as u16;
+        }
     }
 }
 
@@ -467,11 +479,13 @@ fn compute_theta(
 /// - At sweep end, all worker deltas are summed back into the global
 ///   `n_kw` and `n_k` for the next sweep.
 ///
-/// This is bit-identical to `fit` when `n_threads == 1`. For
-/// `n_threads > 1` it diverges very slightly because cross-thread
-/// updates only become visible at sweep boundaries - but Newman et
-/// al. 2009 §4 show the perplexity gap is well within sampling
-/// variance for typical T (4–32 threads). The trade-off is
+/// This is bit-identical to `fit` when `n_threads == 1` and reproducible for a
+/// fixed `seed` and `n_threads`. Changing `n_threads` changes document
+/// partitions and the stochastic trajectory because cross-thread updates only
+/// become visible at sweep boundaries; it can therefore reach a materially
+/// different posterior mode. Compare models with coherence and downstream
+/// biological checks rather than assuming thread-count invariance. The
+/// trade-off is
 /// `O(n_threads × n_topics × n_words × 4 bytes)` memory for the
 /// thread-local deltas (e.g. 30 × 100k × 4B × 8 threads = ~96 MB).
 #[allow(clippy::too_many_arguments)]
@@ -494,6 +508,10 @@ pub fn fit_par(
     }
     let n_docs = row_ptr.len().saturating_sub(1);
     assert!(n_topics > 0, "n_topics must be > 0");
+    assert!(
+        u16::try_from(n_topics).is_ok(),
+        "parallel Gibbs supports at most 65,535 topics"
+    );
     assert!(n_iters > 0, "n_iters must be > 0");
     assert!(
         col_idx.iter().all(|&w| w >= 0 && (w as usize) < n_words),

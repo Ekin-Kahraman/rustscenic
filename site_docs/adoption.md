@@ -21,7 +21,7 @@ Use these when introducing the package to a lab or collaborator:
 
 | Proof point | Evidence |
 | --- | --- |
-| Released | `v0.4.7` on PyPI, with Python 3.10 to 3.13 release wheels. |
+| Released | `v0.5.0`, with Python 3.10 to 3.13 release wheels. |
 | Faster tested path | `11x` to `52x` faster than SCENIC+ for selected stages on sampled data, measured on one machine. |
 | Memory measurement | v0.5.0 candidate: about 81% less peak physical memory than arboreto in a controlled 20,000-cell comparison. See [benchmark scope](benchmarks.md#memory-scaling). |
 | Lab artefact | Collaborator human brain workflow recovered 16 of 17 expected brain transcription factors. |

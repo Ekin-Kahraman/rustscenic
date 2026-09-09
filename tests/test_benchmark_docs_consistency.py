@@ -27,7 +27,7 @@ def test_public_docs_keep_benchmark_claims_scoped():
     assert "assets/rustscenic-evidence.svg" in index
     assert "## Evidence Snapshot" not in readme
     assert "## Highlights" in readme
-    assert "Current release: `v0.4.7`" in readme
+    assert "Current release: `v0.5.0`" in readme
     assert "`11x` to `52x`" in readme
     assert "`11x` to `52x`" in index
     assert "range from 11x to 52x" in benchmarks
@@ -52,7 +52,26 @@ def test_public_docs_keep_benchmark_claims_scoped():
     assert "different methods for enhancer linking" in normalised_benchmarks
     assert "edge-set agreement" in benchmarks
     assert "## Unreleased" in changelog
+    assert "## 0.5.0 - 2026-09-09" in changelog
+    assert "## Upgrading from 0.4.x" in readme
     assert "collaborator lab validation" in changelog
+
+
+def test_historical_synthetic_evidence_keeps_its_original_scope():
+    scaling = json.loads(
+        (ROOT / "validation/scaling/e2e_100k_synthetic.json").read_text()
+    )
+    assert scaling["benchmark_kind"] == "synthetic_scale_check"
+    assert scaling["rustscenic_version"] == "0.3.2"
+    assert scaling["rustscenic_sha"] == "bf1be27ef2cd4f8d3e3b2508eef3678ac64d3999"
+    assert scaling["environment"]["hardware"] is None
+    assert scaling["n_cells"] == 100_000
+    assert scaling["n_genes"] == 15_000
+    assert scaling["n_peaks"] == 50_000
+    assert scaling["K"] == 30
+    assert scaling["n_grn_estimators"] == 20
+    assert scaling["raw_fragment_preprocessing_included"] is False
+    assert "not a v0.5.0" in scaling["claim_scope"]
 
 
 def test_human_brain_external_validation_is_scoped():
@@ -78,7 +97,7 @@ def test_human_brain_external_validation_is_scoped():
 def test_quickstarts_use_published_api_and_explain_candidate_gene_sets():
     for path in (ROOT / "README.md", ROOT / "site_docs/quickstart.md"):
         document = path.read_text()
-        assert "v0.4.7" in document
+        assert "v0.5.0" in document
         assert "candidate" in document
         blocks = re.findall(r"```python\n(.*?)```", document, re.DOTALL)
         assert blocks
@@ -91,4 +110,4 @@ def test_quickstarts_use_published_api_and_explain_candidate_gene_sets():
             assert {"infer", "score"} <= calls
             assert not {"add_correlation", "build_regulons"} & calls
     api = (ROOT / "site_docs/api.md").read_text()
-    assert "not in the published v0.4.7 package" in api
+    assert "require v0.5.0 or later" in api

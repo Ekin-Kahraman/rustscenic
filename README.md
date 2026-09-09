@@ -38,20 +38,20 @@
 
 - Gene-network inference on **1.3 million mouse-brain cells** in under 47 minutes,
   with **4.28 GB** peak memory during analysis on 16 CPU cores
-  ([v0.5.0 candidate benchmark](https://github.com/Ekin-Kahraman/rustscenic/blob/0c8eb00539e3860c78e452c8661cc2735c169386/validation/scaling/IFB_REAL_RNA_GRN_2026-08-28.md)).
+  ([v0.5.0 benchmark](https://github.com/Ekin-Kahraman/rustscenic/blob/0c8eb00539e3860c78e452c8661cc2735c169386/validation/scaling/IFB_REAL_RNA_GRN_2026-08-28.md)).
 - **3.3x faster with about 81% less peak physical memory than arboreto** in a
   controlled 20,000-cell gene-network comparison on the same hardware.
 - **21.4% lower topic-model peak memory**, with unchanged output files in repeated
-  mouse-brain tests ([v0.5.0 candidate memory audit](https://github.com/Ekin-Kahraman/rustscenic/blob/0c8eb00539e3860c78e452c8661cc2735c169386/validation/scaling/IFB_SCALE_2026-08-28.md#compact-gibbs-token-audit)).
+  mouse-brain tests ([v0.5.0 memory audit](https://github.com/Ekin-Kahraman/rustscenic/blob/0c8eb00539e3860c78e452c8661cc2735c169386/validation/scaling/IFB_SCALE_2026-08-28.md#compact-gibbs-token-audit)).
 - `11x` to `52x` faster than SCENIC+ for selected analysis stages on sampled real-data inputs, measured on one machine.
 - Huang Lab collaborator run recovered `16/17` expected brain transcription factors in human brain data.
 
-The first three results use the **v0.5.0 release candidate**, not the current PyPI
-release. The million-cell run used prepared RNA and 2,095 selected genes;
+The first three results were measured on the **v0.5.0 release candidate**.
+The million-cell run used prepared RNA and 2,095 selected genes;
 separate full-data preparation peaked at **71.49 GB**. These measurements do not
 describe a complete million-cell spatial workflow.
 
-Current release: `v0.4.7`. Python 3.10 to 3.13; Linux, macOS and Windows.
+Current release: `v0.5.0`. Python 3.10 to 3.13; Linux, macOS and Windows.
 Core analysis runs without Java, dask, CUDA or Snakemake.
 
 ## Installation
@@ -59,6 +59,14 @@ Core analysis runs without Java, dask, CUDA or Snakemake.
 ```bash
 pip install rustscenic
 ```
+
+## Upgrading from 0.4.x
+
+v0.5.0 reduces memory use and adds separate positively and negatively correlated
+target sets. Gene-network fitting now follows arboreto's stopping rule; use
+`early_stop_mode="legacy_inbag"` only to reproduce the previous behaviour.
+See the [release notes](docs/releases/v0.5.0.md) for compatibility options and
+the change to Apache-2.0. Earlier published releases remain under MIT.
 
 ## Benchmark Evidence
 
@@ -103,7 +111,7 @@ Full commands, hardware, validation metrics and output signatures are in
 
 ## Quick Start
 
-This example works with the published **v0.4.7** package. It builds candidate
+This example uses **v0.5.0**. It builds candidate
 gene sets from network edges and scores their activity; these sets have not
 been filtered for motif support or split by positive and negative correlation.
 
@@ -140,9 +148,10 @@ rustscenic cistarget --rankings rankings.feather --regulons regulons.tsv --outpu
 See [examples/pbmc3k_end_to_end.py](examples/pbmc3k_end_to_end.py) for a small
 real-data RNA example.
 
-The development branch adds `add_correlation`, `build_regulons`, and
-`rustscenic add-cor`. These are planned for v0.5.0 and are **not available in
-the current PyPI release**. See the [API map](site_docs/api.md) for those features.
+v0.5.0 also provides `add_correlation`, `build_regulons`, and
+`rustscenic add-cor` to separate target sets by correlation sign.
+See the [API map](site_docs/api.md) for those features. A correlation sign is
+not experimental proof of activation or repression.
 
 ## Validation
 
@@ -165,7 +174,7 @@ lives in [site_docs/benchmarks.md](site_docs/benchmarks.md) and
 - GRN, gene AUCell and eRegulon edge agreement are not claimed to be
   bit-identical to SCENIC+; see [Benchmarks](site_docs/benchmarks.md) for the
   parity metrics.
-- The development branch changes `grn.infer` to arboreto-compatible early stopping.
+- v0.5.0 changes `grn.infer` to arboreto-compatible early stopping.
   Use `early_stop_mode="legacy_inbag"` only to reproduce historical
   RustScenic stopping behaviour. The pipeline defaults to separate activator
   and repressor regulons; `grn_regulon_polarities="unsigned"` is the explicit

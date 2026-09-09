@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "rustscenic"
-version = "0.4.7"
+version = "0.5.0"
 description = "Rust and PyO3 implementation of SCENIC-style regulatory-network analysis. Includes GRN, AUCell, topics, cistarget, peak calling, cell QC, enhancer-gene links, and eRegulon assembly. Installs without dask, Java, or CUDA."
 readme = "README.md"
 license = "Apache-2.0"

@@ -1639,8 +1639,10 @@ fn topics_fit<'py>(
 ///
 /// If `n_threads <= 1`, runs the bit-deterministic serial path. If
 /// `n_threads > 1`, dispatches to `fit_par` (AD-LDA, Newman et al.
-/// 2009) which partitions docs across threads for near-linear speedup
-/// at the cost of small cross-thread staleness within a sweep.
+/// 2009), which partitions docs across threads. Runs are reproducible at a
+/// fixed seed and thread count, but changing the thread count changes the
+/// stochastic trajectory and can reach a different posterior. Speedup is
+/// workload-dependent and may saturate on memory bandwidth.
 #[pyfunction]
 #[pyo3(signature = (
     row_ptr, col_idx, counts, n_words,

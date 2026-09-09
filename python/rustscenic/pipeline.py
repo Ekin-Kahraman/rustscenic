@@ -105,6 +105,7 @@ class PipelineResult:
     regulon_source: str = "candidate_grn_activator_repressor"
     grn_fit: dict = field(default_factory=dict)
     grn_correlation: dict = field(default_factory=dict)
+    topics_fit: dict = field(default_factory=dict)
     backend_execution: dict = field(default_factory=dict)
     matrix_inputs: dict = field(default_factory=dict)
     cistarget_rankings: dict = field(default_factory=dict)
@@ -225,7 +226,9 @@ def run(
         ``"gibbs"`` - collapsed-Gibbs LDA (Mallet-class), slower per
         sweep but recovers ~10× more distinct topics on sparse scATAC
         at K ≥ 30. Pair with ``topics_n_threads > 1`` for AD-LDA
-        parallel speedup at atlas scale.
+        parallel execution at atlas scale. Keep the thread count fixed
+        across biological comparisons because it changes the AD-LDA
+        partition and may change the fitted posterior mode.
     topics_n_iters
         Gibbs sweeps (only used when ``topics_method='gibbs'``). 200
         is a reasonable default; bump to 500–1000 for higher-quality
@@ -233,7 +236,9 @@ def run(
     topics_n_threads
         Threads for the Gibbs sampler (only used when
         ``topics_method='gibbs'``). 1 = bit-deterministic serial
-        path. > 1 = AD-LDA parallel path.
+        path. > 1 = AD-LDA parallel path, reproducible at a fixed seed and
+        thread count. Treat the thread count as part of the model
+        configuration, not only as a scheduler setting.
     grn_max_features
         Fraction of candidate TFs sampled per split in GRN boosting.
         ``0.1`` matches arboreto/SCENIC defaults. Lower values can be
@@ -345,6 +350,7 @@ def run(
     atac_matrix_path = None
     cell_barcode_filter = None
     topics_dir = None
+    topics_fit: dict[str, Any] = {}
     have_atac_input = adata_atac is not None or (fragments is not None and peaks is not None)
     if have_atac_input:
         if adata_atac is not None:
@@ -417,6 +423,24 @@ def run(
                 topics_result.cell_topic,
                 "topics_fit_gibbs",
             )
+        topic_summary = rustscenic.topics.assignment_summary(
+            topics_result.cell_topic
+        )
+        backend_execution["topics_assignment"] = _rust_execution(
+            "topics_cell_assignment"
+        )
+        active_argmax_topics = topic_summary["active_argmax_topics"]
+        empty_topic_cells = topic_summary["empty_cells"]
+        topics_fit = {
+            "method": topics_method,
+            "n_topics": int(topics_n_topics),
+            "n_passes": int(topics_n_passes) if topics_method == "vb" else None,
+            "n_iters": int(topics_n_iters) if topics_method == "gibbs" else None,
+            "n_threads": int(topics_n_threads) if topics_method == "gibbs" else None,
+            "seed": int(seed),
+            "active_argmax_topics": active_argmax_topics,
+            "empty_cells": empty_topic_cells,
+        }
         elapsed["topics"] = time.perf_counter() - t0
         log(f"      fit in {elapsed['topics']:.1f}s")
         mark_memory("topics")
@@ -1098,6 +1122,7 @@ def run(
         regulon_source=regulon_source,
         grn_fit=grn_fit,
         grn_correlation=grn_correlation,
+        topics_fit=topics_fit,
         backend_execution=backend_execution,
         matrix_inputs=matrix_inputs,
         cistarget_rankings=cistarget_rankings,

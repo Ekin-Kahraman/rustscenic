@@ -116,3 +116,10 @@ python validation/grn_parity_v0310.py \
 ```
 
 Temporary generated parquet/JSON outputs were not added to Git.
+
+On 2026-08-29, the internal row-index width was reduced from 64 to 32 bits to
+bound per-worker tree scratch memory at atlas scale. A fresh run on the same
+PBMC3k inputs completed in 113.28 seconds at 0.47 GB peak RSS and reproduced
+the corrected parquet SHA-256 `87570e0956c9244ded26f995de4c5a82bd8246c86958bebaad8b3c4badb45ddd`
+exactly: 974,784 edges, 362,608 fitted trees, median 26 and p95 30. This is
+correctness evidence; the single runtime observation is not a speed claim.

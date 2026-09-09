@@ -2,6 +2,54 @@
 
 ## Unreleased
 
+No changes yet.
+
+## 0.5.0 - 2026-09-09
+
+### Performance and scale
+
+- Real 1,306,127-cell mouse-brain RNA GRN completed in 46m42s at 4.28 GB
+  execution peak memory with 2,095 genes, 256 TFs and 16 CPU cores. Separate
+  full-data preparation peaked at 71.49 GB; this is not a full spatial or
+  SCENIC+ workflow measurement.
+- Controlled same-node 20k-cell GRN comparison measured 3.325x faster execution
+  and 5.27x lower peak physical memory than arboreto. Fitted-tree totals
+  differed by 0.094%; fine edge rankings are not identical.
+- Compact Gibbs token storage reduced peak memory by 21.4% in repeated real
+  mouse-brain ATAC runs with byte-identical outputs. GRN internal row-index
+  storage was also halved, preserving byte-identical PBMC3k output.
+- Controlled synthetic 100k-to-200k seven-stage runs used 1.995x peak memory
+  and 2.063x analysis time for twice the cells; commands, parameters and
+  output invariants are recorded in the IFB validation artefacts.
+
+### Reproducibility and diagnostics
+
+- Clarified that parallel Gibbs/AD-LDA is reproducible at fixed seed and thread
+  count, while changing the thread count can change the posterior mode and
+  should not be treated as a purely computational setting. Removed stale
+  near-linear-speedup wording; scaling claims now require measured workload
+  evidence.
+- Pipeline manifests now record the topic method, iteration/pass count, seed,
+  thread count, active argmax-topic count and empty-cell count. Severely
+  collapsed fits emit an actionable warning instead of remaining silent; the
+  manifest also records the Rust topic-assignment kernel used for this check.
+- Hardened the atlas-scale benchmark harnesses with bounded sparse synthetic
+  construction, nested row-prefix GRN inputs, portable source/harness
+  provenance and explicit output invariants. Added the clean-commit IFB
+  validation record through a 1.2-million-cell fixed-schema GRN and a
+  200,000-cell seven-stage scale check.
+
+### Migration from 0.4.x
+
+- GRN early stopping now defaults to the arboreto-style trailing-window OOB
+  monitor. Set `early_stop_mode="legacy_inbag"` only to reproduce the earlier
+  RustScenic rule.
+- Regulon construction now preserves activator and repressor polarity by
+  default. Use the documented `"unsigned"` compatibility mode when an older
+  unsigned workflow is required.
+- This and future releases use Apache-2.0. Published 0.4.x and earlier release
+  artefacts remain available under MIT.
+
 ### Scientific correctness
 
 - Fixed issue #95 by replacing the default GRN early-stop rule with arboreto's

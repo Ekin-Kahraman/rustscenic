@@ -62,12 +62,12 @@ pub fn subsample_rows(rng: &mut impl RngCore, n: usize, frac: f32) -> Vec<usize>
 }
 
 /// Fill `out` in place with bernoulli-sampled row indices.
-pub fn subsample_rows_into(rng: &mut impl RngCore, n: usize, frac: f32, out: &mut Vec<usize>) {
+pub fn subsample_rows_into(rng: &mut impl RngCore, n: usize, frac: f32, out: &mut Vec<u32>) {
     out.clear();
     for i in 0..n {
         let u: f32 = (rng.next_u32() as f32) / (u32::MAX as f32);
         if u < frac {
-            out.push(i);
+            out.push(i as u32);
         }
     }
 }
@@ -78,7 +78,7 @@ pub fn subsample_rows_into(rng: &mut impl RngCore, n: usize, frac: f32, out: &mu
 /// `max(1, floor(subsample * n_samples))` on every round.  Sequential
 /// selection keeps that contract without allocating a second `n_samples`
 /// permutation buffer per Rayon worker.
-pub fn subsample_rows_fixed_into(rng: &mut impl RngCore, n: usize, k: usize, out: &mut Vec<usize>) {
+pub fn subsample_rows_fixed_into(rng: &mut impl RngCore, n: usize, k: usize, out: &mut Vec<u32>) {
     out.clear();
     let mut needed = k.min(n);
     for i in 0..n {
@@ -87,7 +87,7 @@ pub fn subsample_rows_fixed_into(rng: &mut impl RngCore, n: usize, k: usize, out
         }
         let remaining = n - i;
         if rng.gen_range(0..remaining) < needed {
-            out.push(i);
+            out.push(i as u32);
             needed -= 1;
         }
     }

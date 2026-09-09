@@ -409,6 +409,14 @@ def test_pipeline_run_with_atac_and_gene_coords_emits_eregulons(tmp_path):
         "preproc_fragments_to_matrix"
     ]
     assert result.backend_execution["topics"]["symbols"] == ["topics_fit"]
+    assert result.backend_execution["topics_assignment"]["symbols"] == [
+        "topics_cell_assignment"
+    ]
+    assert result.topics_fit["method"] == "vb"
+    assert result.topics_fit["n_topics"] == 5
+    assert result.topics_fit["n_passes"] == 2
+    assert result.topics_fit["n_threads"] is None
+    assert manifest["topics_fit"] == result.topics_fit
     assert result.backend_execution["cistarget"]["symbols"] == [
         "cistarget_enrichment_from_rankings_i32"
     ]
@@ -1899,6 +1907,10 @@ def test_pipeline_run_topics_method_gibbs(tmp_path):
     assert (out / "topics" / "topic_peak.npy").exists()
     assert (out / "topics" / "cell_topic.parquet").exists()
     assert (out / "topics" / "topic_peak.parquet").exists()
+    assert result.topics_fit["method"] == "gibbs"
+    assert result.topics_fit["n_iters"] == 20
+    assert result.topics_fit["n_threads"] == 2
+    assert result.topics_fit["active_argmax_topics"] > 0
 
 
 def test_pipeline_grn_top_targets_below_ten_still_builds_candidates(tmp_path, monkeypatch):
@@ -2531,7 +2543,7 @@ def test_pipeline_records_skipped_peak_attribution_when_cistarget_empty(
         gene_coords=gene_coords,
         grn_top_targets=3,
         grn_regulon_polarities="unsigned",
-        topics_n_topics=2,
+        topics_n_topics=4,
         topics_n_passes=1,
         eregulon_min_target_genes=1,
         eregulon_min_enhancer_links=1,
@@ -2540,6 +2552,7 @@ def test_pipeline_records_skipped_peak_attribution_when_cistarget_empty(
 
     assert result.n_cistarget_rows == 0
     assert result.n_eregulon_rows == 0
+    assert result.topics_fit["active_argmax_topics"] == 1
     assert result.backend_execution["eregulon_peak_attribution"] == {
         "engine": "skipped",
         "reason": "no enriched cistarget rows to attribute",

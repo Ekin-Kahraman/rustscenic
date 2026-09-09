@@ -9,9 +9,9 @@ Linux, macOS and Windows; a GPU is not required.
 pip install rustscenic
 ```
 
-The current PyPI release is **v0.4.7**. The [quickstart](quickstart.md) uses this
-release. The [API map](api.md) also documents unreleased development features,
-which are labelled separately and require a source build.
+This documentation targets **v0.5.0**. The [quickstart](quickstart.md) starts
+with network inference and activity scoring; the [API map](api.md) covers
+the correlation helpers and other analysis stages.
 
 Supported Python versions: `3.10` to `3.13`.
 

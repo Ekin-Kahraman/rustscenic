@@ -39,13 +39,13 @@ pub struct TreeScratch {
     pub gain_marks: Vec<u32>,
     pub gain_mark_epoch: u32,
     /// Pool of partition buffers reused across tree splits. `build_node_rec`
-    /// needs two temp `Vec<usize>` per split to partition samples into
+    /// needs two temporary row-index buffers per split to partition samples into
     /// left / right children. Freshly allocating them scales memory traffic
     /// with n_samples × (2 × splits_per_tree × n_trees × n_targets), which
     /// becomes super-linear at 30k+ cells due to page-fault + allocator cost.
     /// Pooling caps the live buffer count at ~2 × max_depth and amortises the
     /// allocation to zero after the first few trees.
-    pub partition_bufs: Vec<Vec<usize>>,
+    pub partition_bufs: Vec<Vec<u32>>,
 }
 
 impl TreeScratch {
@@ -64,7 +64,7 @@ impl TreeScratch {
 
     /// Take a partition buffer from the pool, or allocate one with the given
     /// minimum capacity. The returned Vec is empty (`clear()`ed).
-    pub fn take_partition_buf(&mut self, min_cap: usize) -> Vec<usize> {
+    pub fn take_partition_buf(&mut self, min_cap: usize) -> Vec<u32> {
         match self.partition_bufs.pop() {
             Some(mut buf) => {
                 buf.clear();
@@ -78,7 +78,7 @@ impl TreeScratch {
     }
 
     /// Return a partition buffer to the pool for reuse.
-    pub fn return_partition_buf(&mut self, buf: Vec<usize>) {
+    pub fn return_partition_buf(&mut self, buf: Vec<u32>) {
         self.partition_bufs.push(buf);
     }
 
@@ -107,7 +107,7 @@ impl TreeScratch {
 pub fn fit_tree_with_scratch(
     binned: &BinnedMatrix,
     y: &[f32],
-    sample_idx: &[usize],
+    sample_idx: &[u32],
     max_depth: usize,
     max_features_per_split: usize,
     exclude_feature: Option<usize>,
@@ -143,7 +143,7 @@ pub fn fit_tree_with_scratch(
 fn build_node_rec(
     binned: &BinnedMatrix,
     y: &[f32],
-    samples: &[usize],
+    samples: &[u32],
     sum_y: f32,
     depth: usize,
     max_depth: usize,
@@ -195,7 +195,8 @@ fn build_node_rec(
         let col = &binned.bins[base..base + binned.n_samples];
         let mut left_sum = 0.0_f32;
         let mut right_sum = 0.0_f32;
-        for &s in samples {
+        for &sample in samples {
+            let s = sample as usize;
             // Samples are sorted row indices produced from the original
             // 0..n_samples range, so release builds can skip duplicate checks.
             debug_assert!(s < col.len());
@@ -203,10 +204,10 @@ fn build_node_rec(
             let yv = unsafe { *y.get_unchecked(s) };
             if bin <= bin_threshold {
                 left_sum += yv;
-                left_samples.push(s);
+                left_samples.push(sample);
             } else {
                 right_sum += yv;
-                right_samples.push(s);
+                right_samples.push(sample);
             }
         }
 
@@ -321,18 +322,19 @@ fn choose_feature_subset(
     scratch.feat_sub.extend_from_slice(&scratch.feat_pool[..k]);
 }
 
-fn sum_at(samples: &[usize], y: &[f32]) -> f32 {
-    let mut s = 0.0_f32;
-    for &i in samples {
+fn sum_at(samples: &[u32], y: &[f32]) -> f32 {
+    let mut sum = 0.0_f32;
+    for &sample in samples {
+        let i = sample as usize;
         // Same invariant as the partition loop: sample ids are generated from
         // the matrix row range and never rewritten.
         debug_assert!(i < y.len());
-        s += unsafe { *y.get_unchecked(i) };
+        sum += unsafe { *y.get_unchecked(i) };
     }
-    s
+    sum
 }
 
-fn mean_from_sum(samples: &[usize], sum_y: f32) -> f32 {
+fn mean_from_sum(samples: &[u32], sum_y: f32) -> f32 {
     if samples.is_empty() {
         return 0.0;
     }
@@ -379,7 +381,7 @@ mod tests {
             .map(|v| if *v < 1.0 { -1.0 } else { 1.0 })
             .collect();
         let bm = BinnedMatrix::from_dense(&x, 40, 1);
-        let sample_idx: Vec<usize> = (0..40).collect();
+        let sample_idx: Vec<u32> = (0..40).collect();
         let mut rng = StdRng::seed_from_u64(0);
         let mut tree = Tree { nodes: Vec::new() };
         let mut gains = vec![0.0_f32; 1];
@@ -421,7 +423,7 @@ mod tests {
             y[i] = if a > 0.5 { 1.0 } else { -1.0 };
         }
         let bm = BinnedMatrix::from_dense(&x, n, nf);
-        let sample_idx: Vec<usize> = (0..n).collect();
+        let sample_idx: Vec<u32> = (0..n as u32).collect();
         let mut tree = Tree { nodes: Vec::new() };
         let mut gains = vec![0.0_f32; nf];
         let mut hist = NodeHist::zeros(crate::histogram::MAX_BINS);
@@ -473,7 +475,7 @@ mod tests {
         fit_tree_with_scratch(
             &bm,
             &y,
-            &(0..n).collect::<Vec<_>>(),
+            &(0..n as u32).collect::<Vec<_>>(),
             3,
             2,
             None,
@@ -513,7 +515,7 @@ mod tests {
         fit_tree_with_scratch(
             &bm,
             &y,
-            &(0..n).collect::<Vec<_>>(),
+            &(0..n as u32).collect::<Vec<_>>(),
             3,
             3,
             Some(0),

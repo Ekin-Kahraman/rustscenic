@@ -1,11 +1,12 @@
 # Quickstart
 
-This example works with the published **v0.4.7** package. It starts with an
+This example uses **v0.5.0**. It starts with an
 AnnData RNA matrix, infers a gene network and scores candidate gene sets in
 each cell. The sets are not motif-filtered or split by correlation sign.
 
-The development-only `add_correlation`, `build_regulons` and `add-cor` features
-are planned for v0.5.0; see the [API map](api.md). They are not required below.
+To separate target sets by correlation sign, use `add_correlation`,
+`build_regulons` or `add-cor`; see the [API map](api.md). They are not required
+for the basic example below.
 
 ```python
 import anndata as ad

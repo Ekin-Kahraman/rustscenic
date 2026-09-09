@@ -154,8 +154,9 @@ impl Default for GrnConfig {
 
 /// Infer a GRN from a dense (n_cells × n_genes) f32 expression matrix.
 ///
-/// Pre-bins the TF matrix once, then processes target genes in cache-friendly
-/// blocks while fitting targets inside each block in parallel.
+/// Pre-bins the TF matrix once, then fits all target genes in one flat Rayon
+/// pass. Each worker reuses an `n_cells` response buffer for its current
+/// target.
 pub fn infer(
     expression: &[f32],
     n_cells: usize,
@@ -299,8 +300,8 @@ pub fn infer_indices_view_with_overlap(
 /// Infer a GRN from a sparse CSC (cells × genes) expression matrix.
 ///
 /// This avoids dense materialisation of the full RNA matrix. TF bins are built
-/// directly from selected sparse columns, and only the current target block is
-/// expanded to dense column-major response vectors for GBM fitting.
+/// directly from selected sparse columns, and each Rayon worker expands only
+/// its current target into a reusable dense response vector for GBM fitting.
 #[allow(clippy::too_many_arguments)]
 pub fn infer_indices_sparse_csc(
     indptr: &[usize],

@@ -24,6 +24,15 @@ def synthetic_atac_2_topics():
 
 
 class TestTopicsShape:
+    def test_parallel_gibbs_rejects_unrepresentable_topic_count(self):
+        with pytest.raises(ValueError, match="at most 65,535 topics"):
+            topics.fit_gibbs(
+                sp.csr_matrix([[1.0]]),
+                n_topics=65_536,
+                n_threads=2,
+                verbose=False,
+            )
+
     def test_result_shapes(self, synthetic_atac_2_topics):
         X, cells, peaks = synthetic_atac_2_topics
         res = topics.fit((X, cells, peaks), n_topics=4, n_passes=3, seed=0, verbose=False)
@@ -66,6 +75,27 @@ class TestTopicsShape:
 
 
 class TestTopicsCorrectness:
+    def test_fit_warns_on_severe_topic_collapse(self, monkeypatch):
+        x = sp.csr_matrix(np.ones((6, 3), dtype=np.float32))
+
+        def fake_topics_fit(row_ptr, _col_idx, _counts, n_words, n_topics, *_args):
+            cell_topic = np.zeros((len(row_ptr) - 1, n_topics), dtype=np.float32)
+            cell_topic[:, 0] = 1.0
+            topic_peak = np.full(
+                (n_topics, n_words), 1.0 / n_words, dtype=np.float32
+            )
+            return cell_topic, topic_peak
+
+        monkeypatch.setattr(topics, "_topics_fit", fake_topics_fit)
+
+        with pytest.warns(UserWarning, match="topic model collapse: only 1 of 4"):
+            topics.fit(
+                (x, [f"c{i}" for i in range(6)], ["p0", "p1", "p2"]),
+                n_topics=4,
+                n_passes=1,
+                verbose=False,
+            )
+
     def test_separates_planted_topics(self, synthetic_atac_2_topics):
         X, cells, peaks = synthetic_atac_2_topics
         res = topics.fit((X, cells, peaks), n_topics=2, n_passes=8, seed=0, verbose=False)
@@ -94,6 +124,23 @@ class TestTopicsCorrectness:
         assert assignment.attrs["rust_backend"]["symbols"] == ["topics_cell_assignment"]
         assert pd.isna(assignment.loc["empty_cell"])
         assert assignment.loc["active_cell"] == "Topic_1"
+
+    def test_assignment_summary_uses_rust_counts(self, monkeypatch):
+        cell_topic = pd.DataFrame(
+            np.array([[0.1, 0.9], [0.0, 0.0]], dtype=np.float32),
+            columns=["Topic_0", "Topic_1"],
+        )
+
+        def fake_assignment(values):
+            assert np.shares_memory(values, cell_topic.values)
+            return np.array([1, -1], dtype=np.int64), 1, 1
+
+        monkeypatch.setattr(topics, "_topics_cell_assignment", fake_assignment)
+
+        assert topics.assignment_summary(cell_topic) == {
+            "active_argmax_topics": 1,
+            "empty_cells": 1,
+        }
 
     def test_cell_assignment_uses_rust_row_scanner_without_float32_copy(self, monkeypatch):
         values = np.asfortranarray(

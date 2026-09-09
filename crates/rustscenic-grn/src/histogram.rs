@@ -251,7 +251,7 @@ impl NodeHist {
         binned: &BinnedMatrix,
         feature: usize,
         y: &[f32],
-        sample_idx: &[usize],
+        sample_idx: &[u32],
     ) {
         self.clear(binned.n_bins_per_feature[feature] as usize);
         // Column-major: feature's bin column lives at [base, base+n_samples).
@@ -259,7 +259,8 @@ impl NodeHist {
         // each) shapes, so each `bins[base + s]` access hits cache once.
         let base = feature * binned.n_samples;
         let col = &binned.bins[base..base + binned.n_samples];
-        for &s in sample_idx {
+        for &sample in sample_idx {
+            let s = sample as usize;
             // sample_idx comes from 0..n_samples and child partitions retain
             // those indices, so these checks are redundant in release builds.
             debug_assert!(s < col.len());
@@ -430,7 +431,7 @@ mod tests {
         let y: Vec<f32> = (0..n).map(|i| if i < 50 { -1.0 } else { 1.0 }).collect();
         let bm = BinnedMatrix::from_dense(&x, n, nf);
         let mut h = NodeHist::zeros(MAX_BINS);
-        h.accumulate(&bm, 0, &y, &(0..n).collect::<Vec<_>>());
+        h.accumulate(&bm, 0, &y, &(0..n as u32).collect::<Vec<_>>());
         let (bin, gain, left_n) = h
             .best_split(bm.n_bins_per_feature[0] as usize)
             .expect("split exists");

@@ -59,7 +59,8 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           cache-bin: false
-      - run: python -m pip install maturin numpy pandas pyarrow scipy scanpy anndata certifi pytest
+      # The scaling-harness tests exercise physical-memory sampling via psutil.
+      - run: python -m pip install maturin numpy pandas pyarrow scipy scanpy anndata certifi pytest "psutil>=5.9"
       - run: maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml
       - run: python -m pip install target/wheels/rustscenic-*.whl --force-reinstall --no-deps
       # Smoke test the full API surface. Version pulled dynamically from pyproject.toml
