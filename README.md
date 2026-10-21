@@ -5,19 +5,26 @@
 <h1 align="center">RustScenic</h1>
 
 <p align="center">
-  <strong>Predict how genes are regulated from single-cell data.</strong><br>
-  Fast regulatory-network analysis in Rust, with a Python API.
+  <strong>Predict how genes are regulated from single-cell data.</strong>
 </p>
 
 <p align="center">
+  Fast regulatory-network analysis in Rust, with a Python API.<br>
   Created by <strong>Ekin Kahraman</strong>, developed and scaled with the
   <strong>Huang Lab at Mount Sinai</strong>.
 </p>
 
 <p align="center">
+  <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml"><img alt="CI" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg?branch=main"></a>
+  <a href="https://pypi.org/project/rustscenic/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/rustscenic"></a>
+  <a href="LICENSE"><img alt="Software license: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-blue.svg"></a>
+  <a href="https://doi.org/10.5281/zenodo.20246040"><img alt="Zenodo DOI" src="https://img.shields.io/badge/DOI-Zenodo-1682d4"></a>
+</p>
+
+<p align="center">
   <a href="https://ekin-kahraman.github.io/rustscenic/">Documentation</a> ·
   <a href="https://github.com/Ekin-Kahraman/rustscenic/blob/main/site_docs/benchmarks.md">Benchmarks</a> ·
-  <a href="https://github.com/Ekin-Kahraman/rustscenic/tree/main/examples/cellxgene-endothelial">Try the example</a> ·
+  <a href="examples/cellxgene-endothelial/README.md">Try the example</a> ·
   <a href="https://doi.org/10.5281/zenodo.20246040">Cite the software</a>
 </p>
 
