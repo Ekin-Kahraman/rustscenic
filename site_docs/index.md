@@ -1,4 +1,7 @@
-# RustScenic
+<div class="rustscenic-brand">
+  <img src="assets/branding/rustscenic-logo.svg" width="96" height="96" alt="RustScenic logo">
+  <h1>RustScenic</h1>
+</div>
 
 Fast, memory-efficient gene-regulation analysis for single-cell data.
 

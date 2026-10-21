@@ -1,14 +1,25 @@
-# RustScenic
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/main/site_docs/assets/branding/rustscenic-logo-256.png" width="96" height="96" alt="RustScenic logo">
+</p>
 
-**Predict how genes are regulated from single-cell data.**
+<h1 align="center">RustScenic</h1>
 
-Fast regulatory-network analysis in Rust, with a Python API. Created by
-**Ekin Kahraman**, developed and scaled with the **Huang Lab at Mount Sinai**.
+<p align="center">
+  <strong>Predict how genes are regulated from single-cell data.</strong><br>
+  Fast regulatory-network analysis in Rust, with a Python API.
+</p>
 
-[Documentation](https://ekin-kahraman.github.io/rustscenic/) ·
-[Benchmarks](https://github.com/Ekin-Kahraman/rustscenic/blob/main/site_docs/benchmarks.md) ·
-[Try the example](examples/cellxgene-endothelial/README.md) ·
-[Cite the software](https://doi.org/10.5281/zenodo.20246040)
+<p align="center">
+  Created by <strong>Ekin Kahraman</strong>, developed and scaled with the
+  <strong>Huang Lab at Mount Sinai</strong>.
+</p>
+
+<p align="center">
+  <a href="https://ekin-kahraman.github.io/rustscenic/">Documentation</a> ·
+  <a href="https://github.com/Ekin-Kahraman/rustscenic/blob/main/site_docs/benchmarks.md">Benchmarks</a> ·
+  <a href="https://github.com/Ekin-Kahraman/rustscenic/tree/main/examples/cellxgene-endothelial">Try the example</a> ·
+  <a href="https://doi.org/10.5281/zenodo.20246040">Cite the software</a>
+</p>
 
 - **1.3 million real cells:** GRN inference in **46m42s on 16 CPU cores**,
   using 2,095 selected genes and 256 transcription factors.
