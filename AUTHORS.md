@@ -25,11 +25,3 @@ Software authorship, data authorship, validation authorship, and manuscript auth
 ## Attribution
 
 If you use rustscenic in a paper, report, benchmark, derivative package, or lab workflow, cite the exact release used and preserve the Apache-2.0 licence, NOTICE file, and copyright notice.
-
-## AI-assisted contributions
-
-Development has included assistance from OpenAI Codex and Anthropic Claude.
-Codex has assisted with documentation, branding integration, and repository
-maintenance; Claude-assisted contributions are recorded in the commit history.
-AI assistance is acknowledged through commit co-author credits. Ekin Kahraman
-remains the project creator and maintainer.
