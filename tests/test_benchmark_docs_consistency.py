@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_head_to_head_summary_records_scope_and_provenance():
     summary = json.loads(
-        (ROOT / "validation/head_to_head/head_to_head_summary.json").read_text()
+        (ROOT / "validation/head_to_head/head_to_head_summary.json").read_text(encoding="utf-8")
     )
 
     assert "correlation over the fixed search space" in summary["claim_scope"]
@@ -18,10 +18,10 @@ def test_head_to_head_summary_records_scope_and_provenance():
 
 
 def test_public_docs_keep_benchmark_claims_scoped():
-    readme = (ROOT / "README.md").read_text()
-    index = (ROOT / "site_docs/index.md").read_text()
-    benchmarks = (ROOT / "site_docs/benchmarks.md").read_text()
-    changelog = (ROOT / "CHANGELOG.md").read_text()
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    index = (ROOT / "site_docs/index.md").read_text(encoding="utf-8")
+    benchmarks = (ROOT / "site_docs/benchmarks.md").read_text(encoding="utf-8")
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "rustscenic-evidence.svg" not in readme
     assert "assets/rustscenic-evidence.svg" in index
@@ -71,7 +71,7 @@ def test_public_docs_keep_benchmark_claims_scoped():
 
 def test_historical_synthetic_evidence_keeps_its_original_scope():
     scaling = json.loads(
-        (ROOT / "validation/scaling/e2e_100k_synthetic.json").read_text()
+        (ROOT / "validation/scaling/e2e_100k_synthetic.json").read_text(encoding="utf-8")
     )
     assert scaling["benchmark_kind"] == "synthetic_scale_check"
     assert scaling["rustscenic_version"] == "0.3.2"
@@ -88,10 +88,10 @@ def test_historical_synthetic_evidence_keeps_its_original_scope():
 
 def test_human_brain_external_validation_is_scoped():
     artefact = json.loads(
-        (ROOT / "validation/community/human_brain_10k_v0.4.6.json").read_text()
+        (ROOT / "validation/community/human_brain_10k_v0.4.6.json").read_text(encoding="utf-8")
     )
-    validation = (ROOT / "site_docs/validation.md").read_text()
-    adoption = (ROOT / "site_docs/adoption.md").read_text()
+    validation = (ROOT / "site_docs/validation.md").read_text(encoding="utf-8")
+    adoption = (ROOT / "site_docs/adoption.md").read_text(encoding="utf-8")
 
     assert artefact["rustscenic_version"] == "0.4.6"
     assert artefact["shapes"]["rna_post_qc"][0] == 8215
@@ -104,11 +104,11 @@ def test_human_brain_external_validation_is_scoped():
 
 
 def test_quickstarts_use_published_api_and_explain_candidate_gene_sets():
-    readme = (ROOT / "README.md").read_text()
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
     assert "https://ekin-kahraman.github.io/rustscenic/quickstart/" in readme
     assert "pip install rustscenic" in readme
     for path in (ROOT / "site_docs/quickstart.md",):
-        document = path.read_text()
+        document = path.read_text(encoding="utf-8")
         assert "v0.5.0" in document
         assert "candidate" in document
         blocks = re.findall(r"```python\n(.*?)```", document, re.DOTALL)
@@ -121,5 +121,5 @@ def test_quickstarts_use_published_api_and_explain_candidate_gene_sets():
             }
             assert {"infer", "score"} <= calls
             assert not {"add_correlation", "build_regulons"} & calls
-    api = (ROOT / "site_docs/api.md").read_text()
+    api = (ROOT / "site_docs/api.md").read_text(encoding="utf-8")
     assert "require v0.5.0 or later" in api
