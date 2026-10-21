@@ -5,11 +5,13 @@
 <h1 align="center">RustScenic</h1>
 
 <p align="center">
-  <strong>Predict how genes are regulated from single-cell data.</strong>
+  <strong>Fast gene regulatory network analysis for single-cell data.</strong>
 </p>
 
 <p align="center">
-  Fast regulatory-network analysis in Rust, with a Python API.<br>
+  Infer candidate regulatory relationships and score their activity from RNA and
+  chromatin-accessibility data.<br>
+  Built in Rust, available through Python, and runs on CPUs.<br>
   Created by <strong>Ekin Kahraman</strong>, developed and scaled with the
   <strong>Huang Lab at Mount Sinai</strong>.
 </p>
@@ -27,100 +29,21 @@
 </p>
 
 <p align="center">
+  <a href="#analyse-your-own-data">Install</a> ·
   <a href="https://ekin-kahraman.github.io/rustscenic/">Documentation</a> ·
   <a href="https://github.com/Ekin-Kahraman/rustscenic/blob/main/site_docs/benchmarks.md">Benchmarks</a> ·
   <a href="site_docs/validation.md">Validation</a> ·
-  <a href="examples/cellxgene-endothelial/README.md">Try the example</a> ·
+  <a href="https://ekin-kahraman.github.io/rustscenic/demo/endothelial/">Try the example</a> ·
   <a href="https://doi.org/10.5281/zenodo.20246040">Cite the software</a>
 </p>
 
-- **1.3 million real cells:** GRN inference in **46m42s on 16 CPU cores**,
+- **1.3 million real cells:** RNA gene regulatory network (GRN) inference in
+  **46m42s on 16 CPU cores**,
   using 2,095 selected genes and 256 transcription factors.
 - **2.04–3.33× faster than arboreto** in matched 20,000-cell comparisons;
   **81% lower physical memory** in the measured Intel-node comparison.
-- **704 human cell-ontology labels:** precomputed exploratory networks from
-  CELLxGENE Census, with source attribution and reproducible methods.
-
-## Try a network
-
-[Download the small endothelial-cell example](https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/main/examples/cellxgene-endothelial/starter.zip), extract it and
-open `explore.html`. Choose a regulator to see its predicted targets.
-No installation, HPC connection or new model fitting is needed.
-
-The example includes the complete **184,000-edge network**, **85 motif-supported
-regulons**, activity summaries and source-study citations.
-
-For Python users:
-
-```bash
-python3 example.py --tf ETS1
-```
-
-## Performance
-
-![RustScenic real-RNA scaling and matched arboreto comparisons](docs/benchmarks/real-rna-20260828/figure.png)
-
-The million-cell result measures GRN inference on prepared mouse-brain RNA.
-Separate input preparation took **7m18s** and peaked at **71.5 GB**, versus
-**4.28 GB** during inference. The arboreto comparisons use matching inputs
-and worker counts; each is a single observation, not a repeated-run average.
-These results were measured on the **v0.5.0 release candidate** and do not
-describe a complete million-cell spatial workflow.
-
-[Exact measurements and conditions](docs/benchmarks/real-rna-20260828/benchmark-source-record.md) ·
-[SCENIC+ comparisons and output agreement](site_docs/benchmarks.md)
-
-Additional measured results:
-
-- **21.4% lower topic-model peak memory:** 1,668.2 → 1,312.0 MB median
-  across three baseline and three optimised mouse-brain runs, with identical
-  output files. This v0.5.0 candidate audit used five sampling sweeps to test
-  storage efficiency, not model convergence.
-  [Memory audit](validation/scaling/IFB_SCALE_2026-08-28.md#compact-gibbs-token-audit).
-- **11–52× faster than SCENIC+** on selected stages using sampled real-data
-  inputs of 1,500–2,000 cells. Enhancer-linking methods differ, and output
-  agreement is incomplete; these timings do not establish equivalent
-  scientific performance.
-
-<details>
-<summary>SCENIC+ comparison: timings, input sizes and conditions</summary>
-
-| Dataset | Input: cells / genes / peaks / TFs | RustScenic | SCENIC+ | Speedup | Peak RSS: RustScenic / SCENIC+ |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| PBMC3k dense | 2,000 / 4,000 / 8,000 / 30 | 4.98 s | 258.9 s | 52× | 1.21 / 1.26 GB |
-| PBMC10k dense | 2,000 / 4,000 / 8,000 / 30 | 21.5 s | 241.5 s | 11× | 2.37 / 2.63 GB |
-| Mouse brain E18 | 1,500 / 3,000 / 6,000 / 25 | 2.82 s | 90.4 s | 32× | 1.65 / 2.10 GB |
-| Human brain GEM-X | 2,000 / 4,000 / 8,000 / 30 | 7.41 s | 146.0 s | 19.7× | 2.18 / 2.19 GB |
-
-Measured on an Apple M5, 16 GB RAM, macOS arm64, four CPU threads and seed
-777. Python: 3.13.9 for RustScenic; 3.11.8 for SCENIC+. Shapes are the actual
-sampled benchmark inputs. Including preparation, the human-brain row totals
-**11.89 s versus 150.36 s**.
-
-The comparison starts with prepared RNA, ATAC and cistromes, and measures
-GRN inference, enhancer links, eRegulons and gene/region AUCell. It excludes
-raw-fragment processing, topic modelling, motif-database construction and
-workflow scheduling. RustScenic uses correlation over a fixed search space
-for enhancer links; SCENIC+ uses boosted trees plus Pearson scoring.
-
-[Commands and output agreement](site_docs/benchmarks.md) ·
-[Recorded measurements](validation/head_to_head/head_to_head_summary.json)
-
-</details>
-
-## Validation
-
-| Check | Result |
-| --- | --- |
-| Huang Lab human-brain run | **16/17 expected transcription factors** recovered in 8,215 post-QC cells with v0.4.6. A biological sanity check, not an accuracy estimate. |
-| AUCell vs pySCENIC | Ziegler 2021 airway atlas: mean per-cell Pearson **0.984**; **91.7%** of cells above 0.95. |
-| cisTarget AUC kernel vs ctxcore | Pearson **1.0000**; mean absolute difference approximately **2.4e-5**. |
-| Human brain GEM-X vs SCENIC+ | Region-to-gene edge Jaccard **1.000** under the fixed search space; region AUCell mean Pearson **0.823**. |
-| Remaining output differences | On the same GEM-X comparison, gene AUCell Pearson is **0.386** and eRegulon edge Jaccard is **0.161**. Full output parity is not claimed. |
-
-[Validation and limitations](site_docs/validation.md) ·
-[Huang Lab run record](validation/community/human_brain_10k_v0.4.6.json) ·
-[Benchmark output agreement](site_docs/benchmarks.md#validation)
+- **704 annotated human cell types:** exploratory networks from CELLxGENE Census.
+  **Full release pending;** the endothelial-cell example is available below.
 
 ## Analyse your own data
 
@@ -223,6 +146,90 @@ releases remain MIT.
 [PBMC3k end-to-end example](examples/pbmc3k_end_to_end.py) ·
 [Tester guide](docs/tester-quickstart.md)
 
+## Try a network
+
+[Open the interactive example](https://ekin-kahraman.github.io/rustscenic/demo/endothelial/)
+to choose a regulator and inspect its predicted targets. No installation or
+model fitting is needed. For offline use, [download the ZIP](https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/main/examples/cellxgene-endothelial/starter.zip),
+extract it and open `explore.html`.
+
+[![ETS1 predicted targets in the endothelial-cell example](site_docs/assets/examples/endothelial-preview.png)](https://ekin-kahraman.github.io/rustscenic/demo/endothelial/)
+
+The example includes the complete **184,000-edge network**, **85 motif-supported
+regulons**, activity summaries and source-study citations.
+
+Inside the extracted folder, Python users can run:
+
+```bash
+python3 example.py --tf ETS1
+```
+
+## Performance
+
+![RustScenic real-RNA scaling and matched arboreto comparisons](docs/benchmarks/real-rna-20260828/figure.png)
+
+The million-cell result measures GRN inference on prepared mouse-brain RNA.
+Separate input preparation took **7m18s** and peaked at **71.5 GB**, versus
+**4.28 GB** during inference. The arboreto comparisons use matching inputs
+and worker counts; each is a single observation, not a repeated-run average.
+These results were measured on the **v0.5.0 release candidate** and do not
+describe a complete million-cell spatial workflow.
+
+[Exact measurements and conditions](docs/benchmarks/real-rna-20260828/benchmark-source-record.md) ·
+[SCENIC+ comparisons and output agreement](site_docs/benchmarks.md)
+
+Additional measured results:
+
+- **21.4% lower topic-model peak memory:** 1,668.2 → 1,312.0 MB median
+  across three baseline and three optimised mouse-brain runs, with identical
+  output files. This v0.5.0 candidate audit used five sampling sweeps to test
+  storage efficiency, not model convergence.
+  [Memory audit](validation/scaling/IFB_SCALE_2026-08-28.md#compact-gibbs-token-audit).
+- **11–52× faster than SCENIC+** on selected stages using sampled real-data
+  inputs of 1,500–2,000 cells. Enhancer-linking methods differ, and output
+  agreement is incomplete; these timings do not establish equivalent
+  scientific performance.
+
+<details>
+<summary>SCENIC+ comparison: timings, input sizes and conditions</summary>
+
+| Dataset | Input: cells / genes / peaks / TFs | RustScenic | SCENIC+ | Speedup | Peak RSS: RustScenic / SCENIC+ |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PBMC3k dense | 2,000 / 4,000 / 8,000 / 30 | 4.98 s | 258.9 s | 52× | 1.21 / 1.26 GB |
+| PBMC10k dense | 2,000 / 4,000 / 8,000 / 30 | 21.5 s | 241.5 s | 11× | 2.37 / 2.63 GB |
+| Mouse brain E18 | 1,500 / 3,000 / 6,000 / 25 | 2.82 s | 90.4 s | 32× | 1.65 / 2.10 GB |
+| Human brain GEM-X | 2,000 / 4,000 / 8,000 / 30 | 7.41 s | 146.0 s | 19.7× | 2.18 / 2.19 GB |
+
+Measured on an Apple M5, 16 GB RAM, macOS arm64, four CPU threads and seed
+777. Python: 3.13.9 for RustScenic; 3.11.8 for SCENIC+. Shapes are the actual
+sampled benchmark inputs. Including preparation, the human-brain row totals
+**11.89 s versus 150.36 s**.
+
+The comparison starts with prepared RNA, ATAC and cistromes, and measures
+GRN inference, enhancer links, eRegulons and gene/region AUCell. It excludes
+raw-fragment processing, topic modelling, motif-database construction and
+workflow scheduling. RustScenic uses correlation over a fixed search space
+for enhancer links; SCENIC+ uses boosted trees plus Pearson scoring.
+
+[Commands and output agreement](site_docs/benchmarks.md) ·
+[Recorded measurements](validation/head_to_head/head_to_head_summary.json)
+
+</details>
+
+## Validation
+
+| Check | Result |
+| --- | --- |
+| Huang Lab human-brain run | **16/17 expected transcription factors** recovered in 8,215 post-QC cells with v0.4.6. A biological sanity check, not an accuracy estimate. |
+| AUCell vs pySCENIC | Ziegler 2021 airway atlas: mean per-cell Pearson **0.984**; **91.7%** of cells above 0.95. |
+| cisTarget AUC kernel vs ctxcore | Pearson **1.0000**; mean absolute difference approximately **2.4e-5**. |
+| Human brain GEM-X vs SCENIC+ | Region-to-gene edge Jaccard **1.000** under the fixed search space; region AUCell mean Pearson **0.823**. |
+| Remaining output differences | On the same GEM-X comparison, gene AUCell Pearson is **0.386** and eRegulon edge Jaccard is **0.161**. Full output parity is not claimed. |
+
+[Validation and limitations](site_docs/validation.md) ·
+[Huang Lab run record](validation/community/human_brain_10k_v0.4.6.json) ·
+[Benchmark output agreement](site_docs/benchmarks.md#validation)
+
 ## CELLxGENE-derived resource
 
 The collection contains **137.8 million retained edges** and **51,527
@@ -254,7 +261,8 @@ Cite the exact [RustScenic release](https://doi.org/10.5281/zenodo.20246040)
 used; GitHub citation metadata is in [CITATION.cff](CITATION.cff).
 When using the CELLxGENE-derived networks, also cite the resource when
 available, CELLxGENE and the contributing studies supplied with the data.
-Software: Apache-2.0. The resource has a separate data-licence notice.
+Software and example code: Apache-2.0. Data reuse terms are pending; see the
+[example data-licence notice](examples/cellxgene-endothelial/LICENSING.txt).
 
 Created and maintained by Ekin Kahraman; see [AUTHORS.md](AUTHORS.md)
 for attribution.

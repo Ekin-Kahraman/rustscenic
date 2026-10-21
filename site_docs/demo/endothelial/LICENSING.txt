@@ -1,0 +1,13 @@
+DATA LICENCE NOT YET ASSIGNED
+
+This public example does not grant a separate licence for the derived network
+tables, activity summaries or resource documentation. CC BY 4.0 is the proposed
+data licence, but has not been assigned by this notice. Contact the project
+maintainer to clarify reuse terms until the final data licence is published.
+
+Example code retains Apache-2.0; see LICENSE-SOFTWARE. This data notice does
+not change the software licence. Source-study attribution is retained in
+source-citations.json and data/sources.json. The included files are derived
+analysis outputs, not original expression data. Raw expression, cell-level
+records, input motif databases and annotation tables are excluded. No rights
+to excluded third-party materials are granted.

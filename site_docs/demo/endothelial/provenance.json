@@ -1,0 +1,82 @@
+{
+  "status": "public_example",
+  "selection_reason": "Existing endothelial-cell reuse example; selected for usability, not benchmark performance.",
+  "parent_archive_sha256": "826a61edffef0ae330a0779bba044ff7e6785cd63b7fbe4f4436719aa58e225a",
+  "parent_catalog_sha256": "aef5f4fa237c64cf447b5177d856f3a1c00e492ca1f2ff6fdfdaa849ca8be9f4",
+  "census_release": "2025-11-08",
+  "cohort": {
+    "cohort_index": 43,
+    "cohort_id": "homo_sapiens__CL_0000115",
+    "cell_type": "endothelial cell",
+    "cell_type_ontology_term_id": "CL:0000115",
+    "status": "complete_content_verified",
+    "eligible_source_label": "multiple_sources_not_validated",
+    "selected_cells": 5000,
+    "selected_datasets": 234,
+    "selected_source_groups": 109,
+    "selected_source_label": "multiple_sources_not_validated",
+    "genes": 8229,
+    "tfs": 920,
+    "edges": 184000,
+    "regulons": 85,
+    "quality_flags": [],
+    "path": "cohorts/homo_sapiens__CL_0000115",
+    "original_metadata_sha256": "065f83cde2108c659885fb01bd7039302c4783b951b46f4575df025265f8f2d7"
+  },
+  "original_files": {
+    "data/artifacts/aucell_summary.parquet": {
+      "source_path": "cohorts/homo_sapiens__CL_0000115/artifacts/aucell_summary.parquet",
+      "sha256": "ecaf5534c84200686f0f95c1fddf826ec2666b4e3afee1b3cf8b991a2a4ae0e4",
+      "bytes": 8706
+    },
+    "data/artifacts/candidate_regulons.json": {
+      "source_path": "cohorts/homo_sapiens__CL_0000115/artifacts/candidate_regulons.json",
+      "sha256": "92ed5c6120bbfbb8b41b680ca764e7bb67dd30444cb54d0eb5015155642585ed",
+      "bytes": 1470598
+    },
+    "data/artifacts/gene_universe.parquet": {
+      "source_path": "cohorts/homo_sapiens__CL_0000115/artifacts/gene_universe.parquet",
+      "sha256": "59a84fc762aa20a29a55162eb097e87bc78c24b40f6650e36e1ea1ee429d01f1",
+      "bytes": 79328
+    },
+    "data/artifacts/grn.parquet": {
+      "source_path": "cohorts/homo_sapiens__CL_0000115/artifacts/grn.parquet",
+      "sha256": "aeea66baa77fc116cdfbb841aecc6edc332596cba37a45b681c56967b4f110b6",
+      "bytes": 1732535
+    },
+    "data/artifacts/grn_signed.parquet": {
+      "source_path": "cohorts/homo_sapiens__CL_0000115/artifacts/grn_signed.parquet",
+      "sha256": "6ac837c70ee960ce80ee7b8a2c9af1c9247159372f103b991c6c6be617bb64b5",
+      "bytes": 3512089
+    },
+    "data/artifacts/motif_support.parquet": {
+      "source_path": "cohorts/homo_sapiens__CL_0000115/artifacts/motif_support.parquet",
+      "sha256": "4284560979bb052fa3fdc2272752b5cec62c35248aa8fb85308eb6e9050dc1de",
+      "bytes": 9921
+    },
+    "data/artifacts/regulons.json": {
+      "source_path": "cohorts/homo_sapiens__CL_0000115/artifacts/regulons.json",
+      "sha256": "1f4ea179d1066439b2fa010d24c5297075902b0800f709f75d96f8cf53197bf9",
+      "bytes": 31599
+    },
+    "data/metadata.json": {
+      "source_path": "cohorts/homo_sapiens__CL_0000115/metadata.json",
+      "sha256": "16fb17620bbf6b230b1b4ad3f592a96f48aafe9d94503a0c9efa3841a1737bcd",
+      "bytes": 206328
+    },
+    "data/sources.json": {
+      "source_path": "cohorts/homo_sapiens__CL_0000115/sources.json",
+      "sha256": "f625e45cf481a98da558c0187bfa69a2fa3c6f88b96fc93e1bd82ea926e0ac19",
+      "bytes": 21344
+    }
+  },
+  "preview_derivation": "Join motif-supported regulon membership to original signed edges, activity summaries and motif evidence. No model fitting or score changes.",
+  "historical_source": {
+    "backend_sha256": "a7fc736e723c6704ee672d48e36f3041e106c413cdc242cd427fa2511cc537b3",
+    "commit": null,
+    "source_dirty": null,
+    "workflow_sha256": "fefd27eaa50ab0f3a3024e2a98a5652cc2b7fd4b608c0671e0f8a6332b583c23"
+  },
+  "inference_outputs_unchanged": true,
+  "licensing": "Data licence not yet assigned; see LICENSING.txt. Example code: Apache-2.0."
+}

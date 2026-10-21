@@ -1,127 +1,134 @@
-# rustscenic quickstart
+# RustScenic quickstart
 
-5-minute end-to-end: install, run all 4 SCENIC+ stages on PBMC-3k (scanpy-bundled).
+Infer a gene network and score candidate gene-set activity on PBMC3k with
+**v0.5.0**. This RNA example downloads data on first use and caches it locally.
+Runtime depends on the data, settings and CPU.
 
 ## Install
 
 ```bash
-pip install rustscenic anndata scanpy
+pip install "rustscenic[examples]"
 ```
 
-Python ≥ 3.10 required. No Java / no CUDA / no Dask. Works on macOS, Linux.
+Python **3.10–3.13**; Linux, macOS and Windows. Runs on CPUs without Java,
+Dask or CUDA. To inspect saved results without installation, open the
+[endothelial-cell example](https://ekin-kahraman.github.io/rustscenic/demo/endothelial/).
 
-## One-shot script
+## RNA example
+
+The small transcription-factor list and 100-tree limit keep this demonstration
+manageable. Candidate gene sets are not motif-filtered or split by correlation
+sign; their activity scores do not establish causal regulation.
 
 ```python
-import scanpy as sc
-import rustscenic.grn, rustscenic.aucell
+from pathlib import Path
 
-# 1. Load + preprocess PBMC-3k (shipped with scanpy, zero download)
+import scanpy as sc
+import rustscenic.aucell
+import rustscenic.grn
+
+# Downloads about 5.9 MB on first use; later calls use the local cache.
 adata = sc.datasets.pbmc3k()
 sc.pp.filter_cells(adata, min_genes=200)
 sc.pp.filter_genes(adata, min_cells=3)
 sc.pp.normalize_total(adata, target_sum=1e4)
 sc.pp.log1p(adata)
-print(f"PBMC-3k: {adata.shape}")  # (2700, 13714)
 
-# 2. GRN inference — replaces arboreto.grnboost2
+# A short TF list for this example; use a full matching list for your study.
 tfs = ["SPI1", "CEBPD", "MAFB", "CEBPB", "KLF4", "IRF8", "PAX5", "EBF1",
-       "TCF7", "LEF1", "TBX21"]  # or load a full TF list
-tfs = [t for t in tfs if t in adata.var_names]
-
-grn = rustscenic.grn.infer(adata, tfs, seed=777, n_estimators=100)
-print(f"GRN: {len(grn)} edges")
-print(grn.nlargest(5, "importance").to_string(index=False))
-
-# 3. Build regulons + run AUCell — replaces pyscenic.aucell (~88× faster on 10k cells)
-regulons = [
-    (f"{tf}_regulon", grn[grn["TF"] == tf].nlargest(50, "importance")["target"].tolist())
-    for tf in tfs
-]
-regulons = [(name, genes) for name, genes in regulons if len(genes) >= 10]
-
+       "TCF7", "LEF1", "TBX21"]
+tfs = [tf for tf in tfs if tf in adata.var_names]
+grn = rustscenic.grn.infer(
+    adata, tf_names=tfs, seed=777, n_estimators=100
+)
+regulons = {
+    tf: group.nlargest(50, "importance")["target"].tolist()
+    for tf, group in grn.groupby("TF")
+    if len(group) >= 10
+}
 auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
-print(f"Regulon activity: {auc.shape} (cells x regulons)")
+
+adata.write_h5ad("pbmc3k.h5ad")
+Path("tfs.txt").write_text("\n".join(tfs) + "\n")
+grn.to_parquet("grn.parquet")
+auc.to_parquet("aucell.parquet")
+print(grn.nlargest(5, "importance"))
 print(auc.iloc[:3, :3])
 ```
 
-## Command-line equivalent
+Outputs: a TF-to-target edge table (`grn.parquet`), per-cell activity scores
+(`aucell.parquet`), the prepared RNA matrix and the TF list.
+
+For signed target sets, use `add_correlation` and `build_regulons`; see the
+[API guide](site_docs/api.md). For your own AnnData file, use the
+[own-data quickstart](site_docs/quickstart.md).
+
+## Command line
+
+With the prepared matrix and TF list above, run the same two stages:
 
 ```bash
-# Download aertslab TF list (once)
-curl -o tfs_hg38.txt https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt
-
-# Preprocess + save your AnnData as .h5ad first, then:
-rustscenic grn \
-  --expression data.h5ad \
-  --tfs tfs_hg38.txt \
-  --output grn.parquet \
-  --seed 777
-
-rustscenic aucell \
-  --expression data.h5ad \
-  --regulons grn.parquet \
-  --output auc.parquet
+rustscenic grn --expression pbmc3k.h5ad --tfs tfs.txt --output grn.parquet --seed 777 --n-estimators 100
+rustscenic aucell --expression pbmc3k.h5ad --regulons grn.parquet --output aucell.parquet
 ```
 
-## Running the full 4-stage SCENIC+ pipeline
+The package includes species-specific TF lists through `rustscenic.data.tfs`.
+You can also supply the [Aerts lab human TF list](https://resources.aertslab.org/cistarget/tf_lists/allTFs_hg38.txt).
+Match its gene identifiers to your expression matrix.
 
-For scATAC + RNA multiome analysis:
+## Add chromatin and motif analysis
+
+These are individual stages with separate inputs. A complete multiome analysis
+also needs preprocessing, enhancer links and eRegulon assembly; see
+[`rustscenic.pipeline.run`](site_docs/api.md) and the [scope guide](site_docs/limitations.md).
+
+Given a prepared ATAC AnnData matrix (`atac_adata`) and a compatible motif-ranking
+database, extend the RNA example with:
 
 ```python
-import rustscenic.grn, rustscenic.aucell, rustscenic.topics, rustscenic.cistarget
-
-# Stage 1: GRN on RNA
-grn = rustscenic.grn.infer(rna_adata, tfs, seed=777)
-
-# Stage 2: Regulon activity
-regulons = [
-    (f"{tf}_regulon", grn[grn["TF"] == tf].nlargest(50, "importance")["target"].tolist())
-    for tf in grn["TF"].unique()
-]
-auc = rustscenic.aucell.score(rna_adata, regulons)
-
-# Stage 3: Topic modeling on binarized ATAC peaks
-topics_result = rustscenic.topics.fit(
-    atac_adata,  # cells × peaks, binarized
-    n_topics=50,
-    n_passes=15,
-    seed=777,
-)
-
-# Stage 4: Motif enrichment (provide aertslab ranking DB)
 import rustscenic.cistarget
+import rustscenic.topics
+
+# Cells × peaks, with count or binary values.
+topics = rustscenic.topics.fit(atac_adata, n_topics=50, n_passes=15, seed=777)
+
+# Ranking columns must match the gene identifiers in the candidate sets.
 rankings = rustscenic.cistarget.load_aertslab_feather("hg38_screen_v10.feather")
 enrichments = rustscenic.cistarget.enrich(rankings, regulons, top_frac=0.05)
 ```
 
-## Speed on a 10-core laptop
+`fit_gibbs` is also available for sparse scATAC topic modelling. Inspect topic
+quality and convergence before interpreting either model. Motif-annotation
+pruning requires annotation inputs; see the [API guide](site_docs/api.md).
 
-| Dataset | Stage | Wall-clock |
-|---|---|---|
-| PBMC-3k (2700 cells × 13714 genes) | grn | 207s |
-| PBMC-3k (1274 regulons) | aucell | 0.1s |
-| 10x Multiome PBMC (2588 cells, all 4 stages) | full pipeline | 9.1 min |
+## More examples and benchmarks
 
-Reference (arboreto + pyscenic + tomotopy) on 10x Multiome: 11.8 min. Reference with real pycisTopic-Mallet: 534 s for topics stage alone on 10k PBMC ATAC (measured).
-
-## Common errors
-
-- **"ValueError: expression has 0 peaks/genes"** — preprocess first (`sc.pp.filter_genes`).
-- **"ValueError: N duplicate gene name(s) in expression matrix"** — run `adata.var_names_make_unique()`.
-- **"UserWarning: all regulons dropped"** — your regulon gene symbols don't match `adata.var_names`; check species / naming (human uses uppercase, mouse uses TitleCase).
-
-## Full pipeline on real 10x Multiome
+From a repository checkout:
 
 ```bash
-# Download 10x Multiome PBMC 3k
-curl -o fbm.h5 https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_3k/pbmc_granulocyte_sorted_3k_filtered_feature_bc_matrix.h5
-
-# See validation/validate_multiome_e2e.py for a 55-line reproducible example.
+python examples/pbmc3k_end_to_end.py
 ```
 
-## Get help
+This RNA example downloads 10x data on first use, writes outputs to
+`examples/out/`, and includes a marker-based lineage sanity check. The gene
+sets are candidates, not motif-validated regulons.
 
-- Full docs: README.md + CHANGELOG.md + [VALIDATION_SUMMARY](validation/VALIDATION_SUMMARY.md)
-- Agent skill (Claude Code): auto-loads when you mention "SCENIC" or "arboreto"
-- Issues: open one at https://github.com/Ekin-Kahraman/rustscenic/issues; see [docs/topic-collapse.md](docs/topic-collapse.md) for the one known algorithmic caveat (v0.2 roadmap item)
+For multiome inputs, [download the 10x PBMC3k matrix](https://cf.10xgenomics.com/samples/cell-arc/2.0.0/pbmc_granulocyte_sorted_3k/pbmc_granulocyte_sorted_3k_filtered_feature_bc_matrix.h5)
+and follow the [multiome validation example](validation/validate_multiome_e2e.py).
+
+Use the [benchmark records](site_docs/benchmarks.md) for measured runtime,
+memory, hardware and comparison conditions. The [validation summary](validation/VALIDATION_SUMMARY.md)
+retains earlier development evidence.
+
+## Troubleshooting
+
+| Symptom | What to check |
+| --- | --- |
+| Empty expression matrix | Inspect the shape and filtering thresholds before fitting. |
+| Duplicate gene names | Resolve duplicate biological identifiers before analysis; renaming alone does not combine expression values. |
+| No TF or gene-set overlap | Match species and identifiers, such as gene symbols versus Ensembl IDs. |
+| Few topics carry most cells | Inspect [topic-model limitations](docs/topic-collapse.md) and compare model settings. |
+
+[Installation](site_docs/installation.md) · [HPC guide](site_docs/hpc.md) ·
+[Release notes](docs/releases/v0.5.0.md) ·
+[Report a problem](https://github.com/Ekin-Kahraman/rustscenic/issues/new/choose)

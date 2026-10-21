@@ -3,78 +3,102 @@
   <h1>RustScenic</h1>
 </div>
 
-Fast, memory-efficient gene-regulation analysis for single-cell data.
+**Fast gene regulatory network analysis for single-cell data.**
 
-Infer gene networks and score their activity using RNA and chromatin-accessibility
-data. RustScenic is a Python package accelerated with Rust; it runs on CPUs
-without requiring a GPU.
+Infer candidate regulatory relationships and score their activity from RNA and
+chromatin-accessibility data. Built in Rust, available through Python, and runs
+on CPUs.
 
-Created and maintained by Ekin Kahraman, developed in collaboration with the
-Kuan-Lin Huang Lab at the Icahn School of Medicine at Mount Sinai.
+Created by Ekin Kahraman, developed and scaled with the Kuan-Lin Huang Lab at
+the Icahn School of Medicine at Mount Sinai.
+
+## Get started
+
+Current release `v0.5.0`; Python **3.10–3.13**; Linux, macOS and Windows.
 
 ```bash
 pip install rustscenic
 ```
 
-![RustScenic evidence snapshot: built, released, benchmarked and lab-validated](assets/rustscenic-evidence.svg)
+[Analyse your own data](quickstart.md) ·
+[Explore a saved network](demo/endothelial/index.html) ·
+[Installation options](installation.md)
 
-## Evidence Snapshot
+Core analysis runs without Java, Dask, CUDA or Snakemake. The package supports
+network inference, motif enrichment, activity scoring and multiome analysis.
 
-| Signal | Evidence |
+## Performance and validation
+
+| Evidence | Measured result and scope |
 | --- | --- |
-| Built | Automated tests, installation checks and real-data validation workflows for the Rust and Python package. |
-| Released | Current release `v0.5.0`; Python 3.10 to 3.13 release wheels plus source distribution. |
-| Benchmarked | `11x` to `52x` faster than SCENIC+ for selected analysis stages on sampled real-data inputs, measured on one machine. |
-| Scale tested | Gene-network inference on 1.3 million mouse-brain cells in under 47 minutes, at 4.28 GB peak analysis memory on 16 CPU cores. v0.5.0 candidate; preparation separately peaked at 71.49 GB. [Scope and evidence](benchmarks.md#memory-scaling). |
-| Collaborator-tested | A Huang Lab human brain workflow recovered `16/17` expected brain transcription factors. This is a biological check, not proof of every inferred connection. |
+| RNA scale | **1,306,127 mouse-brain cells in 46m42s**, with 4.28 GB peak inference memory on 16 CPU cores; 2,095 selected genes and 256 TFs. |
+| Matched arboreto comparison | **2.04–3.33× faster** on 20,000 cells; **81% lower physical memory** in the Intel-node comparison. |
+| Memory scaling | **21.4% lower topic-model peak memory**, with unchanged outputs across three baseline and three optimised runs. Five sampling sweeps test storage, not model convergence. |
+| Selected SCENIC+ stages | **`11x` to `52x` faster** on sampled real-data inputs of 1,500–2,000 cells. Enhancer methods differ; output agreement is incomplete. |
+| Huang Lab collaborator run | **16/17 expected brain transcription factors** recovered on 8,215 post-QC cells with v0.4.6. A biological sanity check, not an accuracy estimate. |
 
-## Highlights
+The scale, arboreto and topic-memory results used the **v0.5.0 release candidate**.
+The million-cell run measures inference on prepared RNA; separate preparation
+took **7m18s** and peaked at **71.49 GB**. It does not establish a complete
+million-cell spatial workflow. Each arboreto timing is one observation per
+node, not a repeated-run average.
 
-| Feature | Status |
+[Commands, hardware and output agreement](benchmarks.md) ·
+[Biological checks and limitations](validation.md) ·
+[Collaborator reports](adoption.md)
+
+<details markdown="1">
+<summary>Selected output-agreement results</summary>
+
+| Check | Result |
 | --- | --- |
-| Tested real-data speedup | `11x` to `52x` vs SCENIC+ for selected stages on sampled data |
-| Memory scaling | v0.5.0 candidate: about 81% less peak physical memory than arboreto in a controlled 20,000-cell comparison |
-| Current release | `v0.5.0` |
-| Python support | 3.10 to 3.13 |
-| Core install | `pip install rustscenic` |
-| Runtime model | Runs on CPUs; Rust handles the intensive calculations |
-| Core path dependencies avoided | Java, dask, CUDA, Snakemake |
-| Evidence | Benchmarks and collaborator test records linked from this site |
+| Human brain GEM-X 2k, including preparation | RustScenic **11.89 s**; SCENIC+ **150.36 s**. |
+| GEM-X region-to-gene edge Jaccard | **1.000** under the fixed search space; scores are not identical. |
+| GEM-X region AUCell mean Pearson | **0.823**. |
+| cisTarget AUC kernel vs `ctxcore.recovery.aucs` | Pearson **1.0000**. |
+| Remaining GEM-X differences | Gene AUCell Pearson **0.386**; eRegulon edge Jaccard **0.161**. |
 
-## Benchmark Snapshot
+[Full validation record](benchmarks.md#validation) ·
+[Release and validation graphic](assets/rustscenic-evidence.svg)
 
-| Result | Value |
-| --- | ---: |
-| Human brain GEM-X 2k total runtime | RustScenic `11.89 s`; reference `150.36 s` |
-| Human brain GEM-X region-to-gene edge-set Jaccard | `1.000` |
-| Human brain GEM-X region AUCell mean Pearson | `0.823` |
-| cisTarget AUC kernel agreement vs `ctxcore.recovery.aucs` | Pearson `1.0000` |
+</details>
 
-The v0.5.0 benchmarks were measured on the release candidate. The million-cell
-run uses prepared RNA and 2,095 selected genes; it is not a complete spatial workflow.
+## Explore a network
 
-The full benchmark matrix includes dataset shape, command path, hardware,
-runtime, memory and validation metrics. Start with [Benchmarks](benchmarks.md).
+[Open the endothelial-cell example](demo/endothelial/index.html) to choose a
+regulator and inspect its predicted targets. It uses saved results and needs
+no installation or new model fitting.
 
-## Stage Coverage
+[![ETS1 predicted targets in the endothelial-cell example](assets/examples/endothelial-preview.png)](demo/endothelial/index.html)
 
-| Stage | RustScenic API | SCENIC ecosystem stage covered |
+The example contains **184,000 retained edges**, **85 motif-supported regulons**,
+activity summaries and source-study citations.
+[Download it for offline use](https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/main/examples/cellxgene-endothelial/starter.zip).
+
+The full collection covers **704 annotated human cell types** from CELLxGENE
+Census. **Full release pending;** this example is available now. Results are
+exploratory predictions across pooled tissues and disease annotations.
+Data reuse terms are pending; see the [data notice](demo/endothelial/LICENSING.txt).
+
+## Analysis stages
+
+| Stage | Python API | Purpose |
 | --- | --- | --- |
-| TF-to-gene GRN | `rustscenic.grn.infer` | GRNBoost2-style regulatory-network inference |
-| AUCell | `rustscenic.aucell.score` | Per-cell regulon activity scoring |
+| Gene networks | `rustscenic.grn.infer` | GRNBoost2-style TF-to-gene inference |
+| AUCell | `rustscenic.aucell.score` | Per-cell gene-set activity |
 | cisTarget | `rustscenic.cistarget.enrich` | Motif enrichment and support filtering |
 | Topics | `rustscenic.topics.fit`, `fit_gibbs` | scATAC topic modelling |
 | ATAC preprocessing | `rustscenic.preproc` | Fragment matrix building and QC |
 | Enhancer links | `rustscenic.enhancer.link_peaks_to_genes` | Peak-to-gene linking |
 | eRegulons | `rustscenic.eregulon.build_eregulons` | Enhancer-linked regulon assembly |
-| Orchestration | `rustscenic.pipeline.run` | Staged workflow across RNA and multiome inputs |
+| Pipeline | `rustscenic.pipeline.run` | Staged RNA and multiome workflows |
 
-## Next
+## Documentation and citation
 
-- [Installation](installation.md)
-- [Quickstart](quickstart.md)
-- [API map](api.md)
-- [Benchmarks](benchmarks.md)
-- [Validation](validation.md)
-- [Lab adoption](adoption.md)
-- [Scope](limitations.md)
+[API guide](api.md) · [HPC operation](hpc.md) · [Scope](limitations.md) ·
+[Release notes](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/releases/v0.5.0.md)
+
+The package has automated Rust/Python tests, installation checks and real-data
+validation workflows. Cite the exact [RustScenic release](https://doi.org/10.5281/zenodo.20246040)
+used, plus the contributing studies when using the example. Software and example
+code are Apache-2.0; data terms are separate.
