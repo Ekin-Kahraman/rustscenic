@@ -46,6 +46,8 @@ single observation, not a repeated-run average.
 
 ## Analyse your own data
 
+Current release: `v0.5.0`.
+
 ```bash
 pip install rustscenic
 ```
