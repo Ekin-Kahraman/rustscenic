@@ -15,6 +15,11 @@
   <a href="https://pypi.org/project/rustscenic/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/rustscenic"></a>
   <a href="LICENSE"><img alt="Software license: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-blue.svg"></a>
   <a href="https://doi.org/10.5281/zenodo.20246040"><img alt="Zenodo DOI" src="https://img.shields.io/badge/DOI-Zenodo-1682d4"></a>
+  <br>
+  <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml"><img alt="Docs" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml/badge.svg?branch=main"></a>
+  <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/nightly-real-data.yml"><img alt="Nightly real-data validation" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/nightly-real-data.yml/badge.svg?branch=main"></a>
+  <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/Python-3.10%2B-blue"></a>
+  <a href="https://www.rust-lang.org/"><img alt="Rust" src="https://img.shields.io/badge/Rust-stable-orange"></a>
 </p>
 
 <p align="center">
