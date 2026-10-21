@@ -52,12 +52,21 @@ rustscenic aucell \
 
 ## End-To-End Example
 
-The repository includes a PBMC-3k example:
+From a repository checkout, run the PBMC3k RNA example:
 
 ```bash
 pip install "rustscenic[examples]"
 python examples/pbmc3k_end_to_end.py
 ```
+
+It downloads 10x data on first use, caches it locally and writes the network,
+candidate gene sets and activity scores to `examples/out/`. It includes a
+marker-based lineage sanity check; the gene sets are not motif-filtered.
+
+For a copy-and-run PBMC3k walkthrough, see the
+[repository quickstart](https://github.com/Ekin-Kahraman/rustscenic/blob/main/QUICKSTART.md).
+To explore saved results without installation, open the
+[endothelial-cell example](demo/endothelial/index.html).
 
 For collaborators or external testers, use the
 [tester quickstart](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/tester-quickstart.md)

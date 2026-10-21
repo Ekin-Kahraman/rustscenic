@@ -1,5 +1,10 @@
 # Explore an endothelial-cell regulatory network
 
+[Open the interactive example](https://ekin-kahraman.github.io/rustscenic/demo/endothelial/)
+to choose a regulator and inspect its predicted targets without installation.
+
+[![ETS1 predicted targets](../../site_docs/assets/examples/endothelial-preview.png)](https://ekin-kahraman.github.io/rustscenic/demo/endothelial/)
+
 Download [starter.zip](https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/main/examples/cellxgene-endothelial/starter.zip) and extract it first. The instructions below apply inside the extracted folder.
 
 **No installation or HPC needed.** Open `explore.html` in a browser to choose
@@ -43,6 +48,6 @@ This is the existing endothelial-cell example extracted from the verified
 cohort files are unchanged. See `provenance.json` and `METHODS.md`.
 
 Public example; the full CELLxGENE resource release is pending.
-Data licensing is not yet assigned; see `LICENSING.txt`. Cite contributing studies in
+Data reuse terms are pending; see [LICENSING.txt](LICENSING.txt). Cite contributing studies in
 `source-citations.json` and the CELLxGENE platform when reusing the results.
 Example code: Apache-2.0; see `LICENSE-SOFTWARE`.

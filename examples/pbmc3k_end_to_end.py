@@ -1,8 +1,8 @@
 """End-to-end rustscenic pipeline on PBMC-3k.
 
-What this shows — the realistic RNA-only SCENIC workflow:
+What this shows — an RNA network and candidate gene-set activity workflow:
 
-  1. Load + preprocess PBMC-3k (bundled with scanpy; zero download, zero paths)
+  1. Download PBMC-3k from 10x on first use, then load and preprocess the cached data
   2. Infer a GRN with rustscenic.grn.infer (replaces arboreto.grnboost2)
   3. Build regulons from top-N targets per TF (no pyscenic required)
   4. Score per-cell regulon activity with rustscenic.aucell.score
@@ -15,7 +15,8 @@ Run:
 
 Outputs are written to examples/out/.
 
-Runtime: ~3 minutes on an 8-core laptop with n_estimators=500.
+Candidate gene sets are not motif-filtered or split by correlation sign.
+Runtime depends on hardware; this example uses n_estimators=500.
 """
 from __future__ import annotations
 import json

@@ -1,0 +1,1175 @@
+{
+  "dataset_count": 234,
+  "datasets": [
+    {
+      "dataset_id": "00476f9f-ebc1-4b72-b541-32f912ce36ea",
+      "title": "Dissection: Hypothalamus (HTH) - mammillary region of HTH (HTHma)",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/03dd07cf-c654-4f5a-8852-3e055fd7b27d.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "01b84709-139c-4485-98a9-6e14c58fbbf6",
+      "title": "snRNA-seq data from eight focal cortical dysplasia donors",
+      "citation": "Publication: https://doi.org/10.1016/j.isci.2024.111337 Dataset Version: https://datasets.cellxgene.cziscience.com/19a7c986-7347-443a-8c9c-f067c0135554.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/9e4e8f1d-d905-4d4f-b343-84889d0f9ffe"
+    },
+    {
+      "dataset_id": "03d38670-1444-4001-bc53-9936e61d9b20",
+      "title": "Dissection: Hypothalamus (HTH) - preoptic region of HTH - HTHpo (medial preoptic nucleus, MPN) - supraoptic region of HTH - HTHso (paraventricular nucleus, PV)",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/64cbdeef-096b-4b5d-866c-81f5a7adabdb.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "0436a180-cb44-47ba-8ffa-807b7a468469",
+      "title": "Fallopian tube samples from pre- and post-menopausal humans",
+      "citation": "Publication: https://doi.org/10.1038/s41467-024-55440-2 Dataset Version: https://datasets.cellxgene.cziscience.com/bd314446-2d21-4675-ab1a-320391cbfe52.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/380ade76-e561-49a8-afb2-0f10b39c2c72"
+    },
+    {
+      "dataset_id": "07b1d7c8-5c2e-42f7-9246-26f746cd6013",
+      "title": "Dissection: Myelencephalon (medulla oblongata) (Mo) - afferent nuclei of cranial nerves in medulla oblongata - MoAN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/30a8fa95-95db-436b-9fbe-1ce908611252.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "090da8ea-46e8-40df-bffc-1f78e1538d27",
+      "title": "Dissection: Spinal cord - SpC",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/505ae2fb-7ff5-4e7e-bf95-ab91f61310a9.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "095940cb-7422-4510-96e2-cbafd961eb88",
+      "title": "Dissection: Cerebellum (CB) - Cerebellar deep nuclei - CbDN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/6350bb8b-d480-4f27-91c5-43958f90557c.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "0a2d7e87-c3c0-4ed2-86df-ae18811fcc16",
+      "title": "Full Dataset",
+      "citation": "Publication: https://doi.org/10.1186/s40478-024-01853-5 Dataset Version: https://datasets.cellxgene.cziscience.com/a5e4d931-b455-41d2-93fc-04d30767cc7f.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/7c4552fd-8a6d-4da3-9854-2dfa8baca8bf"
+    },
+    {
+      "dataset_id": "0b4a15a7-4e9e-4555-9733-2423e5c66469",
+      "title": "Single cell RNA-seq data from normal adult kidney tissue",
+      "citation": "Dataset Version: https://datasets.cellxgene.cziscience.com/21f7f1c9-3756-48ae-8010-8d69bcbd52ed.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/a98b828a-622a-483a-80e0-15703678befd"
+    },
+    {
+      "dataset_id": "0b75c598-0893-4216-afe8-5414cab7739d",
+      "title": "Integrated Single-nucleus and Single-cell RNA-seq of the Adult Human Kidney",
+      "citation": "Publication: https://doi.org/10.1038/s41586-023-05769-3 Dataset Version: https://datasets.cellxgene.cziscience.com/3f2bf1e8-75a6-4fa2-9f79-dd6bb54529a0.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/bcb61471-2a44-4d00-a0af-ff085512674c"
+    },
+    {
+      "dataset_id": "0bc7235a-ae5a-479d-a487-510435377e55",
+      "title": "Occipital cortex samples from C9-ALS, C9-ALS/FTD and age matched control brains",
+      "citation": "Publication: https://doi.org/10.1007/s00401-023-02599-5 Dataset Version: https://datasets.cellxgene.cziscience.com/b279d4ec-2674-4c92-aad0-3786fa651fad.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/aee9c366-f2fb-470b-8937-577d5d87d3fc"
+    },
+    {
+      "dataset_id": "0ee5ae70-c3f5-473f-bd1c-287f4690ffc5",
+      "title": "Dissection: Myelencephalon (medulla oblongata) (Mo) - sensory relay nuclei in medulla oblongata - MoSR",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/3ee51d97-1a1e-4b10-afda-b8b0add0b911.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "0f4865d5-8000-4f68-8ac7-f5efea9e5e70",
+      "title": "TI stromal",
+      "citation": "Publication: https://doi.org/10.1016/j.immuni.2023.01.002 Dataset Version: https://datasets.cellxgene.cziscience.com/1a640ddc-ea3c-4711-ba8e-07084cc40a88.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/5c868b6f-62c5-4532-9d7f-a346ad4b50a7"
+    },
+    {
+      "dataset_id": "1185a7d3-a9c1-4280-9ba5-d61895b15cac",
+      "title": "Dissection: Amygdaloid complex (AMY) - corticomedial nuclear group - CMN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/8cd70cea-d064-44e7-84fd-f50f571f61c7.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "12c3efd8-d515-42e6-b93c-4961e599d524",
+      "title": "Adult ureter trio",
+      "citation": "Publication: https://doi.org/10.1016/j.devcel.2022.07.004 Dataset Version: https://datasets.cellxgene.cziscience.com/a3ed6f93-7c66-4940-915b-942fbe815af5.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/af286675-7167-4816-a907-c72d41b73d37"
+    },
+    {
+      "dataset_id": "145dcf6a-2461-4fa3-a0af-7fc56db0bd33",
+      "title": "SL057",
+      "citation": "Publication: https://doi.org/10.1101/2023.09.01.555882 Dataset Version: https://datasets.cellxgene.cziscience.com/9ab0ed86-d4a4-418c-99de-abd5e0afb8f9.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/113a558a-e96e-4643-81db-140e95c58578"
+    },
+    {
+      "dataset_id": "182f6a56-7360-4924-a74e-1772e07b3031",
+      "title": "Dissection: Body of hippocampus (HiB) - Rostral CA1-CA3",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/0214dfb6-7d05-4612-a73c-b0f69a538003.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "18500fcd-9960-49cb-8a8e-7d868dc14efe",
+      "title": "Dissection: Basal nuclei (BN) - Globus pallidus (GP) - External segment of globus pallidus - GPe",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/feb813d0-83c6-4eb8-9626-3b07f6b3f219.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "18e2a8c5-33f7-455e-a58a-b2ba6921db27",
+      "title": "Human Female",
+      "citation": "Publication: https://doi.org/10.1038/s41586-022-04918-4 Dataset Version: https://datasets.cellxgene.cziscience.com/67305bcf-e753-4c03-ace6-f57e913900ad.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/661a402a-2a5a-4c71-9b05-b346c57bc451"
+    },
+    {
+      "dataset_id": "19053a82-9c89-4fb8-bd19-d7b1800b0b7b",
+      "title": "Extended+ - 18485 genes",
+      "citation": "Publication: https://doi.org/10.1038/s41586-024-07571-1 Dataset Version: https://datasets.cellxgene.cziscience.com/1dcf15ee-c103-4aaa-8b8c-0fc697fcccc8.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/f11cb29c-b546-4738-9bd8-66ea621a7bd5"
+    },
+    {
+      "dataset_id": "19b21f40-db42-4a71-a0d6-913e83b17784",
+      "title": "Dissection: Head of hippocampus (HiH) - Tail of Hippocampus (HiT) - Subicular cortex - Sub",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/e510a07c-ece3-4745-be5a-ce1dbbb53608.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "19f1bec6-eeb7-4133-accc-992d745fef89",
+      "title": "Full_Dataset",
+      "citation": "Publication: https://doi.org/10.1038/s41586-024-07234-1 Dataset Version: https://datasets.cellxgene.cziscience.com/3928a751-1873-4982-b66b-a6933a309a97.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/a66d41a7-f1de-4b70-b983-7a4b790a0d5d"
+    },
+    {
+      "dataset_id": "1a018108-b4b6-457b-ba15-046d5e98c169",
+      "title": "Dissection: Myelencephalon (medulla oblongata) (Mo) - precerebellar nuclei (PrCbN) - inferior olive - IO",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/336785fc-b26e-473f-abe1-348f449f1f9c.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "1a2e3350-28a8-4f49-b33c-5b67ceb001f6",
+      "title": "Fetal Bone Marrow (10x)",
+      "citation": "Publication: https://doi.org/10.1038/s41586-021-03929-x Dataset Version: https://datasets.cellxgene.cziscience.com/189b8360-7350-40d7-b956-d2c15cb2ba7f.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/793fdaec-5067-428a-a9db-ecefe135c945"
+    },
+    {
+      "dataset_id": "1b767f95-d0a0-4a3d-b394-cc665d86c3dc",
+      "title": "Dissection: Extended amygdala (EXA) - Bed nucleus of stria terminalis and nearby - BNST",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/5a187320-b2af-45cd-8da0-70838143d56f.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "1cf24082-59de-4029-ac81-6e398768af3a",
+      "title": "Dissection: Cerebral cortex (Cx) - Inferior temporal gyrus - ITG",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/f1ae8d87-0df3-4633-a861-eec0d4fd8c4e.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "1f1c5c14-5949-4c81-b28e-b272e271b672",
+      "title": "Single-cell reconstruction of follicular remodeling in the human adult ovary",
+      "citation": "Publication: https://doi.org/10.1038/s41467-019-11036-9 Dataset Version: https://datasets.cellxgene.cziscience.com/f97b9d99-ca1c-4016-be0d-8d7b948c52fa.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/2902f08c-f83c-470e-a541-e463e25e5058"
+    },
+    {
+      "dataset_id": "21722308-5091-4b63-9c07-4f116ab9a7b3",
+      "title": "SL040",
+      "citation": "Publication: https://doi.org/10.1101/2023.09.01.555882 Dataset Version: https://datasets.cellxgene.cziscience.com/f3066f7e-eba3-4a8d-b7f5-79a465e401fe.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/113a558a-e96e-4643-81db-140e95c58578"
+    },
+    {
+      "dataset_id": "22658f4f-9268-41ad-8828-cc53f4baa9fa",
+      "title": "Dissection: Hypothalamus (HTH) - supraoptic region of HTH - HTHso",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/08182da9-d8ee-4e5f-a1b9-3f8254ed3332.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "2727d83a-0af0-443a-bff8-58dc7028289a",
+      "title": "Molecular characterization of selectively vulnerable neurons in Alzheimer’s Disease: Entorhinal Cortex",
+      "citation": "Publication: https://doi.org/10.1038/s41593-020-00764-7 Dataset Version: https://datasets.cellxgene.cziscience.com/101d58e6-625c-4d52-8966-1db2fda0d481.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/180bff9c-c8a5-4539-b13b-ddbc00d643e6"
+    },
+    {
+      "dataset_id": "27d91086-cfe3-4e33-9282-bd1246e5ce8e",
+      "title": "Dissection: Cerebral cortex (Cx) - Long insular gyri (LIG) - Dysgranular insular cortex - Idg",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/815415e5-8b67-4eeb-8e16-cc533bba4e66.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "2a65bd41-4a3f-42f4-98b2-c53962811152",
+      "title": "Ovarian tissue from donor 4",
+      "citation": "Publication: https://doi.org/10.1126/sciadv.adm7506 Dataset Version: https://datasets.cellxgene.cziscience.com/1e37d6b1-8e91-4273-97d9-7529d7e53b8e.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/6686ada5-43a8-40b6-9a05-6894503606db"
+    },
+    {
+      "dataset_id": "2a8ca8f3-5599-4cda-b973-3a2dfc3c1fe6",
+      "title": "Dissection: Amygdaloid complex (AMY) - Corticomedial nuclear group (CMN) - anterior cortical nucleus - CoA",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/a6926d15-672c-4135-a56e-c32864f41f71.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "2adb1f8a-a6b1-4909-8ee8-484814e2d4bf",
+      "title": "Construction of a human cell landscape at single-cell level",
+      "citation": "Publication: https://doi.org/10.1038/s41586-020-2157-4 Dataset Version: https://datasets.cellxgene.cziscience.com/74c3403a-451c-4a62-84e0-d8a8e45c7ea7.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/38833785-fac5-48fd-944a-0f62a4c23ed1"
+    },
+    {
+      "dataset_id": "2dd9d7a2-4bee-4c3f-a1f5-89bc3271c4f0",
+      "title": "Adult bladder stromal subset",
+      "citation": "Publication: https://doi.org/10.1016/j.isci.2024.111628 Dataset Version: https://datasets.cellxgene.cziscience.com/4feb85d6-7a8e-4d7b-9b3b-5c7aa353a542.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/0e54d4de-44f0-4d50-8649-b5c2bbe8f5d1"
+    },
+    {
+      "dataset_id": "2f05ab20-a092-4bab-9276-3e0eb24e3fee",
+      "title": "A total of 38,217 droplet-based single-nucleus transcriptomes profiled across 14 cell types in the frontal cortex",
+      "citation": "Publication: https://doi.org/10.1038/s41586-021-03710-0 Dataset Version: https://datasets.cellxgene.cziscience.com/5de7e77b-ea84-4349-b0ed-51f37eef12b4.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/59c9ecfe-c47d-4a6a-bab0-895cc0c1942b"
+    },
+    {
+      "dataset_id": "2f132ec9-24b5-422f-9be0-ccef03b4fe28",
+      "title": "Lung",
+      "citation": "Publication: https://doi.org/10.15252/embj.20105114 Dataset Version: https://datasets.cellxgene.cziscience.com/667f3b2e-c7fd-49a6-a1a4-79999f1d46ad.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/6ff3401b-d72c-4940-a00c-3f0792397082"
+    },
+    {
+      "dataset_id": "30f5e171-83d7-4fc0-bf75-384f122346b3",
+      "title": "scRNA-seq data of human fallopian tube",
+      "citation": "Publication: https://doi.org/10.1096/fj.202002747R Dataset Version: https://datasets.cellxgene.cziscience.com/88572c96-9876-4b3f-b293-a3b7aa7cc1d4.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/99be70c4-e534-4413-a607-ce40b3ff2c77"
+    },
+    {
+      "dataset_id": "31f04740-c712-4c4b-a3f8-55c0506b3034",
+      "title": "Dissection: Claustrum - Cla",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/17408121-7535-45ab-9e5e-91addb54f8db.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "31f657dc-1875-4c4b-a5ca-ce63b3ef3a82",
+      "title": "Pancreas",
+      "citation": "Publication: https://doi.org/10.1016/j.cell.2023.11.026 Dataset Version: https://datasets.cellxgene.cziscience.com/72e6a74d-8804-4305-81d7-a12b93f2ac0d.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/854c0855-23ad-4362-8b77-6b1639e7a9fc"
+    },
+    {
+      "dataset_id": "350237e0-9f48-4cbd-9140-3b44495549f3",
+      "title": "Fetal lung + Pan-fetal immune",
+      "citation": "Publication: https://doi.org/10.1126/sciimmunol.adf9988 Dataset Version: https://datasets.cellxgene.cziscience.com/af1ab408-209e-49bb-917e-6717320f81ae.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/ec329aed-22bc-4d6e-8935-8282dcb1acac"
+    },
+    {
+      "dataset_id": "364348b4-bc34-4fe1-a851-60d99e36cafa",
+      "title": "Dissection: Thalamus (THM) - intralaminar nuclear complex (ILN) - posterior group of intralaminar nuclei (PILN) - centromedian nucleus of thalamus - CM",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/1a2dce69-e682-4423-aa31-328a5f0b0f1e.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "364bd0c7-f7fd-48ed-99c1-ae26872b1042",
+      "title": "Heart",
+      "citation": "Publication: https://doi.org/10.1016/j.cell.2023.11.026 Dataset Version: https://datasets.cellxgene.cziscience.com/ae536414-6fb1-4935-b6b6-b81c3d7d4811.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/854c0855-23ad-4362-8b77-6b1639e7a9fc"
+    },
+    {
+      "dataset_id": "367b55f4-d543-49aa-90e8-4765fcb8c687",
+      "title": "Dissection: Thalamus (THM) - intralaminar nuclear complex (ILN) - posterior group of intralaminar nuclei (PILN) - centromedian and parafasicular nuclei - CM and Pf",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/ce490cef-7e9d-441c-911a-79c2bf3e6a73.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "37a17b78-4864-4a42-b67b-31c00962795a",
+      "title": "MSSM_Cohort",
+      "citation": "Publication: https://doi.org/10.1101/2024.10.31.24316513 Dataset Version: https://datasets.cellxgene.cziscience.com/83bb53d2-7eb5-44e1-997e-4875050e104a.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/84ce6837-548d-4a1f-919f-0bc0d9a3952f"
+    },
+    {
+      "dataset_id": "37b21763-7f0f-41ae-9001-60bad6e2841d",
+      "title": "Multiomics single-cell analysis of human pancreatic islets reveals novel cellular states in health and type 1 diabetes",
+      "citation": "Publication: https://doi.org/10.1038/s42255-022-00531-x Dataset Version: https://datasets.cellxgene.cziscience.com/111d6e7d-d3d2-48fd-907a-4d3f8c77ee93.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/51544e44-293b-4c2b-8c26-560678423380"
+    },
+    {
+      "dataset_id": "381aa407-317a-40ef-8048-7ce0eacc4266",
+      "title": "Dissection: Thalamus (THM) - lateral nuclear complex of thalamus (LNC) - lateral posterior nucleus of thalamus - LP",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/c13fac54-da9c-41f5-b0f5-3856938de163.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "3b8b5de4-3aa1-4ac6-8890-8d03c8219981",
+      "title": "Frontal cortex samples from C9-FTD and age matched control brains",
+      "citation": "Publication: https://doi.org/10.1007/s00401-023-02599-5 Dataset Version: https://datasets.cellxgene.cziscience.com/8ec7b265-1c95-4c33-9df3-45c850b8b6b5.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/aee9c366-f2fb-470b-8937-577d5d87d3fc"
+    },
+    {
+      "dataset_id": "3c361813-5d5e-4868-bfe5-e7591e7b5381",
+      "title": "Single-nucleus transcriptome data from the dlPFC: Human",
+      "citation": "Publication: https://doi.org/10.1126/science.abo7257 Dataset Version: https://datasets.cellxgene.cziscience.com/9198437d-f781-4215-bf4f-32c3177e57df.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/e1fa9900-3fc9-4b57-9dce-c95724c88716"
+    },
+    {
+      "dataset_id": "3dc61ca1-ce40-46b6-8337-f27260fd9a03",
+      "title": "All cells",
+      "citation": "Publication: https://doi.org/10.1016/j.cell.2022.11.005 Dataset Version: https://datasets.cellxgene.cziscience.com/8b29a0b2-dd34-4811-a718-1b4124f5ff75.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/2d2e2acd-dade-489f-a2da-6c11aa654028"
+    },
+    {
+      "dataset_id": "3de0ad6d-4378-4f62-b37b-ec0b75a50d94",
+      "title": "Single-cell multiomic profiling of human lungs across age groups",
+      "citation": "Publication: https://doi.org/10.7554/eLife.62522 Dataset Version: https://datasets.cellxgene.cziscience.com/b1ba366b-d63b-4fdb-8bc6-c3c27dc3bd89.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/625f6bf4-2f33-4942-962e-35243d284837"
+    },
+    {
+      "dataset_id": "3e524d45-2265-4440-b903-3c30d51a0b17",
+      "title": "Human adult ureter",
+      "citation": "Publication: https://doi.org/10.1016/j.devcel.2022.07.004 Dataset Version: https://datasets.cellxgene.cziscience.com/59c9d404-3cde-4f85-a20b-b8bde570c784.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/af286675-7167-4816-a907-c72d41b73d37"
+    },
+    {
+      "dataset_id": "3f31f8ce-bbf6-4df8-8203-aa240ed03026",
+      "title": "Dissection: Cerebral cortex (Cx) - Cingulate gyrus, rostral (CgGr) - Ventral division of MFC - A24",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/a69d1d32-5e1f-4b55-8b1a-67cf95c93e20.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "3f56901c-dd4a-47d6-b60b-7b0c0111cfb2",
+      "title": "Dissection: Head of hippocampus (HiH) - Uncal CA1-CA3",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/45201553-d2dc-44e5-ba26-e22fc1a17991.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "40318d39-3d8f-49f4-8455-a2e1365c5c5b",
+      "title": "Dissection: Basal nuclei (BN) - Nucleus Accumbens - NAC",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/e7e1bec6-8a5a-42e9-89a8-7bd331a4c815.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "40569510-2282-461b-84df-6218ef208e0e",
+      "title": "Dissection: Hypothalamus (HTH) - tuberal region of hypothalamus - HTHtub",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/6a453042-dcd3-4346-a19c-27dee249dd3a.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "421e5f54-5de7-425f-b399-34ead0651ce1",
+      "title": "Dissection: Cerebral cortex (Cx) - Frontal agranular insular cortex - FI",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/114f4d7d-35d0-4403-9cd6-36b73cc1156a.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "43b7e156-65b3-4a7b-8c7a-08528e4b21d0",
+      "title": "Dissection: Basal forebrain (BF) - substantia innominata and nearby nuclei - SI",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/09cd2c31-e1db-48fe-8556-5d8abbfaeed2.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "4593c820-512d-4805-a10f-c0b864a7cc8c",
+      "title": "Dissection: Amygdaloid complex (AMY) - basolateral nuclear group (BLN) - basomedial nucleus (accessory basal nucleus) - BM",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/3abc55bf-c215-4733-8dbb-003593267e16.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "46ff9dc2-3d87-4b36-91aa-ffa8aa13c52e",
+      "title": "Dissection: Cerebral cortex (Cx) - Anterior parahippocampal gyrus (AG) - Lateral entorhinal cortex - LEC",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/d8550929-502a-4f19-8bac-997237b47517.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "470565f2-5afc-456a-b617-18e4496c04fd",
+      "title": "Dissection: Midbrain (RN) - Red Nucleus - RN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/27c39afa-7843-4658-b6a6-1a216314100c.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "4724c395-0c46-46d2-81f7-60fd271fb488",
+      "title": "Dissection: Head of hippocampus (HiH) - Uncal DG-CA4",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/c2aced3e-3d5f-439a-8bb9-595f75aa29b7.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "4976b234-9028-4b4b-8a2f-8ac59d636219",
+      "title": "Dissection: Cerebellum (CB) - Cerebellar Vermis - CBV",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/1430d7ad-f0da-4076-9506-4402860cba65.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "4a5b00e0-1ba3-4fd4-af89-d3512eb20720",
+      "title": "human cHSPCs - Ultima",
+      "citation": "Publication: https://doi.org/10.1038/s41591-025-03716-5 Dataset Version: https://datasets.cellxgene.cziscience.com/fd9e6b84-4687-44cb-a61e-1b261c05c414.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/5542eeb0-96ef-4ab9-95ea-eb6abc178461"
+    },
+    {
+      "dataset_id": "4a90bbba-df97-4a28-83ae-7386fe7d9167",
+      "title": "High-Resolution Transcriptomic Landscape of the Human Submandibular Gland",
+      "citation": "Publication: https://doi.org/10.1177/00220345221147908 Dataset Version: https://datasets.cellxgene.cziscience.com/5d1ba19d-ef4c-41a7-81b5-f29542ae6cbe.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/964581c3-b5ac-494d-9bd4-0dcb6fb058da"
+    },
+    {
+      "dataset_id": "4b6af54a-4a21-46e0-bc8d-673c0561a836",
+      "title": "non-immune cells",
+      "citation": "Publication: https://doi.org/10.1016/j.immuni.2023.01.032 Dataset Version: https://datasets.cellxgene.cziscience.com/86d2948e-9ff9-47c7-9d83-999c4cfa1789.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/03cdc7f4-bd08-49d0-a395-4487c0e5a168"
+    },
+    {
+      "dataset_id": "4c6f9f26-5470-455b-8933-c408232fbf56",
+      "title": "chRCC - Single-cell analyses of renal cell cancers reveal insights into tumor microenvironment, cell of origin, and therapy response",
+      "citation": "Publication: https://doi.org/10.1073/pnas.2103240118 Dataset Version: https://datasets.cellxgene.cziscience.com/7d7ad07a-17c3-4300-a7eb-9da10dfd61e0.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/1df8c90d-d299-4b2e-a54d-a5a80f36e780"
+    },
+    {
+      "dataset_id": "4d43082e-59cd-43ac-b77d-54d55519c881",
+      "title": "Dissection: Cerebral cortex (Cx) - Rostral gyrus (RoG) - Dorsal division of MFC - A32",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/71adffef-2efa-43d0-992e-0bf7d9467a25.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "529bb209-9d7b-44da-bfa4-f6e4745c46c2",
+      "title": "Dissection: Basal nuclei (BN) - Body of the Caudate - CaB",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/65796151-f68f-429c-9595-73729cecb680.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "52ea546e-9229-40ef-b048-a2e694dd73e8",
+      "title": "Dissection: Cerebral cortex (Cx) - Anterior parahippocampal gyrus, posterior part (APH) - Medial entorhinal cortex - MEC",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/7aaeff10-c6a1-426f-be89-161059f2e00b.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "52f18bc3-52d9-487b-bf8f-f0b7aa684b09",
+      "title": "Dissection: Midbrain (M) - Substantia Nigra - SN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/0af94f7d-1ba9-448c-8faa-33b8711a2dcd.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "535e9336-2d8d-43c3-944d-bcbebe20df8a",
+      "title": "Human Male",
+      "citation": "Publication: https://doi.org/10.1038/s41586-022-04918-4 Dataset Version: https://datasets.cellxgene.cziscience.com/0c749b30-e206-4955-80b7-5b7152d66a88.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/661a402a-2a5a-4c71-9b05-b346c57bc451"
+    },
+    {
+      "dataset_id": "53ce2631-3646-4172-bbd9-38b0a44d8214",
+      "title": "10x scRNA-seq from human cortex",
+      "citation": "Publication: https://doi.org/10.1126/sciadv.adg3754 Dataset Version: https://datasets.cellxgene.cziscience.com/fe86d86c-16cc-4047-a741-d9e186b35175.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/ceb895f4-ff9f-403a-b7c3-187a9657ac2c"
+    },
+    {
+      "dataset_id": "53d208b0-2cfd-4366-9866-c3c6114081bc",
+      "title": "Tabula Sapiens - All Cells",
+      "citation": "Publication: https://doi.org/10.1126/science.abl4896 Dataset Version: https://datasets.cellxgene.cziscience.com/5a495302-b7cd-4bf9-853e-95627b00bb03.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/e5f58829-1a66-40b5-a624-9046778e74f5"
+    },
+    {
+      "dataset_id": "5500c673-1610-40a0-86d9-64d987ae50e6",
+      "title": "Integrated adult and foetal hearts",
+      "citation": "Publication: https://doi.org/10.1038/s44161-022-00183-w Dataset Version: https://datasets.cellxgene.cziscience.com/51073d23-97b7-4c05-84eb-5a18024e966c.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/43b45a20-a969-49ac-a8e8-8c84b211bd01"
+    },
+    {
+      "dataset_id": "55ca4411-8c7d-4aef-a572-50852e030c05",
+      "title": "ALL- Cells of gingivo-buccal oral squamous cell carcinoma",
+      "citation": "Publication: https://doi.org/10.1111/cas.15979 Dataset Version: https://datasets.cellxgene.cziscience.com/e6e795a7-6bb0-4644-b0a8-ae767a8fccc9.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/1a3b0b02-e68d-4855-9ec8-c5b13703f052"
+    },
+    {
+      "dataset_id": "56a4bc14-9407-45fd-8786-f7f6fc87c9dd",
+      "title": "Postnatal human brain development: RNA",
+      "citation": "Publication: https://doi.org/10.1038/s41588-025-02083-8 Dataset Version: https://datasets.cellxgene.cziscience.com/412352dd-a919-4d8e-9f74-e210627328b5.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/f406a653-c079-4bf9-aab6-85846c27571d"
+    },
+    {
+      "dataset_id": "56c4912d-2bae-4b64-98f2-af8a84389208",
+      "title": "Extended GBmap",
+      "citation": "Publication: https://doi.org/10.1101/2022.08.27.505439 Dataset Version: https://datasets.cellxgene.cziscience.com/7ee66f63-b132-4d4c-9cd6-d2fbc46e7b94.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/999f2a15-3d7e-440b-96ae-2c806799c08c"
+    },
+    {
+      "dataset_id": "576f193c-75d0-4a11-bd25-8676587e6dc2",
+      "title": "Combined samples",
+      "citation": "Publication: https://doi.org/10.1016/j.ccell.2021.09.008 Dataset Version: https://datasets.cellxgene.cziscience.com/5b7cbce2-ed53-47a4-99f8-10af741814e6.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/62e8f058-9c37-48bc-9200-e767f318a8ec"
+    },
+    {
+      "dataset_id": "58f43044-cd3c-42b8-bc0b-3498eb236359",
+      "title": "All_cells",
+      "citation": "Dataset Version: https://datasets.cellxgene.cziscience.com/a7d3fa63-e9f0-4a39-a54b-7c49286456c9.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/7d66d871-091f-4602-9f42-85f86d2853e0"
+    },
+    {
+      "dataset_id": "5a73f63f-18a2-49b5-b431-2c469c41a41b",
+      "title": "Dissection: Thalamus (THM) - medial nuclear complex of thalamus (MNC) - mediodorsal nucleus of thalamus - MD",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/a1488689-2867-40e7-939c-972f90fb464e.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "5af90777-6760-4003-9dba-8f945fec6fdf",
+      "title": "Single-cell transcriptomic datasets of Renal cell carcinoma patients",
+      "citation": "Publication: https://doi.org/10.1016/j.ccell.2022.11.001 Dataset Version: https://datasets.cellxgene.cziscience.com/a2cdf9eb-7b76-40ef-a13e-7704d9321e21.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/f7cecffa-00b4-4560-a29a-8ad626b8ee08"
+    },
+    {
+      "dataset_id": "5bc23cb2-8cfc-4960-bab1-c3027fbeefc4",
+      "title": "Dissection: Hypothalamus (HTH) - mammillary region of HTH (HTHma) - mammillary nucleus - MN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/d1384837-2148-409d-935f-da7cbf17a908.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "5bc42b88-bb76-4954-927b-8bb7369adc64",
+      "title": "Pregnant Uterus (All)",
+      "citation": "Publication: https://doi.org/10.1038/s41586-018-0698-6 Dataset Version: https://datasets.cellxgene.cziscience.com/af7e7ca4-491f-4948-94f2-5300f6f9c2ca.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/a9254216-6cd8-4186-b32c-349363777584"
+    },
+    {
+      "dataset_id": "5c97eeeb-7e52-44b3-b010-b832b1f5424c",
+      "title": "HBCC_Cohort",
+      "citation": "Publication: https://doi.org/10.1101/2024.10.31.24316513 Dataset Version: https://datasets.cellxgene.cziscience.com/524a8acc-37e5-44fe-aae9-e9a50e07ed24.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/84ce6837-548d-4a1f-919f-0bc0d9a3952f"
+    },
+    {
+      "dataset_id": "5e57cd50-8e42-42d6-940d-5c1660d06864",
+      "title": "RADC_Cohort",
+      "citation": "Publication: https://doi.org/10.1101/2024.10.31.24316513 Dataset Version: https://datasets.cellxgene.cziscience.com/e1fd8b32-0855-4ab2-b1c4-3e9dae6fd3b2.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/84ce6837-548d-4a1f-919f-0bc0d9a3952f"
+    },
+    {
+      "dataset_id": "5e5ab909-f73f-4b57-98a0-6d2c5662f6a4",
+      "title": "Dissection: Midbrain (M) - Inferior colliculus and nearby nuclei - IC",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/30866bdd-be7c-43ef-b154-18eadf944e15.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "61af564d-e5ea-4d34-a0f3-2668a00db376",
+      "title": "snRNA-seq analyses of breast tissues of healthy women of diverse genetic ancestry",
+      "citation": "Publication: https://doi.org/10.1038/s41591-024-03011-9 Dataset Version: https://datasets.cellxgene.cziscience.com/bc4614b7-5ab2-4f30-8e8b-eaeeb840c154.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/77446b76-1c2d-4a71-8e59-0efd4374d98e"
+    },
+    {
+      "dataset_id": "639ffc23-14db-4060-9027-3c90314200f8",
+      "title": "Dissection: Cerebral cortex (Cx) - Supraparietal lobule (SPL) - Posterosuperior (dorsal) parietal cortex - A5-A7",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/106eb798-a9f0-424b-a003-42a923d78646.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "64767efb-49b0-4562-a1bd-e619a5d9db41",
+      "title": "Dissection: Hypothalamus (HTH) - preoptic region of HTH - HTHpo",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/22b33bf6-77fc-49da-b194-9d7a8e9835da.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "64f4ad90-a422-400a-944d-4ce0f39594a7",
+      "title": "Dissection: Pons (Pn) - Pontine Nucleus - PN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/5005b870-1dd5-4270-9abf-578ad5f03a14.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "65badd7a-9262-4fd1-9ce2-eb5dc0ca8039",
+      "title": "DCM/ACM heart cell atlas: All cells",
+      "citation": "Publication: https://doi.org/10.1126/science.abo1984 Dataset Version: https://datasets.cellxgene.cziscience.com/9de5d490-b221-4529-875d-91d8b5c321e2.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/e75342a8-0f3b-4ec5-8ee1-245a23e0f7cb"
+    },
+    {
+      "dataset_id": "6725ee8e-ef5b-4e68-8901-61bd14a1fe73",
+      "title": "human endoderm organoid cell atlas",
+      "citation": "Publication: https://doi.org/10.1038/s41588-025-02182-6 Dataset Version: https://datasets.cellxgene.cziscience.com/c49c8589-0221-4955-b547-270f8d67d13f.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/6282a908-f162-44a2-99a3-8a942e4271b2"
+    },
+    {
+      "dataset_id": "67b6b9ac-b841-42ce-b2d4-ed2ec12327bd",
+      "title": "Single cell atlas of LBCL (LME)",
+      "citation": "Publication: https://doi.org/10.1016/j.ccell.2025.06.002 Dataset Version: https://datasets.cellxgene.cziscience.com/560e2123-d4de-47ad-8f0c-92f8da6c00fe.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/4429f25e-5c91-4981-9cf2-6a1044c36732"
+    },
+    {
+      "dataset_id": "68b6114f-e990-4033-bfb3-c35536633aaa",
+      "title": "Stromal cell diversity associated with immune evasion in human triple‐negative breast cancer",
+      "citation": "Publication: https://doi.org/10.15252/embj.2019104063 Dataset Version: https://datasets.cellxgene.cziscience.com/0eb4dd25-5062-4194-8120-67edf6b9962b.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/16a4f6bc-2457-4e21-9b7a-9ba17c7b66c4"
+    },
+    {
+      "dataset_id": "6a270451-b4d9-43e0-aa89-e33aac1ac74b",
+      "title": "VAL and DIS datasets: Non-Epithelial",
+      "citation": "Publication: https://doi.org/10.1016/j.cell.2021.11.031 Dataset Version: https://datasets.cellxgene.cziscience.com/9c123ef4-570c-49c6-ab8f-904ea1f5bd8d.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/a48f5033-3438-4550-8574-cdff3263fdfd"
+    },
+    {
+      "dataset_id": "6c600df6-ddca-4628-a8bb-1d6de1e3f9b4",
+      "title": "Molecular characterization of selectively vulnerable neurons in Alzheimer’s Disease: Superior frontal gyrus",
+      "citation": "Publication: https://doi.org/10.1038/s41593-020-00764-7 Dataset Version: https://datasets.cellxgene.cziscience.com/ccbacbe3-6229-4081-80ce-e0c8260c959a.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/180bff9c-c8a5-4539-b13b-ddbc00d643e6"
+    },
+    {
+      "dataset_id": "6c87755e-a671-41a8-9c7e-4e43b850a57b",
+      "title": "Fresh samples (single cell)",
+      "citation": "Publication: https://doi.org/10.1038/s41591-024-03215-z Dataset Version: https://datasets.cellxgene.cziscience.com/6ba4ff0b-417f-4ab3-9423-61afc225b287.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/a96133de-e951-4e2d-ace6-59db8b3bfb1d"
+    },
+    {
+      "dataset_id": "6ceeaa86-9ceb-4582-b390-6d4dd6ff0572",
+      "title": "3-prime FGID data",
+      "citation": "Publication: https://doi.org/10.1101/2021.09.17.21263540 Dataset Version: https://datasets.cellxgene.cziscience.com/684e9b34-4ac4-4a69-a6ab-c42593251c16.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/a064d795-3b77-44ae-9fb5-beb57c567443"
+    },
+    {
+      "dataset_id": "6cf3634d-e911-44ad-bf52-c747a9af3c01",
+      "title": "colon stromal",
+      "citation": "Publication: https://doi.org/10.1016/j.immuni.2023.01.002 Dataset Version: https://datasets.cellxgene.cziscience.com/5b035773-25c1-4d3f-bb1f-98f2d190a25b.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/5c868b6f-62c5-4532-9d7f-a346ad4b50a7"
+    },
+    {
+      "dataset_id": "6e00ccf7-0749-46ef-a999-dba785630d52",
+      "title": "Single cell transcriptomic profiling identifies molecular phenotypes of newborn human lung cells",
+      "citation": "Publication: https://doi.org/10.3390/genes15030298 Dataset Version: https://datasets.cellxgene.cziscience.com/5c27e357-4786-46d4-9635-cb7b37cce452.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/28e9d721-6816-48a2-8d0b-43bf0b0c0ebc"
+    },
+    {
+      "dataset_id": "6ed0bb6c-a9e3-4ba6-9436-7c8fd4e206f0",
+      "title": "Dissection: Cerebral cortex (Cx) - Inferior frontal gyrus (IFG) - Ventrolateral prefrontal cortex - A44-A45",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/78cf2fb1-7074-4f62-b090-b99b1cd52382.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "70e4f35b-c98c-45a1-9aa9-2053b07315dd",
+      "title": "Dissection: Basal forebrain (BF) - septal nuclei - SEP",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/adc4499a-477f-461b-b580-0ab972d990c5.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "715327a6-7978-4896-ba91-69d6b04dbbfb",
+      "title": "Dissection: Body of hippocampus (HiB) - Rostral DG-CA4",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/53cf534f-adf2-4b2c-811a-8ff59a99417d.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "72955cdb-bd92-4135-aa52-21f33f9640db",
+      "title": "plaque atlas",
+      "citation": "Publication: https://doi.org/10.1038/s41467-025-63202-x Dataset Version: https://datasets.cellxgene.cziscience.com/3bab1c0b-d3e3-4a01-840f-d49a8284d989.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/db70986c-7d91-49fe-a399-a4730be394ac"
+    },
+    {
+      "dataset_id": "74014ef8-d2d0-4cbc-8ba2-037f30753ffd",
+      "title": "Hippocampus",
+      "citation": "Publication: https://doi.org/10.1016/j.cell.2023.11.026 Dataset Version: https://datasets.cellxgene.cziscience.com/f5d29727-b197-4ff6-8012-692d3121d865.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/854c0855-23ad-4362-8b77-6b1639e7a9fc"
+    },
+    {
+      "dataset_id": "75011e96-ba37-4977-a539-fbf9f66a5e37",
+      "title": "Stromal Compartment",
+      "citation": "Publication: https://doi.org/10.1101/2025.03.13.643025 Dataset Version: https://datasets.cellxgene.cziscience.com/26d4305f-2510-49a5-a218-d136068139dd.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/9432ae97-4803-4b9f-8f64-2b41e42ad3cb"
+    },
+    {
+      "dataset_id": "77044335-0ac5-4406-9b3f-8cdd3656d67b",
+      "title": "Dissection: Pons (Pn) - afferent nuclei of cranial nerves in pons - PnAN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/388876fa-e0a0-4d27-a93a-1065863ba884.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "77c1c785-809f-4065-8c54-6a0170783256",
+      "title": "Dissection: Cerebral cortex (Cx) - Subcallosal Gyrus (SCG) - Subgenual (subcallosal) division of MFC - A25",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/3f62b233-31c5-4152-add1-3d0f9327f9ab.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "78c62d4e-abf1-405b-bb51-368720814529",
+      "title": "Bone marrow organoids (BMO)",
+      "citation": "Publication: https://doi.org/10.1038/s41592-024-02172-2 Dataset Version: https://datasets.cellxgene.cziscience.com/229a86c6-e951-43a3-81e5-75d2294c9e6d.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/59cd85c5-3b22-4035-b628-2a20810ad54b"
+    },
+    {
+      "dataset_id": "7b20c613-9add-43d1-87e9-defd3d9b9f8c",
+      "title": "Integrated cancer cell-specific single-cell RNA-seq datasets of immune checkpoint blockade-treated patients",
+      "citation": "Publication: https://doi.org/10.1038/s41597-025-04381-6 Dataset Version: https://datasets.cellxgene.cziscience.com/09595871-5cde-4351-88f9-b3c37b3ed466.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/61e422dd-c9cd-460e-9b91-72d9517348ef"
+    },
+    {
+      "dataset_id": "7b316f62-7fa0-4b95-bac9-e90866038a85",
+      "title": "Dissection: Amygdaloid complex (AMY) - Central nuclear group - CEN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/c42b80e2-d2c6-44e9-97af-36600bcf7905.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "7c1c3d47-3166-43e5-9a95-65ceb2d45f78",
+      "title": "Dissection: Pons (Pn) - Pontine reticular formation - PnRF",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/4001cea7-65f3-4176-a8fd-bf07f34d02b1.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "7cd3c321-e487-4b51-a8af-9bf671b59fe5",
+      "title": "Dissection: Pons (Pn) - other nuclei in pontine tegmentum (XPnTg) - dorsal tegmental nucleus - DTg",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/221e6d47-dee0-414a-8a56-b3ec6f0d62b2.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "7d3ab174-e433-40fc-a352-6fe71b1a19f9",
+      "title": "Dissection: Amygdaloid complex (AMY) - Basolateral nuclear group (BLN) - lateral nucleus - La",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/d31d7034-11b1-43ac-aaec-b07e3a8720e6.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "7db0c178-b0a4-442f-ba54-e9e1633a84bb",
+      "title": "Dissection: Cerebral cortex (Cx) - Parietal operculum (PaO) - Gustatory cortex - A43",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/115f552e-3829-41d5-a57f-799891a1a991.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "8039c63d-08b0-4fc9-af0f-5b57f08ca0da",
+      "title": "Dissection: Perirhinal cortex (area 35) (A35) - rostral subdivision of area 35 - A35r",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/2b1e8865-506a-43c8-82e1-736a7c86919c.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "8058d760-09e6-4bdd-86a1-36917ffca3ef",
+      "title": "snRNA-seq of human ocular surface: cornea, limbus, sclera",
+      "citation": "Dataset Version: https://datasets.cellxgene.cziscience.com/9cc50a9c-b9ce-4abb-8e2c-2edd799d4ab7.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/0f7d022a-46c7-4e64-be4c-e34adbb78089"
+    },
+    {
+      "dataset_id": "821a8e3e-87ec-41ee-bd69-cd4377057d38",
+      "title": "snRNA-seq of human subcutaneous adipose tissue - all cells",
+      "citation": "Publication: https://doi.org/10.1038/s41588-024-02048-3 Dataset Version: https://datasets.cellxgene.cziscience.com/29310a6a-b812-477d-81b8-f34ea1b87899.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/ba84c7ba-8d8c-4720-a76e-3ee37dc89f0b"
+    },
+    {
+      "dataset_id": "8560f809-5794-484e-9152-b63efa91d134",
+      "title": "scRNA-seq of human ocular anterior segment: trabecular meshwork and ciliary body",
+      "citation": "Dataset Version: https://datasets.cellxgene.cziscience.com/edcef626-2d1d-4966-a4fb-22201bab9ed1.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/0cbf8ef8-87bd-4b51-8521-ec3f68183e11"
+    },
+    {
+      "dataset_id": "86282760-5099-4c71-8cdd-412dcbbbd0b9",
+      "title": "Fetal Bone Marrow (10x) - Down Syndrome",
+      "citation": "Publication: https://doi.org/10.1038/s41586-021-03929-x Dataset Version: https://datasets.cellxgene.cziscience.com/cb3abdad-7170-4faf-b180-0b18e6df520c.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/793fdaec-5067-428a-a9db-ecefe135c945"
+    },
+    {
+      "dataset_id": "867757c1-3b1a-49d9-a0cd-17767eb160cc",
+      "title": "snRNA-seq of human kidney with ureteral obstruction",
+      "citation": "Publication: https://doi.org/10.1038/s41467-025-59997-4 Dataset Version: https://datasets.cellxgene.cziscience.com/70ae5e5d-5a40-4ab7-b8dd-becc5dffd4ba.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/307ce143-7cc8-4813-99b1-3797834149c9"
+    },
+    {
+      "dataset_id": "87a06a2a-16c6-42f7-af1b-529fad431051",
+      "title": "Recruited macrophages elicit atrial fibrillation",
+      "citation": "Publication: https://doi.org/10.1126/science.abq3061 Dataset Version: https://datasets.cellxgene.cziscience.com/78f8349f-cdb9-4cd9-9128-ca8487626931.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/eeba7193-4d32-46bd-a21b-089936d60601"
+    },
+    {
+      "dataset_id": "881e0e6b-a185-45f1-9b56-81606e91e7ff",
+      "title": "Single-cell atlas of 24 hormone therapy naive localised prostate cancers",
+      "citation": "Publication: https://doi.org/10.1101/2024.10.23.619925 Dataset Version: https://datasets.cellxgene.cziscience.com/5739e080-4dbc-48e2-91dd-feaa1d7ad773.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/bdac7a53-fe34-4f04-8c46-f9bd5297c099"
+    },
+    {
+      "dataset_id": "88a01d4a-5197-45be-b5ae-e019aef43376",
+      "title": "Dissection: Cerebral cortex (Cx) - Superior Temporal Gyrus - STG",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/656c1e2d-8721-4eb9-a532-21c99f979bc8.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "8c42cfd0-0b0a-46d5-910c-fc833d83c45e",
+      "title": "Krasnow Lab Human Lung Cell Atlas, 10X",
+      "citation": "Publication: https://doi.org/10.1038/s41586-020-2922-4 Dataset Version: https://datasets.cellxgene.cziscience.com/fb57b6c0-a71f-4d57-bd15-d5a6fe04a4fd.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/5d445965-6f1a-4b68-ba3a-b8f765155d3a"
+    },
+    {
+      "dataset_id": "8dc29642-be06-46dc-a289-8075915745d4",
+      "title": "Cells of the human fetal kidney",
+      "citation": "Publication: https://doi.org/10.1371/journal.pbio.3000152 Dataset Version: https://datasets.cellxgene.cziscience.com/b0503d37-f734-4b5c-b3b0-35c877e0c636.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/981b0c87-76d0-4edf-b201-58c52b5cd2f0"
+    },
+    {
+      "dataset_id": "8ef06ea4-8d0f-4303-a652-7d4604402b1f",
+      "title": "scRNA-seq of human ocular surface: cornea, limbus, sclera – fetal data included",
+      "citation": "Dataset Version: https://datasets.cellxgene.cziscience.com/b80d59dc-0830-442f-89ed-9a9c280203c1.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/0f7d022a-46c7-4e64-be4c-e34adbb78089"
+    },
+    {
+      "dataset_id": "8fbed309-d3d4-441b-b3ff-e2dcbcec2d35",
+      "title": "Anomalous Epithelial Variations and Ectopic Inflammatory Response in Chronic Obstructive Pulmonary Disease",
+      "citation": "Publication: https://doi.org/10.1165/rcmb.2021-0555OC Dataset Version: https://datasets.cellxgene.cziscience.com/8304cd86-be18-4162-9195-eec356c7b336.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/dc4cd1f7-667a-4c29-ae77-9401b9700d7f"
+    },
+    {
+      "dataset_id": "900fdf13-150d-4695-9f8c-4c09105ba2eb",
+      "title": "Dissection: Pons (Pn) - efferent nuclei of cranial nerves in pons - PnEN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/beea4453-33c0-48d0-aa4f-ca864e353172.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "90d4a63b-5c02-43eb-acde-c49345681601",
+      "title": "Fallopian tube RNA",
+      "citation": "Publication: https://doi.org/10.1016/j.celrep.2022.111838 Dataset Version: https://datasets.cellxgene.cziscience.com/edbd1ae3-f59f-42a9-a902-5cf7b64f7750.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/d36ca85c-3e8b-444c-ba3e-a645040c6185"
+    },
+    {
+      "dataset_id": "93131426-0124-4ab4-a013-9dfbcd99d467",
+      "title": "Dissection: Epithalamus - ETH",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/7d5db781-d36d-4357-b8cb-345d94accd60.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "9372df2d-13d6-4fac-980b-919a5b7eb483",
+      "title": "Dissection: Midbrain (M) - Periaqueductal gray and nearby nuclei - PAG",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/1fe23576-d2ae-43ce-b38b-472f7abebff6.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "949ec7fc-ac54-47c9-bb6f-ee9e67688cce",
+      "title": "Dissection: Cerebral cortex (Cx) - Short insular gyri - Granular insular cortex - Ig",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/a90c5655-2e52-412f-b109-726d25e5aa49.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "94c41723-b2c4-4b59-a49a-64c9b851903e",
+      "title": "snRNA-seq of human anterior and posterior hippocampus",
+      "citation": "Publication: https://doi.org/10.1016/j.neuron.2021.05.003 Dataset Version: https://datasets.cellxgene.cziscience.com/703771a1-236f-4eda-9c04-318d882e149b.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/f17b9205-f61f-4a0f-a65a-73ba91c50ade"
+    },
+    {
+      "dataset_id": "96baf2e0-60c5-48cf-b1d1-cba657851507",
+      "title": "snRNA-seq of human visceral adipose tissue - all cells",
+      "citation": "Publication: https://doi.org/10.1038/s41588-024-02048-3 Dataset Version: https://datasets.cellxgene.cziscience.com/aa1bca2e-bb05-4c1b-8b24-17a009c3d32f.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/ba84c7ba-8d8c-4720-a76e-3ee37dc89f0b"
+    },
+    {
+      "dataset_id": "978a566a-dc27-478d-b306-26daba116c1f",
+      "title": "snRNA-seq of human ocular anterior segment: trabecular meshwork and ciliary body",
+      "citation": "Dataset Version: https://datasets.cellxgene.cziscience.com/4c27b457-ab33-4626-a9fc-53615030cf3a.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/0cbf8ef8-87bd-4b51-8521-ec3f68183e11"
+    },
+    {
+      "dataset_id": "98219f72-0f9a-4de9-a859-c81834f24ab1",
+      "title": "sci-RNA-seq, Day 7-21 iPSC-Derived Embryoid Bodies (Wellington et al. 2024)",
+      "citation": "Publication: https://doi.org/10.1101/2024.09.24.612755 Dataset Version: https://datasets.cellxgene.cziscience.com/769324b6-3167-4c90-b354-9ebca492cb56.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/4a2c25af-558a-45fc-bc9a-54ec44a1d63f"
+    },
+    {
+      "dataset_id": "98f5d518-1e60-4307-b732-ab045cd3cbc2",
+      "title": "Frontal cortex samples from C9-ALS, C9-ALS/FTD and age matched control brains",
+      "citation": "Publication: https://doi.org/10.1007/s00401-023-02599-5 Dataset Version: https://datasets.cellxgene.cziscience.com/3c913547-82ec-436e-9595-03bb7a6bb3a7.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/aee9c366-f2fb-470b-8937-577d5d87d3fc"
+    },
+    {
+      "dataset_id": "9968be68-ab65-4a38-9e1a-c9b6abece194",
+      "title": "Developing Human Atlas",
+      "citation": "Publication: https://doi.org/10.1016/j.cell.2021.04.028 Dataset Version: https://datasets.cellxgene.cziscience.com/a0215936-cfde-4162-9b34-b3fbcbc7d9e3.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/dfc09a93-bce0-4c77-893d-e153d1b7f9fa"
+    },
+    {
+      "dataset_id": "99e317c0-1fab-4f73-b511-859e752fd1c3",
+      "title": "Sex-Specific Control of Human Heart Maturation by the Progesterone Receptor.",
+      "citation": "Publication: https://doi.org/10.1161/CIRCULATIONAHA.120.051921 Dataset Version: https://datasets.cellxgene.cziscience.com/d61a74ab-e1ef-4ced-9131-698bf7d94be2.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/68e7e5b7-4dc9-4609-832e-7656aa6182ba"
+    },
+    {
+      "dataset_id": "9d8e5dca-03a3-457d-b7fb-844c75735c83",
+      "title": "Human abdominal subcutaneous and intraabdominal white adipose tissue - 22 integrated samples",
+      "citation": "Publication: https://doi.org/10.1101/2025.09.14.673351 Dataset Version: https://datasets.cellxgene.cziscience.com/b84fd20a-cd6b-460e-a4f8-e27f514cc22f.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/6b701826-37bb-4356-9792-ff41fc4c3161"
+    },
+    {
+      "dataset_id": "9ec34295-ab16-47e2-af33-b884143e520b",
+      "title": "Dissection: Midbrain (M) - Substantia Nigra, Red Nucleus, and nearby nuclei - SN-RN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/427ecd9e-e8e2-409a-bfbb-92606ef3635e.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "9f1a899f-05a0-44c5-8aa9-39df61ae4324",
+      "title": "Transcriptome of human posterior ocular segment",
+      "citation": "Publication: https://doi.org/10.1073/pnas.2306153120 Dataset Version: https://datasets.cellxgene.cziscience.com/65504aae-c6eb-4ffe-b345-b4dcd864b177.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/7855daa4-3f34-4aae-b65a-87720c02e7cd"
+    },
+    {
+      "dataset_id": "9f499d32-400d-4c42-ac9a-fb1481844fee",
+      "title": "Dissection: Tail of Hippocampus (HiT) - Caudal Hippocampus - CA4-DGC",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/0c3a27cf-192c-4787-a8a3-3bb8ed50c7ad.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "9fddb063-056d-4202-8b8a-4b0ee531d3ce",
+      "title": "A single-cell and spatially-resolved atlas of human breast cancers",
+      "citation": "Publication: https://doi.org/10.1038/s41588-021-00911-1 Dataset Version: https://datasets.cellxgene.cziscience.com/0e3974a1-9488-4987-9767-21d4e389fac7.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/dea97145-f712-431c-a223-6b5f565f362a"
+    },
+    {
+      "dataset_id": "a12ccb9b-4fbe-457d-8590-ac78053259ef",
+      "title": "Single-nucleus RNA-seq of the Adult Human Kidney (Version 1.5)",
+      "citation": "Dataset Version: https://datasets.cellxgene.cziscience.com/112a469f-6838-49f9-9f96-470744e79e8d.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/0f528c8a-a25c-4840-8fa3-d156fa11086f"
+    },
+    {
+      "dataset_id": "a19b218b-1c0a-4618-b41f-7c216c623ec6",
+      "title": "Dissection: Cerebral cortex (Cx) - Posterior parahippocampal gyrus (PPH) - TH-TL",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/7c35ab59-f2fa-44a8-ab72-5141e0133542.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "a2c833f7-b7f1-4f4d-ad31-cae478b601b7",
+      "title": "Human HYPOMAP single-nucleus data",
+      "citation": "Publication: https://doi.org/10.1038/s41586-024-08504-8 Dataset Version: https://datasets.cellxgene.cziscience.com/480e89e7-84ad-4fa8-adc3-f7c562a77a78.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/d0941303-7ce3-4422-9249-cf31eb98c480"
+    },
+    {
+      "dataset_id": "a4116666-d295-4443-a174-0acc283f92c4",
+      "title": "Dissection: Midbrain (M) - Superior colliculus and nearby nuclei - SC",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/37d2d904-9adb-491b-9dab-787b6dd726bd.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "a59ba9fa-1407-4f15-8c56-d3637421570d",
+      "title": "Dissection: Cerebellum (CB) - Lateral hemisphere of cerebellum - CBL",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/b0aa4153-0f5a-446c-a8ad-265f3f4d9dc3.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "a5b5d1f3-dd8b-44f6-a685-15f0f741c062",
+      "title": "Dissection: Thalamus (THM) - Subthalamic nucleus and nearby - STH",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/a0eeaf43-8dfe-4f3c-a39f-17c28f7ddd44.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "a5d5c529-8a1f-40b5-bda3-35208970070d",
+      "title": "Human Multiple Cortical Areas SMART-seq",
+      "citation": "Publication: https://doi.org/10.1126/science.adf6812 Dataset Version: https://datasets.cellxgene.cziscience.com/dfba29ea-d368-44c2-bb35-69d3e8f730ce.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/d17249d2-0e6e-4500-abb8-e6c93fa1ac6f"
+    },
+    {
+      "dataset_id": "a7b4f565-691d-43ea-bf4a-d2d1d52bb4b4",
+      "title": "Dissection: Thalamus (THM) - Lateral nuclear complex of thalamus (LNC) - ventral group of lateral nucleus - VLN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/a1287900-a93f-416e-9845-e5f911e8a4c8.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "a84face4-eb30-4f43-994f-c6a13a097808",
+      "title": "Dissection: Cerebral cortex (Cx) - Cingulate gyrus, retrosplenial (CgGrs) - A29-A30",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/b63a8d97-5318-4a74-9243-9c8cf756b7b0.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "a9bedd04-51cb-42ad-83fe-cd749de71f1b",
+      "title": "Ovarian tissue from donor 3",
+      "citation": "Publication: https://doi.org/10.1126/sciadv.adm7506 Dataset Version: https://datasets.cellxgene.cziscience.com/e6433a49-a93a-4ff6-aaa3-d7e047f7f57c.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/6686ada5-43a8-40b6-9a05-6894503606db"
+    },
+    {
+      "dataset_id": "acae7679-d077-461c-b857-ee6ccfeb267f",
+      "title": "Dissection: Head of hippocampus (HiH) - Uncal CA1",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/d320397a-575b-43c4-996c-e28eb9b2edce.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "adda0684-f8ea-4403-b393-2a25607077c4",
+      "title": "Dissection: Thalamus (THM) - posterior nuclear complex of thalamus (PoN) - medial geniculate nuclei (MG)",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/77c02caf-60dc-4976-80fa-166ecb4cb9f3.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "af8b241a-c72c-4470-b1a4-80e7336c6ab6",
+      "title": "Retina",
+      "citation": "Publication: https://doi.org/10.1073/pnas.1914143116 Dataset Version: https://datasets.cellxgene.cziscience.com/23f26a44-264a-45c0-aecd-1047bf684357.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/f8057c47-fcd8-4fcf-88b0-e2f930080f6e"
+    },
+    {
+      "dataset_id": "afae4675-434d-4e89-b5ce-2854c9dc38a3",
+      "title": "snRNA-seq of all cells in high-risk Neuroblastoma before and after chemotherapy",
+      "citation": "Publication: https://doi.org/10.1038/s41588-025-02158-6 Dataset Version: https://datasets.cellxgene.cziscience.com/87fe980a-a21f-4fb3-ad79-a6ef44d44c35.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/cee845e3-ec04-4781-9e2a-28734bb4f7ba"
+    },
+    {
+      "dataset_id": "b07e5164-baf6-43d2-bdba-5a249d0da879",
+      "title": "A Single-Cell Transcriptome Atlas of the Human Pancreas",
+      "citation": "Publication: https://doi.org/10.1016/j.cels.2016.09.002 Dataset Version: https://datasets.cellxgene.cziscience.com/e4218427-f7ce-4506-a8fd-40607a652149.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/6e8c5415-302c-492a-a5f9-f29c57ff18fb"
+    },
+    {
+      "dataset_id": "b252b015-b488-4d5c-b16e-968c13e48a2c",
+      "title": "MSK SPECTRUM – All cells",
+      "citation": "Publication: https://doi.org/10.1038/s41586-022-05496-1 Dataset Version: https://datasets.cellxgene.cziscience.com/bc454432-4453-4eee-afa5-d5d5a0760a0d.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/4796c91c-9d8f-4692-be43-347b1727f9d8"
+    },
+    {
+      "dataset_id": "b2dda353-0c96-42df-8dcd-1ea7429a6feb",
+      "title": "Cerebellum",
+      "citation": "Publication: https://doi.org/10.1038/s41593-021-00872-y Dataset Version: https://datasets.cellxgene.cziscience.com/eeac61a9-beda-4cbd-b0a9-2757d5cc1e2d.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/1b014f39-f202-45ae-bb7d-9286bddd8d8b"
+    },
+    {
+      "dataset_id": "b617ee1b-f8c8-4de9-b82b-e803ab93550d",
+      "title": "A multi-tissue single-cell tumor microenvironment atlas",
+      "citation": "Publication: https://doi.org/10.1038/s41467-024-49916-4 Dataset Version: https://datasets.cellxgene.cziscience.com/767856be-7f8d-4644-9fcc-a4ee5510dad3.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/3f7c572c-cd73-4b51-a313-207c7f20f188"
+    },
+    {
+      "dataset_id": "b6b5ea88-e092-46e4-b9c5-e93b52d5c195",
+      "title": "Single cell RNA sequencing of oropharyngeal squamous cell carcinoma",
+      "citation": "Publication: https://doi.org/10.1186/s12943-024-02191-9 Dataset Version: https://datasets.cellxgene.cziscience.com/5ee8e8dd-6f0e-4336-aec8-f476b0b0089b.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/3c34e6f1-6827-47dd-8e19-9edcd461893f"
+    },
+    {
+      "dataset_id": "b8681124-aabf-4904-b9c9-66d834bf5bba",
+      "title": "Dissection: Thalamus (THM) - medial nuclear complex of thalamus (MNC) - mediodorsal nucleus of thalamus + reuniens nucleus (medioventral nucleus) of thalamus - MD + Re",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/9a4f61f6-7aef-4f24-9279-d5d2db6e4350.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "bac09168-940b-4b11-8d55-b4955f80b98d",
+      "title": "Dissection: Head of hippocampus (HiH) - Uncal CA2-CA3",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/60243050-99a9-4844-8143-4fc701252107.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "bc7260e0-54cf-4b0b-823d-93f5b850f757",
+      "title": "Non-neuronal cells of the human fovea and peripheral retina",
+      "citation": "Publication: https://doi.org/10.1038/s41598-020-66092-9 Dataset Version: https://datasets.cellxgene.cziscience.com/e49d16f0-187e-4dab-b0c5-e74a798db461.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/1d1c7275-476a-49e2-9022-ad1b1c793594"
+    },
+    {
+      "dataset_id": "bd65a70f-b274-4133-b9dd-0d1431b6af34",
+      "title": "Single-cell sequencing links multiregional immune landscapes and tissue-resident T cells in ccRCC to tumor topology and therapy efficacy",
+      "citation": "Publication: https://doi.org/10.1016/j.ccell.2021.03.007 Dataset Version: https://datasets.cellxgene.cziscience.com/04e8a75c-86b7-494b-9b88-68a457306cb8.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/3f50314f-bdc9-40c6-8e4a-b0901ebfbe4c"
+    },
+    {
+      "dataset_id": "bdd109f1-ca27-45dc-bb9f-473008449428",
+      "title": "scRNA-seq data of human dental pulp",
+      "citation": "Publication: https://doi.org/10.3389/fdmed.2021.806294 Dataset Version: https://datasets.cellxgene.cziscience.com/e2dd09d8-6b7d-4c7c-8470-da8f00f0601a.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/bd3f7d45-43a0-4944-8327-62d6c89e2ae1"
+    },
+    {
+      "dataset_id": "be39785b-67cb-4177-be19-a40ee3747e45",
+      "title": "ccRCC - Single-cell analyses of renal cell cancers reveal insights into tumor microenvironment, cell of origin, and therapy response",
+      "citation": "Publication: https://doi.org/10.1073/pnas.2103240118 Dataset Version: https://datasets.cellxgene.cziscience.com/23138a44-4709-4760-828c-eeb3e0cf84a8.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/1df8c90d-d299-4b2e-a54d-a5a80f36e780"
+    },
+    {
+      "dataset_id": "be884a28-0eac-4eca-9c23-1294a93cf56e",
+      "title": "Intratumoral heterogeneity in recurrent pediatric pilocytic astrocytomas",
+      "citation": "Dataset Version: https://datasets.cellxgene.cziscience.com/b224b92d-320c-4818-85d2-4ddffc9c6b33.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/10bf5c50-8d85-4c5f-94b4-22c1363d9f31"
+    },
+    {
+      "dataset_id": "c2aad8fc-b63b-4f9b-9cfd-baf7bc9c1771",
+      "title": "Dissection: Cerebral cortex (Cx) - Temporal pole (TP) - Temporopolar area - A38",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/4eeaceaf-75c0-4ffe-8a3e-8e6661100ef1.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "c4dd26a8-d956-4bee-a233-44b573f2ce27",
+      "title": "Dissection: Body of hippocampus (HiB) - Rostral CA1-2",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/7b2bd5e3-d947-43d7-989b-ef484edb3ab7.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "c5cfa2b7-abb1-4a50-908f-707b54ca606b",
+      "title": "Dissection: Midbrain (M) - Periaqueductal gray and Dorsal raphe nucleus - PAG-DR",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/8baf5eef-da2e-465b-997e-96c3230c6beb.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "c7856243-c59a-4b70-8ce7-25b94c2d9da1",
+      "title": "Dissection: Cerebral cortex (Cx) - Gyrus rectus (ReG) - Medial orbitofrontal cortex - A14",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/e2b3ed2e-8002-4eed-8a1d-983b043c4361.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "c893ddc3-f25b-45e2-8c9e-155918b4261c",
+      "title": "Transcriptional responses of the human dorsal striatum in opioid use disorder implicates cell type-specifc programs",
+      "citation": "Publication: https://doi.org/10.1038/s41467-024-45165-7 Dataset Version: https://datasets.cellxgene.cziscience.com/53bca080-a77c-4727-8f61-4e7245e22fa1.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/cec4ef8e-1e70-49a2-ae43-1e6bf1fd5978"
+    },
+    {
+      "dataset_id": "ca20e2ac-5676-4158-b5d0-0c2b15898b19",
+      "title": "Dissection: Basal nuclei (BN) - Globus pallidus (GP) - Internal segment of globus pallidus - GPi",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/9b1706a2-af96-464e-8758-8e738d72ffa4.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "ca46ffe6-0a26-4d8d-82fa-81722daf1102",
+      "title": "A Single-Cell Atlas of Human White Adipose Tissue",
+      "citation": "Publication: https://doi.org/10.1038/s41586-022-04518-2 Dataset Version: https://datasets.cellxgene.cziscience.com/7a5c4b59-efca-4198-9132-03c289db823a.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/fe0e718d-2ee9-42cc-894b-0b490f437dfd"
+    },
+    {
+      "dataset_id": "cda2c8cd-be1c-42e5-b2cd-162caa1c4ce7",
+      "title": "Figure 1 - A cell atlas of human thymic development defines T cell repertoire formation",
+      "citation": "Publication: https://doi.org/10.1126/science.aay3224 Dataset Version: https://datasets.cellxgene.cziscience.com/6eb96707-a6b2-454f-9a61-45fd66b81b7f.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/de13e3e2-23b6-40ed-a413-e9e12d7d3910"
+    },
+    {
+      "dataset_id": "d02287f3-408b-438d-9131-999e460cbd0e",
+      "title": "Dissection: Paleocortex (PalCx) - Piriform cortex - Pir",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/6b89ffb7-1673-4352-bc22-abf24873f77c.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "d1207c81-7309-43a7-a5a0-f4283670b62b",
+      "title": "Ovary RNA",
+      "citation": "Publication: https://doi.org/10.1016/j.celrep.2022.111838 Dataset Version: https://datasets.cellxgene.cziscience.com/3c4f2588-d668-46ae-b813-40e446ec23fd.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/d36ca85c-3e8b-444c-ba3e-a645040c6185"
+    },
+    {
+      "dataset_id": "d2514440-d747-4d8d-b2c7-b58ef8b71fbe",
+      "title": "Dissection: Thalamus (THM) - posterior nuclear complex of thalamus (PoN) - lateral geniculate nucleus (LG)",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/8a00c5b6-2727-45d5-b199-4b18fa8a95f2.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "d288b10a-643e-44bd-b451-96e9588b2ee5",
+      "title": "Dissection: Cerebral cortex (Cx) - Supramarginal gyrus (SMG) - A40",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/e37818c2-66e0-462f-81e6-59f288309b83.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "d2b5efc1-14c6-4b5f-bd98-40f9084872d7",
+      "title": "Dissection: Tail of Hippocampus (HiT) - Caudal Hippocampus - CA1-CA3",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/1d9c7568-7db5-4f48-9a2f-2b1ef80f25a8.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "d3cb449b-c2b1-4b50-a7f1-21203535fe61",
+      "title": "Parkinson's disease",
+      "citation": "Publication: https://doi.org/10.1038/s41597-024-04117-y Dataset Version: https://datasets.cellxgene.cziscience.com/88ad4023-93b2-4b70-a8a5-b0cf6c438cac.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/d5d0df8f-4eee-49d8-a221-a288f50a1590"
+    },
+    {
+      "dataset_id": "d3d4baff-d142-4f13-acc6-96a4ef6a3e95",
+      "title": "Ovarian tissue from donor 5",
+      "citation": "Publication: https://doi.org/10.1126/sciadv.adm7506 Dataset Version: https://datasets.cellxgene.cziscience.com/84f8b504-0208-4a3e-b078-7983eef4314e.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/6686ada5-43a8-40b6-9a05-6894503606db"
+    },
+    {
+      "dataset_id": "d4e69e01-3ba2-4d6b-a15d-e7048f78f22e",
+      "title": "All — Cells of the adult human heart",
+      "citation": "Publication: https://doi.org/10.1038/s41586-020-2797-4 Dataset Version: https://datasets.cellxgene.cziscience.com/a7f6822d-0e0e-451e-9858-af81392fcb9b.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/b52eb423-5d0d-4645-b217-e1c6d38b2e72"
+    },
+    {
+      "dataset_id": "d5452b83-7c3d-4d7c-ab7a-c7fece7196c5",
+      "title": "Dissection: Body of hippocampus (HiB) - Rostral CA3",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/5c7313a0-87da-41c5-9537-0ca16f34af2f.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "d567b692-c374-4628-a508-8008f6778f22",
+      "title": "Combined single cell and single nuclei RNA-Seq data - Heart Global",
+      "citation": "Publication: https://doi.org/10.1038/s41586-023-06311-1 Dataset Version: https://datasets.cellxgene.cziscience.com/9d5eb472-3657-4035-8aea-d3053934e120.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/3116d060-0a8e-4767-99bb-e866badea1ed"
+    },
+    {
+      "dataset_id": "d582f63a-3c88-4e38-8cd3-8682dbe40f64",
+      "title": "Dissection: Cerebral cortex (Cx) - Posterior intermediate orbital gyrus (POrG) - Caudal division of OFCi - A13",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/a21eacc7-6968-48d9-8e2f-322ad7a83bdb.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "d6a5b240-cc8f-45c1-ad36-2fc291e15e8e",
+      "title": "Dissection: Midbrain (M) - Pretectal region - PTR",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/db15058b-4a1d-4f20-89e3-d13c80696894.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "d7dcfd8f-2ee7-4385-b9ac-e074c23ed190",
+      "title": "Fetal kidney dataset: full",
+      "citation": "Publication: https://doi.org/10.1126/science.aat5031 Dataset Version: https://datasets.cellxgene.cziscience.com/29dcc0c9-8db4-49ee-a3cc-7c4fca336de8.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/120e86b4-1195-48c5-845b-b98054105eec"
+    },
+    {
+      "dataset_id": "d7f5d8d0-6150-48d7-b094-c34286ad11a1",
+      "title": "HNOCA Extended: The Human Neural Organoid Atlas",
+      "citation": "Publication: https://doi.org/10.1038/s41586-024-08172-8 Dataset Version: https://datasets.cellxgene.cziscience.com/aea3d8eb-82a7-4479-b902-3cca4c9300ee.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/de379e5f-52d0-498c-9801-0f850823c847"
+    },
+    {
+      "dataset_id": "d8da613f-e681-4c69-b463-e94f5e66847f",
+      "title": "A molecular single-cell lung atlas of lethal COVID-19",
+      "citation": "Publication: https://doi.org/10.1038/s41586-021-03569-1 Dataset Version: https://datasets.cellxgene.cziscience.com/75c059c8-8fb7-4e6e-a618-a3e01ac42060.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/e4c9ed14-e560-4900-a3bf-b0f8d2ce6a10"
+    },
+    {
+      "dataset_id": "d967b47c-a9e6-4337-b2f4-977f690cb67f",
+      "title": "Trabecular Meshwork and Corneal Scleral wedge",
+      "citation": "Publication: https://doi.org/10.1073/pnas.2200914119 Dataset Version: https://datasets.cellxgene.cziscience.com/8b0c2c6a-902e-41dd-ad1c-60165d552360.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/63d03351-06be-478e-a0db-f7a653b6b19b"
+    },
+    {
+      "dataset_id": "d9f3a82c-24bb-4277-b715-8ec92a33dd32",
+      "title": "human cHSPCs - Illumina",
+      "citation": "Publication: https://doi.org/10.1038/s41591-025-03716-5 Dataset Version: https://datasets.cellxgene.cziscience.com/00414a7b-5aba-4c51-ad1e-d6caa6b1ebf3.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/5542eeb0-96ef-4ab9-95ea-eb6abc178461"
+    },
+    {
+      "dataset_id": "db1d2c1b-2ee1-45d5-9d53-69a327cd77e6",
+      "title": "Dissection: Cerebral cortex (Cx) - Middle frontal gyrus (MFG) - A46",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/8eaa0a16-8001-40a8-a0bb-3a9b61f8856e.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "dc30c3ec-46d6-4cd8-8ec1-b544a3d0f503",
+      "title": "Oligodendrocytes in MS",
+      "citation": "Publication: https://doi.org/10.1038/s41586-019-0903-2 Dataset Version: https://datasets.cellxgene.cziscience.com/c48ec35b-a4e3-48a8-8407-87fe3f59caa2.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/16c1e722-96ae-4bf6-b408-cd7f8918484f"
+    },
+    {
+      "dataset_id": "dd03ce70-3243-4c96-9561-330cc461e4d7",
+      "title": "Dissection: Cerebral cortex (Cx) - Perirhinal gyrus (PRG) - A35-A36",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/e065a09a-6d0d-48df-b365-bbf2bf7a8171.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "de5416ef-bbfa-41f3-99d4-01a3554173f5",
+      "title": "Global Atlas",
+      "citation": "Publication: https://doi.org/10.1101/2025.03.13.643025 Dataset Version: https://datasets.cellxgene.cziscience.com/303bc6a5-0811-4ee6-97b8-399f883ce0a2.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/9432ae97-4803-4b9f-8f64-2b41e42ad3cb"
+    },
+    {
+      "dataset_id": "de94c504-4b58-4f42-b68d-74a8e4892f0e",
+      "title": "UMAP visualization of all 12 datasets",
+      "citation": "Publication: https://doi.org/10.1016/j.celrep.2023.111994 Dataset Version: https://datasets.cellxgene.cziscience.com/55df92aa-5c10-4e03-a44a-5a9aebe60c65.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/6d203948-a779-4b69-9b3f-1ee1dadc3980"
+    },
+    {
+      "dataset_id": "dea717d4-7bc0-4e46-950f-fd7e1cc8df7d",
+      "title": "Single-cell RNA-seq of the Adult Human Kidney (Version 1.5)",
+      "citation": "Dataset Version: https://datasets.cellxgene.cziscience.com/1be76d4c-94aa-4c62-9254-f063872ba04f.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/0f528c8a-a25c-4840-8fa3-d156fa11086f"
+    },
+    {
+      "dataset_id": "df1edb87-e512-43ae-b5f4-cb179cfc2bb4",
+      "title": "scRNA-seq for GZMK+CD8+ T cells Target A Specific Acinar Cell Type in Sjögren’s Disease",
+      "citation": "Publication: https://doi.org/10.21203/rs.3.rs-3601404/v2 Dataset Version: https://datasets.cellxgene.cziscience.com/31380664-ba9c-49d1-9961-b2bf4f7131a2.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/21bbfaec-6958-46bc-b1cd-1535752f6304"
+    },
+    {
+      "dataset_id": "e04daea4-4412-45b5-989e-76a9be070a89",
+      "title": "Krasnow Lab Human Lung Cell Atlas, Smart-seq2",
+      "citation": "Publication: https://doi.org/10.1038/s41586-020-2922-4 Dataset Version: https://datasets.cellxgene.cziscience.com/c88e0403-da93-40f4-99b5-f5fdeb81a82c.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/5d445965-6f1a-4b68-ba3a-b8f765155d3a"
+    },
+    {
+      "dataset_id": "e067e5ca-e53e-485f-aa8e-efd5435229c8",
+      "title": "Human kidney cortex snRNA-seq data from donors with and without diabetic kidney disease",
+      "citation": "Publication: https://doi.org/10.1038/s41467-022-32972-z Dataset Version: https://datasets.cellxgene.cziscience.com/46d8d92b-32e0-4ca5-9907-4dbf519c7fc3.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/b3e2c6e3-9b05-4da9-8f42-da38a664b45b"
+    },
+    {
+      "dataset_id": "e1f595f6-ba2c-495e-9bee-7056f116b1e4",
+      "title": "Dissection: Cerebral cortex (Cx) - Middle Temporal Gyrus - MTG",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/598a18c5-8470-4c24-8ec7-b1938fe21184.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "e3ed2ba4-edf5-40ac-8750-8a417ad1eefe",
+      "title": "CRLM-NMP-ATLAS",
+      "citation": "Publication: https://doi.org/10.1186/s12943-025-02430-7 Dataset Version: https://datasets.cellxgene.cziscience.com/b425976f-9d73-4388-95dd-e7cd0f8caca0.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/be679cb1-35f0-46c9-9a2d-30691862a54a"
+    },
+    {
+      "dataset_id": "e51bae9a-c747-4b64-904a-4da7cda218ab",
+      "title": "Integrated transcriptomes of the 14 pancreatic islet cell types",
+      "citation": "Publication: https://doi.org/10.1101/2025.01.17.633590 Dataset Version: https://datasets.cellxgene.cziscience.com/d45ff50f-90e1-4983-9388-c5b2ca1f2866.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/58e85c2f-d52e-4c19-8393-b854b84d516e"
+    },
+    {
+      "dataset_id": "e5b1115b-a486-49bb-bda3-8261822836e0",
+      "title": "Dissection: Cerebral cortex (Cx) - Caudal cingulate gyrus (CgGC) - A23",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/bc7499a4-0d94-4b5b-9907-aa96cb73ee24.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "e6361237-ac4e-4c5d-ad8f-f16aca0c0a8f",
+      "title": "Occipital cortex samples from C9-FTD and age matched control brains",
+      "citation": "Publication: https://doi.org/10.1007/s00401-023-02599-5 Dataset Version: https://datasets.cellxgene.cziscience.com/d46df52a-3c01-422b-bb6e-55b093c21de1.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/aee9c366-f2fb-470b-8937-577d5d87d3fc"
+    },
+    {
+      "dataset_id": "e7bd68ab-df49-44df-9b1e-8486114aeeb5",
+      "title": "Human lymph node slices cultured with and without ex vivo stimulation by liposomal TLR4 and QS-21 adjuvant",
+      "citation": "Publication: https://doi.org/10.1016/j.celrep.2025.115938 Dataset Version: https://datasets.cellxgene.cziscience.com/64bf8212-f851-44af-8d3d-119dfc9de395.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/69f13fde-a4e8-4a32-8b5d-c657ae2f5e9a"
+    },
+    {
+      "dataset_id": "e84f2780-51e8-4cfa-8aa0-13bbfef677c7",
+      "title": "All cells from human liver dataset",
+      "citation": "Publication: https://doi.org/10.1016/j.cell.2021.12.018 Dataset Version: https://datasets.cellxgene.cziscience.com/3e2d5cf8-c983-409c-8bd8-faf5240574d4.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/74e10dc4-cbb2-4605-a189-8a1cd8e44d8c"
+    },
+    {
+      "dataset_id": "e8681d74-ac9e-4be5-be14-1cf1bbd54dd7",
+      "title": "Dissection: Thalamus (THM) - Anterior nuclear complex - ANC",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/2e5040df-a1de-4a9f-bef4-2e2019a5b6e6.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "ec6ceff8-c8bc-488d-b6bf-30df2fa92169",
+      "title": "Modeling Hepatoblastoma: Identification of Distinct Tumor Cell Populations and Key Genetic Mechanisms through Single Cell Sequencing",
+      "citation": "Publication: https://doi.org/10.1038/s42003-021-02562-8 Dataset Version: https://datasets.cellxgene.cziscience.com/9dca54fe-0091-43e1-b647-68b5218df24c.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/a261413d-835b-4f1e-ab0c-dada55ea6afd"
+    },
+    {
+      "dataset_id": "ecd9230d-c571-4dab-abd3-8b54c74833f0",
+      "title": "Dissection: Thalamus (THM) - lateral nuclear complex of thalamus (LNC) - Pulvinar of thalamus - Pul",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/be24105f-65df-4be7-87cb-b7589ae8170e.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "ed11cc3e-2947-407c-883c-c53b043917c3",
+      "title": "Dissection: Thalamus (THM) - Lateral nuclear complex (LNC) - ventral anterior nucleus of thalamus - VA",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/9c96cc81-c4d5-4e45-8378-2f5f7b4b0417.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "ed33c203-233a-476a-a56b-28da945fdd32",
+      "title": "Dissection: Cerebral cortex (Cx) - Cuneus, caudal part - Peristriate Cortex - V2",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/baffb2f7-d82d-4a28-ab9b-6afe34b29ac0.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "edbfa04a-f1dd-496a-8237-df11d70621ca",
+      "title": "Human lymph nodes with partial T and B cell depletion",
+      "citation": "Publication: https://doi.org/10.1016/j.celrep.2025.115938 Dataset Version: https://datasets.cellxgene.cziscience.com/94d06801-4f48-460e-a487-6eb217266ffc.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/69f13fde-a4e8-4a32-8b5d-c657ae2f5e9a"
+    },
+    {
+      "dataset_id": "f20f44ef-a0d4-4d94-87de-037fd47141f0",
+      "title": "Dissection: Hypothalamus (HTH) - mammillary region of HTH (HTHma) - tuberal region of HTH - HTHtub",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/42a9d64f-8c35-49ff-aab8-b5bbd30495a5.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "f32c2c13-bb1a-4ffd-a457-60b64ecfa4cb",
+      "title": "Dissection: Cerebral cortex (Cx) - Precentral gyrus (PrCG) - Primary motor cortex - M1C",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/41fc0233-2264-4b12-8ee8-1f1e4da70670.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "f3565fda-499a-4d20-bd92-563c09954c42",
+      "title": "Dissection: Pons (Pn) - Pontine reticular formation (PnRF) - parabrachial nuclei - PB",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/7d600d52-d803-4734-9043-393217c0a20a.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "f3c49918-4707-4d92-bb6d-2b5b4eb9d1b4",
+      "title": "AmyG region",
+      "citation": "Publication: https://doi.org/10.1016/j.neuron.2021.09.001 Dataset Version: https://datasets.cellxgene.cziscience.com/239acf28-45a6-4f04-af70-0693b435f360.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/22ccff12-9a18-4b01-ba10-302df57a01f8"
+    },
+    {
+      "dataset_id": "f502c312-05dc-4fd4-a762-92a63e92b539",
+      "title": "Dissection: Paleocortex (PalCx) - Anterior Olfactory Nucleus - AON",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/e5345f1e-3da6-4910-bda5-52a3c416ef67.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "f5a04dff-d394-4023-8811-65494e8bb11d",
+      "title": "Dissection: Basal nuclei (BN) - Putamen - Pu",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/dadf0e5c-7c2b-4bc2-8a3a-e0ecb1ec7f65.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "f5be4b96-f5a3-4c3d-84ac-6f69daf744d5",
+      "title": "Human Endothelial cells 10x scRNA-seq",
+      "citation": "Publication: https://doi.org/10.1038/s41593-022-01061-1 Dataset Version: https://datasets.cellxgene.cziscience.com/2789dbe9-db11-42ee-a67b-508f2431e485.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/b0f0b447-ac37-45b0-b1bf-5c0b7d871120"
+    },
+    {
+      "dataset_id": "f6d9f2ad-5ec7-4d53-b7f0-ceb0e7bcd181",
+      "title": "Dissection: Thalamus (THM) - lateral nuclear complex of thalamus (LNC) - ventral posterior lateral nucleus - VPL",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/7f6c1d7a-0c80-4f9f-99a3-78fd4c9c0c23.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "f8dda921-5fb4-4c94-a654-c6fc346bfd6d",
+      "title": "Dissection: Cerebral cortex (Cx) - Occipitotemporal (fusiform) gyrus, temporal part (FuGt) - Temporal area TF",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/bbc44062-fbd5-4e5d-b5f1-83d8973f5745.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "f9034091-2e8f-4ac6-9874-e7b7eb566824",
+      "title": "Dissection: Myelencephalon (medulla oblongata) (Mo) - medullary reticular formation (MoRF) & efferent nuclei of cranial nerves in the medulla oblongata (MoEN) - MoRF-MoEN",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/afa4c852-330a-44e0-b84a-f6b66a95ae88.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "fa554686-fc07-44dd-b2de-b726d82d26ec",
+      "title": "Dissection: Cerebral cortex (Cx) - Superior occipital gyrus (SOG) - Areas 19 and MT - A19",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/f7cd078d-ebdc-4502-8f43-abf9445b2f56.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "fbf173f9-f809-4d84-9b65-ae205d35b523",
+      "title": "Dissection: Thalamus (THM) - lateral nuclear complex of thalamus (LNC) - lateral posterior nucleus of thalamus + ventral posterior lateral nucleus - LP + VPL",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/6c815b29-1fb1-490a-9a77-bbbccf1b00e5.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "fd072bc3-2dfb-46f8-b4e3-467cb3223182",
+      "title": "Full dataset of single-cell RNA-seq profiles from 9 developmental tissues across gestation (4-17 pcw)",
+      "citation": "Publication: https://doi.org/10.1126/science.abo0510 Dataset Version: https://datasets.cellxgene.cziscience.com/4eb0a1aa-216c-4f22-93ab-85e95ed70cbb.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/b1a879f6-5638-48d3-8f64-f6592c1b1561"
+    },
+    {
+      "dataset_id": "fe1a73ab-a203-45fd-84e9-0f7fd19efcbd",
+      "title": "Dissection: Amygdaloid complex (AMY) - basolateral nuclear group (BLN) - basolateral nucleus (basal nucleus) - BL",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/17060c76-b604-4b14-b17b-8223d85f72a2.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    },
+    {
+      "dataset_id": "ff7d15fa-f4b6-4a0e-992e-fd0c9d088ded",
+      "title": "Dissection: Cerebral cortex (Cx) - Cuneus, rostral part - Area Prostriata - Pro",
+      "citation": "Publication: https://doi.org/10.1126/science.add7046 Dataset Version: https://datasets.cellxgene.cziscience.com/f0e3a9cf-d40d-4880-b6a6-cbc4648bf01e.h5ad curated and distributed by CZ CELLxGENE Discover in Collection: https://cellxgene.cziscience.com/collections/283d65eb-dd53-496d-adb7-7570c7caa443"
+    }
+  ]
+}
