@@ -58,28 +58,33 @@ RustScenic supports RNA regulatory-network inference, motif enrichment,
 regulon activity scoring and multiome analysis through a Python API and CLI.
 Core analysis runs without Java, Dask, CUDA or Snakemake.
 
-<details>
-<summary>Python quickstart: infer a network and score candidate gene sets</summary>
-
-Start with a human RNA AnnData file (`rna.h5ad`) with gene symbols matching
-the bundled transcription-factor list. These candidate sets are not
-motif-filtered or split by correlation sign.
+Infer a candidate network from a human RNA AnnData file (`rna.h5ad`) with
+gene symbols matching the bundled transcription-factor list:
 
 ```python
 import anndata as ad
-import rustscenic.aucell
-import rustscenic.data
-import rustscenic.grn
+from rustscenic import data, grn
 
 adata = ad.read_h5ad("rna.h5ad")
-tfs = rustscenic.data.tfs("hs")
-
-grn = rustscenic.grn.infer(
-    adata, tf_names=tfs, n_estimators=500, top_targets_per_tf=50, seed=777
+edges = grn.infer(
+    adata, tf_names=data.tfs("hs"), n_estimators=500,
+    top_targets_per_tf=50, seed=777,
 )
+edges.to_parquet("grn.parquet")
+```
+
+<details>
+<summary>Score candidate gene-set activity</summary>
+
+Continue with the network above. These candidate sets are not motif-filtered
+or split by correlation sign.
+
+```python
+import rustscenic.aucell
+
 regulons = {
     tf: group["target"].tolist()
-    for tf, group in grn.groupby("TF")
+    for tf, group in edges.groupby("TF")
     if len(group) >= 10
 }
 auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
@@ -178,7 +183,8 @@ describe a complete million-cell spatial workflow.
 [Exact measurements and conditions](docs/benchmarks/real-rna-20260828/benchmark-source-record.md) ·
 [SCENIC+ comparisons and output agreement](site_docs/benchmarks.md)
 
-Additional measured results:
+<details>
+<summary>Topic-model memory and selected SCENIC+ comparisons</summary>
 
 - **21.4% lower topic-model peak memory:** 1,668.2 → 1,312.0 MB median
   across three baseline and three optimised mouse-brain runs, with identical
@@ -190,8 +196,7 @@ Additional measured results:
   agreement is incomplete; these timings do not establish equivalent
   scientific performance.
 
-<details>
-<summary>SCENIC+ comparison: timings, input sizes and conditions</summary>
+**SCENIC+ timings, input sizes and conditions**
 
 | Dataset | Input: cells / genes / peaks / TFs | RustScenic | SCENIC+ | Speedup | Peak RSS: RustScenic / SCENIC+ |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -218,6 +223,14 @@ for enhancer links; SCENIC+ uses boosted trees plus Pearson scoring.
 
 ## Validation
 
+The Huang Lab human-brain run recovered **16/17 expected transcription factors**
+in 8,215 post-QC cells with v0.4.6. This is a biological sanity check, not an
+accuracy estimate. Agreement with reference tools varies by stage;
+full output parity is not claimed.
+
+<details>
+<summary>Validation results and remaining output differences</summary>
+
 | Check | Result |
 | --- | --- |
 | Huang Lab human-brain run | **16/17 expected transcription factors** recovered in 8,215 post-QC cells with v0.4.6. A biological sanity check, not an accuracy estimate. |
@@ -225,6 +238,8 @@ for enhancer links; SCENIC+ uses boosted trees plus Pearson scoring.
 | cisTarget AUC kernel vs ctxcore | Pearson **1.0000**; mean absolute difference approximately **2.4e-5**. |
 | Human brain GEM-X vs SCENIC+ | Region-to-gene edge Jaccard **1.000** under the fixed search space; region AUCell mean Pearson **0.823**. |
 | Remaining output differences | On the same GEM-X comparison, gene AUCell Pearson is **0.386** and eRegulon edge Jaccard is **0.161**. Full output parity is not claimed. |
+
+</details>
 
 [Validation and limitations](site_docs/validation.md) ·
 [Huang Lab run record](validation/community/human_brain_10k_v0.4.6.json) ·
