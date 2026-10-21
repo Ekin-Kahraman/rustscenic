@@ -1,0 +1,76 @@
+{
+  "source": "benchmark-source-record.md",
+  "source_sha256": "62aae6d5dde25b9168a8ea5fb0b6791443192641cf5c5c0029be396ee5146bcd",
+  "source_note": "Values parsed from the archived benchmark report, not newly measured.",
+  "record_date": "2026-08-28",
+  "rustscenic_version": "0.5.0",
+  "scaling": [
+    {
+      "cells": 50000,
+      "grn_seconds": 56.922,
+      "process_peak_mb": 294.1,
+      "mean_fitted_trees": 28.233
+    },
+    {
+      "cells": 100000,
+      "grn_seconds": 121.758,
+      "process_peak_mb": 465.7,
+      "mean_fitted_trees": 30.6
+    },
+    {
+      "cells": 200000,
+      "grn_seconds": 272.721,
+      "process_peak_mb": 814.7,
+      "mean_fitted_trees": 34.621
+    },
+    {
+      "cells": 400000,
+      "grn_seconds": 639.504,
+      "process_peak_mb": 1495.9,
+      "mean_fitted_trees": 39.879
+    },
+    {
+      "cells": 800000,
+      "grn_seconds": 1530.81,
+      "process_peak_mb": 2592.9,
+      "mean_fitted_trees": 47.396
+    },
+    {
+      "cells": 1306127,
+      "grn_seconds": 2801.771,
+      "process_peak_mb": 4276.9,
+      "mean_fitted_trees": 53.429
+    }
+  ],
+  "matched_comparisons": [
+    {
+      "record": "`1500622`, `cpu-node-122`, AMD EPYC 9754",
+      "rustscenic_seconds": 23.344,
+      "arboreto_seconds": 47.621,
+      "reported_speedup": 2.04,
+      "pss_mb": null
+    },
+    {
+      "record": "`1509218`, `cpu-node-37`, Intel Xeon E5-2695 v3",
+      "rustscenic_seconds": 19.837,
+      "arboreto_seconds": 65.964,
+      "reported_speedup": 3.325,
+      "pss_mb": [
+        188.9,
+        995.5
+      ]
+    }
+  ],
+  "configuration": {
+    "genes": 2095,
+    "tfs": 256,
+    "cpu_cores": 16,
+    "tree_ceiling": 5000,
+    "early_stopping": true
+  },
+  "preparation": {
+    "seconds": 438,
+    "process_peak_mb": 71491.5
+  },
+  "limits": "Single observations per node/configuration; timing excludes loading and reference dense conversion. No biological-superiority or full-pipeline claim."
+}
