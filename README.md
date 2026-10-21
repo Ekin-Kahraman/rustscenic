@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/main/site_docs/assets/branding/rustscenic-logo-256.png" width="96" height="96" alt="RustScenic logo">
+</p>
+
 <h1 align="center">RustScenic</h1>
 
 <p align="center">
