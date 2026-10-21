@@ -1,14 +1,28 @@
-# RustScenic
+<h1 align="center">RustScenic</h1>
 
-**Predict how genes are regulated from single-cell data.**
+<p align="center">
+  <strong>Predict how genes are regulated from single-cell data.</strong>
+</p>
 
-Fast regulatory-network analysis in Rust, with a Python API. Created by
-**Ekin Kahraman**, developed and scaled with the **Huang Lab at Mount Sinai**.
+<p align="center">
+  Fast regulatory-network analysis in Rust, with a Python API.<br>
+  Created by <strong>Ekin Kahraman</strong>, developed and scaled with the
+  <strong>Huang Lab at Mount Sinai</strong>.
+</p>
 
-[Documentation](https://ekin-kahraman.github.io/rustscenic/) ·
-[Benchmarks](https://github.com/Ekin-Kahraman/rustscenic/blob/main/site_docs/benchmarks.md) ·
-[Try the example](examples/cellxgene-endothelial/README.md) ·
-[Cite the software](https://doi.org/10.5281/zenodo.20246040)
+<p align="center">
+  <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml"><img alt="CI" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg?branch=main"></a>
+  <a href="https://pypi.org/project/rustscenic/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/rustscenic"></a>
+  <a href="LICENSE"><img alt="Software license: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-blue.svg"></a>
+  <a href="https://doi.org/10.5281/zenodo.20246040"><img alt="Zenodo DOI" src="https://img.shields.io/badge/DOI-Zenodo-1682d4"></a>
+</p>
+
+<p align="center">
+  <a href="https://ekin-kahraman.github.io/rustscenic/">Documentation</a> ·
+  <a href="https://github.com/Ekin-Kahraman/rustscenic/blob/main/site_docs/benchmarks.md">Benchmarks</a> ·
+  <a href="examples/cellxgene-endothelial/README.md">Try the example</a> ·
+  <a href="https://doi.org/10.5281/zenodo.20246040">Cite the software</a>
+</p>
 
 - **1.3 million real cells:** GRN inference in **46m42s on 16 CPU cores**,
   using 2,095 selected genes and 256 transcription factors.
