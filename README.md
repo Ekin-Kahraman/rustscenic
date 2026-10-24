@@ -5,13 +5,14 @@
 <h1 align="center">RustScenic</h1>
 
 <p align="center">
-  <strong>Fast gene regulatory network analysis for single-cell data.</strong>
+  <strong>Built to be the simplest, fastest way to run SCENIC-style regulatory-network analysis.</strong>
 </p>
 
 <p align="center">
-  Infer candidate regulatory relationships and score their activity from RNA and
-  chromatin-accessibility data.<br>
-  Built in Rust, available through Python, and runs on CPUs.<br>
+  A Rust reimplementation of core <a href="https://github.com/aertslab/pySCENIC">pySCENIC</a>
+  and <a href="https://github.com/aertslab/scenicplus">SCENIC+</a> analysis stages that prioritises
+  speed, low memory use and easy installation. Infer gene networks, find motif-supported
+  regulons and score their activity through Python. One package. Runs on CPUs.<br>
   Developed and scaled with the
   <strong>Huang Lab at Mount Sinai</strong>.
 </p>
