@@ -14,7 +14,7 @@
   speed, low memory use and easy installation. Infer gene networks, find motif-supported
   regulons and score their activity through Python. One package. Runs on CPUs.<br>
   Developed and scaled with the
-  <strong>Huang Lab at Mount Sinai</strong>.
+  <strong><a href="https://labs.icahn.mssm.edu/kuanhuanglab/">Huang Lab at Mount Sinai</a></strong>.
 </p>
 
 <p align="center">
