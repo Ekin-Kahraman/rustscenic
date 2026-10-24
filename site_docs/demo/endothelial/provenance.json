@@ -78,5 +78,6 @@
     "workflow_sha256": "fefd27eaa50ab0f3a3024e2a98a5652cc2b7fd4b608c0671e0f8a6332b583c23"
   },
   "inference_outputs_unchanged": true,
-  "licensing": "Data licence not yet assigned; see LICENSING.txt. Example code: Apache-2.0."
+  "licensing": "Derived data and resource documentation: CC BY 4.0; see LICENSING.txt. Example code: Apache-2.0.",
+  "dataset_doi": "10.5281/zenodo.23548341"
 }

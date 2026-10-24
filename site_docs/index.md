@@ -75,10 +75,14 @@ The example contains **184,000 retained edges**, **85 motif-supported regulons**
 activity summaries and source-study citations.
 [Download it for offline use](https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/main/examples/cellxgene-endothelial/starter.zip).
 
-The full collection covers **704 annotated human cell types** from CELLxGENE
-Census. **Full release pending;** this example is available now. Results are
-exploratory predictions across pooled tissues and disease annotations.
-Data reuse terms are pending; see the [data notice](demo/endothelial/LICENSING.txt).
+The full collection covers **704 human Cell Ontology labels** from CELLxGENE
+Census 2025-11-08, with **137.8 million retained edges** and **51,527 motif-supported
+regulons**. [Download the published dataset](https://doi.org/10.5281/zenodo.23548341)
+or [find a cell label and load its results](cellxgene-resource.md).
+
+Derived data are available under **CC BY 4.0**, independently hosted on Zenodo.
+Results are exploratory predictions across pooled tissues and disease
+annotations; biological accuracy has not been established.
 
 ## Analysis stages
 
@@ -100,5 +104,7 @@ Data reuse terms are pending; see the [data notice](demo/endothelial/LICENSING.t
 
 The package has automated Rust/Python tests, installation checks and real-data
 validation workflows. Cite the exact [RustScenic release](https://doi.org/10.5281/zenodo.20246040)
-used, plus the contributing studies when using the example. Software and example
-code are Apache-2.0; data terms are separate.
+used. For the example or full CELLxGENE-derived collection, also cite the
+[dataset](cellxgene-resource.md#citation-and-credits), CELLxGENE and contributing
+studies. Software and example code are Apache-2.0; derived data and resource
+documentation are CC BY 4.0.

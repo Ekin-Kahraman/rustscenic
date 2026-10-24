@@ -20,7 +20,7 @@
   <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml"><img alt="CI" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg?branch=main"></a>
   <a href="https://pypi.org/project/rustscenic/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/rustscenic"></a>
   <a href="LICENSE"><img alt="Software license: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-blue.svg"></a>
-  <a href="https://doi.org/10.5281/zenodo.20246040"><img alt="Zenodo DOI" src="https://img.shields.io/badge/DOI-Zenodo-1682d4"></a>
+  <a href="https://doi.org/10.5281/zenodo.20246040"><img alt="Software DOI on Zenodo" src="https://img.shields.io/badge/DOI-Zenodo-1682d4"></a>
   <br>
   <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml"><img alt="Docs" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/docs.yml/badge.svg?branch=main"></a>
   <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/nightly-real-data.yml"><img alt="Nightly real-data validation" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/nightly-real-data.yml/badge.svg?branch=main"></a>
@@ -34,6 +34,7 @@
   <a href="https://github.com/Ekin-Kahraman/rustscenic/blob/main/site_docs/benchmarks.md">Benchmarks</a> ·
   <a href="site_docs/validation.md">Validation</a> ·
   <a href="https://ekin-kahraman.github.io/rustscenic/demo/endothelial/">Try the example</a> ·
+  <a href="https://doi.org/10.5281/zenodo.23548341">Download the dataset</a> ·
   <a href="https://doi.org/10.5281/zenodo.20246040">Cite the software</a>
 </p>
 
@@ -42,8 +43,9 @@
   using 2,095 selected genes and 256 transcription factors.
 - **2.04–3.33× faster than arboreto** in matched 20,000-cell comparisons;
   **81% lower physical memory** in the measured Intel-node comparison.
-- **704 annotated human cell types:** exploratory networks from CELLxGENE Census.
-  **Full release pending;** the endothelial-cell example is available below.
+- **704 human cell labels:** precomputed exploratory networks from CELLxGENE
+  Census, [openly available on Zenodo](https://doi.org/10.5281/zenodo.23548341).
+  Explore the endothelial-cell example below or download the full collection.
 
 ## Analyse your own data
 
@@ -245,20 +247,27 @@ full output parity is not claimed.
 [Huang Lab run record](validation/community/human_brain_10k_v0.4.6.json) ·
 [Benchmark output agreement](site_docs/benchmarks.md#validation)
 
-## CELLxGENE-derived resource
+## CELLxGENE Census-derived resource
 
-The collection contains **137.8 million retained edges** and **51,527
-motif-supported regulons** across 704 human cell-ontology labels, drawing on
-565 source datasets. Each cohort uses up to 5,000 balanced cells.
+[**Download the dataset (v1.0.0)**](https://doi.org/10.5281/zenodo.23548341) ·
+[Find a cell label and load results](site_docs/cellxgene-resource.md)
+
+Published on Zenodo under **CC BY 4.0**. The collection contains **137.8 million
+retained edges** and **51,527 motif-supported regulons** across **704 human Cell
+Ontology labels**, drawing on 565 source datasets in CELLxGENE Census 2025-11-08.
+Each cohort uses up to 5,000 cells balanced by dataset and donor.
+
+Download network tables, motif evidence, regulons and aggregate activity
+summaries with source citations, methods and checksums. Reuse the results
+without rerunning inference. Raw expression and cell-level records are excluded.
 
 All outputs passed integrity and content-consistency checks. These are
 exploratory predictions; motif support and successful execution do not
 establish biological accuracy. Pooled cohorts span tissues and disease
 annotations, and activity scores are not directly comparable across cohorts.
 
-**Release status:** the collection is verified and packaged; the CELLxGENE
-submission enquiry has been sent. Public resource and citation links will
-be added when the release is available.
+The networks are derived from CELLxGENE Census and independently hosted on
+Zenodo; they are not a CELLxGENE-hosted or endorsed dataset.
 
 ## Documentation
 
@@ -274,10 +283,12 @@ be added when the release is available.
 
 Cite the exact [RustScenic release](https://doi.org/10.5281/zenodo.20246040)
 used; GitHub citation metadata is in [CITATION.cff](CITATION.cff).
-When using the CELLxGENE-derived networks, also cite the resource when
-available, CELLxGENE and the contributing studies supplied with the data.
-Software and example code: Apache-2.0. Data reuse terms are pending; see the
-[example data-licence notice](examples/cellxgene-endothelial/LICENSING.txt).
+When using the CELLxGENE-derived networks, also cite the
+[dataset](https://doi.org/10.5281/zenodo.23548341), CELLxGENE and the contributing
+studies supplied with the data. See [dataset credits and citation](site_docs/cellxgene-resource.md#citation-and-credits).
+Software and example code: **Apache-2.0**. Derived data and resource
+documentation: **CC BY 4.0**; see the
+[data-licence notice](examples/cellxgene-endothelial/LICENSING.txt).
 
 Created and maintained by Ekin Kahraman; see [AUTHORS.md](AUTHORS.md)
 for attribution.

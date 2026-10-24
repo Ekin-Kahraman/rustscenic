@@ -47,7 +47,8 @@ This is the existing endothelial-cell example extracted from the verified
 704-label collection, not a new validation experiment. All nine original
 cohort files are unchanged. See `provenance.json` and `METHODS.md`.
 
-Public example; the full CELLxGENE resource release is pending.
-Data reuse terms are pending; see [LICENSING.txt](LICENSING.txt). Cite contributing studies in
-`source-citations.json` and the CELLxGENE platform when reusing the results.
+The full 704-label collection is [published on Zenodo](https://doi.org/10.5281/zenodo.23548341).
+Derived data and resource documentation: **CC BY 4.0**; see [LICENSING.txt](LICENSING.txt).
+Cite the dataset, CELLxGENE and contributing studies in `source-citations.json`.
+Dataset authors: Ekin Kahraman, Longtao Huangfu, Mohamed El Moussaoui and Kuan-Lin Huang.
 Example code: Apache-2.0; see `LICENSE-SOFTWARE`.
