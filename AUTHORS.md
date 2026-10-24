@@ -11,6 +11,13 @@ endorsement or transfer software authorship.
 
 - Ekin Kahraman: project creator, core architecture, Rust and Python implementation, validation framework, benchmarks, releases, documentation.
 
+## CELLxGENE Census-derived dataset
+
+The [published dataset](https://doi.org/10.5281/zenodo.23548341) credits Ekin
+Kahraman, Longtao Huangfu, Mohamed El Moussaoui and Kuan-Lin Huang, in citation
+order. See [dataset contributions](site_docs/cellxgene-resource.md#citation-and-credits)
+for their roles. This dataset has its own DOI and authorship record.
+
 ## Contribution categories
 
 Future contributions should be recorded according to what was actually contributed:
