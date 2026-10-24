@@ -248,12 +248,22 @@ full output parity is not claimed.
 [Huang Lab run record](validation/community/human_brain_10k_v0.4.6.json) ·
 [Benchmark output agreement](site_docs/benchmarks.md#validation)
 
-## CELLxGENE Census-derived resource
+<a id="cellxgene-census-derived-resource"></a>
 
-[**Download the dataset (v1.0.0)**](https://doi.org/10.5281/zenodo.23548341) ·
+## Explore how genes are regulated in human cells
+
+We used RustScenic to analyse public single-cell data from CELLxGENE Census
+and predict links between gene regulators and their target genes.
+
+[Try the endothelial-cell example](https://ekin-kahraman.github.io/rustscenic/demo/endothelial/) ·
+[Download the networks](https://doi.org/10.5281/zenodo.23548341)
+
+<details>
+<summary>Dataset details and methods</summary>
+
 [Find a cell label and load results](site_docs/cellxgene-resource.md)
 
-Published on Zenodo under **CC BY 4.0**. The collection contains **137.8 million
+Version **1.0.0**, published on Zenodo under **CC BY 4.0**. The collection contains **137.8 million
 retained edges** and **51,527 motif-supported regulons** across **704 human Cell
 Ontology labels**, drawing on 565 source datasets in CELLxGENE Census 2025-11-08.
 Each cohort uses up to 5,000 cells balanced by dataset and donor.
@@ -269,6 +279,12 @@ annotations, and activity scores are not directly comparable across cohorts.
 
 The networks are derived from CELLxGENE Census and independently hosted on
 Zenodo; they are not a CELLxGENE-hosted or endorsed dataset.
+
+</details>
+
+**The result: networks covering 704 human cell labels and 137.8 million
+predicted links, freely available for researchers to explore and reuse
+without rerunning the analysis.**
 
 ## Documentation
 
