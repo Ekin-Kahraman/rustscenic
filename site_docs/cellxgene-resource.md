@@ -62,6 +62,8 @@ labels* (Version 1.0.0) [Data set]. Zenodo.
 - **Kuan-Lin Huang:** scientific supervision, resource concept and collaboration
   direction.
 
+Additional RustScenic testing and issue reporting: **Fuaad Siyaad**.
+
 Also cite CELLxGENE and the contributing studies listed in each cohort's
 `sources.json`. See the [attribution notes](https://zenodo.org/records/23548341/files/ATTRIBUTION.md?download=1).
 

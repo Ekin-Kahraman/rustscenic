@@ -32,3 +32,7 @@ Software authorship, data authorship, validation authorship, and manuscript auth
 ## Attribution
 
 If you use rustscenic in a paper, report, benchmark, derivative package, or lab workflow, cite the exact release used and preserve the Apache-2.0 licence, NOTICE file, and copyright notice.
+
+## Testing acknowledgements
+
+- Fuaad Siyaad: testing RustScenic and reporting issues.
