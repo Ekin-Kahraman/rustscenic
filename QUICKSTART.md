@@ -6,15 +6,17 @@ Runtime depends on the data, settings and CPU.
 
 ## Install
 
+Use Python **3.10–3.13** in an active environment; see
+[Installation](site_docs/installation.md) for setup.
+
 ```bash
-pip install "rustscenic[examples]"
+python -m pip install "rustscenic[examples]"
 ```
 
-Python **3.10–3.13**; Linux, macOS and Windows. Runs on CPUs without Java,
-Dask or CUDA. To inspect saved results without installation, open the
-[endothelial-cell example](https://ekin-kahraman.github.io/rustscenic/demo/endothelial/).
-
 ## RNA example
+
+Run the block below in a notebook, or save it as `pbmc3k_example.py` and run
+`python pbmc3k_example.py`. Internet access is needed for the first download.
 
 The small transcription-factor list and 100-tree limit keep this demonstration
 manageable. Candidate gene sets are not motif-filtered or split by correlation
@@ -56,8 +58,15 @@ print(grn.nlargest(5, "importance"))
 print(auc.iloc[:3, :3])
 ```
 
-Outputs: a TF-to-target edge table (`grn.parquet`), per-cell activity scores
-(`aucell.parquet`), the prepared RNA matrix and the TF list.
+A successful run prints network edges and a preview of activity scores.
+Files are saved in the current working directory:
+
+| File | Contents |
+| --- | --- |
+| `grn.parquet` | Network edges: `TF`, `target`, `importance` |
+| `aucell.parquet` | Activity scores: cells × candidate gene sets |
+| `pbmc3k.h5ad` | Prepared RNA matrix |
+| `tfs.txt` | Matching TF names, one per line |
 
 For signed target sets, use `add_correlation` and `build_regulons`; see the
 [API guide](site_docs/api.md). For your own AnnData file, use the
