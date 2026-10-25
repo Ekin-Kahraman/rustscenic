@@ -6,9 +6,9 @@ This document records the default expectations for collaborations around rustsce
 
 rustscenic is an open-source software project created and maintained by Ekin Kahraman.
 
-The project team includes Ekin Kahraman, Longtao Huangfu, Mohamed El Moussaoui,
-Fuaad Siyaad and Kuan-Lin Huang. Ekin is the lead software author and developer;
-individual contribution roles are recorded in [AUTHORS.md](../AUTHORS.md).
+Ekin Kahraman · Longtao Huangfu · Mohamed El Moussaoui · Fuaad Siyaad · Kuan-Lin Huang
+
+[Contributions](../AUTHORS.md)
 
 The code is licensed under the Apache License, Version 2.0, so others may use, copy, modify, and redistribute it under the licence terms. The licence does not remove the need for accurate attribution, citation, or authorship when the software is used in scientific work.
 

@@ -3,8 +3,9 @@
 Bug reports, correctness fixes, documentation and measured performance
 improvements are welcome.
 
-RustScenic is led by **Ekin Kahraman**, with Longtao Huangfu, Mohamed El Moussaoui,
-Fuaad Siyaad and Kuan-Lin Huang. See [team and contributions](AUTHORS.md) for roles.
+Ekin Kahraman · Longtao Huangfu · Mohamed El Moussaoui · Fuaad Siyaad · Kuan-Lin Huang
+
+[Contributions](AUTHORS.md)
 
 ## Ground rules
 

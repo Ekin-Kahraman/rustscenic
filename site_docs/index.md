@@ -3,16 +3,18 @@
   <h1>RustScenic</h1>
 </div>
 
+Ekin Kahraman · Longtao Huangfu · Mohamed El Moussaoui · Fuaad Siyaad · Kuan-Lin Huang
+
+[Contributions](https://github.com/Ekin-Kahraman/rustscenic/blob/main/AUTHORS.md)
+
 **Fast gene regulatory network analysis for single-cell data.**
 
 Infer candidate regulatory relationships and score their activity from RNA and
 chromatin-accessibility data. Built in Rust, available through Python, and runs
 on CPUs.
 
-Created and led by **Ekin Kahraman**, with Longtao Huangfu, Mohamed El Moussaoui,
-Fuaad Siyaad and Kuan-Lin Huang. Developed and scaled with the Huang Lab at
+Developed and scaled with the Huang Lab at
 the Icahn School of Medicine at Mount Sinai.
-[Team and contributions](https://github.com/Ekin-Kahraman/rustscenic/blob/main/AUTHORS.md).
 
 ## Get started
 

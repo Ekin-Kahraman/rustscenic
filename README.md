@@ -5,6 +5,11 @@
 <h1 align="center">RustScenic</h1>
 
 <p align="center">
+  Ekin Kahraman · Longtao Huangfu · Mohamed El Moussaoui · Fuaad Siyaad · Kuan-Lin Huang<br>
+  <a href="AUTHORS.md">Contributions</a>
+</p>
+
+<p align="center">
   <strong>Built to be the simplest, fastest way to run regulatory-network analysis.</strong>
 </p>
 
@@ -15,12 +20,6 @@
   regulons and score their activity through Python. One package. Runs on CPUs.<br>
   Developed and scaled with the
   <strong><a href="https://labs.icahn.mssm.edu/kuanhuanglab/">Huang Lab at Mount Sinai</a></strong>.
-</p>
-
-<p align="center">
-  Created and led by <strong>Ekin Kahraman</strong>, with Longtao Huangfu,
-  Mohamed El Moussaoui, Fuaad Siyaad and Kuan-Lin Huang.<br>
-  <a href="AUTHORS.md">Team and contributions</a>
 </p>
 
 <p align="center">

@@ -16,9 +16,7 @@ abstract: >-
   RustScenic is a Rust and PyO3 implementation of SCENIC-style gene regulatory
   network analysis, including GRN inference, AUCell scoring, topic modelling,
   cisTarget enrichment, enhancer linking, eRegulon assembly and an end-to-end
-  Python pipeline API. Created and led by Ekin Kahraman, with contributions from
-  Longtao Huangfu, Mohamed El Moussaoui, Fuaad Siyaad and Kuan-Lin Huang, in
-  collaboration with the Huang Lab at the Icahn School of Medicine at Mount Sinai.
+  Python pipeline API.
 keywords:
   - single-cell genomics
   - gene regulatory networks

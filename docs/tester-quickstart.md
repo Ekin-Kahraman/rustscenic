@@ -102,6 +102,6 @@ for any clear repro that should be tracked.
 
 ---
 
-Project team: **Ekin Kahraman** (creator and lead developer), Longtao Huangfu,
-Mohamed El Moussaoui, Fuaad Siyaad and Kuan-Lin Huang.
-[Team and contributions](../AUTHORS.md).
+Ekin Kahraman · Longtao Huangfu · Mohamed El Moussaoui · Fuaad Siyaad · Kuan-Lin Huang
+
+[Contributions](../AUTHORS.md)
