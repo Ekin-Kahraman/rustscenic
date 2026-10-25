@@ -17,7 +17,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="site_docs/assets/branding/rustscenic-workflow-dark.svg">
-    <img src="site_docs/assets/branding/rustscenic-workflow-light.svg" width="1120" alt="RustScenic workflow: RNA expression and a TF list become candidate TF–gene links, motif-supported regulons and cell-level activity scores. Optional ATAC and gene coordinates add topics, enhancer–gene links and eRegulons.">
+    <img src="site_docs/assets/branding/rustscenic-workflow-light.svg" width="1120" alt="Inputs → RustScenic → outputs. RNA expression, a TF list and optional ATAC enter RustScenic, one Python package with a Rust backend. It produces regulatory networks, regulons and cell activity scores. Motif databases and gene coordinates support refinement and enhancer links.">
   </picture>
 </p>
 
