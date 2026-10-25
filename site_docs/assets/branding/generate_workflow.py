@@ -115,4 +115,4 @@ def render(dark=False):
 
 if __name__ == '__main__':
     for mode in ('light','dark'):
-        (OUT/f'rustscenic-workflow-{mode}.svg').write_text(render(mode=='dark'))
+        (OUT/f'rustscenic-workflow-{mode}.svg').write_text(render(mode=='dark'), encoding='utf-8')
