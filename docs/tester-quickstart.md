@@ -102,6 +102,6 @@ for any clear repro that should be tracked.
 
 ---
 
-Ekin Kahraman · Longtao Huangfu · Mohamed El Moussaoui · Fuaad Siyaad · Kuan-Lin Huang
+Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad
 
 [Contributions](../AUTHORS.md)

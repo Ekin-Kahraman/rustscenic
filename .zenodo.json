@@ -10,20 +10,20 @@
   ],
   "contributors": [
     {
-      "name": "Huangfu, Longtao",
-      "type": "Researcher"
-    },
-    {
       "name": "El Moussaoui, Mohamed",
-      "type": "ProjectMember"
-    },
-    {
-      "name": "Siyaad, Fuaad",
       "type": "ProjectMember"
     },
     {
       "name": "Huang, Kuan-Lin",
       "type": "Supervisor"
+    },
+    {
+      "name": "Huangfu, Longtao",
+      "type": "Researcher"
+    },
+    {
+      "name": "Siyaad, Fuaad",
+      "type": "ProjectMember"
     }
   ],
   "license": "Apache-2.0",

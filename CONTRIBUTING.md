@@ -3,7 +3,7 @@
 Bug reports, correctness fixes, documentation and measured performance
 improvements are welcome.
 
-Ekin Kahraman · Longtao Huangfu · Mohamed El Moussaoui · Fuaad Siyaad · Kuan-Lin Huang
+Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad
 
 [Contributions](AUTHORS.md)
 

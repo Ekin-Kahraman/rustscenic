@@ -5,7 +5,7 @@
 <h1 align="center">RustScenic</h1>
 
 <p align="center">
-  Ekin Kahraman · Longtao Huangfu · Mohamed El Moussaoui · Fuaad Siyaad · Kuan-Lin Huang<br>
+  Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad<br>
   <a href="AUTHORS.md">Contributions</a>
 </p>
 

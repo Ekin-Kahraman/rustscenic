@@ -9,10 +9,10 @@ Huang Lab at the Icahn School of Medicine at Mount Sinai.
 | Team member | Contributions |
 | --- | --- |
 | **Ekin Kahraman** | Project creation and leadership, architecture, Rust and Python implementation, validation framework, benchmarks, releases, documentation and maintenance. |
-| **Longtao Huangfu** | Real-data execution and scaling, Minerva runs, resumption and transfer of CELLxGENE-derived network outputs. |
 | **Mohamed El Moussaoui** | IFB HPC access and computing resources, analysis support and collaboration. |
-| **Fuaad Siyaad** | ATAC preprocessing tests on human-brain and downsampled fragment data, and validation feedback. |
 | **Kuan-Lin Huang** | Scientific supervision, resource concept and collaboration direction. |
+| **Longtao Huangfu** | Real-data execution and scaling, Minerva runs, resumption and transfer of CELLxGENE-derived network outputs. |
+| **Fuaad Siyaad** | ATAC preprocessing tests on human-brain and downsampled fragment data, and validation feedback. |
 
 Validation records are available in [validation/community/](validation/community/).
 

@@ -2,7 +2,7 @@
   <img src="assets/branding/rustscenic-logo.svg" width="96" height="96" alt="RustScenic logo">
   <h1>RustScenic</h1>
   <p>
-    Ekin Kahraman · Longtao Huangfu · Mohamed El Moussaoui · Fuaad Siyaad · Kuan-Lin Huang<br>
+    Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad<br>
     <a href="https://github.com/Ekin-Kahraman/rustscenic/blob/main/AUTHORS.md">Contributions</a>
   </p>
 </div>
