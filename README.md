@@ -15,6 +15,13 @@
 </p>
 
 <p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="site_docs/assets/branding/rustscenic-workflow-dark.svg">
+    <img src="site_docs/assets/branding/rustscenic-workflow-light.svg" width="1120" alt="Inputs → RustScenic → outputs. RNA expression, a TF list and optional ATAC enter RustScenic, one Python package with a Rust backend. It produces regulatory networks, regulons and cell activity scores. Motif databases and gene coordinates support refinement and enhancer links.">
+  </picture>
+</p>
+
+<p align="center">
   A Rust rewrite of core <a href="https://github.com/aertslab/pySCENIC">pySCENIC</a>
   and <a href="https://github.com/aertslab/scenicplus">SCENIC+</a> analysis stages that prioritises
   speed, low memory use and easy installation. Infer gene networks, find motif-supported
