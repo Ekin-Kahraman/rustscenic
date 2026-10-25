@@ -15,6 +15,13 @@
 </p>
 
 <p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="site_docs/assets/branding/rustscenic-workflow-dark.svg">
+    <img src="site_docs/assets/branding/rustscenic-workflow-light.svg" width="1120" alt="RustScenic workflow: RNA expression and a TF list become candidate TF–gene links, motif-supported regulons and cell-level activity scores. Optional ATAC and gene coordinates add topics, enhancer–gene links and eRegulons.">
+  </picture>
+</p>
+
+<p align="center">
   A Rust rewrite of core <a href="https://github.com/aertslab/pySCENIC">pySCENIC</a>
   and <a href="https://github.com/aertslab/scenicplus">SCENIC+</a> analysis stages that prioritises
   speed, low memory use and easy installation. Infer gene networks, find motif-supported
