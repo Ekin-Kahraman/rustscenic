@@ -1,15 +1,27 @@
-# Authors
+# Team and contributions
 
-rustscenic was created by Ekin Kahraman, who is the lead developer and maintainer of the software.
+RustScenic was created by **Ekin Kahraman**, its lead software author,
+developer and maintainer. The project is developed in collaboration with the
+Huang Lab at the Icahn School of Medicine at Mount Sinai.
 
-The project is developed in collaboration with the Kuan-Lin Huang Lab at the
-Icahn School of Medicine at Mount Sinai. Lab collaborator validation is recorded
-in `validation/community/`; this attribution does not imply institutional
-endorsement or transfer software authorship.
+## Project team
 
-## Current authors
+| Team member | Contributions |
+| --- | --- |
+| **Ekin Kahraman** | Project creation and leadership, architecture, Rust and Python implementation, validation framework, benchmarks, releases, documentation and maintenance. |
+| **Longtao Huangfu** | Real-data execution and scaling, Minerva runs, resumption and transfer of CELLxGENE-derived network outputs. |
+| **Mohamed El Moussaoui** | IFB HPC access and computing resources, analysis support and collaboration. |
+| **Fuaad Siyaad** | ATAC preprocessing tests on human-brain and downsampled fragment data, and validation feedback. |
+| **Kuan-Lin Huang** | Scientific supervision, resource concept and collaboration direction. |
 
-- Ekin Kahraman: project creator, core architecture, Rust and Python implementation, validation framework, benchmarks, releases, documentation.
+Validation records are available in [validation/community/](validation/community/).
+
+## Software citation
+
+Ekin Kahraman is the software creator and lead author in
+[CITATION.cff](CITATION.cff) and the [software DOI](https://doi.org/10.5281/zenodo.20246040).
+The wider team is credited through the contribution roles above and the
+contributors in [.zenodo.json](.zenodo.json).
 
 ## CELLxGENE Census-derived dataset
 
@@ -18,17 +30,9 @@ Kahraman, Longtao Huangfu, Mohamed El Moussaoui and Kuan-Lin Huang, in citation
 order. See [dataset contributions](site_docs/cellxgene-resource.md#citation-and-credits)
 for their roles. This dataset has its own DOI and authorship record.
 
-## Contribution categories
-
-Future contributions should be recorded according to what was actually contributed:
-
-- Core software: implementation, architecture, tests, packaging, release engineering.
-- Validation: datasets, biological interpretation, benchmark design, reproducible test runs.
-- Documentation: examples, tutorials, installation guidance, user-facing explanations.
-- Research and writing: manuscript framing, figures, statistical analysis, response to reviewers.
-
-Software authorship, data authorship, validation authorship, and manuscript authorship are related but not identical. Any paper or formal collaboration should clarify roles before substantial new work starts.
-
 ## Attribution
 
-If you use rustscenic in a paper, report, benchmark, derivative package, or lab workflow, cite the exact release used and preserve the Apache-2.0 licence, NOTICE file, and copyright notice.
+If you use RustScenic, cite the exact software release and any dataset used.
+Preserve the Apache-2.0 licence, NOTICE file and copyright notice.
+For new work, record contributions as they develop; see
+[collaboration and authorship](docs/collaboration-and-authorship.md).

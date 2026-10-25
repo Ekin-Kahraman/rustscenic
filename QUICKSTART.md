@@ -141,3 +141,9 @@ retains earlier development evidence.
 [Installation](site_docs/installation.md) · [HPC guide](site_docs/hpc.md) ·
 [Release notes](docs/releases/v0.5.0.md) ·
 [Report a problem](https://github.com/Ekin-Kahraman/rustscenic/issues/new/choose)
+
+---
+
+Project team: **Ekin Kahraman** (creator and lead developer), Longtao Huangfu,
+Mohamed El Moussaoui, Fuaad Siyaad and Kuan-Lin Huang.
+[Team and contributions](AUTHORS.md).

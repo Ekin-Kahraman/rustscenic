@@ -3,6 +3,9 @@
 Bug reports, correctness fixes, documentation and measured performance
 improvements are welcome.
 
+RustScenic is led by **Ekin Kahraman**, with Longtao Huangfu, Mohamed El Moussaoui,
+Fuaad Siyaad and Kuan-Lin Huang. See [team and contributions](AUTHORS.md) for roles.
+
 ## Ground rules
 
 - **Measure agreement.** Compare changed outputs with the relevant reference and record differences in `validation/`. Agreement varies by stage; see the [benchmark scope](site_docs/benchmarks.md). Algorithm changes need before/after results with inputs, versions and settings.

@@ -59,8 +59,13 @@ labels* (Version 1.0.0) [Data set]. Zenodo.
   and transfer of the 696 completed outputs.
 - **Mohamed El Moussaoui:** IFB HPC access and resources for the original batch
   and supporting work.
+- **Fuaad Siyaad:** RustScenic ATAC preprocessing tests and validation feedback
+  supporting the wider software project.
 - **Kuan-Lin Huang:** scientific supervision, resource concept and collaboration
   direction.
+
+See the [project team and contributions](https://github.com/Ekin-Kahraman/rustscenic/blob/main/AUTHORS.md)
+for software roles. The dataset citation above follows its published author list.
 
 Also cite CELLxGENE and the contributing studies listed in each cohort's
 `sources.json`. See the [attribution notes](https://zenodo.org/records/23548341/files/ATTRIBUTION.md?download=1).

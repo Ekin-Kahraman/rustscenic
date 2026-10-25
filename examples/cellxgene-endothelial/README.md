@@ -52,3 +52,7 @@ Derived data and resource documentation: **CC BY 4.0**; see [LICENSING.txt](LICE
 Cite the dataset, CELLxGENE and contributing studies in `source-citations.json`.
 Dataset authors: Ekin Kahraman, Longtao Huangfu, Mohamed El Moussaoui and Kuan-Lin Huang.
 Example code: Apache-2.0; see `LICENSE-SOFTWARE`.
+
+Project team: **Ekin Kahraman** (creator and lead developer), Longtao Huangfu,
+Mohamed El Moussaoui, Fuaad Siyaad and Kuan-Lin Huang.
+See [team and contributions](../../AUTHORS.md) for their roles.

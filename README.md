@@ -18,6 +18,12 @@
 </p>
 
 <p align="center">
+  Created and led by <strong>Ekin Kahraman</strong>, with Longtao Huangfu,
+  Mohamed El Moussaoui, Fuaad Siyaad and Kuan-Lin Huang.<br>
+  <a href="AUTHORS.md">Team and contributions</a>
+</p>
+
+<p align="center">
   <a href="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml"><img alt="CI" src="https://github.com/Ekin-Kahraman/rustscenic/actions/workflows/audit.yml/badge.svg?branch=main"></a>
   <a href="https://pypi.org/project/rustscenic/"><img alt="PyPI version" src="https://img.shields.io/pypi/v/rustscenic"></a>
   <a href="LICENSE"><img alt="Software license: Apache-2.0" src="https://img.shields.io/badge/License-Apache--2.0-blue.svg"></a>
@@ -323,7 +329,6 @@ Software and example code: **Apache-2.0**. Derived data and resource
 documentation: **CC BY 4.0**; see the
 [data-licence notice](examples/cellxgene-endothelial/LICENSING.txt).
 
-Created and maintained by Ekin Kahraman; see [AUTHORS.md](AUTHORS.md)
-for attribution.
+See [AUTHORS.md](AUTHORS.md) for the project team and contribution roles.
 Questions, bugs and reproducible examples are welcome in
 [GitHub Issues](https://github.com/Ekin-Kahraman/rustscenic/issues).

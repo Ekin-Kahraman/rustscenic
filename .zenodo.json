@@ -2,10 +2,28 @@
   "title": "rustscenic: a Rust and Python implementation of SCENIC-style regulatory-network analysis",
   "upload_type": "software",
   "version": "0.5.0",
-  "description": "rustscenic is a Rust and PyO3 implementation of SCENIC-style gene regulatory network analysis, including GRN inference, AUCell scoring, topic modelling, cistarget enrichment, enhancer linking, eRegulon assembly, and an end-to-end Python pipeline API.",
+  "description": "<p>RustScenic is a Rust and PyO3 implementation of SCENIC-style gene regulatory network analysis, including GRN inference, AUCell scoring, topic modelling, cisTarget enrichment, enhancer linking, eRegulon assembly and an end-to-end Python pipeline API.</p><p>Created and led by Ekin Kahraman, with Longtao Huangfu, Mohamed El Moussaoui, Fuaad Siyaad and Kuan-Lin Huang, in collaboration with the Huang Lab at the Icahn School of Medicine at Mount Sinai.</p><p>Ekin Kahraman: software creation, architecture, Rust and Python implementation, benchmarks, releases and maintenance. Longtao Huangfu: real-data execution, scaling and dataset production. Mohamed El Moussaoui: HPC resources and analysis support. Fuaad Siyaad: ATAC preprocessing tests and validation feedback. Kuan-Lin Huang: scientific supervision, resource concept and collaboration direction.</p>",
   "creators": [
     {
       "name": "Kahraman, Ekin"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Huangfu, Longtao",
+      "type": "Researcher"
+    },
+    {
+      "name": "El Moussaoui, Mohamed",
+      "type": "ProjectMember"
+    },
+    {
+      "name": "Siyaad, Fuaad",
+      "type": "ProjectMember"
+    },
+    {
+      "name": "Huang, Kuan-Lin",
+      "type": "Supervisor"
     }
   ],
   "license": "Apache-2.0",

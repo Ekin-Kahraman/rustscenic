@@ -99,3 +99,9 @@ topic quality as a RustScenic biology failure.
 Open a GitHub issue at
 [Ekin-Kahraman/rustscenic/issues](https://github.com/Ekin-Kahraman/rustscenic/issues)
 for any clear repro that should be tracked.
+
+---
+
+Project team: **Ekin Kahraman** (creator and lead developer), Longtao Huangfu,
+Mohamed El Moussaoui, Fuaad Siyaad and Kuan-Lin Huang.
+[Team and contributions](../AUTHORS.md).

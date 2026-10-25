@@ -9,8 +9,10 @@ Infer candidate regulatory relationships and score their activity from RNA and
 chromatin-accessibility data. Built in Rust, available through Python, and runs
 on CPUs.
 
-Created by Ekin Kahraman, developed and scaled with the Kuan-Lin Huang Lab at
+Created and led by **Ekin Kahraman**, with Longtao Huangfu, Mohamed El Moussaoui,
+Fuaad Siyaad and Kuan-Lin Huang. Developed and scaled with the Huang Lab at
 the Icahn School of Medicine at Mount Sinai.
+[Team and contributions](https://github.com/Ekin-Kahraman/rustscenic/blob/main/AUTHORS.md).
 
 ## Get started
 
