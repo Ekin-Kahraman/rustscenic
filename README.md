@@ -1,16 +1,17 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/main/site_docs/assets/branding/rustscenic-logo-256.png" width="96" alt="RustScenic logo">
+  <img src="https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/main/site_docs/assets/branding/rustscenic-logo-256.png" width="160" alt="RustScenic logo">
 </p>
 
-<h1 align="center">RustScenic</h1>
-
-<p align="center">
-  Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad<br>
-  <a href="AUTHORS.md">Contributions</a>
-</p>
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="site_docs/assets/branding/rustscenic-wordmark-dark.svg">
+    <img src="site_docs/assets/branding/rustscenic-wordmark-light.svg" width="420" alt="RustScenic">
+  </picture>
+</h1>
 
 <p align="center">
   <strong>Built to be the simplest, fastest way to run regulatory-network analysis.</strong>
+  <br><br>
 </p>
 
 <p align="center">

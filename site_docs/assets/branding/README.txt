@@ -8,7 +8,8 @@ Symbol: #D46F40
 Social-preview background: #F4F1EA
 Social-preview text: #252A2E
 
-README: display rustscenic-logo-256.png at 96 x 96 pixels.
+README: display rustscenic-logo-256.png at 160 x 160 pixels.
+Use the light/dark wordmark SVGs at 420 pixels wide for the README title.
 Documentation: use the SVG and rustscenic-favicon-64.png.
 GitHub social preview: upload social-preview.png (1280 x 640) in repository
 Settings. Committing this file alone does not change the repository preview.
