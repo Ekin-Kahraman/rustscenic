@@ -1,73 +1,72 @@
 # Quickstart
 
-This example uses **v0.5.0**. It starts with an
-AnnData RNA matrix, infers a gene network and scores candidate gene sets in
-each cell. The sets are not motif-filtered or split by correlation sign.
+Infer a gene network and score candidate gene-set activity with **v0.5.0**.
+Start with [Installation](installation.md), or
+[run PBMC3k](https://github.com/Ekin-Kahraman/rustscenic/blob/main/QUICKSTART.md)
+for a complete example that downloads its own data.
 
-To separate target sets by correlation sign, use `add_correlation`,
-`build_regulons` or `add-cor`; see the [API map](api.md). They are not required
-for the basic example below.
+## Prepare your input
+
+Use an RNA AnnData file (`rna.h5ad`) with:
+
+- Cells as rows and genes as columns.
+- Log-normalised expression in `adata.X`. If it is in a layer, set
+  `adata.X = adata.layers["logcounts"]` using your layer's name.
+- Gene symbols matching your TF list. Use `data.tfs("hs")` for human or
+  `data.tfs("mm")` for mouse.
+
+For Ensembl-indexed AnnData, RustScenic can resolve gene symbols from
+`adata.var["feature_name"]`. For R inputs, see the
+[Seurat guide](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/seurat-interop.md).
+
+## Python
 
 ```python
 import anndata as ad
-import rustscenic.grn
-import rustscenic.aucell
-import rustscenic.data
+from rustscenic import aucell, data, grn
 
 adata = ad.read_h5ad("rna.h5ad")
-tfs = rustscenic.data.tfs("hs")
-
-grn = rustscenic.grn.infer(
-    adata,
-    tf_names=tfs,
-    n_estimators=500,
-    top_targets_per_tf=50,
-    seed=777,
+edges = grn.infer(
+    adata, tf_names=data.tfs("hs"), n_estimators=500,
+    top_targets_per_tf=50, seed=777,
 )
 regulons = {
     tf: group["target"].tolist()
-    for tf, group in grn.groupby("TF")
+    for tf, group in edges.groupby("TF")
     if len(group) >= 10
 }
+auc = aucell.score(adata, regulons, top_frac=0.05)
 
-auc = rustscenic.aucell.score(adata, regulons, top_frac=0.05)
+edges.to_parquet("grn.parquet")
 auc.to_parquet("aucell.parquet")
+print(edges.head())
+print(auc.iloc[:3, :3])
 ```
 
-## CLI
+`grn.parquet` contains `TF`, `target` and `importance` columns.
+`aucell.parquet` contains cells × candidate gene-set activity scores,
+with cell names in the index.
 
-The same core stages are available from the command line:
+These candidate sets are not motif-filtered or split by correlation sign.
+For signed sets and motif support, see the [API map](api.md).
+
+## Command line
+
+Run the RNA pipeline on the same prepared file. The `hs` shortcut uses the
+bundled human TF list; use `mm` for mouse.
 
 ```bash
-rustscenic grn \
-  --expression data.h5ad \
-  --tfs tfs.txt \
-  --output grn.parquet
-
-rustscenic aucell \
-  --expression data.h5ad \
-  --regulons grn.parquet \
-  --output auc.parquet
+rustscenic pipeline --rna rna.h5ad --tfs hs --output out/
 ```
 
-## End-To-End Example
+Results are written to `out/`. The pipeline separates candidate target sets
+by correlation sign; motif filtering requires motif rankings and annotations.
+For individual GRN and AUCell commands with prepared inputs, see the
+[PBMC3k walkthrough](https://github.com/Ekin-Kahraman/rustscenic/blob/main/QUICKSTART.md#command-line).
 
-From a repository checkout, run the PBMC3k RNA example:
+## Next steps
 
-```bash
-pip install "rustscenic[examples]"
-python examples/pbmc3k_end_to_end.py
-```
-
-It downloads 10x data on first use, caches it locally and writes the network,
-candidate gene sets and activity scores to `examples/out/`. It includes a
-marker-based lineage sanity check; the gene sets are not motif-filtered.
-
-For a copy-and-run PBMC3k walkthrough, see the
-[repository quickstart](https://github.com/Ekin-Kahraman/rustscenic/blob/main/QUICKSTART.md).
-To explore saved results without installation, open the
-[endothelial-cell example](demo/endothelial/index.html).
-
-For collaborators or external testers, use the
-[tester quickstart](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/tester-quickstart.md)
-in the repository.
+[Motif and multiome stages](api.md) ·
+[HPC operation](hpc.md) ·
+[Tester guide](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/tester-quickstart.md) ·
+[Explore a saved network](demo/endothelial/index.html)

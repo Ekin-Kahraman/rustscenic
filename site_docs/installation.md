@@ -1,21 +1,57 @@
 # Installation
 
-Install RustScenic as a Python package. Prebuilt packages are available for
-Linux, macOS and Windows; a GPU is not required.
+RustScenic **v0.5.0** supports Python **3.10–3.13** on Linux, macOS and Windows.
+Prebuilt packages need no Rust setup. Core analysis runs on CPUs without Java,
+Dask, CUDA or Snakemake.
 
-## Standard Install
+## Install
+
+Use a clean environment. With Conda:
 
 ```bash
-pip install rustscenic
+conda create -n rustscenic python=3.12 -y
+conda activate rustscenic
 ```
 
-This documentation targets **v0.5.0**. The [quickstart](quickstart.md) starts
-with network inference and activity scoring; the [API map](api.md) covers
-the correlation helpers and other analysis stages.
+Install and check the version:
 
-Supported Python versions: `3.10` to `3.13`.
+```bash
+python -m pip install rustscenic
+python -c "import rustscenic; print(rustscenic.__version__)"
+```
 
-Supported platforms in the release workflow:
+Expected version: `0.5.0`.
+
+<details markdown="1">
+<summary>Using venv instead of Conda</summary>
+
+With Python 3.10–3.13 installed, create an environment:
+
+```bash
+python -m venv .venv
+```
+
+Activate it on macOS or Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+Or in Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Then run the install and check commands above.
+
+</details>
+
+Next, [run the PBMC3k example](https://github.com/Ekin-Kahraman/rustscenic/blob/main/QUICKSTART.md)
+or [analyse your own data](quickstart.md).
+
+<details markdown="1">
+<summary>Supported platforms and dependencies</summary>
 
 | Platform | Architecture |
 | --- | --- |
@@ -23,56 +59,36 @@ Supported platforms in the release workflow:
 | macOS | `x86_64`, `aarch64` |
 | Windows | `x64` |
 
-Core runtime dependencies are intentionally small:
+The core dependencies (`numpy`, `pandas`, `pyarrow`, `scipy` and `anndata`)
+install automatically.
 
-- `numpy`
-- `pandas`
-- `pyarrow`
-- `scipy`
-- `anndata`
+</details>
 
-## Optional Extras
+<details markdown="1">
+<summary>Optional extras and reference comparisons</summary>
 
-```bash
-pip install "rustscenic[examples]"
-pip install "rustscenic[validation]"
-pip install "rustscenic[benchmarks]"
-```
-
-The `reference` extra includes pySCENIC ecosystem dependencies and is treated as
-informational because parts of that stack can fail on current Python packaging
-combinations. For strict reference comparisons, prefer the pinned Docker path
-under `validation/reference/`.
-
-## What This Avoids
-
-The core RustScenic path does not require:
-
-- Java or Mallet for topic modelling.
-- dask or a distributed scheduler for local runs.
-- CUDA or GPU drivers.
-- Snakemake workflow setup.
-- A large pinned environment just to import the package.
-
-## Check The Install
+The PBMC3k walkthrough uses the `examples` extra. Validation and benchmark
+extras add packages for comparison scripts.
 
 ```bash
-python - <<'PY'
-import rustscenic
-import rustscenic.grn
-import rustscenic.aucell
-import rustscenic.cistarget
-import rustscenic.topics
-
-print(rustscenic.__version__)
-print("core imports OK")
-PY
+python -m pip install "rustscenic[examples]"
+python -m pip install "rustscenic[validation]"
+python -m pip install "rustscenic[benchmarks]"
 ```
 
-## Common Failure Modes
+For pySCENIC reference comparisons, prefer the pinned
+[Docker environment](https://github.com/Ekin-Kahraman/rustscenic/tree/main/validation/reference).
+The `reference` extra can encounter upstream dependency conflicts.
 
-| Symptom | Likely cause | Fix |
-| --- | --- | --- |
-| TF list has zero overlap with expression matrix | Gene-symbol mismatch, for example ENSEMBL IDs in `var_names` | Use `var["feature_name"]` or pass matching TF names. |
-| cisTarget NES is `NaN` | Motif universe too small or zero variance across motifs | Use a real motif ranking database with enough motifs. |
-| pySCENIC reference install fails | Upstream dependency conflict | Use the pinned reference Docker path instead of relying on a fresh pip install. |
+</details>
+
+<details markdown="1">
+<summary>Troubleshooting</summary>
+
+| Symptom | What to do |
+| --- | --- |
+| Package not found after installing | Use `python -m pip` in the same environment as your script. In a notebook, select that environment's kernel. |
+| No compatible wheel, or pip tries to compile Rust | Check the Python version and platform above, then update pip with `python -m pip install --upgrade pip`. |
+| TFs do not match your genes | Check species and gene identifiers in the [input guide](quickstart.md#prepare-your-input). |
+
+</details>

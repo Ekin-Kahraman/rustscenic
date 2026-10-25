@@ -30,7 +30,7 @@
 </p>
 
 <p align="center">
-  <a href="#analyse-your-own-data">Install</a> ·
+  <a href="#get-started">Install</a> ·
   <a href="https://ekin-kahraman.github.io/rustscenic/">Documentation</a> ·
   <a href="https://github.com/Ekin-Kahraman/rustscenic/blob/main/site_docs/benchmarks.md">Benchmarks</a> ·
   <a href="site_docs/validation.md">Validation</a> ·
@@ -48,21 +48,29 @@
   Census, [openly available on Zenodo](https://doi.org/10.5281/zenodo.23548341).
   Explore the endothelial-cell example below or download the full collection.
 
-## Analyse your own data
+## Get started
 
 Current release: `v0.5.0`. Python **3.10–3.13**; Linux, macOS and Windows.
-Runs on CPUs; no GPU required.
+Runs on CPUs; no GPU or Rust setup needed with prebuilt packages.
 
 ```bash
-pip install rustscenic
+python -m pip install rustscenic
+python -c "import rustscenic; print(rustscenic.__version__)"
 ```
 
-RustScenic supports RNA regulatory-network inference, motif enrichment,
-regulon activity scoring and multiome analysis through a Python API and CLI.
-Core analysis runs without Java, Dask, CUDA or Snakemake.
+Expected version: `0.5.0`. For a clean environment, see
+[Installation](site_docs/installation.md).
 
-Infer a candidate network from a human RNA AnnData file (`rna.h5ad`) with
-gene symbols matching the bundled transcription-factor list:
+### Run a working example
+
+[Run the PBMC3k walkthrough](QUICKSTART.md). It downloads a small RNA dataset
+and saves network edges (`grn.parquet`) and per-cell activity scores
+(`aucell.parquet`).
+
+### Analyse your own data
+
+Use an RNA AnnData file (`rna.h5ad`) with cells × genes, log-normalised
+expression in `adata.X` and gene symbols in `adata.var_names`.
 
 ```python
 import anndata as ad
@@ -74,7 +82,18 @@ edges = grn.infer(
     top_targets_per_tf=50, seed=777,
 )
 edges.to_parquet("grn.parquet")
+print(edges.head())
 ```
+
+<details>
+<summary>Input formats and species</summary>
+
+The example uses human transcription factors; use `data.tfs("mm")` for mouse.
+For expression layers and Ensembl identifiers, see the
+[input guide](site_docs/quickstart.md#prepare-your-input).
+For R inputs, see the [Seurat guide](docs/seurat-interop.md).
+
+</details>
 
 <details>
 <summary>Score candidate gene-set activity</summary>
@@ -104,19 +123,16 @@ of activation or repression.
 <details>
 <summary>Command-line examples</summary>
 
-Run the RNA pipeline, or individual stages with the corresponding inputs:
+Run the RNA pipeline on the same prepared `rna.h5ad`. The `hs` shortcut uses
+the bundled human TF list; use `mm` for mouse.
 
 ```bash
-rustscenic pipeline --rna rna.h5ad --tfs tfs.txt --output out/
-rustscenic grn --expression rna.h5ad --tfs tfs.txt --output grn.parquet
-rustscenic aucell --expression rna.h5ad --regulons grn.parquet --output aucell.parquet
-rustscenic topics --expression atac.h5ad --output topics.parquet --n-topics 30
-rustscenic cistarget --rankings rankings.feather --regulons regulons.tsv --output motifs.parquet
+rustscenic pipeline --rna rna.h5ad --tfs hs --output out/
 ```
 
-The topic model requires an ATAC matrix; cisTarget requires prepared motif
-rankings and gene sets. See the [quickstart](site_docs/quickstart.md) for
-input guidance.
+Results are written to `out/`. Motif filtering needs motif rankings and
+annotation inputs. See the [RNA quickstart](site_docs/quickstart.md) for input
+guidance and the [API map](site_docs/api.md) for motif and multiome stages.
 
 </details>
 

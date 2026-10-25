@@ -1,53 +1,34 @@
-# 5-minute tester quickstart
+# Tester quickstart
 
-For collaborators trying rustscenic on their own data. The goal of
-this page is to get you from **`pip install`** to **first useful
-output** in under five minutes, and to tell you exactly what to send
-back if anything is off.
+Run a short RNA check on your own data and collect the details needed to
+report a problem. For an example that downloads its own data, use
+[PBMC3k](../QUICKSTART.md).
 
 ## Install
 
 ```bash
-pip install --upgrade rustscenic
+python -m pip install --upgrade rustscenic
+python -c "import rustscenic; print(rustscenic.__version__)"
 ```
+
+Expected version: `0.5.0`. For a clean Python 3.10–3.13 environment, see
+[Installation](../site_docs/installation.md).
 
 Wheels are also at the [latest release page](https://github.com/Ekin-Kahraman/rustscenic/releases/latest)
 if your network cannot pull from PyPI directly.
 
-Requires Python 3.10 to 3.13. Linux, macOS and Windows x64 wheels are
-published for v0.4.7.
-Brings five runtime deps: numpy, pandas, pyarrow, scipy, anndata.
+## RNA smoke test
 
-If you are running the example or validation scripts, install the
-validation extra in one line (v0.4.0+):
-
-```bash
-pip install --upgrade "rustscenic[validation]"
-```
-
-That adds the ecosystem packages used outside rustscenic core: scanpy,
-anndata, igraph, leidenalg, and scikit-learn.
-
-From a source checkout, use:
-
-```bash
-pip install -e ".[validation]"
-```
-
-For SCENIC-ecosystem parity benchmarks (pyscenic, arboreto, ctxcore), use
-`[reference]`. For topic-model benchmarks (tomotopy, gensim), use `[benchmarks]`.
-The canonical reproducible reference path remains the pinned Docker image at
-`validation/reference/Dockerfile`.
-
-## RNA-only smoke test (10 lines)
-
-If you have a scRNA AnnData and a TF list, this is the smallest run
-that exercises GRN + AUCell:
+Use a prepared RNA AnnData file as described in the
+[input guide](../site_docs/quickstart.md#prepare-your-input).
+Choose TFs present in your data; the example below uses human symbols.
+The 50-tree limit is for a smoke test. Its gene sets are not motif-filtered.
 
 ```python
 import anndata as ad
 import rustscenic.grn
 import rustscenic.aucell
+import rustscenic.data
 
 adata = ad.read_h5ad("your_data.h5ad")
 tfs = ["SPI1", "PAX5", "TCF7"]   # or rustscenic.data.tfs("human")
@@ -92,6 +73,7 @@ dataset-shape-specific.
 ## What to send back
 
 If the run looks wrong, please paste:
+
 1. The exact `pip install` line you ran (so we know which version)
 2. The shape: `print(adata.shape, adata.X.dtype)`
 3. The first ~20 lines of `var_names` and the columns of `adata.var`
