@@ -53,14 +53,8 @@ Kahraman, E., Huangfu, L., El Moussaoui, M., & Huang, K.-L. (2026).
 labels* (Version 1.0.0) [Data set]. Zenodo.
 [doi:10.5281/zenodo.23548341](https://doi.org/10.5281/zenodo.23548341).
 
-- **Ekin Kahraman:** software and workflow development, analysis design,
-  troubleshooting, verification and packaging.
-- **Longtao Huangfu:** Minerva execution and resumption of indices 9–704,
-  and transfer of the 696 completed outputs.
-- **Mohamed El Moussaoui:** IFB HPC access and resources for the original batch
-  and supporting work.
-- **Kuan-Lin Huang:** scientific supervision, resource concept and collaboration
-  direction.
+See [Contributions](https://github.com/Ekin-Kahraman/rustscenic/blob/main/AUTHORS.md)
+for project roles.
 
 Also cite CELLxGENE and the contributing studies listed in each cohort's
 `sources.json`. See the [attribution notes](https://zenodo.org/records/23548341/files/ATTRIBUTION.md?download=1).

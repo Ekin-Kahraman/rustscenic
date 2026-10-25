@@ -3,6 +3,10 @@
 Bug reports, correctness fixes, documentation and measured performance
 improvements are welcome.
 
+Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad
+
+[Contributions](AUTHORS.md)
+
 ## Ground rules
 
 - **Measure agreement.** Compare changed outputs with the relevant reference and record differences in `validation/`. Agreement varies by stage; see the [benchmark scope](site_docs/benchmarks.md). Algorithm changes need before/after results with inputs, versions and settings.

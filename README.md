@@ -5,6 +5,11 @@
 <h1 align="center">RustScenic</h1>
 
 <p align="center">
+  Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad<br>
+  <a href="AUTHORS.md">Contributions</a>
+</p>
+
+<p align="center">
   <strong>Built to be the simplest, fastest way to run regulatory-network analysis.</strong>
 </p>
 
@@ -323,7 +328,6 @@ Software and example code: **Apache-2.0**. Derived data and resource
 documentation: **CC BY 4.0**; see the
 [data-licence notice](examples/cellxgene-endothelial/LICENSING.txt).
 
-Created and maintained by Ekin Kahraman; see [AUTHORS.md](AUTHORS.md)
-for attribution.
+See [AUTHORS.md](AUTHORS.md) for the project team and contribution roles.
 Questions, bugs and reproducible examples are welcome in
 [GitHub Issues](https://github.com/Ekin-Kahraman/rustscenic/issues).

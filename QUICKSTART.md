@@ -141,3 +141,9 @@ retains earlier development evidence.
 [Installation](site_docs/installation.md) · [HPC guide](site_docs/hpc.md) ·
 [Release notes](docs/releases/v0.5.0.md) ·
 [Report a problem](https://github.com/Ekin-Kahraman/rustscenic/issues/new/choose)
+
+---
+
+Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad
+
+[Contributions](AUTHORS.md)

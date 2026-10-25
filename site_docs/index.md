@@ -1,6 +1,10 @@
 <div class="rustscenic-brand">
   <img src="assets/branding/rustscenic-logo.svg" width="96" height="96" alt="RustScenic logo">
   <h1>RustScenic</h1>
+  <p>
+    Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad<br>
+    <a href="https://github.com/Ekin-Kahraman/rustscenic/blob/main/AUTHORS.md">Contributions</a>
+  </p>
 </div>
 
 **Fast gene regulatory network analysis for single-cell data.**
@@ -9,7 +13,7 @@ Infer candidate regulatory relationships and score their activity from RNA and
 chromatin-accessibility data. Built in Rust, available through Python, and runs
 on CPUs.
 
-Created by Ekin Kahraman, developed and scaled with the Kuan-Lin Huang Lab at
+Developed and scaled with the Huang Lab at
 the Icahn School of Medicine at Mount Sinai.
 
 ## Get started

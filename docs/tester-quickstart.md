@@ -99,3 +99,9 @@ topic quality as a RustScenic biology failure.
 Open a GitHub issue at
 [Ekin-Kahraman/rustscenic/issues](https://github.com/Ekin-Kahraman/rustscenic/issues)
 for any clear repro that should be tracked.
+
+---
+
+Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad
+
+[Contributions](../AUTHORS.md)

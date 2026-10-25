@@ -12,7 +12,11 @@ license: Apache-2.0
 version: "0.5.0"
 date-released: "2026-09-09"
 doi: 10.5281/zenodo.20246040
-abstract: "rustscenic is a Rust and PyO3 implementation of SCENIC-style gene regulatory network analysis, including GRN inference, AUCell scoring, topic modelling, cistarget enrichment, enhancer linking, eRegulon assembly, and an end-to-end Python pipeline API."
+abstract: >-
+  RustScenic is a Rust and PyO3 implementation of SCENIC-style gene regulatory
+  network analysis, including GRN inference, AUCell scoring, topic modelling,
+  cisTarget enrichment, enhancer linking, eRegulon assembly and an end-to-end
+  Python pipeline API.
 keywords:
   - single-cell genomics
   - gene regulatory networks

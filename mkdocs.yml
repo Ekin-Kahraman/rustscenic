@@ -3,6 +3,9 @@ site_description: Rust and PyO3 regulatory-network toolkit for SCENIC-style sing
 site_url: https://ekin-kahraman.github.io/rustscenic/
 repo_url: https://github.com/Ekin-Kahraman/rustscenic
 repo_name: Ekin-Kahraman/rustscenic
+copyright: >-
+  Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad<br>
+  <a href="https://github.com/Ekin-Kahraman/rustscenic/blob/main/AUTHORS.md">Contributions</a>
 edit_uri: edit/main/site_docs/
 docs_dir: site_docs
 site_dir: site
