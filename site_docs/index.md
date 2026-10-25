@@ -1,11 +1,11 @@
 <div class="rustscenic-brand">
   <img src="assets/branding/rustscenic-logo.svg" width="96" height="96" alt="RustScenic logo">
   <h1>RustScenic</h1>
+  <p>
+    Ekin Kahraman · Longtao Huangfu · Mohamed El Moussaoui · Fuaad Siyaad · Kuan-Lin Huang<br>
+    <a href="https://github.com/Ekin-Kahraman/rustscenic/blob/main/AUTHORS.md">Contributions</a>
+  </p>
 </div>
-
-Ekin Kahraman · Longtao Huangfu · Mohamed El Moussaoui · Fuaad Siyaad · Kuan-Lin Huang
-
-[Contributions](https://github.com/Ekin-Kahraman/rustscenic/blob/main/AUTHORS.md)
 
 **Fast gene regulatory network analysis for single-cell data.**
 
