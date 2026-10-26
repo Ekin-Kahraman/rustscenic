@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Bin canonical sparse GRN inputs without dense temporary TF columns. Keep
+  the original accumulation path for duplicate or unsorted CSC rows.
+- Use an exact-order histogram fast path for zero-heavy RNA features.
+- Move GRN edge filtering into the native core, release the Python GIL during
+  filtering, and select per-TF top targets without fully sorting each group.
+  Cap temporary allocation by the actual edge count for large requested caps.
+  Python API, fitting defaults, tie order and result metadata are unchanged.
+
 ## 0.5.1 - 2026-10-26
 
 - Reject AUCell tuple inputs with a non-2D expression matrix or a gene-name

@@ -5,6 +5,7 @@ use pyo3::types::{PyAny, PyDict, PyList};
 use rayon::prelude::*;
 
 use rustscenic_aucell::{aucell_sparse_csr, aucell_view};
+use rustscenic_grn::postprocess::filter_edges as filter_grn_edges;
 use rustscenic_grn::{
     correlation::{
         correlations_dense_view, correlations_sparse_csc, regulations_from_correlations,
@@ -449,8 +450,9 @@ fn grn_edges_to_py(
     tf_overlap: TfOverlapSummary,
     expression_max: f32,
 ) -> PyResult<GrnInferFilteredPyResult> {
-    let (raw_n_edges, adjacencies) =
-        filter_grn_edges(adjacencies, min_importance, top_targets_per_tf);
+    let (raw_n_edges, adjacencies) = py.detach(move || {
+        filter_grn_edges(adjacencies, min_importance, top_targets_per_tf)
+    });
     let tfs = PyList::new(
         py,
         adjacencies.iter().map(|a| gene_names[a.tf_idx].as_str()),
@@ -749,52 +751,6 @@ fn validate_finite_sparse_values_max(
         max_value = max_value.max(value);
     }
     Ok(max_value)
-}
-
-fn filter_grn_edges(
-    mut edges: Vec<IndexedAdjacency>,
-    min_importance: Option<f32>,
-    top_targets_per_tf: Option<usize>,
-) -> (usize, Vec<IndexedAdjacency>) {
-    let raw_n_edges = edges.len();
-    if let Some(min_importance) = min_importance {
-        edges.retain(|edge| edge.importance >= min_importance);
-    }
-    let Some(top_targets_per_tf) = top_targets_per_tf else {
-        return (raw_n_edges, edges);
-    };
-    if top_targets_per_tf == 0 || edges.is_empty() {
-        return (raw_n_edges, Vec::new());
-    }
-
-    let mut by_tf: HashMap<usize, Vec<usize>> = HashMap::new();
-    for (idx, edge) in edges.iter().enumerate() {
-        by_tf.entry(edge.tf_idx).or_default().push(idx);
-    }
-
-    let mut order = Vec::with_capacity(top_targets_per_tf.saturating_mul(by_tf.len()));
-    for group in by_tf.values_mut() {
-        group.sort_by(|&a, &b| {
-            compare_importance_desc(
-                f64::from(edges[a].importance),
-                f64::from(edges[b].importance),
-                a,
-                b,
-            )
-        });
-        order.extend(group.iter().take(top_targets_per_tf).copied());
-    }
-    order.sort_by(|&a, &b| {
-        compare_importance_desc(
-            f64::from(edges[a].importance),
-            f64::from(edges[b].importance),
-            a,
-            b,
-        )
-    });
-
-    let filtered = order.into_iter().map(|idx| edges[idx]).collect();
-    (raw_n_edges, filtered)
 }
 
 /// Compute per-cell AUCell regulon activity.
