@@ -1,4 +1,6 @@
 """Tests for rustscenic.aucell.score."""
+import warnings
+
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
@@ -18,6 +20,67 @@ class TestAucellShape:
         auc = aucell.score(small_expr, canonical_regulons, top_frac=0.1)
         assert (auc.values >= 0).all()
         assert (auc.values <= 1.0).all()
+
+
+class TestAucellTupleAxes:
+    @pytest.mark.parametrize("matrix_type", [np.asarray, sp.csr_matrix, sp.csc_matrix],
+                             ids=["dense", "csr", "csc"])
+    @pytest.mark.parametrize("name_count", [0, 1, 5, 15])
+    def test_wrong_gene_count_rejected_before_diagnostics_or_backend(
+        self, matrix_type, name_count, monkeypatch
+    ):
+        X = matrix_type(np.ones((60, 10), dtype=np.float32))
+
+        def forbidden(*args, **kwargs):
+            pytest.fail("invalid axes reached diagnostics or a Rust backend")
+
+        for name in ["duplicate_gene_summary", "prepare_regulon_indices_with_coverage",
+                     "_aucell_score", "_aucell_score_sparse_csr"]:
+            monkeypatch.setattr(aucell, name, forbidden)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            with pytest.raises(ValueError, match=rf"gene_names length is {name_count}.*10 gene columns"):
+                aucell.score((X, [f"g{i}" for i in range(name_count)]),
+                             {"R": ["g0"]}, top_frac=0.5)
+        assert not caught
+
+    @pytest.mark.parametrize("shape", [(), (10,), (2, 3, 4)],
+                             ids=["scalar", "one-dimensional", "three-dimensional"])
+    def test_non_matrix_rejected_before_diagnostics_or_backend(self, shape, monkeypatch):
+        def forbidden(*args, **kwargs):
+            pytest.fail("invalid dimensions reached diagnostics or a Rust backend")
+
+        monkeypatch.setattr(aucell, "duplicate_gene_summary", forbidden)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            with pytest.raises(ValueError, match="two-dimensional.*cells by genes"):
+                aucell.score((np.ones(shape, dtype=np.float32), ["g0"]),
+                             {"R": ["g0"]}, top_frac=0.5)
+        assert not caught
+
+    @pytest.mark.parametrize("matrix_type", [np.asarray, sp.csr_matrix, sp.csc_matrix],
+                             ids=["dense", "csr", "csc"])
+    def test_valid_tuple_matches_named_dataframe_exactly(self, matrix_type, rng):
+        X = rng.random((60, 10)).astype(np.float32)
+        genes = [f"g{i}" for i in range(10)]
+        regulons = {"R": ["g0", "g1", "g2"]}
+        expected = aucell.score(pd.DataFrame(X, columns=genes), regulons, top_frac=0.3)
+        actual = aucell.score((matrix_type(X), iter(genes)), regulons, top_frac=0.3)
+        pd.testing.assert_frame_equal(actual, expected, check_exact=True)
+        assert actual.attrs["regulon_coverage"] == expected.attrs["regulon_coverage"]
+
+    @pytest.mark.parametrize("matrix_type", [np.asarray, sp.csr_matrix, sp.csc_matrix],
+                             ids=["dense", "csr", "csc"])
+    def test_valid_duplicate_symbols_still_sum(self, matrix_type, rng):
+        X = rng.random((60, 10)).astype(np.float32)
+        genes = ["g0", "g0"] + [f"g{i}" for i in range(2, 10)]
+        merged = np.column_stack((X[:, 0] + X[:, 1], X[:, 2:]))
+        regulons = {"R": ["g0", "g2", "g3"]}
+        expected = aucell.score((merged, ["g0"] + genes[2:]), regulons, top_frac=0.3)
+        with pytest.warns(UserWarning, match="duplicate gene name"):
+            actual = aucell.score((matrix_type(X), genes), regulons, top_frac=0.3)
+        pd.testing.assert_frame_equal(actual, expected, check_exact=True)
+        assert actual.attrs["regulon_coverage"] == expected.attrs["regulon_coverage"]
 
 
 class TestAucellCorrectness:

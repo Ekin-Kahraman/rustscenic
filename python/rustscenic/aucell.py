@@ -70,6 +70,17 @@ def score(
     pandas.DataFrame of shape (n_cells, n_regulons). Index: cell barcodes.
     Columns: regulon names. Per-regulon gene-coverage counts are stored on
     the DataFrame's ``.attrs["regulon_coverage"]`` dict, keyed by regulon name.
+
+    Raises
+    ------
+    ValueError
+        A tuple input's matrix is not two-dimensional (cells by genes), or
+        its gene-name count differs from the number of matrix columns.
+
+    Notes
+    -----
+    Tuple-axis validation is unreleased and is not included in the published
+    PyPI 0.5.0 wheel.
     """
     if chunk_size is not None and chunk_size < 1:
         raise ValueError(f"chunk_size must be None or a positive integer, got {chunk_size}")
@@ -78,6 +89,7 @@ def score(
             f"top_frac must be in (0, 1], got {top_frac}. "
             f"top_frac=0 scores every cell to zero; top_frac>1 is invalid."
         )
+    X_raw, gene_names, cell_names = _coerce(expression)
     if top_frac > 0.3:
         import warnings
         warnings.warn(
@@ -87,7 +99,6 @@ def score(
             UserWarning, stacklevel=3,
         )
 
-    X_raw, gene_names, cell_names = _coerce(expression)
     # Warn if the rank-cutoff K = floor(top_frac × n_genes) is so small
     # that no regulon's members can be inside it. Was a silent-all-zero
     # mode at very small top_frac on small gene sets.
@@ -213,7 +224,19 @@ def _coerce(expression):
         X, gene_names = expression
         if not sp.issparse(X):
             X = np.asarray(X)
-        return X, string_list(gene_names), list(range(X.shape[0]))
+        if X.ndim != 2:
+            raise ValueError(
+                "expression matrix must be two-dimensional (cells by genes); "
+                f"got shape {X.shape}"
+            )
+        gene_names = string_list(gene_names)
+        if len(gene_names) != X.shape[1]:
+            raise ValueError(
+                f"gene_names length is {len(gene_names)} but expression "
+                f"has {X.shape[1]} gene columns (shape {X.shape}). "
+                "Supply one name per gene column in cells-by-genes orientation."
+            )
+        return X, gene_names, list(range(X.shape[0]))
     raise TypeError("expression must be AnnData, pandas.DataFrame, or (matrix, gene_names) tuple")
 
 
