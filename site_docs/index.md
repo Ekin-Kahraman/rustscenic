@@ -18,16 +18,14 @@ the Icahn School of Medicine at Mount Sinai.
 
 ## Get started
 
-Current release `v0.5.0`; Python **3.10–3.13**; Linux, macOS and Windows.
-
-Source candidate: `v0.5.1` (unpublished).
+Current release `v0.5.1`; Python **3.10–3.13**; Linux, macOS and Windows.
 
 ```bash
 python -m pip install rustscenic
 python -c "import rustscenic; print(rustscenic.__version__)"
 ```
 
-Expected version: `0.5.0`.
+Expected version: `0.5.1`.
 
 [Run the PBMC3k example](https://github.com/Ekin-Kahraman/rustscenic/blob/main/QUICKSTART.md) ·
 [Analyse your own data](quickstart.md) ·
@@ -110,7 +108,7 @@ annotations; biological accuracy has not been established.
 ## Documentation and citation
 
 [API guide](api.md) · [HPC operation](hpc.md) · [Scope](limitations.md) ·
-[Release notes](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/releases/v0.5.0.md)
+[Release notes](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/releases/v0.5.1.md)
 
 The package has automated Rust/Python tests, installation checks and real-data
 validation workflows. Cite the exact [RustScenic release](https://doi.org/10.5281/zenodo.20246040)

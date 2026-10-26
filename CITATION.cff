@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "Unpublished source candidate v0.5.1. If you use rustscenic in published work, software, benchmarks, or reports, please cite this repository or the exact release you used."
+message: "If you use rustscenic in published work, software, benchmarks, or reports, please cite this repository or the exact release you used."
 title: "rustscenic: a Rust and Python implementation of SCENIC-style regulatory-network analysis"
 type: software
 authors:
@@ -28,3 +28,4 @@ keywords:
   - multiome
   - Rust
   - Python
+date-released: "2026-10-26"

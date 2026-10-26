@@ -79,8 +79,8 @@ def score(
 
     Notes
     -----
-    Tuple-axis validation is included in the unpublished 0.5.1 source candidate.
-    It is not included in the published PyPI 0.5.0 wheel.
+    Tuple-axis validation was added in version 0.5.1. It is absent from the
+    0.5.0 wheel.
     """
     if chunk_size is not None and chunk_size < 1:
         raise ValueError(f"chunk_size must be None or a positive integer, got {chunk_size}")

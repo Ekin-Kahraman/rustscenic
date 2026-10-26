@@ -9,6 +9,10 @@ without extracting archive contents.
 
 ## Candidate state
 
+Prepare these fields only on a dedicated branch for a future release. A checkout
+in published release state uses strict default/tag validation; it does not pass
+`--candidate` until an explicit newer candidate has been prepared.
+
 An unpublished candidate keeps the README installation version, website and
 evidence card at the currently published version. The source metadata uses a
 strictly newer version. `release-candidate.json` records the candidate version,
@@ -55,7 +59,7 @@ they do not establish biological accuracy or performance.
 For a locally built wheel compatible with the current machine:
 
 ```bash
-python scripts/smoke_release_wheel.py --wheel /absolute/path/to/rustscenic-0.5.1-cp310-abi3-macosx_11_0_arm64.whl
+python scripts/smoke_release_wheel.py --wheel /absolute/path/to/rustscenic-VERSION-cp310-abi3-macosx_11_0_arm64.whl
 ```
 
 ## Later publication transition
@@ -69,10 +73,11 @@ citation release date, remove unpublished citation/Zenodo markers, and finalize
 the release notes and source documentation without stale candidate claims.
 Historical benchmark measurements retain their original version and scope.
 
-Then run strict validation against the intended tag and artifacts:
+Then run strict validation against the intended tag and artifacts, replacing
+`VERSION` with that reviewed release version:
 
 ```bash
-python scripts/check_release_version.py --tag v0.5.1 --dist target/wheels
+python scripts/check_release_version.py --tag vVERSION --dist target/wheels
 ```
 
 Tagging and publication require a separate explicit maintainer decision. No

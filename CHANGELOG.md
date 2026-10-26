@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 0.5.1 - Candidate prepared 2026-10-26 (unpublished)
+## 0.5.1 - 2026-10-26
 
 - Reject AUCell tuple inputs with a non-2D expression matrix or a gene-name
   count that differs from the gene columns before scoring. Previously,

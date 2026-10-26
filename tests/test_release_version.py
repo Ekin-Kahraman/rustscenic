@@ -37,7 +37,6 @@ RELEASE_FILES = [
     "CITATION.cff",
     "README.md",
     "pyproject.toml",
-    "release-candidate.json",
     "site_docs/assets/rustscenic-evidence.svg",
     "site_docs/index.md",
     "docs/releases/v0.5.1.md",
@@ -59,6 +58,63 @@ def _replace(root: Path, path: str, old: str, new: str) -> None:
     file.write_text(text.replace(old, new), encoding="utf-8")
 
 
+def _copy_candidate_state(destination: Path) -> Path:
+    """Build a candidate fixture independently of the checkout's release state.
+
+    The synthetic 0.5.1-over-0.5.0 transition exercises candidate policy without
+    requiring unpublished metadata in the live repository.
+    """
+    root = _copy_release_state(destination)
+    (root / "release-candidate.json").write_text(
+        json.dumps(
+            {
+                "candidate_version": "0.5.1",
+                "published_version": "0.5.0",
+                "prepared_on": "2026-10-26",
+            }
+        )
+    )
+    for name, old, new in [
+        ("README.md", "Current release: `v0.5.1`", "Current release: `v0.5.0`"),
+        ("README.md", "Expected version: `0.5.1`", "Expected version: `0.5.0`"),
+        ("site_docs/index.md", "Current release `v0.5.1`", "Current release `v0.5.0`"),
+        (
+            "site_docs/index.md",
+            "Expected version: `0.5.1`",
+            "Expected version: `0.5.0`",
+        ),
+        ("site_docs/assets/rustscenic-evidence.svg", ">v0.5.1<", ">v0.5.0<"),
+        (
+            "CHANGELOG.md",
+            "## 0.5.1 - 2026-10-26",
+            "## 0.5.1 - Candidate prepared 2026-10-26 (unpublished)",
+        ),
+        ("CITATION.cff", 'date-released: "2026-10-26"\n', ""),
+        (
+            "CITATION.cff",
+            'message: "',
+            'message: "Unpublished source candidate v0.5.1. ',
+        ),
+    ]:
+        _replace(root, name, old, new)
+    for name in ["README.md", "site_docs/index.md"]:
+        with (root / name).open("a") as handle:
+            handle.write("\nSource candidate: `v0.5.1` (unpublished).\n")
+    zenodo_path = root / ".zenodo.json"
+    zenodo = json.loads(zenodo_path.read_text())
+    zenodo["description"] = (
+        "<p>Unpublished source candidate v0.5.1. Published release: v0.5.0.</p>"
+        + zenodo["description"]
+    )
+    zenodo_path.write_text(json.dumps(zenodo, indent=2))
+    (root / "docs/releases/v0.5.1.md").write_text(
+        "# RustScenic v0.5.1 candidate: fixture\n\n"
+        "**Draft for review. This candidate is not published. The current PyPI and\n"
+        "GitHub release is v0.5.0.**\n\nPublished release: `v0.5.0`.\n"
+    )
+    return root
+
+
 def _promote_fixture(root: Path) -> Path:
     """Model the explicit later publication transition in a disposable fixture."""
     state = json.loads((root / "release-candidate.json").read_text())
@@ -76,6 +132,12 @@ def _promote_fixture(root: Path) -> Path:
         "site_docs/index.md",
         "Current release `v0.5.0`",
         "Current release `v0.5.1`",
+    )
+    _replace(
+        root,
+        "site_docs/index.md",
+        "Expected version: `0.5.0`",
+        "Expected version: `0.5.1`",
     )
     _replace(root, "site_docs/assets/rustscenic-evidence.svg", ">v0.5.0<", ">v0.5.1<")
     _replace(
@@ -104,22 +166,32 @@ def _promote_fixture(root: Path) -> Path:
     return root
 
 
-def test_candidate_metadata_and_current_published_labels_are_consistent():
-    assert validate_repository(ROOT, candidate=True) == "0.5.1"
-    assert "Current release: `v0.5.0`" in (ROOT / "README.md").read_text()
-    assert "Current release `v0.5.0`" in (ROOT / "site_docs/index.md").read_text()
+def test_live_release_metadata_passes_strict_default_and_tag_validation():
+    assert validate_repository(ROOT) == "0.5.1"
+    assert validate_repository(ROOT, tag="v0.5.1") == "0.5.1"
+    assert "Current release: `v0.5.1`" in (ROOT / "README.md").read_text()
+    assert "Current release `v0.5.1`" in (ROOT / "site_docs/index.md").read_text()
+    with pytest.raises(ReleaseValidationError, match="candidate mode requires"):
+        validate_repository(ROOT, candidate=True)
+
+
+def test_explicit_candidate_fixture_passes_without_changing_live_release(tmp_path):
+    assert (
+        validate_repository(_copy_candidate_state(tmp_path), candidate=True) == "0.5.1"
+    )
 
 
 @pytest.mark.parametrize("tag", [None, "v0.5.1"])
-def test_candidate_cannot_pass_default_or_tag_publication_validation(tag):
+def test_candidate_cannot_pass_default_or_tag_publication_validation(tmp_path, tag):
+    root = _copy_candidate_state(tmp_path)
     with pytest.raises(
         ReleaseValidationError, match="candidate state cannot pass publication"
     ):
-        validate_repository(ROOT, tag=tag)
+        validate_repository(root, tag=tag)
 
 
 def test_explicitly_promoted_state_retains_strict_default_and_tag_validation(tmp_path):
-    root = _promote_fixture(_copy_release_state(tmp_path))
+    root = _promote_fixture(_copy_candidate_state(tmp_path))
     assert validate_repository(root) == "0.5.1"
     assert validate_repository(root, tag="v0.5.1") == "0.5.1"
     with pytest.raises(ReleaseValidationError, match="candidate mode requires"):
@@ -169,7 +241,7 @@ def test_candidate_and_tag_are_incompatible_in_api_and_cli():
     ],
 )
 def test_candidate_mode_does_not_exempt_mismatches(tmp_path, path, old, new):
-    root = _copy_release_state(tmp_path)
+    root = _copy_candidate_state(tmp_path)
     _replace(root, path, old, new)
     with pytest.raises(ReleaseValidationError):
         validate_repository(root, candidate=True)
@@ -179,7 +251,7 @@ def test_candidate_mode_does_not_exempt_mismatches(tmp_path, path, old, new):
 def test_candidate_must_be_newer_than_consistent_published_baseline(
     tmp_path, published
 ):
-    root = _copy_release_state(tmp_path)
+    root = _copy_candidate_state(tmp_path)
     for path, old in [
         ("README.md", "Current release: `v0.5.0`"),
         ("README.md", "Expected version: `0.5.0`"),
@@ -209,7 +281,7 @@ def test_candidate_must_be_newer_than_consistent_published_baseline(
     ],
 )
 def test_candidate_state_must_be_explicit_and_unpublished(tmp_path, change):
-    root = _copy_release_state(tmp_path)
+    root = _copy_candidate_state(tmp_path)
     if change == "missing_state":
         (root / "release-candidate.json").unlink()
     elif change == "missing_label":
@@ -232,7 +304,7 @@ def test_candidate_state_must_be_explicit_and_unpublished(tmp_path, change):
 
 
 def test_publication_rejects_lingering_candidate_citation_or_notes(tmp_path):
-    root = _promote_fixture(_copy_release_state(tmp_path))
+    root = _promote_fixture(_copy_candidate_state(tmp_path))
     _replace(
         root,
         "CITATION.cff",
@@ -244,7 +316,7 @@ def test_publication_rejects_lingering_candidate_citation_or_notes(tmp_path):
 
 
 def test_publication_rejects_a_draft_release_notes_banner(tmp_path):
-    root = _promote_fixture(_copy_release_state(tmp_path))
+    root = _promote_fixture(_copy_candidate_state(tmp_path))
     _replace(
         root,
         "docs/releases/v0.5.1.md",
@@ -255,16 +327,18 @@ def test_publication_rejects_a_draft_release_notes_banner(tmp_path):
         validate_repository(root, tag="v0.5.1")
 
 
-def test_release_notes_keep_historical_benchmark_scope_and_candidate_limits():
+def test_release_notes_keep_historical_scope_and_verified_artifact_limits():
     workflow = (ROOT / ".github/workflows/release.yml").read_text()
     historical = (ROOT / "docs/releases/v0.5.0.md").read_text()
-    candidate = (ROOT / "docs/releases/v0.5.1.md").read_text()
+    notes = (ROOT / "docs/releases/v0.5.1.md").read_text()
     assert "body_path: docs/releases/${{ github.ref_name }}.md" in workflow
     assert "generate_release_notes: false" in workflow
     assert "71.49 GB" in historical and "21.4%" in historical
     assert "does not include the unfinished CELLxGENE" in historical
-    assert "candidate is not published" in candidate
-    assert "No new performance or biological accuracy result" in candidate
+    assert "Released 2026-10-26." in notes
+    assert "CPython 3.12.15" in notes and "CPython 3.14.5" in notes
+    assert "other three wheels is not" in notes
+    assert "No new performance or biological accuracy result" in notes
 
 
 def test_every_release_upload_fails_when_its_build_output_is_missing():
@@ -351,11 +425,12 @@ def test_sdist_metadata_is_read_without_following_links_or_extracting(tmp_path):
 
 
 def test_candidate_artifact_filename_validation_is_not_relaxed(tmp_path):
+    root = _copy_candidate_state(tmp_path / "source")
     _write_artifacts(tmp_path)
     validate_artifacts(tmp_path, "0.5.1")
     assert (
         RELEASE_MODULE.main(
-            ["--root", str(ROOT), "--candidate", "--dist", str(tmp_path)]
+            ["--root", str(root), "--candidate", "--dist", str(tmp_path)]
         )
         == 0
     )
@@ -366,7 +441,7 @@ def test_candidate_artifact_filename_validation_is_not_relaxed(tmp_path):
         validate_artifacts(tmp_path, "0.5.1")
     assert (
         RELEASE_MODULE.main(
-            ["--root", str(ROOT), "--candidate", "--dist", str(tmp_path)]
+            ["--root", str(root), "--candidate", "--dist", str(tmp_path)]
         )
         == 1
     )
