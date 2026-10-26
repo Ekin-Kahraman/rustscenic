@@ -106,7 +106,8 @@ print(edges.head())
 The example uses human transcription factors; use `data.tfs("mm")` for mouse.
 For expression layers and Ensembl identifiers, see the
 [input guide](site_docs/quickstart.md#prepare-your-input).
-For R inputs, see the [Seurat guide](docs/seurat-interop.md).
+For R inputs, see the [Seurat / R guide](https://ekin-kahraman.github.io/rustscenic/seurat-interop/)
+for explicit RNA layer selection and a sparse matrix round-trip.
 
 </details>
 
