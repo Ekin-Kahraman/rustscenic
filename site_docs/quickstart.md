@@ -17,7 +17,8 @@ Use an RNA AnnData file (`rna.h5ad`) with:
 
 For Ensembl-indexed AnnData, RustScenic can resolve gene symbols from
 `adata.var["feature_name"]`. For R inputs, see the
-[Seurat guide](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/seurat-interop.md).
+[Seurat / R guide](seurat-interop.md) for explicit RNA layer selection and a
+sparse matrix round-trip.
 
 ## Python
 

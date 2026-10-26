@@ -18,6 +18,7 @@ nav:
   - Overview: index.md
   - Installation: installation.md
   - Quickstart: quickstart.md
+  - Seurat / R interoperability: seurat-interop.md
   - CELLxGENE resource: cellxgene-resource.md
   - API Map: api.md
   - API reference:

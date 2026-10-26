@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Replace the Seurat guide's ambiguous converter/layer recipe with explicit
+  sparse RNA `data`-layer exchange, paired R/Python examples and named activity
+  return. Validate the example with SeuratObject 5.4.0 and the published
+  RustScenic 0.5.0 wheel; distinguish this from untested full Seurat and
+  third-party converter workflows. Publish the guide in the documentation.
 - Record the GRN seed, fitting settings and output filters in ``grn_fit``
   metadata, which is carried into pipeline manifests. Record requested target
   blocking separately from its unused effective value. Accepted nonfinite
