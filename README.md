@@ -24,9 +24,8 @@
 </p>
 
 <p align="center">
-  Rust implementations of core <a href="https://github.com/aertslab/pySCENIC">pySCENIC</a>
-  and <a href="https://github.com/aertslab/scenicplus">SCENIC+</a> analysis stages for
-  single-cell RNA and multiome data, accessible through a Python API.<br>
+  A Rust rewrite of core <a href="https://github.com/aertslab/pySCENIC">pySCENIC</a>
+  and <a href="https://github.com/aertslab/scenicplus">SCENIC+</a> analysis stages, with a Python API.<br>
   Developed and scaled with the
   <strong><a href="https://labs.icahn.mssm.edu/kuanhuanglab/">Huang Lab at Mount Sinai</a></strong>.
 </p>
