@@ -3,6 +3,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>RustScenic · endothelial-cell example</title>
+<meta name="description" content="Choose a regulator and inspect predicted target genes from a saved RustScenic analysis of 5,000 endothelial cells. No installation needed.">
+<link rel="canonical" href="https://ekin-kahraman.github.io/rustscenic/demo/endothelial/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RustScenic">
+<meta property="og:title" content="Explore an endothelial-cell gene network | RustScenic">
+<meta property="og:description" content="Choose a regulator and inspect predicted target genes from 5,000 sampled cells. Explore saved results directly in your browser.">
+<meta property="og:url" content="https://ekin-kahraman.github.io/rustscenic/demo/endothelial/">
+<meta property="og:image" content="https://ekin-kahraman.github.io/rustscenic/assets/examples/endothelial-social-preview.jpg">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="720">
+<meta property="og:image:alt" content="RustScenic browser example showing a regulator selector and predicted target genes with model importance and expression correlation.">
+<meta name="twitter:card" content="summary_large_image">
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f4f7f8;color:#18293b;font:16px/1.55 system-ui,sans-serif}
 main{max-width:1000px;margin:40px auto;padding:0 24px}header{margin-bottom:24px}
@@ -19,7 +31,8 @@ th{font-size:13px;color:#526273}a{color:#087f8c}.note{font-size:14px}footer{font
 <header><div class="brand">RustScenic · resource example</div>
 <h1>Explore an endothelial-cell network</h1>
 <p class="muted">5,000 sampled cells · 234 source datasets · 184,000 retained edges</p>
-<p>Choose a regulator to inspect its top predicted targets within a motif-supported gene set.</p></header>
+<p>Choose a regulator to inspect its top predicted targets within a motif-supported gene set.</p>
+<p class="note"><a href="https://github.com/Ekin-Kahraman/rustscenic">View RustScenic on GitHub</a> · <a href="https://ekin-kahraman.github.io/rustscenic/quickstart/">Run an analysis with Python</a></p></header>
 <section class="panel">
 <div class="controls"><label for="regulator">Regulator</label><select id="regulator"></select><span class="summary" id="summary"></span></div>
 <p class="muted note" id="activity"></p>
