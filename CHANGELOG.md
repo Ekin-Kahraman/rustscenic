@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Reject AUCell tuple inputs with a non-2D expression matrix or a gene-name
+  count that differs from the gene columns before scoring. Previously,
+  mismatched names could produce plausible activity and coverage results.
+  Valid-input scoring and duplicate-symbol aggregation are unchanged.
 - Replace the Seurat guide's ambiguous converter/layer recipe with explicit
   sparse RNA `data`-layer exchange, paired R/Python examples and named activity
   return. Validate the example with SeuratObject 5.4.0 and the published
