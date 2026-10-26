@@ -48,22 +48,23 @@ class ERegulon:
     Attributes
     ----------
     tf
-        Transcription factor gene symbol.
+        TF identifier used for the assembled module.
     enhancers
         Peak IDs whose accessibility correlates with at least one of
         this eRegulon's target genes (the peaks that carry the TF's motif
         and are linked to a target gene by rustscenic.enhancer).
     target_genes
-        Gene symbols reachable from this TF via either (a) an enhancer
-        link on a TF-enriched peak, or (b) direct GRN co-expression when
-        ``use_grn_intersection=False`` in :func:`build_eregulons`.
+        Genes linked to supporting motif-enriched peaks. When GRN
+        intersection is enabled, these must also be TF targets in the GRN;
+        disabling it skips that GRN filter.
     n_enhancer_links
-        Number of (peak, gene) edges that survive all filters. A useful
-        sanity signal - eRegulons with only 1-2 supporting links are
-        weak; ≥ 5 is typical for a real regulon.
+        Number of actual (peak, gene) edges surviving the assembly filters.
     motif_auc
         Mean motif-enrichment AUC across the supporting peaks (from
-        cistarget). Higher = stronger TF-motif evidence.
+        cistarget).
+    target_to_peaks
+        Target gene mapped to the peaks supporting its retained edges.
+        Used to flatten actual edges without a Cartesian product.
     """
 
     tf: str
@@ -77,6 +78,7 @@ class ERegulon:
     target_to_peaks: dict = field(default_factory=dict)
 
     def __len__(self) -> int:
+        """Return the number of target genes in this eRegulon."""
         return len(self.target_genes)
 
 
@@ -158,6 +160,32 @@ def build_eregulons_dataframe(
     This is the preferred API for large/HPC runs because it avoids building
     Python ``ERegulon`` objects before writing parquet. ``build_eregulons``
     remains available when callers need the object representation.
+
+    Parameters
+    ----------
+    grn
+        TF-target edge table, optionally signed by ``regulation``. ``None``
+        skips GRN support filtering.
+    cistarget
+        Motif enrichment table with ``regulon``, ``motif``, ``auc`` and a
+        ``peak_id`` or ``region_id`` column.
+    enhancer_links
+        Peak-gene links with ``peak_id``, ``gene`` and ``correlation`` columns.
+    min_target_genes
+        Minimum number of surviving target genes per eRegulon.
+    min_enhancer_links
+        Minimum number of surviving peak-gene links per eRegulon.
+    cistarget_auc_threshold
+        Minimum motif AUC retained before assembly; zero disables this filter.
+    use_grn_intersection
+        Keep only enhancer-linked genes also supported by the TF's GRN edges
+        when true and ``grn`` is provided.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Long table with ``tf``, ``enhancer``, ``target_gene``,
+        ``n_enhancer_links`` and ``motif_auc`` columns.
     """
     return _build_eregulons_dataframe(
         grn,
@@ -435,6 +463,21 @@ def regulons_from_dataframe(
     This avoids reconstructing public ``ERegulon`` objects, nested
     ``target_to_peaks`` dictionaries, and Python-side feature de-duplication
     in benchmark and HPC paths that only need ``(regulon, features)`` pairs.
+
+    Parameters
+    ----------
+    eregulons
+        Long eRegulon table containing ``tf`` and the selected feature column.
+    feature_col
+        Column whose values become regulon features, for example
+        ``target_gene`` or ``enhancer``.
+    suffix_with_index
+        Ask the Rust conversion helper to append an index to regulon names.
+
+    Returns
+    -------
+    list[tuple[str, list[str]]]
+        Regulon names and their de-duplicated feature lists for AUCell.
     """
     _require_columns(eregulons, {"tf", feature_col}, name="eregulons")
     names, features = _eregulon_regulon_pairs_from_columns(
@@ -451,6 +494,17 @@ def eregulons_to_dataframe(eregulons: Sequence[ERegulon]) -> pd.DataFrame:
     One row per (TF, enhancer, target_gene) triple. Useful for parquet
     persistence, joining back to downstream AUCell scoring, and quick
     cross-regulon aggregation.
+
+    Parameters
+    ----------
+    eregulons
+        Sequence of ``ERegulon`` objects to flatten using ``target_to_peaks``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Columns ``tf``, ``enhancer``, ``target_gene``, ``n_enhancer_links``
+        and ``motif_auc``, with one row per actual peak-target edge.
     """
     rows = []
     for er in eregulons:

@@ -43,6 +43,18 @@ def _save(df, path: Path) -> None:
 
 
 def cmd_grn(args: argparse.Namespace) -> int:
+    """Run GRN inference for the ``grn`` command.
+
+    Parameters
+    ----------
+    args
+        Namespace parsed by ``main`` for the ``grn`` subcommand.
+
+    Returns
+    -------
+    int
+        Zero after writing the inferred edge table.
+    """
     from . import __version__
     from . import grn as rs_grn
 
@@ -87,7 +99,13 @@ def cmd_grn(args: argparse.Namespace) -> int:
 
 
 def cmd_add_cor(args: argparse.Namespace) -> int:
-    """Add Pearson correlation and SCENIC polarity to GRN adjacencies."""
+    """Add Pearson correlation and SCENIC polarity to GRN adjacencies.
+
+    Parameters
+    ----------
+    args
+        Namespace parsed by ``main`` for the ``add-cor`` subcommand.
+    """
     from . import grn as rs_grn
     import pandas as pd
 
@@ -133,6 +151,18 @@ def cmd_add_cor(args: argparse.Namespace) -> int:
 
 
 def cmd_aucell(args: argparse.Namespace) -> int:
+    """Score regulon activity for the ``aucell`` command.
+
+    Parameters
+    ----------
+    args
+        Namespace parsed by ``main`` for the ``aucell`` subcommand.
+
+    Returns
+    -------
+    int
+        Zero after writing activity scores and any requested metadata.
+    """
     from . import __version__
     from . import aucell as rs_aucell
     from .pipeline import _candidate_regulons_from_grn
@@ -252,6 +282,18 @@ def _regulons_from_adjacencies(df, args, *, unsigned_builder, signed_builder):
 
 
 def cmd_topics(args: argparse.Namespace) -> int:
+    """Fit a topic model for the ``topics`` command.
+
+    Parameters
+    ----------
+    args
+        Namespace parsed by ``main`` for the ``topics`` subcommand.
+
+    Returns
+    -------
+    int
+        Zero after writing the topic model outputs.
+    """
     from . import __version__
     from . import topics as rs_topics
 
@@ -287,6 +329,18 @@ def cmd_topics(args: argparse.Namespace) -> int:
 
 
 def cmd_cistarget(args: argparse.Namespace) -> int:
+    """Score motif enrichment for the ``cistarget`` command.
+
+    Parameters
+    ----------
+    args
+        Namespace parsed by ``main`` for the ``cistarget`` subcommand.
+
+    Returns
+    -------
+    int
+        Zero after writing motif enrichment rows.
+    """
     from . import __version__
     from . import cistarget as rs_cistarget
     import pandas as pd
@@ -328,7 +382,13 @@ def cmd_cistarget(args: argparse.Namespace) -> int:
 
 
 def cmd_pipeline(args: argparse.Namespace) -> int:
-    """Run available stages through the public pipeline orchestrator."""
+    """Run available stages through the public pipeline orchestrator.
+
+    Parameters
+    ----------
+    args
+        Namespace parsed by ``main`` for the ``pipeline`` subcommand.
+    """
     from . import pipeline
 
     if (args.fragments is None) != (args.peaks is None):
@@ -380,7 +440,18 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
-    """Check the installed Rust extension exposes all required symbols."""
+    """Check the installed Rust extension exposes all required symbols.
+
+    Parameters
+    ----------
+    args
+        Namespace parsed by ``main`` for the ``doctor`` subcommand.
+
+    Returns
+    -------
+    int
+        Zero if the backend check passes, otherwise one.
+    """
     from . import backend
 
     payload = backend.backend_capabilities()
@@ -389,6 +460,19 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Parse command-line arguments and dispatch the requested subcommand.
+
+    Parameters
+    ----------
+    argv
+        Arguments excluding the program name. ``None`` uses the process's
+        command-line arguments, as in ``argparse.ArgumentParser.parse_args``.
+
+    Returns
+    -------
+    int
+        Exit status returned by the selected command handler.
+    """
     from . import __version__
     p = argparse.ArgumentParser(prog="rustscenic", description="Fast SCENIC+ stage replacements (Rust + PyO3)")
     p.add_argument("--version", action="version", version=f"rustscenic {__version__}")

@@ -74,6 +74,78 @@ class PipelineResult:
 
     All file paths point inside ``output_dir``. Stages that were skipped
     because inputs weren't provided have ``None`` for their result path.
+
+    Attributes
+    ----------
+    output_dir
+        Directory containing the run's written artifacts and manifest.
+    atac_matrix_path
+        Written cells-by-peaks AnnData file, when ATAC inputs were available.
+    cell_barcode_filter
+        Optional barcode-filter counts recovered from ATAC metadata.
+    grn_path
+        Written TF-target importance table.
+    regulons_path
+        Written active regulon collection used for scoring.
+    candidate_regulons_path
+        Written GRN-derived candidate regulons before motif pruning.
+    pruned_regulons_path
+        Written motif-pruned regulons, when annotation pruning was run.
+    aucell_path
+        Written cells-by-regulons activity scores.
+    topics_dir
+        Directory containing the fitted topic matrices, when ATAC was used.
+    cistarget_path
+        Written motif enrichment table, when motif rankings were supplied.
+    enhancer_links_path
+        Written peak-to-gene links, when linking inputs were available.
+    eregulons_path
+        Written long eRegulon edge table, when assembly was run.
+    integrated_adata_path
+        RNA AnnData file with AUCell scores attached, unless writing was disabled.
+    elapsed
+        Recorded stage elapsed times in seconds.
+    io_elapsed
+        Separately instrumented IO elapsed times in seconds.
+    memory
+        Process peak-RSS snapshots observed after recorded stages. These are
+        cumulative process peaks, not incremental allocations per stage.
+    n_cells
+        Number of RNA cells entering the run.
+    n_grn_edges
+        Number of inferred TF-target edges.
+    n_regulons
+        Number of active regulons used for AUCell scoring.
+    n_candidate_regulons
+        Number of GRN-derived candidate regulons before motif pruning.
+    n_pruned_regulons
+        Number of regulons retained by motif pruning, when performed.
+    n_cistarget_rows
+        Number of reported motif enrichment rows, when enrichment was run.
+    n_enhancer_links
+        Number of retained peak-to-gene links, when linking was run.
+    n_eregulon_rows
+        Number of rows in the assembled long eRegulon edge table.
+    n_eregulons
+        Number of assembled eRegulons.
+    aucell_shape
+        Activity-matrix dimensions as ``[cells, regulons]``.
+    regulon_source
+        Label recording how the active regulon collection was selected.
+    grn_fit
+        Recorded GRN fitting settings and fitted-tree summaries.
+    grn_correlation
+        Recorded polarity and correlation settings and edge-count summaries.
+    topics_fit
+        Recorded topic-model settings and assignment summaries.
+    backend_execution
+        Per-stage backend symbol provenance or reasons stages were skipped.
+    matrix_inputs
+        Recorded profiles of the RNA and shared-cell ATAC inputs.
+    cistarget_rankings
+        Recorded gene-ranking input provenance and projection metadata.
+    region_cistarget_rankings
+        Recorded region-ranking input provenance and projection metadata.
     """
 
     output_dir: Path
@@ -112,6 +184,7 @@ class PipelineResult:
     region_cistarget_rankings: dict = field(default_factory=dict)
 
     def manifest(self) -> dict:
+        """Return result metadata, converting top-level Path values to strings."""
         d = asdict(self)
         for k, v in d.items():
             if isinstance(v, Path):
@@ -255,11 +328,60 @@ def run(
         dichotomisation.
     grn_target_block_size
         Retained for API compatibility. Flat GRN scheduling ignores the value.
+    grn_n_estimators
+        Maximum boosting trees fitted per target gene. Early stopping may
+        fit fewer; passed to ``grn.infer``.
+    grn_early_stop_window
+        Trailing-window size for the selected GRN stopping monitor.
+        Zero disables early stopping.
+    grn_top_targets
+        Maximum highest-importance targets per candidate regulon, applied
+        separately to each TF and polarity in signed mode. Candidate sets
+        require at least ``min(10, grn_top_targets)`` genes.
+    grn_rho_threshold
+        Absolute Pearson-correlation threshold for activating or repressing
+        GRN edges. Neutral edges are excluded from signed regulons.
+        Ignored for ``grn_regulon_polarities="unsigned"``.
+    grn_rho_mask_dropouts
+        Exclude cells where either gene is zero when scoring correlations.
+        Ignored for unsigned regulons.
+    aucell_top_frac
+        Fraction of the highest-ranked genes per cell used for AUCell
+        recovery, greater than zero and at most one.
+    topics_n_topics
+        Number of latent topics requested when ATAC input is available.
+    topics_n_passes
+        Passes over the ATAC corpus for ``topics_method="vb"``.
+        Gibbs fitting uses ``topics_n_iters`` instead.
+    cistarget_top_frac
+        Ranking-universe fraction used for enrichment recovery AUC and
+        for the target-recovery window during motif-annotation pruning.
+    cistarget_auc_threshold
+        Minimum motif AUC for enrichment reporting and annotation-based
+        motif filtering on the gene- and region-ranking paths.
+    cistarget_nes_threshold
+        Optional minimum normalized enrichment score. ``None`` applies
+        no NES filter; a supplied threshold excludes undefined NES values.
+    enhancer_max_distance
+        Maximum peak-center to gene-TSS distance in base pairs for
+        enhancer-to-gene linking when its inputs are available.
+    enhancer_min_abs_corr
+        Minimum absolute correlation retained for enhancer-to-gene links.
+    eregulon_min_target_genes
+        Minimum surviving target genes required for an assembled eRegulon.
+    eregulon_min_enhancer_links
+        Minimum peak-to-gene links required for an assembled eRegulon.
     write_integrated_adata
         Write ``rna_with_regulons.h5ad`` with AUCell scores attached to
         ``obs``. Default ``True`` preserves the full end-to-end artifact.
         Set ``False`` for HPC profiling runs that need to measure compute
         stages without the final full-RNA h5ad materialisation and write.
+    seed
+        Random seed passed to GRN inference and the selected topic fitter.
+        Hold the Gibbs thread count and other settings fixed as well.
+    verbose
+        Enable pipeline progress logging. Called stages may still emit
+        their own messages or warnings when this is false.
 
     Returns
     -------

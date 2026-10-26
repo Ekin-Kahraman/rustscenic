@@ -5,7 +5,7 @@ modeling. Converges in tens of passes vs Gibbs's thousands of iterations.
 
     rustscenic.topics.fit(adata_or_sparse, n_topics=50) -> TopicsResult
 
-Output is a `TopicsResult` namedtuple with:
+Output is a `TopicsResult` dataclass with:
     cell_topic:  (cells x topics) probability matrix (each row sums to 1)
     topic_peak:  (topics x peaks) probability matrix (each row sums to 1)
 
@@ -39,6 +39,20 @@ class RustBackendArray(np.ndarray):
 
 @dataclass
 class TopicsResult:
+    """Fitted topic weights and backend provenance.
+
+    Attributes
+    ----------
+    cell_topic
+        Cells-by-topics probability DataFrame, indexed by cell name.
+    topic_peak
+        Topics-by-peaks probability DataFrame, with peak names as columns.
+    n_topics
+        Number of topics requested for the fit.
+    backend_execution
+        Optional dictionary describing the Rust backend symbols used.
+    """
+
     cell_topic: pd.DataFrame   # (cells x topics)
     topic_peak: pd.DataFrame   # (topics x peaks)
     n_topics: int
@@ -69,6 +83,19 @@ class TopicsResult:
         return out
 
     def top_peaks_per_topic(self, n: int = 20) -> CandidateEnhancers:
+        """Select the highest-weight peaks for each fitted topic.
+
+        Parameters
+        ----------
+        n
+            Maximum number of peaks retained per topic from ``topic_peak``.
+
+        Returns
+        -------
+        CandidateEnhancers
+            Topic names mapped to their top peak names, with Rust backend
+            provenance attached.
+        """
         return _candidate_enhancers_per_topic(self.topic_peak, top_n=n)
 
 
@@ -83,6 +110,16 @@ def assignment_summary(cell_topic: pd.DataFrame) -> dict[str, int]:
 
     Returns active argmax-topic and empty-cell counts without materialising a
     Python boolean mask over the cells-by-topics matrix.
+
+    Parameters
+    ----------
+    cell_topic
+        Cells-by-topics weight DataFrame.
+
+    Returns
+    -------
+    dict[str, int]
+        Counts named ``active_argmax_topics`` and ``empty_cells``.
     """
     _, active_topics, empty_cells = _topic_assignment_indices(cell_topic)
     return {
@@ -138,6 +175,10 @@ def fit(
         Learning-rate schedule (Hoffman 2010).
     batch_size, n_passes
         Minibatch SGD controls.
+    seed
+        Random seed passed to the online-VB backend.
+    verbose
+        Print fitting progress and timing to standard error.
 
     Returns
     -------
@@ -248,6 +289,8 @@ def fit_gibbs(
         keep it fixed when comparing biological outputs. Speedup is workload
         dependent and often saturates once topic-word reads become
         memory-bandwidth bound.
+    verbose
+        Print fitting progress and timing to standard error.
 
     Returns
     -------

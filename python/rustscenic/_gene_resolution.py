@@ -192,6 +192,15 @@ def warn_if_poor_coverage(
     This catches the silent-near-zero case that the existing
     ``all regulons dropped`` warning misses: a regulon with 3 out of 50
     genes still runs, and still produces a floor-bound AUC score.
+
+    Parameters
+    ----------
+    coverage
+        Regulon names mapped to ``(matched_gene_count, total_gene_count)``.
+    threshold
+        Warn when a nonempty regulon's matched fraction is below this value.
+    stacklevel
+        Stack depth passed to ``warnings.warn`` to locate the caller.
     """
     poor = [
         (name, matched, total)
@@ -251,7 +260,17 @@ def warn_if_max_likely_unnormalized(
     max_threshold: float = 50.0,
     stacklevel: int = 2,
 ) -> None:
-    """Warn from a Rust-collected expression maximum without rescanning in Python."""
+    """Warn from a Rust-collected expression maximum without rescanning in Python.
+
+    Parameters
+    ----------
+    max_val
+        Observed expression maximum; ``None`` skips the check.
+    max_threshold
+        Finite maximum above which the normalization warning is emitted.
+    stacklevel
+        Stack depth passed to ``warnings.warn`` to locate the caller.
+    """
     if max_val is None:
         return
     try:
@@ -280,6 +299,14 @@ def dedupe_by_symbol(X, gene_names: Sequence[str]):
     total per-gene expression aggregated across transcripts. This
     preserves signal; the alternative (drop all but one) silently
     loses half the gene's reads.
+
+    Parameters
+    ----------
+    X
+        Dense NumPy or SciPy sparse cells-by-genes matrix with numeric
+        float32/float64, int32/int64 or uint32/uint64 values.
+    gene_names
+        Gene symbols corresponding to the columns of ``X``.
 
     Returns
     -------
@@ -322,13 +349,28 @@ def duplicate_gene_summary(
     *,
     max_examples: int = 3,
 ) -> tuple[int, list[str]]:
-    """Return duplicate gene count and example names from the Rust stage helper."""
+    """Return duplicate gene count and example names from the Rust stage helper.
+
+    Parameters
+    ----------
+    gene_names
+        Gene symbols to inspect for duplicates.
+    max_examples
+        Maximum number of duplicate-name examples to return.
+    """
     duplicate_count, examples = _gene_duplicate_summary(list(gene_names), int(max_examples))
     return int(duplicate_count), list(examples)
 
 
 def dedupe_backend_symbol_for_matrix(X) -> str | None:
-    """Return the Rust dedupe kernel symbol that ``dedupe_by_symbol`` will use."""
+    """Return the Rust dedupe kernel symbol that ``dedupe_by_symbol`` will use.
+
+    Parameters
+    ----------
+    X
+        Dense NumPy or SciPy sparse matrix whose dtype and sparse status
+        select the kernel. Unsupported dtypes return ``None``.
+    """
     import scipy.sparse as sp
 
     dtype = np.dtype(X.dtype)

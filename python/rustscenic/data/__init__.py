@@ -162,7 +162,44 @@ def motif_rankings_cache_path(
     filename: str | None = None,
     url: str | None = None,
 ) -> Path:
-    """Return the expected local motif-ranking cache path without IO."""
+    """Return the expected local motif-ranking cache path without IO.
+
+    Parameters
+    ----------
+    species
+        Human (``hs``, ``human``, ``hg38``) or mouse (``mm``, ``mouse``,
+        ``mm10``) species alias used to select the default assembly.
+    genome
+        Assembly token used in a generated filename. ``None`` chooses
+        ``hg38`` for human or ``mm10`` for mouse.
+    motif_collection
+        Motif-collection token. The leading ``mc_`` is removed when
+        constructing the filename.
+    refseq_release
+        Accepted for interface compatibility; unused in the local cache key.
+    region
+        Database mode: ``gene_based`` or ``region_based``. Selects the
+        generated filename layout.
+    window
+        Regulatory-window token in generated gene-based filenames.
+        Unused for region-based filenames.
+    score_type
+        Filename suffix token, normally ``rankings``.
+    cache_dir
+        Cache directory; defaults to ``~/.cache/rustscenic/cistarget``.
+        This path-only helper does not create it.
+    filename
+        Explicit local filename. ``None`` constructs one from the other
+        filename tokens; it is not derived from ``url``.
+    url
+        Accepted for interface compatibility; ignored in the local path.
+
+    Returns
+    -------
+    pathlib.Path
+        Expected cache file, which need not exist. No download, directory
+        creation or Feather loading is performed.
+    """
     return _motif_rankings_cache_path(
         species=species,
         genome=genome,
@@ -291,7 +328,55 @@ def motif_rankings_path(
     url: str | None = None,
     verbose: bool = True,
 ) -> Path:
-    """Fetch/cache motif rankings and return the local path without loading it."""
+    """Fetch/cache motif rankings and return the local path without loading it.
+
+    Parameters
+    ----------
+    species
+        Human (``hs``, ``human``, ``hg38``) or mouse (``mm``, ``mouse``,
+        ``mm10``) alias selecting the remote species directory.
+    genome
+        Assembly token in the database filename and URL. ``None`` chooses
+        ``hg38`` for human or ``mm10`` for mouse.
+    motif_collection
+        Motif-collection directory token; a leading ``mc_`` is removed
+        when constructing the filename.
+    refseq_release
+        Annotation directory in generated gene-based URLs. Unused by
+        region-based URLs and not part of the local cache key.
+    region
+        ``gene_based`` for genes-versus-motifs or ``region_based`` for
+        screen regions-versus-motifs filename and URL layouts. Names are
+        constructed without checking that a remote database exists.
+    window
+        Regulatory-window token in generated gene-based filenames.
+        Unused for region-based filenames.
+    score_type
+        Filename suffix token, normally ``rankings``.
+    cache_dir
+        Cache directory; defaults to ``~/.cache/rustscenic/cistarget``.
+        Created when needed.
+    filename
+        Override the local filename and the final component of a generated
+        URL. ``None`` builds a name from the other filename tokens.
+    url
+        Full download-URL override. It does not determine the local filename.
+        An existing local file is reused without fetching this URL; use a
+        distinct ``filename`` or ``cache_dir`` for a different resource.
+    verbose
+        Print a download message when an uncached file is fetched.
+
+    Returns
+    -------
+    pathlib.Path
+        Cached or newly downloaded database file. The Feather table is not
+        loaded, and existing files are reused without checksum verification.
+
+    Raises
+    ------
+    RuntimeError
+        If downloading fails. A partially written local file is removed.
+    """
     return _ensure_motif_rankings_cached(
         species=species,
         genome=genome,
@@ -361,7 +446,10 @@ def download_motif_rankings(
         Escape hatch - pass an aertslab feather filename directly to
         bypass the auto-built name. Combined with the auto-built dir.
     url
-        Full URL escape hatch - bypasses both name and dir construction.
+        Full download-URL override. The local cache name still comes from
+        ``filename`` or the generated filename tokens, not from this URL.
+    verbose
+        Print a download message when an uncached file is fetched.
 
     Returns
     -------
@@ -473,6 +561,8 @@ def download_gene_coords(
         (``~/.cache/rustscenic/gene_coords/``).
     url
         Escape hatch for an alternate GENCODE GTF URL.
+    verbose
+        Print a message when the annotation GTF must be downloaded.
 
     Returns
     -------

@@ -417,6 +417,11 @@ def prune_enriched_motifs(
         DataFrame mapping motifs to TF names. Common column names such as
         ``motif``, ``motif_id``, ``features`` and ``TF``, ``gene_name`` are
         auto-detected; pass ``motif_col`` / ``tf_col`` to override.
+    motif_col
+        Motif identifier column in ``motif_annotations``; auto-detected
+        when omitted.
+    tf_col
+        TF symbol column in ``motif_annotations``; auto-detected when omitted.
     auc_threshold
         Optional minimum AUC to keep before applying annotations. ``None``
         preserves the rows already returned by ``enrich``.
@@ -581,6 +586,44 @@ def prune_regulons(
     pruning semantics more closely than keeping the whole GRN top-N list.
     ``nes_threshold`` adds the canonical pyscenic / pycistarget NES filter
     on top of motif annotation matching; pass ``3.0`` for the standard cutoff.
+
+    Parameters
+    ----------
+    enriched
+        Motif enrichment rows containing ``regulon``, ``motif`` and ``auc``.
+        An ``nes`` column is required when ``nes_threshold`` is set.
+    regulons
+        Candidate regulons as a name-to-genes mapping, ``(name, genes)``
+        pairs or accepted regulon objects.
+    motif_annotations
+        DataFrame mapping motif identifiers to TF symbols.
+    rankings
+        Optional motifs-by-genes rank DataFrame. When provided, restrict
+        surviving targets to the supported motifs' top-ranked window.
+    top_frac
+        Fraction of the ranking universe used for target recovery when
+        ``rankings`` is provided.
+    auc_threshold
+        Optional minimum motif AUC applied before annotation matching.
+    nes_threshold
+        Optional minimum motif NES applied before annotation matching.
+    min_genes
+        Minimum retained target count for a final regulon.
+    motif_col
+        Motif identifier column in ``motif_annotations``; auto-detected
+        when omitted.
+    tf_col
+        TF symbol column in ``motif_annotations``; auto-detected when omitted.
+    case_sensitive
+        Match annotation TF symbols case-sensitively when true.
+    rank_universe_size
+        Original feature count for projected rankings. Leave unset when
+        columns cover the full ranking universe.
+
+    Returns
+    -------
+    dict[str, list[str]]
+        Surviving regulon names mapped to their retained target genes.
     """
     candidate_pairs = list(iter_regulon_pairs(regulons))
     if not candidate_pairs:
@@ -876,6 +919,17 @@ def load_aertslab_feather(path) -> pd.DataFrame:
 
     The feather file typically has `motifs` or `features` as one column and the
     rest as genes. Returns a DataFrame indexed by motif name.
+
+    Parameters
+    ----------
+    path
+        Feather-file path accepted by ``pyarrow.feather.read_feather``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Ranking table with ``features`` or ``motifs`` moved to the index
+        when such a column exists.
     """
     import pyarrow.feather as feather
     df = feather.read_feather(path)

@@ -121,7 +121,20 @@ def missing_backend_symbols(
     extension: Any,
     required: dict[str, list[str]] = REQUIRED_RUST_BACKEND_SYMBOLS,
 ) -> list[str]:
-    """Return ``stage.symbol`` entries missing from a RustScenic extension."""
+    """Return ``stage.symbol`` entries missing from a RustScenic extension.
+
+    Parameters
+    ----------
+    extension
+        Extension module or module-like object whose attributes are checked.
+    required
+        Stage names mapped to the backend symbol names each stage requires.
+
+    Returns
+    -------
+    list[str]
+        Missing attributes, qualified by the stage that requires them.
+    """
     return [
         f"{stage}.{symbol}"
         for stage, symbols in required.items()
@@ -131,7 +144,14 @@ def missing_backend_symbols(
 
 
 def backend_capabilities() -> dict[str, Any]:
-    """Record Rust extension symbols required by the benchmarked pipeline."""
+    """Record Rust extension symbols required by the benchmarked pipeline.
+
+    Returns
+    -------
+    dict[str, Any]
+        ``ok``, ``extension_error``, ``required_symbols`` and
+        ``missing_symbols`` describing the installed extension.
+    """
     try:
         import rustscenic._rustscenic as ext
     except Exception as exc:  # pragma: no cover - package self-check path
