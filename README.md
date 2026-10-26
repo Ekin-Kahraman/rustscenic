@@ -205,6 +205,8 @@ Inside the extracted folder, Python users can run:
 python3 example.py --tf ETS1
 ```
 
+If RustScenic is useful to you, [star the repository](https://github.com/Ekin-Kahraman/rustscenic).
+
 <br>
 
 ## Performance
