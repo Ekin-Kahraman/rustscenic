@@ -5,6 +5,24 @@ pool for Rust work, and pin every BLAS/OpenMP pool to one thread. LSF launchers
 under `validation/hpc/minerva/` provide Minerva-specific wrapping and evidence
 collection; the Python and Rust APIs do not depend on LSF or personal paths.
 
+## GRN settings in manifests (unreleased)
+
+The next release records the GRN seed, learning rate, feature-sampling fraction,
+tree depth and output filters in `grn_fit`, alongside the existing stopping and
+fitted-tree summaries. `pipeline.run` includes these values in `manifest.json`,
+including RNA-only runs. They are also available from `grn.infer` as
+`result.attrs["grn_fit"]`.
+
+`target_block_size_requested` preserves the normalized compatibility argument;
+`target_block_size_effective` is `null` because flat scheduling ignores it.
+`min_importance` is normally a number or `null`. Accepted nonfinite thresholds
+are represented as the strings `"NaN"`, `"Infinity"` and `"-Infinity"` so the
+metadata remains valid strict JSON. These markers do not change filtering.
+
+The settings do not capture all input transformations, data identities or
+software and hardware details. Keep those records with the analysis script.
+This metadata addition is not included in the published PyPI 0.5.0 wheel.
+
 ## Thread contract
 
 ```bash

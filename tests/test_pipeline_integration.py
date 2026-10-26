@@ -629,6 +629,38 @@ def test_pipeline_run_can_skip_integrated_h5ad_for_compute_profiling(tmp_path):
     }
 
 
+def test_rna_only_manifest_preserves_grn_fit_settings(tmp_path, small_expr):
+    import rustscenic.pipeline
+
+    result = rustscenic.pipeline.run(
+        small_expr,
+        tmp_path / "out",
+        tfs=["g0", "g1", "g2"],
+        grn_n_estimators=8,
+        grn_max_features=np.float32(0.375),
+        grn_early_stop_window=0,
+        grn_target_block_size=np.int64(7),
+        grn_top_targets=5,
+        grn_regulon_polarities="unsigned",
+        write_integrated_adata=False,
+        seed=np.uint64(0),
+        verbose=False,
+    )
+    manifest = json.loads((tmp_path / "out" / "manifest.json").read_text())
+    assert json.loads(json.dumps(manifest, allow_nan=False)) == manifest
+    assert manifest["topics_fit"] == {}
+    assert manifest["grn_fit"] == result.grn_fit
+    assert manifest["grn_fit"]["seed"] == 0
+    assert manifest["grn_fit"]["max_features"] == 0.375
+    assert manifest["grn_fit"]["learning_rate"] == 0.01
+    assert manifest["grn_fit"]["max_depth"] == 3
+    assert manifest["grn_fit"]["top_targets_per_tf"] is None
+    assert manifest["grn_fit"]["min_importance"] is None
+    assert manifest["grn_fit"]["target_block_size_requested"] == 7
+    assert manifest["grn_fit"]["target_block_size_effective"] is None
+    assert manifest["grn_fit"]["fitted_trees_max"] == 8
+
+
 def test_pipeline_run_with_pre_built_adata_atac_skips_fragments_to_matrix(tmp_path):
     """When ``adata_atac`` is supplied, pipeline.run uses it directly and
     does not call fragments_to_matrix. Closes the v0.4 gate item: real-data

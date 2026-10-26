@@ -450,6 +450,94 @@ class TestGrnEarlyStopping:
         assert first.attrs["grn_fit"] == second.attrs["grn_fit"]
 
 
+class TestGrnProvenance:
+    @pytest.mark.parametrize("sparse_input", [False, True])
+    @pytest.mark.parametrize(
+        "threshold, recorded",
+        [
+            (None, None),
+            (np.float32(0.125), 0.125),
+            (float("nan"), "NaN"),
+            (float("inf"), "Infinity"),
+            (float("-inf"), "-Infinity"),
+        ],
+    )
+    def test_fit_settings_are_normalized_and_json_safe(
+        self, small_expr, sparse_input, threshold, recorded
+    ):
+        import json
+        from scipy import sparse
+
+        values = small_expr.to_numpy()
+        if sparse_input:
+            values = sparse.csc_matrix(values)
+        out = grn.infer(
+            (values, small_expr.columns),
+            tf_names=["g0", "g1", "g2"],
+            n_estimators=np.int64(8),
+            learning_rate=np.float64(0.05),
+            max_features=np.float32(0.5),
+            subsample=0.75,
+            max_depth=np.int64(2),
+            early_stop_window=0,
+            seed=np.uint64(0),
+            top_targets_per_tf=np.int64(5),
+            min_importance=threshold,
+            target_block_size=np.int64(3),
+            verbose=False,
+        )
+        fit = out.attrs["grn_fit"]
+        assert json.loads(json.dumps(fit, allow_nan=False)) == fit
+        assert fit["seed"] == 0 and type(fit["seed"]) is int
+        assert fit["learning_rate"] == 0.05
+        assert fit["max_features"] == 0.5
+        assert fit["max_depth"] == 2 and type(fit["max_depth"]) is int
+        assert fit["top_targets_per_tf"] == 5
+        assert fit["min_importance"] == recorded
+        assert fit["target_block_size_requested"] == 3
+        assert fit["target_block_size_effective"] is None
+        legacy = {
+            "early_stop_mode": "arboreto",
+            "early_stop_window": 0,
+            "n_estimators_ceiling": 8,
+            "subsample": 0.75,
+            "target_count": small_expr.shape[1],
+            "fitted_trees_min": 8,
+            "fitted_trees_max": 8,
+            "fitted_trees_mean": 8.0,
+            "fitted_trees_median": 8.0,
+        }
+        assert {key: fit[key] for key in legacy} == legacy
+        assert len(out) <= 15
+        if recorded in ("NaN", "Infinity"):
+            assert out.empty
+
+    @pytest.mark.parametrize("sparse_input", [False, True])
+    def test_requested_block_size_does_not_claim_effective_blocking(
+        self, small_expr, sparse_input
+    ):
+        from scipy import sparse
+
+        values = small_expr.to_numpy()
+        if sparse_input:
+            values = sparse.csc_matrix(values)
+        kwargs = dict(n_estimators=8, seed=19, verbose=False)
+        implicit = grn.infer((values, small_expr.columns), ["g0", "g1"], **kwargs)
+        requested = grn.infer(
+            (values, small_expr.columns), ["g0", "g1"],
+            target_block_size=3, **kwargs,
+        )
+        assert implicit.attrs["grn_fit"]["target_block_size_requested"] is None
+        assert requested.attrs["grn_fit"]["target_block_size_requested"] == 3
+        assert implicit.attrs["grn_fit"]["target_block_size_effective"] is None
+        assert requested.attrs["grn_fit"]["target_block_size_effective"] is None
+        assert implicit.attrs["grn_fit"]["top_targets_per_tf"] is None
+        assert implicit.attrs["grn_fit"]["min_importance"] is None
+        implicit.attrs = {}
+        requested.attrs = {}
+        pd.testing.assert_frame_equal(implicit, requested, check_exact=True)
+
+
 class TestGrnCorrelation:
     @staticmethod
     def expression_frame():
