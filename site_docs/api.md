@@ -6,6 +6,8 @@ alone, or combined through `rustscenic.pipeline.run`.
 **Version note:** this page describes v0.5.0. The correlation helpers,
 `early_stop_mode`, and pipeline polarity options require v0.5.0 or later.
 Start with the [quickstart](quickstart.md) for a basic workflow.
+For every public function, class, parameter and default, see the
+[Python API reference](reference/index.md).
 
 ## RNA Regulatory Network
 

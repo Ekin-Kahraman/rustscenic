@@ -20,6 +20,21 @@ nav:
   - Quickstart: quickstart.md
   - CELLxGENE resource: cellxgene-resource.md
   - API Map: api.md
+  - API reference:
+      - Overview: reference/index.md
+      - GRN: reference/grn.md
+      - AUCell: reference/aucell.md
+      - cisTarget: reference/cistarget.md
+      - Topics: reference/topics.md
+      - Preprocessing and QC: reference/preproc.md
+      - Enhancer links: reference/enhancer.md
+      - eRegulons: reference/eregulon.md
+      - Specificity: reference/specificity.md
+      - Pipeline: reference/pipeline.md
+      - Data: reference/data.md
+      - Backend capabilities: reference/backend.md
+      - Command-line entry points: reference/cli.md
+      - Quickstart entry point: reference/quickstart.md
   - HPC operation: hpc.md
   - Benchmarks: benchmarks.md
   - Validation: validation.md
@@ -30,3 +45,30 @@ markdown_extensions:
   - tables
   - toc:
       permalink: true
+plugins:
+  - search
+  - mkdocstrings:
+      enable_inventory: true
+      handlers:
+        python:
+          paths: [python]
+          load_external_modules: false
+          options:
+            allow_inspection: false
+            docstring_style: numpy
+            docstring_options:
+              # Matrix-like inputs can be intentionally untyped in the source.
+              warn_missing_types: false
+            show_if_no_docstring: true
+            filters: ["!^_", "^__len__$"]
+            members_order: source
+            show_submodules: false
+            show_root_heading: true
+            show_root_full_path: true
+            heading_level: 2
+            show_source: false
+            show_signature_annotations: true
+            separate_signature: true
+            line_length: 88
+            merge_init_into_class: true
+            show_attribute_values: false

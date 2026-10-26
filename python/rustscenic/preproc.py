@@ -265,6 +265,11 @@ class qc:
           - ``sub_nucleosomal`` (uint32) - fragments < 150 bp
           - ``mono_nucleosomal`` (uint32) - 150–299 bp
           - ``di_nucleosomal`` (uint32) - 300–449 bp
+
+        Parameters
+        ----------
+        fragments_path
+            Path to the 10x fragments file used for the per-barcode summaries.
         """
         fragments_path = str(Path(fragments_path))
         barcodes, means, medians, counts, sub, mono, di = _insert_size_stats(
@@ -296,6 +301,13 @@ class qc:
 
         Returns a pandas Series indexed by barcode. UCSC vs Ensembl
         chrom conventions are normalised at join time.
+
+        Parameters
+        ----------
+        fragments_path
+            Path to the 10x fragments file.
+        peaks_path
+            BED-file path defining the peak intervals used for overlap counts.
         """
         fragments_path = str(Path(fragments_path))
         peaks_path = str(Path(peaks_path))

@@ -51,6 +51,14 @@ def _synthetic_fixture():
 
 
 def main() -> int:
+    """Run the small PBMC-3k GRN example, with a synthetic fallback.
+
+    Returns
+    -------
+    int
+        Zero on completion or one when required imports are unavailable.
+        Scanpy or remote-data unavailability selects the synthetic example.
+    """
     try:
         import anndata as ad  # noqa: F401
         import rustscenic.grn

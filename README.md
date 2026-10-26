@@ -332,7 +332,8 @@ without rerunning the analysis.**
 ## Documentation
 
 [Installation](site_docs/installation.md) ·
-[API reference](site_docs/api.md) ·
+[API map](site_docs/api.md) ·
+[Python API reference](https://ekin-kahraman.github.io/rustscenic/reference/) ·
 [HPC operation](site_docs/hpc.md) ·
 [Benchmarks](site_docs/benchmarks.md) ·
 [Validation](site_docs/validation.md) ·

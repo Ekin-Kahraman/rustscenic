@@ -58,6 +58,12 @@ body::before {
 
 .bs-sidebar .nav-link {
   color: var(--rustscenic-rust);
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.doc-heading {
+  overflow-wrap: anywhere;
 }
 
 .col-md-9 .rustscenic-brand img {

@@ -55,6 +55,21 @@ def infer(
         ``(n_cells, n_genes)`` float32/float64.
     tf_names
         Iterable of candidate transcription factor gene symbols.
+    n_estimators
+        Maximum number of boosting trees fitted for each target gene.
+    learning_rate
+        Positive shrinkage applied to each tree's prediction update.
+    max_features
+        Fraction of candidate TF features considered at each split, in
+        ``(0, 1]``. At least one feature is considered.
+    subsample
+        Fraction of cells sampled for each boosting tree, in ``(0, 1]``.
+        Values below one leave out-of-bag cells for the stopping monitor.
+    max_depth
+        Maximum depth of each regression tree; at least one.
+    early_stop_window
+        Number of recent improvements used by the stopping monitor.
+        Zero disables early stopping.
     top_targets_per_tf
         If set, keep only the top-K targets per TF by importance,
         descending. Useful on under-determined inputs (n_samples ≪
@@ -77,6 +92,10 @@ def infer(
         ``early_stop_window=0`` to disable either rule. Arboreto OOB stopping
         also has no OOB rows at ``subsample=1.0`` and therefore fits to the
         estimator ceiling.
+    seed
+        Seed passed to the Rust GRN backend's random-number generator.
+    verbose
+        Print progress and timing information to standard error.
 
     Returns
     -------
@@ -306,6 +325,25 @@ def add_correlation(
     indeterminate) and ``rho``. With ``mask_dropouts=True``, only cells where
     both the TF and target are non-zero contribute to a pair's correlation,
     matching pySCENIC's historical dropout-masked option.
+
+    Parameters
+    ----------
+    adjacencies
+        Edge table containing ``TF``, ``target`` and ``importance`` columns.
+    expression
+        AnnData, a cells-by-genes DataFrame, or a ``(matrix, gene_names)``
+        tuple covering every TF and target in the edge table.
+    rho_threshold
+        Positive correlation magnitude separating activating and repressing
+        edges from neutral edges.
+    mask_dropouts
+        Restrict each correlation to cells with nonzero TF and target
+        expression when true.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A copy of the edge table with ``rho`` and ``regulation`` columns.
     """
     required = {"TF", "target", "importance"}
     missing_columns = required - set(adjacencies.columns)
@@ -430,6 +468,24 @@ def build_regulons(
 
     Names use ``<TF>_activator`` and ``<TF>_repressor``. Neutral edges
     (``regulation == 0``) are excluded rather than silently assigned a sign.
+
+    Parameters
+    ----------
+    correlated_adjacencies
+        Edge table with ``TF``, ``target``, ``importance`` and ``regulation``
+        columns, such as the output of ``add_correlation``.
+    top_targets_per_tf
+        Maximum number of targets retained per TF and polarity by importance.
+    min_targets
+        Minimum number of targets needed to retain a regulon.
+    include_repressors
+        Include negatively correlated target sets as repressor regulons.
+        False returns activator regulons only.
+
+    Returns
+    -------
+    dict[str, list[str]]
+        Signed regulon names mapped to their retained target genes.
     """
     required = {"TF", "target", "importance", "regulation"}
     missing_columns = required - set(correlated_adjacencies.columns)
@@ -548,6 +604,16 @@ def load_tfs(path: str | Path) -> list[str]:
 
     Strips whitespace (including \\r from Windows line endings) and skips
     blank lines / comment lines starting with ``#``.
+
+    Parameters
+    ----------
+    path
+        Path to the text file containing TF symbols.
+
+    Returns
+    -------
+    list[str]
+        Nonblank, noncomment TF symbols in file order.
     """
     out = []
     for line in Path(path).read_text().splitlines():

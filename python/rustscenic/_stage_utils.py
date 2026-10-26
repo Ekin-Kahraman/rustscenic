@@ -13,7 +13,13 @@ from rustscenic._rustscenic import (
 
 
 def as_float32_contiguous(values) -> np.ndarray:
-    """Return a C-contiguous float32 ndarray, copying only when needed."""
+    """Return a C-contiguous float32 ndarray, copying only when needed.
+
+    Parameters
+    ----------
+    values
+        Array-like values accepted by ``numpy.asarray``.
+    """
     arr = np.asarray(values)
     if arr.dtype != np.float32:
         arr = arr.astype(np.float32, copy=False)
@@ -21,7 +27,13 @@ def as_float32_contiguous(values) -> np.ndarray:
 
 
 def as_float32_array(values) -> np.ndarray:
-    """Return a float32 ndarray without changing memory layout."""
+    """Return a float32 ndarray without changing memory layout.
+
+    Parameters
+    ----------
+    values
+        Array-like values accepted by ``numpy.asarray``.
+    """
     arr = np.asarray(values)
     if arr.dtype != np.float32:
         arr = arr.astype(np.float32, copy=False)
@@ -29,7 +41,14 @@ def as_float32_array(values) -> np.ndarray:
 
 
 def string_list(values: Iterable) -> list[str]:
-    """Return Python strings with minimal pandas boundary overhead."""
+    """Return Python strings with minimal pandas boundary overhead.
+
+    Parameters
+    ----------
+    values
+        Iterable, pandas Series or Index, or NumPy array of values to
+        convert to strings in input order.
+    """
     if isinstance(values, (pd.Series, pd.Index)):
         arr = values.to_numpy(copy=False)
     elif isinstance(values, np.ndarray):
@@ -49,7 +68,14 @@ def string_list(values: Iterable) -> list[str]:
 
 
 def string_list_missing_empty(values: Iterable) -> list[str]:
-    """Return strings, mapping pandas-style missing scalar values to ``""``."""
+    """Return strings, mapping pandas-style missing scalar values to ``""``.
+
+    Parameters
+    ----------
+    values
+        Iterable, pandas Series or Index, or NumPy array. Missing scalars
+        become empty strings; other values are converted with ``str``.
+    """
     if isinstance(values, (pd.Series, pd.Index)):
         arr = values.to_numpy(copy=False)
     elif isinstance(values, np.ndarray):
@@ -94,7 +120,14 @@ def coerce_regulon(reg) -> tuple[str, list[str]]:
 
 
 def iter_regulon_pairs(regulons: Iterable) -> Iterator[tuple[str, list[str]]]:
-    """Yield ``(name, genes)`` pairs from dicts, tuples, or Regulon objects."""
+    """Yield ``(name, genes)`` pairs from dicts, tuples, or Regulon objects.
+
+    Parameters
+    ----------
+    regulons
+        Name-to-genes mapping, iterable of ``(name, genes)`` pairs, mappings
+        with ``name``/``genes`` keys, or objects exposing a name and genes.
+    """
     items = regulons.items() if isinstance(regulons, dict) else regulons
     for reg in items:
         yield coerce_regulon(reg)
@@ -104,7 +137,21 @@ def prepare_regulon_indices(
     gene_names: Iterable[str],
     regulons: Iterable,
 ) -> tuple[list[str], list[list[int]], list[tuple[str, list[str]]], int]:
-    """Map regulon genes onto a feature axis once, preserving coverage inputs."""
+    """Map regulon genes onto a feature axis once, preserving coverage inputs.
+
+    Parameters
+    ----------
+    gene_names
+        Feature names in expression-matrix column order.
+    regulons
+        Regulons accepted by ``iter_regulon_pairs``.
+
+    Returns
+    -------
+    tuple
+        Retained names, feature-index lists, original regulon pairs and
+        number of regulons dropped because no features matched.
+    """
     gene_names_list = string_list(gene_names)
     reg_pairs = [
         (name, string_list(genes_list))
@@ -128,7 +175,21 @@ def prepare_regulon_indices_with_coverage(
     dict[str, tuple[int, int]],
     int,
 ]:
-    """Map regulon genes and coverage in one Rust call."""
+    """Map regulon genes and coverage in one Rust call.
+
+    Parameters
+    ----------
+    gene_names
+        Feature names in expression-matrix column order.
+    regulons
+        Regulons accepted by ``iter_regulon_pairs``.
+
+    Returns
+    -------
+    tuple
+        Retained names, feature-index lists, original regulon pairs,
+        per-regulon ``(matched, total)`` coverage and dropped-empty count.
+    """
     gene_names_list = string_list(gene_names)
     reg_pairs = [
         (name, string_list(genes_list))
@@ -154,7 +215,14 @@ _REGULON_NAME_PARENS = ("(+)", "(-)")
 
 
 def tf_from_regulon_name(name: str) -> str:
-    """Reduce common SCENIC regulon-name variants to the bare TF symbol."""
+    """Reduce common SCENIC regulon-name variants to the bare TF symbol.
+
+    Parameters
+    ----------
+    name
+        Regulon name whose ``_regulon``, ``_extended``, ``_activator``,
+        ``_repressor``, ``(+)`` and ``(-)`` suffixes should be stripped.
+    """
     tf = str(name).strip()
     while True:
         prev = tf

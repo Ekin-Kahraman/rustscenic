@@ -75,6 +75,21 @@ expected result where available, and distinguish documented method differences
 from regressions. See [validation](site_docs/validation.md) and
 [topic-model limitations](docs/topic-collapse.md).
 
+## Documentation
+
+The API reference is rendered from Python source and docstrings with
+mkdocstrings. Building it does not import RustScenic or require the Rust
+extension, numerical dependencies or a package installation.
+
+```bash
+python -m pip install -r requirements-docs.txt
+mkdocs build --strict
+```
+
+Keep the [API map](site_docs/api.md) as a workflow guide. Add new public modules
+to the [reference navigation](mkdocs.yml); members and signatures are collected
+from their source. Members without docstrings still appear with their signatures.
+
 ## License
 
 By contributing, you agree that your contributions are licensed under the Apache License, Version 2.0, including the patent grant and termination terms in that licence.
