@@ -10,7 +10,7 @@
 </h1>
 
 <p align="center">
-  <strong>Fast, memory-efficient gene-regulation analysis for single-cell data.</strong>
+  <strong>Built to be the simplest, fastest way to run regulatory-network analysis.</strong>
   <br><br>
 </p>
 
