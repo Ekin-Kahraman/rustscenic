@@ -27,13 +27,17 @@ fn main() {
     let nnz = take_u64();
     let indptr: Vec<usize> = (0..=columns).map(|_| take_u64()).collect();
     let indices: Vec<i32> = bytes[offset..offset + nnz * 4]
-        .chunks_exact(4)
-        .map(|b| i32::from_le_bytes(b.try_into().unwrap()))
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .map(|b| i32::from_le_bytes(*b))
         .collect();
     offset += nnz * 4;
     let data: Vec<f32> = bytes[offset..offset + nnz * 4]
-        .chunks_exact(4)
-        .map(|b| f32::from_le_bytes(b.try_into().unwrap()))
+        .as_chunks::<4>()
+        .0
+        .iter()
+        .map(|b| f32::from_le_bytes(*b))
         .collect();
     assert_eq!(bytes.len(), offset + nnz * 4, "unexpected trailing data");
     let selected: Vec<usize> = (0..columns).collect();
