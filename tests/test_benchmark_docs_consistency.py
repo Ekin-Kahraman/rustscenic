@@ -26,7 +26,7 @@ def test_public_docs_keep_benchmark_claims_scoped():
     assert "rustscenic-evidence.svg" not in readme
     assert "assets/rustscenic-evidence.svg" in index
     assert "## Evidence Snapshot" not in readme
-    assert "Current release: `v0.5.0`" in readme
+    assert "Current release: `v0.5.1`" in readme
     assert "docs/benchmarks/real-rna-20260828/figure.png" in readme
     assert "docs/benchmarks/real-rna-20260828/benchmark-source-record.md" in readme
     assert "1.3 million real cells" in readme

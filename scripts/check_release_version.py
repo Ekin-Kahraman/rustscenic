@@ -4,9 +4,14 @@
 from __future__ import annotations
 
 import argparse
+from datetime import date
+from email.parser import BytesParser
+from email.policy import default as email_policy
 import json
 import re
 import sys
+import tarfile
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -54,8 +59,199 @@ def _require_equal(label: str, values: dict[str, str]) -> str:
     return next(iter(distinct))
 
 
-def validate_repository(root: Path = ROOT, tag: str | None = None) -> str:
+def _single_version(text: str, pattern: str, label: str) -> str:
+    matches = re.findall(pattern, text, re.MULTILINE)
+    if len(matches) != 1:
+        raise ReleaseValidationError(
+            f"expected exactly one {label}; found {len(matches)}"
+        )
+    return matches[0]
+
+
+def _validate_release_state(root: Path, version: str, candidate: bool) -> None:
+    """Cross-check visible release labels with an explicit publication state."""
+    version_pattern = r"([0-9]+\.[0-9]+\.[0-9]+)"
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    index = (root / "site_docs/index.md").read_text(encoding="utf-8")
+    svg = (root / "site_docs/assets/rustscenic-evidence.svg").read_text(
+        encoding="utf-8"
+    )
+    published = _require_equal(
+        "published release labels",
+        {
+            "README": _single_version(
+                readme,
+                rf"Current release: `v{version_pattern}`",
+                "README release label",
+            ),
+            "README installation": _single_version(
+                readme,
+                rf"Expected version: `{version_pattern}`",
+                "README installation version",
+            ),
+            "site": _single_version(
+                index, rf"Current release `v{version_pattern}`", "site release label"
+            ),
+            "evidence": _single_version(
+                svg, rf">v{version_pattern}<", "evidence release label"
+            ),
+        },
+    )
+    changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
+    state_path = root / "release-candidate.json"
+    candidate_pattern = rf"^Source candidate: `v{version_pattern}` \(unpublished\)\.$"
+    candidate_labels = {
+        "README": re.findall(candidate_pattern, readme, re.MULTILINE),
+        "site": re.findall(candidate_pattern, index, re.MULTILINE),
+    }
+    citation = (root / "CITATION.cff").read_text(encoding="utf-8")
+    zenodo_description = str(
+        json.loads((root / ".zenodo.json").read_text(encoding="utf-8")).get(
+            "description", ""
+        )
+    )
+    notes = (root / f"docs/releases/v{version}.md").read_text(encoding="utf-8")
+    title = notes.splitlines()[0] if notes.splitlines() else ""
+    if not re.match(rf"^# RustScenic v{re.escape(version)}(?:\s|:|$)", title):
+        raise ReleaseValidationError("release notes title does not match metadata")
+
+    if candidate:
+        if not state_path.is_file():
+            raise ReleaseValidationError(
+                "candidate mode requires release-candidate.json"
+            )
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+        if not isinstance(state, dict) or set(state) != {
+            "candidate_version",
+            "published_version",
+            "prepared_on",
+        }:
+            raise ReleaseValidationError("invalid release-candidate.json fields")
+        _require_equal(
+            "source candidate version",
+            {
+                "metadata": version,
+                "candidate state": str(state["candidate_version"]),
+                **{
+                    name: _single_version(
+                        text, candidate_pattern, f"{name} source candidate label"
+                    )
+                    for name, text in [("README", readme), ("site", index)]
+                },
+            },
+        )
+        _require_equal(
+            "published candidate baseline",
+            {
+                "labels": published,
+                "candidate state": str(state["published_version"]),
+            },
+        )
+        if tuple(map(int, version.split("."))) <= tuple(map(int, published.split("."))):
+            raise ReleaseValidationError(
+                "source candidate must be newer than the published release"
+            )
+        try:
+            prepared_on = date.fromisoformat(str(state["prepared_on"])).isoformat()
+        except ValueError as exc:
+            raise ReleaseValidationError("invalid candidate preparation date") from exc
+        heading = f"## {version} - Candidate prepared {prepared_on} (unpublished)"
+        if changelog.splitlines().count(heading) != 1:
+            raise ReleaseValidationError(
+                "missing or duplicate dated candidate changelog section"
+            )
+        if re.search(
+            rf"^## {re.escape(version)} - [0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}$",
+            changelog,
+            re.MULTILINE,
+        ):
+            raise ReleaseValidationError(
+                "candidate also has a published changelog section"
+            )
+        if not re.search(
+            rf"^## {re.escape(published)} - [0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}$",
+            changelog,
+            re.MULTILINE,
+        ):
+            raise ReleaseValidationError("missing published baseline changelog section")
+        if re.search(r"^date-released:", citation, re.MULTILINE):
+            raise ReleaseValidationError(
+                "unpublished candidate must not claim a citation release date"
+            )
+        candidate_marker = f"Unpublished source candidate v{version}."
+        if (
+            candidate_marker not in _cff_string(root / "CITATION.cff", "message")
+            or candidate_marker not in zenodo_description
+        ):
+            raise ReleaseValidationError(
+                "citation and Zenodo must identify the unpublished candidate"
+            )
+        if f"Published release: v{published}." not in zenodo_description:
+            raise ReleaseValidationError("Zenodo published baseline differs")
+        if not title.startswith(f"# RustScenic v{version} candidate:"):
+            raise ReleaseValidationError(
+                "candidate release notes must identify the unpublished candidate"
+            )
+        if "**Draft for review. This candidate is not published." not in notes:
+            raise ReleaseValidationError(
+                "candidate release notes need an unpublished banner"
+            )
+        notes_published = _single_version(
+            notes,
+            rf"^Published release: `v{version_pattern}`\.$",
+            "release notes published baseline",
+        )
+        if notes_published != published:
+            raise ReleaseValidationError("release notes published baseline differs")
+    else:
+        if state_path.exists() or any(candidate_labels.values()):
+            raise ReleaseValidationError(
+                "candidate state cannot pass publication validation"
+            )
+        if published != version:
+            raise ReleaseValidationError(
+                f"published release labels identify v{published}, not v{version}"
+            )
+        release_dates = re.findall(
+            rf"^## {re.escape(version)} - ([0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}})$",
+            changelog,
+            re.MULTILINE,
+        )
+        if len(release_dates) != 1:
+            raise ReleaseValidationError(
+                f"missing or duplicate dated {version} changelog section"
+            )
+        try:
+            released_on = date.fromisoformat(release_dates[0]).isoformat()
+        except ValueError as exc:
+            raise ReleaseValidationError("invalid release date") from exc
+        if _cff_string(root / "CITATION.cff", "date-released") != released_on:
+            raise ReleaseValidationError("citation and changelog release dates differ")
+        if (
+            " candidate:" in title
+            or "**Draft for review." in notes
+            or re.search(r"^Published release:", notes, re.MULTILINE)
+        ):
+            raise ReleaseValidationError(
+                "candidate release notes cannot pass publication validation"
+            )
+        if (
+            "Unpublished source candidate" in citation
+            or "Unpublished source candidate" in zenodo_description
+        ):
+            raise ReleaseValidationError(
+                "candidate citation metadata cannot pass publication validation"
+            )
+
+
+def validate_repository(
+    root: Path = ROOT, tag: str | None = None, *, candidate: bool = False
+) -> str:
     """Return the release version after validating repository state."""
+    if candidate and tag is not None:
+        raise ReleaseValidationError(
+            "candidate mode and tag validation are incompatible"
+        )
     pyproject = root / "pyproject.toml"
     cargo = root / "Cargo.toml"
     citation = root / "CITATION.cff"
@@ -92,25 +288,7 @@ def validate_repository(root: Path = ROOT, tag: str | None = None) -> str:
     if licence != "Apache-2.0":
         raise ReleaseValidationError(f"unexpected release licence: {licence}")
 
-    changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
-    if not re.search(
-        rf"^## {re.escape(version)} - [0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}$",
-        changelog,
-        re.MULTILINE,
-    ):
-        raise ReleaseValidationError(f"missing dated {version} changelog section")
-
-    required_release_text = {
-        "README.md": f"Current release: `v{version}`",
-        "site_docs/index.md": f"Current release `v{version}`",
-        "site_docs/assets/rustscenic-evidence.svg": f">v{version}<",
-    }
-    for relative_path, expected in required_release_text.items():
-        text = (root / relative_path).read_text(encoding="utf-8")
-        if expected not in text:
-            raise ReleaseValidationError(
-                f"{relative_path} does not identify v{version} as the release"
-            )
+    _validate_release_state(root, version, candidate)
 
     citation_text = citation.read_text(encoding="utf-8")
     readme_text = (root / "README.md").read_text(encoding="utf-8")
@@ -153,25 +331,95 @@ def validate_artifacts(dist: Path, version: str) -> None:
         if not path.name.startswith(f"rustscenic-{version}-")
     ]
     wrong.extend(
-        path.name
-        for path in sdists
-        if path.name != f"rustscenic-{version}.tar.gz"
+        path.name for path in sdists if path.name != f"rustscenic-{version}.tar.gz"
     )
     if wrong:
         raise ReleaseValidationError(
             f"artefact/version mismatch for {version}: {', '.join(wrong)}"
         )
 
+    for path in wheels + sdists:
+        try:
+            if path.suffix == ".whl":
+                with zipfile.ZipFile(path) as archive:
+                    entries = [
+                        info
+                        for info in archive.infolist()
+                        if re.fullmatch(r"[^/]+\.dist-info/METADATA", info.filename)
+                    ]
+                    expected = f"rustscenic-{version}.dist-info/METADATA"
+                    if len(entries) != 1 or entries[0].filename != expected:
+                        raise ReleaseValidationError(
+                            f"{path.name}: missing or ambiguous wheel METADATA"
+                        )
+                    if entries[0].file_size > 1024 * 1024:
+                        raise ReleaseValidationError(
+                            f"{path.name}: oversized wheel METADATA"
+                        )
+                    metadata = archive.read(entries[0])
+            else:
+                metadata_entries = []
+                expected = f"rustscenic-{version}/PKG-INFO"
+                with tarfile.open(path, "r|gz") as archive:
+                    for entry in archive:
+                        if entry.name == expected:
+                            if not entry.isfile() or entry.size > 1024 * 1024:
+                                raise ReleaseValidationError(
+                                    f"{path.name}: invalid sdist PKG-INFO"
+                                )
+                            stream = archive.extractfile(entry)
+                            if stream is None:
+                                raise ReleaseValidationError(
+                                    f"{path.name}: unreadable sdist PKG-INFO"
+                                )
+                            with stream:
+                                metadata_entries.append(stream.read())
+                if len(metadata_entries) != 1:
+                    raise ReleaseValidationError(
+                        f"{path.name}: missing or ambiguous sdist PKG-INFO"
+                    )
+                metadata = metadata_entries[0]
+            headers = BytesParser(policy=email_policy).parsebytes(
+                metadata, headersonly=True
+            )
+            names = headers.get_all("Name", [])
+            versions = headers.get_all("Version", [])
+            if headers.defects or len(names) != 1 or len(versions) != 1:
+                raise ReleaseValidationError(f"{path.name}: malformed package metadata")
+            name = re.sub(r"[-_.]+", "-", str(names[0]).strip()).lower()
+            if name != "rustscenic" or str(versions[0]).strip() != version:
+                raise ReleaseValidationError(
+                    f"{path.name}: internal Name/Version mismatch: {names[0]}/{versions[0]}"
+                )
+        except (
+            OSError,
+            EOFError,
+            tarfile.TarError,
+            zipfile.BadZipFile,
+            RuntimeError,
+        ) as exc:
+            raise ReleaseValidationError(
+                f"{path.name}: cannot read package metadata: {exc}"
+            ) from exc
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=ROOT)
-    parser.add_argument("--tag", help="Release tag, for example v0.5.0")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--tag", help="Release tag, for example v0.5.1")
+    mode.add_argument(
+        "--candidate",
+        action="store_true",
+        help="Validate explicit unpublished source-candidate state",
+    )
     parser.add_argument("--dist", type=Path, help="Directory of built artefacts")
     args = parser.parse_args(argv)
 
     try:
-        version = validate_repository(args.root.resolve(), args.tag)
+        version = validate_repository(
+            args.root.resolve(), args.tag, candidate=args.candidate
+        )
         if args.dist is not None:
             validate_artifacts(args.dist.resolve(), version)
     except (OSError, json.JSONDecodeError, ReleaseValidationError) as exc:
@@ -179,7 +427,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     suffix = f" and artefacts under {args.dist}" if args.dist else ""
-    print(f"release metadata v{version}{suffix}: OK")
+    state = "source candidate" if args.candidate else "release"
+    print(f"{state} metadata v{version}{suffix}: OK")
     return 0
 
 

@@ -20,7 +20,7 @@ python -m pip install rustscenic
 python -c "import rustscenic; print(rustscenic.__version__)"
 ```
 
-Expected version: `0.5.0`.
+Expected version: `0.5.1`.
 
 <details markdown="1">
 <summary>Using venv instead of Conda</summary>

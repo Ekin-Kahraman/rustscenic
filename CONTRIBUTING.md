@@ -90,6 +90,12 @@ Keep the [API map](site_docs/api.md) as a workflow guide. Add new public modules
 to the [reference navigation](mkdocs.yml); members and signatures are collected
 from their source. Members without docstrings still appear with their signatures.
 
+## Release candidates
+
+See [release candidate validation](docs/release-candidates.md) for unpublished
+source-state checks, isolated artifact qualification and the separate
+publication transition.
+
 ## License
 
 By contributing, you agree that your contributions are licensed under the Apache License, Version 2.0, including the patent grant and termination terms in that licence.

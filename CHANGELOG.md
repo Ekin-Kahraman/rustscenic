@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.1 - 2026-10-26
+
 - Reject AUCell tuple inputs with a non-2D expression matrix or a gene-name
   count that differs from the gene columns before scoring. Previously,
   mismatched names could produce plausible activity and coverage results.
@@ -17,6 +19,11 @@
   importance thresholds use strict-JSON string markers in metadata without
   changing filtering or numerical results. This is not a complete replay
   record of analysis inputs and environment.
+
+- Add a source-derived API reference and expanded parameter/result descriptions.
+- Add the precomputed CELLxGENE endothelial network viewer/starter with provenance
+  and checksums. It inspects saved results, without running new inference or
+  establishing a new biological validation result.
 
 ## 0.5.0 - 2026-09-09
 

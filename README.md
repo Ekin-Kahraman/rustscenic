@@ -65,7 +65,7 @@
 
 ## Get started
 
-Current release: `v0.5.0`. Python **3.10–3.13**; Linux, macOS and Windows.
+Current release: `v0.5.1`. Python **3.10–3.13**; Linux, macOS and Windows.
 Runs on CPUs; no GPU or Rust setup needed with prebuilt packages.
 
 ```bash
@@ -73,7 +73,7 @@ python -m pip install rustscenic
 python -c "import rustscenic; print(rustscenic.__version__)"
 ```
 
-Expected version: `0.5.0`. For a clean environment, see
+Expected version: `0.5.1`. For a clean environment, see
 [Installation](site_docs/installation.md).
 
 ### Run a working example
@@ -339,7 +339,7 @@ without rerunning the analysis.**
 [Benchmarks](site_docs/benchmarks.md) ·
 [Validation](site_docs/validation.md) ·
 [Scope](site_docs/limitations.md) ·
-[Release notes](docs/releases/v0.5.0.md)
+[Release notes](docs/releases/v0.5.1.md)
 
 <br>
 

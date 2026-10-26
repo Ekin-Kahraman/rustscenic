@@ -9,8 +9,7 @@ authors:
 repository-code: "https://github.com/Ekin-Kahraman/rustscenic"
 url: "https://github.com/Ekin-Kahraman/rustscenic"
 license: Apache-2.0
-version: "0.5.0"
-date-released: "2026-09-09"
+version: "0.5.1"
 doi: 10.5281/zenodo.20246040
 abstract: >-
   RustScenic is a Rust and PyO3 implementation of SCENIC-style gene regulatory
@@ -29,3 +28,4 @@ keywords:
   - multiome
   - Rust
   - Python
+date-released: "2026-10-26"
