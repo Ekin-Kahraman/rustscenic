@@ -20,6 +20,8 @@ the Icahn School of Medicine at Mount Sinai.
 
 Current release `v0.5.0`; Python **3.10–3.13**; Linux, macOS and Windows.
 
+Source candidate: `v0.5.1` (unpublished).
+
 ```bash
 python -m pip install rustscenic
 python -c "import rustscenic; print(rustscenic.__version__)"

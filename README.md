@@ -66,6 +66,8 @@
 ## Get started
 
 Current release: `v0.5.0`. Python **3.10–3.13**; Linux, macOS and Windows.
+
+Source candidate: `v0.5.1` (unpublished).
 Runs on CPUs; no GPU or Rust setup needed with prebuilt packages.
 
 ```bash

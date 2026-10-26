@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-message: "If you use rustscenic in published work, software, benchmarks, or reports, please cite this repository or the exact release you used."
+message: "Unpublished source candidate v0.5.1. If you use rustscenic in published work, software, benchmarks, or reports, please cite this repository or the exact release you used."
 title: "rustscenic: a Rust and Python implementation of SCENIC-style regulatory-network analysis"
 type: software
 authors:
@@ -9,8 +9,7 @@ authors:
 repository-code: "https://github.com/Ekin-Kahraman/rustscenic"
 url: "https://github.com/Ekin-Kahraman/rustscenic"
 license: Apache-2.0
-version: "0.5.0"
-date-released: "2026-09-09"
+version: "0.5.1"
 doi: 10.5281/zenodo.20246040
 abstract: >-
   RustScenic is a Rust and PyO3 implementation of SCENIC-style gene regulatory

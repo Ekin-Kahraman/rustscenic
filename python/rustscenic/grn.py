@@ -105,8 +105,8 @@ def infer(
 
     Notes
     -----
-    These additional provenance fields are unreleased and are absent from the
-    published PyPI 0.5.0 wheel.
+    These additional provenance fields are included in the unpublished 0.5.1
+    source candidate and are absent from the published PyPI 0.5.0 wheel.
 
     ``result.attrs["grn_fit"]`` records normalized fitting and output-filter
     settings alongside fitted-tree summaries. The ignored compatibility option

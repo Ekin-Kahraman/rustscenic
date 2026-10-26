@@ -5,9 +5,9 @@ pool for Rust work, and pin every BLAS/OpenMP pool to one thread. LSF launchers
 under `validation/hpc/minerva/` provide Minerva-specific wrapping and evidence
 collection; the Python and Rust APIs do not depend on LSF or personal paths.
 
-## GRN settings in manifests (unreleased)
+## GRN settings in manifests (0.5.1 source candidate)
 
-The next release records the GRN seed, learning rate, feature-sampling fraction,
+The unpublished 0.5.1 source candidate records the GRN seed, learning rate, feature-sampling fraction,
 tree depth and output filters in `grn_fit`, alongside the existing stopping and
 fitted-tree summaries. `pipeline.run` includes these values in `manifest.json`,
 including RNA-only runs. They are also available from `grn.infer` as
