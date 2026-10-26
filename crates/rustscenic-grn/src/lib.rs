@@ -25,6 +25,7 @@
 pub mod correlation;
 pub mod gbm;
 pub mod histogram;
+pub mod postprocess;
 pub mod rng;
 pub mod tree;
 

@@ -706,6 +706,18 @@ class TestGrnTruncationKnobs:
         assert (out["importance"] >= threshold).all()
         assert len(out) <= len(full)
 
+    def test_large_top_target_cap_matches_full_stable_sort(self, small_expr):
+        kwargs = dict(n_estimators=8, seed=42, verbose=False)
+        full = grn.infer(small_expr, ["g0", "g1", "g2"], **kwargs)
+        capped = grn.infer(
+            small_expr, ["g0", "g1", "g2"],
+            top_targets_per_tf=10**9, **kwargs,
+        )
+        expected = full.sort_values(
+            "importance", ascending=False, kind="mergesort"
+        ).reset_index(drop=True)
+        pd.testing.assert_frame_equal(capped, expected, check_exact=True)
+
     def test_truncation_matches_pandas_reference(self, small_expr):
         full = grn.infer(small_expr, tf_names=["g0", "g1", "g2"],
                          n_estimators=100, seed=42, verbose=False)
