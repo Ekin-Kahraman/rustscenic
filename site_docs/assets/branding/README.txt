@@ -18,6 +18,7 @@ Keep the original proportions and transparent padding. Avoid stretching,
 adding effects, or replacing the mark with the rejected geometric variant.
 
 README workflow: use rustscenic-workflow-light.svg and
-rustscenic-workflow-dark.svg as a theme-aware picture. The illustration is a
+rustscenic-workflow-dark.svg as a theme-aware picture. The mobile light/dark
+variants provide a stacked input-to-output layout below 600 px. The illustration is a
 conceptual overview, not measured biological output. Regenerate both assets
 with python3 site_docs/assets/branding/generate_workflow.py.

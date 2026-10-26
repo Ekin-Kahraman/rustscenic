@@ -10,22 +10,23 @@
 </h1>
 
 <p align="center">
-  <strong>Built to be the simplest, fastest way to run regulatory-network analysis.</strong>
+  <strong>Fast, memory-efficient gene-regulation analysis for single-cell data.</strong>
   <br><br>
 </p>
 
 <p align="center">
   <picture>
+    <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="site_docs/assets/branding/rustscenic-workflow-mobile-dark.svg">
+    <source media="(max-width: 600px)" srcset="site_docs/assets/branding/rustscenic-workflow-mobile-light.svg">
     <source media="(prefers-color-scheme: dark)" srcset="site_docs/assets/branding/rustscenic-workflow-dark.svg">
-    <img src="site_docs/assets/branding/rustscenic-workflow-light.svg" width="1120" alt="Inputs → RustScenic → outputs. RNA expression, a TF list and optional ATAC enter RustScenic, one Python package with a Rust backend. It produces regulatory networks, regulons and cell activity scores. Motif databases and gene coordinates support refinement and enhancer links.">
+    <img src="site_docs/assets/branding/rustscenic-workflow-light.svg" width="1120" alt="Inputs → RustScenic → outputs. RNA expression, a TF list and optional ATAC enter RustScenic, one Python package with a Rust backend. It produces regulatory networks, regulons and per-cell regulon activity scores. Motif data support refinement; optional ATAC and gene coordinates support enhancer links and eRegulons.">
   </picture>
 </p>
 
 <p align="center">
-  A Rust rewrite of core <a href="https://github.com/aertslab/pySCENIC">pySCENIC</a>
-  and <a href="https://github.com/aertslab/scenicplus">SCENIC+</a> analysis stages that prioritises
-  speed, low memory use and easy installation. Infer gene networks, find motif-supported
-  regulons and score their activity through Python. One package. Runs on CPUs.<br>
+  Rust implementations of core <a href="https://github.com/aertslab/pySCENIC">pySCENIC</a>
+  and <a href="https://github.com/aertslab/scenicplus">SCENIC+</a> analysis stages for
+  single-cell RNA and multiome data, accessible through a Python API.<br>
   Developed and scaled with the
   <strong><a href="https://labs.icahn.mssm.edu/kuanhuanglab/">Huang Lab at Mount Sinai</a></strong>.
 </p>
@@ -60,6 +61,8 @@
 - **704 human cell labels:** precomputed exploratory networks from CELLxGENE
   Census, [openly available on Zenodo](https://doi.org/10.5281/zenodo.23548341).
   Explore the endothelial-cell example below or download the full collection.
+
+<br>
 
 ## Get started
 
@@ -183,6 +186,8 @@ releases remain MIT.
 [PBMC3k end-to-end example](examples/pbmc3k_end_to_end.py) ·
 [Tester guide](docs/tester-quickstart.md)
 
+<br>
+
 ## Try a network
 
 [Open the interactive example](https://ekin-kahraman.github.io/rustscenic/demo/endothelial/)
@@ -200,6 +205,8 @@ Inside the extracted folder, Python users can run:
 ```bash
 python3 example.py --tf ETS1
 ```
+
+<br>
 
 ## Performance
 
@@ -253,6 +260,8 @@ for enhancer links; SCENIC+ uses boosted trees plus Pearson scoring.
 
 </details>
 
+<br>
+
 ## Validation
 
 The Huang Lab human-brain run recovered **16/17 expected transcription factors**
@@ -276,6 +285,8 @@ full output parity is not claimed.
 [Validation and limitations](site_docs/validation.md) ·
 [Huang Lab run record](validation/community/human_brain_10k_v0.4.6.json) ·
 [Benchmark output agreement](site_docs/benchmarks.md#validation)
+
+<br>
 
 <a id="cellxgene-census-derived-resource"></a>
 
@@ -315,6 +326,8 @@ Zenodo; they are not a CELLxGENE-hosted or endorsed dataset.
 predicted links, freely available for researchers to explore and reuse
 without rerunning the analysis.**
 
+<br>
+
 ## Documentation
 
 [Installation](site_docs/installation.md) ·
@@ -325,13 +338,17 @@ without rerunning the analysis.**
 [Scope](site_docs/limitations.md) ·
 [Release notes](docs/releases/v0.5.0.md)
 
+<br>
+
 ## Citation and contribution
 
 Cite the exact [RustScenic release](https://doi.org/10.5281/zenodo.20246040)
 used; GitHub citation metadata is in [CITATION.cff](CITATION.cff).
+
 When using the CELLxGENE-derived networks, also cite the
 [dataset](https://doi.org/10.5281/zenodo.23548341), CELLxGENE and the contributing
 studies supplied with the data. See [dataset credits and citation](site_docs/cellxgene-resource.md#citation-and-credits).
+
 Software and example code: **Apache-2.0**. Derived data and resource
 documentation: **CC BY 4.0**; see the
 [data-licence notice](examples/cellxgene-endothelial/LICENSING.txt).
