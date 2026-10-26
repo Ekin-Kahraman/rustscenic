@@ -102,6 +102,17 @@ def infer(
     pandas.DataFrame with columns ``['TF', 'target', 'importance']``,
     filtered to ``importance > 0``, sorted descending per target.
     Matches the schema produced by ``arboreto.algo.grnboost2``.
+
+    Notes
+    -----
+    ``result.attrs["grn_fit"]`` records normalized fitting and output-filter
+    settings alongside fitted-tree summaries. The ignored compatibility option
+    is recorded as ``target_block_size_requested``; its effective value is
+    always ``None`` under flat target scheduling. ``min_importance`` is a float
+    or ``None``, except accepted nonfinite values are recorded as the strict-JSON
+    strings ``"NaN"``, ``"Infinity"`` or ``"-Infinity"``. Filtering is unchanged.
+    These settings alone do not capture the inputs and environment needed to
+    reproduce a complete analysis.
     """
     import scipy.sparse as sp
 
@@ -187,6 +198,9 @@ def infer(
     top_targets_for_rust = (
         None if top_targets_per_tf is None else int(top_targets_per_tf)
     )
+    min_importance_for_rust = (
+        None if min_importance is None else float(min_importance)
+    )
     common_args = (
         string_list(gene_names),
         tfs_list,
@@ -200,7 +214,7 @@ def infer(
         seed,
         target_block_size_for_rust,
         top_targets_for_rust,
-        None if min_importance is None else float(min_importance),
+        min_importance_for_rust,
     )
     if sp.issparse(X):
         backend_symbol = "grn_infer_sparse_csc"
@@ -291,6 +305,16 @@ def infer(
         "early_stop_window": int(early_stop_window),
         "n_estimators_ceiling": int(n_estimators),
         "subsample": float(subsample),
+        "seed": int(seed),
+        "learning_rate": learning_rate,
+        "max_features": max_features,
+        "max_depth": max_depth,
+        "top_targets_per_tf": top_targets_for_rust,
+        "min_importance": _json_safe_optional_float(min_importance_for_rust),
+        "target_block_size_requested": (
+            None if target_block_size is None else target_block_size_for_rust
+        ),
+        "target_block_size_effective": None,
         **dict(fit_summary),
     }
 
@@ -309,6 +333,14 @@ def infer(
                 file=sys.stderr, flush=True,
             )
     return df
+
+
+def _json_safe_optional_float(value: float | None) -> float | str | None:
+    if value is None or math.isfinite(value):
+        return value
+    if math.isnan(value):
+        return "NaN"
+    return "Infinity" if value > 0 else "-Infinity"
 
 
 def add_correlation(

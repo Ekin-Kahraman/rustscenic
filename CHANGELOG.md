@@ -2,7 +2,12 @@
 
 ## Unreleased
 
-No changes yet.
+- Record the GRN seed, fitting settings and output filters in ``grn_fit``
+  metadata, which is carried into pipeline manifests. Record requested target
+  blocking separately from its unused effective value. Accepted nonfinite
+  importance thresholds use strict-JSON string markers in metadata without
+  changing filtering or numerical results. This is not a complete replay
+  record of analysis inputs and environment.
 
 ## 0.5.0 - 2026-09-09
 
