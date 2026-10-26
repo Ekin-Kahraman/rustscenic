@@ -105,6 +105,9 @@ def infer(
 
     Notes
     -----
+    These additional provenance fields are unreleased and are absent from the
+    published PyPI 0.5.0 wheel.
+
     ``result.attrs["grn_fit"]`` records normalized fitting and output-filter
     settings alongside fitted-tree summaries. The ignored compatibility option
     is recorded as ``target_block_size_requested``; its effective value is
