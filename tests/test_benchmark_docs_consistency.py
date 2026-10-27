@@ -109,7 +109,7 @@ def test_quickstarts_use_published_api_and_explain_candidate_gene_sets():
     assert "pip install rustscenic" in readme
     for path in (ROOT / "site_docs/quickstart.md",):
         document = path.read_text(encoding="utf-8")
-        assert "v0.5.0" in document
+        assert "v0.5.1" in document
         assert "candidate" in document
         blocks = re.findall(r"```python\n(.*?)```", document, re.DOTALL)
         assert blocks
