@@ -29,7 +29,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install notebook execution tools
-        run: python -m pip install --only-binary=:all: nbclient nbformat ipykernel
+        run: |
+          python -m pip install --only-binary=:all: nbclient nbformat ipykernel
       - name: Execute the public-wheel starter with a cold kernel
         env:
           NOTEBOOK_SOURCE: ${{ github.workspace }}/examples/pbmc3k_quickstart.ipynb
