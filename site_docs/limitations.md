@@ -8,7 +8,8 @@ assembly.
 ## Designed For
 
 - Local CPU runs on laptops and workstations.
-- Python 3.10 to 3.13 environments.
+- Regular CPython 3.10–3.14 environments; see [installation](installation.md) for
+  platform, source-build and published-wheel qualification details.
 - Researchers who want fewer moving parts than the legacy SCENIC stack.
 - Benchmarked, reproducible workflows with commands and artefacts committed in
   the repository.

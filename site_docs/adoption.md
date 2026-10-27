@@ -21,7 +21,7 @@ Use these when introducing the package to a lab or collaborator:
 
 | Proof point | Evidence |
 | --- | --- |
-| Released | `v0.5.0`, with Python 3.10 to 3.13 release wheels. |
+| Published package | [v0.5.1](https://pypi.org/project/rustscenic/0.5.1/), with prebuilt CPU packages. See [installation](installation.md) for platforms and Python qualification details. |
 | Faster tested path | `11x` to `52x` faster than SCENIC+ for selected stages on sampled data, measured on one machine. |
 | Memory measurement | v0.5.0 candidate: about 81% less peak physical memory than arboreto in a controlled 20,000-cell comparison. See [benchmark scope](benchmarks.md#memory-scaling). |
 | Lab artefact | Collaborator human brain workflow recovered 16 of 17 expected brain transcription factors. |
@@ -34,6 +34,12 @@ Run one small dataset first:
 pip install rustscenic
 python -m rustscenic.quickstart
 ```
+
+For a real-data walkthrough, [open the PBMC3k notebook](https://colab.research.google.com/github/Ekin-Kahraman/rustscenic/blob/main/examples/pbmc3k_quickstart.ipynb).
+It installs the published `0.5.1` wheel, runs GRN inference and candidate
+gene-set scoring, and exports results with dataset, version and settings
+provenance. It demonstrates software execution; interpreting regulatory
+biology requires the [additional validation steps](validation.md).
 
 Then infer a gene network from your own AnnData object. The
 [quickstart](quickstart.md) adds activity scoring:

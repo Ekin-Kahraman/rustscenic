@@ -3,6 +3,9 @@
 Bug reports, correctness fixes, documentation and measured performance
 improvements are welcome.
 
+Please follow the [Code of Conduct](CODE_OF_CONDUCT.md) when participating
+in project spaces.
+
 Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad
 
 [Contributions](AUTHORS.md)
