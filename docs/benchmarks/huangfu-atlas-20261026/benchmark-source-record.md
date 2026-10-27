@@ -35,5 +35,19 @@ for RustScenic. The approximately 80% memory claim is specific to Dask.
 
 [Individual seed measurements](measurements.csv) · [Parameters and source hashes](summary.json)
 
+The README graphic shows measured runtime and PSS scaling, with both arboreto
+routes visible. The 100,000- and 500,000-cell sizes have one matched seed each;
+the 1,306,127-cell point is the median of three matched seeds. All sizes used
+the same ordered gene/TF panel, host, allocation, dependencies and parameters.
+Individual runs and the observed three-seed ranges are shown, not confidence
+intervals. Lines connect measured points and do not represent a fitted model.
+
+[Scaling measurements](scaling-measurements.csv) · [Scaling source hashes](scaling-provenance.json)
+
+Rebuild the light/dark and desktop/mobile figures with
+`python docs/benchmarks/huangfu-atlas-20261026/make_figure.py` (requires
+Matplotlib). Endpoint medians are checked against the summary; the original
+nine 1.3M source measurements are unchanged.
+
 The earlier 20,000-cell experiment remains a separate historical result:
 [original measurements and conditions](../real-rna-20260828/benchmark-source-record.md).

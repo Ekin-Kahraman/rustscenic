@@ -217,7 +217,17 @@ If RustScenic is useful to you, [star the repository](https://github.com/Ekin-Ka
 
 ## Performance
 
-![RustScenic on 1.3 million real cells: three matched seeds against arboreto](docs/benchmarks/huangfu-atlas-20261026/figure.png)
+<p align="center">
+  <a href="docs/benchmarks/huangfu-atlas-20261026/benchmark-source-record.md">
+    <picture>
+      <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/benchmarks/huangfu-atlas-20261026/figure-mobile-dark.svg">
+      <source media="(max-width: 600px)" srcset="docs/benchmarks/huangfu-atlas-20261026/figure-mobile.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="docs/benchmarks/huangfu-atlas-20261026/figure-dark.svg">
+      <source media="(min-width: 601px)" srcset="docs/benchmarks/huangfu-atlas-20261026/figure.svg">
+      <img src="docs/benchmarks/huangfu-atlas-20261026/figure.png" width="1120" alt="RustScenic on 1.3 million real cells: 3.06 times faster gene-network analysis and 78.7 percent lower measured memory than arboreto Dask. Versus arboreto multiprocessing: 2.94 times faster and 54.5 percent lower memory. Medians of three matched seeds on 16 CPUs.">
+    </picture>
+  </a>
+</p>
 
 **3.06× faster analysis and 78.7% lower peak measured memory** than arboreto
 (Dask, sparse), using ratios of medians across three matched seeds on

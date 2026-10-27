@@ -1,0 +1,62 @@
+{
+  "scope": "Same input gene/TF order, host, allocation, dependencies and parameters across three cell counts.",
+  "source_archive_sha256": "e46cd9f7affa6399907a80802d30c1db5347fa67845482ceb95dbf1e5369eb6c",
+  "host": "lc07e01",
+  "job_id": "278171683",
+  "environment_signature": "6f9dd1d4566f073972e8b923702ecc69340592e198a5a5847fbd94e3bd6e61e2",
+  "genes": 2095,
+  "tfs": 256,
+  "threads": 16,
+  "repeats_by_cell_count": {
+    "100000": [
+      777
+    ],
+    "500000": [
+      777
+    ],
+    "1306127": [
+      777,
+      778,
+      779
+    ]
+  },
+  "source_pairs": [
+    {
+      "pair_file": "atlas-n100000-seed777.json",
+      "sha256": "d1eee9b185be49ea04a0e13b3bf43000c7c40b25d70539f3d35e1760bb09d069",
+      "input_manifest": "atlas-n100000.json",
+      "input_manifest_sha256": "cee663b651cd3a96eea6134463a358ac64c61687a4386b6c3180a28363f653df",
+      "input_signature": "502f7f02959ce6a126a4b823eb4c650b6282b4856eb14997afdc68590341366a"
+    },
+    {
+      "pair_file": "atlas-n500000-seed777.json",
+      "sha256": "3cc2189d4b43cd26fecef92ce39fa5a6c401bc0b9ee73834637fe707b338150e",
+      "input_manifest": "atlas-n500000.json",
+      "input_manifest_sha256": "2a21988dae7f489193ab0f773dad7237110b5170c2fb726877b4ae9c2c39f862",
+      "input_signature": "e32e99e6b91f2c794d7fcfa212f0134058091754ef3d278da1e3c810daf8a214"
+    },
+    {
+      "pair_file": "atlas-n1306127-seed777.json",
+      "sha256": "d2427a3eeb0d741eb048d45ab083f919abdc0826cd57e54e3b3048916fccc29a",
+      "input_manifest": "atlas-n1306127.json",
+      "input_manifest_sha256": "e6cec82764a745c399e7d2cbf8f8e4a3fad4c2c24834bdb581d4580bb7eab53b",
+      "input_signature": "63c100f65255ca95197e72ab22ea7efea7e7a2306f3f6df3e93bcde63b7fff1c"
+    },
+    {
+      "pair_file": "atlas-n1306127-seed778.json",
+      "sha256": "491a632b06724f08771a5c0af0b79b3564e065214dd3b21bc2e24aae5c8dcc75",
+      "input_manifest": "atlas-n1306127.json",
+      "input_manifest_sha256": "e6cec82764a745c399e7d2cbf8f8e4a3fad4c2c24834bdb581d4580bb7eab53b",
+      "input_signature": "63c100f65255ca95197e72ab22ea7efea7e7a2306f3f6df3e93bcde63b7fff1c"
+    },
+    {
+      "pair_file": "atlas-n1306127-seed779.json",
+      "sha256": "7cff82777a69d0fc3cdce02c489223d2243231e4799ed4cfc29861650630e65a",
+      "input_manifest": "atlas-n1306127.json",
+      "input_manifest_sha256": "e6cec82764a745c399e7d2cbf8f8e4a3fad4c2c24834bdb581d4580bb7eab53b",
+      "input_signature": "63c100f65255ca95197e72ab22ea7efea7e7a2306f3f6df3e93bcde63b7fff1c"
+    }
+  ],
+  "wide_panel_included": false,
+  "unpublished_optimization_included": false
+}
