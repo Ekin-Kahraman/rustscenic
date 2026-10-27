@@ -49,9 +49,9 @@ def measurements():
 
 def draw(rows, medians, summary, *, dark=False, mobile=False):
     if dark:
-        bg, fg, muted, grid = "#0D1117", "#F0F4FA", "#AFBBD0", "#293441"
-        colors = ("#FF975F", "#C0CBDB", "#7D93AF")
-        accent = "#45C6CA"
+        bg, fg, muted, grid = "#142034", "#FFFFFF", "#D3DEEE", "#34465F"
+        colors = ("#FFAC66", "#DAE4F3", "#A3BCDF")
+        accent = "#4CEBD8"
     else:
         bg, fg, muted, grid = "#FFFFFF", "#142437", "#56697F", "#E9EEF2"
         colors = ("#D85D27", "#52647D", "#8293A5")
@@ -70,7 +70,8 @@ def draw(rows, medians, summary, *, dark=False, mobile=False):
         fig.text(.055, .887, "Mouse-brain RNA · 2,095 genes · 256 TFs · 16 CPU cores",
                  color=muted, fontsize=13)
         legend_y = .844
-    styles = (("o", "-", 2.8), ("s", "--", 1.8), ("^", ":", 2.0))
+    styles = (("o", "-", 3.5), ("s", "--", 2.1), ("^", ":", 2.2)) if dark else (
+        ("o", "-", 2.8), ("s", "--", 1.8), ("^", ":", 2.0))
     handles = [Line2D([0], [0], color=c, marker=m, linestyle=ls, linewidth=lw,
                       markersize=6, label=n) for c, (m, ls, lw), n in zip(colors, styles, NAMES)]
     legend = fig.legend(handles=handles, loc="upper left", bbox_to_anchor=(.055, legend_y),
@@ -94,16 +95,16 @@ def draw(rows, medians, summary, *, dark=False, mobile=False):
             xs = [count / 1e6 for count in SIZES]
             ys = [medians[method][count][key] / divisor for count in SIZES]
             ax.plot(xs, ys, color=color, marker=marker, linestyle=style, linewidth=lw,
-                    markersize=5.5, zorder=4 if method == "rustscenic" else 3)
+                    markersize=6.5 if dark else 5.5, zorder=4 if method == "rustscenic" else 3)
             runs = [r[key] / divisor for r in rows if r["method"] == method and r["cells"] == final]
-            ax.scatter([final / 1e6] * len(runs), runs, s=24, facecolor=color,
+            ax.scatter([final / 1e6] * len(runs), runs, s=31 if dark else 24, facecolor=color,
                        edgecolor=bg, linewidth=.65, zorder=6)
             ax.vlines(final / 1e6, min(runs), max(runs), color=color, linewidth=1.2, zorder=5)
             value = ys[-1]
             y_label = {"rustscenic": value, "arboreto_sparse": 104, "arboreto_mp_sparse": 86}[method] if panel == 0 else value
             annotation = f"{value:.1f}" if panel == 0 else f"{value:.2f}"
             ax.annotate(annotation, xy=(xs[-1], value), xytext=(1.365, y_label), va="center",
-                fontsize=10.2 if mobile else 11.4, color=color,
+                fontsize=10.8 if mobile and dark else 10.2 if mobile else 12.2 if dark else 11.4, color=color,
                 fontweight="bold" if method == "rustscenic" else "normal",
                 arrowprops=dict(arrowstyle="-", color=color, lw=.7, shrinkA=2, shrinkB=5) if y_label != value else None)
         ax.set_title(title, loc="left", fontsize=14 if mobile else 15.5, fontweight="bold", color=fg, pad=20)
@@ -133,7 +134,7 @@ def draw(rows, medians, summary, *, dark=False, mobile=False):
                  color=muted, fontsize=11.5)
         fig.text(.075, .080, "Core GRN inference; preparation/loading excluded. Memory: peak sampled process-tree PSS. Full conditions linked below.",
                  color=muted, fontsize=11.5)
-    suffix = ("-mobile" if mobile else "") + ("-dark" if dark else "")
+    suffix = ("-mobile" if mobile else "") + ("-dark-bright" if dark else "")
     svg_path = ROOT / f"figure{suffix}.svg"
     fig.savefig(svg_path, facecolor=bg,
         metadata={"Date": None, "Title": "RustScenic: measured scaling on real single-cell data",

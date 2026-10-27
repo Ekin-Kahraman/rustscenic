@@ -198,9 +198,9 @@ releases remain MIT.
 <p align="center">
   <a href="docs/benchmarks/huangfu-atlas-20261026/benchmark-source-record.md">
     <picture>
-      <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/69c1d59c6fb274056570ec1a1024e50c9ed8bc5f/docs/benchmarks/huangfu-atlas-20261026/figure-mobile-dark.svg">
+      <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/benchmarks/huangfu-atlas-20261026/figure-mobile-dark-bright.svg">
       <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/69c1d59c6fb274056570ec1a1024e50c9ed8bc5f/docs/benchmarks/huangfu-atlas-20261026/figure-mobile.svg">
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/69c1d59c6fb274056570ec1a1024e50c9ed8bc5f/docs/benchmarks/huangfu-atlas-20261026/figure-dark.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="docs/benchmarks/huangfu-atlas-20261026/figure-dark-bright.svg">
       <source media="(min-width: 601px)" srcset="https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/69c1d59c6fb274056570ec1a1024e50c9ed8bc5f/docs/benchmarks/huangfu-atlas-20261026/figure.svg">
       <img src="docs/benchmarks/huangfu-atlas-20261026/figure.png" width="1120" alt="RustScenic on 1.3 million real cells: 3.06 times faster gene-network analysis and 78.7 percent lower measured memory than arboreto Dask. Versus arboreto multiprocessing: 2.94 times faster and 54.5 percent lower memory. Medians of three matched seeds on 16 CPUs.">
     </picture>
