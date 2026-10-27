@@ -17,6 +17,10 @@ ROOT = Path(__file__).resolve().parent
 METHODS = ("rustscenic", "arboreto_sparse", "arboreto_mp_sparse")
 NAMES = ("RustScenic", "arboreto · Dask", "arboreto · multiprocessing")
 SIZES = (100000, 500000, 1306127)
+# Match the documented symbol colour and existing README workflow palette.
+# See site_docs/assets/branding/README.txt and generate_workflow.py.
+BRAND_ORANGE = "#D46F40"
+BRAND_TEAL = "#449F95"
 
 
 def measurements():
@@ -49,13 +53,13 @@ def measurements():
 
 def draw(rows, medians, summary, *, dark=False, mobile=False):
     if dark:
-        bg, fg, muted, grid = "#142034", "#FFFFFF", "#D3DEEE", "#34465F"
-        colors = ("#FFAC66", "#DAE4F3", "#A3BCDF")
-        accent = "#4CEBD8"
+        bg, fg, muted, grid = "#141414", "#E6EDF3", "#9DA7B3", "#303B47"
+        colors = (BRAND_ORANGE, "#9DA7B3", "#9DA7B3")
+        accent = BRAND_TEAL
     else:
-        bg, fg, muted, grid = "#FFFFFF", "#142437", "#56697F", "#E9EEF2"
-        colors = ("#D85D27", "#52647D", "#8293A5")
-        accent = "#007F89"
+        bg, fg, muted, grid = "#FFFFFF", "#24292F", "#57616C", "#D8DFE5"
+        colors = (BRAND_ORANGE, "#57616C", "#9DA7B3")
+        accent = BRAND_TEAL
     fig = plt.figure(figsize=(8.4, 12.4) if mobile else (15.4, 8.6), facecolor=bg)
     if mobile:
         axes = [fig.add_axes((.13, .52, .82, .265)), fig.add_axes((.13, .16, .82, .265))]
@@ -134,14 +138,14 @@ def draw(rows, medians, summary, *, dark=False, mobile=False):
                  color=muted, fontsize=11.5)
         fig.text(.075, .080, "Core GRN inference; preparation/loading excluded. Memory: peak sampled process-tree PSS. Full conditions linked below.",
                  color=muted, fontsize=11.5)
-    suffix = ("-mobile" if mobile else "") + ("-dark-bright" if dark else "")
+    suffix = ("-mobile" if mobile else "") + ("-dark" if dark else "") + "-brand"
     svg_path = ROOT / f"figure{suffix}.svg"
     fig.savefig(svg_path, facecolor=bg,
         metadata={"Date": None, "Title": "RustScenic: measured scaling on real single-cell data",
                   "Description": "Runtime and memory at 100,000, 500,000 and 1,306,127 real cells. Both arboreto routes shown."})
     svg_path.write_text("\n".join(line.rstrip() for line in svg_path.read_text().splitlines()) + "\n")
     if not mobile and not dark:
-        fig.savefig(ROOT / "figure.png", dpi=180, facecolor=bg,
+        fig.savefig(ROOT / "figure-brand.png", dpi=180, facecolor=bg,
             metadata={"Software": "RustScenic scientific benchmark visualization"})
     plt.close(fig)
 
