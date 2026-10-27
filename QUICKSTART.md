@@ -1,8 +1,17 @@
 # RustScenic quickstart
 
 Infer a gene network and score candidate gene-set activity on PBMC3k with
-**v0.5.0**. This RNA example downloads data on first use and caches it locally.
+**v0.5.1**. This RNA example downloads data on first use and caches it locally.
 Runtime depends on the data, settings and CPU.
+
+## Run in a notebook
+
+[Open the PBMC3k notebook in Colab](https://colab.research.google.com/github/Ekin-Kahraman/rustscenic/blob/main/examples/pbmc3k_quickstart.ipynb),
+or download the [notebook](examples/pbmc3k_quickstart.ipynb) and run it locally.
+It installs the published package, reads the public 10x count matrix and walks
+through GRN inference, candidate gene-set scoring and result export. The modest
+gene and TF subsets are for learning the workflow; the notebook does not perform
+motif filtering or biological validation.
 
 ## Install
 
