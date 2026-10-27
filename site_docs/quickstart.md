@@ -1,9 +1,14 @@
 # Quickstart
 
-Infer a gene network and score candidate gene-set activity with **v0.5.0**.
+Infer a gene network and score candidate gene-set activity with **v0.5.1**.
 Start with [Installation](installation.md), or
 [run PBMC3k](https://github.com/Ekin-Kahraman/rustscenic/blob/main/QUICKSTART.md)
 for a complete example that downloads its own data.
+
+[Run the PBMC3k notebook in Colab](https://colab.research.google.com/github/Ekin-Kahraman/rustscenic/blob/main/examples/pbmc3k_quickstart.ipynb)
+to install the published package, fit a small GRN, score candidate gene sets and
+export your results. It uses public count data and does not perform motif
+filtering or biological validation.
 
 ## Prepare your input
 

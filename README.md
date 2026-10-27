@@ -78,9 +78,14 @@ Expected version: `0.5.1`. For a clean environment, see
 
 ### Run a working example
 
-[Run the PBMC3k walkthrough](QUICKSTART.md). It downloads a small RNA dataset
-and saves network edges (`grn.parquet`) and per-cell activity scores
-(`aucell.parquet`).
+Run GRN inference and candidate gene-set scoring on PBMC3k in the
+[executable notebook](examples/pbmc3k_quickstart.ipynb):
+
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Ekin-Kahraman/rustscenic/blob/main/examples/pbmc3k_quickstart.ipynb)
+
+The notebook installs the published package, downloads the public RNA data and
+saves network edges, per-cell activity scores and run settings. For a local
+script, follow the [PBMC3k walkthrough](QUICKSTART.md).
 
 ### Analyse your own data
 

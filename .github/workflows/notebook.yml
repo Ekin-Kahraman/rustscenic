@@ -1,0 +1,78 @@
+name: notebook
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - examples/pbmc3k_quickstart.ipynb
+      - .github/workflows/notebook.yml
+  pull_request:
+    paths:
+      - examples/pbmc3k_quickstart.ipynb
+      - .github/workflows/notebook.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-wheel-notebook:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONNOUSERSITE: "1"
+      PYTHONPATH: ""
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install notebook execution tools
+        run: python -m pip install --only-binary=:all: nbclient nbformat ipykernel
+      - name: Execute the public-wheel starter with a cold kernel
+        env:
+          NOTEBOOK_SOURCE: ${{ github.workspace }}/examples/pbmc3k_quickstart.ipynb
+          NOTEBOOK_EVIDENCE: ${{ runner.temp }}/pbmc3k-notebook-evidence
+        run: |
+          python <<'PY'
+          import os
+          import shutil
+          import tempfile
+          from pathlib import Path
+
+          import nbformat
+          from nbclient import NotebookClient
+
+          notebook = nbformat.read(os.environ["NOTEBOOK_SOURCE"], as_version=4)
+          assert all(
+              cell.execution_count is None and not cell.outputs
+              for cell in notebook.cells if cell.cell_type == "code"
+          ), "Commit the notebook without execution state or outputs."
+          evidence = Path(os.environ["NOTEBOOK_EVIDENCE"])
+          evidence.mkdir(parents=True, exist_ok=True)
+          with tempfile.TemporaryDirectory(prefix="rustscenic-notebook-") as workdir:
+              client = NotebookClient(
+                  notebook,
+                  timeout=300,
+                  kernel_name="python3",
+                  allow_errors=False,
+                  resources={"metadata": {"path": workdir}},
+              )
+              try:
+                  client.execute()
+              finally:
+                  nbformat.write(notebook, evidence / "pbmc3k_quickstart.executed.ipynb")
+                  results = Path(workdir) / "rustscenic_pbmc3k" / "results"
+                  if results.exists():
+                      shutil.copytree(results, evidence / "results", dirs_exist_ok=True)
+          print(f"Executed notebook and results saved to {evidence}")
+          PY
+      - name: Upload executed notebook and run provenance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pbmc3k-public-wheel-notebook
+          path: ${{ runner.temp }}/pbmc3k-notebook-evidence
+          if-no-files-found: warn
+          retention-days: 14
