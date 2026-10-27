@@ -33,8 +33,7 @@ for RustScenic. The approximately 80% memory claim is specific to Dask.
   target-set mean Jaccard 0.402-0.404. Faster execution does not establish
   biological equivalence. No complete million-cell multiome workflow is claimed.
 
-[Individual seed measurements](measurements.csv) · [Parameters and source hashes](summary.json) ·
-[Benchmark harness](../../../validation/hpc/huangfu_atlas/METHODS.md)
+[Individual seed measurements](measurements.csv) · [Parameters and source hashes](summary.json)
 
 The earlier 20,000-cell experiment remains a separate historical result:
 [original measurements and conditions](../real-rna-20260828/benchmark-source-record.md).
