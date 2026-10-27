@@ -193,28 +193,6 @@ releases remain MIT.
 
 <br>
 
-## Try a network
-
-[Open the interactive example](https://ekin-kahraman.github.io/rustscenic/demo/endothelial/)
-to choose a regulator and inspect its predicted targets. No installation or
-model fitting is needed. For offline use, [download the ZIP](https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/main/examples/cellxgene-endothelial/starter.zip),
-extract it and open `explore.html`.
-
-[![ETS1 predicted targets in the endothelial-cell example](site_docs/assets/examples/endothelial-preview.png)](https://ekin-kahraman.github.io/rustscenic/demo/endothelial/)
-
-The example includes the complete **184,000-edge network**, **85 motif-supported
-regulons**, activity summaries and source-study citations.
-
-Inside the extracted folder, Python users can run:
-
-```bash
-python3 example.py --tf ETS1
-```
-
-If RustScenic is useful to you, [star the repository](https://github.com/Ekin-Kahraman/rustscenic).
-
-<br>
-
 ## Performance
 
 <p align="center">
@@ -303,6 +281,28 @@ for enhancer links; SCENIC+ uses boosted trees plus Pearson scoring.
 [Recorded measurements](validation/head_to_head/head_to_head_summary.json)
 
 </details>
+
+<br>
+
+## Try a network
+
+[Open the interactive example](https://ekin-kahraman.github.io/rustscenic/demo/endothelial/)
+to choose a regulator and inspect its predicted targets. No installation or
+model fitting is needed. For offline use, [download the ZIP](https://raw.githubusercontent.com/Ekin-Kahraman/rustscenic/main/examples/cellxgene-endothelial/starter.zip),
+extract it and open `explore.html`.
+
+[![ETS1 predicted targets in the endothelial-cell example](site_docs/assets/examples/endothelial-preview.png)](https://ekin-kahraman.github.io/rustscenic/demo/endothelial/)
+
+The example includes the complete **184,000-edge network**, **85 motif-supported
+regulons**, activity summaries and source-study citations.
+
+Inside the extracted folder, Python users can run:
+
+```bash
+python3 example.py --tf ETS1
+```
+
+If RustScenic is useful to you, [star the repository](https://github.com/Ekin-Kahraman/rustscenic).
 
 <br>
 
