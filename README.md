@@ -65,7 +65,7 @@
 
 ## Get started
 
-Current release: `v0.5.1`. Python **3.10–3.13**; Linux, macOS and Windows.
+Current release: `v0.5.1`. Regular CPython **3.10–3.14**; Linux, macOS and Windows.
 Runs on CPUs; no GPU or Rust setup needed with prebuilt packages.
 
 ```bash

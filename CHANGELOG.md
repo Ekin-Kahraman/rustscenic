@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add regular CPython 3.14 to the standard three-platform audit matrix and
+  support metadata. Separately qualify the published v0.5.1 macOS arm64 ABI3
+  wheel with synthetic software tests; other released platform wheels and
+  free-threaded Python builds are not individually qualified by that check.
+
 ## 0.5.1 - 2026-10-26
 
 - Reject AUCell tuple inputs with a non-2D expression matrix or a gene-name
