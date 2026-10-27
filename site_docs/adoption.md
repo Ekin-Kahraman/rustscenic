@@ -23,7 +23,7 @@ Use these when introducing the package to a lab or collaborator:
 | --- | --- |
 | Published package | [v0.5.1](https://pypi.org/project/rustscenic/0.5.1/), with prebuilt CPU packages. See [installation](installation.md) for platforms and Python qualification details. |
 | Faster tested path | `11x` to `52x` faster than SCENIC+ for selected stages on sampled data, measured on one machine. |
-| Memory measurement | v0.5.0 candidate: about 81% less peak physical memory than arboreto in a controlled 20,000-cell comparison. See [benchmark scope](benchmarks.md#memory-scaling). |
+| Memory measurement | **3× faster with approximately 80% lower peak measured memory** than sparse Dask arboreto on **1.3 million real cells**, across three matched seeds (exact: 3.06×, 78.7%). See [benchmark scope](benchmarks.md#13-million-real-cell-comparison). |
 | Lab artefact | Collaborator human brain workflow recovered 16 of 17 expected brain transcription factors. |
 
 ## Minimal Adoption Test

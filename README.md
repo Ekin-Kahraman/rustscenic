@@ -53,10 +53,10 @@
 </p>
 
 - **1.3 million real cells:** RNA gene regulatory network (GRN) inference in
-  **46m42s on 16 CPU cores**,
+  **31m20s on 16 CPU cores**,
   using 2,095 selected genes and 256 transcription factors.
-- **2.04–3.33× faster than arboreto** in matched 20,000-cell comparisons;
-  **81% lower physical memory** in the measured Intel-node comparison.
+- **3× faster than arboreto** in matched 1.3 million-cell comparisons;
+  **~80% lower physical memory** in the measured Intel-node comparison.
 - **704 human cell labels:** precomputed exploratory networks from CELLxGENE
   Census, [openly available on Zenodo](https://doi.org/10.5281/zenodo.23548341).
   Explore the endothelial-cell example below or download the full collection.
@@ -217,6 +217,31 @@ If RustScenic is useful to you, [star the repository](https://github.com/Ekin-Ka
 
 ## Performance
 
+![RustScenic on 1.3 million real cells: three matched seeds against arboreto](docs/benchmarks/huangfu-atlas-20261026/figure.png)
+
+**3.06× faster analysis and 78.7% lower peak measured memory** than arboreto
+(Dask, sparse), using ratios of medians across three matched seeds on
+**1,306,127 real mouse-brain cells**. Median analysis took **31m20s versus
+96m00s**, using **2.97 versus 13.93 GB** peak sampled process-tree PSS.
+
+Measured with RustScenic **v0.5.0**, 2,095 selected genes, 256 transcription
+factors and 16 CPU cores on matched inputs and hardware. This measures core
+GRN analysis, excluding input preparation and loading. Network rankings differ;
+biological equivalence is not claimed. Against sparse multiprocessing arboreto,
+the separate result is **2.94× faster with 54.5% lower PSS**.
+
+[Measurements, seeds and conditions](docs/benchmarks/huangfu-atlas-20261026/benchmark-source-record.md) ·
+[SCENIC+ comparisons and output agreement](site_docs/benchmarks.md)
+
+<details>
+<summary>Earlier 20,000-cell benchmark and real-RNA scaling</summary>
+
+- **1.3 million real cells:** RNA gene regulatory network (GRN) inference in
+  **46m42s on 16 CPU cores**,
+  using 2,095 selected genes and 256 transcription factors.
+- **2.04–3.33× faster than arboreto** in matched 20,000-cell comparisons;
+  **81% lower physical memory** in the measured Intel-node comparison.
+
 ![RustScenic real-RNA scaling and matched arboreto comparisons](docs/benchmarks/real-rna-20260828/figure.png)
 
 The million-cell result measures GRN inference on prepared mouse-brain RNA.
@@ -228,6 +253,8 @@ describe a complete million-cell spatial workflow.
 
 [Exact measurements and conditions](docs/benchmarks/real-rna-20260828/benchmark-source-record.md) ·
 [SCENIC+ comparisons and output agreement](site_docs/benchmarks.md)
+
+</details>
 
 <details>
 <summary>Topic-model memory and selected SCENIC+ comparisons</summary>

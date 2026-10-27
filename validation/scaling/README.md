@@ -3,6 +3,13 @@
 Measures how rustscenic's GRN inference and AUCell scale with cell count.
 Delivers the evidence promised to Moha/Kuan: scaling behaviour at atlas scale.
 
+## Latest matched real-cell evidence
+
+The [three-seed 1.3 million-cell benchmark](../../docs/benchmarks/huangfu-atlas-20261026/benchmark-source-record.md)
+measures **3.06x faster GRN analysis and 78.7% lower peak analysis PSS** than
+sparse Dask arboreto on matched inputs and hardware. The earlier scaling
+and 20,000-cell results below retain their original scope and measurements.
+
 ## Run
 
 ```bash

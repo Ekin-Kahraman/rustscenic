@@ -4,6 +4,27 @@ This page records what was measured, on which data and hardware, and how the
 results compare with established tools. Speed and memory results apply to the
 stated workloads; they are not universal guarantees.
 
+## 1.3 million real-cell comparison
+
+**3× faster with approximately 80% lower measured memory than arboreto
+(Dask, sparse)** on 1,306,127 real mouse-brain cells, consistently across
+three matched seeds. Exact ratios of medians: **3.06× and 78.7%**.
+
+| Implementation | Median GRN analysis | Median peak analysis PSS | Seeds |
+| --- | ---: | ---: | ---: |
+| RustScenic 0.5.0 | 31m20s | 2.97 GB | 3 |
+| Arboreto 0.1.6, sparse Dask | 96m00s | 13.93 GB | 3 |
+| Arboreto 0.1.6, sparse multiprocessing | 92m12s | 6.52 GB | 3 |
+
+Matched inputs and hardware; 2,095 selected genes, 256 TFs and 16 CPUs;
+seeds 777, 778 and 779. Timings exclude preparation and input loading;
+memory is sampled process-tree PSS. The approximately 80% memory claim
+applies to Dask. Against multiprocessing arboreto, the result is **2.94×
+faster with 54.5% lower PSS**. Network rankings differ, so this is performance
+evidence rather than proof of biological equivalence.
+
+[Individual seeds, hardware and methods](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/benchmarks/huangfu-atlas-20261026/benchmark-source-record.md).
+
 The SCENIC+ comparison starts with prepared RNA and chromatin-accessibility
 matrices and tests the following analysis stages:
 
@@ -77,7 +98,8 @@ For the human brain GEM-X row, including data preparation:
 
 ## Memory Scaling
 
-The newer measurements below were made on the **v0.5.0 release candidate**.
+The earlier measurements below were made on the **v0.5.0 release candidate**.
+The original 20,000-cell comparison and scaling results are retained here.
 Full commands and results are in the
 [real-RNA benchmark](https://github.com/Ekin-Kahraman/rustscenic/blob/0c8eb00539e3860c78e452c8661cc2735c169386/validation/scaling/IFB_REAL_RNA_GRN_2026-08-28.md)
 and [scaling/memory audit](https://github.com/Ekin-Kahraman/rustscenic/blob/0c8eb00539e3860c78e452c8661cc2735c169386/validation/scaling/IFB_SCALE_2026-08-28.md).

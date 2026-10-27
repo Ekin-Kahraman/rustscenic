@@ -1,0 +1,79 @@
+{
+  "cells": 1306127,
+  "genes": 2095,
+  "tfs": 256,
+  "threads": 16,
+  "seeds": [
+    777,
+    778,
+    779
+  ],
+  "cpu": "INTEL(R) XEON(R) PLATINUM 8568Y+",
+  "python": "3.12.5",
+  "packages": {
+    "rustscenic": "0.5.0",
+    "arboreto": "0.1.6",
+    "dask": "2024.4.1",
+    "distributed": "2024.4.1",
+    "scikit-learn": "1.7.2",
+    "numpy": "1.26.4",
+    "scipy": "1.13.1"
+  },
+  "parameters": {
+    "early_stop_window": 25,
+    "learning_rate": 0.01,
+    "max_depth": 3,
+    "max_features": 0.1,
+    "n_estimators": 5000,
+    "subsample": 0.9
+  },
+  "source": {
+    "bytes": 4216018749,
+    "name": "1M_neurons_filtered_gene_bc_matrices_h5.h5",
+    "sha256": "255a36ee92de25cb3568faa2c27d31fe6d0db30f285c5c977be8d6245de14044",
+    "url": "https://cf.10xgenomics.com/samples/cell-exp/1.3.0/1M_neurons/1M_neurons_filtered_gene_bc_matrices_h5.h5"
+  },
+  "memory_metric": "peak sampled process-tree analysis PSS; decimal GB",
+  "timing_scope": "matrix-to-network GRN analysis; excludes input preparation and loading",
+  "medians": {
+    "rustscenic": {
+      "analysis_s": 1880.174099592492,
+      "analysis_peak_pss_gb": 2.969996288
+    },
+    "arboreto_sparse": {
+      "analysis_s": 5759.960822513327,
+      "analysis_peak_pss_gb": 13.932635136
+    },
+    "arboreto_mp_sparse": {
+      "analysis_s": 5532.37131623365,
+      "analysis_peak_pss_gb": 6.521243648
+    }
+  },
+  "speedup_ratio_of_medians": 3.0635252468171634,
+  "pss_reduction_percent": 78.68316898412175,
+  "output_agreement": [
+    {
+      "seed": 777,
+      "spearman_all_candidates_zero_filled": 0.6282391086531917,
+      "top50_mean_jaccard": 0.40348522187891955,
+      "arboreto_routes_have_identical_networks": true
+    },
+    {
+      "seed": 778,
+      "spearman_all_candidates_zero_filled": 0.6295144679120156,
+      "top50_mean_jaccard": 0.4016492230599871,
+      "arboreto_routes_have_identical_networks": true
+    },
+    {
+      "seed": 779,
+      "spearman_all_candidates_zero_filled": 0.6238738671485023,
+      "top50_mean_jaccard": 0.40425802337318395,
+      "arboreto_routes_have_identical_networks": true
+    }
+  ],
+  "source_pair_sha256": {
+    "atlas-n1306127-seed777.json": "d2427a3eeb0d741eb048d45ab083f919abdc0826cd57e54e3b3048916fccc29a",
+    "atlas-n1306127-seed778.json": "491a632b06724f08771a5c0af0b79b3564e065214dd3b21bc2e24aae5c8dcc75",
+    "atlas-n1306127-seed779.json": "7cff82777a69d0fc3cdce02c489223d2243231e4799ed4cfc29861650630e65a"
+  }
+}

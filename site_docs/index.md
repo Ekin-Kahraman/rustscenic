@@ -39,17 +39,23 @@ network inference, motif enrichment, activity scoring and multiome analysis.
 
 | Evidence | Measured result and scope |
 | --- | --- |
-| RNA scale | **1,306,127 mouse-brain cells in 46m42s**, with 4.28 GB peak inference memory on 16 CPU cores; 2,095 selected genes and 256 TFs. |
-| Matched arboreto comparison | **2.04–3.33× faster** on 20,000 cells; **81% lower physical memory** in the Intel-node comparison. |
+| RNA scale | **1,306,127 real mouse-brain cells in 31m20s median**, with 2.97 GB peak analysis PSS on 16 CPU cores; 2,095 selected genes and 256 TFs; three matched seeds. |
+| Matched arboreto comparison | **3.06× faster with 78.7% lower peak measured memory** than sparse Dask arboreto on the full 1.3 million-cell input, using ratios of medians across three matched seeds. |
 | Memory scaling | **21.4% lower topic-model peak memory**, with unchanged outputs across three baseline and three optimised runs. Five sampling sweeps test storage, not model convergence. |
 | Selected SCENIC+ stages | **`11x` to `52x` faster** on sampled real-data inputs of 1,500–2,000 cells. Enhancer methods differ; output agreement is incomplete. |
 | Huang Lab collaborator run | **16/17 expected brain transcription factors** recovered on 8,215 post-QC cells with v0.4.6. A biological sanity check, not an accuracy estimate. |
 
-The scale, arboreto and topic-memory results used the **v0.5.0 release candidate**.
-The million-cell run measures inference on prepared RNA; separate preparation
-took **7m18s** and peaked at **71.49 GB**. It does not establish a complete
-million-cell spatial workflow. Each arboreto timing is one observation per
-node, not a repeated-run average.
+The new million-cell comparison used **RustScenic v0.5.0** and measures core
+GRN analysis on prepared RNA, excluding preparation and input loading. The
+approximately 80% memory reduction is specific to the sparse Dask comparator;
+the sparse multiprocessing comparator gives **2.94× faster analysis and 54.5%
+lower PSS**. Network rankings differ. [Measurements and conditions](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/benchmarks/huangfu-atlas-20261026/benchmark-source-record.md).
+
+The [earlier scaling and 20,000-cell experiments](benchmarks.md#memory-scaling)
+remain available. Their v0.5.0 candidate million-cell run took 46m42s, with
+separate preparation taking **7m18s** and peaking at **71.49 GB**. The earlier
+arboreto timings were single observations per node. Neither study establishes
+a complete million-cell spatial workflow.
 
 [Commands, hardware and output agreement](benchmarks.md) ·
 [Biological checks and limitations](validation.md) ·
