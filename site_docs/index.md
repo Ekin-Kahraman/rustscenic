@@ -18,7 +18,7 @@ the Icahn School of Medicine at Mount Sinai.
 
 ## Get started
 
-Current release `v0.5.1`; Python **3.10–3.13**; Linux, macOS and Windows.
+Current release `v0.5.1`; regular CPython **3.10–3.14**; Linux, macOS and Windows.
 
 ```bash
 python -m pip install rustscenic

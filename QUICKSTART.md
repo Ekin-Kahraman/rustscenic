@@ -6,7 +6,7 @@ Runtime depends on the data, settings and CPU.
 
 ## Install
 
-Use Python **3.10–3.13** in an active environment; see
+Use regular CPython **3.10–3.14** in an active environment; see
 [Installation](site_docs/installation.md) for setup.
 
 ```bash

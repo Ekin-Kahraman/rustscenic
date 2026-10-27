@@ -1,6 +1,6 @@
 # Installation
 
-RustScenic **v0.5.0** supports Python **3.10–3.13** on Linux, macOS and Windows.
+RustScenic **v0.5.1** supports regular CPython **3.10–3.14** on Linux, macOS and Windows.
 Prebuilt packages need no Rust setup. Core analysis runs on CPUs without Java,
 Dask, CUDA or Snakemake.
 
@@ -25,7 +25,7 @@ Expected version: `0.5.1`.
 <details markdown="1">
 <summary>Using venv instead of Conda</summary>
 
-With Python 3.10–3.13 installed, create an environment:
+With regular CPython 3.10–3.14 installed, create an environment:
 
 ```bash
 python -m venv .venv
@@ -61,6 +61,13 @@ or [analyse your own data](quickstart.md).
 
 The core dependencies (`numpy`, `pandas`, `pyarrow`, `scipy` and `anndata`)
 install automatically.
+
+Python 3.14 support refers to CPython with the GIL enabled. The standard audit
+matrix tests source builds on Linux, macOS and Windows.
+The public v0.5.1 macOS `arm64` ABI3 wheel was also installed and exercised on
+CPython 3.14.5 with synthetic software fixtures. The other released platform
+wheels were not individually requalified for Python 3.14 in that local check.
+Free-threaded Python builds have not been qualified.
 
 </details>
 
