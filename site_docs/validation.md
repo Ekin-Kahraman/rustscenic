@@ -11,12 +11,33 @@ runtime, memory use and biological checks.
 
 | Signal | Evidence |
 | --- | --- |
-| Released package | `v0.5.0` is the current GitHub release and PyPI package. |
+| Published package | [v0.5.1 on GitHub](https://github.com/Ekin-Kahraman/rustscenic/releases/tag/v0.5.1) and [PyPI](https://pypi.org/project/rustscenic/0.5.1/). |
 | Controlled benchmark path | `validation/head_to_head/head_to_head_summary.json` records machine, seed, Python versions, runtime, peak RSS and output signatures. |
 | Lab validation | Huang Lab collaborator artefacts include Kamath dopaminergic neurons and 10x human brain GEM-X multiome runs. |
 | Multi-stage real-data run | Human brain GEM-X `v0.4.6` artefact completed GRN, regulons, cisTarget, enhancer links and eRegulons on 8,215 post-QC cells and 123,089 peaks. |
 | Biological sanity check | The multi-stage human brain run recovered 16 of 17 expected brain TFs. |
 | CI coverage | Audit, docs, release and nightly real-data validation workflows keep the public evidence path checked. |
+
+## Software checks: 27 October 2026
+
+The [audit run](https://github.com/Ekin-Kahraman/rustscenic/actions/runs/40455144426)
+for [source commit `ad6f0ed3`](https://github.com/Ekin-Kahraman/rustscenic/commit/ad6f0ed3e09297f9215d8c1a774a42a62dcf24dc)
+passed all 23 jobs: three Rust checks, 15 regular CPython 3.10–3.14 checks across
+Linux, macOS and Windows, and five installation checks for the core package
+and optional extras. This source snapshot includes post-release changes;
+its results are distinct from testing the published wheels.
+
+The separate [published-wheel notebook run](https://github.com/Ekin-Kahraman/rustscenic/actions/runs/40455144375)
+installed `rustscenic==0.5.1` on Ubuntu with Python 3.12 and completed all nine
+code cells on the public PBMC3k dataset. It checks input integrity, cell-barcode
+alignment and result export, and saves an executed notebook, a plot and run
+provenance as CI artifacts. [Open the notebook](https://colab.research.google.com/github/Ekin-Kahraman/rustscenic/blob/main/examples/pbmc3k_quickstart.ipynb)
+to reproduce that workflow. Its gene sets are unsigned and not motif-filtered;
+AUCell ranks the selected gene panel.
+
+These checks establish software execution for the stated inputs and settings.
+The stage-specific reference comparisons and biological checks below have
+their own versions, datasets and scope.
 
 ## Headline Results
 
@@ -29,7 +50,7 @@ runtime, memory use and biological checks.
 | PBMC3k activator/repressor split | 2,000 seeded sampled edges matched SciPy polarity classifications exactly; maximum absolute rho difference `5.05e-08`. |
 | Human brain GEM-X SCENIC+ comparison | Region-to-gene edge-set Jaccard `1.000`; region AUCell mean Pearson `0.823`; gene AUCell and eRegulon-edge parity remain weaker. |
 | Real multiome pipeline runs | PBMC 3k, mouse brain E18 5k, PBMC granulocyte 10k. |
-| Local unit/integration suite | 223 tests passed, 1 skipped in the 2026-05-24 audit. |
+| Historical local unit/integration snapshot | 223 tests passed, 1 skipped in the 2026-05-24 audit. |
 
 ## External Validation
 
