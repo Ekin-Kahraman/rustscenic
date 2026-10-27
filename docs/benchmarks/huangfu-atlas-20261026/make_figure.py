@@ -146,7 +146,7 @@ def draw(rows, medians, summary, *, dark=False, mobile=False):
 
 
 if __name__ == "__main__":
-    plt.rcParams.update({"font.family": "DejaVu Sans", "svg.fonttype": "none", "svg.hashsalt": "rustscenic-atlas-20261026"})
+    plt.rcParams.update({"font.family": "DejaVu Sans", "svg.fonttype": "path", "svg.hashsalt": "rustscenic-atlas-20261026"})
     observations, values, provenance = measurements()
     for narrow in (False, True):
         for night in (False, True):
