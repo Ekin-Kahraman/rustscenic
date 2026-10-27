@@ -16,6 +16,11 @@ Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fu
 
 ## Setup
 
+Use the current stable Rust toolchain for source builds. The PyO3 0.30 and
+Rust `numpy` 0.30 dependencies declare Rust 1.85 as their minimum; this is a
+dependency requirement, not a tested minimum for the complete workspace or
+every target. CI validates the stable toolchain.
+
 ```bash
 git clone https://github.com/Ekin-Kahraman/rustscenic
 cd rustscenic

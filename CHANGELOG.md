@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Update the coupled Python-binding dependencies to PyO3 0.30.1 and the Rust
+  `numpy` crate 0.30.0. Native bridge entry points now explain NumPy dtype and
+  dimension mismatches instead of reporting a contradictory `ndarray` type
+  error. Retain the `abi3-py310` wheel ABI and existing regular CPython
+  3.10–3.14 support scope.
+
 - Add regular CPython 3.14 to the standard three-platform audit matrix and
   support metadata. Separately qualify the published v0.5.1 macOS arm64 ABI3
   wheel with synthetic software tests; other released platform wheels and
