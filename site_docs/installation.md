@@ -47,6 +47,26 @@ Then run the install and check commands above.
 
 </details>
 
+## Install with Bioconda
+
+[Bioconda](https://anaconda.org/bioconda/rustscenic) also packages RustScenic
+`0.5.1`. Create a separate environment using the `conda-forge` and `bioconda`
+channels in this order, with strict channel priority:
+
+```bash
+conda create -n rustscenic --override-channels \
+  -c conda-forge -c bioconda --strict-channel-priority \
+  python=3.13 rustscenic=0.5.1
+conda activate rustscenic
+python -c "import rustscenic; print(rustscenic.__version__)"
+rustscenic --help
+```
+
+Expected version: `0.5.1`. The published Bioconda builds use Python **3.13**
+and cover Linux `x86_64` / `aarch64` and Intel macOS `x86_64` as of
+28 October 2026. For native Apple Silicon macOS or Windows, use the PyPI
+instructions above. The broader platform table below describes PyPI support.
+
 Next, [run the PBMC3k example](https://github.com/Ekin-Kahraman/rustscenic/blob/main/QUICKSTART.md)
 or [analyse your own data](quickstart.md).
 

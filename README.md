@@ -76,6 +76,9 @@ python -c "import rustscenic; print(rustscenic.__version__)"
 Expected version: `0.5.1`. For a clean environment, see
 [Installation](site_docs/installation.md).
 
+Prefer Conda packages? Follow the [Bioconda install instructions](site_docs/installation.md#install-with-bioconda)
+for Linux or Intel macOS.
+
 ### Run a working example
 
 Run GRN inference and candidate gene-set scoring on PBMC3k in the
