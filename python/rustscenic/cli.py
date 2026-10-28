@@ -66,7 +66,7 @@ def cmd_grn(args: argparse.Namespace) -> int:
     expression, gene_names, n_cells = _load_expression(expr_path)
     tfs = rs_grn.load_tfs(Path(args.tfs))
     gene_set = set(gene_names)
-    tfs_in = [t for t in tfs if t in gene_set]
+    tfs_in = {t for t in tfs if t in gene_set}
     if not tfs_in:
         print(f"error: no TFs in {args.tfs} found in expression data", file=sys.stderr)
         return 2

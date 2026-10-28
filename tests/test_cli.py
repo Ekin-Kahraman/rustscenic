@@ -7,6 +7,84 @@ from pathlib import Path
 import pandas as pd
 
 
+def test_grn_cli_counts_unique_matching_tfs_without_changing_inference(
+    tmp_path, monkeypatch, capsys
+):
+    import numpy as np
+    import rustscenic.cli
+    import rustscenic.grn
+
+    expression_path = tmp_path / "expression.tsv"
+    x = np.linspace(0.1, 1.0, 64)
+    pd.DataFrame(
+        {
+            "TF_A": x,
+            "TF_B": np.ones_like(x),
+            "G1": 2.0 * x + 0.1,
+            "G2": 3.0 * (1.0 - x),
+            "flat": np.zeros_like(x),
+        },
+        index=[f"c{i}" for i in range(len(x))],
+    ).to_csv(expression_path, sep="\t")
+
+    forwarded_tfs = []
+    infer = rustscenic.grn.infer
+
+    def recording_infer(expression, tfs, **kwargs):
+        forwarded_tfs.append(list(tfs))
+        return infer(expression, tfs, **kwargs)
+
+    monkeypatch.setattr(rustscenic.grn, "infer", recording_infer)
+    tf_texts = {
+        "unique": "TF_A\nTF_B\n",
+        "duplicate": "# Candidate TFs\nTF_A\n TF_A \nTF_B\nTF_B\nTF_A\n\nMISSING\nMISSING\n",
+    }
+    outputs = {}
+    for name, tf_text in tf_texts.items():
+        tf_path = tmp_path / f"{name}-tfs.txt"
+        tf_path.write_text(tf_text)
+        output_path = tmp_path / f"{name}.tsv"
+        rc = rustscenic.cli.main(
+            [
+                "grn", "--expression", str(expression_path),
+                "--tfs", str(tf_path), "--output", str(output_path),
+                "--seed", "777", "--n-estimators", "32",
+                "--learning-rate", "0.1", "--max-features", "1.0",
+                "--subsample", "1.0", "--max-depth", "2",
+                "--early-stop-window", "0",
+            ]
+        )
+        assert rc == 0
+        outputs[name] = (
+            output_path.read_bytes(),
+            json.loads(output_path.with_suffix(".json").read_text()),
+            capsys.readouterr().err,
+        )
+
+    assert forwarded_tfs == [
+        ["TF_A", "TF_B"],
+        ["TF_A", "TF_A", "TF_B", "TF_B", "TF_A", "MISSING", "MISSING"],
+    ]
+    unique_bytes, unique_meta, _ = outputs["unique"]
+    duplicate_bytes, duplicate_meta, _ = outputs["duplicate"]
+    assert duplicate_bytes == unique_bytes
+    assert duplicate_meta["grn_fit"] == unique_meta["grn_fit"]
+
+    network = pd.read_csv(tmp_path / "unique.tsv", sep="\t")
+    assert set(network["TF"]) == {"TF_A"}
+    assert set(network["target"]) == {"G1", "G2"}
+    assert np.isfinite(network["importance"]).all()
+    assert (network["importance"] > 0).all()
+    # The constant TF_B is selected but emits no edges: count inputs, not output TFs.
+    for _, metadata, stderr in outputs.values():
+        assert metadata["n_tfs_used"] == 2
+        assert type(metadata["n_tfs_used"]) is int
+        assert "genes=5  tfs=2  seed=777" in stderr.splitlines()[0]
+    assert {k: v for k, v in duplicate_meta.items() if k != "wall_clock_s"} == {
+        k: v for k, v in unique_meta.items() if k != "wall_clock_s"
+    }
+
+
 def test_aucell_cli_groups_long_form_regulons_by_name(tmp_path, monkeypatch):
     import rustscenic.aucell
     import rustscenic.cli

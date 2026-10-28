@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Count distinct matching TF symbols in the `grn` CLI JSON `n_tfs_used`
+  and status header when a TF list repeats names. Preserve the supplied TF
+  list, inferred network, `grn_fit` settings and fit telemetry.
+
 - Update the coupled Python-binding dependencies to PyO3 0.30.1 and the Rust
   `numpy` crate 0.30.0. Native bridge entry points now explain NumPy dtype and
   dimension mismatches instead of reporting a contradictory `ndarray` type
