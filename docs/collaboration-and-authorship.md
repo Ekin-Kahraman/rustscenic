@@ -6,6 +6,8 @@ This document records the default expectations for collaborations around rustsce
 
 rustscenic is an open-source software project created and maintained by Ekin Kahraman.
 
+Built and scaled with the Huang Lab at the Icahn School of Medicine at Mount Sinai.
+
 Ekin Kahraman · Mohamed El Moussaoui · Kuan-Lin Huang · Longtao Huangfu · Fuaad Siyaad
 
 [Contributions](../AUTHORS.md)

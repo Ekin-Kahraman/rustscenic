@@ -1,7 +1,7 @@
 # Team and contributions
 
 RustScenic was created by **Ekin Kahraman**, its lead software author,
-developer and maintainer. The project is developed in collaboration with the
+developer and maintainer. The project is built and scaled with the
 Huang Lab at the Icahn School of Medicine at Mount Sinai.
 
 ## Project team
