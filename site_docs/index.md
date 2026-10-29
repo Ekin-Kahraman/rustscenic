@@ -13,7 +13,7 @@ Infer candidate regulatory relationships and score their activity from RNA and
 chromatin-accessibility data. Built in Rust, available through Python, and runs
 on CPUs.
 
-Developed and scaled with the Huang Lab at
+Built and scaled with the Huang Lab at
 the Icahn School of Medicine at Mount Sinai.
 
 ## Get started

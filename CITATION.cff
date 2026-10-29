@@ -16,6 +16,8 @@ abstract: >-
   network analysis, including GRN inference, AUCell scoring, topic modelling,
   cisTarget enrichment, enhancer linking, eRegulon assembly and an end-to-end
   Python pipeline API.
+  Created and maintained by Ekin Kahraman. Built and scaled with the Huang Lab
+  at the Icahn School of Medicine at Mount Sinai.
 keywords:
   - single-cell genomics
   - gene regulatory networks
