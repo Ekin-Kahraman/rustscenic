@@ -30,8 +30,8 @@ jobs:
   version-integrity:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: { python-version: '3.12' }
       - name: Validate release metadata and tag
         env:
@@ -54,10 +54,10 @@ jobs:
       matrix:
         target: [x86_64, aarch64]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: { python-version: '3.12' }
-      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-qemu-action@v4
         if: matrix.target == 'aarch64'
       - uses: PyO3/maturin-action@v1
         with:
@@ -78,8 +78,8 @@ jobs:
       matrix:
         target: [x86_64, aarch64]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: { python-version: '3.12' }
       - uses: PyO3/maturin-action@v1
         with:
@@ -99,8 +99,8 @@ jobs:
       matrix:
         target: [x64]
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: { python-version: '3.12' }
       - uses: PyO3/maturin-action@v1
         with:
@@ -116,9 +116,9 @@ jobs:
     needs: version-integrity
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with: { python-version: '3.12' }
       - run: rm -f target/wheels/*.tar.gz
       - uses: PyO3/maturin-action@v1
@@ -149,8 +149,8 @@ jobs:
     needs: [wheels-linux, wheels-macos, wheels-windows, sdist]
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with: { python-version: '3.12' }
       - uses: actions/download-artifact@v8
         with:
@@ -203,7 +203,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
           path: dist
