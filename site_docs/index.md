@@ -114,7 +114,7 @@ annotations; biological accuracy has not been established.
 ## Documentation and citation
 
 [API guide](api.md) · [HPC operation](hpc.md) · [Scope](limitations.md) ·
-[Release notes](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/releases/v0.5.1.md)
+[Release notes](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/releases/v0.6.0.md)
 
 The package has automated Rust/Python tests, installation checks and real-data
 validation workflows. Cite the exact [RustScenic release](https://doi.org/10.5281/zenodo.20246040)
