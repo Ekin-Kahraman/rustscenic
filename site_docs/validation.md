@@ -11,7 +11,8 @@ runtime, memory use and biological checks.
 
 | Signal | Evidence |
 | --- | --- |
-| Published package | [v0.5.1 on GitHub](https://github.com/Ekin-Kahraman/rustscenic/releases/tag/v0.5.1) and [PyPI](https://pypi.org/project/rustscenic/0.5.1/). |
+| Published package | [v0.6.0 on GitHub](https://github.com/Ekin-Kahraman/rustscenic/releases/tag/v0.6.0) and [PyPI](https://pypi.org/project/rustscenic/0.6.0/). |
+| Biological confirmation | Separate activity directions closed the mean external macro-F1 gap: **0.7123 vs 0.7113** for SCENIC+ networks on 12,315 cells from eight donors. Reused-cohort confirmation; [full results and the remaining recall gap](https://github.com/Ekin-Kahraman/rustscenic/blob/v0.6.0/docs/paper/RESULTS.md). |
 | Controlled benchmark path | `validation/head_to_head/head_to_head_summary.json` records machine, seed, Python versions, runtime, peak RSS and output signatures. |
 | Lab validation | Huang Lab collaborator artefacts include Kamath dopaminergic neurons and 10x human brain GEM-X multiome runs. |
 | Multi-stage real-data run | Human brain GEM-X `v0.4.6` artefact completed GRN, regulons, cisTarget, enhancer links and eRegulons on 8,215 post-QC cells and 123,089 peaks. |
@@ -77,8 +78,9 @@ for public performance claims.
   implementation uses an independent histogram-GBM path.
 - Downstream cell-level AUCell agreement is stronger than fine-grained GRN edge
   agreement.
-- Some real-data biological checks currently use expected TF recovery by name;
-  cell-type enrichment checks are part of the next validation tier.
+- Earlier reports check expected TF recovery by name. The completed
+  [biological case study](https://github.com/Ekin-Kahraman/rustscenic/blob/v0.6.0/docs/paper/case-study/README.md)
+  also assesses lineage-specific activity and traces missing regulators.
 - The [v0.5.0 candidate benchmarks](benchmarks.md#memory-scaling) add million-cell
   RNA execution and repeated memory measurements. These do not replace broader
   biological validation of complete RNA/chromatin workflows.

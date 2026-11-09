@@ -39,13 +39,19 @@ network inference, motif enrichment, activity scoring and multiome analysis.
 
 | Evidence | Measured result and scope |
 | --- | --- |
+| RNA+ATAC atlas workflow vs SCENIC+ | **14.4× faster with 57% lower measured peak memory** on **817,740 real paired cells**; median workflow time **102.5 vs 1,474.2 minutes**. |
+| RNA atlas workflow vs pySCENIC | **4× faster with 96.6% lower measured peak memory** on **1.3 million real cells**; median workflow time **42.3 vs 168.4 minutes**. |
 | RNA scale | **1,306,127 real mouse-brain cells in 31m20s median**, with 2.97 GB peak analysis PSS on 16 CPU cores; 2,095 selected genes and 256 TFs; three matched seeds. |
 | Matched arboreto comparison | **3.06× faster with 78.7% lower peak measured memory** than sparse Dask arboreto on the full 1.3 million-cell input, using ratios of medians across three matched seeds. |
 | Memory scaling | **21.4% lower topic-model peak memory**, with unchanged outputs across three baseline and three optimised runs. Five sampling sweeps test storage, not model convergence. |
 | Selected SCENIC+ stages | **`11x` to `52x` faster** on sampled real-data inputs of 1,500–2,000 cells. Enhancer methods differ; output agreement is incomplete. |
 | Huang Lab collaborator run | **16/17 expected brain transcription factors** recovered on 8,215 post-QC cells with v0.4.6. A biological sanity check, not an accuracy estimate. |
 
-The new million-cell comparison used **RustScenic v0.5.0** and measures core
+The atlas workflows use v0.5.0, selected feature panels, three seeds and 16 CPUs.
+Timings include prepared-input loading through export; raw-data preparation is
+excluded. Algorithms and outputs differ. [Full conditions and biological results](benchmarks.md).
+
+The earlier million-cell arboreto comparison used **RustScenic v0.5.0** and measures core
 GRN analysis on prepared RNA, excluding preparation and input loading. The
 approximately 80% memory reduction is specific to the sparse Dask comparator;
 the sparse multiprocessing comparator gives **2.94× faster analysis and 54.5%
