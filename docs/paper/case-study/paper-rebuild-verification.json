@@ -1,0 +1,98 @@
+{
+  "status": "passed",
+  "source_files_verified": 118,
+  "selected_runs": 42,
+  "matched_pairs": 21,
+  "corrected_confusion_matrices_verified": 96,
+  "source_statistics_recomputed": true,
+  "model_fits_performed": 0,
+  "environment": {
+    "python": "3.13.9",
+    "numpy": "2.3.5",
+    "pandas": "2.3.3",
+    "matplotlib": "3.10.8"
+  },
+  "outputs": [
+    {
+      "path": "RESULTS.md",
+      "sha256": "b9d0c3700c38e8a151b0d0fbad3babfd8b087571a7a981a6404c03fe458dd9ee"
+    },
+    {
+      "path": "figures/01-workflow-scaling.pdf",
+      "sha256": "cde5cdde266e54ea9cdb1b7bbe9ca9c1284d8ad58a16a86e4f1bfc68a5ff85cb"
+    },
+    {
+      "path": "figures/01-workflow-scaling.png",
+      "sha256": "4d9610d0ef34157d8346423eccfcf9bbc9855367794ec9a0f64db026107a1055"
+    },
+    {
+      "path": "figures/01-workflow-scaling.svg",
+      "sha256": "fc61aa3e188172c2367c0f6ea6c46defa58540484bbada84a3caacb13043174a"
+    },
+    {
+      "path": "figures/02-biological-utility.pdf",
+      "sha256": "dad74239a685a1a16b322a45fc7a47787639a38df956c51793d05826692707b4"
+    },
+    {
+      "path": "figures/02-biological-utility.png",
+      "sha256": "54064a70e3cae6e29e1cec7c84bffaf69247be49d5d3735ee20cf9879754dbb1"
+    },
+    {
+      "path": "figures/02-biological-utility.svg",
+      "sha256": "b85bd5ebd0e8a6bc2a9a65d5c4345fb746dbca897589a5b16cf7ed98c419d27b"
+    },
+    {
+      "path": "figures/03-rna-reference-recovery.pdf",
+      "sha256": "1bbcf78b99cf690eeb71bc5358ed0c414a464fa26d0762ce891a195e23380349"
+    },
+    {
+      "path": "figures/03-rna-reference-recovery.png",
+      "sha256": "f1c9fe0087f4227831b644f7b20908cca2da04e5482cc660d8df8efa831c220a"
+    },
+    {
+      "path": "figures/03-rna-reference-recovery.svg",
+      "sha256": "d91a8a364aad677eb5343d45c111d7f61538ba7ff5ef228ca1ceb025ff5105b1"
+    },
+    {
+      "path": "tables/bmmc-original-utility.csv",
+      "sha256": "921cf05393cc0f6a9f175af17fc9ab44131ef788e2d3ade5eb32a8ed0a5259ba"
+    },
+    {
+      "path": "tables/bmmc-signed-diagnostic.csv",
+      "sha256": "85bd4ffb9331952b3051dab990c99cd4370a5d965e31cd150228f1ce611f86d2"
+    },
+    {
+      "path": "tables/kang-corrected-folds.csv",
+      "sha256": "4fec31f6a0e7a6517bd244b2611c6aab351fe2c561713ccaa0c000b0964d7bbb"
+    },
+    {
+      "path": "tables/kang-final-comparison.csv",
+      "sha256": "65459f3a2918e9a7525dd867bbf7d9d0c72a26d1b0854103a5262dca8baefc0e"
+    },
+    {
+      "path": "tables/kang-original-endpoints-and-controls.csv",
+      "sha256": "398e2e917425768b79032488556f286be6f30c8375ff3d1ec8bea254f54c57be"
+    },
+    {
+      "path": "tables/rna-reference-recovery.csv",
+      "sha256": "f59e925383e28df968c6f8d91454f87731cc09e262b03129bc1941b15222e420"
+    },
+    {
+      "path": "tables/scoring-confirmation-runs.csv",
+      "sha256": "b67b3540fbf44549ea00d33add0963398a032fe6ec91ca0a5804f9ba18397ff6"
+    },
+    {
+      "path": "tables/workflow-performance.csv",
+      "sha256": "9e2f079c03c2d0b0ecf9454ca25d04346a0298ca03985279fc274abfc4651d58"
+    },
+    {
+      "path": "tables/workflow-runs.csv",
+      "sha256": "574f4f6ce38a3fb3286b39d9e6dff1cb76e8a8f814a5ca9623c584e5f3ac8df1"
+    },
+    {
+      "path": "tables/workflow-stage-timings.csv",
+      "sha256": "609033333929fe2d5126ea5bea3fb324d6fde618ebb530c865380893754bf8d3"
+    }
+  ],
+  "note": "Verification rerun passed using the current environment. Original published figure assets restored after checking; this receipt records the temporary regenerated assets, not a replacement for the original figure manifest."
+}

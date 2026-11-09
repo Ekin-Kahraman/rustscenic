@@ -1,0 +1,190 @@
+   Compiling autocfg v1.5.0
+   Compiling libm v0.2.16
+   Compiling crossbeam-utils v0.8.21
+   Compiling libc v0.2.185
+   Compiling crossbeam-epoch v0.9.20
+   Compiling proc-macro2 v1.0.106
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.45
+   Compiling cfg-if v1.0.4
+   Compiling rayon-core v1.13.0
+   Compiling either v1.15.0
+   Compiling thiserror v2.0.18
+   Compiling rawpointer v0.2.1
+   Compiling anyhow v1.0.104
+   Compiling num-traits v0.2.19
+   Compiling matrixmultiply v0.3.10
+   Compiling zerocopy v0.8.48
+   Compiling getrandom v0.2.17
+   Compiling rand_core v0.6.4
+   Compiling num-complex v0.2.4
+   Compiling crc32fast v1.5.0
+   Compiling simd-adler32 v0.3.9
+   Compiling adler2 v2.0.1
+   Compiling getrandom v0.4.2
+   Compiling rustix v1.1.4
+   Compiling crossbeam-deque v0.8.6
+   Compiling num-complex v0.4.6
+   Compiling num-integer v0.1.46
+   Compiling syn v2.0.117
+   Compiling rayon v1.12.0
+   Compiling approx v0.5.1
+   Compiling approx v0.3.2
+   Compiling miniz_oxide v0.8.9
+   Compiling errno v0.3.14
+   Compiling num_cpus v1.17.0
+   Compiling bitflags v2.11.1
+   Compiling rand_core v0.10.1
+   Compiling smallvec v1.15.1
+   Compiling alga v0.9.3
+   Compiling rand_mt v6.0.3
+   Compiling flate2 v1.1.9
+   Compiling statrs v0.18.0
+   Compiling fastrand v2.4.1
+   Compiling rustc-hash v2.1.2
+   Compiling once_cell v1.21.4
+   Compiling thiserror-impl v2.0.18
+   Compiling ndarray v0.17.2
+   Compiling tempfile v3.27.0
+   Compiling rustscenic-preproc v0.5.1 (/Users/ekin/projects/bio/rustscenic-biological-fidelity/crates/rustscenic-preproc)
+   Compiling ppv-lite86 v0.2.21
+   Compiling rand_chacha v0.3.1
+   Compiling rand v0.8.6
+   Compiling sprs v0.11.4
+   Compiling rustscenic-aucell v0.5.1 (/Users/ekin/projects/bio/rustscenic-biological-fidelity/crates/rustscenic-aucell)
+   Compiling rustscenic-topics v0.5.1 (/Users/ekin/projects/bio/rustscenic-biological-fidelity/crates/rustscenic-topics)
+   Compiling rustscenic-grn v0.5.1 (/Users/ekin/projects/bio/rustscenic-biological-fidelity/crates/rustscenic-grn)
+    Finished `release` profile [optimized] target(s) in 13.54s
+     Running unittests src/lib.rs (target/release/deps/rustscenic_aucell-ad0e0fe059520ee6)
+
+running 10 tests
+test tests::empty_regulons_returns_empty_matrix ... ok
+test tests::rejects_zero_top_frac - should panic ... ok
+test tests::dense_rejects_nan_even_with_no_regulons - should panic ... ok
+test tests::sparse_csr_rejects_negative_col_idx - should panic ... ok
+test tests::regulon_gene_outside_top_k_contributes_zero ... ok
+test tests::single_cell_top_ranked_regulon_matches_ctxcore ... ok
+test tests::sparse_csr_matches_dense_with_negative_values ... ok
+test tests::regulon_is_not_affected_by_unrelated_genes ... ok
+test tests::sparse_csr_matches_dense_with_implicit_zero_ties ... ok
+test tests::many_cells_deterministic ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/release/deps/rustscenic_grn-02c8665f04dd4a91)
+
+running 26 tests
+test gbm::tests::arboreto_monitor_uses_strict_trailing_window_mean ... ok
+test gbm::tests::legacy_monitor_keeps_two_point_semantics ... ok
+test rng::tests::different_targets_diverge ... ok
+test histogram::tests::binning_preserves_order ... ok
+test histogram::tests::histogram_finds_perfect_split ... ok
+test rng::tests::fixed_subsample_has_exact_size_and_sorted_unique_rows ... ok
+test histogram::tests::csc_column_binning_matches_dense_with_implicit_zeros ... ok
+test correlation::tests::dense_correlations_classify_positive_negative_and_constant_edges ... ok
+test rng::tests::sample_indices_no_duplicates ... ok
+test correlation::tests::sparse_and_dense_correlations_match_with_and_without_dropout_masking ... ok
+test histogram::tests::selected_column_binning_matches_materialised_matrix ... ok
+test rng::tests::target_rng_is_deterministic ... ok
+test rng::tests::subsample_fraction_correct ... ok
+test tests::sparse_csc_rejects_negative_row_indices - should panic ... ok
+test tests::tf_overlap_summary_counts_input_names_and_caps_missing_examples ... ok
+test tree::tests::dense_feature_subset_fallback_is_unique_and_excludes_feature ... ok
+test tree::tests::feature_subset_sampling_is_unique_and_excludes_feature ... ok
+test tree::tests::single_feature_split_finds_optimal_threshold ... ok
+test tree::tests::exclude_feature_is_respected ... ok
+test tree::tests::informative_feature_dominates ... ok
+test tree::tests::right_subtree_uses_correct_samples ... ok
+test tests::infer_indices_deduplicates_tf_names_and_excludes_self_edges ... ok
+test tests::sparse_csc_infer_matches_dense_infer ... ok
+test tests::dense_view_infer_matches_row_major_infer ... ok
+test gbm::tests::recovers_linear_signal ... ok
+test gbm::tests::excludes_self_feature ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/release/deps/rustscenic_preproc-7f78764dd376d0ab)
+
+running 41 tests
+test fragments::tests::missing_count_column_defaults_to_one ... ok
+test fragments::tests::barcode_qc_counts_fuses_fragments_totals_and_median ... ok
+test fragments::tests::rejects_bad_integer ... ok
+test fragments::tests::skips_comments_and_blank_lines ... ok
+test fragments::tests::fragments_per_barcode_counts_rows ... ok
+test fragments::tests::parses_basic_bed ... ok
+test fragments::tests::rejects_start_ge_end ... ok
+test matrix::tests::barcode_filter_builds_only_requested_rows_in_fragment_order ... ok
+test fragments::tests::total_counts_sums_dup_column ... ok
+test matrix::tests::builds_correct_matrix ... ok
+test matrix::tests::drops_peaks_on_chroms_not_in_fragments ... ok
+test matrix::tests::empty_barcode_filter_keeps_peak_axis_and_zero_rows ... ok
+test matrix::tests::empty_fragments_returns_empty_matrix ... ok
+test matrix::tests::matrix_counts_fragment_records_not_duplicate_count_column ... ok
+test matrix::tests::touching_but_not_overlapping_excluded ... ok
+test peak_calling::tests::consensus_merging_drops_lower_intensity_overlap ... ok
+test matrix::tests::rejects_dimensions_that_would_wrap_u32_indices - should panic ... ok
+test peak_calling::tests::handles_empty_fragment_table ... ok
+test peak_calling::tests::max_gap_zero_does_not_merge_across_empty_window ... ok
+test peak_calling::tests::peak_calling_counts_fragment_records_not_duplicate_count_column ... ok
+test peak_calling::tests::recovers_simulated_peaks ... ok
+test peak_calling::tests::respects_cluster_assignment ... ok
+test peaks::tests::align_chroms_collapses_mitochondrial_aliases ... ok
+test peaks::tests::align_chroms_handles_reverse_convention ... ok
+test peaks::tests::align_chroms_handles_ucsc_vs_ensembl_convention ... ok
+test peaks::tests::align_chroms_to_maps_correctly ... ok
+test peaks::tests::align_chroms_to_returns_none_for_missing ... ok
+test peaks::tests::normalise_chrom_strips_prefix_and_canonicalises_mt ... ok
+test peaks::tests::parses_bed_with_names ... ok
+test peaks::tests::rejects_zero_length_peak ... ok
+test peaks::tests::skips_track_and_comment_lines ... ok
+test qc::tests::frip_counts_fragment_records_not_duplicate_count_column ... ok
+test qc::tests::frip_counts_in_peak_fragments ... ok
+test qc::tests::frip_empty_peaks_gives_zero ... ok
+test qc::tests::frip_peaks_on_other_chrom_drop ... ok
+test qc::tests::frip_touching_not_overlapping_excluded ... ok
+test qc::tests::insert_size_empty_table_returns_empty ... ok
+test qc::tests::insert_size_stats_counts_and_means_correct ... ok
+test qc::tests::tss_enrichment_counts_fragment_records_not_duplicate_count_column ... ok
+test qc::tests::tss_enrichment_high_when_fragments_cluster_at_tss ... ok
+test qc::tests::tss_enrichment_ignores_chroms_not_in_fragments ... ok
+
+test result: ok. 41 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/release/deps/rustscenic_topics-e7cefd5b4e0d425d)
+
+running 8 tests
+test gibbs::tests::gibbs_handles_empty_doc ... ok
+test tests::empty_doc_gets_uniform_theta ... ok
+test gibbs::tests::gibbs_deterministic_under_same_seed ... ok
+test gibbs::tests::gibbs_par_n_threads_1_matches_serial ... ok
+test gibbs::tests::gibbs_recovers_two_planted_topics ... ok
+test gibbs::tests::gibbs_par_deterministic_under_same_seed_and_threads ... ok
+test gibbs::tests::gibbs_par_recovers_two_planted_topics ... ok
+test tests::recovers_planted_topics_on_synthetic ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+   Doc-tests rustscenic_aucell
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests rustscenic_grn
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests rustscenic_preproc
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests rustscenic_topics
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

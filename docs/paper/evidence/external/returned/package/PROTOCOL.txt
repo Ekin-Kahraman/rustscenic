@@ -1,0 +1,85 @@
+RustScenic signed-activity confirmation, frozen 7 November 2026
+
+Question
+Does preserving and separately normalising positive and negative TF-target
+programmes improve classification on an external cohort, at low scoring cost?
+This tests activity representation, not improved causal or enhancer prediction.
+No new inference, topic fitting, motif selection or parameter search is performed.
+
+Independent biological confirmation
+Kang et al. 2018, GSE96583, unstimulated PBMCs from eight donors. These donors
+are separate from the GSE194122 BMMC networks used to develop the correction.
+Use every control cell in the frozen scverse data object. Exclude stimulated
+cells by condition, not by outcomes. X must contain integer counts whose library
+totals agree exactly with the source's nCount_RNA metadata, not SCT totals.
+Intersect gene identifiers with the original 5,000-gene BMMC vocabulary, without
+using cell labels or expression variability. Keep original network memberships.
+Report coverage and zero-score signatures; do not drop unfavourable TFs or donors.
+Signatures with less than 80% of their original targets measured score zero for
+both scorers. Keep their TF columns and report them. This shared coverage rule
+prevents a native/reference mismatch in handling missing genes.
+
+Reuse all 12 frozen BMMC outputs: two methods, 5,000 and 20,000 training cells,
+three inference seeds. No external donor contributed to those network fits.
+Primary: same common TF roster per original method pair, one feature per TF,
+shared pySCENIC AUCell scorer, positive-target AUC minus negative-target AUC.
+Compare corrected RustScenic vs corrected SCENIC+ and corrected vs original
+RustScenic. Keep original unsigned endpoints for both methods. The 20,000-cell
+networks are primary; 5,000-cell networks test the residual small-sample gap.
+
+Use fixed StandardScaler plus balanced L2 logistic regression (C=1, lbfgs,
+max_iter=2000), leaving out each external donor in turn. Fit the classifier and
+scaling only on the other seven external donors. External labels train the
+fold-specific classifier only; no labels modify the frozen networks or scoring.
+Report macro-F1, balanced accuracy, per-class confusion matrices, convergence,
+unseen labels and all-TF secondary results. Average seeds within each donor
+before paired bootstrap intervals. Eight donors, not 24 independent replicates.
+Do not introduce a post-result non-inferiority margin or automatic paper-ready
+verdict. Independent cohort confirmation is not proof of TF-target edge truth.
+
+Controls, fixed before outcomes
+Repeat common-TF comparisons with Rust AUCell for the Rust networks to confirm
+the correction also works with the shipped engine. Report matched-TF expression,
+training-fold expression PCA50, five size-matched random gene-set controls for
+seed777/20,000 cells and ten within-training-donor label permutations for that
+primary comparison. Preserve positive/negative group sizes, observed gene
+coverage and disjointness in random controls.
+Check SPI1 activity in monocytes, PAX5/EBF1 in B cells, TCF7 in CD4/CD8 T cells;
+report missing signatures, never count them as successful negatives.
+Do not locally calculate external-cohort classifier scores during package QA.
+QA uses synthetic data and already inspected BMMC cells; new cohort checks are
+limited to schema, count integrity, gene coverage and donor identities.
+
+Speed and memory
+Reuse the existing real 817,740-cell HDMA RNA matrix and all three seed networks.
+For each seed, run original union and corrected signed gene scoring for each
+method in separate fresh processes, sequentially on the same 16-core node.
+Use identical 4,096-cell blocks for both modes and scorers, with the same input,
+output dtype and uncompressed HDF5 output format. Alternate mode/method order by
+seed. These are paired measurements of the affected scoring/export stage, not
+a fresh full-workflow head-to-head. They must not replace original full-pipeline
+timings or be used to claim a new end-to-end speedup by adding unrelated peaks.
+The 1.3-million-cell RNA inference comparison is unchanged by this multiome fix.
+Capture score, combine, read and write timings plus whole-process elapsed time,
+sampled process-tree PSS/RSS, environment/source hashes and output checksums.
+Retain full scores on HPC; return a fixed 10,000-cell sample, summaries and logs.
+No cells are simulated, repeated or upsampled to create atlas-scale input.
+
+Resources and restart
+One preparation job: 4 cores, 32 GB, 2 h. Six independent biology jobs: 16 cores,
+64 GB, 24 h, maximum two concurrently. Three atlas jobs: 16 cores, 128 GB, 24 h,
+maximum one concurrently; per scoring process guard 110 GB / 5 h. These are
+conservative allocation limits, not runtime forecasts. LSF memory requests
+use per-core rusage and total -M, following the audited Minerva convention.
+Require 80 GiB free scratch. Do not change existing runtimes or old results.
+Completed checksummed tasks are reused. A deliberate --resume only resubmits
+failed/incomplete work after earlier jobs end; normal start prevents duplicates.
+Collection runs even after failures and reports missing results explicitly.
+Everything necessary except the existing runtime and atlas matrix is bundled.
+
+Sources
+https://doi.org/10.1038/nbt.4042
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE96583
+https://pertpy.scverse.org/en/1.3.0/_modules/pertpy/data/_datasets.html
+https://exampledata.scverse.org/pertpy/kang_2018.h5ad
+https://doi.org/10.1038/s41586-026-10326-9

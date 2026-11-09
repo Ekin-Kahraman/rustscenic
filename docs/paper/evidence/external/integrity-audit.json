@@ -1,0 +1,158 @@
+{
+  "archive_sha256": "ca67130354dd4e852f0c654f304e3aeddb7dfcd53748bae7c85aa3716c3ecd27",
+  "archive_bytes": 108021641,
+  "manifest_files_verified": 228,
+  "package_files_verified": 25,
+  "tasks": [
+    {
+      "path": "atlas/777/reference-signed",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 3624,
+      "full_matrix_not_returned": [
+        "full-scores.h5"
+      ]
+    },
+    {
+      "path": "atlas/777/reference-union",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 3575,
+      "full_matrix_not_returned": [
+        "full-scores.h5"
+      ]
+    },
+    {
+      "path": "atlas/777/rustscenic-signed",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 272,
+      "full_matrix_not_returned": [
+        "full-scores.h5"
+      ]
+    },
+    {
+      "path": "atlas/777/rustscenic-union",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 278,
+      "full_matrix_not_returned": [
+        "full-scores.h5"
+      ]
+    },
+    {
+      "path": "atlas/778/reference-signed",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 3685,
+      "full_matrix_not_returned": [
+        "full-scores.h5"
+      ]
+    },
+    {
+      "path": "atlas/778/reference-union",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 3671,
+      "full_matrix_not_returned": [
+        "full-scores.h5"
+      ]
+    },
+    {
+      "path": "atlas/778/rustscenic-signed",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 320,
+      "full_matrix_not_returned": [
+        "full-scores.h5"
+      ]
+    },
+    {
+      "path": "atlas/778/rustscenic-union",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 282,
+      "full_matrix_not_returned": [
+        "full-scores.h5"
+      ]
+    },
+    {
+      "path": "atlas/779/reference-signed",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 3837,
+      "full_matrix_not_returned": [
+        "full-scores.h5"
+      ]
+    },
+    {
+      "path": "atlas/779/reference-union",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 3616,
+      "full_matrix_not_returned": [
+        "full-scores.h5"
+      ]
+    },
+    {
+      "path": "atlas/779/rustscenic-signed",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 276,
+      "full_matrix_not_returned": [
+        "full-scores.h5"
+      ]
+    },
+    {
+      "path": "atlas/779/rustscenic-union",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 300,
+      "full_matrix_not_returned": [
+        "full-scores.h5"
+      ]
+    },
+    {
+      "path": "biology/20000-777",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 1606,
+      "full_matrix_not_returned": []
+    },
+    {
+      "path": "biology/20000-778",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 717,
+      "full_matrix_not_returned": []
+    },
+    {
+      "path": "biology/20000-779",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 697,
+      "full_matrix_not_returned": []
+    },
+    {
+      "path": "biology/5000-777",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 650,
+      "full_matrix_not_returned": []
+    },
+    {
+      "path": "biology/5000-778",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 616,
+      "full_matrix_not_returned": []
+    },
+    {
+      "path": "biology/5000-779",
+      "status": "complete",
+      "pss_missing": 0,
+      "samples": 640,
+      "full_matrix_not_returned": []
+    }
+  ]
+}

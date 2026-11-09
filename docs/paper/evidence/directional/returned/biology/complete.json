@@ -1,0 +1,63 @@
+{
+  "outputs": {
+    "20000-777-reference-directional.parquet": {
+      "bytes": 478377,
+      "sha256": "51690db59d089a1ac9ecebce825ea634ef05227027654a574e2f3eabf0d22a6e"
+    },
+    "20000-777-rustscenic-directional.parquet": {
+      "bytes": 619884,
+      "sha256": "6020cf027694360de411fdf6604f453a60e4138a75eefa4e2939d850571318e1"
+    },
+    "20000-778-reference-directional.parquet": {
+      "bytes": 576193,
+      "sha256": "28a7fb48014cbf6107d4787f837b800330cd5f202e191d58091387d349812d7c"
+    },
+    "20000-778-rustscenic-directional.parquet": {
+      "bytes": 760661,
+      "sha256": "806705c52dad79c6961b57a04003b6d541698120d59135f2f55d6c9880fdcfa1"
+    },
+    "20000-779-reference-directional.parquet": {
+      "bytes": 615432,
+      "sha256": "5f420b827dd28b138a4ef31052f154317580af100d91cab6ccc5d98abb9a9a8a"
+    },
+    "20000-779-rustscenic-directional.parquet": {
+      "bytes": 780924,
+      "sha256": "39d72ced52b854f2f73e487f62f943fc1c8c029684ade365067f3f94f2a22e5e"
+    },
+    "5000-777-reference-directional.parquet": {
+      "bytes": 311658,
+      "sha256": "bbd790d21d6dd9b9b329dff46db427fa0b58bab56bfeb88ac5b6a6b5b1434109"
+    },
+    "5000-777-rustscenic-directional.parquet": {
+      "bytes": 419622,
+      "sha256": "bd92c93c7d4af8dd7552100696dfce487e2ad9abcb3fc80012eeba9d1fc46fd9"
+    },
+    "5000-778-reference-directional.parquet": {
+      "bytes": 260140,
+      "sha256": "79167a784ddb5356bae73f87efcb4f55120c43e1e79cae38e1cf26ca5765e8dd"
+    },
+    "5000-778-rustscenic-directional.parquet": {
+      "bytes": 340522,
+      "sha256": "c464e50a95b350a443fd0c4d529e0bd3c7738040d62a86261860ef77e01b43e5"
+    },
+    "5000-779-reference-directional.parquet": {
+      "bytes": 401183,
+      "sha256": "bb5d9b78077ae449117b40c7306e2a0cf764a9c373615cffcb57ad93c27f6219"
+    },
+    "5000-779-rustscenic-directional.parquet": {
+      "bytes": 508941,
+      "sha256": "0e20fa89b7c169580e919947e0cbd40ed559d7568341c3416fa7781eaee564c1"
+    },
+    "environment.json": {
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a"
+    },
+    "verification.json": {
+      "bytes": 493285,
+      "sha256": "76de95ad562ae45e96dcd1d976244513a7ae72dafe1e768c6e11a72c45897cd4"
+    }
+  },
+  "package": "b2870ecf8c11abfbb4e586fad9604993d687e75ef387340df59d2276edfbbbc9",
+  "smoke": false,
+  "status": "complete"
+}

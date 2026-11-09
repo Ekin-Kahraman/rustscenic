@@ -1,0 +1,64 @@
+{
+  "atlas_numerical_checks": [
+    {
+      "max_absolute_error": 0.0,
+      "passed": true,
+      "seed": 777
+    },
+    {
+      "max_absolute_error": 0.0,
+      "passed": true,
+      "seed": 778
+    },
+    {
+      "max_absolute_error": 0.0,
+      "passed": true,
+      "seed": 779
+    }
+  ],
+  "biology": "Report both endpoints, all seeds/donors/classes and intervals. No retrospective biological equivalence or superiority pass threshold.",
+  "classifier_convergence_pass": true,
+  "collector_job_id": "281494886",
+  "cost_review_flag_over_10_percent": false,
+  "execution_complete": true,
+  "median_ratios": {
+    "analysis_peak_pss_mb_ratio": 1.0405709854760563,
+    "output_array_bytes_ratio": 1.3432835820895523,
+    "peak_tree_pss_mb_ratio": 1.0452173722203224,
+    "scoring_seconds_ratio": 1.0262276681476739,
+    "stage_elapsed_seconds_ratio": 1.0029019526092884
+  },
+  "memory_measurements_complete": true,
+  "missing": [],
+  "numerical_agreement_pass": true,
+  "pairs": [
+    {
+      "analysis_peak_pss_mb_ratio": 1.0384943880639599,
+      "output_array_bytes_ratio": 1.3432835820895523,
+      "peak_tree_pss_mb_ratio": 1.0452173722203224,
+      "scoring_seconds_ratio": 1.0344720726928487,
+      "seed": 777,
+      "stage_elapsed_seconds_ratio": 1.0029019526092884
+    },
+    {
+      "analysis_peak_pss_mb_ratio": 1.0405709854760563,
+      "output_array_bytes_ratio": 1.3636363636363635,
+      "peak_tree_pss_mb_ratio": 1.034231138529708,
+      "scoring_seconds_ratio": 1.0262276681476739,
+      "seed": 778,
+      "stage_elapsed_seconds_ratio": 1.0048658567354898
+    },
+    {
+      "analysis_peak_pss_mb_ratio": 1.152522110689839,
+      "output_array_bytes_ratio": 1.328358208955224,
+      "peak_tree_pss_mb_ratio": 1.1593635636335677,
+      "scoring_seconds_ratio": 1.0069059721511469,
+      "seed": 779,
+      "stage_elapsed_seconds_ratio": 0.9995052551355224
+    }
+  ],
+  "performance": "Three paired network seeds, two fresh-process modes, alternating order, fixed16CPUs. Ratios>1 mean increased cost;10% is an operational review flag, not a statistical test.",
+  "same_node": true,
+  "scope": "Independent execution on reused networks/cohorts; gene-activity scoring on RNA only. No inference, ATAC imputation, motif fitting or new full-workflow benchmark.",
+  "smoke": false
+}

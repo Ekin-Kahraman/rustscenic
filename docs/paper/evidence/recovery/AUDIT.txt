@@ -1,0 +1,59 @@
+RustScenic recovery results: independent audit
+2 November 2026
+
+VERDICT
+The computational gains are verified for the configured workflows. Biological outputs retain useful cell-type information, but biological equivalence, causal accuracy and superiority to SCENIC+ are not established.
+
+COMPLETED COMPARISONS
+Times include matrix loading through analysis and output export. They exclude shared preparation, process startup and final checksum generation. Memory is sampled peak process-tree proportional set size (PSS), in decimal GB. Each pair used identical inputs, one host/allocation and 16 allocated CPU cores. CPU models differ between pairs. Ratios below are ratios of medians over the same completed seeds.
+
+Reference / dataset / cells | Seeds | Rust time / reference time, min | Speedup | Rust / reference peak PSS, GB | PSS reduction
+pySCENIC 0.12.1 / atlas / 100,000 | 3 | 1.87 / 6.82 | 3.64x | 0.54 / 10.58 | 94.9%
+SCENIC+ 1.0a2 / bmmc / 10,000 | 3 | 2.19 / 20.36 | 9.31x | 4.05 / 13.39 | 69.7%
+SCENIC+ 1.0a2 / bmmc / 50,000 | 3 | 12.49 / 79.60 | 6.37x | 10.14 / 34.00 | 70.2%
+SCENIC+ 1.0a2 / hdma / 100,000 | 3 | 12.13 / 150.59 | 12.42x | 18.23 / 44.76 | 59.3%
+SCENIC+ 1.0a2 / hdma / 500,000 | 1 | 56.53 / 747.04 | 13.21x | 91.53 / 214.96 | 57.4%
+
+The 500,000-cell HDMA comparison is ONE completed pair, seed 777. Its 56.53-minute Rust runtime must not be replaced with the three-seed Rust median when calculating the 13.21x ratio. The other two SCENIC+ runs timed out after 16 hours. It is supporting evidence, not a replicated headline.
+Including process startup and output checksum work, the corresponding process-wall speedups are 3.47x (RNA 100k), 9.16x (BMMC 10k), 6.28x (BMMC 50k), 12.06x (HDMA 100k) and 13.09x (HDMA 500k single pair).
+
+LARGEST RUNS WITH INCOMPLETE REFERENCES
+RNA, 1,306,127 real cells: RustScenic completed all three runs. Median 42.54 min, 4.57 GB PSS; runtime range 40.57 to 42.65 min. All three pySCENIC runs exceeded the configured 120 GB PSS cap during cell activity after approximately 2.70 to 2.82 hours. No completed full-workflow speedup or memory-reduction percentage is available.
+HDMA, 817,740 real paired cells: RustScenic completed all three runs. Median 108.98 min, 149.56 GB PSS; runtime range 99.65 to 139.58 min. All three SCENIC+ runs timed out after 16 hours during gene-network inference. No completed full-workflow speedup or memory-reduction percentage is available. Its partial observed memory is not a completed peak and must not support a memory-saving claim.
+RNA uses 3,000 selected genes and 256 TFs. Paired workflows use 5,000 selected genes, 20,000 selected accessible regions and 256 TFs. These are selected panels, not every feature in the original atlases. The earlier arboreto 3.06x/78.7% benchmark used a different panel and measured core inference; keep it separate.
+
+BIOLOGICAL FINDINGS
+1. Structural checks passed on all 34 completed model outputs: finite positive GRN weights, known genes/TFs/regions, consistent cell identity/order, finite bounded activity samples, non-empty motif support, normalized topic distributions, and enhancer triplets supported by the returned GRN, peak-gene links and motif tables. All 13 completed-pair GRN rank correlations, regulon memberships and enhancer-triplet overlaps were independently recomputed. All 57 stored seed-stability comparisons were independently recomputed.
+2. Primary BMMC case, 50,000 cells, predeclared seed 777: across 10 held-out donors and a fixed 20,000-cell evaluation sample, mean balanced cell-type accuracy was 62.07% for RustScenic and 50.70% for SCENIC+. Mean macro-F1 was 56.61% versus 45.73%. RustScenic scored higher in every donor fold. All classifiers converged. These reported metrics were independently recovered from the returned confusion matrices.
+3. A separate, independent local refit on the portable 10,000-cell BMMC sample gave mean balanced accuracy 60.99% versus 49.75%, and macro-F1 55.89% versus 45.14%. This is a smaller replication, not a regeneration of the exact 20,000-cell HPC fit. Original label and panel files were checked against the original sent ZIP.
+4. The BMMC classifier uses 79 RustScenic TF signatures versus 14 SCENIC+ signatures. Networks were inferred on all unlabelled cells; donor holdout applies only to supervised classification. These findings support downstream usefulness, not matched-feature accuracy or out-of-sample network validation.
+5. BMMC 50k, seed 777: gene activity on 14 common TF signatures has reported all-cell median Spearman correlation 0.770; the independently recomputed 10k-cell sample gives 0.773. GRN rank correlation is 0.605. Final enhancer triplets have Jaccard overlap 0.0818 (1,175 shared; 11,016 RustScenic versus 4,530 SCENIC+). Median target-set Jaccard over shared TFs is 0.182. The outputs are materially different networks.
+6. HDMA full atlas, seed 777: mean held-out-donor balanced accuracy 31.91% and macro-F1 28.67% across 22 evaluated donor folds, using 67 TF signatures. There is no completed SCENIC+ comparator at this size and no matched expression/majority baseline here. Do not label this preserved equivalence or strong general biological accuracy.
+7. The predeclared lineage checks were NOT assessed successfully. In BMMC, SPI1 and GATA1 were outside the TF panel; PAX5, EBF1 and TCF7 were included but lacked returned motif-supported regulons in both methods. In full HDMA, HNF4A, CRX, NEUROD2, MYOD1 and SPI1 were outside the panel; TBX5 was included but lacked a motif-supported regulon. This is a material validation gap, not a positive plausibility result.
+8. Three RustScenic runs contain one all-zero region-activity signature each: MXI1 at BMMC 50k seed 777; LCORL at HDMA 100k seeds 777 and 779. No gene-activity signatures were constant or all-zero in any completed run. Keep these region-score cases visible.
+9. SCENIC+ intentionally injects TF self-target edges. Their presence is an upstream convention, not corruption; the non-self GRN rank comparison excludes them as prescribed. RustScenic uses positive region-gene links here, whereas SCENIC+ can retain signed links.
+
+INTERPRETATION AND NEXT STEP
+These are configured native analysis workflows, not identical algorithms accelerated by a language change. RustScenic uses Pearson peak-gene links and its native regulon assembly; SCENIC+ uses GBM peak-gene links and a GSEA-based selection step, with adjusted p<0.05 filtering in this benchmark. Their topic, pruning and activity implementations also differ. Speed and memory improvements are meaningful, but must accompany that scope.
+The strongest replicated paired-workflow result is 12.42x faster with 59.3% lower sampled peak PSS at 100,000 HDMA cells. The BMMC 50k result is 6.37x faster with 70.2% lower sampled peak PSS. Do not claim the fastest software overall, identical biological predictions, or causal accuracy.
+Corrected next step: complete the eight resource-censored comparisons with revised memory/time budgets and fresh matched RustScenic controls. The previous caps do not establish an intrinsic scalability limit for the references. Preserve all 34 successful model runs and rerun only the eight unfinished pairs. Targeted biological validation using the existing data is also required: resolve missing marker/motif coverage and compare with an independent reference. Full HPC arrays can be exported to close local reproducibility gaps without repeating the entire scaling grid. The separate resource-only follow-up package changes no scientific algorithms or settings.
+
+PROVENANCE AND LIMITS
+Both Slack parts were joined in filename order. The 1,078,648,717-byte gzip archive passed full decompression/CRC checks and safe tar inspection. It contains 941 entries, approximately 1.662 GiB expanded.
+Archive SHA256: 1359f116bd312c8c6d651749108cfafb46747798219b218c8af6f6cf927d59bb
+No external sender checksum was supplied, so this is transport integrity plus internal-manifest verification, not comparison with an independent archive hash.
+All 522 returned model output files were rehashed against engine manifests. The 34 successful runs and 8 censored runs agree with the independently checked logs and metrics. Every monitor maximum was recalculated from memory.csv, with no unreadable-live-process PSS samples.
+All 57 returned source/configuration files present in the sent recovery ZIP match byte-for-byte. The active 115-entry manifest was exactly reconstructed from the 59 approved recovery entries plus 56 inherited input/vendor entries. All 21 allocation records match the pinned unchanged native Rust library hash.
+84 full-output files remain on HPC by design: full gene/region activity arrays and expanded multiome motif evidence. Their registry hashes match engine manifests, but the absent bytes could not be rehashed locally. Full-array all-cell correlations and exact 20k-cell model fits were not independently regenerated locally. Prepared BMMC/HDMA input matrices/manifests were not returned; within-pair input fingerprints agree, and frozen local annotation files were verified against the original ZIP.
+Nothing was sent, published, pushed to GitHub or changed in RustScenic.
+
+FILES
+verified-performance.json; verified-runs.csv; verified-comparisons.csv; verified-biology.json; archive-integrity.json; source-comparison.json; approved-manifest-audit.json; audit-environment.json.
+Reproduce local audits with .venv/bin/python audit_results.py and .venv/bin/python audit_biology.py. The biology script also uses the retained original atlas-scaling ZIP and input annotation files; its local paths are recorded in the script.
+
+PRIMARY REFERENCE SOURCES
+pySCENIC pipeline stages: https://pyscenic.readthedocs.io/en/latest/
+SCENIC+ RNA/accessibility workflow: https://scenicplus.readthedocs.io/en/latest/
+SCENIC+ native TF self-target convention: https://github.com/aertslab/scenicplus/blob/v1.0a2/src/scenicplus/TF_to_gene.py
+HDMA data descriptions: https://greenleaflab.github.io/HDMA/DATA.html
+Huangfu completion message: https://huang-lab-omics.slack.com/archives/C0BUGTD3F9C/p1793631507805399

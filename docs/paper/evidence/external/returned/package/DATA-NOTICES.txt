@@ -1,0 +1,25 @@
+Code and data provenance
+
+The included LICENSE and NOTICE apply to RustScenic package code. They do not
+relicense third-party datasets or software.
+
+External RNA cohort: Kang et al., Multiplexed droplet single-cell RNA-sequencing
+using natural genetic variation, Nature Biotechnology (2018), GSE96583.
+https://doi.org/10.1038/nbt.4042
+https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE96583
+
+The processed public object was obtained through the scverse/pertpy mirror:
+https://exampledata.scverse.org/pertpy/kang_2018.h5ad
+Its SHA-256 and the exact preparation are in external/input.json and
+prepare_external.py. All 12,315 control cells are included. Labels and donors
+come from the source object; they were not manually reassigned.
+The packaged matrix has 4,741 measured genes from the frozen BMMC vocabulary.
+
+Frozen BMMC and HDMA networks are the lab's previously returned RustScenic and
+SCENIC+ outputs. network-provenance.json records the original file hashes.
+No network was fitted to the external cohort. The existing HDMA matrix remains
+on Huangfu's HPC and is verified against expected-hdma-input.json.
+
+pySCENIC, ctxcore, SCENIC+ and their dependencies retain their own licences and
+citations. No third-party executables or Python environments are redistributed.
+The package reuses the previously audited HPC runtime without modification.

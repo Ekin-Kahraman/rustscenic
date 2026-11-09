@@ -1,0 +1,23 @@
+{
+  "archive_sha256": "139ba5e6a32a8119d99da7eedb25bb09f776882e1071dcea7c454da8b9d9f056",
+  "archive_bytes": 420779326,
+  "files": 609,
+  "expanded_bytes": 744293075,
+  "manifest_files": 596,
+  "bad_hashes": [],
+  "package_matches": {
+    "run.py": true,
+    "test_validation.py": true,
+    "reference_metrics.py": true,
+    "prepare_holdout.py": true,
+    "PROTOCOL.txt": true,
+    "assess_holdout.py": true,
+    "utility.py": true,
+    "SHA256SUMS": true,
+    "START-HERE.txt": true,
+    "analysis_worker.py": true,
+    "rank_storage.py": true,
+    "reuse_audit.py": true
+  },
+  "unexpected_members": []
+}

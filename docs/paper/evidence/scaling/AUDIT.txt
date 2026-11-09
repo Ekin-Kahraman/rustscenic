@@ -1,0 +1,54 @@
+RustScenic final scaling results: independent audit
+6 November 2026
+
+VERDICT
+All eight resource-follow-up pairs completed with nonempty outputs from both methods. The complete study now has 21 completed matched pairs: three seeds at each of seven dataset/size combinations. The original unsuccessful attempts remain archived. Computational gains are verified for the configured workflows. Biological outputs pass structural checks and contain cell-type information, but equivalence and superior regulatory accuracy are not established.
+
+LARGEST VERIFIED COMPARISONS
+Median across matched seeds 777, 778 and 779; 16 CPU cores per method.
+
+Reference / real cells | Rust time | Reference time | Speedup | Rust / reference peak PSS | Memory reduction
+pySCENIC 0.12.1 / 1,306,127 RNA | 42.31 min | 168.38 min | 3.979x | 4.563 / 134.877 GB | 96.617%
+SCENIC+ 1.0a2 / 500,000 RNA+ATAC | 57.91 min | 747.04 min | 12.901x | 91.531 / 214.947 GB | 57.417%
+SCENIC+ 1.0a2 / 817,740 RNA+ATAC | 102.55 min | 1,474.23 min | 14.376x | 149.878 / 349.054 GB | 57.062%
+
+The 500k summary combines the previously successful matched seed-777 pair with the new matched seed-778 and seed-779 pairs. Both methods within every pair ran on the same host/allocation with identical prepared inputs. No old Rust time is paired with a newly rerun reference time. Native scientific configuration is unchanged; the reference time allowance was extended. CPU models vary between allocations, so absolute scaling curves also reflect hardware differences.
+
+RNA Rust time range: 40.30-45.34 minutes. Largest paired Rust range: 100.43-105.02 minutes. Including process startup and final output hashing, the largest RNA and paired speedups are 3.959x and 14.360x respectively.
+
+All seven sizes and per-run results are in consolidated-performance.csv and consolidated-runs.csv.
+
+MEASUREMENT SCOPE
+Times run from prepared matrix loading through analysis and standard output export. Shared preparation, alignment, peak calling, motif-database construction, process startup and final output hashing are excluded from the primary clock. Memory is peak sampled whole-process-tree proportional set size (PSS), including children/Java, in decimal GB. It is neither the requested RAM nor a claim about summed RSS.
+RNA uses 3,000 selected genes and 256 TFs. Paired analyses use 5,000 selected genes, 20,000 selected regions and 256 TFs. These are genuine measured cells with selected feature panels, not all features from the source atlases.
+RustScenic 0.5.0 is the unchanged published native extension, with the disclosed memory-bounded orchestration adapter. Pearson region-gene linking, motif pruning, topic inference and native regulon assembly differ from the SCENIC+ workflow, which uses GBM linking and signed GSEA with adjusted p<0.05. Thus the speed gains include differences in computational methods; they cannot all be attributed to Rust or described as identical calculations.
+
+BIOLOGICAL FINDINGS
+1. All 16 new model outputs pass independent structural checks: finite positive GRN weights, no duplicate TF-target pairs, frozen feature-panel membership, consistent cell IDs/order, finite bounded sampled activity, genuine motif evidence with NES>=3, normalised topics, and enhancer triplets supported by the saved component tables.
+2. No constant or all-zero gene or region activity signatures were found in the 16 new runs. The three all-zero region signatures previously identified in smaller completed experiments remain documented in the earlier audit; the new result does not erase them.
+3. All eight new matched GRN rank, regulon-membership and enhancer-triplet comparisons were independently recomputed. All 22 returned seed-stability comparisons were independently recomputed. Portable 10k-cell activity correlations were recomputed; full-cell arrays remain on HPC.
+4. Largest RNA: non-self GRN rank Spearman 0.620-0.622 across seeds. Median common-TF gene-activity correlations on the portable samples range 0.608-0.695. There are 38-46 common TF signatures per pair. Outputs agree partially and are not identical.
+5. Largest paired atlas: GRN rank Spearman 0.748-0.751. Final TF-region-gene triplet Jaccard is 0.080-0.089. Only five to six final TF signatures overlap. Median common-signature activity correlation on the portable samples is 0.579-0.637. These are materially different inferred networks.
+6. Fixed primary HDMA seed 777: the reported 20k-cell held-out-donor classifier has mean balanced accuracy 31.91% for RustScenic and 12.52% for SCENIC+, and mean macro-F1 28.67% versus 10.38%, across 22 donors. All classifiers converged. Metrics were independently recovered from each confusion matrix, not by regenerating the complete HPC classifier. RustScenic supplies 67 signatures and SCENIC+ five; this is not a matched-feature accuracy test. Networks were fitted on all unlabelled cells, so donor holdout applies to the classifier only. No expression-only baseline was included.
+7. Predeclared HDMA lineage checks remain unassessed: five expected TFs are outside the frozen TF panel, while included TBX5 lacks a final motif-supported regulon in both tools. This is a coverage gap, not successful lineage validation.
+8. Earlier independent RNA experimental-reference tests remain separate evidence: RustScenic and arboreto had similar reference-retrieval scores, while absolute Pearson scored higher on all four references. Do not describe the present results as proving superior biological accuracy.
+
+VERIFICATION
+Both downloaded parts match their supplied sizes and SHA256 hashes. The joined archive matches both the sender's parts manifest and standalone checksum; full gzip CRC/decompression passed. Safe tar validation found 416 unique entries, 1,765,774,689 expanded bytes.
+Archive SHA256: 720d8ab3681a52687c640ec8fc3e57b9049266e587adcf10dafde29a90cc1043
+All 228 returned engine output files were rehashed and matched their manifests. The 36 large outputs retained on HPC have registry hashes matching the engine manifests, but their absent bytes were not rehashed locally.
+All 16 memory sample maxima were independently recomputed. No unreadable-live-process PSS samples were found. All eight pairs share their input/configuration/version fingerprints, host and job ID, and use 16 allocated CPUs.
+All eight returned follow-up package files match the exact ZIP sent to Huangfu. All five returned baseline files match the earlier audited package. The source signature is unchanged: 67c0aa65d93754760db27b7d5bf102eb96fcf8e68d9fec3cbe79ca643a771142. Native-extension hashes match the corresponding earlier allocations. Returned BMMC and HDMA cell metadata match the original frozen inputs. Complete source matrices remain on HPC, so this is not a new raw-data reconstruction.
+No benchmark fits were rerun locally. No Slack message was sent or public material updated.
+
+NEXT STEP
+The planned scaling grid is complete. Finish the focused biological evaluation: controlled common-TF/expression-baseline cell-type comparison, independent multiome reference validation, and targeted marker/zero-score investigation. Explain stage-level costs and algorithm differences in the paper. These results support a software/methods submission once its biological claims are adequately supported; completion alone does not establish publication readiness.
+
+REPRODUCIBILITY
+verify_extract.py: archive integrity and safe extraction.
+audit_results.py: independent performance, output-hash and sample-maximum checks.
+audit_biology.py: structural checks, agreement/stability and confusion-matrix metrics.
+consolidate.py: 21-pair result selection, metadata and native-library checks.
+The audit scripts use the existing ../RustScenic-Recovery-Results-Audit-20261102/.venv environment and original frozen input files. They read returned artefacts rather than execute the downloaded benchmark package.
+
+Slack completion message: https://huang-lab-omics.slack.com/archives/C0BUGTD3F9C/p1793927203254329

@@ -1,0 +1,8 @@
+{
+  "base": "/sc/arion/scratch/huangl21/rustscenic-recovery",
+  "jobs": {
+    "collect": "281494886",
+    "compute": "281494885"
+  },
+  "package": "b2870ecf8c11abfbb4e586fad9604993d687e75ef387340df59d2276edfbbbc9"
+}

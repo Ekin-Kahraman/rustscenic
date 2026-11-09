@@ -1,0 +1,132 @@
+Huangfu confirmation results: independent audit, 7 November 2026
+
+VERDICT
+All runs completed and the computational gains remain intact at the tested
+scoring stage. The proposed signed-activity correction is not yet confirmed as
+an improvement for the shipped native RustScenic scorer. The prespecified
+shared-scorer result improves, but the native-scorer result does not.
+Do not publish an equal-biological-accuracy or universally improved-fix claim.
+
+PROVENANCE AND EXECUTION
+Slack return: Huangfu, 7 November 2026, 16:18:09 GMT.
+https://huang-lab-omics.slack.com/archives/C0BUGTD3F9C/p1794068289645369
+Archive: SEND_BACK.tar.gz, Slack file F0CGMHR2HKJ.
+SHA-256: ca67130354dd4e852f0c654f304e3aeddb7dfcd53748bae7c85aa3716c3ecd27
+The supplied checksum matches. All 228 return-manifest files match; all 25
+returned package files match the frozen package. Six biology tasks and twelve
+atlas-scoring tasks completed successfully, with no missing tasks or failed
+classifier convergence. All tasks use the expected package fingerprint.
+Original HDMA input checksum and external input identities match. The ten
+runtime versions and the native binary hash match the audited environment.
+Within each atlas seed, all four measurements used the same host and 16 CPUs.
+All sampled live-process PSS readings were complete.
+
+INDEPENDENT SCIENTIFIC CHECKS
+Verified 776 classifier-fold metrics directly from their confusion matrices,
+including controls; checked donor-specific class counts against the original
+metadata and training/test cell totals. Verified all 36 returned biological
+score matrices for cell alignment, unique axes and finite values. Verified all
+twelve 10,000-cell atlas sample matrices and raw memory traces. Five local
+classifier refits reproduced the returned confusion matrices exactly for the
+diagnostic seed 778 / patient_1244, across both scorers and the reference.
+No network was refitted and no new method parameters were selected.
+
+PRIMARY BIOLOGY: 20,000-CELL TRAINING NETWORKS
+Evaluation cohort: 12,315 independent Kang2018 control PBMCs, eight donors.
+Three inference seeds, averaged within donor before paired donor bootstrap.
+These are cell-type classification macro-F1 scores, not percentages of correct
+regulatory edges. Matched common TFs: 14, 21 and 20 across the three seeds.
+
+Endpoint                                  Before       After
+Rust networks, shared reference scorer    0.673762     0.692902
+Rust networks, native Rust scorer         0.690106     0.682918
+SCENIC+ networks, reference scorer        0.711326     0.711326
+
+Shared-scorer correction: +1.914 percentage points; paired donor bootstrap
+95% interval +0.373 to +3.723 points. Six of eight donors improve. The remaining
+gap to the matched reference is -1.842 points, interval -3.446 to -0.295.
+Thus the shared-scorer gap is approximately halved, not eliminated.
+
+Native-scorer correction: -0.719 points; interval -3.082 to +1.233.
+This is not evidence of an improvement. The interval includes zero, so it also
+does not establish a reliable population-wide deterioration. Four donors
+improve and four decline. Corrected native Rust remains -2.841 points below
+the reference, interval -5.173 to -0.884.
+
+Balanced accuracy also does not establish a consistent correction benefit:
+the shared-scorer change is +1.189 points, interval -1.951 to +5.227.
+The 5,000-cell sensitivity result is similarly inconclusive for improvement:
+shared macro-F1 0.599572 to 0.606795, native 0.608949 to 0.601687. Both correction
+intervals include zero; both corrected matched endpoints trail the reference.
+
+WHERE THE CHANGE OCCURS
+Shared-scorer megakaryocyte F1 rises from 0.4481 to 0.6905. This accounts for
+most of the overall shared-scorer gain; several other classes decline.
+Native megakaryocyte F1 instead changes from 0.5238 to 0.5090. Native changes
+also include CD8 T cells -2.45 points and FCGR3A+ monocytes -2.99 points, while
+B-cell F1 improves by 1.05 points. See primary-class-summary.csv for every class.
+These are diagnostic per-class averages, not a newly selected primary endpoint.
+
+Native and shared AUCell scores are not numerically interchangeable. Across
+the primary matched signed features, per-TF Pearson correlations range from
+0.737 to 0.990. This identifies a scorer/representation interaction worth
+investigating; it does not yet establish whether ranking, tie handling,
+normalisation or another implementation detail causes the difference.
+
+BIOLOGICAL CONTROLS AND LIMITS
+At the fixed seed777/20,000-cell comparison, the actual shared-scorer Rust
+macro-F1 is 0.6906, versus 0.3519-0.4067 for five size/coverage-matched random
+gene sets and 0.0944-0.1520 for ten training-label permutations.
+The reference also exceeds its controls: 0.7170 versus random 0.3147-0.3508
+and shuffled-label 0.0498-0.1764. This supports non-random cell-type information.
+Expression PCA50 scores 0.8841, so network activity is not the strongest
+cell-type classifier tested. That baseline answers a different feature task.
+SPI1 monocyte enrichment is strong (mean AUROC about 0.981 for signed Rust).
+PAX5, EBF1 and TCF7 are absent from the scored networks, so those planned
+marker checks provide no validation. Do not count absence as a successful test.
+The all-TF shared-scorer Rust endpoint reaches 0.8156, but has 152-157 features
+against 14-22 in the reference. It is a secondary, unequal-capacity comparison
+and must not replace the matched primary result.
+This RNA transfer cohort does not validate causal edges or enhancer links.
+
+ATLAS SCORING COST: 817,740 REAL CELLS, THREE SEEDS, 16 CPUS
+Median for RustScenic                     Before       After
+Scoring stage including input/output     58.538 s     57.798 s
+Whole measured child process             62.263 s     61.055 s
+Peak process-tree PSS                     568.573 MB   638.440 MB
+
+There is no material runtime penalty in these runs. Median peak measured
+memory is 69.868 MB higher (12.3% for this small scoring-stage footprint).
+Memory varies across seeds and the before/after ranges overlap; three seeds
+do not justify an exact universal overhead claim.
+The corrected reference scoring stage takes 852.161 s with 1,207.027 MB PSS.
+The observed scoring-stage ratio is 14.74x and PSS is 47.1% lower for Rust.
+These are NOT new full-pipeline SCENIC+ results. Each method scores its own
+frozen networks (Rust 66-67 TF outputs; reference 5-6), so do not market this
+as a matched-signature scorer-only benchmark either. The paired within-Rust
+before/after comparison is the intended performance confirmation here.
+Original full-pipeline comparisons remain separate evidence. No inference,
+topic fitting or motif step was rerun or changed by this package.
+
+REMAINING ACTION
+Keep the candidate correction experimental. Diagnose the native/shared AUCell
+difference locally using the returned matrices and frozen inputs, especially
+the rare-cell effect. Establish a principled implementation correction and
+regression checks before another confirmation request. Do not tune against
+this now-inspected external cohort and then call it independent validation.
+The present results support efficiency and some biological usefulness, not
+biological equivalence. Manuscript claims must reflect that distinction.
+
+Full atlas score matrices remain on HPC as planned. Their recorded hashes and
+shape summaries were checked, and returned samples were inspected; the omitted
+full matrices were not independently read locally.
+Nothing was sent, published, uploaded or changed in the repository during this
+audit. No new package was sent to Huangfu.
+
+FILES
+verified-results.json: verified endpoint statistics and paired intervals.
+integrity-audit.json: archive, package and task checksum verification.
+verified-performance.csv: raw-trace-verified measurements.
+primary-class-summary.csv: isolated endpoint-only per-class comparisons.
+scorer-differences.csv: matched native/reference scoring differences.
+audit_results.py and audit.log: independent verification procedure and outcome.

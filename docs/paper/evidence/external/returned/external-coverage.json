@@ -1,0 +1,6956 @@
+{
+  "20000-777-reference": {
+    "BCL11A_activator": {
+      "fraction": 0.9818181818181818,
+      "present": 54,
+      "total": 55
+    },
+    "CEBPD_activator": {
+      "fraction": 0.9787234042553191,
+      "present": 92,
+      "total": 94
+    },
+    "ETS1_activator": {
+      "fraction": 0.9569377990430622,
+      "present": 200,
+      "total": 209
+    },
+    "FOSB_activator": {
+      "fraction": 0.9797979797979798,
+      "present": 97,
+      "total": 99
+    },
+    "FOS_activator": {
+      "fraction": 0.9686274509803922,
+      "present": 247,
+      "total": 255
+    },
+    "GATA1_activator": {
+      "fraction": 0.9315068493150684,
+      "present": 68,
+      "total": 73
+    },
+    "JUNB_activator": {
+      "fraction": 0.9797979797979798,
+      "present": 97,
+      "total": 99
+    },
+    "JUND_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "JUN_activator": {
+      "fraction": 0.9795918367346939,
+      "present": 96,
+      "total": 98
+    },
+    "KLF1_activator": {
+      "fraction": 0.9381443298969072,
+      "present": 182,
+      "total": 194
+    },
+    "KLF2_activator": {
+      "fraction": 0.9605734767025089,
+      "present": 268,
+      "total": 279
+    },
+    "RUNX3_activator": {
+      "fraction": 0.9491525423728814,
+      "present": 112,
+      "total": 118
+    },
+    "SPIB_activator": {
+      "fraction": 0.967741935483871,
+      "present": 30,
+      "total": 31
+    },
+    "TFDP1_activator": {
+      "fraction": 0.96,
+      "present": 384,
+      "total": 400
+    }
+  },
+  "20000-777-rustscenic": {
+    "AHCTF1_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "AHR_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ATF2_activator": {
+      "fraction": 0.9,
+      "present": 9,
+      "total": 10
+    },
+    "ATF3_activator": {
+      "fraction": 1.0,
+      "present": 62,
+      "total": 62
+    },
+    "ATF4_activator": {
+      "fraction": 0.963855421686747,
+      "present": 80,
+      "total": 83
+    },
+    "ATF6_activator": {
+      "fraction": 0.96,
+      "present": 24,
+      "total": 25
+    },
+    "BACH1_activator": {
+      "fraction": 0.9649122807017544,
+      "present": 55,
+      "total": 57
+    },
+    "BACH1_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "BACH2_activator": {
+      "fraction": 0.9428571428571428,
+      "present": 33,
+      "total": 35
+    },
+    "BACH2_repressor": {
+      "fraction": 0.981651376146789,
+      "present": 107,
+      "total": 109
+    },
+    "BATF_activator": {
+      "fraction": 0.8235294117647058,
+      "present": 14,
+      "total": 17
+    },
+    "BCL11A_activator": {
+      "fraction": 0.9795918367346939,
+      "present": 48,
+      "total": 49
+    },
+    "BCL11A_repressor": {
+      "fraction": 0.96,
+      "present": 24,
+      "total": 25
+    },
+    "BCL11B_activator": {
+      "fraction": 0.9,
+      "present": 18,
+      "total": 20
+    },
+    "BCLAF1_activator": {
+      "fraction": 0.972972972972973,
+      "present": 72,
+      "total": 74
+    },
+    "BHLHE40_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "BPTF_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "BRCA1_activator": {
+      "fraction": 0.948051948051948,
+      "present": 73,
+      "total": 77
+    },
+    "CCNT2_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "CEBPB_activator": {
+      "fraction": 0.9047619047619048,
+      "present": 19,
+      "total": 21
+    },
+    "CEBPD_activator": {
+      "fraction": 0.9787234042553191,
+      "present": 92,
+      "total": 94
+    },
+    "CEBPZ_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "CHD1_activator": {
+      "fraction": 1.0,
+      "present": 27,
+      "total": 27
+    },
+    "CHD2_activator": {
+      "fraction": 0.9743589743589743,
+      "present": 38,
+      "total": 39
+    },
+    "CREB1_activator": {
+      "fraction": 0.95,
+      "present": 38,
+      "total": 40
+    },
+    "CREB3L2_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "CREB5_activator": {
+      "fraction": 0.9904761904761905,
+      "present": 104,
+      "total": 105
+    },
+    "CREB5_repressor": {
+      "fraction": 1.0,
+      "present": 20,
+      "total": 20
+    },
+    "CREM_activator": {
+      "fraction": 0.9253731343283582,
+      "present": 62,
+      "total": 67
+    },
+    "CUX1_activator": {
+      "fraction": 0.9428571428571428,
+      "present": 33,
+      "total": 35
+    },
+    "CUX1_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "E2F1_activator": {
+      "fraction": 0.9,
+      "present": 108,
+      "total": 120
+    },
+    "E2F2_activator": {
+      "fraction": 0.9388888888888889,
+      "present": 169,
+      "total": 180
+    },
+    "E2F2_repressor": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "E2F3_activator": {
+      "fraction": 0.9453125,
+      "present": 121,
+      "total": 128
+    },
+    "E2F4_activator": {
+      "fraction": 0.9448818897637795,
+      "present": 120,
+      "total": 127
+    },
+    "E2F7_activator": {
+      "fraction": 0.8666666666666667,
+      "present": 65,
+      "total": 75
+    },
+    "E2F8_activator": {
+      "fraction": 0.9024390243902439,
+      "present": 148,
+      "total": 164
+    },
+    "EGR1_activator": {
+      "fraction": 1.0,
+      "present": 38,
+      "total": 38
+    },
+    "ELF1_activator": {
+      "fraction": 0.9639344262295082,
+      "present": 294,
+      "total": 305
+    },
+    "ELF1_repressor": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "ELF2_activator": {
+      "fraction": 0.9759358288770054,
+      "present": 365,
+      "total": 374
+    },
+    "ELF2_repressor": {
+      "fraction": 1.0,
+      "present": 38,
+      "total": 38
+    },
+    "ELF4_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "EOMES_activator": {
+      "fraction": 1.0,
+      "present": 21,
+      "total": 21
+    },
+    "EP300_activator": {
+      "fraction": 0.9830508474576272,
+      "present": 58,
+      "total": 59
+    },
+    "ERG_activator": {
+      "fraction": 0.9256198347107438,
+      "present": 112,
+      "total": 121
+    },
+    "ERG_repressor": {
+      "fraction": 1.0,
+      "present": 46,
+      "total": 46
+    },
+    "ETS1_activator": {
+      "fraction": 0.9588377723970944,
+      "present": 396,
+      "total": 413
+    },
+    "ETS1_repressor": {
+      "fraction": 0.958904109589041,
+      "present": 210,
+      "total": 219
+    },
+    "ETS2_activator": {
+      "fraction": 0.972972972972973,
+      "present": 72,
+      "total": 74
+    },
+    "ETV6_activator": {
+      "fraction": 0.9626168224299065,
+      "present": 309,
+      "total": 321
+    },
+    "ETV6_repressor": {
+      "fraction": 0.9782608695652174,
+      "present": 45,
+      "total": 46
+    },
+    "FLI1_activator": {
+      "fraction": 0.9485294117647058,
+      "present": 258,
+      "total": 272
+    },
+    "FLI1_repressor": {
+      "fraction": 0.967741935483871,
+      "present": 30,
+      "total": 31
+    },
+    "FOSB_activator": {
+      "fraction": 0.9797979797979798,
+      "present": 194,
+      "total": 198
+    },
+    "FOSB_repressor": {
+      "fraction": 0.9333333333333333,
+      "present": 14,
+      "total": 15
+    },
+    "FOSL1_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "FOSL2_activator": {
+      "fraction": 0.9922480620155039,
+      "present": 128,
+      "total": 129
+    },
+    "FOS_activator": {
+      "fraction": 0.9647058823529412,
+      "present": 410,
+      "total": 425
+    },
+    "FOS_repressor": {
+      "fraction": 1.0,
+      "present": 19,
+      "total": 19
+    },
+    "FOXO1_activator": {
+      "fraction": 0.9693877551020408,
+      "present": 95,
+      "total": 98
+    },
+    "FOXO1_repressor": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "FOXO3_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "GABPB1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "GATA1_activator": {
+      "fraction": 0.9285714285714286,
+      "present": 78,
+      "total": 84
+    },
+    "HCFC1_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "HDAC2_activator": {
+      "fraction": 0.9459459459459459,
+      "present": 35,
+      "total": 37
+    },
+    "HES6_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "HIVEP1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "HMGA1_activator": {
+      "fraction": 0.9629629629629629,
+      "present": 78,
+      "total": 81
+    },
+    "IKZF1_activator": {
+      "fraction": 0.9393939393939394,
+      "present": 62,
+      "total": 66
+    },
+    "IKZF2_activator": {
+      "fraction": 0.8947368421052632,
+      "present": 17,
+      "total": 19
+    },
+    "IKZF2_repressor": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "IKZF3_activator": {
+      "fraction": 0.9538461538461539,
+      "present": 62,
+      "total": 65
+    },
+    "IKZF3_repressor": {
+      "fraction": 0.9230769230769231,
+      "present": 12,
+      "total": 13
+    },
+    "IRF1_activator": {
+      "fraction": 0.9629629629629629,
+      "present": 26,
+      "total": 27
+    },
+    "IRF4_activator": {
+      "fraction": 0.9523809523809523,
+      "present": 60,
+      "total": 63
+    },
+    "IRF4_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "IRF7_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "IRF8_activator": {
+      "fraction": 0.9759036144578314,
+      "present": 81,
+      "total": 83
+    },
+    "JDP2_activator": {
+      "fraction": 0.9885057471264368,
+      "present": 86,
+      "total": 87
+    },
+    "JUNB_activator": {
+      "fraction": 0.9452054794520548,
+      "present": 207,
+      "total": 219
+    },
+    "JUND_activator": {
+      "fraction": 0.9883720930232558,
+      "present": 85,
+      "total": 86
+    },
+    "JUN_activator": {
+      "fraction": 0.9622641509433962,
+      "present": 255,
+      "total": 265
+    },
+    "JUN_repressor": {
+      "fraction": 0.8125,
+      "present": 13,
+      "total": 16
+    },
+    "KLF10_activator": {
+      "fraction": 0.9230769230769231,
+      "present": 12,
+      "total": 13
+    },
+    "KLF11_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "KLF12_activator": {
+      "fraction": 0.957345971563981,
+      "present": 202,
+      "total": 211
+    },
+    "KLF12_repressor": {
+      "fraction": 0.9595959595959596,
+      "present": 95,
+      "total": 99
+    },
+    "KLF13_activator": {
+      "fraction": 0.9461538461538461,
+      "present": 123,
+      "total": 130
+    },
+    "KLF16_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "KLF1_activator": {
+      "fraction": 0.9388489208633094,
+      "present": 261,
+      "total": 278
+    },
+    "KLF1_repressor": {
+      "fraction": 0.9821428571428571,
+      "present": 110,
+      "total": 112
+    },
+    "KLF2_activator": {
+      "fraction": 0.9630872483221476,
+      "present": 287,
+      "total": 298
+    },
+    "KLF2_repressor": {
+      "fraction": 0.875,
+      "present": 14,
+      "total": 16
+    },
+    "KLF3_activator": {
+      "fraction": 0.9746835443037974,
+      "present": 77,
+      "total": 79
+    },
+    "KLF4_activator": {
+      "fraction": 0.9815950920245399,
+      "present": 160,
+      "total": 163
+    },
+    "KLF4_repressor": {
+      "fraction": 0.96,
+      "present": 24,
+      "total": 25
+    },
+    "KLF6_activator": {
+      "fraction": 0.9695431472081218,
+      "present": 191,
+      "total": 197
+    },
+    "KLF6_repressor": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "KLF7_activator": {
+      "fraction": 1.0,
+      "present": 87,
+      "total": 87
+    },
+    "KLF7_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "KLF9_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "LEF1_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "LEF1_repressor": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "LMO2_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 51,
+      "total": 54
+    },
+    "MAFB_activator": {
+      "fraction": 1.0,
+      "present": 43,
+      "total": 43
+    },
+    "MAFF_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "MAFG_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "MAF_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 21,
+      "total": 22
+    },
+    "MAZ_activator": {
+      "fraction": 0.9125,
+      "present": 146,
+      "total": 160
+    },
+    "MBD2_activator": {
+      "fraction": 0.9333333333333333,
+      "present": 14,
+      "total": 15
+    },
+    "MECP2_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "MEF2A_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "MEF2C_activator": {
+      "fraction": 0.9767441860465116,
+      "present": 42,
+      "total": 43
+    },
+    "MEF2C_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "MEIS1_activator": {
+      "fraction": 0.9117647058823529,
+      "present": 31,
+      "total": 34
+    },
+    "MITF_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "MYB_activator": {
+      "fraction": 0.8823529411764706,
+      "present": 15,
+      "total": 17
+    },
+    "NFATC3_activator": {
+      "fraction": 1.0,
+      "present": 19,
+      "total": 19
+    },
+    "NFE2L2_activator": {
+      "fraction": 1.0,
+      "present": 17,
+      "total": 17
+    },
+    "NFE2_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "NFIL3_activator": {
+      "fraction": 1.0,
+      "present": 42,
+      "total": 42
+    },
+    "NFKB1_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 21,
+      "total": 22
+    },
+    "NFYC_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "NR2C2_activator": {
+      "fraction": 1.0,
+      "present": 22,
+      "total": 22
+    },
+    "NR3C1_activator": {
+      "fraction": 0.9534883720930233,
+      "present": 82,
+      "total": 86
+    },
+    "NRF1_activator": {
+      "fraction": 0.9375,
+      "present": 45,
+      "total": 48
+    },
+    "PBX1_activator": {
+      "fraction": 0.922077922077922,
+      "present": 71,
+      "total": 77
+    },
+    "PBX3_activator": {
+      "fraction": 0.936,
+      "present": 117,
+      "total": 125
+    },
+    "PBX3_repressor": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "PHF21A_activator": {
+      "fraction": 0.9047619047619048,
+      "present": 19,
+      "total": 21
+    },
+    "PHTF1_activator": {
+      "fraction": 0.8181818181818182,
+      "present": 9,
+      "total": 11
+    },
+    "PLAGL1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "POU2F1_activator": {
+      "fraction": 0.9565217391304348,
+      "present": 22,
+      "total": 23
+    },
+    "PRDM1_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "RB1_activator": {
+      "fraction": 0.9298245614035088,
+      "present": 53,
+      "total": 57
+    },
+    "RCOR1_activator": {
+      "fraction": 0.9534883720930233,
+      "present": 41,
+      "total": 43
+    },
+    "RELB_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "REL_activator": {
+      "fraction": 0.95,
+      "present": 19,
+      "total": 20
+    },
+    "RUNX1_activator": {
+      "fraction": 0.96875,
+      "present": 62,
+      "total": 64
+    },
+    "RUNX2_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "RUNX3_activator": {
+      "fraction": 0.9661016949152542,
+      "present": 57,
+      "total": 59
+    },
+    "RXRA_activator": {
+      "fraction": 0.9423076923076923,
+      "present": 49,
+      "total": 52
+    },
+    "SATB1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "SF1_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "SFPQ_activator": {
+      "fraction": 1.0,
+      "present": 17,
+      "total": 17
+    },
+    "SOX5_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "SP1_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "SP3_activator": {
+      "fraction": 0.9645390070921985,
+      "present": 136,
+      "total": 141
+    },
+    "SP3_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "SP4_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "SPI1_activator": {
+      "fraction": 0.9679144385026738,
+      "present": 181,
+      "total": 187
+    },
+    "SPIB_activator": {
+      "fraction": 1.0,
+      "present": 40,
+      "total": 40
+    },
+    "SREBF2_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "STAT1_activator": {
+      "fraction": 0.9655172413793104,
+      "present": 28,
+      "total": 29
+    },
+    "STAT2_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "TAF1_activator": {
+      "fraction": 1.0,
+      "present": 18,
+      "total": 18
+    },
+    "TAL1_activator": {
+      "fraction": 0.9375,
+      "present": 75,
+      "total": 80
+    },
+    "TBL1XR1_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "TBX21_activator": {
+      "fraction": 0.94,
+      "present": 47,
+      "total": 50
+    },
+    "TCF12_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 64,
+      "total": 68
+    },
+    "TCF12_repressor": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "TCF3_activator": {
+      "fraction": 0.9375,
+      "present": 30,
+      "total": 32
+    },
+    "TCF4_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 20,
+      "total": 22
+    },
+    "TCF7L2_activator": {
+      "fraction": 0.9583333333333334,
+      "present": 23,
+      "total": 24
+    },
+    "TFDP1_activator": {
+      "fraction": 0.9522292993630573,
+      "present": 299,
+      "total": 314
+    },
+    "TFDP1_repressor": {
+      "fraction": 1.0,
+      "present": 27,
+      "total": 27
+    },
+    "TFDP2_activator": {
+      "fraction": 0.8765432098765432,
+      "present": 71,
+      "total": 81
+    },
+    "TFEC_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "TIMELESS_activator": {
+      "fraction": 0.6666666666666666,
+      "present": 4,
+      "total": 6
+    },
+    "TRPS1_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "TRPS1_repressor": {
+      "fraction": 0.9230769230769231,
+      "present": 12,
+      "total": 13
+    },
+    "XBP1_activator": {
+      "fraction": 0.9242424242424242,
+      "present": 61,
+      "total": 66
+    },
+    "YBX1_activator": {
+      "fraction": 0.9478260869565217,
+      "present": 109,
+      "total": 115
+    },
+    "YY1_activator": {
+      "fraction": 0.8947368421052632,
+      "present": 17,
+      "total": 19
+    },
+    "ZBTB11_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ZBTB20_activator": {
+      "fraction": 0.9649122807017544,
+      "present": 55,
+      "total": 57
+    },
+    "ZBTB20_repressor": {
+      "fraction": 0.7857142857142857,
+      "present": 11,
+      "total": 14
+    },
+    "ZBTB7A_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "ZEB1_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "ZNF100_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF121_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "ZNF148_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ZNF207_activator": {
+      "fraction": 0.9629629629629629,
+      "present": 26,
+      "total": 27
+    },
+    "ZNF281_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF385D_activator": {
+      "fraction": 0.9672131147540983,
+      "present": 59,
+      "total": 61
+    },
+    "ZNF385D_repressor": {
+      "fraction": 0.9,
+      "present": 9,
+      "total": 10
+    },
+    "ZNF519_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "ZNF704_activator": {
+      "fraction": 0.9583333333333334,
+      "present": 23,
+      "total": 24
+    }
+  },
+  "20000-778-reference": {
+    "BCL11A_activator": {
+      "fraction": 0.9836065573770492,
+      "present": 60,
+      "total": 61
+    },
+    "BCL11B_activator": {
+      "fraction": 0.9666666666666667,
+      "present": 58,
+      "total": 60
+    },
+    "CEBPD_activator": {
+      "fraction": 0.9726027397260274,
+      "present": 71,
+      "total": 73
+    },
+    "E2F8_repressor": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "EP300_activator": {
+      "fraction": 0.96,
+      "present": 24,
+      "total": 25
+    },
+    "ERF_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ETV6_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "FOSB_activator": {
+      "fraction": 0.9858156028368794,
+      "present": 139,
+      "total": 141
+    },
+    "FOSL2_activator": {
+      "fraction": 0.9891304347826086,
+      "present": 91,
+      "total": 92
+    },
+    "FOS_activator": {
+      "fraction": 0.9668508287292817,
+      "present": 175,
+      "total": 181
+    },
+    "JDP2_activator": {
+      "fraction": 1.0,
+      "present": 39,
+      "total": 39
+    },
+    "JUNB_activator": {
+      "fraction": 0.970873786407767,
+      "present": 100,
+      "total": 103
+    },
+    "JUN_activator": {
+      "fraction": 0.974025974025974,
+      "present": 75,
+      "total": 77
+    },
+    "KLF1_activator": {
+      "fraction": 0.9516728624535316,
+      "present": 256,
+      "total": 269
+    },
+    "KLF2_activator": {
+      "fraction": 0.9639344262295082,
+      "present": 294,
+      "total": 305
+    },
+    "NFIL3_activator": {
+      "fraction": 1.0,
+      "present": 32,
+      "total": 32
+    },
+    "RUNX3_activator": {
+      "fraction": 0.9508196721311475,
+      "present": 58,
+      "total": 61
+    },
+    "SPI1_activator": {
+      "fraction": 0.927536231884058,
+      "present": 64,
+      "total": 69
+    },
+    "SPIB_activator": {
+      "fraction": 0.9375,
+      "present": 15,
+      "total": 16
+    },
+    "STAT1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "TAL1_activator": {
+      "fraction": 0.9436619718309859,
+      "present": 67,
+      "total": 71
+    },
+    "TFDP1_activator": {
+      "fraction": 0.9536423841059603,
+      "present": 288,
+      "total": 302
+    }
+  },
+  "20000-778-rustscenic": {
+    "ACAA1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "AHCTF1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "ATF2_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ATF3_activator": {
+      "fraction": 0.9827586206896551,
+      "present": 57,
+      "total": 58
+    },
+    "ATF4_activator": {
+      "fraction": 0.9801980198019802,
+      "present": 99,
+      "total": 101
+    },
+    "ATF6_activator": {
+      "fraction": 0.9375,
+      "present": 15,
+      "total": 16
+    },
+    "BACH1_activator": {
+      "fraction": 1.0,
+      "present": 26,
+      "total": 26
+    },
+    "BACH2_activator": {
+      "fraction": 0.96875,
+      "present": 31,
+      "total": 32
+    },
+    "BACH2_repressor": {
+      "fraction": 1.0,
+      "present": 108,
+      "total": 108
+    },
+    "BATF_activator": {
+      "fraction": 1.0,
+      "present": 19,
+      "total": 19
+    },
+    "BCL11A_activator": {
+      "fraction": 0.9827586206896551,
+      "present": 57,
+      "total": 58
+    },
+    "BCL11A_repressor": {
+      "fraction": 0.9615384615384616,
+      "present": 25,
+      "total": 26
+    },
+    "BCL11B_activator": {
+      "fraction": 0.9285714285714286,
+      "present": 26,
+      "total": 28
+    },
+    "BCLAF1_activator": {
+      "fraction": 0.9875,
+      "present": 79,
+      "total": 80
+    },
+    "BRCA1_activator": {
+      "fraction": 0.9344262295081968,
+      "present": 57,
+      "total": 61
+    },
+    "CCNT2_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "CEBPA_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "CEBPB_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "CEBPD_activator": {
+      "fraction": 0.9795918367346939,
+      "present": 96,
+      "total": 98
+    },
+    "CEBPZ_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "CHD1_activator": {
+      "fraction": 1.0,
+      "present": 25,
+      "total": 25
+    },
+    "CHD2_activator": {
+      "fraction": 0.96875,
+      "present": 31,
+      "total": 32
+    },
+    "CREB1_activator": {
+      "fraction": 0.918918918918919,
+      "present": 34,
+      "total": 37
+    },
+    "CREB5_activator": {
+      "fraction": 0.9795918367346939,
+      "present": 96,
+      "total": 98
+    },
+    "CREB5_repressor": {
+      "fraction": 1.0,
+      "present": 20,
+      "total": 20
+    },
+    "CREM_activator": {
+      "fraction": 0.9310344827586207,
+      "present": 54,
+      "total": 58
+    },
+    "CUX1_activator": {
+      "fraction": 1.0,
+      "present": 25,
+      "total": 25
+    },
+    "DEAF1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "E2F1_activator": {
+      "fraction": 0.921875,
+      "present": 118,
+      "total": 128
+    },
+    "E2F2_activator": {
+      "fraction": 0.937799043062201,
+      "present": 196,
+      "total": 209
+    },
+    "E2F2_repressor": {
+      "fraction": 0.9090909090909091,
+      "present": 10,
+      "total": 11
+    },
+    "E2F3_activator": {
+      "fraction": 0.9212598425196851,
+      "present": 117,
+      "total": 127
+    },
+    "E2F4_activator": {
+      "fraction": 0.9612903225806452,
+      "present": 149,
+      "total": 155
+    },
+    "E2F5_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "E2F7_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 72,
+      "total": 81
+    },
+    "E2F8_activator": {
+      "fraction": 0.9078014184397163,
+      "present": 128,
+      "total": 141
+    },
+    "EGR1_activator": {
+      "fraction": 1.0,
+      "present": 40,
+      "total": 40
+    },
+    "ELF1_activator": {
+      "fraction": 0.967741935483871,
+      "present": 300,
+      "total": 310
+    },
+    "ELF1_repressor": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "ELF2_activator": {
+      "fraction": 0.961439588688946,
+      "present": 374,
+      "total": 389
+    },
+    "ELF2_repressor": {
+      "fraction": 0.96875,
+      "present": 31,
+      "total": 32
+    },
+    "ELF4_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ELK3_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "EOMES_activator": {
+      "fraction": 0.9047619047619048,
+      "present": 19,
+      "total": 21
+    },
+    "EP300_activator": {
+      "fraction": 0.9803921568627451,
+      "present": 50,
+      "total": 51
+    },
+    "ERG_activator": {
+      "fraction": 0.9666666666666667,
+      "present": 116,
+      "total": 120
+    },
+    "ERG_repressor": {
+      "fraction": 0.9230769230769231,
+      "present": 36,
+      "total": 39
+    },
+    "ETS1_activator": {
+      "fraction": 0.9537712895377128,
+      "present": 392,
+      "total": 411
+    },
+    "ETS1_repressor": {
+      "fraction": 0.9744897959183674,
+      "present": 191,
+      "total": 196
+    },
+    "ETS2_activator": {
+      "fraction": 1.0,
+      "present": 90,
+      "total": 90
+    },
+    "ETV6_activator": {
+      "fraction": 0.9654088050314465,
+      "present": 307,
+      "total": 318
+    },
+    "ETV6_repressor": {
+      "fraction": 0.9818181818181818,
+      "present": 54,
+      "total": 55
+    },
+    "FLI1_activator": {
+      "fraction": 0.9556451612903226,
+      "present": 237,
+      "total": 248
+    },
+    "FLI1_repressor": {
+      "fraction": 0.9583333333333334,
+      "present": 23,
+      "total": 24
+    },
+    "FOSB_activator": {
+      "fraction": 0.9835164835164835,
+      "present": 179,
+      "total": 182
+    },
+    "FOSB_repressor": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "FOSL1_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "FOSL2_activator": {
+      "fraction": 0.9776119402985075,
+      "present": 131,
+      "total": 134
+    },
+    "FOS_activator": {
+      "fraction": 0.9740566037735849,
+      "present": 413,
+      "total": 424
+    },
+    "FOS_repressor": {
+      "fraction": 1.0,
+      "present": 28,
+      "total": 28
+    },
+    "FOXO1_activator": {
+      "fraction": 0.9803921568627451,
+      "present": 100,
+      "total": 102
+    },
+    "FOXO1_repressor": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "FOXO3_activator": {
+      "fraction": 0.9428571428571428,
+      "present": 33,
+      "total": 35
+    },
+    "GATA1_activator": {
+      "fraction": 0.9367088607594937,
+      "present": 74,
+      "total": 79
+    },
+    "HCFC1_activator": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "HDAC2_activator": {
+      "fraction": 0.9459459459459459,
+      "present": 35,
+      "total": 37
+    },
+    "HES6_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "HIVEP1_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "HMGA1_activator": {
+      "fraction": 0.961038961038961,
+      "present": 74,
+      "total": 77
+    },
+    "HSF1_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "IKZF1_activator": {
+      "fraction": 0.9512195121951219,
+      "present": 78,
+      "total": 82
+    },
+    "IKZF2_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 12,
+      "total": 14
+    },
+    "IKZF2_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "IKZF3_activator": {
+      "fraction": 0.9552238805970149,
+      "present": 64,
+      "total": 67
+    },
+    "IKZF3_repressor": {
+      "fraction": 1.0,
+      "present": 22,
+      "total": 22
+    },
+    "IRF1_activator": {
+      "fraction": 0.9714285714285714,
+      "present": 34,
+      "total": 35
+    },
+    "IRF3_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "IRF4_activator": {
+      "fraction": 0.9571428571428572,
+      "present": 67,
+      "total": 70
+    },
+    "IRF4_repressor": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "IRF7_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "IRF8_activator": {
+      "fraction": 0.9659090909090909,
+      "present": 85,
+      "total": 88
+    },
+    "JDP2_activator": {
+      "fraction": 1.0,
+      "present": 94,
+      "total": 94
+    },
+    "JUNB_activator": {
+      "fraction": 0.9646464646464646,
+      "present": 191,
+      "total": 198
+    },
+    "JUNB_repressor": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "JUND_activator": {
+      "fraction": 0.9753086419753086,
+      "present": 79,
+      "total": 81
+    },
+    "JUN_activator": {
+      "fraction": 0.9748953974895398,
+      "present": 233,
+      "total": 239
+    },
+    "JUN_repressor": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "KLF10_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "KLF12_activator": {
+      "fraction": 0.9626168224299065,
+      "present": 206,
+      "total": 214
+    },
+    "KLF12_repressor": {
+      "fraction": 0.967391304347826,
+      "present": 89,
+      "total": 92
+    },
+    "KLF13_activator": {
+      "fraction": 0.9692307692307692,
+      "present": 126,
+      "total": 130
+    },
+    "KLF16_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "KLF1_activator": {
+      "fraction": 0.9507042253521126,
+      "present": 270,
+      "total": 284
+    },
+    "KLF1_repressor": {
+      "fraction": 0.9813084112149533,
+      "present": 105,
+      "total": 107
+    },
+    "KLF2_activator": {
+      "fraction": 0.9493243243243243,
+      "present": 281,
+      "total": 296
+    },
+    "KLF2_repressor": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "KLF3_activator": {
+      "fraction": 0.961038961038961,
+      "present": 74,
+      "total": 77
+    },
+    "KLF4_activator": {
+      "fraction": 0.967741935483871,
+      "present": 150,
+      "total": 155
+    },
+    "KLF4_repressor": {
+      "fraction": 0.9375,
+      "present": 30,
+      "total": 32
+    },
+    "KLF5_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "KLF6_activator": {
+      "fraction": 0.9735449735449735,
+      "present": 184,
+      "total": 189
+    },
+    "KLF6_repressor": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "KLF7_activator": {
+      "fraction": 0.956989247311828,
+      "present": 89,
+      "total": 93
+    },
+    "KLF7_repressor": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "KLF9_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "LEF1_activator": {
+      "fraction": 0.9,
+      "present": 9,
+      "total": 10
+    },
+    "LEF1_repressor": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "LMO2_activator": {
+      "fraction": 0.9615384615384616,
+      "present": 50,
+      "total": 52
+    },
+    "MAFB_activator": {
+      "fraction": 1.0,
+      "present": 27,
+      "total": 27
+    },
+    "MAFF_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "MAFG_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "MAF_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 16,
+      "total": 18
+    },
+    "MAZ_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 162,
+      "total": 171
+    },
+    "MBD2_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "MECP2_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "MEF2A_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "MEF2C_activator": {
+      "fraction": 1.0,
+      "present": 20,
+      "total": 20
+    },
+    "MEIS1_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 34,
+      "total": 36
+    },
+    "MYB_activator": {
+      "fraction": 0.8181818181818182,
+      "present": 9,
+      "total": 11
+    },
+    "NFATC3_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "NFE2L2_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "NFE2_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "NFIL3_activator": {
+      "fraction": 0.9777777777777777,
+      "present": 44,
+      "total": 45
+    },
+    "NFKB1_activator": {
+      "fraction": 0.9722222222222222,
+      "present": 35,
+      "total": 36
+    },
+    "NFYC_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "NR2C2_activator": {
+      "fraction": 0.8947368421052632,
+      "present": 17,
+      "total": 19
+    },
+    "NR3C1_activator": {
+      "fraction": 0.9259259259259259,
+      "present": 75,
+      "total": 81
+    },
+    "NRF1_activator": {
+      "fraction": 1.0,
+      "present": 43,
+      "total": 43
+    },
+    "PBX1_activator": {
+      "fraction": 0.926829268292683,
+      "present": 76,
+      "total": 82
+    },
+    "PBX1_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "PBX3_activator": {
+      "fraction": 0.9296875,
+      "present": 119,
+      "total": 128
+    },
+    "PBX3_repressor": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "PHF21A_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "PHTF1_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "PLAGL1_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "POU2F1_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 18,
+      "total": 19
+    },
+    "PRDM1_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "RB1_activator": {
+      "fraction": 0.8936170212765957,
+      "present": 42,
+      "total": 47
+    },
+    "RCOR1_activator": {
+      "fraction": 0.967741935483871,
+      "present": 30,
+      "total": 31
+    },
+    "RELB_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "REL_activator": {
+      "fraction": 0.9642857142857143,
+      "present": 27,
+      "total": 28
+    },
+    "RUNX1_activator": {
+      "fraction": 0.9701492537313433,
+      "present": 65,
+      "total": 67
+    },
+    "RUNX2_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "RUNX3_activator": {
+      "fraction": 0.9529411764705882,
+      "present": 81,
+      "total": 85
+    },
+    "RXRA_activator": {
+      "fraction": 0.92,
+      "present": 46,
+      "total": 50
+    },
+    "SF1_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "SMAD3_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "SOX5_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "SP1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "SP3_activator": {
+      "fraction": 0.9790209790209791,
+      "present": 140,
+      "total": 143
+    },
+    "SP4_activator": {
+      "fraction": 0.7777777777777778,
+      "present": 7,
+      "total": 9
+    },
+    "SPI1_activator": {
+      "fraction": 0.9631578947368421,
+      "present": 183,
+      "total": 190
+    },
+    "SPI1_repressor": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "SPIB_activator": {
+      "fraction": 1.0,
+      "present": 40,
+      "total": 40
+    },
+    "SREBF2_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "STAT1_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 22,
+      "total": 24
+    },
+    "TAF1_activator": {
+      "fraction": 1.0,
+      "present": 20,
+      "total": 20
+    },
+    "TAL1_activator": {
+      "fraction": 0.92,
+      "present": 69,
+      "total": 75
+    },
+    "TBL1XR1_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "TBX21_activator": {
+      "fraction": 0.9347826086956522,
+      "present": 43,
+      "total": 46
+    },
+    "TCF12_activator": {
+      "fraction": 0.967741935483871,
+      "present": 60,
+      "total": 62
+    },
+    "TCF3_activator": {
+      "fraction": 0.9032258064516129,
+      "present": 28,
+      "total": 31
+    },
+    "TCF4_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 20,
+      "total": 22
+    },
+    "TCF7L2_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 10,
+      "total": 11
+    },
+    "TFDP1_activator": {
+      "fraction": 0.9589905362776026,
+      "present": 304,
+      "total": 317
+    },
+    "TFDP1_repressor": {
+      "fraction": 1.0,
+      "present": 25,
+      "total": 25
+    },
+    "TFDP2_activator": {
+      "fraction": 0.9438202247191011,
+      "present": 84,
+      "total": 89
+    },
+    "TIMELESS_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "TRPS1_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "TRPS1_repressor": {
+      "fraction": 0.9230769230769231,
+      "present": 12,
+      "total": 13
+    },
+    "XBP1_activator": {
+      "fraction": 0.9607843137254902,
+      "present": 49,
+      "total": 51
+    },
+    "YBX1_activator": {
+      "fraction": 0.9117647058823529,
+      "present": 93,
+      "total": 102
+    },
+    "YY1_activator": {
+      "fraction": 0.9393939393939394,
+      "present": 31,
+      "total": 33
+    },
+    "ZBTB11_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "ZBTB20_activator": {
+      "fraction": 0.9318181818181818,
+      "present": 41,
+      "total": 44
+    },
+    "ZBTB20_repressor": {
+      "fraction": 0.875,
+      "present": 7,
+      "total": 8
+    },
+    "ZBTB25_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "ZBTB7A_activator": {
+      "fraction": 1.0,
+      "present": 21,
+      "total": 21
+    },
+    "ZEB1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF148_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "ZNF207_activator": {
+      "fraction": 0.8636363636363636,
+      "present": 19,
+      "total": 22
+    },
+    "ZNF385D_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 51,
+      "total": 54
+    },
+    "ZNF385D_repressor": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF519_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "ZNF704_activator": {
+      "fraction": 1.0,
+      "present": 24,
+      "total": 24
+    },
+    "ZNF711_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    }
+  },
+  "20000-779-reference": {
+    "BACH2_repressor": {
+      "fraction": 0.9714285714285714,
+      "present": 34,
+      "total": 35
+    },
+    "BCL11A_activator": {
+      "fraction": 1.0,
+      "present": 65,
+      "total": 65
+    },
+    "CEBPD_activator": {
+      "fraction": 0.9906542056074766,
+      "present": 106,
+      "total": 107
+    },
+    "CREM_activator": {
+      "fraction": 0.9354838709677419,
+      "present": 29,
+      "total": 31
+    },
+    "E2F2_activator": {
+      "fraction": 0.9154929577464789,
+      "present": 130,
+      "total": 142
+    },
+    "ETS2_activator": {
+      "fraction": 1.0,
+      "present": 43,
+      "total": 43
+    },
+    "FOSB_activator": {
+      "fraction": 0.9836065573770492,
+      "present": 120,
+      "total": 122
+    },
+    "FOSL2_activator": {
+      "fraction": 0.9871794871794872,
+      "present": 77,
+      "total": 78
+    },
+    "FOS_activator": {
+      "fraction": 0.96875,
+      "present": 217,
+      "total": 224
+    },
+    "JUNB_activator": {
+      "fraction": 0.9310344827586207,
+      "present": 108,
+      "total": 116
+    },
+    "JUND_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "JUN_activator": {
+      "fraction": 0.9591836734693877,
+      "present": 94,
+      "total": 98
+    },
+    "KLF1_activator": {
+      "fraction": 0.9631336405529954,
+      "present": 209,
+      "total": 217
+    },
+    "KLF2_activator": {
+      "fraction": 0.9653979238754326,
+      "present": 279,
+      "total": 289
+    },
+    "KLF6_activator": {
+      "fraction": 0.9805825242718447,
+      "present": 202,
+      "total": 206
+    },
+    "NFE2_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "RUNX3_activator": {
+      "fraction": 0.9666666666666667,
+      "present": 58,
+      "total": 60
+    },
+    "SPI1_activator": {
+      "fraction": 0.9568965517241379,
+      "present": 111,
+      "total": 116
+    },
+    "SPIB_activator": {
+      "fraction": 0.96,
+      "present": 24,
+      "total": 25
+    },
+    "TAL1_activator": {
+      "fraction": 0.9305555555555556,
+      "present": 67,
+      "total": 72
+    },
+    "TFDP1_activator": {
+      "fraction": 0.95,
+      "present": 266,
+      "total": 280
+    }
+  },
+  "20000-779-rustscenic": {
+    "ATF2_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "ATF3_activator": {
+      "fraction": 1.0,
+      "present": 61,
+      "total": 61
+    },
+    "ATF4_activator": {
+      "fraction": 0.946236559139785,
+      "present": 88,
+      "total": 93
+    },
+    "ATF6_activator": {
+      "fraction": 1.0,
+      "present": 21,
+      "total": 21
+    },
+    "ATF7_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "BACH1_activator": {
+      "fraction": 0.9615384615384616,
+      "present": 25,
+      "total": 26
+    },
+    "BACH2_activator": {
+      "fraction": 0.9285714285714286,
+      "present": 26,
+      "total": 28
+    },
+    "BACH2_repressor": {
+      "fraction": 0.9811320754716981,
+      "present": 104,
+      "total": 106
+    },
+    "BATF_activator": {
+      "fraction": 0.9333333333333333,
+      "present": 14,
+      "total": 15
+    },
+    "BCL11A_activator": {
+      "fraction": 0.9795918367346939,
+      "present": 48,
+      "total": 49
+    },
+    "BCL11A_repressor": {
+      "fraction": 1.0,
+      "present": 23,
+      "total": 23
+    },
+    "BCL11B_activator": {
+      "fraction": 0.9032258064516129,
+      "present": 28,
+      "total": 31
+    },
+    "BCL11B_repressor": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "BCLAF1_activator": {
+      "fraction": 0.9666666666666667,
+      "present": 58,
+      "total": 60
+    },
+    "BHLHE40_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "BPTF_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "BRCA1_activator": {
+      "fraction": 0.9210526315789473,
+      "present": 70,
+      "total": 76
+    },
+    "CEBPB_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 21,
+      "total": 22
+    },
+    "CEBPD_activator": {
+      "fraction": 0.989010989010989,
+      "present": 90,
+      "total": 91
+    },
+    "CEBPZ_activator": {
+      "fraction": 1.0,
+      "present": 17,
+      "total": 17
+    },
+    "CHD1_activator": {
+      "fraction": 1.0,
+      "present": 22,
+      "total": 22
+    },
+    "CHD2_activator": {
+      "fraction": 1.0,
+      "present": 23,
+      "total": 23
+    },
+    "CREB1_activator": {
+      "fraction": 0.90625,
+      "present": 29,
+      "total": 32
+    },
+    "CREB5_activator": {
+      "fraction": 0.99,
+      "present": 99,
+      "total": 100
+    },
+    "CREB5_repressor": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "CREM_activator": {
+      "fraction": 0.9423076923076923,
+      "present": 49,
+      "total": 52
+    },
+    "DEAF1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "E2F1_activator": {
+      "fraction": 0.905982905982906,
+      "present": 106,
+      "total": 117
+    },
+    "E2F2_activator": {
+      "fraction": 0.9140271493212669,
+      "present": 202,
+      "total": 221
+    },
+    "E2F2_repressor": {
+      "fraction": 0.875,
+      "present": 14,
+      "total": 16
+    },
+    "E2F3_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 112,
+      "total": 119
+    },
+    "E2F4_activator": {
+      "fraction": 0.9485294117647058,
+      "present": 129,
+      "total": 136
+    },
+    "E2F5_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "E2F7_activator": {
+      "fraction": 0.9130434782608695,
+      "present": 63,
+      "total": 69
+    },
+    "E2F8_activator": {
+      "fraction": 0.927007299270073,
+      "present": 127,
+      "total": 137
+    },
+    "E2F8_repressor": {
+      "fraction": 0.6666666666666666,
+      "present": 4,
+      "total": 6
+    },
+    "EGR1_activator": {
+      "fraction": 1.0,
+      "present": 35,
+      "total": 35
+    },
+    "ELF1_activator": {
+      "fraction": 0.9494949494949495,
+      "present": 282,
+      "total": 297
+    },
+    "ELF1_repressor": {
+      "fraction": 0.9090909090909091,
+      "present": 10,
+      "total": 11
+    },
+    "ELF2_activator": {
+      "fraction": 0.9769820971867008,
+      "present": 382,
+      "total": 391
+    },
+    "ELF2_repressor": {
+      "fraction": 1.0,
+      "present": 40,
+      "total": 40
+    },
+    "ELF4_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ELK3_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "EOMES_activator": {
+      "fraction": 1.0,
+      "present": 22,
+      "total": 22
+    },
+    "EP300_activator": {
+      "fraction": 1.0,
+      "present": 40,
+      "total": 40
+    },
+    "ERF_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ERG_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 90,
+      "total": 95
+    },
+    "ERG_repressor": {
+      "fraction": 0.9428571428571428,
+      "present": 33,
+      "total": 35
+    },
+    "ETS1_activator": {
+      "fraction": 0.964735516372796,
+      "present": 383,
+      "total": 397
+    },
+    "ETS1_repressor": {
+      "fraction": 0.9720930232558139,
+      "present": 209,
+      "total": 215
+    },
+    "ETS2_activator": {
+      "fraction": 0.9642857142857143,
+      "present": 81,
+      "total": 84
+    },
+    "ETV6_activator": {
+      "fraction": 0.964516129032258,
+      "present": 299,
+      "total": 310
+    },
+    "ETV6_repressor": {
+      "fraction": 0.9622641509433962,
+      "present": 51,
+      "total": 53
+    },
+    "FLI1_activator": {
+      "fraction": 0.9535864978902954,
+      "present": 226,
+      "total": 237
+    },
+    "FLI1_repressor": {
+      "fraction": 0.9259259259259259,
+      "present": 25,
+      "total": 27
+    },
+    "FOSB_activator": {
+      "fraction": 0.9834254143646409,
+      "present": 178,
+      "total": 181
+    },
+    "FOSB_repressor": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "FOSL1_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "FOSL2_activator": {
+      "fraction": 1.0,
+      "present": 134,
+      "total": 134
+    },
+    "FOS_activator": {
+      "fraction": 0.975609756097561,
+      "present": 400,
+      "total": 410
+    },
+    "FOS_repressor": {
+      "fraction": 0.9166666666666666,
+      "present": 22,
+      "total": 24
+    },
+    "FOXO1_activator": {
+      "fraction": 0.9574468085106383,
+      "present": 90,
+      "total": 94
+    },
+    "FOXO1_repressor": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "FOXO3_activator": {
+      "fraction": 0.90625,
+      "present": 29,
+      "total": 32
+    },
+    "GATA1_activator": {
+      "fraction": 0.9285714285714286,
+      "present": 78,
+      "total": 84
+    },
+    "GATA2_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "HDAC2_activator": {
+      "fraction": 0.9696969696969697,
+      "present": 32,
+      "total": 33
+    },
+    "HES6_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "HMGA1_activator": {
+      "fraction": 0.9625,
+      "present": 77,
+      "total": 80
+    },
+    "IKZF1_activator": {
+      "fraction": 0.9605263157894737,
+      "present": 73,
+      "total": 76
+    },
+    "IKZF2_activator": {
+      "fraction": 0.8823529411764706,
+      "present": 15,
+      "total": 17
+    },
+    "IKZF2_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "IKZF3_activator": {
+      "fraction": 0.9682539682539683,
+      "present": 61,
+      "total": 63
+    },
+    "IKZF3_repressor": {
+      "fraction": 0.9411764705882353,
+      "present": 16,
+      "total": 17
+    },
+    "IRF1_activator": {
+      "fraction": 0.9583333333333334,
+      "present": 23,
+      "total": 24
+    },
+    "IRF3_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "IRF4_activator": {
+      "fraction": 0.9344262295081968,
+      "present": 57,
+      "total": 61
+    },
+    "IRF4_repressor": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "IRF7_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "IRF8_activator": {
+      "fraction": 0.9512195121951219,
+      "present": 78,
+      "total": 82
+    },
+    "JDP2_activator": {
+      "fraction": 0.989010989010989,
+      "present": 90,
+      "total": 91
+    },
+    "JUNB_activator": {
+      "fraction": 0.9690721649484536,
+      "present": 188,
+      "total": 194
+    },
+    "JUND_activator": {
+      "fraction": 0.9879518072289156,
+      "present": 82,
+      "total": 83
+    },
+    "JUN_activator": {
+      "fraction": 0.973568281938326,
+      "present": 221,
+      "total": 227
+    },
+    "JUN_repressor": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "KLF10_activator": {
+      "fraction": 1.0,
+      "present": 20,
+      "total": 20
+    },
+    "KLF11_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "KLF12_activator": {
+      "fraction": 0.9624413145539906,
+      "present": 205,
+      "total": 213
+    },
+    "KLF12_repressor": {
+      "fraction": 0.9361702127659575,
+      "present": 88,
+      "total": 94
+    },
+    "KLF13_activator": {
+      "fraction": 0.9596774193548387,
+      "present": 119,
+      "total": 124
+    },
+    "KLF1_activator": {
+      "fraction": 0.9448529411764706,
+      "present": 257,
+      "total": 272
+    },
+    "KLF1_repressor": {
+      "fraction": 0.9807692307692307,
+      "present": 102,
+      "total": 104
+    },
+    "KLF2_activator": {
+      "fraction": 0.9525423728813559,
+      "present": 281,
+      "total": 295
+    },
+    "KLF2_repressor": {
+      "fraction": 1.0,
+      "present": 17,
+      "total": 17
+    },
+    "KLF3_activator": {
+      "fraction": 0.9518072289156626,
+      "present": 79,
+      "total": 83
+    },
+    "KLF4_activator": {
+      "fraction": 0.98,
+      "present": 147,
+      "total": 150
+    },
+    "KLF4_repressor": {
+      "fraction": 1.0,
+      "present": 24,
+      "total": 24
+    },
+    "KLF6_activator": {
+      "fraction": 0.9576719576719577,
+      "present": 181,
+      "total": 189
+    },
+    "KLF6_repressor": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "KLF7_activator": {
+      "fraction": 0.9560439560439561,
+      "present": 87,
+      "total": 91
+    },
+    "KLF7_repressor": {
+      "fraction": 0.875,
+      "present": 7,
+      "total": 8
+    },
+    "KLF9_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "LEF1_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "LEF1_repressor": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "LMO2_activator": {
+      "fraction": 0.9272727272727272,
+      "present": 51,
+      "total": 55
+    },
+    "MAFB_activator": {
+      "fraction": 1.0,
+      "present": 28,
+      "total": 28
+    },
+    "MAFF_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "MAFG_activator": {
+      "fraction": 0.875,
+      "present": 7,
+      "total": 8
+    },
+    "MAF_activator": {
+      "fraction": 0.8947368421052632,
+      "present": 17,
+      "total": 19
+    },
+    "MAZ_activator": {
+      "fraction": 0.9464285714285714,
+      "present": 159,
+      "total": 168
+    },
+    "MBD2_activator": {
+      "fraction": 0.9375,
+      "present": 15,
+      "total": 16
+    },
+    "MECP2_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "MEF2A_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "MEF2C_activator": {
+      "fraction": 1.0,
+      "present": 18,
+      "total": 18
+    },
+    "MEIS1_activator": {
+      "fraction": 0.9642857142857143,
+      "present": 27,
+      "total": 28
+    },
+    "MYB_activator": {
+      "fraction": 0.8461538461538461,
+      "present": 11,
+      "total": 13
+    },
+    "NFATC3_activator": {
+      "fraction": 0.9583333333333334,
+      "present": 23,
+      "total": 24
+    },
+    "NFE2L1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "NFE2L2_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "NFIL3_activator": {
+      "fraction": 1.0,
+      "present": 46,
+      "total": 46
+    },
+    "NR2C2_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "NR3C1_activator": {
+      "fraction": 0.9775280898876404,
+      "present": 87,
+      "total": 89
+    },
+    "NRF1_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 42,
+      "total": 44
+    },
+    "PBX1_activator": {
+      "fraction": 0.9487179487179487,
+      "present": 74,
+      "total": 78
+    },
+    "PBX1_repressor": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "PBX3_activator": {
+      "fraction": 0.923728813559322,
+      "present": 109,
+      "total": 118
+    },
+    "PHF21A_activator": {
+      "fraction": 1.0,
+      "present": 20,
+      "total": 20
+    },
+    "PHTF1_activator": {
+      "fraction": 0.9,
+      "present": 9,
+      "total": 10
+    },
+    "PLAGL1_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "POU2F1_activator": {
+      "fraction": 0.9230769230769231,
+      "present": 12,
+      "total": 13
+    },
+    "PRDM1_activator": {
+      "fraction": 0.875,
+      "present": 7,
+      "total": 8
+    },
+    "RB1_activator": {
+      "fraction": 0.9423076923076923,
+      "present": 49,
+      "total": 52
+    },
+    "RCOR1_activator": {
+      "fraction": 0.96875,
+      "present": 31,
+      "total": 32
+    },
+    "RFX2_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "RFX3_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "RFX7_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "RUNX1_activator": {
+      "fraction": 0.9594594594594594,
+      "present": 71,
+      "total": 74
+    },
+    "RUNX2_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "RUNX3_activator": {
+      "fraction": 0.9375,
+      "present": 90,
+      "total": 96
+    },
+    "RXRA_activator": {
+      "fraction": 0.95,
+      "present": 38,
+      "total": 40
+    },
+    "SATB1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "SF1_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "SP1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "SP3_activator": {
+      "fraction": 0.927536231884058,
+      "present": 128,
+      "total": 138
+    },
+    "SP4_activator": {
+      "fraction": 0.9230769230769231,
+      "present": 12,
+      "total": 13
+    },
+    "SPI1_activator": {
+      "fraction": 0.9725274725274725,
+      "present": 177,
+      "total": 182
+    },
+    "SPIB_activator": {
+      "fraction": 1.0,
+      "present": 38,
+      "total": 38
+    },
+    "SREBF1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "SREBF2_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "STAT1_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "TAF1_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "TAL1_activator": {
+      "fraction": 0.9382716049382716,
+      "present": 76,
+      "total": 81
+    },
+    "TBL1XR1_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "TBX21_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 44,
+      "total": 48
+    },
+    "TCF12_activator": {
+      "fraction": 0.92,
+      "present": 46,
+      "total": 50
+    },
+    "TCF12_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "TCF3_activator": {
+      "fraction": 0.8214285714285714,
+      "present": 23,
+      "total": 28
+    },
+    "TCF4_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 20,
+      "total": 22
+    },
+    "TCF7L2_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 16,
+      "total": 17
+    },
+    "TFDP1_activator": {
+      "fraction": 0.954248366013072,
+      "present": 292,
+      "total": 306
+    },
+    "TFDP1_repressor": {
+      "fraction": 1.0,
+      "present": 26,
+      "total": 26
+    },
+    "TFDP2_activator": {
+      "fraction": 0.9120879120879121,
+      "present": 83,
+      "total": 91
+    },
+    "TFEC_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "TRPS1_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "TRPS1_repressor": {
+      "fraction": 0.8181818181818182,
+      "present": 9,
+      "total": 11
+    },
+    "UBE2K_activator": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "XBP1_activator": {
+      "fraction": 0.96,
+      "present": 48,
+      "total": 50
+    },
+    "YBX1_activator": {
+      "fraction": 0.9203539823008849,
+      "present": 104,
+      "total": 113
+    },
+    "YY1_activator": {
+      "fraction": 0.9629629629629629,
+      "present": 26,
+      "total": 27
+    },
+    "ZBTB11_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ZBTB20_activator": {
+      "fraction": 0.9318181818181818,
+      "present": 41,
+      "total": 44
+    },
+    "ZBTB20_repressor": {
+      "fraction": 0.8823529411764706,
+      "present": 15,
+      "total": 17
+    },
+    "ZBTB25_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZBTB7A_activator": {
+      "fraction": 1.0,
+      "present": 17,
+      "total": 17
+    },
+    "ZEB1_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ZNF121_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF207_activator": {
+      "fraction": 0.9565217391304348,
+      "present": 22,
+      "total": 23
+    },
+    "ZNF281_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "ZNF385D_activator": {
+      "fraction": 0.9607843137254902,
+      "present": 49,
+      "total": 51
+    },
+    "ZNF385D_repressor": {
+      "fraction": 0.8461538461538461,
+      "present": 11,
+      "total": 13
+    },
+    "ZNF43_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "ZNF519_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "ZNF704_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "ZNF711_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    }
+  },
+  "5000-777-reference": {
+    "BCL11A_activator": {
+      "fraction": 0.9512195121951219,
+      "present": 39,
+      "total": 41
+    },
+    "FOSB_activator": {
+      "fraction": 0.9761904761904762,
+      "present": 41,
+      "total": 42
+    },
+    "FOS_activator": {
+      "fraction": 0.9629629629629629,
+      "present": 130,
+      "total": 135
+    },
+    "IRF4_activator": {
+      "fraction": 0.8333333333333334,
+      "present": 10,
+      "total": 12
+    },
+    "KLF1_activator": {
+      "fraction": 0.9362549800796812,
+      "present": 235,
+      "total": 251
+    },
+    "KLF2_activator": {
+      "fraction": 0.9634146341463414,
+      "present": 158,
+      "total": 164
+    },
+    "RUNX3_activator": {
+      "fraction": 0.96,
+      "present": 48,
+      "total": 50
+    },
+    "TAL1_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 30,
+      "total": 33
+    },
+    "TFDP1_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 234,
+      "total": 247
+    }
+  },
+  "5000-777-rustscenic": {
+    "ACAA1_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 16,
+      "total": 18
+    },
+    "AHCTF1_activator": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "AHR_activator": {
+      "fraction": 0.9333333333333333,
+      "present": 14,
+      "total": 15
+    },
+    "ARID5A_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "ATF1_activator": {
+      "fraction": 0.9047619047619048,
+      "present": 19,
+      "total": 21
+    },
+    "ATF2_activator": {
+      "fraction": 0.9428571428571428,
+      "present": 33,
+      "total": 35
+    },
+    "ATF3_activator": {
+      "fraction": 0.9710144927536232,
+      "present": 67,
+      "total": 69
+    },
+    "ATF4_activator": {
+      "fraction": 0.9552238805970149,
+      "present": 64,
+      "total": 67
+    },
+    "ATF6B_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "ATF6_activator": {
+      "fraction": 0.9523809523809523,
+      "present": 20,
+      "total": 21
+    },
+    "ATF7_activator": {
+      "fraction": 1.0,
+      "present": 18,
+      "total": 18
+    },
+    "BACH1_activator": {
+      "fraction": 1.0,
+      "present": 21,
+      "total": 21
+    },
+    "BACH2_activator": {
+      "fraction": 0.9032258064516129,
+      "present": 28,
+      "total": 31
+    },
+    "BACH2_repressor": {
+      "fraction": 0.9692307692307692,
+      "present": 63,
+      "total": 65
+    },
+    "BATF_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 16,
+      "total": 17
+    },
+    "BCL11A_activator": {
+      "fraction": 0.9722222222222222,
+      "present": 35,
+      "total": 36
+    },
+    "BCL11A_repressor": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "BCL11B_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 16,
+      "total": 17
+    },
+    "BCLAF1_activator": {
+      "fraction": 0.95,
+      "present": 57,
+      "total": 60
+    },
+    "BHLHE40_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "BRCA1_activator": {
+      "fraction": 0.9333333333333333,
+      "present": 42,
+      "total": 45
+    },
+    "CCNT2_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "CEBPA_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "CEBPB_activator": {
+      "fraction": 1.0,
+      "present": 22,
+      "total": 22
+    },
+    "CEBPD_activator": {
+      "fraction": 0.9852941176470589,
+      "present": 67,
+      "total": 68
+    },
+    "CEBPG_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "CEBPZ_activator": {
+      "fraction": 1.0,
+      "present": 27,
+      "total": 27
+    },
+    "CHD1_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "CHD2_activator": {
+      "fraction": 0.9565217391304348,
+      "present": 22,
+      "total": 23
+    },
+    "CHD2_repressor": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "CNOT3_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "CREB1_activator": {
+      "fraction": 0.9454545454545454,
+      "present": 52,
+      "total": 55
+    },
+    "CREB3L2_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "CREB3L4_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "CREB5_activator": {
+      "fraction": 0.9789473684210527,
+      "present": 93,
+      "total": 95
+    },
+    "CREB5_repressor": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "CREBL2_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "CREM_activator": {
+      "fraction": 0.9365079365079365,
+      "present": 59,
+      "total": 63
+    },
+    "CUX1_activator": {
+      "fraction": 0.9583333333333334,
+      "present": 23,
+      "total": 24
+    },
+    "DEAF1_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "E2F1_activator": {
+      "fraction": 0.950354609929078,
+      "present": 134,
+      "total": 141
+    },
+    "E2F2_activator": {
+      "fraction": 0.930635838150289,
+      "present": 161,
+      "total": 173
+    },
+    "E2F2_repressor": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "E2F3_activator": {
+      "fraction": 0.9479166666666666,
+      "present": 91,
+      "total": 96
+    },
+    "E2F4_activator": {
+      "fraction": 0.9144736842105263,
+      "present": 139,
+      "total": 152
+    },
+    "E2F4_repressor": {
+      "fraction": 0.6,
+      "present": 3,
+      "total": 5
+    },
+    "E2F5_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "E2F6_activator": {
+      "fraction": 0.8421052631578947,
+      "present": 16,
+      "total": 19
+    },
+    "E2F7_activator": {
+      "fraction": 0.9117647058823529,
+      "present": 62,
+      "total": 68
+    },
+    "E2F8_activator": {
+      "fraction": 0.926605504587156,
+      "present": 101,
+      "total": 109
+    },
+    "E2F8_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "E4F1_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "EGR1_activator": {
+      "fraction": 0.9782608695652174,
+      "present": 45,
+      "total": 46
+    },
+    "EGR2_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "ELF1_activator": {
+      "fraction": 0.953307392996109,
+      "present": 245,
+      "total": 257
+    },
+    "ELF1_repressor": {
+      "fraction": 1.0,
+      "present": 17,
+      "total": 17
+    },
+    "ELF2_activator": {
+      "fraction": 0.9611940298507463,
+      "present": 322,
+      "total": 335
+    },
+    "ELF2_repressor": {
+      "fraction": 0.9333333333333333,
+      "present": 28,
+      "total": 30
+    },
+    "ELF4_activator": {
+      "fraction": 1.0,
+      "present": 18,
+      "total": 18
+    },
+    "ELK1_activator": {
+      "fraction": 1.0,
+      "present": 24,
+      "total": 24
+    },
+    "ELK3_activator": {
+      "fraction": 1.0,
+      "present": 27,
+      "total": 27
+    },
+    "ELK4_activator": {
+      "fraction": 1.0,
+      "present": 20,
+      "total": 20
+    },
+    "EOMES_activator": {
+      "fraction": 1.0,
+      "present": 19,
+      "total": 19
+    },
+    "EP300_activator": {
+      "fraction": 0.9838709677419355,
+      "present": 61,
+      "total": 62
+    },
+    "EP300_repressor": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "ERF_activator": {
+      "fraction": 1.0,
+      "present": 22,
+      "total": 22
+    },
+    "ERG_activator": {
+      "fraction": 0.963855421686747,
+      "present": 80,
+      "total": 83
+    },
+    "ERG_repressor": {
+      "fraction": 1.0,
+      "present": 17,
+      "total": 17
+    },
+    "ETS1_activator": {
+      "fraction": 0.9523809523809523,
+      "present": 320,
+      "total": 336
+    },
+    "ETS1_repressor": {
+      "fraction": 0.967391304347826,
+      "present": 178,
+      "total": 184
+    },
+    "ETS2_activator": {
+      "fraction": 0.95,
+      "present": 76,
+      "total": 80
+    },
+    "ETV3_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 18,
+      "total": 19
+    },
+    "ETV5_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "ETV6_activator": {
+      "fraction": 0.9640287769784173,
+      "present": 268,
+      "total": 278
+    },
+    "ETV6_repressor": {
+      "fraction": 0.9655172413793104,
+      "present": 28,
+      "total": 29
+    },
+    "FLI1_activator": {
+      "fraction": 0.9490196078431372,
+      "present": 242,
+      "total": 255
+    },
+    "FLI1_repressor": {
+      "fraction": 0.8333333333333334,
+      "present": 20,
+      "total": 24
+    },
+    "FOSB_activator": {
+      "fraction": 0.9708029197080292,
+      "present": 133,
+      "total": 137
+    },
+    "FOSB_repressor": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "FOSL1_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 21,
+      "total": 22
+    },
+    "FOSL2_activator": {
+      "fraction": 0.9647058823529412,
+      "present": 82,
+      "total": 85
+    },
+    "FOS_activator": {
+      "fraction": 0.9551820728291317,
+      "present": 341,
+      "total": 357
+    },
+    "FOS_repressor": {
+      "fraction": 0.9545454545454546,
+      "present": 21,
+      "total": 22
+    },
+    "FOXO1_activator": {
+      "fraction": 0.9390243902439024,
+      "present": 77,
+      "total": 82
+    },
+    "FOXO1_repressor": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "FOXO3_activator": {
+      "fraction": 0.9310344827586207,
+      "present": 27,
+      "total": 29
+    },
+    "GABPA_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "GABPB1_activator": {
+      "fraction": 0.7,
+      "present": 7,
+      "total": 10
+    },
+    "GATA1_activator": {
+      "fraction": 0.9295774647887324,
+      "present": 66,
+      "total": 71
+    },
+    "GATA2_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "GMEB1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "GMEB2_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "GTF2F1_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "HCFC1_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "HDAC2_activator": {
+      "fraction": 0.9852941176470589,
+      "present": 67,
+      "total": 68
+    },
+    "HES6_activator": {
+      "fraction": 0.8333333333333334,
+      "present": 10,
+      "total": 12
+    },
+    "HMGA1_activator": {
+      "fraction": 0.9344262295081968,
+      "present": 57,
+      "total": 61
+    },
+    "HMGA2_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "HOXA10_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "HTATIP2_activator": {
+      "fraction": 0.9230769230769231,
+      "present": 12,
+      "total": 13
+    },
+    "IKZF1_activator": {
+      "fraction": 0.961038961038961,
+      "present": 74,
+      "total": 77
+    },
+    "IKZF2_activator": {
+      "fraction": 0.9375,
+      "present": 15,
+      "total": 16
+    },
+    "IKZF3_activator": {
+      "fraction": 0.9423076923076923,
+      "present": 49,
+      "total": 52
+    },
+    "IKZF3_repressor": {
+      "fraction": 1.0,
+      "present": 19,
+      "total": 19
+    },
+    "IRF1_activator": {
+      "fraction": 0.9375,
+      "present": 15,
+      "total": 16
+    },
+    "IRF2_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "IRF3_activator": {
+      "fraction": 0.8421052631578947,
+      "present": 16,
+      "total": 19
+    },
+    "IRF4_activator": {
+      "fraction": 0.9791666666666666,
+      "present": 47,
+      "total": 48
+    },
+    "IRF7_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 18,
+      "total": 19
+    },
+    "IRF8_activator": {
+      "fraction": 0.9714285714285714,
+      "present": 68,
+      "total": 70
+    },
+    "JDP2_activator": {
+      "fraction": 0.9824561403508771,
+      "present": 56,
+      "total": 57
+    },
+    "JUNB_activator": {
+      "fraction": 0.9602272727272727,
+      "present": 169,
+      "total": 176
+    },
+    "JUNB_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "JUND_activator": {
+      "fraction": 0.9859154929577465,
+      "present": 70,
+      "total": 71
+    },
+    "JUN_activator": {
+      "fraction": 0.9435897435897436,
+      "present": 184,
+      "total": 195
+    },
+    "KLF10_activator": {
+      "fraction": 0.975609756097561,
+      "present": 40,
+      "total": 41
+    },
+    "KLF11_activator": {
+      "fraction": 0.9130434782608695,
+      "present": 21,
+      "total": 23
+    },
+    "KLF12_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 168,
+      "total": 176
+    },
+    "KLF12_repressor": {
+      "fraction": 0.9452054794520548,
+      "present": 69,
+      "total": 73
+    },
+    "KLF13_activator": {
+      "fraction": 0.921875,
+      "present": 118,
+      "total": 128
+    },
+    "KLF16_activator": {
+      "fraction": 1.0,
+      "present": 19,
+      "total": 19
+    },
+    "KLF1_activator": {
+      "fraction": 0.9304347826086956,
+      "present": 214,
+      "total": 230
+    },
+    "KLF1_repressor": {
+      "fraction": 0.9672131147540983,
+      "present": 59,
+      "total": 61
+    },
+    "KLF2_activator": {
+      "fraction": 0.9606299212598425,
+      "present": 244,
+      "total": 254
+    },
+    "KLF2_repressor": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "KLF3_activator": {
+      "fraction": 0.974025974025974,
+      "present": 75,
+      "total": 77
+    },
+    "KLF4_activator": {
+      "fraction": 0.9774436090225563,
+      "present": 130,
+      "total": 133
+    },
+    "KLF4_repressor": {
+      "fraction": 0.9333333333333333,
+      "present": 14,
+      "total": 15
+    },
+    "KLF5_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "KLF6_activator": {
+      "fraction": 0.9746835443037974,
+      "present": 154,
+      "total": 158
+    },
+    "KLF6_repressor": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "KLF7_activator": {
+      "fraction": 0.9587628865979382,
+      "present": 93,
+      "total": 97
+    },
+    "KLF7_repressor": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "KLF8_activator": {
+      "fraction": 0.8461538461538461,
+      "present": 11,
+      "total": 13
+    },
+    "KLF9_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "LEF1_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "LMO2_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 32,
+      "total": 36
+    },
+    "MAFB_activator": {
+      "fraction": 1.0,
+      "present": 18,
+      "total": 18
+    },
+    "MAFF_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "MAFG_activator": {
+      "fraction": 0.9,
+      "present": 9,
+      "total": 10
+    },
+    "MAF_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "MAZ_activator": {
+      "fraction": 0.9622641509433962,
+      "present": 102,
+      "total": 106
+    },
+    "MBD2_activator": {
+      "fraction": 0.95,
+      "present": 19,
+      "total": 20
+    },
+    "MECP2_activator": {
+      "fraction": 0.9565217391304348,
+      "present": 22,
+      "total": 23
+    },
+    "MEF2A_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "MEF2C_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 18,
+      "total": 19
+    },
+    "MEIS1_activator": {
+      "fraction": 0.9615384615384616,
+      "present": 25,
+      "total": 26
+    },
+    "MITF_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "MLX_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "MYB_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "MZF1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "NFATC3_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "NFE2L1_activator": {
+      "fraction": 1.0,
+      "present": 26,
+      "total": 26
+    },
+    "NFIL3_activator": {
+      "fraction": 0.975,
+      "present": 39,
+      "total": 40
+    },
+    "NFYA_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "NFYB_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "NFYC_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "NR2C2_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 18,
+      "total": 19
+    },
+    "NR3C1_activator": {
+      "fraction": 0.9906542056074766,
+      "present": 106,
+      "total": 107
+    },
+    "NRF1_activator": {
+      "fraction": 0.984375,
+      "present": 63,
+      "total": 64
+    },
+    "NRL_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "PATZ1_activator": {
+      "fraction": 0.9333333333333333,
+      "present": 14,
+      "total": 15
+    },
+    "PBX1_activator": {
+      "fraction": 0.9253731343283582,
+      "present": 62,
+      "total": 67
+    },
+    "PBX3_activator": {
+      "fraction": 0.9540229885057471,
+      "present": 83,
+      "total": 87
+    },
+    "PBX3_repressor": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "PHF21A_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "PHTF1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "PLAGL1_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "PML_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "POU2F1_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 16,
+      "total": 17
+    },
+    "PRDM1_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "RB1_activator": {
+      "fraction": 0.9333333333333333,
+      "present": 56,
+      "total": 60
+    },
+    "RB1_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "RCOR1_activator": {
+      "fraction": 1.0,
+      "present": 20,
+      "total": 20
+    },
+    "RUNX1_activator": {
+      "fraction": 0.9310344827586207,
+      "present": 27,
+      "total": 29
+    },
+    "RUNX3_activator": {
+      "fraction": 0.9607843137254902,
+      "present": 49,
+      "total": 51
+    },
+    "RXRA_activator": {
+      "fraction": 0.88,
+      "present": 22,
+      "total": 25
+    },
+    "SATB1_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "SETDB1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "SF1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "SMAD5_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "SMARCC1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "SMARCC2_activator": {
+      "fraction": 1.0,
+      "present": 17,
+      "total": 17
+    },
+    "SOX5_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "SP1_activator": {
+      "fraction": 1.0,
+      "present": 25,
+      "total": 25
+    },
+    "SP2_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 18,
+      "total": 19
+    },
+    "SP3_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 128,
+      "total": 136
+    },
+    "SP3_repressor": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "SP4_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "SPI1_activator": {
+      "fraction": 0.9533333333333334,
+      "present": 143,
+      "total": 150
+    },
+    "SPIB_activator": {
+      "fraction": 0.9761904761904762,
+      "present": 41,
+      "total": 42
+    },
+    "SREBF1_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "SREBF2_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "STAT1_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 20,
+      "total": 22
+    },
+    "STAT3_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "STAT5A_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "TAF1_activator": {
+      "fraction": 0.9491525423728814,
+      "present": 56,
+      "total": 59
+    },
+    "TAL1_activator": {
+      "fraction": 0.9242424242424242,
+      "present": 61,
+      "total": 66
+    },
+    "TBL1XR1_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "TBP_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "TBX21_activator": {
+      "fraction": 0.9210526315789473,
+      "present": 35,
+      "total": 38
+    },
+    "TCF12_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "TCF12_repressor": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "TCF3_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 18,
+      "total": 21
+    },
+    "TCF7L2_activator": {
+      "fraction": 1.0,
+      "present": 17,
+      "total": 17
+    },
+    "TCFL5_activator": {
+      "fraction": 0.875,
+      "present": 7,
+      "total": 8
+    },
+    "TFDP1_activator": {
+      "fraction": 0.9537366548042705,
+      "present": 268,
+      "total": 281
+    },
+    "TFDP1_repressor": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "TFDP2_activator": {
+      "fraction": 0.9714285714285714,
+      "present": 68,
+      "total": 70
+    },
+    "TFEC_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 16,
+      "total": 17
+    },
+    "THAP1_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "TRPS1_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "TRPS1_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "USF2_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "XBP1_activator": {
+      "fraction": 0.8983050847457628,
+      "present": 53,
+      "total": 59
+    },
+    "YBX1_activator": {
+      "fraction": 0.9777777777777777,
+      "present": 88,
+      "total": 90
+    },
+    "YY1_activator": {
+      "fraction": 0.9607843137254902,
+      "present": 49,
+      "total": 51
+    },
+    "ZBTB11_activator": {
+      "fraction": 1.0,
+      "present": 20,
+      "total": 20
+    },
+    "ZBTB14_activator": {
+      "fraction": 0.9354838709677419,
+      "present": 29,
+      "total": 31
+    },
+    "ZBTB20_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ZBTB20_repressor": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "ZBTB25_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "ZBTB2_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "ZBTB33_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ZBTB40_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ZBTB7A_activator": {
+      "fraction": 0.95,
+      "present": 19,
+      "total": 20
+    },
+    "ZEB1_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ZNF100_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "ZNF134_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "ZNF148_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "ZNF200_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "ZNF207_activator": {
+      "fraction": 0.92,
+      "present": 23,
+      "total": 25
+    },
+    "ZNF281_activator": {
+      "fraction": 0.8823529411764706,
+      "present": 15,
+      "total": 17
+    },
+    "ZNF385D_activator": {
+      "fraction": 0.9714285714285714,
+      "present": 34,
+      "total": 35
+    },
+    "ZNF407_activator": {
+      "fraction": 0.7142857142857143,
+      "present": 5,
+      "total": 7
+    },
+    "ZNF441_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ZNF519_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "ZNF571_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "ZNF580_activator": {
+      "fraction": 0.8666666666666667,
+      "present": 13,
+      "total": 15
+    },
+    "ZNF595_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ZNF629_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "ZNF669_activator": {
+      "fraction": 0.875,
+      "present": 7,
+      "total": 8
+    },
+    "ZNF66_activator": {
+      "fraction": 0.8461538461538461,
+      "present": 11,
+      "total": 13
+    },
+    "ZNF704_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "ZNF749_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "ZNF76_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "ZNF770_activator": {
+      "fraction": 0.9230769230769231,
+      "present": 12,
+      "total": 13
+    },
+    "ZNF777_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ZNF846_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    }
+  },
+  "5000-778-reference": {
+    "BCL11A_activator": {
+      "fraction": 0.9787234042553191,
+      "present": 46,
+      "total": 47
+    },
+    "FOSB_activator": {
+      "fraction": 0.968503937007874,
+      "present": 123,
+      "total": 127
+    },
+    "KLF1_activator": {
+      "fraction": 0.9485714285714286,
+      "present": 166,
+      "total": 175
+    },
+    "KLF2_activator": {
+      "fraction": 0.9428571428571428,
+      "present": 132,
+      "total": 140
+    },
+    "RUNX3_activator": {
+      "fraction": 0.9666666666666667,
+      "present": 29,
+      "total": 30
+    },
+    "TFDP1_activator": {
+      "fraction": 0.9365079365079365,
+      "present": 236,
+      "total": 252
+    }
+  },
+  "5000-778-rustscenic": {
+    "ACAA1_activator": {
+      "fraction": 0.8823529411764706,
+      "present": 15,
+      "total": 17
+    },
+    "AHCTF1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "ATF1_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 16,
+      "total": 18
+    },
+    "ATF2_activator": {
+      "fraction": 0.9565217391304348,
+      "present": 22,
+      "total": 23
+    },
+    "ATF3_activator": {
+      "fraction": 0.9577464788732394,
+      "present": 68,
+      "total": 71
+    },
+    "ATF4_activator": {
+      "fraction": 0.9506172839506173,
+      "present": 77,
+      "total": 81
+    },
+    "ATF5_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "ATF6B_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "ATF6_activator": {
+      "fraction": 0.95,
+      "present": 19,
+      "total": 20
+    },
+    "ATF7_activator": {
+      "fraction": 0.8928571428571429,
+      "present": 25,
+      "total": 28
+    },
+    "BACH1_activator": {
+      "fraction": 0.9787234042553191,
+      "present": 46,
+      "total": 47
+    },
+    "BACH2_activator": {
+      "fraction": 0.9615384615384616,
+      "present": 25,
+      "total": 26
+    },
+    "BACH2_repressor": {
+      "fraction": 0.984375,
+      "present": 63,
+      "total": 64
+    },
+    "BATF_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "BCL11A_activator": {
+      "fraction": 0.975,
+      "present": 39,
+      "total": 40
+    },
+    "BCL11A_repressor": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "BCL11B_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 21,
+      "total": 22
+    },
+    "BCLAF1_activator": {
+      "fraction": 1.0,
+      "present": 64,
+      "total": 64
+    },
+    "BRCA1_activator": {
+      "fraction": 0.9523809523809523,
+      "present": 40,
+      "total": 42
+    },
+    "CCNT2_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "CEBPB_activator": {
+      "fraction": 1.0,
+      "present": 23,
+      "total": 23
+    },
+    "CEBPD_activator": {
+      "fraction": 0.9848484848484849,
+      "present": 65,
+      "total": 66
+    },
+    "CEBPZ_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 22,
+      "total": 24
+    },
+    "CHD1_activator": {
+      "fraction": 1.0,
+      "present": 25,
+      "total": 25
+    },
+    "CHD2_activator": {
+      "fraction": 0.9696969696969697,
+      "present": 32,
+      "total": 33
+    },
+    "CHD2_repressor": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "CNOT3_activator": {
+      "fraction": 0.9230769230769231,
+      "present": 12,
+      "total": 13
+    },
+    "CREB1_activator": {
+      "fraction": 0.9672131147540983,
+      "present": 59,
+      "total": 61
+    },
+    "CREB3L2_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "CREB5_activator": {
+      "fraction": 0.9897959183673469,
+      "present": 97,
+      "total": 98
+    },
+    "CREB5_repressor": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "CREM_activator": {
+      "fraction": 0.9824561403508771,
+      "present": 56,
+      "total": 57
+    },
+    "CUX1_activator": {
+      "fraction": 1.0,
+      "present": 19,
+      "total": 19
+    },
+    "DEAF1_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 16,
+      "total": 18
+    },
+    "E2F1_activator": {
+      "fraction": 0.9103448275862069,
+      "present": 132,
+      "total": 145
+    },
+    "E2F2_activator": {
+      "fraction": 0.9418604651162791,
+      "present": 162,
+      "total": 172
+    },
+    "E2F3_activator": {
+      "fraction": 0.9252336448598131,
+      "present": 99,
+      "total": 107
+    },
+    "E2F4_activator": {
+      "fraction": 0.9144736842105263,
+      "present": 139,
+      "total": 152
+    },
+    "E2F4_repressor": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "E2F5_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "E2F6_activator": {
+      "fraction": 0.8421052631578947,
+      "present": 16,
+      "total": 19
+    },
+    "E2F7_activator": {
+      "fraction": 0.8852459016393442,
+      "present": 54,
+      "total": 61
+    },
+    "E2F8_activator": {
+      "fraction": 0.9448818897637795,
+      "present": 120,
+      "total": 127
+    },
+    "E4F1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "EGR1_activator": {
+      "fraction": 0.9827586206896551,
+      "present": 57,
+      "total": 58
+    },
+    "EGR2_activator": {
+      "fraction": 0.875,
+      "present": 7,
+      "total": 8
+    },
+    "ELF1_activator": {
+      "fraction": 0.967479674796748,
+      "present": 238,
+      "total": 246
+    },
+    "ELF1_repressor": {
+      "fraction": 0.9285714285714286,
+      "present": 13,
+      "total": 14
+    },
+    "ELF2_activator": {
+      "fraction": 0.967741935483871,
+      "present": 300,
+      "total": 310
+    },
+    "ELF2_repressor": {
+      "fraction": 0.9444444444444444,
+      "present": 34,
+      "total": 36
+    },
+    "ELF4_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "ELK1_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 20,
+      "total": 22
+    },
+    "ELK3_activator": {
+      "fraction": 1.0,
+      "present": 24,
+      "total": 24
+    },
+    "ELK4_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "EOMES_activator": {
+      "fraction": 0.9565217391304348,
+      "present": 22,
+      "total": 23
+    },
+    "EP300_activator": {
+      "fraction": 1.0,
+      "present": 50,
+      "total": 50
+    },
+    "EP300_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ERF_activator": {
+      "fraction": 1.0,
+      "present": 22,
+      "total": 22
+    },
+    "ERG_activator": {
+      "fraction": 0.9782608695652174,
+      "present": 90,
+      "total": 92
+    },
+    "ERG_repressor": {
+      "fraction": 1.0,
+      "present": 19,
+      "total": 19
+    },
+    "ETS1_activator": {
+      "fraction": 0.9566563467492261,
+      "present": 309,
+      "total": 323
+    },
+    "ETS1_repressor": {
+      "fraction": 0.9641025641025641,
+      "present": 188,
+      "total": 195
+    },
+    "ETS2_activator": {
+      "fraction": 0.9594594594594594,
+      "present": 71,
+      "total": 74
+    },
+    "ETV3_activator": {
+      "fraction": 0.9565217391304348,
+      "present": 22,
+      "total": 23
+    },
+    "ETV5_activator": {
+      "fraction": 0.9333333333333333,
+      "present": 14,
+      "total": 15
+    },
+    "ETV6_activator": {
+      "fraction": 0.9739776951672863,
+      "present": 262,
+      "total": 269
+    },
+    "ETV6_repressor": {
+      "fraction": 0.9393939393939394,
+      "present": 31,
+      "total": 33
+    },
+    "FLI1_activator": {
+      "fraction": 0.9566929133858267,
+      "present": 243,
+      "total": 254
+    },
+    "FLI1_repressor": {
+      "fraction": 0.96,
+      "present": 24,
+      "total": 25
+    },
+    "FOSB_activator": {
+      "fraction": 0.9661016949152542,
+      "present": 171,
+      "total": 177
+    },
+    "FOSB_repressor": {
+      "fraction": 0.9375,
+      "present": 15,
+      "total": 16
+    },
+    "FOSL1_activator": {
+      "fraction": 1.0,
+      "present": 20,
+      "total": 20
+    },
+    "FOSL2_activator": {
+      "fraction": 0.9826086956521739,
+      "present": 113,
+      "total": 115
+    },
+    "FOS_activator": {
+      "fraction": 0.9617486338797814,
+      "present": 352,
+      "total": 366
+    },
+    "FOS_repressor": {
+      "fraction": 1.0,
+      "present": 19,
+      "total": 19
+    },
+    "FOXO1_activator": {
+      "fraction": 0.9529411764705882,
+      "present": 81,
+      "total": 85
+    },
+    "FOXO1_repressor": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "GABPA_activator": {
+      "fraction": 1.0,
+      "present": 24,
+      "total": 24
+    },
+    "GABPB1_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "GATA1_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 64,
+      "total": 68
+    },
+    "GATA2_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "GMEB1_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "GMEB2_activator": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "HCFC1_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 10,
+      "total": 11
+    },
+    "HDAC2_activator": {
+      "fraction": 0.9365079365079365,
+      "present": 59,
+      "total": 63
+    },
+    "HES6_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "HMGA1_activator": {
+      "fraction": 1.0,
+      "present": 34,
+      "total": 34
+    },
+    "HMGA2_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 21,
+      "total": 22
+    },
+    "HSF1_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "HTATIP2_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "IKZF1_activator": {
+      "fraction": 0.9178082191780822,
+      "present": 67,
+      "total": 73
+    },
+    "IKZF2_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 12,
+      "total": 14
+    },
+    "IKZF3_activator": {
+      "fraction": 0.9491525423728814,
+      "present": 56,
+      "total": 59
+    },
+    "IKZF3_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "IRF1_activator": {
+      "fraction": 0.9375,
+      "present": 15,
+      "total": 16
+    },
+    "IRF3_activator": {
+      "fraction": 0.9565217391304348,
+      "present": 22,
+      "total": 23
+    },
+    "IRF4_activator": {
+      "fraction": 0.9583333333333334,
+      "present": 46,
+      "total": 48
+    },
+    "IRF5_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "IRF7_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "IRF8_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 63,
+      "total": 66
+    },
+    "JDP2_activator": {
+      "fraction": 0.9838709677419355,
+      "present": 61,
+      "total": 62
+    },
+    "JUNB_activator": {
+      "fraction": 0.9597989949748744,
+      "present": 191,
+      "total": 199
+    },
+    "JUND_activator": {
+      "fraction": 0.9852941176470589,
+      "present": 67,
+      "total": 68
+    },
+    "JUN_activator": {
+      "fraction": 0.9727272727272728,
+      "present": 214,
+      "total": 220
+    },
+    "JUN_repressor": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "KLF10_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 36,
+      "total": 38
+    },
+    "KLF11_activator": {
+      "fraction": 1.0,
+      "present": 21,
+      "total": 21
+    },
+    "KLF12_activator": {
+      "fraction": 0.9512195121951219,
+      "present": 156,
+      "total": 164
+    },
+    "KLF12_repressor": {
+      "fraction": 0.9577464788732394,
+      "present": 68,
+      "total": 71
+    },
+    "KLF13_activator": {
+      "fraction": 0.9428571428571428,
+      "present": 99,
+      "total": 105
+    },
+    "KLF16_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "KLF1_activator": {
+      "fraction": 0.9292035398230089,
+      "present": 210,
+      "total": 226
+    },
+    "KLF1_repressor": {
+      "fraction": 0.9705882352941176,
+      "present": 66,
+      "total": 68
+    },
+    "KLF2_activator": {
+      "fraction": 0.9568627450980393,
+      "present": 244,
+      "total": 255
+    },
+    "KLF2_repressor": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "KLF3_activator": {
+      "fraction": 0.975609756097561,
+      "present": 80,
+      "total": 82
+    },
+    "KLF4_activator": {
+      "fraction": 0.9811320754716981,
+      "present": 156,
+      "total": 159
+    },
+    "KLF4_repressor": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "KLF5_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "KLF6_activator": {
+      "fraction": 0.9754601226993865,
+      "present": 159,
+      "total": 163
+    },
+    "KLF6_repressor": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "KLF7_activator": {
+      "fraction": 0.9724770642201835,
+      "present": 106,
+      "total": 109
+    },
+    "KLF7_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "KLF8_activator": {
+      "fraction": 0.9,
+      "present": 9,
+      "total": 10
+    },
+    "KLF9_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "LEF1_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "LMO2_activator": {
+      "fraction": 0.9142857142857143,
+      "present": 32,
+      "total": 35
+    },
+    "MAFB_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 24,
+      "total": 27
+    },
+    "MAFF_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "MAFG_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "MAF_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 10,
+      "total": 11
+    },
+    "MAZ_activator": {
+      "fraction": 0.9134615384615384,
+      "present": 95,
+      "total": 104
+    },
+    "MBD2_activator": {
+      "fraction": 0.9583333333333334,
+      "present": 23,
+      "total": 24
+    },
+    "MECP2_activator": {
+      "fraction": 0.9,
+      "present": 9,
+      "total": 10
+    },
+    "MEF2A_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "MEF2C_activator": {
+      "fraction": 0.9714285714285714,
+      "present": 34,
+      "total": 35
+    },
+    "MEIS1_activator": {
+      "fraction": 0.9565217391304348,
+      "present": 22,
+      "total": 23
+    },
+    "MYBL2_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "MYB_activator": {
+      "fraction": 0.9230769230769231,
+      "present": 12,
+      "total": 13
+    },
+    "MZF1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "NFATC3_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "NFE2L1_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "NFE2L2_activator": {
+      "fraction": 0.9333333333333333,
+      "present": 14,
+      "total": 15
+    },
+    "NFE2_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "NFIL3_activator": {
+      "fraction": 1.0,
+      "present": 42,
+      "total": 42
+    },
+    "NFYA_activator": {
+      "fraction": 0.9,
+      "present": 9,
+      "total": 10
+    },
+    "NFYB_activator": {
+      "fraction": 1.0,
+      "present": 18,
+      "total": 18
+    },
+    "NFYC_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "NR2C2_activator": {
+      "fraction": 1.0,
+      "present": 20,
+      "total": 20
+    },
+    "NR3C1_activator": {
+      "fraction": 0.9629629629629629,
+      "present": 104,
+      "total": 108
+    },
+    "NR3C1_repressor": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "NRF1_activator": {
+      "fraction": 1.0,
+      "present": 53,
+      "total": 53
+    },
+    "NRL_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "PATZ1_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "PBX1_activator": {
+      "fraction": 0.9342105263157895,
+      "present": 71,
+      "total": 76
+    },
+    "PBX1_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "PBX3_activator": {
+      "fraction": 0.9175257731958762,
+      "present": 89,
+      "total": 97
+    },
+    "PBX3_repressor": {
+      "fraction": 0.8,
+      "present": 8,
+      "total": 10
+    },
+    "PHF21A_activator": {
+      "fraction": 1.0,
+      "present": 18,
+      "total": 18
+    },
+    "PHTF1_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "PML_activator": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "POU2F1_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 21,
+      "total": 22
+    },
+    "PRDM1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "RB1_activator": {
+      "fraction": 0.9107142857142857,
+      "present": 51,
+      "total": 56
+    },
+    "RCOR1_activator": {
+      "fraction": 1.0,
+      "present": 21,
+      "total": 21
+    },
+    "RUNX1_activator": {
+      "fraction": 0.9487179487179487,
+      "present": 37,
+      "total": 39
+    },
+    "RUNX2_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "RUNX3_activator": {
+      "fraction": 0.9459459459459459,
+      "present": 35,
+      "total": 37
+    },
+    "RXRA_activator": {
+      "fraction": 1.0,
+      "present": 19,
+      "total": 19
+    },
+    "SATB1_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "SETDB1_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "SMAD5_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 16,
+      "total": 17
+    },
+    "SMARCC1_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "SMARCC2_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "SOX5_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "SP1_activator": {
+      "fraction": 0.9705882352941176,
+      "present": 33,
+      "total": 34
+    },
+    "SP2_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 18,
+      "total": 19
+    },
+    "SP3_activator": {
+      "fraction": 0.9632352941176471,
+      "present": 131,
+      "total": 136
+    },
+    "SP3_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "SP4_activator": {
+      "fraction": 0.8,
+      "present": 16,
+      "total": 20
+    },
+    "SPI1_activator": {
+      "fraction": 0.9681528662420382,
+      "present": 152,
+      "total": 157
+    },
+    "SPIB_activator": {
+      "fraction": 0.972972972972973,
+      "present": 36,
+      "total": 37
+    },
+    "SREBF1_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "SREBF2_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "STAT1_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 10,
+      "total": 11
+    },
+    "TAF1_activator": {
+      "fraction": 1.0,
+      "present": 47,
+      "total": 47
+    },
+    "TAL1_activator": {
+      "fraction": 0.9242424242424242,
+      "present": 61,
+      "total": 66
+    },
+    "TBL1XR1_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "TBP_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "TBX21_activator": {
+      "fraction": 0.9285714285714286,
+      "present": 26,
+      "total": 28
+    },
+    "TCF12_activator": {
+      "fraction": 0.9210526315789473,
+      "present": 35,
+      "total": 38
+    },
+    "TCF3_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 18,
+      "total": 21
+    },
+    "TCF7L2_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "TCFL5_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "TFDP1_activator": {
+      "fraction": 0.9405204460966543,
+      "present": 253,
+      "total": 269
+    },
+    "TFDP1_repressor": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "TFDP2_activator": {
+      "fraction": 0.9142857142857143,
+      "present": 64,
+      "total": 70
+    },
+    "TFDP2_repressor": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "TFEC_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "THAP1_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "TRPS1_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "TRPS1_repressor": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "XBP1_activator": {
+      "fraction": 0.9245283018867925,
+      "present": 49,
+      "total": 53
+    },
+    "YBX1_activator": {
+      "fraction": 0.9512195121951219,
+      "present": 78,
+      "total": 82
+    },
+    "YY1_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 34,
+      "total": 36
+    },
+    "ZBTB11_activator": {
+      "fraction": 0.9285714285714286,
+      "present": 26,
+      "total": 28
+    },
+    "ZBTB14_activator": {
+      "fraction": 0.9722222222222222,
+      "present": 35,
+      "total": 36
+    },
+    "ZBTB20_activator": {
+      "fraction": 1.0,
+      "present": 27,
+      "total": 27
+    },
+    "ZBTB25_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ZBTB2_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "ZBTB33_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "ZBTB40_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "ZBTB7A_activator": {
+      "fraction": 0.9629629629629629,
+      "present": 26,
+      "total": 27
+    },
+    "ZNF100_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "ZNF121_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF134_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "ZNF143_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF148_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF200_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 10,
+      "total": 11
+    },
+    "ZNF207_activator": {
+      "fraction": 1.0,
+      "present": 18,
+      "total": 18
+    },
+    "ZNF281_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "ZNF385D_activator": {
+      "fraction": 0.926829268292683,
+      "present": 38,
+      "total": 41
+    },
+    "ZNF385D_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ZNF43_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF441_activator": {
+      "fraction": 0.9,
+      "present": 9,
+      "total": 10
+    },
+    "ZNF519_activator": {
+      "fraction": 0.8,
+      "present": 12,
+      "total": 15
+    },
+    "ZNF571_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "ZNF580_activator": {
+      "fraction": 0.9655172413793104,
+      "present": 28,
+      "total": 29
+    },
+    "ZNF595_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "ZNF629_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ZNF669_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "ZNF66_activator": {
+      "fraction": 0.8461538461538461,
+      "present": 11,
+      "total": 13
+    },
+    "ZNF704_activator": {
+      "fraction": 0.9642857142857143,
+      "present": 27,
+      "total": 28
+    },
+    "ZNF749_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "ZNF76_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "ZNF770_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "ZNF777_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "ZNF846_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ZNF85_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    }
+  },
+  "5000-779-reference": {
+    "BCL11A_activator": {
+      "fraction": 1.0,
+      "present": 30,
+      "total": 30
+    },
+    "CEBPD_activator": {
+      "fraction": 0.96,
+      "present": 48,
+      "total": 50
+    },
+    "FOSB_activator": {
+      "fraction": 0.9764705882352941,
+      "present": 83,
+      "total": 85
+    },
+    "FOSL2_activator": {
+      "fraction": 0.978021978021978,
+      "present": 89,
+      "total": 91
+    },
+    "FOS_activator": {
+      "fraction": 0.967391304347826,
+      "present": 178,
+      "total": 184
+    },
+    "JUN_activator": {
+      "fraction": 0.9611650485436893,
+      "present": 99,
+      "total": 103
+    },
+    "KLF1_activator": {
+      "fraction": 0.9534883720930233,
+      "present": 205,
+      "total": 215
+    },
+    "KLF2_activator": {
+      "fraction": 0.9385474860335196,
+      "present": 168,
+      "total": 179
+    },
+    "RUNX3_activator": {
+      "fraction": 0.9743589743589743,
+      "present": 76,
+      "total": 78
+    },
+    "TAL1_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 33,
+      "total": 36
+    },
+    "TBX21_activator": {
+      "fraction": 0.9523809523809523,
+      "present": 20,
+      "total": 21
+    },
+    "TFDP1_activator": {
+      "fraction": 0.9437751004016064,
+      "present": 235,
+      "total": 249
+    }
+  },
+  "5000-779-rustscenic": {
+    "ACAA1_activator": {
+      "fraction": 0.95,
+      "present": 19,
+      "total": 20
+    },
+    "AHCTF1_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "ARID5A_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "ATF1_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "ATF2_activator": {
+      "fraction": 0.9310344827586207,
+      "present": 27,
+      "total": 29
+    },
+    "ATF3_activator": {
+      "fraction": 0.9830508474576272,
+      "present": 58,
+      "total": 59
+    },
+    "ATF4_activator": {
+      "fraction": 0.9634146341463414,
+      "present": 79,
+      "total": 82
+    },
+    "ATF5_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ATF6_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "ATF6_repressor": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "ATF7_activator": {
+      "fraction": 0.9629629629629629,
+      "present": 26,
+      "total": 27
+    },
+    "BACH1_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "BACH2_activator": {
+      "fraction": 0.9375,
+      "present": 30,
+      "total": 32
+    },
+    "BACH2_repressor": {
+      "fraction": 0.9857142857142858,
+      "present": 69,
+      "total": 70
+    },
+    "BATF_activator": {
+      "fraction": 0.96,
+      "present": 24,
+      "total": 25
+    },
+    "BCL11A_activator": {
+      "fraction": 0.9767441860465116,
+      "present": 42,
+      "total": 43
+    },
+    "BCL11A_repressor": {
+      "fraction": 0.7857142857142857,
+      "present": 11,
+      "total": 14
+    },
+    "BCL11B_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 16,
+      "total": 17
+    },
+    "BCL11B_repressor": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "BCLAF1_activator": {
+      "fraction": 0.9701492537313433,
+      "present": 65,
+      "total": 67
+    },
+    "BHLHE40_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "BPTF_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "BRCA1_activator": {
+      "fraction": 0.9622641509433962,
+      "present": 51,
+      "total": 53
+    },
+    "CCNT2_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "CEBPB_activator": {
+      "fraction": 0.9375,
+      "present": 15,
+      "total": 16
+    },
+    "CEBPD_activator": {
+      "fraction": 0.9850746268656716,
+      "present": 66,
+      "total": 67
+    },
+    "CEBPG_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "CEBPZ_activator": {
+      "fraction": 0.8947368421052632,
+      "present": 17,
+      "total": 19
+    },
+    "CHD1_activator": {
+      "fraction": 0.92,
+      "present": 23,
+      "total": 25
+    },
+    "CHD2_activator": {
+      "fraction": 0.9722222222222222,
+      "present": 35,
+      "total": 36
+    },
+    "CHD2_repressor": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "CNOT3_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "CREB1_activator": {
+      "fraction": 0.9787234042553191,
+      "present": 46,
+      "total": 47
+    },
+    "CREB3L2_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "CREB3L4_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "CREB5_activator": {
+      "fraction": 1.0,
+      "present": 92,
+      "total": 92
+    },
+    "CREB5_repressor": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "CREM_activator": {
+      "fraction": 0.9692307692307692,
+      "present": 63,
+      "total": 65
+    },
+    "DEAF1_activator": {
+      "fraction": 1.0,
+      "present": 23,
+      "total": 23
+    },
+    "E2F1_activator": {
+      "fraction": 0.9391891891891891,
+      "present": 139,
+      "total": 148
+    },
+    "E2F2_activator": {
+      "fraction": 0.9378238341968912,
+      "present": 181,
+      "total": 193
+    },
+    "E2F2_repressor": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "E2F3_activator": {
+      "fraction": 0.9777777777777777,
+      "present": 88,
+      "total": 90
+    },
+    "E2F4_activator": {
+      "fraction": 0.9403973509933775,
+      "present": 142,
+      "total": 151
+    },
+    "E2F5_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 10,
+      "total": 11
+    },
+    "E2F6_activator": {
+      "fraction": 0.8095238095238095,
+      "present": 17,
+      "total": 21
+    },
+    "E2F7_activator": {
+      "fraction": 0.8974358974358975,
+      "present": 70,
+      "total": 78
+    },
+    "E2F8_activator": {
+      "fraction": 0.9224137931034483,
+      "present": 107,
+      "total": 116
+    },
+    "E4F1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "EGR1_activator": {
+      "fraction": 0.9649122807017544,
+      "present": 55,
+      "total": 57
+    },
+    "EGR2_activator": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "ELF1_activator": {
+      "fraction": 0.9580152671755725,
+      "present": 251,
+      "total": 262
+    },
+    "ELF1_repressor": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "ELF2_activator": {
+      "fraction": 0.9626168224299065,
+      "present": 309,
+      "total": 321
+    },
+    "ELF2_repressor": {
+      "fraction": 0.9285714285714286,
+      "present": 26,
+      "total": 28
+    },
+    "ELF4_activator": {
+      "fraction": 0.95,
+      "present": 19,
+      "total": 20
+    },
+    "ELK1_activator": {
+      "fraction": 0.9285714285714286,
+      "present": 13,
+      "total": 14
+    },
+    "ELK3_activator": {
+      "fraction": 1.0,
+      "present": 26,
+      "total": 26
+    },
+    "ELK4_activator": {
+      "fraction": 0.9565217391304348,
+      "present": 22,
+      "total": 23
+    },
+    "EOMES_activator": {
+      "fraction": 1.0,
+      "present": 21,
+      "total": 21
+    },
+    "EP300_activator": {
+      "fraction": 0.9803921568627451,
+      "present": 50,
+      "total": 51
+    },
+    "EP300_repressor": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ERF_activator": {
+      "fraction": 1.0,
+      "present": 27,
+      "total": 27
+    },
+    "ERG_activator": {
+      "fraction": 0.946236559139785,
+      "present": 88,
+      "total": 93
+    },
+    "ERG_repressor": {
+      "fraction": 0.9411764705882353,
+      "present": 16,
+      "total": 17
+    },
+    "ETS1_activator": {
+      "fraction": 0.9591836734693877,
+      "present": 329,
+      "total": 343
+    },
+    "ETS1_repressor": {
+      "fraction": 0.9432989690721649,
+      "present": 183,
+      "total": 194
+    },
+    "ETS2_activator": {
+      "fraction": 0.967741935483871,
+      "present": 90,
+      "total": 93
+    },
+    "ETV3_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 16,
+      "total": 17
+    },
+    "ETV5_activator": {
+      "fraction": 0.9444444444444444,
+      "present": 17,
+      "total": 18
+    },
+    "ETV6_activator": {
+      "fraction": 0.9501915708812261,
+      "present": 248,
+      "total": 261
+    },
+    "ETV6_repressor": {
+      "fraction": 0.972972972972973,
+      "present": 36,
+      "total": 37
+    },
+    "FLI1_activator": {
+      "fraction": 0.9655172413793104,
+      "present": 252,
+      "total": 261
+    },
+    "FLI1_repressor": {
+      "fraction": 0.8181818181818182,
+      "present": 18,
+      "total": 22
+    },
+    "FOSB_activator": {
+      "fraction": 0.9794520547945206,
+      "present": 143,
+      "total": 146
+    },
+    "FOSB_repressor": {
+      "fraction": 0.9166666666666666,
+      "present": 11,
+      "total": 12
+    },
+    "FOSL1_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "FOSL2_activator": {
+      "fraction": 0.9888888888888889,
+      "present": 89,
+      "total": 90
+    },
+    "FOS_activator": {
+      "fraction": 0.9767441860465116,
+      "present": 336,
+      "total": 344
+    },
+    "FOS_repressor": {
+      "fraction": 1.0,
+      "present": 22,
+      "total": 22
+    },
+    "FOXO1_activator": {
+      "fraction": 0.9886363636363636,
+      "present": 87,
+      "total": 88
+    },
+    "FOXO1_repressor": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "FOXO3_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 10,
+      "total": 11
+    },
+    "GABPA_activator": {
+      "fraction": 1.0,
+      "present": 17,
+      "total": 17
+    },
+    "GABPB1_activator": {
+      "fraction": 0.9166666666666666,
+      "present": 22,
+      "total": 24
+    },
+    "GATA1_activator": {
+      "fraction": 0.9242424242424242,
+      "present": 61,
+      "total": 66
+    },
+    "GATA2_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "GMEB1_activator": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "GMEB2_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "GTF2I_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "HCFC1_activator": {
+      "fraction": 0.95,
+      "present": 19,
+      "total": 20
+    },
+    "HDAC2_activator": {
+      "fraction": 0.9846153846153847,
+      "present": 64,
+      "total": 65
+    },
+    "HES6_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "HMGA1_activator": {
+      "fraction": 0.9074074074074074,
+      "present": 49,
+      "total": 54
+    },
+    "HMGA2_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "HSF1_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "HTATIP2_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "IKZF1_activator": {
+      "fraction": 0.971830985915493,
+      "present": 69,
+      "total": 71
+    },
+    "IKZF2_activator": {
+      "fraction": 0.95,
+      "present": 19,
+      "total": 20
+    },
+    "IKZF2_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "IKZF3_activator": {
+      "fraction": 0.9761904761904762,
+      "present": 41,
+      "total": 42
+    },
+    "IKZF3_repressor": {
+      "fraction": 0.9375,
+      "present": 15,
+      "total": 16
+    },
+    "IRF1_activator": {
+      "fraction": 0.9629629629629629,
+      "present": 26,
+      "total": 27
+    },
+    "IRF2_activator": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "IRF3_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 21,
+      "total": 22
+    },
+    "IRF4_activator": {
+      "fraction": 0.9772727272727273,
+      "present": 43,
+      "total": 44
+    },
+    "IRF5_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "IRF7_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 8,
+      "total": 9
+    },
+    "IRF8_activator": {
+      "fraction": 0.9859154929577465,
+      "present": 70,
+      "total": 71
+    },
+    "IRF9_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "JDP2_activator": {
+      "fraction": 0.9818181818181818,
+      "present": 54,
+      "total": 55
+    },
+    "JUNB_activator": {
+      "fraction": 0.9617486338797814,
+      "present": 176,
+      "total": 183
+    },
+    "JUND_activator": {
+      "fraction": 0.9701492537313433,
+      "present": 65,
+      "total": 67
+    },
+    "JUN_activator": {
+      "fraction": 0.9746192893401016,
+      "present": 192,
+      "total": 197
+    },
+    "JUN_repressor": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "KLF10_activator": {
+      "fraction": 0.896551724137931,
+      "present": 26,
+      "total": 29
+    },
+    "KLF11_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "KLF12_activator": {
+      "fraction": 0.9367088607594937,
+      "present": 148,
+      "total": 158
+    },
+    "KLF12_repressor": {
+      "fraction": 0.958904109589041,
+      "present": 70,
+      "total": 73
+    },
+    "KLF13_activator": {
+      "fraction": 0.9689922480620154,
+      "present": 125,
+      "total": 129
+    },
+    "KLF16_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 18,
+      "total": 19
+    },
+    "KLF1_activator": {
+      "fraction": 0.948051948051948,
+      "present": 219,
+      "total": 231
+    },
+    "KLF1_repressor": {
+      "fraction": 1.0,
+      "present": 58,
+      "total": 58
+    },
+    "KLF2_activator": {
+      "fraction": 0.960352422907489,
+      "present": 218,
+      "total": 227
+    },
+    "KLF2_repressor": {
+      "fraction": 0.875,
+      "present": 14,
+      "total": 16
+    },
+    "KLF3_activator": {
+      "fraction": 0.974025974025974,
+      "present": 75,
+      "total": 77
+    },
+    "KLF4_activator": {
+      "fraction": 0.991869918699187,
+      "present": 122,
+      "total": 123
+    },
+    "KLF4_repressor": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "KLF5_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "KLF6_activator": {
+      "fraction": 0.984251968503937,
+      "present": 125,
+      "total": 127
+    },
+    "KLF6_repressor": {
+      "fraction": 0.9,
+      "present": 9,
+      "total": 10
+    },
+    "KLF7_activator": {
+      "fraction": 0.9894736842105263,
+      "present": 94,
+      "total": 95
+    },
+    "KLF8_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "KLF9_activator": {
+      "fraction": 1.0,
+      "present": 17,
+      "total": 17
+    },
+    "LEF1_activator": {
+      "fraction": 0.875,
+      "present": 7,
+      "total": 8
+    },
+    "LMO2_activator": {
+      "fraction": 0.8857142857142857,
+      "present": 31,
+      "total": 35
+    },
+    "MAFB_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "MAFF_activator": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "MAFG_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "MAF_activator": {
+      "fraction": 1.0,
+      "present": 18,
+      "total": 18
+    },
+    "MAZ_activator": {
+      "fraction": 0.9405940594059405,
+      "present": 95,
+      "total": 101
+    },
+    "MBD2_activator": {
+      "fraction": 0.9666666666666667,
+      "present": 29,
+      "total": 30
+    },
+    "MECP2_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 21,
+      "total": 22
+    },
+    "MEF2A_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "MEF2C_activator": {
+      "fraction": 0.9705882352941176,
+      "present": 33,
+      "total": 34
+    },
+    "MEF2C_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "MEIS1_activator": {
+      "fraction": 0.9333333333333333,
+      "present": 14,
+      "total": 15
+    },
+    "MITF_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "MYBL2_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "MYB_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 16,
+      "total": 17
+    },
+    "MZF1_activator": {
+      "fraction": 1.0,
+      "present": 11,
+      "total": 11
+    },
+    "NFATC3_activator": {
+      "fraction": 0.8888888888888888,
+      "present": 16,
+      "total": 18
+    },
+    "NFE2L1_activator": {
+      "fraction": 0.9047619047619048,
+      "present": 19,
+      "total": 21
+    },
+    "NFIL3_activator": {
+      "fraction": 0.9459459459459459,
+      "present": 35,
+      "total": 37
+    },
+    "NFYA_activator": {
+      "fraction": 1.0,
+      "present": 18,
+      "total": 18
+    },
+    "NFYB_activator": {
+      "fraction": 0.9565217391304348,
+      "present": 22,
+      "total": 23
+    },
+    "NFYC_activator": {
+      "fraction": 1.0,
+      "present": 14,
+      "total": 14
+    },
+    "NR2C2_activator": {
+      "fraction": 1.0,
+      "present": 25,
+      "total": 25
+    },
+    "NR3C1_activator": {
+      "fraction": 0.9834710743801653,
+      "present": 119,
+      "total": 121
+    },
+    "NR3C1_repressor": {
+      "fraction": 0.6666666666666666,
+      "present": 4,
+      "total": 6
+    },
+    "NRF1_activator": {
+      "fraction": 0.98,
+      "present": 49,
+      "total": 50
+    },
+    "NRL_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "PATZ1_activator": {
+      "fraction": 0.8,
+      "present": 16,
+      "total": 20
+    },
+    "PBX1_activator": {
+      "fraction": 0.9482758620689655,
+      "present": 55,
+      "total": 58
+    },
+    "PBX3_activator": {
+      "fraction": 0.9313725490196079,
+      "present": 95,
+      "total": 102
+    },
+    "PBX3_repressor": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "PHF21A_activator": {
+      "fraction": 0.9583333333333334,
+      "present": 23,
+      "total": 24
+    },
+    "PHTF1_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "PML_activator": {
+      "fraction": 0.8571428571428571,
+      "present": 6,
+      "total": 7
+    },
+    "POU2F1_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "RB1_activator": {
+      "fraction": 0.9591836734693877,
+      "present": 47,
+      "total": 49
+    },
+    "RB1_repressor": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "RCOR1_activator": {
+      "fraction": 1.0,
+      "present": 16,
+      "total": 16
+    },
+    "RUNX1_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 36,
+      "total": 38
+    },
+    "RUNX2_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "RUNX3_activator": {
+      "fraction": 0.9512195121951219,
+      "present": 39,
+      "total": 41
+    },
+    "RXRA_activator": {
+      "fraction": 0.9375,
+      "present": 15,
+      "total": 16
+    },
+    "SATB1_activator": {
+      "fraction": 0.8333333333333334,
+      "present": 5,
+      "total": 6
+    },
+    "SETDB1_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "SF1_activator": {
+      "fraction": 0.9285714285714286,
+      "present": 13,
+      "total": 14
+    },
+    "SMAD5_activator": {
+      "fraction": 0.9090909090909091,
+      "present": 10,
+      "total": 11
+    },
+    "SMARCC1_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "SMARCC2_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "SOX5_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "SP1_activator": {
+      "fraction": 1.0,
+      "present": 21,
+      "total": 21
+    },
+    "SP2_activator": {
+      "fraction": 0.9545454545454546,
+      "present": 21,
+      "total": 22
+    },
+    "SP3_activator": {
+      "fraction": 0.968503937007874,
+      "present": 123,
+      "total": 127
+    },
+    "SP3_repressor": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "SP4_activator": {
+      "fraction": 0.9583333333333334,
+      "present": 23,
+      "total": 24
+    },
+    "SPI1_activator": {
+      "fraction": 0.967741935483871,
+      "present": 150,
+      "total": 155
+    },
+    "SPIB_activator": {
+      "fraction": 0.972972972972973,
+      "present": 36,
+      "total": 37
+    },
+    "SREBF1_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "SREBF2_activator": {
+      "fraction": 0.8,
+      "present": 8,
+      "total": 10
+    },
+    "STAT1_activator": {
+      "fraction": 0.9230769230769231,
+      "present": 24,
+      "total": 26
+    },
+    "STAT2_activator": {
+      "fraction": 1.0,
+      "present": 10,
+      "total": 10
+    },
+    "STAT5A_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "TAF1_activator": {
+      "fraction": 1.0,
+      "present": 53,
+      "total": 53
+    },
+    "TAL1_activator": {
+      "fraction": 0.921875,
+      "present": 59,
+      "total": 64
+    },
+    "TBL1XR1_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "TBP_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "TBX21_activator": {
+      "fraction": 0.9666666666666667,
+      "present": 29,
+      "total": 30
+    },
+    "TCF12_activator": {
+      "fraction": 0.9642857142857143,
+      "present": 27,
+      "total": 28
+    },
+    "TCF12_repressor": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "TCF3_activator": {
+      "fraction": 0.9473684210526315,
+      "present": 18,
+      "total": 19
+    },
+    "TCF7L2_activator": {
+      "fraction": 0.9285714285714286,
+      "present": 13,
+      "total": 14
+    },
+    "TCFL5_activator": {
+      "fraction": 0.9,
+      "present": 9,
+      "total": 10
+    },
+    "TFDP1_activator": {
+      "fraction": 0.9581749049429658,
+      "present": 252,
+      "total": 263
+    },
+    "TFDP1_repressor": {
+      "fraction": 0.95,
+      "present": 19,
+      "total": 20
+    },
+    "TFDP2_activator": {
+      "fraction": 0.8970588235294118,
+      "present": 61,
+      "total": 68
+    },
+    "TFDP2_repressor": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "TFEC_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "THAP1_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "TRPS1_activator": {
+      "fraction": 1.0,
+      "present": 12,
+      "total": 12
+    },
+    "TRPS1_repressor": {
+      "fraction": 0.8461538461538461,
+      "present": 11,
+      "total": 13
+    },
+    "UBE2K_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "XBP1_activator": {
+      "fraction": 0.9019607843137255,
+      "present": 46,
+      "total": 51
+    },
+    "YBX1_activator": {
+      "fraction": 0.96875,
+      "present": 93,
+      "total": 96
+    },
+    "YY1_activator": {
+      "fraction": 0.9821428571428571,
+      "present": 55,
+      "total": 56
+    },
+    "ZBTB11_activator": {
+      "fraction": 0.9285714285714286,
+      "present": 26,
+      "total": 28
+    },
+    "ZBTB14_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 32,
+      "total": 34
+    },
+    "ZBTB16_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ZBTB20_activator": {
+      "fraction": 0.975609756097561,
+      "present": 40,
+      "total": 41
+    },
+    "ZBTB25_activator": {
+      "fraction": 0.8823529411764706,
+      "present": 15,
+      "total": 17
+    },
+    "ZBTB2_activator": {
+      "fraction": 1.0,
+      "present": 15,
+      "total": 15
+    },
+    "ZBTB33_activator": {
+      "fraction": 0.9,
+      "present": 9,
+      "total": 10
+    },
+    "ZBTB40_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "ZBTB7A_activator": {
+      "fraction": 1.0,
+      "present": 32,
+      "total": 32
+    },
+    "ZEB1_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF100_activator": {
+      "fraction": 0.9375,
+      "present": 15,
+      "total": 16
+    },
+    "ZNF121_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF134_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "ZNF200_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "ZNF207_activator": {
+      "fraction": 0.96,
+      "present": 24,
+      "total": 25
+    },
+    "ZNF281_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ZNF282_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF385D_activator": {
+      "fraction": 0.9333333333333333,
+      "present": 42,
+      "total": 45
+    },
+    "ZNF385D_repressor": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "ZNF43_activator": {
+      "fraction": 0.8,
+      "present": 4,
+      "total": 5
+    },
+    "ZNF519_activator": {
+      "fraction": 0.9285714285714286,
+      "present": 13,
+      "total": 14
+    },
+    "ZNF563_activator": {
+      "fraction": 1.0,
+      "present": 6,
+      "total": 6
+    },
+    "ZNF571_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "ZNF580_activator": {
+      "fraction": 0.9411764705882353,
+      "present": 16,
+      "total": 17
+    },
+    "ZNF595_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF629_activator": {
+      "fraction": 1.0,
+      "present": 5,
+      "total": 5
+    },
+    "ZNF652_activator": {
+      "fraction": 0.875,
+      "present": 7,
+      "total": 8
+    },
+    "ZNF669_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "ZNF66_activator": {
+      "fraction": 1.0,
+      "present": 8,
+      "total": 8
+    },
+    "ZNF704_activator": {
+      "fraction": 1.0,
+      "present": 22,
+      "total": 22
+    },
+    "ZNF711_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ZNF76_activator": {
+      "fraction": 1.0,
+      "present": 9,
+      "total": 9
+    },
+    "ZNF770_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    },
+    "ZNF777_activator": {
+      "fraction": 1.0,
+      "present": 13,
+      "total": 13
+    },
+    "ZNF846_activator": {
+      "fraction": 1.0,
+      "present": 7,
+      "total": 7
+    }
+  }
+}

@@ -1,0 +1,422 @@
+[
+  {
+    "bytes": 22800128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/atlas-n100000-seed777/reference/full-gene-activity.npy",
+    "sha256": "3627b7be30546c30b8f2bd9c348a5617c71473eb222be026cb1da0efffc72b4f"
+  },
+  {
+    "bytes": 22000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/atlas-n100000-seed777/rustscenic/full-gene-activity.npy",
+    "sha256": "3c795c7f66eb472d745f5cecf92e317faf88905376d613fafd04b4f713670d8c"
+  },
+  {
+    "bytes": 20800128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/atlas-n100000-seed778/reference/full-gene-activity.npy",
+    "sha256": "9be0c7a01c12a6135b52dfda7b95eb3c59c409f29a72aedb94de8cd27f97c992"
+  },
+  {
+    "bytes": 22000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/atlas-n100000-seed778/rustscenic/full-gene-activity.npy",
+    "sha256": "11b52ee2d3839abc99e9f4f957d6fdba880bf5cdaaf497a1294ba2bf556afead"
+  },
+  {
+    "bytes": 19200128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/atlas-n100000-seed779/reference/full-gene-activity.npy",
+    "sha256": "49ff5ac989b371fe33371f4d880f091af1d0089d89b788291311ca9073f311fe"
+  },
+  {
+    "bytes": 21600128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/atlas-n100000-seed779/rustscenic/full-gene-activity.npy",
+    "sha256": "0607f2a5b838c8a0e4938391dab8405a9effbedfbe0007ce01c1b9275dd06de3"
+  },
+  {
+    "bytes": 287348068,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/atlas-n1306127-seed777/rustscenic/full-gene-activity.npy",
+    "sha256": "535776c309f340c457065d94bc79a4f11acab74c60a14ff718dce090e8d1ecb2"
+  },
+  {
+    "bytes": 323919624,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/atlas-n1306127-seed778/rustscenic/full-gene-activity.npy",
+    "sha256": "c0f3399821173e5c7dd30a44ef00fba4cf67d8db2662d6e17b6fcad1a98c4f98"
+  },
+  {
+    "bytes": 282123560,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/atlas-n1306127-seed779/rustscenic/full-gene-activity.npy",
+    "sha256": "dfd5cd9b7248ed232ff36e71e39c21306bb4cd54dc59274b0d048ada19334b6b"
+  },
+  {
+    "bytes": 440128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed777/reference/full-gene-activity.npy",
+    "sha256": "173d9a5a590c8abab357dc3d57e79f04f740652464a82ed9c2930b6218bf9d2c"
+  },
+  {
+    "bytes": 1534970,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed777/reference/full-motif-evidence.parquet",
+    "sha256": "3ad818246663bedfe2574a9400db5c6fa83649b917fec5a264ef1487e1d87ce3"
+  },
+  {
+    "bytes": 440128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed777/reference/full-region-activity.npy",
+    "sha256": "f74289531ae555458b173741fdc3b6f7270d76cb44e9c5aa439c216f68687003"
+  },
+  {
+    "bytes": 3160128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed777/rustscenic/full-gene-activity.npy",
+    "sha256": "49d4c128d49ea0df3a4e0236b3d9e3ec15c88c83dce9ff84c2e9b41ccb4b291b"
+  },
+  {
+    "bytes": 774450,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed777/rustscenic/full-motif-evidence.parquet",
+    "sha256": "e20609985fcfab9055cda94667bc51592cece5235632d66e2bdccaeeaf2c221b"
+  },
+  {
+    "bytes": 3160128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed777/rustscenic/full-region-activity.npy",
+    "sha256": "6abcaea0644d3e7fa9403131f5bbc186dd3c32f5ef4412a148f5bed80925974c"
+  },
+  {
+    "bytes": 520128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed778/reference/full-gene-activity.npy",
+    "sha256": "c2775a9cfaec7f540e114d4284e3970158c81ef83ec7e7438eba3884cbe0e1d9"
+  },
+  {
+    "bytes": 1464087,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed778/reference/full-motif-evidence.parquet",
+    "sha256": "509fb7e3041d09d75e0e66342b7f51cd601fd87bfb4b435662a9b3101979c1c1"
+  },
+  {
+    "bytes": 520128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed778/reference/full-region-activity.npy",
+    "sha256": "691c1d2744570f18a61b9d208ff1fa88a026e7867d710832fad81c998f12a3bc"
+  },
+  {
+    "bytes": 3240128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed778/rustscenic/full-gene-activity.npy",
+    "sha256": "1665bbcafff9d5ad60d18604bcc8cee0faed90035fca03c53f223ba346eaa215"
+  },
+  {
+    "bytes": 773121,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed778/rustscenic/full-motif-evidence.parquet",
+    "sha256": "cab2bf17d0a02bc76d1576995fc56de501a372d1b8177910a4940294fc8f6e93"
+  },
+  {
+    "bytes": 3240128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed778/rustscenic/full-region-activity.npy",
+    "sha256": "4dc9f6c96f07fd0953c87b1a190d314b1e8135a0b1e4fcfff0090d1a7f1ad486"
+  },
+  {
+    "bytes": 400128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed779/reference/full-gene-activity.npy",
+    "sha256": "82b22488926996fc306a99b5d24957187df2bfc7a6f827192d6134afb3215f80"
+  },
+  {
+    "bytes": 1568639,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed779/reference/full-motif-evidence.parquet",
+    "sha256": "4a0fc560c97953a52f1cf3235fd70a80844d702281d0388cbee415bef371956b"
+  },
+  {
+    "bytes": 400128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed779/reference/full-region-activity.npy",
+    "sha256": "d62ebc662424683218ecba9ef2cf698218e5d142f93be35c329f7c731d5879a2"
+  },
+  {
+    "bytes": 3160128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed779/rustscenic/full-gene-activity.npy",
+    "sha256": "859d0558fd45e5214c6ea863fd5c410ac696bea09fd946376610bf5469769058"
+  },
+  {
+    "bytes": 762464,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed779/rustscenic/full-motif-evidence.parquet",
+    "sha256": "8f7bd8b1f99ee3de429d5671362dd46de34f87f2a68467fd279fafa46e67acc4"
+  },
+  {
+    "bytes": 3160128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n10000-seed779/rustscenic/full-region-activity.npy",
+    "sha256": "ec99fe435af2df19608879544c4bc619fad2e55ab04fad05623caf1d0cd75b65"
+  },
+  {
+    "bytes": 2800128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed777/reference/full-gene-activity.npy",
+    "sha256": "a55251d2e440da56fba57737ef8a1fa385896ccce4f10b64ba051725bf2b4eff"
+  },
+  {
+    "bytes": 1427785,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed777/reference/full-motif-evidence.parquet",
+    "sha256": "b4b75793f37a257a30d1f5f8f904f9bbde41de4892c58eb58d518ebd0a27e331"
+  },
+  {
+    "bytes": 2800128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed777/reference/full-region-activity.npy",
+    "sha256": "b2d168d055df5cb4d2d47a40d26d551e8aa6bc54a6acb26e7c724374023767f5"
+  },
+  {
+    "bytes": 15800128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed777/rustscenic/full-gene-activity.npy",
+    "sha256": "4da9ceaa101307032abddb76905089e634ada80218a5990b40b0619d28c68fdc"
+  },
+  {
+    "bytes": 728039,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed777/rustscenic/full-motif-evidence.parquet",
+    "sha256": "ccc9529a8caf223019f4e0aa281c3ece6efdec60fd1aa57de71ba6fce96d9fda"
+  },
+  {
+    "bytes": 15800128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed777/rustscenic/full-region-activity.npy",
+    "sha256": "86fdee55c433fbbb98f235f027eb35b6b59da9d5231123f29f2b3e918af9e2ae"
+  },
+  {
+    "bytes": 3400128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed778/reference/full-gene-activity.npy",
+    "sha256": "e4deb42a5b9800aeb2ac40ce8df0dfe1ff188cda23b6a9a6d397b60c10b5e403"
+  },
+  {
+    "bytes": 1531283,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed778/reference/full-motif-evidence.parquet",
+    "sha256": "56d6795ed7f5f048da0756d1856eca4da265d207d50a9b682e716faf5b5c7294"
+  },
+  {
+    "bytes": 3400128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed778/reference/full-region-activity.npy",
+    "sha256": "c33a0c658db8e7e81854ac608b601681c4e9aeb70635ebf059770de69ec38703"
+  },
+  {
+    "bytes": 16000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed778/rustscenic/full-gene-activity.npy",
+    "sha256": "2679cb3344831621815a05b2fe99e9ede97f27262b832545e6638213fab59edb"
+  },
+  {
+    "bytes": 741706,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed778/rustscenic/full-motif-evidence.parquet",
+    "sha256": "6372a9f2154c16907538757f887eae1640e202982dae85320ffda4a4109111e3"
+  },
+  {
+    "bytes": 16000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed778/rustscenic/full-region-activity.npy",
+    "sha256": "8f268bfaa36400567cc936f04c7a8ea31496f8eeecab1fd4ab4d4e1c1bb27cdb"
+  },
+  {
+    "bytes": 3400128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed779/reference/full-gene-activity.npy",
+    "sha256": "fb8eb931a7db3a2532b14901419af174cd23bb34c15f7653799242c5abfb7b61"
+  },
+  {
+    "bytes": 1486528,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed779/reference/full-motif-evidence.parquet",
+    "sha256": "229fd402f9763e03aa507d98c6b3d987970c9bf292592527041e72923bed429c"
+  },
+  {
+    "bytes": 3400128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed779/reference/full-region-activity.npy",
+    "sha256": "76e7922367a2dbf74fcc09ddea09da99647103b1e6815dfd80ac92d5b646ead8"
+  },
+  {
+    "bytes": 15800128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed779/rustscenic/full-gene-activity.npy",
+    "sha256": "ed52c67f3310438cef6805591c91f4913761ef63fa0596989e4acd72c991ed2b"
+  },
+  {
+    "bytes": 746159,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed779/rustscenic/full-motif-evidence.parquet",
+    "sha256": "cf0417675e1ec404da020d3f04d5770f2db0d075cb5014572293a7286bddda97"
+  },
+  {
+    "bytes": 15800128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/bmmc-n50000-seed779/rustscenic/full-region-activity.npy",
+    "sha256": "1a0ac52f873e5917778e75e38d9a95d4bf9eb1a42a62e7ad6aad1618c1688b6d"
+  },
+  {
+    "bytes": 2400128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed777/reference/full-gene-activity.npy",
+    "sha256": "daeaea6d6abe6df140c5d0ee41589ab16b4cc66224106a76c31f4fece92b406e"
+  },
+  {
+    "bytes": 1009829,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed777/reference/full-motif-evidence.parquet",
+    "sha256": "cfeeb2806b28955c329853f2046a4d56436cf515d633691073d390837b7bfb87"
+  },
+  {
+    "bytes": 2400128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed777/reference/full-region-activity.npy",
+    "sha256": "42f2acd192990ad17819e20483419537fd4910dfa2b3feceea997ceaf2c6be76"
+  },
+  {
+    "bytes": 27600128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed777/rustscenic/full-gene-activity.npy",
+    "sha256": "6471c5ebd4708ae405d029819f2f2ad96b07d176195180fa8c680683b3d723d1"
+  },
+  {
+    "bytes": 476887,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed777/rustscenic/full-motif-evidence.parquet",
+    "sha256": "cf257f57bb3c830116710b5aab833d25bb14a6e14c81d9109bf8a484a63a8536"
+  },
+  {
+    "bytes": 27600128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed777/rustscenic/full-region-activity.npy",
+    "sha256": "a800b47942391185ff3eef5b718b803016330ad662a0a77154b3d3837f2ab643"
+  },
+  {
+    "bytes": 2800128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed778/reference/full-gene-activity.npy",
+    "sha256": "0ef510e55da86cfa7f1f8a0c34f34fa4b3facb9dab2db1cf90133e996040f144"
+  },
+  {
+    "bytes": 999330,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed778/reference/full-motif-evidence.parquet",
+    "sha256": "d95e199849fc834d91008d7a0f09b9f7914f0156d7ad698a3ff83561dff9930d"
+  },
+  {
+    "bytes": 2800128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed778/reference/full-region-activity.npy",
+    "sha256": "44b7a110db66d9c1d6a9662b55375146cb090252bc508732d6e64d22829369dd"
+  },
+  {
+    "bytes": 27200128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed778/rustscenic/full-gene-activity.npy",
+    "sha256": "cf69033b91800826fc8943068ba89e5c98eee5d4147901ebc280bfd56c523f57"
+  },
+  {
+    "bytes": 463858,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed778/rustscenic/full-motif-evidence.parquet",
+    "sha256": "2b0d4e23ac3c0a60e1be94178e45e083ce1c29ab009346ac0e19afa13755bfdd"
+  },
+  {
+    "bytes": 27200128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed778/rustscenic/full-region-activity.npy",
+    "sha256": "8221d636123bfad979a8cf673aa18846960b8d13a3431c34c97b0384d6b92b7b"
+  },
+  {
+    "bytes": 2400128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed779/reference/full-gene-activity.npy",
+    "sha256": "074b6d5461b6f09e379d5eddc1458075c24e0c74dce8d6bf78b7f35d376bfc24"
+  },
+  {
+    "bytes": 987755,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed779/reference/full-motif-evidence.parquet",
+    "sha256": "7e3c1260db3a49cdba505a16b409fec3f06dddee68ec7972d006d717c57a0f35"
+  },
+  {
+    "bytes": 2400128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed779/reference/full-region-activity.npy",
+    "sha256": "7b2f9c9fa14eb386345784a030fea8e5ad6efb4bbb8741e14a2bc2e1ee488823"
+  },
+  {
+    "bytes": 28000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed779/rustscenic/full-gene-activity.npy",
+    "sha256": "4140b4b97fcfc13e8859bd66c093530cbb1097581241017b3fbf3c9fe75549ff"
+  },
+  {
+    "bytes": 465380,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed779/rustscenic/full-motif-evidence.parquet",
+    "sha256": "0648a9ec0fa13b26c3cf9bbaf8087d3bc45de4a8e4c7ea8a88b0c8916eb271c4"
+  },
+  {
+    "bytes": 28000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n100000-seed779/rustscenic/full-region-activity.npy",
+    "sha256": "d7582a722f4583f588495238377fe68ffc7c5e40ddbb1f2e1ce39fad13ed7321"
+  },
+  {
+    "bytes": 10000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n500000-seed777/reference/full-gene-activity.npy",
+    "sha256": "d3a124fd3bd85fadeb1103c1acbe19a26efa293979817adbd7383020148ab28b"
+  },
+  {
+    "bytes": 964653,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n500000-seed777/reference/full-motif-evidence.parquet",
+    "sha256": "411ab131892df437bca71628edefbc9afbee8774b6c8b5b46ae394bdc3f9c7d9"
+  },
+  {
+    "bytes": 10000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n500000-seed777/reference/full-region-activity.npy",
+    "sha256": "a6e6fc33b966bda0d76ddf6a410a971dfc61ef749bcc6d5825d2b52ba7c5f0e7"
+  },
+  {
+    "bytes": 134000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n500000-seed777/rustscenic/full-gene-activity.npy",
+    "sha256": "130a28bb50d9fc26ca5b80e3eba2186b7a3a809ec478412fb3ece8748351510d"
+  },
+  {
+    "bytes": 463314,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n500000-seed777/rustscenic/full-motif-evidence.parquet",
+    "sha256": "48796ef0a2e75fc4db8eb3cdf5cba704b9b520562d56f6ac28cb68568e60f64d"
+  },
+  {
+    "bytes": 134000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n500000-seed777/rustscenic/full-region-activity.npy",
+    "sha256": "078885075e30175ad1c436db0e6c012532e08b48e901e6b97034356489757423"
+  },
+  {
+    "bytes": 138000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n500000-seed778/rustscenic/full-gene-activity.npy",
+    "sha256": "2026118fb028463294841e335a16203e16bfe851026a7824022124c5b0656c37"
+  },
+  {
+    "bytes": 467063,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n500000-seed778/rustscenic/full-motif-evidence.parquet",
+    "sha256": "a3a6e96f571eefe2265ec2b984557dee99f686fc9cdbf4121011173bc68728b1"
+  },
+  {
+    "bytes": 138000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n500000-seed778/rustscenic/full-region-activity.npy",
+    "sha256": "5df7102ac27b333f5b5211e2c3816de770d52559403f7d4b3c9af87a03dab3a2"
+  },
+  {
+    "bytes": 132000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n500000-seed779/rustscenic/full-gene-activity.npy",
+    "sha256": "e8e3300751db67d6929283f63f0dd8ecc05d199d7e97128dda3143d08b7f2c7b"
+  },
+  {
+    "bytes": 456335,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n500000-seed779/rustscenic/full-motif-evidence.parquet",
+    "sha256": "0629145610ed50c3406c796b4fd7d630018b16908fe014644693e9de87862436"
+  },
+  {
+    "bytes": 132000128,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n500000-seed779/rustscenic/full-region-activity.npy",
+    "sha256": "5f4d6534406c48a47e4ff9daf4c3c2f6472059a1e3feec17dd689a44c2214c59"
+  },
+  {
+    "bytes": 219154448,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n817740-seed777/rustscenic/full-gene-activity.npy",
+    "sha256": "7ffa820bb851ee4291b30717c49ac98b2bbeb4b38f38d782c6a1cfbe00eb0d01"
+  },
+  {
+    "bytes": 452164,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n817740-seed777/rustscenic/full-motif-evidence.parquet",
+    "sha256": "d7351614d5e4604d30305bff4537494f0f05b96f58cfd27c71be378a6a28d617"
+  },
+  {
+    "bytes": 219154448,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n817740-seed777/rustscenic/full-region-activity.npy",
+    "sha256": "c9a4aba6958037b922889f734a6b4a262742324f891f48bde9cc5026ce935a7d"
+  },
+  {
+    "bytes": 215883488,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n817740-seed778/rustscenic/full-gene-activity.npy",
+    "sha256": "c17f4d941b3a56666e1c7fdc6db62267e78da4e85f6df3945307c51ad8b59334"
+  },
+  {
+    "bytes": 458084,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n817740-seed778/rustscenic/full-motif-evidence.parquet",
+    "sha256": "b67fe6c8dac29f60cfeea468753388946a0f7520d0b2d0f7c1b1a7effb6296b4"
+  },
+  {
+    "bytes": 215883488,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n817740-seed778/rustscenic/full-region-activity.npy",
+    "sha256": "8ef139f30dfc41a82643fb85ed7a8843ff7fc2b1c40b0b1e7878cae2d206fba5"
+  },
+  {
+    "bytes": 219154448,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n817740-seed779/rustscenic/full-gene-activity.npy",
+    "sha256": "b1c18ba9fd6116d7b6f919db1a6f6ad2620feb3169abc228541bc8ae2905d3b8"
+  },
+  {
+    "bytes": 456521,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n817740-seed779/rustscenic/full-motif-evidence.parquet",
+    "sha256": "cc853e2d290f1bc15a8196b267452889680842fb3e8a6a63e5a419c09f28b559"
+  },
+  {
+    "bytes": 219154448,
+    "path_on_hpc": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results/hdma-n817740-seed779/rustscenic/full-region-activity.npy",
+    "sha256": "438548ad9afcb6fae3afd35b08df01edef54417ca3241c0a4352658792814e19"
+  }
+]

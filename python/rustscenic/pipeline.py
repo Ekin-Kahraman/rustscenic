@@ -182,6 +182,7 @@ class PipelineResult:
     matrix_inputs: dict = field(default_factory=dict)
     cistarget_rankings: dict = field(default_factory=dict)
     region_cistarget_rankings: dict = field(default_factory=dict)
+    aucell_seed: int | None = None
 
     def manifest(self) -> dict:
         """Return result metadata, converting top-level Path values to strings."""
@@ -223,6 +224,7 @@ def run(
     grn_rho_threshold: float = 0.03,
     grn_rho_mask_dropouts: bool = False,
     aucell_top_frac: float = 0.05,
+    aucell_seed: int | None = None,
     topics_n_topics: int = 30,
     topics_n_passes: int = 3,
     topics_method: str = "vb",
@@ -348,6 +350,9 @@ def run(
     aucell_top_frac
         Fraction of the highest-ranked genes per cell used for AUCell
         recovery, greater than zero and at most one.
+    aucell_seed
+        Explicit seed for AUCell gene-order tie handling. ``None`` preserves
+        legacy behaviour; the audited workflow uses ``20261106``.
     topics_n_topics
         Number of latent topics requested when ATAC input is available.
     topics_n_passes
@@ -421,6 +426,13 @@ def run(
             f"signed regulons, got {grn_rho_threshold}"
         )
 
+    if aucell_seed is not None and (
+        isinstance(aucell_seed, bool) or not isinstance(aucell_seed, (int, np.integer))
+        or not 0 <= aucell_seed <= 2**32 - 1
+    ):
+        raise ValueError("aucell_seed must be None or an integer in 0..2**32-1")
+    if aucell_seed is not None:
+        aucell_seed = int(aucell_seed)
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     log = _Logger(verbose)
@@ -441,7 +453,7 @@ def run(
         io_elapsed[stage] = io_elapsed.get(stage, 0.0) + (time.perf_counter() - t0)
         return out
 
-    if motif_annotations is not None and motif_rankings is None:
+    if motif_annotations is not None and motif_rankings is None and region_motif_rankings is None:
         # Pruning needs both. Without rankings we have no enriched motifs to
         # filter, so the annotations are dead weight; warn instead of silently
         # routing the user into an un-pruned run they didn't ask for.
@@ -886,21 +898,16 @@ def run(
                 example_tf = tf_from_regulon_name(
                     next(iter(candidate_regulons), "TF_X_regulon")
                 )
-                # All candidate regulons were pruned away. Most common cause
-                # is a TF-symbol convention mismatch between the GRN (regulon
-                # names like ``PAX5_regulon``) and the annotation table
-                # (column ``TF``). Falling back to candidates so the run
-                # isn't silently empty downstream (AUCell would otherwise
-                # score 0 cells x 0 regulons without complaint).
                 _warnings.warn(
                     f"motif-annotation pruning removed all "
-                    f"{len(candidate_regulons)} candidate regulons. Likely "
-                    f"cause: motif_annotations TF symbols don't match the "
-                    f"GRN regulon TF symbols (case / convention mismatch). "
+                    f"{len(candidate_regulons)} candidate regulons. This can "
+                    f"reflect insufficient motif support or mismatched TF names. "
                     f"Compare the regulon TF (e.g. "
                     f"`{example_tf}`) "
                     f"with the annotation table's TF column. Falling back "
-                    f"to candidate GRN top-target regulons for AUCell.",
+                    f"to candidate GRN top-target regulons for AUCell. "
+                    f"These are not motif-supported results. Use "
+                    f"rustscenic.validated.run to disable this fallback.",
                     UserWarning,
                     stacklevel=2,
                 )
@@ -919,6 +926,7 @@ def run(
                 _stale = output_dir / "pruned_regulons.json"
                 try:
                     _stale.unlink(missing_ok=True)
+                    (output_dir / "cistarget_pruned_enriched.parquet").unlink(missing_ok=True)
                 except OSError as exc:
                     _warnings.warn(
                         f"could not remove stale {_stale}: {exc}. "
@@ -934,6 +942,19 @@ def run(
                     f"      pruning removed all regulons; falling back to "
                     f"{len(candidate_regulons)} candidate regulons"
                 )
+
+    if motif_rankings is not None and motif_annotations is not None and (
+        enriched is None or enriched.empty
+    ):
+        n_pruned_regulons = 0
+        regulon_source = f"{regulon_source}_without_motif_support"
+        _warnings.warn(
+            "No enriched motifs were retained. AUCell will score unfiltered "
+            "candidates in the generic pipeline. Use rustscenic.validated.run "
+            "for supported results without candidate fallback.", UserWarning, stacklevel=2,
+        )
+        for filename in ("pruned_regulons.json", "cistarget_pruned_enriched.parquet"):
+            (output_dir / filename).unlink(missing_ok=True)
 
     regulons_path = output_dir / "regulons.json"
     time_io(
@@ -1090,7 +1111,6 @@ def run(
                 )
                 if (
                     motif_annotations is not None
-                    and motif_rankings is not None
                     and not region_enrich.empty
                 ):
                     if motif_annotations_df is None:
@@ -1185,6 +1205,7 @@ def run(
             adata_rna,
             active_regulon_pairs,
             top_frac=aucell_top_frac,
+            **({"seed": aucell_seed} if aucell_seed is not None else {}),
         )
         backend_execution["aucell"] = _rust_execution_from_attrs(
             auc,
@@ -1249,6 +1270,7 @@ def run(
         matrix_inputs=matrix_inputs,
         cistarget_rankings=cistarget_rankings,
         region_cistarget_rankings=region_cistarget_rankings,
+        aucell_seed=aucell_seed,
     )
     # Manifest is the single source of truth for "what did this run produce"
     (output_dir / "manifest.json").write_text(json.dumps(result.manifest(), indent=2))
@@ -1848,8 +1870,10 @@ def _coerce_motif_annotations(annotations):
         return pd.read_parquet(path)
     if suffix == ".feather":
         return pd.read_feather(path)
-    if suffix in (".csv", ".tsv", ".txt"):
-        return pd.read_csv(path, sep="\t" if suffix in (".tsv", ".txt") else ",")
+    if suffix in (".csv", ".tsv", ".txt", ".tbl"):
+        return pd.read_csv(path, sep="," if suffix == ".csv" else "\t").rename(
+            columns={"#motif_id": "motif", "gene_name": "TF"}
+        )
     raise ValueError(f"unsupported motif_annotations format: {suffix}")
 
 

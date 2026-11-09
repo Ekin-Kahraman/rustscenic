@@ -97,6 +97,7 @@ def aucell_score(
     regulon_names: list[str],
     regulon_gene_indices: list[list[int]],
     top_frac: float = 0.05,
+    gene_order: list[int] | None = None,
 ) -> tuple[npt.NDArray[np.float32], float]:
     """Per-cell regulon recovery AUCs.
 
@@ -112,6 +113,7 @@ def aucell_score_sparse_csr(
     regulon_names: list[str],
     regulon_gene_indices: list[list[int]],
     top_frac: float = 0.05,
+    gene_order: list[int] | None = None,
 ) -> tuple[npt.NDArray[np.float32], float]:
     """Per-cell AUCell for CSR sparse expression without dense materialisation."""
 

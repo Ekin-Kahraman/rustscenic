@@ -1,0 +1,25 @@
+{
+  "analysis_memory_samples": 767,
+  "analysis_peak_pss_mb": 306.241536,
+  "analysis_pss_incomplete_samples": 0,
+  "command": [
+    "/sc/arion/scratch/huangl21/rustscenic-recovery/work/reference/bin/python",
+    "/sc/arion/scratch/huangl21/rustscenic-directional-confirmation/worker.py",
+    "--kind",
+    "biology",
+    "--arm",
+    "directional",
+    "--seed",
+    "777",
+    "--out",
+    "/sc/arion/scratch/huangl21/rustscenic-directional-confirmation/work/biology"
+  ],
+  "exit_code": 0,
+  "memory_samples": 898,
+  "peak_summed_rss_mb": 317.001728,
+  "peak_tree_pss_mb": 306.241536,
+  "process_wall_s": 108.40445296093822,
+  "pss_incomplete_samples": 0,
+  "status": "complete",
+  "timeout_seconds": 1800
+}

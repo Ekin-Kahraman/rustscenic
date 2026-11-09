@@ -1,0 +1,364 @@
+{
+  "package_sha256": "4e465b3ec15efe6ece51f5b068f4b903936fc474f6516339b9642bc664627793",
+  "tasks_verified": 18,
+  "returned_files_verified": 195,
+  "external_matrices_verified": 12,
+  "external_max_error": 3.300890139001922e-08,
+  "classifier_folds_verified": 96,
+  "confusion_matches_with_reference_scorer": 92,
+  "same_matrices_different_local_classifier_folds": [
+    {
+      "training_cells": 5000,
+      "seed": 777,
+      "mode": "signed",
+      "donor": "patient_1039",
+      "returned_f1": 0.5719843180836852,
+      "local_f1": 0.5759119465430156,
+      "max_confusion_count_difference": 2
+    },
+    {
+      "training_cells": 5000,
+      "seed": 778,
+      "mode": "signed",
+      "donor": "patient_1015",
+      "returned_f1": 0.5347062207933019,
+      "local_f1": 0.5349647734587023,
+      "max_confusion_count_difference": 1
+    },
+    {
+      "training_cells": 5000,
+      "seed": 778,
+      "mode": "signed",
+      "donor": "patient_1016",
+      "returned_f1": 0.5109149536031137,
+      "local_f1": 0.5110014320250498,
+      "max_confusion_count_difference": 1
+    },
+    {
+      "training_cells": 5000,
+      "seed": 779,
+      "mode": "signed",
+      "donor": "patient_1244",
+      "returned_f1": 0.693985760291324,
+      "local_f1": 0.6934311036245662,
+      "max_confusion_count_difference": 1
+    },
+    {
+      "training_cells": 5000,
+      "seed": 779,
+      "mode": "signed",
+      "donor": "patient_1256",
+      "returned_f1": 0.7150564345501121,
+      "local_f1": 0.7236889302288783,
+      "max_confusion_count_difference": 1
+    }
+  ],
+  "atlas_samples": [
+    {
+      "seed": 777,
+      "cells_checked_locally": 10000,
+      "max_error": 2.8292338027924302e-08,
+      "full_legacy_hashes_equal": true
+    },
+    {
+      "seed": 778,
+      "cells_checked_locally": 10000,
+      "max_error": 2.848088442863883e-08,
+      "full_legacy_hashes_equal": true
+    },
+    {
+      "seed": 779,
+      "cells_checked_locally": 10000,
+      "max_error": 3.121852876208919e-08,
+      "full_legacy_hashes_equal": true
+    }
+  ],
+  "full_score_files_retained_on_hpc": 15,
+  "paired_ratios": {
+    "baseline": {
+      "scoring_seconds": 0.9284257504647274,
+      "stage_elapsed_seconds": 0.973271015594306,
+      "peak_tree_pss_mb": 0.908882588074678
+    },
+    "unseeded": {
+      "scoring_seconds": 1.0041750479364087,
+      "stage_elapsed_seconds": 1.00759973165783,
+      "peak_tree_pss_mb": 1.034812213948036
+    }
+  },
+  "arm_medians": {
+    "baseline": {
+      "scoring_seconds": 19.325224367901683,
+      "stage_elapsed_seconds": 58.122574891895056,
+      "peak_tree_pss_mb": 613.20192
+    },
+    "seeded": {
+      "scoring_seconds": 18.225986080244184,
+      "stage_elapsed_seconds": 55.54960779286921,
+      "peak_tree_pss_mb": 549.579776
+    },
+    "unseeded": {
+      "scoring_seconds": 18.15171404927969,
+      "stage_elapsed_seconds": 55.51630304940045,
+      "peak_tree_pss_mb": 557.325312
+    }
+  },
+  "biology": {
+    "5000": {
+      "old_native": {
+        "balanced_accuracy": {
+          "left_mean": 0.7114454159697124,
+          "right_mean": 0.7115172169707813,
+          "difference": -7.180100106875253e-05,
+          "paired_donor_bootstrap_ci95": [
+            -0.015650233417791856,
+            0.012813482221723916
+          ],
+          "donors": 8,
+          "donor_differences": {
+            "patient_101": 0.009328170670595992,
+            "patient_1015": 0.004712989971323522,
+            "patient_1016": -0.042119857089004675,
+            "patient_1039": 0.02539277086587699,
+            "patient_107": -0.0033790283790284814,
+            "patient_1244": -0.002129707128751712,
+            "patient_1256": -0.015347303054389139,
+            "patient_1488": 0.022967556134827483
+          }
+        },
+        "macro_f1": {
+          "left_mean": 0.6064471777350622,
+          "right_mean": 0.6016866950261189,
+          "difference": 0.004760482708943234,
+          "paired_donor_bootstrap_ci95": [
+            -0.006481871857832383,
+            0.015262764655647826
+          ],
+          "donors": 8,
+          "donor_differences": {
+            "patient_101": 0.022492475829968273,
+            "patient_1015": 0.01642362732987468,
+            "patient_1016": -0.013341069957596097,
+            "patient_1039": 0.026622312422403538,
+            "patient_107": -0.0035007596137086594,
+            "patient_1244": 0.0003010014875728384,
+            "patient_1256": -0.02119711099247157,
+            "patient_1488": 0.010283385165502867
+          }
+        }
+      },
+      "reference_network": {
+        "balanced_accuracy": {
+          "left_mean": 0.7114454159697124,
+          "right_mean": 0.758360142237583,
+          "difference": -0.046914726267870493,
+          "paired_donor_bootstrap_ci95": [
+            -0.07926611270135994,
+            -0.007920294662596
+          ],
+          "donors": 8,
+          "donor_differences": {
+            "patient_101": -0.045870528443085146,
+            "patient_1015": -0.10876048400901805,
+            "patient_1016": 0.06561859875011844,
+            "patient_1039": -0.04406096318233743,
+            "patient_107": -0.09541350255635972,
+            "patient_1244": -0.08184206097118985,
+            "patient_1256": -0.017465214734345258,
+            "patient_1488": -0.047523654996746933
+          }
+        },
+        "macro_f1": {
+          "left_mean": 0.6064471777350622,
+          "right_mean": 0.6620943810211128,
+          "difference": -0.05564720328605062,
+          "paired_donor_bootstrap_ci95": [
+            -0.07840185043206742,
+            -0.029767484299351055
+          ],
+          "donors": 8,
+          "donor_differences": {
+            "patient_101": -0.03970571512781007,
+            "patient_1015": -0.09062230802885163,
+            "patient_1016": 0.013497305022584283,
+            "patient_1039": -0.03647653204870027,
+            "patient_107": -0.09613953559528554,
+            "patient_1244": -0.09265001689868613,
+            "patient_1256": -0.048616380157238126,
+            "patient_1488": -0.05446444345441748
+          }
+        }
+      },
+      "reference_scorer": {
+        "balanced_accuracy": {
+          "left_mean": 0.7114454159697124,
+          "right_mean": 0.7114700834363703,
+          "difference": -2.466746665791275e-05,
+          "paired_donor_bootstrap_ci95": [
+            -7.715100312886969e-05,
+            9.401323706387243e-06
+          ],
+          "donors": 8,
+          "donor_differences": {
+            "patient_101": 0.0,
+            "patient_1015": -4.381352961779772e-05,
+            "patient_1016": 0.0,
+            "patient_1039": 0.0,
+            "patient_107": 0.0,
+            "patient_1244": 3.7605294825548974e-05,
+            "patient_1256": -0.00019113149847105326,
+            "patient_1488": 0.0
+          }
+        },
+        "macro_f1": {
+          "left_mean": 0.6064471777350622,
+          "right_mean": 0.6067945273882875,
+          "difference": -0.0003473496532253595,
+          "paired_donor_bootstrap_ci95": [
+            -0.0010898349875707591,
+            5.855905561970298e-05
+          ],
+          "donors": 8,
+          "donor_differences": {
+            "patient_101": 0.0,
+            "patient_1015": -8.618422180017848e-05,
+            "patient_1016": 0.0,
+            "patient_1039": 0.0,
+            "patient_107": 0.0,
+            "patient_1244": 0.00018488555558593411,
+            "patient_1256": -0.0028774985595886315,
+            "patient_1488": 0.0
+          }
+        }
+      }
+    },
+    "20000": {
+      "old_native": {
+        "balanced_accuracy": {
+          "left_mean": 0.7782464667213164,
+          "right_mean": 0.7654425713970763,
+          "difference": 0.012803895324240075,
+          "paired_donor_bootstrap_ci95": [
+            -0.005775388788903264,
+            0.03623281116600756
+          ],
+          "donors": 8,
+          "donor_differences": {
+            "patient_101": -0.004190588067172651,
+            "patient_1015": 0.029766218542879197,
+            "patient_1016": 0.02534926652648206,
+            "patient_1039": 0.005084135385458932,
+            "patient_107": -0.009462523748237861,
+            "patient_1244": 0.08294036869779542,
+            "patient_1256": -0.00957911861007299,
+            "patient_1488": -0.01747659613321151
+          }
+        },
+        "macro_f1": {
+          "left_mean": 0.6928915795017478,
+          "right_mean": 0.682917593863558,
+          "difference": 0.009973985638189825,
+          "paired_donor_bootstrap_ci95": [
+            -0.004825327914313435,
+            0.027035486545844298
+          ],
+          "donors": 8,
+          "donor_differences": {
+            "patient_101": 0.02183714209870491,
+            "patient_1015": 0.017708629723136804,
+            "patient_1016": 0.015073199605461829,
+            "patient_1039": 0.003922500849772748,
+            "patient_107": -0.017849552430648896,
+            "patient_1244": 0.05880034358675401,
+            "patient_1256": -0.007368054910405597,
+            "patient_1488": -0.012332323417257207
+          }
+        }
+      },
+      "reference_network": {
+        "balanced_accuracy": {
+          "left_mean": 0.7782464667213164,
+          "right_mean": 0.7976465472407899,
+          "difference": -0.019400080519473423,
+          "paired_donor_bootstrap_ci95": [
+            -0.04376484420447861,
+            0.0050950241194456375
+          ],
+          "donors": 8,
+          "donor_differences": {
+            "patient_101": -0.04274277370714241,
+            "patient_1015": -0.01107834924792872,
+            "patient_1016": 0.03954067856232335,
+            "patient_1039": 0.007554330428168776,
+            "patient_107": -0.07413670627956337,
+            "patient_1244": -0.06327764635816246,
+            "patient_1256": -0.008206344832339618,
+            "patient_1488": -0.0028538327211429237
+          }
+        },
+        "macro_f1": {
+          "left_mean": 0.6928915795017478,
+          "right_mean": 0.7113264956873543,
+          "difference": -0.018434916185606456,
+          "paired_donor_bootstrap_ci95": [
+            -0.03448375303507012,
+            -0.0029634137479954276
+          ],
+          "donors": 8,
+          "donor_differences": {
+            "patient_101": -0.011264758436330347,
+            "patient_1015": -0.022108347142837603,
+            "patient_1016": 0.012421494447017678,
+            "patient_1039": 0.012547942195236694,
+            "patient_107": -0.061969175549333455,
+            "patient_1244": -0.03695985505751942,
+            "patient_1256": -0.025260921298071115,
+            "patient_1488": -0.014885708643014084
+          }
+        }
+      },
+      "reference_scorer": {
+        "balanced_accuracy": {
+          "left_mean": 0.7782464667213164,
+          "right_mean": 0.7782507498901761,
+          "difference": -4.283168859670061e-06,
+          "paired_donor_bootstrap_ci95": [
+            -1.2849506579010184e-05,
+            0.0
+          ],
+          "donors": 8,
+          "donor_differences": {
+            "patient_101": 0.0,
+            "patient_1015": 0.0,
+            "patient_1016": 0.0,
+            "patient_1039": 0.0,
+            "patient_107": 0.0,
+            "patient_1244": 0.0,
+            "patient_1256": 0.0,
+            "patient_1488": -3.426535087736049e-05
+          }
+        },
+        "macro_f1": {
+          "left_mean": 0.6928915795017478,
+          "right_mean": 0.6929019474766387,
+          "difference": -1.0367974890915232e-05,
+          "paired_donor_bootstrap_ci95": [
+            -3.11039246727457e-05,
+            0.0
+          ],
+          "donors": 8,
+          "donor_differences": {
+            "patient_101": 0.0,
+            "patient_1015": 0.0,
+            "patient_1016": 0.0,
+            "patient_1039": 0.0,
+            "patient_107": 0.0,
+            "patient_1244": 0.0,
+            "patient_1256": 0.0,
+            "patient_1488": -8.294379912732186e-05
+          }
+        }
+      }
+    }
+  }
+}

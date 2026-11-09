@@ -1,0 +1,100 @@
+{
+  "analysis_s": 409.09897017106414,
+  "biological_outputs_nonempty": true,
+  "cells": 100000,
+  "config_signature": "048cdd25523fd44b57cfb765a8c1a1db353d36f03478878c9300bb4c2359e4dc",
+  "dataset": "atlas",
+  "export_s": 0.2207350917160511,
+  "fit_summary": {
+    "fitted_trees_max": 291,
+    "fitted_trees_mean": 30.701666666666668,
+    "fitted_trees_median": 27.0,
+    "fitted_trees_min": 25,
+    "metadata_source": "arboreto target fit metadata",
+    "target_count": 3000
+  },
+  "full_activity_portability": "Full scores retained on HPC with hashes; return archive includes a fixed shared 10000-cell sample, full-network outputs and metrics computed across all cells.",
+  "gene_regulons": 48,
+  "genes": 3000,
+  "host": "lc07e20",
+  "input_signature": "5e491e3ee7d13b0de46b8eee0d93386fdd5c952a108299ae0a8cd3f1758b8662",
+  "input_to_export_s": 409.3197052627802,
+  "job_id": "278524598",
+  "local_test": false,
+  "memory_orchestration": {
+    "native_wheel_unchanged": true,
+    "no_cells_or_features_removed": true,
+    "rustscenic_aucell_cell_batch": 2048,
+    "rustscenic_peak_batch": 256
+  },
+  "method": "pyscenic",
+  "n_default_modules": null,
+  "n_eregulons": null,
+  "outputs": {
+    "cells.json": {
+      "bytes": 2519379,
+      "sha256": "d5f24b6309d2679bddc5c4efbc79fc1dae7908c247f9a42c2d7868f6005f03e5"
+    },
+    "full-gene-activity.npy": {
+      "bytes": 19200128,
+      "sha256": "49ff5ac989b371fe33371f4d880f091af1d0089d89b788291311ca9073f311fe"
+    },
+    "gene-activity-signatures.json": {
+      "bytes": 990,
+      "sha256": "94d782c88a7d562c74655bc284e32acaf2f1e925093a774538582bb8465095cb"
+    },
+    "gene-activity-summary.json": {
+      "bytes": 9192,
+      "sha256": "71aa170d9c4fc350684438c8201334f7e9e674b7defb2f1c9f677405cfe456f2"
+    },
+    "grn.parquet": {
+      "bytes": 2164340,
+      "sha256": "dce14d6d904c8969cf736b6068aca74d2d2e457cfd5cd6318ddb8e2f400f0c2d"
+    },
+    "marker-coverage.json": {
+      "bytes": 76,
+      "sha256": "f298a1ae8ecbe5def73cc61b64df11d9e6ab458b18ae7818800344c1f5472117"
+    },
+    "motif-evidence.parquet": {
+      "bytes": 44409,
+      "sha256": "fd4ba8e950c91165c5dda7421d79e0eb8485f67f5105d8e3dda7b125a0de25ae"
+    },
+    "regulons.json": {
+      "bytes": 13633,
+      "sha256": "c35462cff2e1fc0ec71bb139c83ce5d62ce5ba07b2ca4cc1f269fb588682ef62"
+    },
+    "sampled-gene-activity.parquet": {
+      "bytes": 826972,
+      "sha256": "d4e13893b837fe32d011fabaa17fa1cccc5bb1b9160b3a1ea84bdec1f60aea8e"
+    }
+  },
+  "runtime_additions": {
+    "lda": "3.0.0",
+    "numexpr": "2.8.7",
+    "polars-lts-cpu": "0.20.13"
+  },
+  "scope": "RNA matrix -> native signed top-50 modules -> motif refinement -> unweighted AUCell. GRN stopping/recipe/resources shared; pruning algorithms differ.",
+  "seed": 779,
+  "stages": {
+    "candidate_modules_and_correlation": 13.367446541786194,
+    "cell_activity": 16.02792288735509,
+    "dense_expression": 0.47159589268267155,
+    "gene_network": 364.1941044833511,
+    "motif_database_load": 0.11140847206115723,
+    "motif_enrichment_and_pruning": 10.121284801512957,
+    "rna_load": 0.7270874883979559
+  },
+  "status": "complete",
+  "tfs": 256,
+  "threads": 16,
+  "versions": {
+    "numpy": "1.23.5",
+    "pandas": "1.5.3",
+    "pycistarget": "1.1",
+    "pycistopic": "2.0a0",
+    "pyscenic": "0.12.1",
+    "rustscenic": "0.5.0",
+    "scenicplus": "1.0a2",
+    "scikit-learn": "1.3.2"
+  }
+}

@@ -1,7 +1,7 @@
 # RustScenic quickstart
 
 Infer a gene network and score candidate gene-set activity on PBMC3k with
-**v0.5.1**. This RNA example downloads data on first use and caches it locally.
+**v0.6.0**. This RNA example downloads data on first use and caches it locally.
 Runtime depends on the data, settings and CPU.
 
 ## Run in a notebook

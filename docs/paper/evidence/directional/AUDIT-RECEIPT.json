@@ -1,0 +1,139 @@
+{
+  "status": "passed",
+  "archive_sha256": "919f9312edb3a7805bfe555556aaf562c3507d4765b06adbbf54f423a079ae44",
+  "manifested_files": 96,
+  "completed_tasks": 7,
+  "folds_recomputed_from_confusions": 192,
+  "external_cells": 12315,
+  "donors": 8,
+  "numerical_checks": [
+    {
+      "training_cells": 5000,
+      "seed": 777,
+      "method": "rustscenic",
+      "max_error": 0.0
+    },
+    {
+      "training_cells": 5000,
+      "seed": 777,
+      "method": "reference",
+      "max_error": 0.0
+    },
+    {
+      "training_cells": 5000,
+      "seed": 778,
+      "method": "rustscenic",
+      "max_error": 0.0
+    },
+    {
+      "training_cells": 5000,
+      "seed": 778,
+      "method": "reference",
+      "max_error": 0.0
+    },
+    {
+      "training_cells": 5000,
+      "seed": 779,
+      "method": "rustscenic",
+      "max_error": 0.0
+    },
+    {
+      "training_cells": 5000,
+      "seed": 779,
+      "method": "reference",
+      "max_error": 0.0
+    },
+    {
+      "training_cells": 20000,
+      "seed": 777,
+      "method": "rustscenic",
+      "max_error": 0.0
+    },
+    {
+      "training_cells": 20000,
+      "seed": 777,
+      "method": "reference",
+      "max_error": 0.0
+    },
+    {
+      "training_cells": 20000,
+      "seed": 778,
+      "method": "rustscenic",
+      "max_error": 0.0
+    },
+    {
+      "training_cells": 20000,
+      "seed": 778,
+      "method": "reference",
+      "max_error": 0.0
+    },
+    {
+      "training_cells": 20000,
+      "seed": 779,
+      "method": "rustscenic",
+      "max_error": 0.0
+    },
+    {
+      "training_cells": 20000,
+      "seed": 779,
+      "method": "reference",
+      "max_error": 0.0
+    }
+  ],
+  "atlas_sample_checks": [
+    {
+      "seed": 777,
+      "max_error": 0.0
+    },
+    {
+      "seed": 778,
+      "max_error": 0.0
+    },
+    {
+      "seed": 779,
+      "max_error": 0.0
+    }
+  ],
+  "full_arrays_retained_on_hpc": [
+    {
+      "path": "atlas/778/directional/full-scores.h5",
+      "bytes": 353986520,
+      "sha256": "3c5dd765327b3e1ed5ad5a01c68ae377b9958164bfe2ee0932d0cae387c9f7ce"
+    },
+    {
+      "path": "atlas/778/union/full-scores.h5",
+      "bytes": 275343320,
+      "sha256": "f21a2dda11df697612f4eaf5d3feab7ce189d0cede1180b371be23d7c44fdd9e"
+    },
+    {
+      "path": "atlas/777/directional/full-scores.h5",
+      "bytes": 353986520,
+      "sha256": "e40d0cb3452288a5b68df2c2a7556fc2862cd81bec1846b2713262ddf35438ab"
+    },
+    {
+      "path": "atlas/777/union/full-scores.h5",
+      "bytes": 278620120,
+      "sha256": "ff25834bda69294bb7bbb95bd52dd85ece84ec925235c8162029a160d00b17c2"
+    },
+    {
+      "path": "atlas/779/directional/full-scores.h5",
+      "bytes": 350709720,
+      "sha256": "e574779e18f8093e3807f5a331b6407636769ffd663f2f82436c4bf40d60fbc3"
+    },
+    {
+      "path": "atlas/779/union/full-scores.h5",
+      "bytes": 278620120,
+      "sha256": "263d29265faa6a1c1c5c57bf25827099e3df11be248067e804142031a52cba18"
+    }
+  ],
+  "all_performance_ratios_verified": true,
+  "all_bootstrap_intervals_reproduced": true,
+  "median_ratios": {
+    "analysis_peak_pss_mb_ratio": 1.0405709854760563,
+    "output_array_bytes_ratio": 1.3432835820895523,
+    "peak_tree_pss_mb_ratio": 1.0452173722203224,
+    "scoring_seconds_ratio": 1.0262276681476739,
+    "stage_elapsed_seconds_ratio": 1.0029019526092884
+  },
+  "scope": "Reused cohorts and networks; no classifier or network refitting during this audit. Full atlas arrays are hash-listed but not included in the return."
+}

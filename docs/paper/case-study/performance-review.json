@@ -1,0 +1,103 @@
+{
+  "basis": "Existing matched HPC stage timings and code-path inspection, not a new timing run",
+  "stage_review": [
+    {
+      "dataset": "atlas",
+      "cells": 1306127,
+      "median_stage_seconds": {
+        "candidate_modules": 0.0427598096430301,
+        "cell_activity": 6.929053015075624,
+        "gene_correlation": 10.211503144353628,
+        "gene_network": 2511.801184395328,
+        "motif_database_load": 0.2025423534214496,
+        "motif_enrichment": 0.0234392192214727,
+        "motif_pruning": 0.2931240731850266,
+        "rna_load": 5.689839584752917
+      },
+      "dominant_native_stages": [
+        "gene_network"
+      ],
+      "median_native_fraction_of_workflow": 0.9893450601265491
+    },
+    {
+      "dataset": "hdma",
+      "cells": 817740,
+      "median_stage_seconds": {
+        "accessibility_imputation": 173.45832461863756,
+        "atac_counts_load": 20.02835271321237,
+        "gene_activity": 17.05781744234264,
+        "gene_correlation": 70.96593179553747,
+        "gene_network": 2480.026054624468,
+        "region_activity": 140.94418979808688,
+        "region_database_load": 2.7808235604315996,
+        "region_motif_enrichment": 7.989777721464634,
+        "region_to_gene": 752.5815487299114,
+        "regulon_assembly": 0.9813853185623884,
+        "rna_load": 36.87646301090717,
+        "topic_modelling": 2470.070029789582
+      },
+      "dominant_native_stages": [
+        "gene_network",
+        "topic_modelling",
+        "region_to_gene"
+      ],
+      "median_native_fraction_of_workflow": 0.9239021340491665
+    }
+  ],
+  "python_hot_path_scan": {
+    "allowed_hit_count": 32,
+    "exists": true,
+    "ok": true,
+    "package_dir": "/Users/ekin/projects/bio/rustscenic-biological-fidelity/python/rustscenic",
+    "pattern_count": 62,
+    "violation_count": 0,
+    "violations": []
+  },
+  "engine_changed": false,
+  "native_scoring_fix_preserved": true,
+  "core_source_sha256": {
+    "python/rustscenic/__init__.py": "3c87ad345d082eb9fdcbf5f475c3119b8613c8b22415e619cfa1c694e251d599",
+    "python/rustscenic/__main__.py": "76f7383ee669526d7eca9e5b640b7b024534ddec5a4ddd148899a197e8e53a68",
+    "python/rustscenic/_gene_resolution.py": "c285342ced20f60b2fda427645544df559c42a9c062ceff2e09b29beebd97dc6",
+    "python/rustscenic/_memory.py": "459eaea263340ac7d54f8e0855a0a28fecd8266c947401c4bf248128fb3b6361",
+    "python/rustscenic/_rustscenic.pyi": "673f7fb349182aff9183a7cccabd177ae17f731e47410e7e45834821c5a30634",
+    "python/rustscenic/_stage_utils.py": "6ba7511e0e4a290cb16acbafdf6392de50872659456fded5f2d2f7d4f182198e",
+    "python/rustscenic/aucell.py": "95a0bb806c26a8b0b816e4e478dbcb222fd4968429881bdf5143d78e0de60170",
+    "python/rustscenic/backend.py": "bbf76c6c643d407796a4a627a7b4bff822393d14b3c55a854fc31cae91ea8147",
+    "python/rustscenic/cistarget.py": "3ec1a79e9696fab6e7f7a19e6d927db4e220dbb7879452cc4b54e7410ae606bc",
+    "python/rustscenic/cli.py": "dc56c2369ae7be91d8e9939967ebcd0b4e25d5501bd4f8500045fb151d994c8d",
+    "python/rustscenic/data/__init__.py": "17a2fb11a5d2f77c065a9144b04cbee17a5a266bd9f5baac98e2bfc0bbcf1cca",
+    "python/rustscenic/enhancer.py": "a077825090c12b9f9acfef191ba63078eb2dad7a100e217c7199bb0bf8a2cb59",
+    "python/rustscenic/eregulon.py": "019a775ddf70a2cc8c8b225a9aa50d4897f6f2234526fbe026e06c1e30ea7306",
+    "python/rustscenic/grn.py": "b7046b124fcf5b9fa08b94b2880ebd80da9cb679515ec8d6db34ea03b4f4d5d1",
+    "python/rustscenic/pipeline.py": "cc03c8a82bbc42b49e592734269938bf699e1fd9094ebedc53a4a6f7e75832b9",
+    "python/rustscenic/preproc.py": "b736ba338906ccf38072a77e235b89286aebd8cd624bbe6b947bc7e7f3c890aa",
+    "python/rustscenic/quickstart.py": "108e868bd78defe1e12616307ef9bc5b9fc25bd038e2e3df792f41d323807a61",
+    "python/rustscenic/specificity.py": "d4f4d3aa07adb982fe1c921c9bbc9577c5e077c6a78a0a6fa30c673d70c57e6e",
+    "python/rustscenic/topics.py": "0120d40ab0864ecce5ea95f0a1f6c2bcf1266a2d1d61541f156ae90fe3215cea",
+    "crates/rustscenic-aucell/Cargo.toml": "dd464fdb38576f7868c83f5cd67a6e2970136d32ef27d839a2972d7ce1147d45",
+    "crates/rustscenic-aucell/src/lib.rs": "d4b81b577d6d9415545046afda634f43f8f6c1bfc90a245d2f54672c27c20da8",
+    "crates/rustscenic-grn/Cargo.toml": "500b4c979ebe4575590a1b0e6bd4ebf3c86806fcafa71043f3f324542a748225",
+    "crates/rustscenic-grn/src/correlation.rs": "78450e22c3e27bda9800b279d08241a1257e4f10fd0b6dcb1d0ae1c367aea10a",
+    "crates/rustscenic-grn/src/gbm.rs": "143edc697106f1a31a2ca68a36081702e2ac25d133695fafc4a1dd177ef10b03",
+    "crates/rustscenic-grn/src/histogram.rs": "b7d30fde1cf3d3d18d0e8e6ec6c4fa99331711aba59d0e8e9b3c7a4cd13c9340",
+    "crates/rustscenic-grn/src/lib.rs": "40865b05376fe1deed45256dc252fb66fad0c61d5d9452b8dc0f48af22e7defa",
+    "crates/rustscenic-grn/src/rng.rs": "50ae0a98da69b13fb4900c7036c7e57067d42c325562c8eaee79438b8a50fd66",
+    "crates/rustscenic-grn/src/tree.rs": "eb45b01e169146e07e01d687855a96e4da51b0989d78bf05593473a2bbb1f161",
+    "crates/rustscenic-preproc/Cargo.toml": "937a3e6dff6f11437bbb2543b87f5c110fccf09d385154c7ec485bc3466270f6",
+    "crates/rustscenic-preproc/src/fragments.rs": "d17d8091f33609e1098ac135db7c98395ebc7fce5cd3449adf0dd497013fa884",
+    "crates/rustscenic-preproc/src/lib.rs": "003b1070bcdf266fc073d4b9b9e143453f5f2c2f3b1877d375dd5708508cce35",
+    "crates/rustscenic-preproc/src/matrix.rs": "2851db1fe79373dcdcd0a50083f673961ab7293546923f2700c966165c579d04",
+    "crates/rustscenic-preproc/src/peak_calling.rs": "5c4775ac624ef3c385572cc8359d3410c642358dc52de910dcc5fd3414553160",
+    "crates/rustscenic-preproc/src/peaks.rs": "16a7f03918f75fcf6809eb61416aa3083e893344f44f5a53023eaac507215c1d",
+    "crates/rustscenic-preproc/src/qc.rs": "489814b2f64b539986a1f4edc32398a958445f73baf268ce8a75eee51996e50c",
+    "crates/rustscenic-py/Cargo.toml": "4533bdd05b29bb99cd0e4150717bb6a867b6725481203448b9770eec810a1ba4",
+    "crates/rustscenic-py/src/lib.rs": "8969dec28d07357bb1c5e5afb99a2b99d94a930178461cb0b371639413a5d6f2",
+    "crates/rustscenic-topics/Cargo.toml": "2101ec53705ce38fb5884ebaca8854405848c61f905d615b06bce1e5ed01bb7d",
+    "crates/rustscenic-topics/src/gibbs.rs": "fc0fd3cc95030c633be18c0b5f55a456f84e8799f1b151ec3735148317c4388d",
+    "crates/rustscenic-topics/src/lib.rs": "cb58060139c1c6f241fd0d15682661628eafd7f29e231184f2cc12cc7ddda6b8"
+  },
+  "decision": "No confirmed engine defect behind missing regulators. Dominant computation already uses Rust. Preserve kernels and defaults; no speculative port or new speedup claim.",
+  "analysis_memory_design": "Trace uses sparse rank contributions and block decoding; no dense full motif-ranking matrix.",
+  "whole_workflow_performance_claims_changed": false
+}

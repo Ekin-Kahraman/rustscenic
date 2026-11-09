@@ -1,0 +1,35 @@
+{
+  "outputs": {
+    "coverage.json": {
+      "bytes": 1056,
+      "sha256": "5382485b0c06d0decd1349a17f9a37585f78b7190d2ce1551139f2153f9be62b"
+    },
+    "environment.json": {
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a"
+    },
+    "full-scores.h5": {
+      "bytes": 278620120,
+      "sha256": "ff25834bda69294bb7bbb95bd52dd85ece84ec925235c8162029a160d00b17c2"
+    },
+    "network.json": {
+      "bytes": 108,
+      "sha256": "8b996d1f08155143a78b65fd75523e45c138ec8b21480515e0c804a823ced151"
+    },
+    "sampled-scores.parquet": {
+      "bytes": 1376489,
+      "sha256": "729cadc33b40f8b617812809c2811cebf61bf56a45cbf9610303cffc17f9c134"
+    },
+    "score-summary.json": {
+      "bytes": 6011,
+      "sha256": "574c445d6faab47416f7201f73c99bc98b141c73ae010129d263f44c7f848224"
+    },
+    "signatures.json": {
+      "bytes": 46111,
+      "sha256": "90f541add67310985506431b3e99bce56e2984a00eecc9fe7d8eb9623af7d5a7"
+    }
+  },
+  "package": "b2870ecf8c11abfbb4e586fad9604993d687e75ef387340df59d2276edfbbbc9",
+  "smoke": false,
+  "status": "complete"
+}

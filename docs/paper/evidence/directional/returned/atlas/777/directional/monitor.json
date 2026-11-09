@@ -1,0 +1,27 @@
+{
+  "analysis_memory_samples": 477,
+  "analysis_peak_pss_mb": 581.456896,
+  "analysis_pss_incomplete_samples": 0,
+  "command": [
+    "/sc/arion/scratch/huangl21/rustscenic-recovery/work/reference/bin/python",
+    "/sc/arion/scratch/huangl21/rustscenic-directional-confirmation/worker.py",
+    "--kind",
+    "atlas",
+    "--arm",
+    "directional",
+    "--seed",
+    "777",
+    "--out",
+    "/sc/arion/scratch/huangl21/rustscenic-directional-confirmation/work/atlas/777/directional",
+    "--matrix",
+    "/sc/arion/scratch/huangl21/rustscenic-recovery/work/prepared/hdma/rna.h5"
+  ],
+  "exit_code": 0,
+  "memory_samples": 493,
+  "peak_summed_rss_mb": 595.984384,
+  "peak_tree_pss_mb": 585.22112,
+  "process_wall_s": 60.140703273937106,
+  "pss_incomplete_samples": 0,
+  "status": "complete",
+  "timeout_seconds": 1200
+}

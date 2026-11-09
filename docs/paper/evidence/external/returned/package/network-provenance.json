@@ -1,0 +1,92 @@
+[
+  {
+    "file": "networks/bmmc-train5000-seed777/rustscenic.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/rustscenic/eregulon-edges.parquet",
+    "sha256": "e7d63c5e3e8291e79f22d7e141ec19415fa4f62ee71f59e30594daf28b7ff592"
+  },
+  {
+    "file": "networks/bmmc-train5000-seed777/reference.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/reference/eregulon-edges.parquet",
+    "sha256": "7000c59948f4cbe6e7306603edb7446a81589b1a439035979f66c293dfa41dfd"
+  },
+  {
+    "file": "networks/bmmc-train5000-seed778/rustscenic.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/rustscenic/eregulon-edges.parquet",
+    "sha256": "a9180c26d1f5dfe778faa4b97db2a9417941f93e2153cdc09fb39ed8d47bd77f"
+  },
+  {
+    "file": "networks/bmmc-train5000-seed778/reference.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/reference/eregulon-edges.parquet",
+    "sha256": "54ff96913741ebf2d18b3144a6654d9b18ee8da50dd45fa8804063c27f35b189"
+  },
+  {
+    "file": "networks/bmmc-train5000-seed779/rustscenic.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/rustscenic/eregulon-edges.parquet",
+    "sha256": "1bfcaba5658031ec224c3dbaebb73d6091b70df99c936b06b615353c0b76e580"
+  },
+  {
+    "file": "networks/bmmc-train5000-seed779/reference.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/reference/eregulon-edges.parquet",
+    "sha256": "4795ad8aacc16e69dfcd4274c87ed19524b9bf63296a66a9c62babb54538cdd7"
+  },
+  {
+    "file": "networks/bmmc-train20000-seed777/rustscenic.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/rustscenic/eregulon-edges.parquet",
+    "sha256": "edfb650cd0e4ae1dcefc2c587c40273d0b2fa5ddb2d1b97dbb6e30394623de9a"
+  },
+  {
+    "file": "networks/bmmc-train20000-seed777/reference.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/reference/eregulon-edges.parquet",
+    "sha256": "f53530817741c505ffaa30f46d047e5d70ca47e7571f8276af4d12916d7c3728"
+  },
+  {
+    "file": "networks/bmmc-train20000-seed778/rustscenic.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/rustscenic/eregulon-edges.parquet",
+    "sha256": "ad4c96fe88a203e7e0427af82275d4721840c7657f27c4142584b372e5795854"
+  },
+  {
+    "file": "networks/bmmc-train20000-seed778/reference.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/reference/eregulon-edges.parquet",
+    "sha256": "ca429f038003a14eed9591eb5f8e4ef8ffc53d05667228d0036cc62f3cdffa9f"
+  },
+  {
+    "file": "networks/bmmc-train20000-seed779/rustscenic.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/rustscenic/eregulon-edges.parquet",
+    "sha256": "29e0328898054bf46f7a2f30d9c5f0bcf4c61a0349dffcb8d4ceae26cf09e89e"
+  },
+  {
+    "file": "networks/bmmc-train20000-seed779/reference.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/reference/eregulon-edges.parquet",
+    "sha256": "c2b543101e5782b2b7b190d14cb7972f5d522b773f88ef2ee7c8775a8c9cc193"
+  },
+  {
+    "file": "networks/hdma-n817740-seed777/rustscenic.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n817740-seed777/rustscenic/eregulon-edges.parquet",
+    "sha256": "0c6b916f4f63018cf9533859eee767d19b2fb365ac8956b16d83cffb8b7ab8df"
+  },
+  {
+    "file": "networks/hdma-n817740-seed777/reference.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n817740-seed777/reference/eregulon-edges.parquet",
+    "sha256": "bfea7826cbfc84e091a8610d0f57d6d866a9b1b84fbf28fb048466138ca75b68"
+  },
+  {
+    "file": "networks/hdma-n817740-seed778/rustscenic.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n817740-seed778/rustscenic/eregulon-edges.parquet",
+    "sha256": "91538dc7d69e6875b517839a00c004d3d04d30cadc1dc038f6226b55336abf82"
+  },
+  {
+    "file": "networks/hdma-n817740-seed778/reference.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n817740-seed778/reference/eregulon-edges.parquet",
+    "sha256": "338e3d9b7ba88db08faabc3856368d328ffdd355c1119305008a035cbaa29ca0"
+  },
+  {
+    "file": "networks/hdma-n817740-seed779/rustscenic.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n817740-seed779/rustscenic/eregulon-edges.parquet",
+    "sha256": "0754e6814c554b2af6b7d244669ef65b9bbcbc738e3d9dfe03512af02c460d35"
+  },
+  {
+    "file": "networks/hdma-n817740-seed779/reference.parquet",
+    "source": "/Users/ekin/Desktop/RustScenic/RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n817740-seed779/reference/eregulon-edges.parquet",
+    "sha256": "23294adfc714c13d8217225e4743189a7addd1eb204ae117b8dae541f9b669cb"
+  }
+]

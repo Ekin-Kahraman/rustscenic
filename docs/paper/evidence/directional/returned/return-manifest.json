@@ -1,0 +1,389 @@
+{
+  "excluded": "Full HDF5 scores remain on HPC; sample matrices, full-score hashes, checks and logs are included.",
+  "files": {
+    "READY.json": {
+      "bytes": 293,
+      "sha256": "d9df35b8e1b0f8f6df7a72f2520d99fe584db6b18b718796bfbc242065e622e4"
+    },
+    "SUMMARY.json": {
+      "bytes": 2297,
+      "sha256": "6a3c808f561bb842baf78e0098fe32a568378f80464d6b3ccb6c458a250eca29"
+    },
+    "atlas/777/directional/complete.json": {
+      "bytes": 1252,
+      "sha256": "d4537df2e805f2f9220c24bb798885908b71db7fe96af4951de2524918784d79"
+    },
+    "atlas/777/directional/coverage.json": {
+      "bytes": 2318,
+      "sha256": "c694c905193f826e7e156ef6502a01686c69e4cb60d6eb95a85bebcfcfba6f93"
+    },
+    "atlas/777/directional/environment.json": {
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a"
+    },
+    "atlas/777/directional/memory.csv": {
+      "bytes": 31084,
+      "sha256": "a8bbb02824f757bdd71f2e38329e282a0c87202ea463548e5ab1d0de1f313599"
+    },
+    "atlas/777/directional/monitor.json": {
+      "bytes": 818,
+      "sha256": "c5e811a3d5fe41e9cf227493ce053a611271b34812e80af7b769af1290721e32"
+    },
+    "atlas/777/directional/network.json": {
+      "bytes": 108,
+      "sha256": "8b996d1f08155143a78b65fd75523e45c138ec8b21480515e0c804a823ced151"
+    },
+    "atlas/777/directional/phase.json": {
+      "bytes": 24,
+      "sha256": "3b625f687e09b5e1303da28be51b227d4a4102980cf7901bac47f3aa84dbcee5"
+    },
+    "atlas/777/directional/prior-sample-check.json": {
+      "bytes": 50,
+      "sha256": "64d13978e5a4b7b59f00a53e381425564c5ad7636dc55958aaf675a511bc3b62"
+    },
+    "atlas/777/directional/run.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "atlas/777/directional/sampled-scores.parquet": {
+      "bytes": 1726713,
+      "sha256": "cf2d80e6ade7aca7494ccee7ab3eb621b710cf6d628d41c6d93b5a9cfdb4f21b"
+    },
+    "atlas/777/directional/score-summary.json": {
+      "bytes": 8777,
+      "sha256": "bf043ebdcd63b42c7275949ad853da2d5d624a28d8f6be984da21edf20e00978"
+    },
+    "atlas/777/directional/signatures.json": {
+      "bytes": 47396,
+      "sha256": "569650d0ee1a9c3a72c821fa913b3818b1ab5a2733daeb0cc0623dcf49f362b3"
+    },
+    "atlas/777/union/complete.json": {
+      "bytes": 1110,
+      "sha256": "ec54d2d8ee771b87b98f30e980a2617c19a09086f8e16be18582e7952fd1ec25"
+    },
+    "atlas/777/union/coverage.json": {
+      "bytes": 1056,
+      "sha256": "5382485b0c06d0decd1349a17f9a37585f78b7190d2ce1551139f2153f9be62b"
+    },
+    "atlas/777/union/environment.json": {
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a"
+    },
+    "atlas/777/union/memory.csv": {
+      "bytes": 31311,
+      "sha256": "2c2c9b80eaf3afa98e91c63f06d116d9a33f625b54e20840d9b6b61130fe3e35"
+    },
+    "atlas/777/union/monitor.json": {
+      "bytes": 807,
+      "sha256": "d24c8f58e395dcba7d3337d6b6bcdf7dd14c2fead601c2a780b6ef1832e51cff"
+    },
+    "atlas/777/union/network.json": {
+      "bytes": 108,
+      "sha256": "8b996d1f08155143a78b65fd75523e45c138ec8b21480515e0c804a823ced151"
+    },
+    "atlas/777/union/phase.json": {
+      "bytes": 24,
+      "sha256": "3b625f687e09b5e1303da28be51b227d4a4102980cf7901bac47f3aa84dbcee5"
+    },
+    "atlas/777/union/run.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "atlas/777/union/sampled-scores.parquet": {
+      "bytes": 1376489,
+      "sha256": "729cadc33b40f8b617812809c2811cebf61bf56a45cbf9610303cffc17f9c134"
+    },
+    "atlas/777/union/score-summary.json": {
+      "bytes": 6011,
+      "sha256": "574c445d6faab47416f7201f73c99bc98b141c73ae010129d263f44c7f848224"
+    },
+    "atlas/777/union/signatures.json": {
+      "bytes": 46111,
+      "sha256": "90f541add67310985506431b3e99bce56e2984a00eecc9fe7d8eb9623af7d5a7"
+    },
+    "atlas/778/directional/complete.json": {
+      "bytes": 1252,
+      "sha256": "382406166d18ba28eb417fb2e0ed3ba751a8c9caf363cc6041ce349d2125cf7f"
+    },
+    "atlas/778/directional/coverage.json": {
+      "bytes": 2318,
+      "sha256": "069c99f690b0821b1cc3b34f0b9de21f4d5eea748b307a2e9b899348a62b9142"
+    },
+    "atlas/778/directional/environment.json": {
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a"
+    },
+    "atlas/778/directional/memory.csv": {
+      "bytes": 30819,
+      "sha256": "88401988ed0b876ffaa5a07fbe70633460eee50e9e708d50106a1446edf224ad"
+    },
+    "atlas/778/directional/monitor.json": {
+      "bytes": 816,
+      "sha256": "2f6a24c2e52d6a5aea11662436b0866d55b26558cfabdc8c5c692c545ab3e413"
+    },
+    "atlas/778/directional/network.json": {
+      "bytes": 108,
+      "sha256": "273a9313d01760920e2debd5024398c0f3ec92ad3d48d00948d1d42db6d741f4"
+    },
+    "atlas/778/directional/phase.json": {
+      "bytes": 24,
+      "sha256": "3b625f687e09b5e1303da28be51b227d4a4102980cf7901bac47f3aa84dbcee5"
+    },
+    "atlas/778/directional/prior-sample-check.json": {
+      "bytes": 50,
+      "sha256": "64d13978e5a4b7b59f00a53e381425564c5ad7636dc55958aaf675a511bc3b62"
+    },
+    "atlas/778/directional/run.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "atlas/778/directional/sampled-scores.parquet": {
+      "bytes": 1724207,
+      "sha256": "8bf329c67f835c382633462f056547094ed6d699f2b97ba2038f9e1a3e930583"
+    },
+    "atlas/778/directional/score-summary.json": {
+      "bytes": 8789,
+      "sha256": "2b513cc041d64cf2c248d33ee81fdb88e3e1959e50275c133a2d07043007a197"
+    },
+    "atlas/778/directional/signatures.json": {
+      "bytes": 46955,
+      "sha256": "523e9abaab446864372ebc87ee107663a584ece63e32c460569af258bd78b0e1"
+    },
+    "atlas/778/union/complete.json": {
+      "bytes": 1110,
+      "sha256": "7a94ae2b5cf010bfe62c5eea6bc6f2d15a7d61d2022cc5480d84a9f90ca7c3ec"
+    },
+    "atlas/778/union/coverage.json": {
+      "bytes": 1042,
+      "sha256": "933d4abda5cdf6409be249045a9af5fdedcf010dcc943f8228825f63579a0381"
+    },
+    "atlas/778/union/environment.json": {
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a"
+    },
+    "atlas/778/union/memory.csv": {
+      "bytes": 30687,
+      "sha256": "8f5e90ca8b95b6930e147874b4de558127dbed7631fbae45f2fcf270476cce32"
+    },
+    "atlas/778/union/monitor.json": {
+      "bytes": 806,
+      "sha256": "966eecb62d11ca0e88b86d89f53aae159f3a1e7f03c991155c52bc981d4e6e84"
+    },
+    "atlas/778/union/network.json": {
+      "bytes": 108,
+      "sha256": "273a9313d01760920e2debd5024398c0f3ec92ad3d48d00948d1d42db6d741f4"
+    },
+    "atlas/778/union/phase.json": {
+      "bytes": 24,
+      "sha256": "3b625f687e09b5e1303da28be51b227d4a4102980cf7901bac47f3aa84dbcee5"
+    },
+    "atlas/778/union/run.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "atlas/778/union/sampled-scores.parquet": {
+      "bytes": 1363290,
+      "sha256": "bf3f570e1d5262d2ef361fdf43fddc73197074406ee5d8ee97262e82e4aef1ec"
+    },
+    "atlas/778/union/score-summary.json": {
+      "bytes": 5939,
+      "sha256": "49c9873d9cfd5fc71896392d1e371d1b342b7c296286c267ed3a8233cf19e448"
+    },
+    "atlas/778/union/signatures.json": {
+      "bytes": 45655,
+      "sha256": "2865419acb6918488fa6b6fdbcd66e7f6b277c8fed8d0db682d4087c342099c4"
+    },
+    "atlas/779/directional/complete.json": {
+      "bytes": 1252,
+      "sha256": "38ff8e16fced100d4c4a6d704ab8569f9ef411ded594f688b3cf91a5bf26388b"
+    },
+    "atlas/779/directional/coverage.json": {
+      "bytes": 2293,
+      "sha256": "67787668a47658f700996469ba6314203aa3306636226292f7e79131cce21b2b"
+    },
+    "atlas/779/directional/environment.json": {
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a"
+    },
+    "atlas/779/directional/memory.csv": {
+      "bytes": 32054,
+      "sha256": "58c52f9a34d1d78a3b12b7bb9900fb525524da8d61f2f34ce700ef60bf72027a"
+    },
+    "atlas/779/directional/monitor.json": {
+      "bytes": 818,
+      "sha256": "8c95f5aae697b2da20786e2f8d046fc1692c3674856e42630f52aaa283dd4d07"
+    },
+    "atlas/779/directional/network.json": {
+      "bytes": 108,
+      "sha256": "b25b4154920a36ff6b9077f1da025161049b7cbfc8e82bc0a25f0576f3fcdc2c"
+    },
+    "atlas/779/directional/phase.json": {
+      "bytes": 24,
+      "sha256": "3b625f687e09b5e1303da28be51b227d4a4102980cf7901bac47f3aa84dbcee5"
+    },
+    "atlas/779/directional/prior-sample-check.json": {
+      "bytes": 50,
+      "sha256": "64d13978e5a4b7b59f00a53e381425564c5ad7636dc55958aaf675a511bc3b62"
+    },
+    "atlas/779/directional/run.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "atlas/779/directional/sampled-scores.parquet": {
+      "bytes": 1682493,
+      "sha256": "620c40a24a1d330d7659fb0984e22d6870ef203d42a401e1695f4025c1841899"
+    },
+    "atlas/779/directional/score-summary.json": {
+      "bytes": 8695,
+      "sha256": "534cf0eea4b9e04de586d9004401be88af44b44aac750adbc52c284f0707593e"
+    },
+    "atlas/779/directional/signatures.json": {
+      "bytes": 45636,
+      "sha256": "fda284318288abdc0e2e221ccadf007dc5a9eee9b420d0fd9abd8e0c5b9577d8"
+    },
+    "atlas/779/union/complete.json": {
+      "bytes": 1110,
+      "sha256": "c4a58c11bc6eb7a43b8b8ba3d2e53deb6fb0aecf1aafd197c524e067d9548c6b"
+    },
+    "atlas/779/union/coverage.json": {
+      "bytes": 1057,
+      "sha256": "e114646d728639fc38cc0fcdd7c9cc522c21b66022ca346bb7ec59146ccaf723"
+    },
+    "atlas/779/union/environment.json": {
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a"
+    },
+    "atlas/779/union/memory.csv": {
+      "bytes": 36307,
+      "sha256": "8333acdb11c1c8a7b1449baecd7d4c4513e4aa73252957b551e7b67b8db613cd"
+    },
+    "atlas/779/union/monitor.json": {
+      "bytes": 806,
+      "sha256": "3b1be14296d138a1cd0bd34c3824e8556081bc8e67111729cbce89180b473888"
+    },
+    "atlas/779/union/network.json": {
+      "bytes": 108,
+      "sha256": "b25b4154920a36ff6b9077f1da025161049b7cbfc8e82bc0a25f0576f3fcdc2c"
+    },
+    "atlas/779/union/phase.json": {
+      "bytes": 24,
+      "sha256": "3b625f687e09b5e1303da28be51b227d4a4102980cf7901bac47f3aa84dbcee5"
+    },
+    "atlas/779/union/run.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "atlas/779/union/sampled-scores.parquet": {
+      "bytes": 1352544,
+      "sha256": "692a513444bf2320a5340603c10743178cdbbb432526956f87e911574809f0eb"
+    },
+    "atlas/779/union/score-summary.json": {
+      "bytes": 6015,
+      "sha256": "0a33c74ac89bb0ce1a3a4f28a85d5d4548f51c7c942fd5c5cdd10cbf22ac40ff"
+    },
+    "atlas/779/union/signatures.json": {
+      "bytes": 44378,
+      "sha256": "43ba59ddebf703c5b49e71094e854a1dbb7ada8fe9af65ca6d9b83e475d27fa1"
+    },
+    "biological-summary.json": {
+      "bytes": 9299,
+      "sha256": "7ea8c16a547c015ba1c0124aefad58f229b5289db1eee9bc90c47080a3a440df"
+    },
+    "biology/20000-777-reference-directional.parquet": {
+      "bytes": 478377,
+      "sha256": "51690db59d089a1ac9ecebce825ea634ef05227027654a574e2f3eabf0d22a6e"
+    },
+    "biology/20000-777-rustscenic-directional.parquet": {
+      "bytes": 619884,
+      "sha256": "6020cf027694360de411fdf6604f453a60e4138a75eefa4e2939d850571318e1"
+    },
+    "biology/20000-778-reference-directional.parquet": {
+      "bytes": 576193,
+      "sha256": "28a7fb48014cbf6107d4787f837b800330cd5f202e191d58091387d349812d7c"
+    },
+    "biology/20000-778-rustscenic-directional.parquet": {
+      "bytes": 760661,
+      "sha256": "806705c52dad79c6961b57a04003b6d541698120d59135f2f55d6c9880fdcfa1"
+    },
+    "biology/20000-779-reference-directional.parquet": {
+      "bytes": 615432,
+      "sha256": "5f420b827dd28b138a4ef31052f154317580af100d91cab6ccc5d98abb9a9a8a"
+    },
+    "biology/20000-779-rustscenic-directional.parquet": {
+      "bytes": 780924,
+      "sha256": "39d72ced52b854f2f73e487f62f943fc1c8c029684ade365067f3f94f2a22e5e"
+    },
+    "biology/5000-777-reference-directional.parquet": {
+      "bytes": 311658,
+      "sha256": "bbd790d21d6dd9b9b329dff46db427fa0b58bab56bfeb88ac5b6a6b5b1434109"
+    },
+    "biology/5000-777-rustscenic-directional.parquet": {
+      "bytes": 419622,
+      "sha256": "bd92c93c7d4af8dd7552100696dfce487e2ad9abcb3fc80012eeba9d1fc46fd9"
+    },
+    "biology/5000-778-reference-directional.parquet": {
+      "bytes": 260140,
+      "sha256": "79167a784ddb5356bae73f87efcb4f55120c43e1e79cae38e1cf26ca5765e8dd"
+    },
+    "biology/5000-778-rustscenic-directional.parquet": {
+      "bytes": 340522,
+      "sha256": "c464e50a95b350a443fd0c4d529e0bd3c7738040d62a86261860ef77e01b43e5"
+    },
+    "biology/5000-779-reference-directional.parquet": {
+      "bytes": 401183,
+      "sha256": "bb5d9b78077ae449117b40c7306e2a0cf764a9c373615cffcb57ad93c27f6219"
+    },
+    "biology/5000-779-rustscenic-directional.parquet": {
+      "bytes": 508941,
+      "sha256": "0e20fa89b7c169580e919947e0cbd40ed559d7568341c3416fa7781eaee564c1"
+    },
+    "biology/complete.json": {
+      "bytes": 2366,
+      "sha256": "a1dbde7d99fb70de37bb9b7cdca0ce15f88629dc21d640133a2503b93d1579c3"
+    },
+    "biology/environment.json": {
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a"
+    },
+    "biology/memory.csv": {
+      "bytes": 56433,
+      "sha256": "8c441e7d05b9078224c99cbc569ea716e77337343deb44995e88be9fb019fa7f"
+    },
+    "biology/monitor.json": {
+      "bytes": 711,
+      "sha256": "063a54ff910e263b96ecd281cd8e576a657f13f7951970ab93c15ecafd3da062"
+    },
+    "biology/phase.json": {
+      "bytes": 26,
+      "sha256": "afe649a1877c31cfeade15d16d8190edd1432cdc2338f85ff9ed7ed316bc8662"
+    },
+    "biology/run.log": {
+      "bytes": 5040,
+      "sha256": "6e7ffd258cec72e0f8d13d6552ba7f997f277f1ab98268ab78ecf95040a9c40e"
+    },
+    "biology/verification.json": {
+      "bytes": 493285,
+      "sha256": "76de95ad562ae45e96dcd1d976244513a7ae72dafe1e768c6e11a72c45897cd4"
+    },
+    "logs/281494885.err": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "logs/281494885.out": {
+      "bytes": 1748,
+      "sha256": "e59976a0dc0a9fc995b87a13aa902a9595b13f11d7a2a5f389b3df83dc8923a6"
+    },
+    "scoring-performance.csv": {
+      "bytes": 1990,
+      "sha256": "0d9cea7ef76c0f436ed4bb2f50e30300bfc39dd3439cee5759b2c092df1528c0"
+    },
+    "submission.log": {
+      "bytes": 2116,
+      "sha256": "05269fb3dfd00f373798720acc1267fd64ec2806f1a5a95d5f34a1d96373313e"
+    },
+    "submitted.json": {
+      "bytes": 216,
+      "sha256": "832b22fb6cf59fe985cff617fda31671cd51e0ec2eb97decbc7c29dcfc21aae2"
+    }
+  }
+}

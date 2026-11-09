@@ -4,6 +4,8 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+VERSION = re.search(r'^version\s*=\s*"([^"]+)"',
+                    (ROOT / "pyproject.toml").read_text(), re.MULTILINE).group(1)
 
 
 def test_head_to_head_summary_records_scope_and_provenance():
@@ -26,7 +28,7 @@ def test_public_docs_keep_benchmark_claims_scoped():
     assert "rustscenic-evidence.svg" not in readme
     assert "assets/rustscenic-evidence.svg" in index
     assert "## Evidence Snapshot" not in readme
-    assert "Current release: `v0.5.1`" in readme
+    assert f"Current release: `v{VERSION}`" in readme
     assert "docs/benchmarks/real-rna-20260828/figure.png" in readme
     assert "docs/benchmarks/real-rna-20260828/benchmark-source-record.md" in readme
     assert "1.3 million real cells" in readme
@@ -64,7 +66,7 @@ def test_public_docs_keep_benchmark_claims_scoped():
     normalised_benchmarks = " ".join(benchmarks.split())
     assert "different methods for enhancer linking" in normalised_benchmarks
     assert "edge-set agreement" in benchmarks
-    assert "## Unreleased" in changelog
+    assert f"## {VERSION} - " in changelog
     assert "## 0.5.0 - 2026-09-09" in changelog
     assert "collaborator lab validation" in changelog
 
@@ -109,7 +111,7 @@ def test_quickstarts_use_published_api_and_explain_candidate_gene_sets():
     assert "pip install rustscenic" in readme
     for path in (ROOT / "site_docs/quickstart.md",):
         document = path.read_text(encoding="utf-8")
-        assert "v0.5.1" in document
+        assert f"v{VERSION}" in document
         assert "candidate" in document
         blocks = re.findall(r"```python\n(.*?)```", document, re.DOTALL)
         assert blocks

@@ -1,0 +1,53 @@
+RustScenic confirmation audit, 9 November 2026
+
+PASS: archive checksum, all 96 returned file hashes, shipped package and native
+engine provenance, seven completed tasks, 192 converged donor-fold metrics
+recomputed from confusion matrices, all reported donor-bootstrap intervals,
+12 exact external numerical comparisons and three exact atlas sample checks.
+The complete HPC job took 492 seconds. No local network/classifier refits.
+
+Source: https://huang-lab-omics.slack.com/archives/C0BUGTD3F9C/p1794183198321469
+Archive SHA256: 919f9312edb3a7805bfe555556aaf562c3507d4765b06adbbf54f423a079ae44
+
+External macro-F1: Rust contrast -> Rust directional; SCENIC+ directional
+5k network-training cells: 0.606447 -> 0.663828; reference 0.662094.
+20k network-training cells: 0.692892 -> 0.712332; reference 0.711258.
+Evaluation: same 12,315 Kang cells, eight held-out donor folds, three network
+seeds averaged within donors. Both frozen network sources use the same scorer,
+common-TF roster and classifier. This is not a new full SCENIC+ execution.
+
+Rust directional minus reference, donor-bootstrap 95% intervals:
+5k: +0.001733 [-0.021513, +0.026811].
+20k: +0.001074 [-0.003019, +0.004277].
+Average deficit closed; superiority and formal equivalence are not established.
+At 20k, balanced accuracy remains 0.782637 versus 0.797620, a 1.498 percentage-
+point recall deficit (difference interval [-0.023889, -0.004481]). Retain this
+alongside the F1 improvement. Full per-class and donor tables are included.
+
+817,740-cell atlas, 5,000 genes, same node and 16 CPUs:
+Median union -> directional scoring: 19.0106 -> 19.5223 seconds.
+Median I/O-inclusive stage: 57.5793 -> 57.7464 seconds.
+Median sampled process-tree PSS: 559.904 -> 585.221 MB.
+Median full HDF5 output: 278.620 -> 353.987 MB.
+Median paired overheads: scoring +2.62%, stage +0.29%, PSS +4.52%, raw array
+storage +34.33%. Full HDF5 output storage increases about 27.05%.
+One seed has +15.94% PSS (559.338 -> 648.477 MB); do not hide this variation.
+All memory peaks reproduced from raw traces, with no incomplete PSS samples.
+No new full-workflow competitor speedup was measured here.
+
+Interpretation: preserving the two activity channels confirms the observed
+representation improvement at small additional cost. This is independent
+execution on reused cohorts, not untouched biological validation. It supports
+practical utility, not every inferred edge or universally equivalent accuracy.
+
+No further network-fitting run is indicated for the scoped implementation
+paper. Remaining work: exact versioned release and normal build/install CI,
+permanent evidence deposit, secure full arrays from HPC scratch, coauthor
+review and manuscript finalisation. Stronger equivalence/causal claims need
+additional independent evidence; they are unnecessary for the narrower paper.
+
+Six full atlas arrays remain on HPC. Sizes and hashes are in AUDIT-RECEIPT.json;
+this audit verifies returned samples and logs, not every full-array value.
+No messages sent, repository publication or new HPC run performed.
+
+Reproduce: run audit.py using the existing F1-Diagnosis-20261108/venv Python.

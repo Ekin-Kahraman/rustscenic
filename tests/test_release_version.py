@@ -48,6 +48,26 @@ def _copy_release_state(destination: Path) -> Path:
         target = destination / relative_path
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(ROOT / relative_path, target)
+    # Keep the historical fixture independent of the checkout release version.
+    current = RELEASE_MODULE._toml_string(ROOT / 'pyproject.toml', 'project', 'version')
+    for name in ['pyproject.toml', 'Cargo.toml', 'CITATION.cff', 'README.md',
+                 'site_docs/index.md', 'site_docs/assets/rustscenic-evidence.svg']:
+        path = destination / name
+        text = path.read_text().replace(current, '0.5.1')
+        text = text.replace('Unpublished source candidate v0.5.1. ', '')
+        text = text.replace('Source candidate: `v0.5.1` (unpublished).\n', '')
+        if name == 'CITATION.cff':
+            text = re.sub(r'^date-released:.*\n?', '', text, flags=re.MULTILINE)
+            text += 'date-released: "2026-10-26"\n'
+        path.write_text(text)
+    path = destination / 'Cargo.lock'
+    path.write_text(re.sub(r'(name = "rustscenic[^"\n]*"\nversion = ")[^"]+',
+                           r'\g<1>0.5.1', path.read_text()))
+    path = destination / '.zenodo.json'
+    obj = json.loads(path.read_text())
+    obj['version'] = '0.5.1'
+    obj['description'] = re.sub(r'<p>Unpublished source candidate.*?</p>', '', obj['description'])
+    path.write_text(json.dumps(obj))
     return destination
 
 
@@ -166,12 +186,10 @@ def _promote_fixture(root: Path) -> Path:
     return root
 
 
-def test_live_release_metadata_passes_strict_default_and_tag_validation():
-    assert validate_repository(ROOT) == "0.5.1"
-    assert validate_repository(ROOT, tag="v0.5.1") == "0.5.1"
-    assert "Current release: `v0.5.1`" in (ROOT / "README.md").read_text()
-    assert "Current release `v0.5.1`" in (ROOT / "site_docs/index.md").read_text()
-    with pytest.raises(ReleaseValidationError, match="candidate mode requires"):
+def test_live_release_passes_default_and_tag_validation():
+    assert validate_repository(ROOT) == "0.6.0"
+    assert validate_repository(ROOT, tag="v0.6.0") == "0.6.0"
+    with pytest.raises(ReleaseValidationError, match="release-candidate.json"):
         validate_repository(ROOT, candidate=True)
 
 

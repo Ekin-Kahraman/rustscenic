@@ -240,7 +240,8 @@ def cmd_aucell(args: argparse.Namespace) -> int:
           file=sys.stderr, flush=True)
 
     t0 = time.monotonic()
-    auc = rs_aucell.score(expression, regulons, top_frac=args.top_frac)
+    auc = rs_aucell.score(expression, regulons, top_frac=args.top_frac,
+                         **({"seed": args.seed} if getattr(args, "seed", None) is not None else {}))
     wall = time.monotonic() - t0
 
     output_path = Path(args.output)
@@ -252,6 +253,7 @@ def cmd_aucell(args: argparse.Namespace) -> int:
     meta = {
         "wall_clock_s": round(wall, 2), "n_cells": int(n_cells),
         "n_regulons": len(regulons), "top_frac": args.top_frac,
+        "aucell_seed": getattr(args, "seed", None),
         "rustscenic_version": __version__, "stage": "aucell",
     }
     output_path.with_suffix(".json").write_text(json.dumps(meta, indent=2))
@@ -419,6 +421,7 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
         grn_rho_threshold=args.grn_rho_threshold,
         grn_rho_mask_dropouts=args.grn_rho_mask_dropouts,
         aucell_top_frac=args.aucell_top_frac,
+        aucell_seed=getattr(args, "aucell_seed", None),
         topics_n_topics=args.topics_n_topics,
         topics_n_passes=args.topics_n_passes,
         topics_method=args.topics_method,
@@ -436,6 +439,27 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
         verbose=True,
     )
     print(f"pipeline done → {result.output_dir}", file=sys.stderr)
+    return 0
+
+
+def cmd_validated(args: argparse.Namespace) -> int:
+    """Run the fixed, motif-supported native RNA or paired recipe."""
+    import os
+    from . import validated
+
+    os.environ["RAYON_NUM_THREADS"] = str(args.threads)
+    try:
+        manifest = validated.run(args.rna, args.output, tfs=args.tfs,
+            motif_rankings=args.motif_rankings, motif_annotations=args.motif_annotations,
+            atac=args.atac, region_motif_rankings=args.region_motif_rankings,
+            region_mapping=args.region_mapping, gene_coords=args.gene_coords,
+            seed=args.seed, aucell_seed=args.aucell_seed, threads=args.threads,
+            activity_mode=args.activity_mode)
+    except (ValueError, FileNotFoundError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"{manifest['status']}: {manifest['n_regulons']} supported regulons; "
+          f"results in {args.output}", file=sys.stderr)
     return 0
 
 
@@ -518,6 +542,7 @@ def main(argv: list[str] | None = None) -> int:
     pa.add_argument("--expression", required=True)
     pa.add_argument("--regulons", required=True, help="Path to grn.tsv/parquet or regulons TSV (name\\tgene,gene,...)")
     pa.add_argument("--output", required=True); pa.add_argument("--top-frac", type=float, default=0.05)
+    pa.add_argument("--seed", type=int, default=None, help="Seeded gene-order tie handling; audited scorer uses 20261106")
     pa.add_argument("--top-n-targets", type=int, default=50,
                     help="When regulons input is a grn output, keep top-N targets per TF (default 50)")
     pa.add_argument("--min-genes", type=int, default=10,
@@ -594,6 +619,7 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument("--grn-rho-threshold", type=float, default=0.03)
     pp.add_argument("--grn-rho-mask-dropouts", action="store_true")
     pp.add_argument("--aucell-top-frac", type=float, default=0.05)
+    pp.add_argument("--aucell-seed", type=int, default=None, help="Explicit AUCell tie-order seed; None preserves legacy behaviour")
     pp.add_argument("--topics-n-topics", type=int, default=30)
     pp.add_argument("--topics-n-passes", type=int, default=3)
     pp.add_argument("--topics-method", choices=["vb", "gibbs"], default="vb")
@@ -616,6 +642,23 @@ def main(argv: list[str] | None = None) -> int:
     )
     pp.add_argument("--seed", type=int, default=777)
     pp.set_defaults(func=cmd_pipeline)
+
+    pv = sub.add_parser("validated", help="Audited native recipe with motif-supported results and seeded scoring")
+    pv.add_argument("--rna", required=True, help="Prepared, non-negative RNA expression (.h5ad)")
+    pv.add_argument("--tfs", required=True, help="TF names file, hs or mm")
+    pv.add_argument("--output", required=True, help="New or empty result directory")
+    pv.add_argument("--motif-annotations", required=True, help="Motif-to-TF table (.tbl/.tsv/.csv/.parquet)")
+    pv.add_argument("--motif-rankings", help="RNA gene-ranking feather/parquet")
+    pv.add_argument("--atac", help="Paired ATAC peak counts (.h5ad)")
+    pv.add_argument("--region-motif-rankings", help="Paired region-ranking feather/parquet")
+    pv.add_argument("--region-mapping", help="Peak-to-database mapping TSV: Target, Query")
+    pv.add_argument("--gene-coords", help="Gene coordinates TSV: gene, chrom, tss")
+    pv.add_argument("--threads", type=int, default=16)
+    pv.add_argument("--seed", type=int, default=777)
+    pv.add_argument("--aucell-seed", type=int, default=20261106)
+    pv.add_argument("--activity-mode", choices=["union", "directional"],
+                    help="Keep separate directional target sets; defaults: RNA directional, paired union")
+    pv.set_defaults(func=cmd_validated)
 
     args = p.parse_args(argv)
     return args.func(args)

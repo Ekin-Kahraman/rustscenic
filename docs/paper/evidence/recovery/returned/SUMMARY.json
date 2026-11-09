@@ -1,0 +1,204 @@
+{
+  "complete_nonempty_model_runs": 34,
+  "existing_evidence": "Previously completed 1.3M-cell inference and independent RNA reference retrieval remain separate; they were not rerun here.",
+  "expected_model_runs": 42,
+  "full_activity_location": "/sc/arion/scratch/huangl21/rustscenic-recovery/work/results",
+  "groups": [
+    {
+      "biological_equivalence_established": false,
+      "cells": 100000,
+      "dataset": "atlas",
+      "eligible_complete_nonempty_matched_seed_pairs": 3,
+      "medians": {
+        "reference": {
+          "input_to_export_s": 409.3197052627802,
+          "whole_worker_peak_sampled_tree_pss_mb": 10584.408064
+        },
+        "rustscenic": {
+          "input_to_export_s": 112.4161646347493,
+          "whole_worker_peak_sampled_tree_pss_mb": 537.096192
+        }
+      },
+      "ratio_of_median_input_to_export_times": 3.641110747664257,
+      "ratio_of_median_whole_worker_pss_reduction_fraction": 0.9492559065417379,
+      "scope": "Configured complete analysis workflows from shared QC-filtered matrices. Includes native topic modelling for multiome and real cisTarget motif enrichment. Excludes raw-read alignment, peak calling and motif database construction. Native pruning, enhancer-link and regulon algorithms differ. No presumption of biological equivalence or superiority.",
+      "three_seed_timing_summary_eligible": true
+    },
+    {
+      "biological_equivalence_established": false,
+      "cells": 1306127,
+      "dataset": "atlas",
+      "eligible_complete_nonempty_matched_seed_pairs": 0,
+      "medians": {
+        "reference": {},
+        "rustscenic": {
+          "input_to_export_s": 2552.353104300797,
+          "whole_worker_peak_sampled_tree_pss_mb": 4568.6016
+        }
+      },
+      "ratio_of_median_input_to_export_times": null,
+      "ratio_of_median_whole_worker_pss_reduction_fraction": null,
+      "scope": "Configured complete analysis workflows from shared QC-filtered matrices. Includes native topic modelling for multiome and real cisTarget motif enrichment. Excludes raw-read alignment, peak calling and motif database construction. Native pruning, enhancer-link and regulon algorithms differ. No presumption of biological equivalence or superiority.",
+      "three_seed_timing_summary_eligible": false
+    },
+    {
+      "biological_equivalence_established": false,
+      "cells": 10000,
+      "dataset": "bmmc",
+      "eligible_complete_nonempty_matched_seed_pairs": 3,
+      "medians": {
+        "reference": {
+          "input_to_export_s": 1221.7483412977308,
+          "whole_worker_peak_sampled_tree_pss_mb": 13389.462528
+        },
+        "rustscenic": {
+          "input_to_export_s": 131.1627062316984,
+          "whole_worker_peak_sampled_tree_pss_mb": 4054.92736
+        }
+      },
+      "ratio_of_median_input_to_export_times": 9.314753990661929,
+      "ratio_of_median_whole_worker_pss_reduction_fraction": 0.6971553300574724,
+      "scope": "Configured complete analysis workflows from shared QC-filtered matrices. Includes native topic modelling for multiome and real cisTarget motif enrichment. Excludes raw-read alignment, peak calling and motif database construction. Native pruning, enhancer-link and regulon algorithms differ. No presumption of biological equivalence or superiority.",
+      "three_seed_timing_summary_eligible": true
+    },
+    {
+      "biological_equivalence_established": false,
+      "cells": 50000,
+      "dataset": "bmmc",
+      "eligible_complete_nonempty_matched_seed_pairs": 3,
+      "medians": {
+        "reference": {
+          "input_to_export_s": 4776.03099789191,
+          "whole_worker_peak_sampled_tree_pss_mb": 33998.217216
+        },
+        "rustscenic": {
+          "input_to_export_s": 749.6331955287606,
+          "whole_worker_peak_sampled_tree_pss_mb": 10142.048256
+        }
+      },
+      "ratio_of_median_input_to_export_times": 6.371157289163394,
+      "ratio_of_median_whole_worker_pss_reduction_fraction": 0.7016888211648045,
+      "scope": "Configured complete analysis workflows from shared QC-filtered matrices. Includes native topic modelling for multiome and real cisTarget motif enrichment. Excludes raw-read alignment, peak calling and motif database construction. Native pruning, enhancer-link and regulon algorithms differ. No presumption of biological equivalence or superiority.",
+      "three_seed_timing_summary_eligible": true
+    },
+    {
+      "biological_equivalence_established": false,
+      "cells": 100000,
+      "dataset": "hdma",
+      "eligible_complete_nonempty_matched_seed_pairs": 3,
+      "medians": {
+        "reference": {
+          "input_to_export_s": 9035.532629304565,
+          "whole_worker_peak_sampled_tree_pss_mb": 44759.576576
+        },
+        "rustscenic": {
+          "input_to_export_s": 727.6649926546961,
+          "whole_worker_peak_sampled_tree_pss_mb": 18227.790848
+        }
+      },
+      "ratio_of_median_input_to_export_times": 12.41715998503759,
+      "ratio_of_median_whole_worker_pss_reduction_fraction": 0.5927622144268964,
+      "scope": "Configured complete analysis workflows from shared QC-filtered matrices. Includes native topic modelling for multiome and real cisTarget motif enrichment. Excludes raw-read alignment, peak calling and motif database construction. Native pruning, enhancer-link and regulon algorithms differ. No presumption of biological equivalence or superiority.",
+      "three_seed_timing_summary_eligible": true
+    },
+    {
+      "biological_equivalence_established": false,
+      "cells": 500000,
+      "dataset": "hdma",
+      "eligible_complete_nonempty_matched_seed_pairs": 1,
+      "medians": {
+        "reference": {
+          "input_to_export_s": 44822.64667714201,
+          "whole_worker_peak_sampled_tree_pss_mb": 214963.73248
+        },
+        "rustscenic": {
+          "input_to_export_s": 4056.9714558478445,
+          "whole_worker_peak_sampled_tree_pss_mb": 91589.021696
+        }
+      },
+      "ratio_of_median_input_to_export_times": null,
+      "ratio_of_median_whole_worker_pss_reduction_fraction": null,
+      "scope": "Configured complete analysis workflows from shared QC-filtered matrices. Includes native topic modelling for multiome and real cisTarget motif enrichment. Excludes raw-read alignment, peak calling and motif database construction. Native pruning, enhancer-link and regulon algorithms differ. No presumption of biological equivalence or superiority.",
+      "three_seed_timing_summary_eligible": false
+    },
+    {
+      "biological_equivalence_established": false,
+      "cells": 817740,
+      "dataset": "hdma",
+      "eligible_complete_nonempty_matched_seed_pairs": 0,
+      "medians": {
+        "reference": {},
+        "rustscenic": {
+          "input_to_export_s": 6538.882160813548,
+          "whole_worker_peak_sampled_tree_pss_mb": 149559.176192
+        }
+      },
+      "ratio_of_median_input_to_export_times": null,
+      "ratio_of_median_whole_worker_pss_reduction_fraction": null,
+      "scope": "Configured complete analysis workflows from shared QC-filtered matrices. Includes native topic modelling for multiome and real cisTarget motif enrichment. Excludes raw-read alignment, peak calling and motif database construction. Native pruning, enhancer-link and regulon algorithms differ. No presumption of biological equivalence or superiority.",
+      "three_seed_timing_summary_eligible": false
+    }
+  ],
+  "missing_failed_or_censored_runs": [
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "method": "reference",
+      "seed": 777,
+      "status": "memory_limit"
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "method": "reference",
+      "seed": 778,
+      "status": "memory_limit"
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "method": "reference",
+      "seed": 779,
+      "status": "memory_limit"
+    },
+    {
+      "cells": 500000,
+      "dataset": "hdma",
+      "method": "reference",
+      "seed": 778,
+      "status": "timeout"
+    },
+    {
+      "cells": 500000,
+      "dataset": "hdma",
+      "method": "reference",
+      "seed": 779,
+      "status": "timeout"
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "method": "reference",
+      "seed": 777,
+      "status": "timeout"
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "method": "reference",
+      "seed": 778,
+      "status": "timeout"
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "method": "reference",
+      "seed": 779,
+      "status": "timeout"
+    }
+  ],
+  "portable_archive": "Full networks, gene/region regulon membership, compact motif evidence, all-cell activity comparisons, fixed sampled activity, donor utility, logs, settings and provenance. Full activity and expanded motif evidence remain on HPC with hashes.",
+  "scientific_verdict": "Review required. Completion, performance, agreement and lineage plausibility are distinct outcomes. No automated biological-equivalence or publication verdict.",
+  "source_package_signature": "67c0aa65d93754760db27b7d5bf102eb96fcf8e68d9fec3cbe79ca643a771142",
+  "verified_complete_model_runs": 34
+}

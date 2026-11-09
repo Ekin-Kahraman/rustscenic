@@ -1,0 +1,13 @@
+{
+  "wheels": {
+    "candidate": {
+      "wheel": "wheels/rustscenic-0.5.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "bcd31ce63cad51f9ee84905ade998244d9bfb31edfd2f4205162788fd0a000e8",
+      "extension": "rustscenic/_rustscenic.abi3.so",
+      "extension_sha256": "30e615e4fd4534a5a6485744e5dae5d98fa350d87397fe56109cacd24bec01b7"
+    }
+  },
+  "seed": 20261106,
+  "source_head": "4793b20808afc75cf0dc360b1755a4425e172583",
+  "scope": "Same verified seeded native engine; directional activity public option. Metadata0.5.1 reused; identifybyhash."
+}

@@ -1,0 +1,29 @@
+{
+  "fix_commit": "27b15ed575d3d47803297a815872b9c97029d49f",
+  "base_commit": "e624c6a2c288620ab46534aed634abc0180815e5",
+  "branch": "fix/biological-fidelity-20261107",
+  "source_matches_hpc": true,
+  "tests": {
+    "python_passed": 728,
+    "python_skipped": 1,
+    "skip_reason": "opt-in live-network test",
+    "rust_passed": 85,
+    "clippy": "passed"
+  },
+  "test_mode": "Full local Python suite uses the already built macOS candidate wheel; its source matches the integrated core files. Full Rust workspace tests exclude the Python cdylib, exercised through Python.",
+  "remote_ci_run": false,
+  "pushed": false,
+  "messages_sent": false,
+  "core_sources": {
+    "crates/rustscenic-aucell/src/lib.rs": "d4b81b577d6d9415545046afda634f43f8f6c1bfc90a245d2f54672c27c20da8",
+    "crates/rustscenic-py/src/lib.rs": "8969dec28d07357bb1c5e5afb99a2b99d94a930178461cb0b371639413a5d6f2",
+    "python/rustscenic/aucell.py": "95a0bb806c26a8b0b816e4e478dbcb222fd4968429881bdf5143d78e0de60170",
+    "python/rustscenic/_rustscenic.pyi": "673f7fb349182aff9183a7cccabd177ae17f731e47410e7e45834821c5a30634"
+  },
+  "logs": {
+    "cargo-test.log": "4d00dfddd4ed7ffb809c75d4334e4defea3ab247661ea17447bd3c7329fc7922",
+    "paper-build.log": "6a8276e0663f7f7b4749933df78beae0ce539c24709a45365e10993c557d56c1",
+    "clippy.log": "1972302d200664d9d92c98620f68528294c6d180eac8bd6bd3ed0cdabb9b552e",
+    "pytest-full.log": "c77111cdfcb7da3e7f1d1f1ba3c20b291224873750ef940cdabe29c517593695"
+  }
+}
