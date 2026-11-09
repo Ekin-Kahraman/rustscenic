@@ -1,0 +1,157 @@
+{
+  "analysis_s": 746.9139194479212,
+  "biological_outputs_nonempty": true,
+  "cells": 50000,
+  "config_signature": "048cdd25523fd44b57cfb765a8c1a1db353d36f03478878c9300bb4c2359e4dc",
+  "dataset": "bmmc",
+  "export_s": 2.719276080839336,
+  "fit_summary": {
+    "early_stop_mode": "arboreto",
+    "early_stop_window": 25,
+    "fitted_trees_max": 206,
+    "fitted_trees_mean": 31.5758,
+    "fitted_trees_median": 26.0,
+    "fitted_trees_min": 25,
+    "metadata_source": "RustScenic native grn_fit attributes",
+    "n_estimators_ceiling": 5000,
+    "subsample": 0.9,
+    "target_count": 5000
+  },
+  "full_activity_portability": "Full scores retained on HPC with hashes; return archive includes a fixed shared 10000-cell sample, full-network outputs and metrics computed across all cells.",
+  "gene_regulons": 79,
+  "genes": 5000,
+  "host": "lh06g13",
+  "input_signature": "3a52ae005008ad04f0d663ff2b57e03ddbcf9ba1525ea083b7d9b90a7f85ccc7",
+  "input_to_export_s": 749.6331955287606,
+  "job_id": "278524624",
+  "local_test": false,
+  "memory_orchestration": {
+    "native_wheel_unchanged": true,
+    "no_cells_or_features_removed": true,
+    "rustscenic_aucell_cell_batch": 2048,
+    "rustscenic_peak_batch": 256
+  },
+  "method": "rustscenic",
+  "n_default_modules": 112,
+  "n_eregulons": 112,
+  "outputs": {
+    "cell-topic.parquet": {
+      "bytes": 8865437,
+      "sha256": "f302cd9ef8b022cdb2e98f3bd123e23dc24249eb2bc35bef3025cd68ad3171b5"
+    },
+    "cells.json": {
+      "bytes": 1471494,
+      "sha256": "96a5d0ddfccbff0a7371adcb9f8aeee7fdc5ff4df901defe2ba0ea203d9cd6a7"
+    },
+    "eregulon-edges.parquet": {
+      "bytes": 121977,
+      "sha256": "e3b30734de649ae8d3f5624108de9130c4aae59409fcb3df77d29bf380a462ea"
+    },
+    "full-gene-activity.npy": {
+      "bytes": 15800128,
+      "sha256": "ed52c67f3310438cef6805591c91f4913761ef63fa0596989e4acd72c991ed2b"
+    },
+    "full-motif-evidence.parquet": {
+      "bytes": 746159,
+      "sha256": "cf0417675e1ec404da020d3f04d5770f2db0d075cb5014572293a7286bddda97"
+    },
+    "full-region-activity.npy": {
+      "bytes": 15800128,
+      "sha256": "1a0ac52f873e5917778e75e38d9a95d4bf9eb1a42a62e7ad6aad1618c1688b6d"
+    },
+    "gene-activity-signatures.json": {
+      "bytes": 848,
+      "sha256": "739828b241a7d678b310e178410bed0111a982c193392f31a943a32474cd9112"
+    },
+    "gene-activity-summary.json": {
+      "bytes": 14692,
+      "sha256": "d99bf88a57ea0a80e3f6de6cc5ecd7ab333d9159f1bfb86538f15bb384d3e5cb"
+    },
+    "grn.parquet": {
+      "bytes": 5336982,
+      "sha256": "6c10c94464f274c69988e2c4b6efe7c92d356838d883364f6b3c0abbad906fd5"
+    },
+    "gsea-statistics.parquet": {
+      "bytes": 1388,
+      "sha256": "47fc481ed85824140cb2fb43aae03c93c5cbe64fadf7da4ec86f209bda4f0fec"
+    },
+    "marker-coverage.json": {
+      "bytes": 973,
+      "sha256": "0491423f15ddf06a6b63dcd51c48f24da9913d7e1a4c16b90c2e928a7836bd44"
+    },
+    "motif-evidence.parquet": {
+      "bytes": 505092,
+      "sha256": "77bd54c59dabd8f18cc1733a1223c2dd1864fbc650bbff83e75b9806195a4ab8"
+    },
+    "region-activity-signatures.json": {
+      "bytes": 848,
+      "sha256": "739828b241a7d678b310e178410bed0111a982c193392f31a943a32474cd9112"
+    },
+    "region-activity-summary.json": {
+      "bytes": 15019,
+      "sha256": "422333df1622464ee5561ea788e64a23ee6cc041afe34baee64e4df948034501"
+    },
+    "region-motif-scores.parquet": {
+      "bytes": 64602,
+      "sha256": "293b2c0be82ede624c6ae91ab9e2eecf42c38233ca2b4aba827c6937eff92a78"
+    },
+    "region-regulons.json": {
+      "bytes": 311965,
+      "sha256": "82e1837e8b5a5a0413a86766249e27d5ea120ef10d4c849d31829bbf13240fea"
+    },
+    "region-to-gene.parquet": {
+      "bytes": 1083632,
+      "sha256": "912f779f69a0bb6a95f1ad33458d95a9a2f1e89155421778fd228074e9df30ed"
+    },
+    "regulons.json": {
+      "bytes": 124774,
+      "sha256": "3d21841b67327756a3515c32782556f50422cf63bbaafe7cc970ec6d9597327f"
+    },
+    "sampled-gene-activity.parquet": {
+      "bytes": 1849837,
+      "sha256": "74414c4d3df87a90b64a635569fc4058a2b967242c63dbcee080075f8786d3b6"
+    },
+    "sampled-region-activity.parquet": {
+      "bytes": 1979950,
+      "sha256": "85cdd961f7491aba7d6c3b18769ee76bd5bb6faa4f0d0ddb4a273f2beef2a205"
+    },
+    "topic-peak.parquet": {
+      "bytes": 17691912,
+      "sha256": "38e8e758cc2bddfee68a31beec28c77f1e21119410e127858e25be5b5cb62926"
+    }
+  },
+  "runtime_additions": {
+    "lda": "3.0.0",
+    "numexpr": "2.8.7",
+    "polars-lts-cpu": "0.20.13"
+  },
+  "scope": "Paired matrices -> native topics -> real cisTarget motif enrichment -> native regulatory networks -> TF-union activity. Includes topic fitting; excludes raw reads/peak calling and database construction. Native linking, pruning and assembly algorithms differ; SCENIC+ outputs use adjusted p<0.05.",
+  "seed": 779,
+  "stages": {
+    "accessibility_imputation": 8.52964089345187,
+    "atac_counts_load": 3.7523371186107397,
+    "gene_activity": 3.1518979370594025,
+    "gene_correlation": 2.9358510179445148,
+    "gene_network": 94.65074382349849,
+    "region_activity": 6.454020753502846,
+    "region_database_load": 4.869288687594235,
+    "region_motif_enrichment": 14.933985425159335,
+    "region_to_gene": 39.972066124901175,
+    "regulon_assembly": 1.3894690200686455,
+    "rna_load": 1.7826562719419599,
+    "topic_modelling": 569.048500563018
+  },
+  "status": "complete",
+  "tfs": 256,
+  "threads": 16,
+  "versions": {
+    "numpy": "1.23.5",
+    "pandas": "1.5.3",
+    "pycistarget": "1.1",
+    "pycistopic": "2.0a0",
+    "pyscenic": "0.12.1",
+    "rustscenic": "0.5.0",
+    "scenicplus": "1.0a2",
+    "scikit-learn": "1.3.2"
+  }
+}

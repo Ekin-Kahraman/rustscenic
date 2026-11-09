@@ -1,0 +1,41 @@
+Sender: LSF System <lsfadmin@lc06e19>
+Subject: Job 281494885: <rsdirection1794181973compute> in cluster <chimera> Done
+
+Job <rsdirection1794181973compute> was submitted from host <li04e01> by user <huangl21> in cluster <chimera> at Sun Nov  8 18:52:53 2026
+Job was executed on host(s) <16*lc06e19>, in queue <premium>, as user <huangl21> in cluster <chimera> at Sun Nov  8 18:52:56 2026
+</hpc/users/huangl21> was used as the home directory.
+</sc/arion/scratch/huangl21/rustscenic-directional-confirmation> was used as the working directory.
+Started at Sun Nov  8 18:52:56 2026
+Terminated at Sun Nov  8 19:01:08 2026
+Results reported at Sun Nov  8 19:01:08 2026
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+bash /sc/arion/scratch/huangl21/rustscenic-directional-confirmation/job.sh compute /sc/arion/scratch/huangl21/rustscenic-recovery
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   1323.31 sec.
+    Max Memory :                                 689 MB
+    Average Memory :                             448.04 MB
+    Total Requested Memory :                     32000.00 MB
+    Delta Memory :                               31311.00 MB
+    Max Swap :                                   -
+    Max Processes :                              4
+    Max Threads :                                25
+    Run time :                                   492 sec.
+    Turnaround time :                            495 sec.
+
+The output (if any) follows:
+
+
+
+PS:
+
+Read file </sc/arion/scratch/huangl21/rustscenic-directional-confirmation/work/logs/281494885.err> for stderr output of this job.
+

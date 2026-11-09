@@ -1,0 +1,162 @@
+{
+  "verdict": "Execution passed; biological evidence is mixed. Biological equivalence and superiority are not established.",
+  "publication_assessment": "Sufficient to develop a scoped software/scalability manuscript with explicit trade-offs; not support for an accuracy-preserving general SCENIC+ replacement claim. No further atlas timing run is indicated.",
+  "archive_sha256": "139ba5e6a32a8119d99da7eedb25bb09f776882e1071dcea7c454da8b9d9f056",
+  "workers_complete": 30,
+  "classification_folds_recomputed": 1064,
+  "metric_mismatches": [],
+  "primary_holdout": {
+    "20000": {
+      "common": {
+        "balanced_accuracy": {
+          "difference": -0.02225390932048336,
+          "donor_differences": {
+            "10886": -0.030250875220987017,
+            "12710": -0.01832645019179968,
+            "16710": -0.01818440254866338
+          },
+          "donors": 3,
+          "left_mean": 0.5346536258296767,
+          "paired_donor_bootstrap_ci95": [
+            -0.030250875220987017,
+            -0.01818440254866338
+          ],
+          "right_mean": 0.55690753515016
+        },
+        "macro_f1": {
+          "difference": -0.030503872234288205,
+          "donor_differences": {
+            "10886": -0.03327673767316469,
+            "12710": -0.031239045020712508,
+            "16710": -0.026995834008987418
+          },
+          "donors": 3,
+          "left_mean": 0.4819830071695441,
+          "paired_donor_bootstrap_ci95": [
+            -0.03327673767316469,
+            -0.026995834008987418
+          ],
+          "right_mean": 0.5124868794038324
+        }
+      },
+      "native": {
+        "balanced_accuracy": {
+          "difference": 0.11662627247930413,
+          "donor_differences": {
+            "10886": 0.11762153149506538,
+            "12710": 0.12626218301757897,
+            "16710": 0.10599510292526804
+          },
+          "donors": 3,
+          "left_mean": 0.6738170179641015,
+          "paired_donor_bootstrap_ci95": [
+            0.10599510292526804,
+            0.12626218301757897
+          ],
+          "right_mean": 0.5571907454847976
+        },
+        "macro_f1": {
+          "difference": 0.12480679725648808,
+          "donor_differences": {
+            "10886": 0.1409087656385279,
+            "12710": 0.11801221764228431,
+            "16710": 0.11549940848865203
+          },
+          "donors": 3,
+          "left_mean": 0.6384359099983998,
+          "paired_donor_bootstrap_ci95": [
+            0.11549940848865203,
+            0.1409087656385279
+          ],
+          "right_mean": 0.5136291127419117
+        }
+      }
+    },
+    "5000": {
+      "common": {
+        "balanced_accuracy": {
+          "difference": -0.03521387857207264,
+          "donor_differences": {
+            "10886": -0.02316775939619692,
+            "12710": -0.0674696636937464,
+            "16710": -0.015004212626274605
+          },
+          "donors": 3,
+          "left_mean": 0.418479895470919,
+          "paired_donor_bootstrap_ci95": [
+            -0.0674696636937464,
+            -0.015004212626274605
+          ],
+          "right_mean": 0.4536937740429916
+        },
+        "macro_f1": {
+          "difference": -0.05791799213994416,
+          "donor_differences": {
+            "10886": -0.04739527308225305,
+            "12710": -0.06580254843782918,
+            "16710": -0.06055615489975025
+          },
+          "donors": 3,
+          "left_mean": 0.368848760421906,
+          "paired_donor_bootstrap_ci95": [
+            -0.06580254843782918,
+            -0.04739527308225305
+          ],
+          "right_mean": 0.42676675256185015
+        }
+      },
+      "native": {
+        "balanced_accuracy": {
+          "difference": 0.18779080910370208,
+          "donor_differences": {
+            "10886": 0.2316571560050315,
+            "12710": 0.14869303519350624,
+            "16710": 0.18302223611256857
+          },
+          "donors": 3,
+          "left_mean": 0.6414845831466938,
+          "paired_donor_bootstrap_ci95": [
+            0.14869303519350624,
+            0.23165715600503148
+          ],
+          "right_mean": 0.4536937740429916
+        },
+        "macro_f1": {
+          "difference": 0.1966923319747702,
+          "donor_differences": {
+            "10886": 0.24025511131883204,
+            "12710": 0.155769966144302,
+            "16710": 0.1940519184611766
+          },
+          "donors": 3,
+          "left_mean": 0.6234590845366204,
+          "paired_donor_bootstrap_ci95": [
+            0.155769966144302,
+            0.24025511131883204
+          ],
+          "right_mean": 0.42676675256185015
+        }
+      }
+    }
+  },
+  "classification_reproduction": {
+    "folds": 36,
+    "identical_confusion_matrices": 23,
+    "max_absolute_f1_difference": 0.0006304073735924343,
+    "max_absolute_balanced_accuracy_difference": 0.0011534025374856371
+  },
+  "key_findings": [
+    "The common-TF F1 deficit persists with a shared scorer and unseen donors.",
+    "Removing TF self-targets explains little of the deficit.",
+    "Shared-TF target sets have median Jaccard about 0.23.",
+    "SPI1 and GATA1 lineage activity is strong; PAX5/EBF1/TCF7 fail motif enrichment in both configured workflows.",
+    "Large random-target feature sets retain much of the Rust all-signature cell-type score.",
+    "RNA reference recovery is close between methods but weak relative to prevalence and Pearson baselines."
+  ],
+  "unchanged": {
+    "software_repository": true,
+    "returned_outputs": true,
+    "published_claims": true
+  },
+  "messages_sent": false
+}

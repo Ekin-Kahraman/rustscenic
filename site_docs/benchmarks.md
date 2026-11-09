@@ -4,7 +4,31 @@ This page records what was measured, on which data and hardware, and how the
 results compare with established tools. Speed and memory results apply to the
 stated workloads; they are not universal guarantees.
 
-## 1.3 million real-cell comparison
+## Completed atlas workflow benchmarks
+
+| Comparison | Real cells | Faster | Lower measured peak PSS |
+| --- | ---: | ---: | ---: |
+| Configured paired workflow vs SCENIC+ | 817,740 | **14.4×** | **57.1%** |
+| Configured RNA workflow vs pySCENIC | 1,306,127 | **3.98×** | **96.6%** |
+
+Three matched seeds and 16 CPUs. Selected panels: RNA 3,000 genes; paired
+5,000 genes and 20,000 regions; 256 TFs. Loading prepared inputs through
+export is timed; raw-data preparation is excluded. v0.5.0 plus the archived
+workflow adapter was measured. Linking, pruning and assembly differ between
+methods, so these figures describe configured workflows and different outputs.
+
+The directional confirmation closed the average external macro-F1 gap
+(0.7123 vs 0.7113 at 20k network-training cells; 12,315 evaluation cells,
+eight donors). Recall remained 1.5 percentage points lower. Scoring the
+817,740-cell atlas added 2.62% time and 4.52% peak PSS by median paired ratio.
+The new option was not a fresh full-workflow benchmark.
+
+[All runs, biological endpoints and figures](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/paper/RESULTS.md) ·
+[Exact methods](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/paper/METHODS.md)
+
+<a id="13-million-real-cell-comparison"></a>
+
+## Core inference: 1.3 million cells versus arboreto
 
 **3× faster with approximately 80% lower measured memory than arboreto
 (Dask, sparse)** on 1,306,127 real mouse-brain cells, consistently across
@@ -25,7 +49,10 @@ evidence rather than proof of biological equivalence.
 
 [Individual seeds, hardware and methods](https://github.com/Ekin-Kahraman/rustscenic/blob/main/docs/benchmarks/huangfu-atlas-20261026/benchmark-source-record.md).
 
-The SCENIC+ comparison starts with prepared RNA and chromatin-accessibility
+## Historical small-workload SCENIC+ comparisons
+
+The earlier comparison below is separate from the completed atlas grid.
+It starts with prepared RNA and chromatin-accessibility
 matrices and tests the following analysis stages:
 
 ```text
@@ -46,7 +73,7 @@ space. The SCENIC+ reference row uses GBM plus Pearson scoring for
 region-to-gene links. Region-to-gene Jaccard below therefore means edge-set
 agreement under the benchmark search space, not score-level identity.
 
-## At a Glance
+### Historical comparison at a glance
 
 | Question | Evidence |
 | --- | --- |
@@ -147,7 +174,7 @@ The benchmark set supports a direct message:
 - RustScenic is faster than SCENIC+ on the selected stages and sampled inputs tested here.
 - The package runs this path without Java, dask, CUDA, or a Snakemake stack.
 - Peak memory is lower or comparable in the tested real-data rows.
-- The clearest current strength is faster local execution with a single modern
+- The clearest strength in these earlier runs was faster local execution with a single modern
   Python install.
 
 The evidence supports faster execution on the stated workloads, alongside

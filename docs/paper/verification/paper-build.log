@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "source_files_verified": 118,
+  "selected_runs": 42,
+  "matched_pairs": 21,
+  "corrected_confusion_matrices_verified": 96,
+  "source_statistics_recomputed": true,
+  "model_fits_performed": 0,
+  "environment": {
+    "python": "3.13.9",
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "matplotlib": "3.11.1"
+  }
+}

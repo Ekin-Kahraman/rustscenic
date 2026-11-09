@@ -2,6 +2,19 @@
 
 Per-cell regulon activity scores.
 
+For comparisons with pySCENIC, use the same gene axis and an explicit scoring
+seed in both tools:
+
+```python
+activity = rustscenic.aucell.score(expression, regulons, seed=777)
+```
+
+The seed controls the ordering of genes with equal expression, including sparse
+zeros. It does not shuffle or densify the expression matrix. Omitting it retains
+the previous deterministic gene-order behaviour. Seeded tie agreement alone is
+not a biological-accuracy claim; match gene coverage, signatures and thresholds
+as well. Native scores retain float32 precision.
+
 ::: rustscenic.aucell
 
 ## Reexported helpers

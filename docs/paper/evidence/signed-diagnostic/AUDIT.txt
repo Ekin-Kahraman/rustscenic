@@ -1,0 +1,113 @@
+RUSTSCENIC BIOLOGICAL FIDELITY: LOCAL CORRECTION
+7 November 2026
+
+Finding
+Our benchmark export combined positively and negatively correlated targets into
+one unsigned activity score. RustScenic's core already retains their direction.
+This lossy aggregation explains most of the observed 20,000-cell macro-F1 gap.
+It is an assessment/export issue, not evidence that faster GRN inference itself
+caused the entire deficit.
+
+Change
+Preserve both target sets, score them separately, then subtract negative-target
+activity from positive-target activity. Apply the same rule to both methods and
+retain exactly the original shared TF roster, one feature per TF. Correlation
+direction is not functional proof of activation/repression. The contrast is not
+an ordinary AUCell AUC and is explicitly labelled as an additional endpoint.
+No network, target list, inference parameter or public API default was changed.
+
+Results: shared pySCENIC AUCell scorer, same classifier and test donors
+Training cells    Rust original    Rust corrected    SCENIC+ corrected
+5,000             0.368849         0.405922          0.426781
+20,000            0.481983         0.512074          0.512593
+
+Each mean covers three algorithm seeds and three test donors, not nine
+independent biological replicates. Corrected minus original Rust macro-F1,
+averaged across seeds separately for each test donor:
+                     donor10886    donor12710    donor16710
+5,000                 +0.04712       +0.02255       +0.04155
+20,000                +0.03048       +0.03395       +0.02584
+
+20,000-cell balanced accuracy: Rust 0.534654 -> 0.560783; corrected SCENIC+ 0.557000.
+Rust's all-TF macro-F1 remains essentially unchanged: 0.638436 -> 0.638680.
+All-TF comparisons do not control the differing numbers/identities of TFs.
+
+Why this explanation is credible
+The frozen GRNs and final edges are unchanged. At 20,000 cells, 28 of 55 shared
+TF/seed combinations contain both positive and negative targets in RustScenic,
+versus zero in SCENIC+. Rust's mean negative-target fractions include ETS1 35%,
+BCL11A 32% and KLF1 28%. The original union obscures this opposing direction.
+The correction improved all six training-donor development settings before it
+was frozen for the test-donor diagnostic. Positive-only scoring and removal of
+weaker targets were less effective/inconsistent; no pruning changes were adopted.
+The correction changes both direction and per-group normalisation. A training-
+only control adding, rather than subtracting, the two AUCs gave macro-F1 0.475
+at 20k versus 0.446 original and 0.490 signed. At 5k: 0.332 versus 0.340 and 0.393.
+Thus group weighting also matters; this is not evidence for a sign-only effect.
+
+Class-level checks at 20,000 training cells
+Cell type        Rust original    Rust corrected    Reference corrected
+Naive CD20+ B    0.446121         0.587593          0.644486
+CD8+ T           0.266253         0.350226          0.404754
+pDC              0.652283         0.687168          0.522998
+SPI1 and GATA1 lineage AUROCs remain above 0.99. PAX5, EBF1 and TCF7 still lack
+final regulons. Their prior loss at motif enrichment has not been corrected.
+Gene/region overlap and experimental reference edge accuracy have not changed.
+Some class scores worsened: proerythroblast -0.01855, lymphoid progenitors
+-0.01780, HSC -0.01666 and plasma cells -0.01331. Improvement is not universal.
+
+Compatibility and performance
+The actual RustScenic 0.5.0 scorer also improves on these cached networks:
+mean common-TF macro-F1 0.481359 -> 0.511851 across three seeds.
+The correction therefore does not require replacing it with a slow scorer.
+
+Local measurement, 30,000 scored cells x 5,000 genes, 16 Rust threads:
+157 unsigned signatures vs 191 signed signatures combined into 157 contrasts.
+Cold scoring/export: 0.750 s unsigned, 0.777 s corrected.
+Mean of two subsequent warm repetitions: 0.091 s unsigned, 0.140 s corrected.
+Whole-process peak RSS: 439,697,408 bytes unsigned; 503,496,704 bytes corrected.
+The final contrast matrix is allocated once to avoid an unnecessary full copy.
+These are local macOS scoring measurements, including input/output memory.
+They are not an atlas rerun and not directly comparable to HPC process-tree PSS.
+Inference is unchanged; the atlas gains are likely to remain substantial, but
+the corrected full pipeline's atlas runtime and peak memory are not verified.
+
+Audit
+35 tests passed: 12 new regression checks plus 23 existing eRegulon tests against
+the benchmark's unchanged 0.5.0 engine. 384 classifier folds independently checked
+against confusion matrices, all converged. All 12 original score matrices matched
+the shared scorer reconstruction within 4.72e-16; all 12 saved corrected matrices
+reproduced exactly. Input RNA and metadata SHA256 values match the frozen manifest.
+Same cells, TF roster, donors and original network edges verified. No test-cell
+network fitting or label-based feature selection was introduced.
+
+Limits and publication decision
+The three test donors had already been inspected. The correction was chosen in
+training-donor development, but these are still post hoc results, not fresh
+independent confirmation. Training-donor CV is transductive because the networks
+were fit on all seven training donors. Mean macro-F1 matching is not a formal
+non-inferiority result. The 5,000-cell deficit and some cell-type deficits remain.
+Higher classification utility does not prove more accurate regulatory edges.
+No claim of equivalent functional biology or preserved atlas costs is established.
+
+Next justified step: independently confirm this fixed signed endpoint with the
+same scorer and matched TF set, retaining the original unsigned endpoint. No
+reason was found to repeat the expensive atlas inference merely for this fix.
+Do not replace published metrics silently. No package, message or push was sent.
+
+Deliverables
+Local branch: fix/biological-fidelity-20261107, base e624c6a.
+Worktree: /Users/ekin/Projects/bio/rustscenic-biological-fidelity
+Adapter: validation/biological_fidelity/polarity.py
+Tests: tests/test_biological_polarity.py
+Methods: validation/biological_fidelity/README.md
+Evidence: audit-receipt.json, paired-common-tf-comparison.csv,
+per-class-diagnostic.csv, signed-target-composition.csv, native-*.json,
+development-*.json, diagnostic-*.json.
+Scripts: diagnose.py, assess_correction.py, native_rescore.py,
+assess_native.py and audit_correction.py. Run with the existing audit Python
+environment, except native_rescore.py, which uses the original RustScenic venv.
+
+Source scoring implementations checked during the investigation
+https://raw.githubusercontent.com/aertslab/pySCENIC/0.12.1/src/pyscenic/aucell.py
+https://raw.githubusercontent.com/aertslab/ctxcore/0.2.0/src/ctxcore/recovery.py

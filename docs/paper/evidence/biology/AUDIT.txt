@@ -1,0 +1,218 @@
+RustScenic biological validation: independent return audit
+6 November 2026
+
+VERDICT
+Execution succeeded. Biological evidence is mixed: useful lineage signals and
+broadly similar RNA reference recovery, but a reproducible disadvantage in the
+prespecified shared-TF classification comparison. Biological equivalence or
+superiority is not established. The existing speed and memory results remain
+valid for the documented configured workflows.
+
+There is enough evidence to start and finish a carefully scoped software and
+scalability manuscript that reports these trade-offs. This is not a green light
+for a claim that RustScenic replaces SCENIC+ without loss of biological quality,
+nor evidence of superior enhancer or causal predictions. No further atlas timing
+run would resolve the present biological limitations. Journal suitability and
+acceptance cannot be determined from execution completion alone.
+
+1. What actually completed and was verified
+
+Huangfu's 16:20 GMT Slack return:
+https://huang-lab-omics.slack.com/archives/C0BUGTD3F9C/p1793982048539049
+Archive: SEND_BACK.tar.gz, 420,779,326 bytes.
+SHA256: 139ba5e6a32a8119d99da7eedb25bb09f776882e1071dcea7c454da8b9d9f056
+
+- All 609 archive files extracted safely. All 596 return-manifest hashes match.
+- All 12 returned package files exactly match the audited handoff.
+- 30/30 model jobs completed: 12 new multiome fits and 18 RNA refinements.
+- All six donor-transfer assessments and the atlas reuse analysis completed.
+- All 378 returned worker-output hashes match. The 42 full .npy activity arrays
+  were deliberately excluded by the return collector; sampled and shared-scorer
+  matrices are present. This is expected packaging, not an undisclosed failure.
+- All 18 old RNA inference networks were reused exactly at the TF/target/weight
+  level. No atlas inference was rerun.
+- All 12 fitted multiome cell lists match the frozen training cells, with no
+  test donors in fitting. All shared-scorer RNA/ATAC matrices have the expected
+  paired train/test cell identities and finite values.
+- Recomputed 1,064 completed classification folds from their confusion matrices:
+  all balanced-accuracy and macro-F1 values match; none failed convergence.
+- Recomputed 48 RNA reference metric panels from actual network files and truth
+  tables: all checked numeric outputs match.
+- Refit the 36 primary shared-TF classifier folds locally. All converged, with
+  maximum absolute differences of 0.0006304 macro-F1 and 0.0011534 balanced
+  accuracy. 23 confusion matrices were identical; 13 had small differences.
+  This is not bitwise reproduction across runtimes, but it preserves the main
+  findings. HPC scores remain the authoritative prespecified results.
+- All 11 returned scheduler job logs report successful completion. No memory or
+  time termination occurred. Preparation checked the frozen native extension,
+  reference source hashes and package versions before running.
+
+2. The primary biological test
+
+BMMC paired RNA/ATAC, GSE194122. Seven training donors, three unseen test donors;
+10,000 test cells. Two training sizes, three algorithm seeds. Both methods use
+the same 5,000 genes, 20,000 regions, 1,176 candidate TFs, AUCell scorer, classifier
+and test cells. Only common TF names are used in the primary comparison; their
+target-gene sets can differ. Means below give each donor equal weight, with
+algorithm seeds averaged within donors.
+
+Training cells   Rust macro-F1   SCENIC+ macro-F1   Difference
+5,000            0.36885         0.42677           -0.05792
+20,000           0.48198         0.51249           -0.03050
+
+At 20,000 cells, balanced accuracy is 0.53465 versus 0.55691 (-0.02225).
+The macro-F1 deficit remains in all three held-out donors after averaging seeds.
+The reported donor-bootstrap interval is [-0.03328, -0.02700] at 20,000, but only
+three test donors make that interval too limited to treat as precise population
+evidence. No noninferiority margin was prespecified. Do not call this equivalent.
+
+All returned TF signatures, still using the shared scorer:
+Training cells   Rust macro-F1   SCENIC+ macro-F1   Rust/ref TF counts
+5,000            0.62346         0.42677           208-218 / 6-12
+20,000           0.63844         0.51363           152-157 / 14-22
+
+This larger-feature-set advantage is useful descriptive evidence, not a fair
+demonstration of better individual networks. The files call these results
+"native", but here that means each method's full signature set, not native
+activity scoring. Use "all signatures, common scorer" in the manuscript.
+
+3. Does this explain the lower F1?
+
+Partly. Several alternatives can now be ruled out or localised:
+
+- Scoring alone: the deficit persists with identical AUCell scoring. Native and
+  reference scoring are similar, not identical: median Spearman correlations
+  at 20,000 cells are 0.927 on Rust signatures and 0.956 on reference signatures.
+- TF self-expression: removing each TF's own gene changes reference shared-TF
+  F1 from 0.51249 to 0.51139. Rust stays at 0.48198. The residual gap is 0.02940,
+  so this explains very little of it.
+- Target selection: median shared-TF gene-set Jaccard is 0.228 at 20,000 cells.
+  Median common-signature sizes are 141 genes for Rust and 92 for SCENIC+.
+  The remaining difference therefore lies in the learned signature composition
+  and its interaction with the fixed classifier, not simply the scorer.
+  These checks do not identify one uniquely responsible algorithmic step.
+- Cell types: the largest common-TF F1 deficits at 20,000 are naive B cells
+  (-0.198), CD8 T cells (-0.139) and ID2-high myeloid progenitors (-0.119).
+  Rust is better for pDCs (+0.129), so the deficit is not uniform across biology.
+  These are exploratory cell-type diagnostics, not prespecified significance tests.
+- All-signature classification is partly nonspecific: for seed777 at 20,000,
+  Rust F1 is 0.63166, versus 0.58747 for five size-matched random-target controls.
+  The corresponding reference values are 0.49853 and 0.18819. Random gene sets
+  can still encode cell identity when many features are provided. This result
+  weakens use of classification alone as proof of correct regulatory edges.
+- Label permutations are low (roughly 0.03-0.04 F1), supporting genuine label
+  information in the unpermuted scores. Expression PCA remains stronger than
+  either network representation: F1 0.76286 at 20,000 training cells.
+
+The package narrows the explanation to network/signature construction and
+coverage. It does not prove that changing any one threshold will safely fix it.
+Do not choose thresholds on these test donors and then present the same donors
+as an untouched confirmation set.
+
+4. What biological evidence is positive, and what is weak?
+
+Lineage plausibility:
+- Rust recovers SPI1 and GATA1 in all six configurations. At 20,000 training
+  cells their mean held-out lineage AUROCs are 0.9951 and 0.9959 respectively.
+- PAX5, EBF1 and TCF7 are absent from both methods' final networks in all six.
+  All are present in expression, candidate TFs, initial GRNs and motif-library
+  annotations. Their motifs fail the selected region-set enrichment stage in
+  both methods. This localises a coverage limitation of the configured workflow;
+  it is not a gene-name mismatch or evidence that these regulators are absent
+  from the biology. The exact reason within region/topic selection and enrichment
+  requires further investigation if broad lineage recovery is a central claim.
+- Reference SPI1 appears in two of three 20,000-cell seeds and GATA1 in one;
+  both show strong expected lineage activity when present.
+
+ATAC utility:
+At 20,000 training cells, common-TF region-activity F1 is 0.19277 for Rust and
+0.21355 for the reference. All-signature scores are 0.27478 and 0.21426.
+These use observed ATAC counts with the common scorer. They do not validate
+functional enhancer-to-gene links or reproduce native imputed-ATAC scoring.
+
+RNA experimental references, mean average precision after motif refinement:
+Reference          Rust       pySCENIC    Reference prevalence
+mESC ChIP          0.29273    0.29287     0.29063
+mESC perturbation  0.11712    0.11784     0.10958
+hESC ChIP          0.14803    0.14757     0.14728
+mDC ChIP           0.04795    0.04764     0.04607
+
+These are descriptively close between methods, but close to the prevalence
+baseline in several settings. The original absolute-Pearson baseline beats
+both original inference methods on all four reference comparisons. Motif
+pruning does not reverse that overall AP comparison.
+
+Pruning retains a small, partly enriched subset: Rust's retained-edge support
+is 1.13-2.30 times a degree-matched uniform baseline, while recall of known
+reference links is only 0.57-1.59%. Against the original GRN at the same per-TF
+edge budget, enrichment improves in mESC/hESC but not mDC (0.80 times baseline).
+Report both support and coverage; a high fraction among a tiny retained set
+does not demonstrate strong whole-network recovery.
+
+Experimental truth covers 81/620 TFs for mESC ChIP, 34/620 for its perturbations,
+34/410 for hESC and 18/321 for mDC. Unlisted edges are unlabelled, not confirmed
+negatives. ChIP binding and perturbation response are not proof of direct causal
+regulation. These references support a limited retrieval comparison, not a
+global probability that a predicted edge is biologically correct.
+
+Seed stability is also mixed. At 20,000 cells Rust recovers TF identities more
+consistently (mean TF Jaccard 0.809 versus 0.481), while common-TF target sets are
+less stable (mean of pairwise median target Jaccards 0.344 versus 0.558).
+Whole TF-gene edge Jaccard is similar (0.425 versus 0.422). No universal stability
+advantage follows from these different measures.
+
+5. Audit limitations and reporting requirements
+
+- Three unseen donors from one BMMC cohort are not three independent cohorts.
+  Seeds are algorithm repeats. The 5k experiment uses the vocabulary selected
+  on the 20k training pool, but never the test donors; it is not a completely
+  independent 5k feature-selection experiment.
+- Macro-F1 is averaged over cell types actually present in each test donor.
+  These donors contain 16-21 cell types, with the smallest present class having
+  six cells. Predictions of classes absent from a donor produce the observed
+  sklearn warnings, not failed runs. Recomputing macro-F1 over the union of
+  true and predicted classes lowers scores but preserves the main direction.
+- The reused HDMA analysis evaluates 22 donors; HDMA-4 has insufficient sampled
+  cells for its fold. Some HDMA test labels do not occur in classifier training
+  donors and remain errors. Its network fitting is transductive, unlike the new
+  BMMC experiment. Do not conflate these two validation designs.
+- RNA motif databases are species-correct despite the historical mouse-gene
+  filename alias. pySCENIC reports modules skipped below 80% gene mapping:
+  521 mESC, 84 hESC and 1 mDC warnings across the three seeds. Native pruning has
+  different filtering rules. Include mapping coverage and algorithm differences.
+- Both pipelines share a deliberately restricted gene/region panel and fixed
+  topic settings. SCENIC+ biological claims are broader than this configured
+  benchmark. These are configured workflow comparisons, not proof of a purely
+  language-level speedup or a lossless, default-for-default replacement.
+- No independent functional enhancer-to-gene validation was performed. TF-union
+  signatures also combine contexts. This limits mechanistic claims.
+- Small cross-runtime classifier differences were retained, not silently replaced
+  with favourable recomputed values. Raw outputs and scripts are unchanged.
+
+6. What to do before submission
+
+Proceed with the software/scalability manuscript and use these results to state
+the biological trade-offs explicitly. Finish the methods, figures, code/data
+archive and a complete parameter/feature-coverage comparison. Include weak and
+negative controls, not just the favourable all-signature and lineage plots.
+
+If the intended paper requires "preserved biological accuracy" or broad
+SCENIC+ replacement, the current evidence does not meet that claim. The next
+work would be a targeted diagnostic/repair of signature construction and motif
+coverage, followed by validation on independent data. More cells or another
+speed run cannot substitute for that. Do not automatically repeat the atlas jobs.
+
+Primary methodological references
+SCENIC+ biological benchmarking and workflow scope:
+https://pmc.ncbi.nlm.nih.gov/articles/PMC10482700/
+BEELINE reference benchmarking and its scope:
+https://pmc.ncbi.nlm.nih.gov/articles/PMC7098173/
+
+Evidence files
+integrity.json; scientific-integrity.json; audit_results.py;
+classifier-reproduction.json; verified-workers.csv; all-utility-folds.csv;
+per-cell-type-utility.csv; lineage-checks.csv; scorer-agreement.csv;
+shared-tf-target-overlap.csv; marker-stage-audit.csv; seed-stability.csv;
+returned/biological-summary.json; returned/rna-reference-recovery.csv.
+
+Nothing sent, published or changed in the software repository during this audit.

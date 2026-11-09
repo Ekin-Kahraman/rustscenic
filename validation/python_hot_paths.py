@@ -239,6 +239,27 @@ ALLOWED_HITS = {
 }
 
 
+# Reviewed native/BLAS workflow orchestration; no cell-wise Python inference.
+ALLOWED_HITS.update({
+    ('_audited_multiome.py', '.to_numpy(', 'values = frame.to_numpy(copy=False)'): 'Read-only topic probability validation at native input boundary.',
+    ('_audited_multiome.py', '.to_numpy(', 'values = ranks.to_numpy(copy=False)'): 'Authentic rank lookup after native enrichment; no rank recomputation.',
+    ('_audited_multiome.py', '.to_numpy(', 'left = cell_topic.to_numpy(dtype=np.float32)'): 'Small topic factor conversion for bounded BLAS imputation.',
+    ('_audited_multiome.py', '.to_numpy(', 'right = topic_peak.to_numpy(dtype=np.float32)'): 'Small topic factor conversion for bounded BLAS imputation.',
+    ('_audited_multiome.py', ' @ ', 'block = (left[row:stop] @ right[:, start:end] * np.float32(1000000)).astype(np.int32)'): 'BLAS posterior product bounded to8192x2000, disk output; real20kx1000 bit-exact check.',
+    ('_audited_multiome.py', 'pd.concat(', 'return pd.concat(pieces, ignore_index=True)'): 'Assemble independent native peak-link batches, no Python correlations.',
+    ('_audited_multiome.py', '.concat(', 'return pd.concat(pieces, ignore_index=True)'): 'Assemble independent native peak-link batches, no Python correlations.',
+    ('_audited_multiome.py', 'pd.concat(', 'result = pd.concat(pieces)'): 'Assemble whole-cell native AUCell batches; bit-exact seeded scoring.',
+    ('_audited_multiome.py', '.concat(', 'result = pd.concat(pieces)'): 'Assemble whole-cell native AUCell batches; bit-exact seeded scoring.',
+    ('_audited_multiome.py', 'pd.concat(', 'pd.concat(signed, ignore_index=True), links, min_target_genes=5,'): 'Two signed evidence tables passed to native eRegulon assembly.',
+    ('_audited_multiome.py', '.concat(', 'pd.concat(signed, ignore_index=True), links, min_target_genes=5,'): 'Two signed evidence tables passed to native eRegulon assembly.',
+    ('validated.py', '.iloc[', 'block = frame.iloc[start:start + rank_batch].to_numpy(copy=False)'): 'Bounded8MiB input validation rejects lost rank universe before inference.',
+    ('validated.py', '.to_numpy(', 'block = frame.iloc[start:start + rank_batch].to_numpy(copy=False)'): 'Bounded8MiB input validation rejects lost rank universe before inference.',
+    ('validated.py', '.loc[', 'frame = frame.loc[(frame.motif_similarity_qvalue <= .001) & (frame.orthologous_identity >= 0)]'): 'One-time annotation resource filtering with audited thresholds, independent of cell count.',
+    ('validated.py', '.drop_duplicates(', 'return frame.dropna(subset=["motif", "TF"]).drop_duplicates()'): 'One-time annotation resource hygiene, independent of cell count.',
+    ('validated.py', '.intersection(', 'if not set(factors).intersection(rna.var_names):'): 'Input TF-name validation, independent of cell count.',
+    ('validated.py', '.intersection(', 'if not set(annotations.TF).intersection(factors):'): 'Input annotation TF-name validation, independent of cell count.',
+})
+
 def scan_python_hot_paths(package_dir: Path = DEFAULT_PACKAGE) -> list[str]:
     """Return package lines that look like scale-sensitive Python compute."""
     if not package_dir.exists():

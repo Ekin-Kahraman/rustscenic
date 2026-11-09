@@ -1,0 +1,179 @@
+........................................................................ [  9%]
+........................................................................ [ 19%]
+........................................................................ [ 29%]
+........................................................................ [ 39%]
+........................................................................ [ 49%]
+........................................................................ [ 59%]
+........................................................................ [ 69%]
+........................................................................ [ 79%]
+......s................................................................. [ 88%]
+........................................................................ [ 98%]
+.........                                                                [100%]
+=============================== warnings summary ===============================
+tests/test_aucell.py::TestAucellCorrectness::test_matches_ctxcore_on_small_case
+tests/test_aucell.py::TestAucellCorrectness::test_equal_expression_ties_break_by_gene_order
+  /Users/ekin/Projects/bio/rustscenic/.venv/lib/python3.13/site-packages/_pytest/python.py:167: UserWarning: top_frac=0.4 is unusually high - pyscenic defaults to 0.05 and values > 0.3 saturate every regulon near its ceiling. Are you sure?
+    result = testfunction(**testargs)
+
+tests/test_aucell.py::TestAucellCorrectness::test_regulon_outside_topk_gives_zero
+  /Users/ekin/Projects/bio/rustscenic/.venv/lib/python3.13/site-packages/_pytest/python.py:167: UserWarning: effective AUCell rank cutoff is 0: round(top_frac × n_genes) - 1 = round(0.1 × 10) - 1, which is below 1. Every AUC will score to 0. Increase top_frac or use a wider gene set.
+    result = testfunction(**testargs)
+
+tests/test_aucell.py::TestAucellCorrectness::test_dense_path_passes_strided_float32_without_python_contiguity_copy
+tests/test_aucell.py::TestAucellCorrectness::test_dense_path_does_not_allocate_python_isfinite_mask
+tests/test_aucell.py::TestAucellEdgeCases::test_nan_input_raises_value_error
+tests/test_aucell.py::test_aucell_accepts_dict_regulons
+  /Users/ekin/Projects/bio/rustscenic/.venv/lib/python3.13/site-packages/_pytest/python.py:167: UserWarning: effective AUCell rank cutoff is 0: round(top_frac × n_genes) - 1 = round(0.2 × 5) - 1, which is below 1. Every AUC will score to 0. Increase top_frac or use a wider gene set.
+    result = testfunction(**testargs)
+
+tests/test_aucell.py::TestAucellCorrectness::test_dense_strided_float32_matches_c_contiguous_result
+tests/test_aucell.py::TestAucellCorrectness::test_dense_strided_float32_matches_c_contiguous_result
+  /Users/ekin/Projects/bio/rustscenic/.venv/lib/python3.13/site-packages/_pytest/python.py:167: UserWarning: top_frac=0.6 is unusually high - pyscenic defaults to 0.05 and values > 0.3 saturate every regulon near its ceiling. Are you sure?
+    result = testfunction(**testargs)
+
+tests/test_aucell.py::TestAucellCorrectness::test_duplicate_gene_dedupe_kernel_is_recorded
+tests/test_aucell.py::TestAucellSparse::test_sparse_zero_tie_boundary_matches_dense
+tests/test_aucell.py::TestAucellSparse::test_sparse_zero_tie_boundary_matches_dense
+tests/test_aucell.py::TestAucellSparse::test_sparse_path_passes_int32_indices_without_copy
+  /Users/ekin/Projects/bio/rustscenic/.venv/lib/python3.13/site-packages/_pytest/python.py:167: UserWarning: top_frac=0.5 is unusually high - pyscenic defaults to 0.05 and values > 0.3 saturate every regulon near its ceiling. Are you sure?
+    result = testfunction(**testargs)
+
+tests/test_cistarget.py::TestCistargetShape::test_returns_df_with_expected_cols
+tests/test_cistarget.py::TestCistargetCorrectness::test_self_consistency_motif_tops_its_own_genes
+tests/test_cistarget.py::TestCistargetCorrectness::test_enrich_does_not_allocate_isfinite_mask_for_integer_rankings
+tests/test_cistarget.py::TestCistargetCorrectness::test_projected_enrich_matches_full_rankings
+tests/test_cistarget.py::TestCistargetEdgeCases::test_empty_regulons_returns_empty_df
+tests/test_cistarget.py::TestCistargetEdgeCases::test_auc_threshold_filters
+tests/test_cistarget.py::TestCistargetDeterminism::test_reproducible
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/cistarget.py:247: UserWarning: NES computed on only 10 motifs, below the 30-motif floor where a z-score is reliable. NES values are returned as NaN. Either pass a larger motif ranking matrix or ignore the `nes` column for this run.
+    return _enrichment_result_to_dataframe(result, motif_names, reg_names)
+
+tests/test_cistarget.py: 2 warnings
+tests/test_full_scenicplus_smoke.py: 1 warning
+tests/test_pipeline_integration.py: 7 warnings
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/cistarget.py:247: UserWarning: NES computed on only 3 motifs, below the 30-motif floor where a z-score is reliable. NES values are returned as NaN. Either pass a larger motif ranking matrix or ignore the `nes` column for this run.
+    return _enrichment_result_to_dataframe(result, motif_names, reg_names)
+
+tests/test_cistarget.py::TestCistargetCorrectness::test_array_backed_projected_enrich_and_prune_match_dataframe
+tests/test_cli.py::test_pipeline_cli_runs_full_multiome_smoke
+tests/test_pipeline_integration.py::test_pipeline_run_with_motif_annotations_scores_pruned_regulons
+tests/test_pipeline_integration.py::test_pipeline_run_without_motif_annotations_keeps_candidate_regulons
+tests/test_pipeline_integration.py::test_region_cistarget_with_peak_ids_preserves_float32_auc_dtype
+tests/test_pipeline_integration.py::test_region_cistarget_attribution_passes_full_rankings_to_rust
+tests/test_pipeline_integration.py::test_region_cistarget_uses_rust_row_expander
+tests/test_pipeline_integration.py::test_gene_cistarget_file_projection_preserves_full_rank_universe
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/cistarget.py:247: UserWarning: NES computed on only 2 motifs, below the 30-motif floor where a z-score is reliable. NES values are returned as NaN. Either pass a larger motif ranking matrix or ignore the `nes` column for this run.
+    return _enrichment_result_to_dataframe(result, motif_names, reg_names)
+
+tests/test_cistarget.py::TestCistargetEdgeCases::test_all_dropped_regulons_preserve_rust_metadata
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/cistarget.py:124: UserWarning: 1 of 1 regulons have < 50% of their genes present in the expression matrix (first: R_missing (0/1)). Their AUCell / GRN scores will be dominated by the floor. Common cause: ENSEMBL-ID-vs-symbol mismatch between regulons and `var_names`; `rustscenic._gene_resolution.resolve_gene_names(adata)` handles the cellxgene convention automatically.
+    return _enrich_from_rank_array(
+
+tests/test_cistarget.py::TestCistargetEdgeCases::test_all_dropped_regulons_preserve_rust_metadata
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/cistarget.py:124: UserWarning: all 1 regulons dropped - none of their genes appear in the ranking columns. Common causes: (1) rankings indexed by ENSEMBL while regulons use gene symbols; (2) species mismatch between rankings (e.g. hg38) and regulons (e.g. mouse MGI); (3) rankings orientation swapped (motifs-in-cols vs motifs-in-rows). First regulon genes: ['not_in_rankings']. First 3 ranking columns: ['g0', 'g1', 'g2'].
+    return _enrich_from_rank_array(
+
+tests/test_cli.py::test_add_cor_cli_emits_signed_adjacencies
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/cli.py:621: UserWarning: top_frac=0.75 is unusually high - pyscenic defaults to 0.05 and values > 0.3 saturate every regulon near its ceiling. Are you sure?
+    return args.func(args)
+
+tests/test_convention_mismatch_guards.py::test_full_pipeline_survives_both_chrom_and_var_names_conventions
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/aucell.py:233: UserWarning: var_names look like ENSEMBL IDs (e.g. 'ENSG00000110000'); using `var['feature_name']` for gene-symbol matching (cellxgene/10x convention). First three swaps: [('ENSG00000110000', 'SYM0'), ('ENSG00000110001', 'SYM1'), ('ENSG00000110002', 'SYM2')].
+    return X, resolve_gene_names(expression), string_list(expression.obs_names)
+
+tests/test_eregulon.py::test_min_target_genes_filter
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/eregulon.py:137: UserWarning: build_eregulons kept only 0 of 2 input TFs. try use_grn_intersection=False - the GRN ∩ enhancer-link step dropped most TFs, which usually means GRN gene names and enhancer_links `gene` column use different conventions (symbol vs ENSEMBL).
+    return _build_eregulon_objects(
+
+tests/test_grn.py::TestGrnEdgeCases::test_all_foreign_tfs_returns_empty
+  /Users/ekin/projects/bio/rustscenic-biological-fidelity/tests/test_grn.py:35: UserWarning: none of the 2 supplied TFs match any gene in the expression matrix - returning empty DataFrame. TF example: 'NOT_IN_DATA1'; data example: 'g0'. No automatic hint available - check symbol convention and species.
+    out = grn.infer(small_expr, tf_names=["NOT_IN_DATA1", "NOT_IN_DATA2"],
+
+tests/test_grn.py::TestGrnCorrelation::test_dropout_mask_ignores_explicit_sparse_zeros
+  /Users/ekin/Projects/bio/rustscenic/.venv/lib/python3.13/site-packages/scipy/sparse/_index.py:174: SparseEfficiencyWarning: Changing the sparsity structure of a csc_matrix is expensive. lil and dok are more efficient.
+    self._set_intXint(row, col, x.flat[0])
+
+tests/test_pipeline_integration.py::test_end_to_end_multiome_pipeline
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/cistarget.py:247: UserWarning: NES computed on only 12 motifs, below the 30-motif floor where a z-score is reliable. NES values are returned as NaN. Either pass a larger motif ranking matrix or ignore the `nes` column for this run.
+    return _enrichment_result_to_dataframe(result, motif_names, reg_names)
+
+tests/test_pipeline_integration.py: 13 warnings
+tests/test_public_api_smoke.py: 1 warning
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/pipeline.py:2319: Pandas4Warning: The copy keyword is deprecated and will be removed in a future version. Copy-on-Write is active in pandas since 3.0 which utilizes a lazy copy mechanism that defers copies until necessary. Use .copy() to make an eager copy if necessary.
+    adata_rna.obs = pd.concat([obs, auc_obs], axis=1, copy=False)
+
+tests/test_pipeline_integration.py::test_pipeline_run_can_skip_integrated_h5ad_for_compute_profiling
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/pipeline.py:603: UserWarning: expression matrix max value is 99.0; rustscenic expects log-normalised input. If this is raw UMI counts, run `scanpy.pp.normalize_total(adata, target_sum=1e4)` followed by `scanpy.pp.log1p(adata)` before calling rustscenic.
+    grn = rustscenic.grn.infer(
+
+tests/test_pipeline_integration.py::test_pipeline_run_can_skip_integrated_h5ad_for_compute_profiling
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/pipeline.py:603: UserWarning: only 20 samples for 5 genes and 1 TFs. GRN edge rankings are unstable in this regime regardless of implementation - a GBM with n_estimators=5 memorises the training set trivially. Consider running on cell-level (not pseudobulk) input, or apply `top_targets_per_tf=...` / `min_importance=...` to extract a sparser, more comparable edge set. See validation/kamath_da/KAMATH_AUDIT.md for the analysis behind this guidance.
+    grn = rustscenic.grn.infer(
+
+tests/test_pipeline_integration.py::test_pipeline_run_can_skip_integrated_h5ad_for_compute_profiling
+  /Users/ekin/projects/bio/rustscenic-biological-fidelity/tests/test_pipeline_integration.py:606: UserWarning: effective AUCell rank cutoff is 0: round(top_frac × n_genes) - 1 = round(0.05 × 5) - 1, which is below 1. Every AUC will score to 0. Increase top_frac or use a wider gene set.
+    result = rustscenic.pipeline.run(
+
+tests/test_pipeline_integration.py::test_pipeline_run_can_skip_integrated_h5ad_for_compute_profiling
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/pipeline.py:1184: UserWarning: expression matrix max value is 99.0; rustscenic expects log-normalised input. If this is raw UMI counts, run `scanpy.pp.normalize_total(adata, target_sum=1e4)` followed by `scanpy.pp.log1p(adata)` before calling rustscenic.
+    auc = rustscenic.aucell.score(
+
+tests/test_pipeline_integration.py::test_pipeline_run_with_motif_annotations_scores_pruned_regulons
+  /Users/ekin/projects/bio/rustscenic-biological-fidelity/tests/test_pipeline_integration.py:794: UserWarning: effective AUCell rank cutoff is 0: round(top_frac × n_genes) - 1 = round(0.05 × 26) - 1, which is below 1. Every AUC will score to 0. Increase top_frac or use a wider gene set.
+    result = rustscenic.pipeline.run(
+
+tests/test_pipeline_integration.py::test_pipeline_run_without_motif_annotations_keeps_candidate_regulons
+  /Users/ekin/projects/bio/rustscenic-biological-fidelity/tests/test_pipeline_integration.py:849: UserWarning: effective AUCell rank cutoff is 0: round(top_frac × n_genes) - 1 = round(0.05 × 26) - 1, which is below 1. Every AUC will score to 0. Increase top_frac or use a wider gene set.
+    result = rustscenic.pipeline.run(
+
+tests/test_pipeline_integration.py::test_pipeline_skips_cistarget_rankings_io_when_no_candidate_regulons
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/pipeline.py:603: UserWarning: none of the 1 supplied TFs match any gene in the expression matrix - returning empty DataFrame. TF list looks UPPERCASE (human HGNC) but data looks Titlecase (mouse MGI). Try `[tf.title() for tf in tf_names]` or pass the mouse TF list from `rustscenic.data.tfs('mouse')`.
+    grn = rustscenic.grn.infer(
+
+tests/test_pipeline_integration.py::test_pipeline_run_fallback_removes_stale_pruned_regulons_json
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/cistarget.py:247: UserWarning: NES computed on only 1 motifs, below the 30-motif floor where a z-score is reliable. NES values are returned as NaN. Either pass a larger motif ranking matrix or ignore the `nes` column for this run.
+    return _enrichment_result_to_dataframe(result, motif_names, reg_names)
+
+tests/test_pipeline_integration.py::test_pipeline_run_fallback_removes_stale_pruned_regulons_json
+  /Users/ekin/projects/bio/rustscenic-biological-fidelity/tests/test_pipeline_integration.py:1156: UserWarning: effective AUCell rank cutoff is 0: round(top_frac × n_genes) - 1 = round(0.05 × 26) - 1, which is below 1. Every AUC will score to 0. Increase top_frac or use a wider gene set.
+    result1 = rustscenic.pipeline.run(motif_annotations=matching_annotations, **common)
+
+tests/test_pipeline_integration.py::test_region_cistarget_peak_attribution_matches_pandas_reference
+tests/test_pipeline_integration.py::test_region_cistarget_peak_attribution_matches_pandas_reference
+tests/test_pipeline_integration.py::test_region_cistarget_peak_attribution_matches_pandas_reference
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/cistarget.py:247: UserWarning: NES computed on only 4 motifs, below the 30-motif floor where a z-score is reliable. NES values are returned as NaN. Either pass a larger motif ranking matrix or ignore the `nes` column for this run.
+    return _enrichment_result_to_dataframe(result, motif_names, reg_names)
+
+tests/test_pipeline_integration.py::test_pipeline_run_topics_method_gibbs
+  /Users/ekin/projects/bio/rustscenic-biological-fidelity/tests/test_pipeline_integration.py:1926: UserWarning: effective AUCell rank cutoff is 0: round(top_frac × n_genes) - 1 = round(0.05 × 20) - 1, which is below 1. Every AUC will score to 0. Increase top_frac or use a wider gene set.
+    result = rustscenic.pipeline.run(
+
+tests/test_pipeline_integration.py::test_pipeline_keeps_cistarget_metadata_when_rankings_do_not_overlap
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/cistarget.py:124: UserWarning: 1 of 1 regulons have < 50% of their genes present in the expression matrix (first: TF1_regulon (0/5)). Their AUCell / GRN scores will be dominated by the floor. Common cause: ENSEMBL-ID-vs-symbol mismatch between regulons and `var_names`; `rustscenic._gene_resolution.resolve_gene_names(adata)` handles the cellxgene convention automatically.
+    return _enrich_from_rank_array(
+
+tests/test_pipeline_integration.py::test_pipeline_keeps_cistarget_metadata_when_rankings_do_not_overlap
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/cistarget.py:124: UserWarning: all 1 regulons dropped - none of their genes appear in the ranking columns. Common causes: (1) rankings indexed by ENSEMBL while regulons use gene symbols; (2) species mismatch between rankings (e.g. hg38) and regulons (e.g. mouse MGI); (3) rankings orientation swapped (motifs-in-cols vs motifs-in-rows). First regulon genes: ['G0', 'G1', 'G2']. First 3 ranking columns: ['X_NOT_RNA', 'Y_NOT_RNA'].
+    return _enrich_from_rank_array(
+
+tests/test_pipeline_integration.py::test_pipeline_run_uses_region_cistarget_when_supplied
+  /Users/ekin/Desktop/RustScenic/RustScenic-Native-AUCell-Fix-20261107/candidate/rustscenic/eregulon.py:190: UserWarning: build_eregulons kept only 1 of 6 input TFs. try use_grn_intersection=False - the GRN ∩ enhancer-link step dropped most TFs, which usually means GRN gene names and enhancer_links `gene` column use different conventions (symbol vs ENSEMBL).
+    return _build_eregulons_dataframe(
+
+tests/test_seurat_like_input.py::test_sparse_exchange_preserves_values_names_and_activity
+tests/test_seurat_like_input.py::test_sparse_exchange_cli_writes_named_activity_and_h5ad
+tests/test_seurat_like_input.py::test_sparse_exchange_rejects_wrong_orientation
+tests/test_seurat_like_input.py::test_sparse_exchange_rejects_invalid_expression[nan]
+tests/test_seurat_like_input.py::test_sparse_exchange_rejects_invalid_expression[inf]
+tests/test_seurat_like_input.py::test_sparse_exchange_rejects_invalid_expression[-1.0]
+  /Users/ekin/projects/bio/rustscenic-biological-fidelity/examples/seurat_score.py:34: DeprecationWarning: The default value for `spmatrix` is changing to `False` in v1.20.
+               That means the default return type will be a sparse array.
+               Unless you use * instead of @, ** for matrix power, or you depend
+               on 2D shapes from e.g. `A.sum(axis=0)` it may not matter to you.
+               See the spmatrix to sparray migration guide for details.
+               https://docs.scipy.org/doc/scipy/reference/sparse.migration_to_sparray.html
+               
+    matrix = sparse.csr_matrix(mmread(directory / "expression.mtx"))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+728 passed, 1 skipped, 82 warnings in 6.51s

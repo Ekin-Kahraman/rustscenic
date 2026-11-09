@@ -1,0 +1,4 @@
+# Preserve checksummed evidence and generated artefacts across checkouts.
+evidence/** -text linguist-generated=true
+figures/** -text linguist-generated=true
+verification/*.log -text linguist-generated=true

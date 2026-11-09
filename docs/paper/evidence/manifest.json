@@ -1,0 +1,1283 @@
+{
+  "files": [
+    {
+      "path": "scaling/AUDIT.txt",
+      "bytes": 7962,
+      "sha256": "5cd33a54e2578031c66489b3bbb4ad7094594374ab7afd52532f4abe6c8d4fee",
+      "source": "RustScenic-Final-Results-Audit-20261106/AUDIT.txt"
+    },
+    {
+      "path": "scaling/consolidated-runs.csv",
+      "bytes": 8994,
+      "sha256": "095a31e7e7a23822b1ff04939ffca33a85d40e978df4d422502968908df8f0bd",
+      "source": "RustScenic-Final-Results-Audit-20261106/consolidated-runs.csv"
+    },
+    {
+      "path": "scaling/consolidated-performance.csv",
+      "bytes": 1267,
+      "sha256": "1fd534cf2b58cfc6680faeadb5776e81a2df8768400d49635b3df028cd39f4cf",
+      "source": "RustScenic-Final-Results-Audit-20261106/consolidated-performance.csv"
+    },
+    {
+      "path": "scaling/consolidated-results.json",
+      "bytes": 6080,
+      "sha256": "7332e6a27d4f48da698f5b11a00383918de6aac89c118d151a5b6d14ed1e3109",
+      "source": "RustScenic-Final-Results-Audit-20261106/consolidated-results.json"
+    },
+    {
+      "path": "scaling/verified-biology.json",
+      "bytes": 45047,
+      "sha256": "dc3f76eb505111596e0752e21612eba582c20de035f747b1132777fde3f2041e",
+      "source": "RustScenic-Final-Results-Audit-20261106/verified-biology.json"
+    },
+    {
+      "path": "scaling/archive-integrity.json",
+      "bytes": 252,
+      "sha256": "b93e6db9d6b88cb1d3f3a78b6187b63d0c4961af07850511b4d2cff6c06fad75",
+      "source": "RustScenic-Final-Results-Audit-20261106/archive-integrity.json"
+    },
+    {
+      "path": "scaling/returned/FULL-OUTPUTS-RETAINED-ON-HPC.json",
+      "bytes": 9279,
+      "sha256": "a077ead2c8900aa351d9049cfd5c41c39bf268a6fc2f332b516125565106e795",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/FULL-OUTPUTS-RETAINED-ON-HPC.json"
+    },
+    {
+      "path": "recovery/AUDIT.txt",
+      "bytes": 10074,
+      "sha256": "75a1f775eaf275838c742fd3a8f3402a3c96970cda56ada294f27cfe0f2b3fd4",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/AUDIT.txt"
+    },
+    {
+      "path": "recovery/AUDIT-before-resource-followup.txt",
+      "bytes": 9712,
+      "sha256": "6280e7a5addf6bb7e04a92064675076ca895776a9ca23bbbb0d5495d5c33457a",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/AUDIT-before-resource-followup.txt"
+    },
+    {
+      "path": "recovery/verified-runs.csv",
+      "bytes": 8015,
+      "sha256": "100846a4405b65b3fc01ca54b64178b25431880a2cb5972bae5f5e7f5b6a1cff",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/verified-runs.csv"
+    },
+    {
+      "path": "recovery/returned/SUMMARY.json",
+      "bytes": 9126,
+      "sha256": "eac3cac6929883352524ff8fe015e81b607da8b9272f8521f5d0b07271fed389",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/SUMMARY.json"
+    },
+    {
+      "path": "recovery/returned/FULL-OUTPUTS-RETAINED-ON-HPC.json",
+      "bytes": 21063,
+      "sha256": "f1711ffa697f7c50a8efaddf5786c8b12f2274519d40bbc6c94585b8aa29d2e4",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/FULL-OUTPUTS-RETAINED-ON-HPC.json"
+    },
+    {
+      "path": "recovery/returned/package/config.json",
+      "bytes": 1581,
+      "sha256": "f067d1e3dc3d12a17fb95572ab42d0d8ae34ba8dcf679233b4005a40d61ccfef",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/package/config.json"
+    },
+    {
+      "path": "recovery/returned/package/sources.json",
+      "bytes": 1901,
+      "sha256": "b7c0d6d144c12d66d2c37c626f723d36322057ef3686c1c4379ec1970b0a6400",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/package/sources.json"
+    },
+    {
+      "path": "recovery/returned/package/bounded.py",
+      "bytes": 2867,
+      "sha256": "cbfea78c21db48c5adb89a9e33446ef8b6d517b1997d1081fac66df700d4a4f1",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/package/bounded.py"
+    },
+    {
+      "path": "recovery/returned/package/worker.py",
+      "bytes": 7792,
+      "sha256": "2c9e97e0cc857c08a8ef2fb30fe8584d4ad055c73bedb971abbeabf0140d47c5",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/package/worker.py"
+    },
+    {
+      "path": "biology/AUDIT.txt",
+      "bytes": 13100,
+      "sha256": "f32b37e78f71e8e993a153e78fec8e87b90730ec1173ed6f03fbdfa4657ef7a0",
+      "source": "RustScenic-Biology-Results-Audit-20261106/AUDIT.txt"
+    },
+    {
+      "path": "biology/AUDIT-SUMMARY.json",
+      "bytes": 5523,
+      "sha256": "1a71a11f581a6a64bce25fc22e579376106841e7b47b1d39f5e23568cf92eade",
+      "source": "RustScenic-Biology-Results-Audit-20261106/AUDIT-SUMMARY.json"
+    },
+    {
+      "path": "biology/scientific-integrity.json",
+      "bytes": 24079,
+      "sha256": "d6c8cfb7975b5465e1fc73147f6c5e86f999a5dd4e31d2ff54772c54545aa6f8",
+      "source": "RustScenic-Biology-Results-Audit-20261106/scientific-integrity.json"
+    },
+    {
+      "path": "biology/integrity.json",
+      "bytes": 608,
+      "sha256": "99d55b2efeeeb5ff2f548104ac10c1c4a5284a8655034120ad9f45ec9af8b30b",
+      "source": "RustScenic-Biology-Results-Audit-20261106/integrity.json"
+    },
+    {
+      "path": "biology/all-utility-folds.csv",
+      "bytes": 47261,
+      "sha256": "a223726b17903d72941f332cd3e5db25df5079cac8d575382c718553c84171c5",
+      "source": "RustScenic-Biology-Results-Audit-20261106/all-utility-folds.csv"
+    },
+    {
+      "path": "biology/lineage-checks.csv",
+      "bytes": 9341,
+      "sha256": "ff8cd88cef33cc9e551b6f42ae539b67e41778d11ae0adf6b94f3d5cbea35f4c",
+      "source": "RustScenic-Biology-Results-Audit-20261106/lineage-checks.csv"
+    },
+    {
+      "path": "biology/marker-stage-audit.csv",
+      "bytes": 3526,
+      "sha256": "52e3fc326b278855a0f67e054e5abb63970662a36e081ff99bcfee1be96f86c8",
+      "source": "RustScenic-Biology-Results-Audit-20261106/marker-stage-audit.csv"
+    },
+    {
+      "path": "biology/per-cell-type-utility.csv",
+      "bytes": 50805,
+      "sha256": "dd02eee0cd3bfd6e19e727f68a09b2491beb1928825bbfe67c9f57f80909912a",
+      "source": "RustScenic-Biology-Results-Audit-20261106/per-cell-type-utility.csv"
+    },
+    {
+      "path": "biology/seed-stability.csv",
+      "bytes": 1045,
+      "sha256": "8168e756ded19d5b3b3e305219b6167f48c5269e5c75816040a4f962a65c15b1",
+      "source": "RustScenic-Biology-Results-Audit-20261106/seed-stability.csv"
+    },
+    {
+      "path": "biology/shared-tf-target-overlap.csv",
+      "bytes": 3963,
+      "sha256": "e801c3fe602bccf06c798c92c1ca446c2de58af5152ee0930d91eabb86a7115f",
+      "source": "RustScenic-Biology-Results-Audit-20261106/shared-tf-target-overlap.csv"
+    },
+    {
+      "path": "biology/regulon-sizes.csv",
+      "bytes": 41493,
+      "sha256": "f131d530816dffdcebf78f8b71aa9d8881bd65c5ebc47f9be0b29e8f7f082dff",
+      "source": "RustScenic-Biology-Results-Audit-20261106/regulon-sizes.csv"
+    },
+    {
+      "path": "biology/returned/biological-summary.json",
+      "bytes": 4199,
+      "sha256": "9934f388c54eb2a6a3ecee2b612fcd475800749bd50dd62b87898ae154c2f001",
+      "source": "RustScenic-Biology-Results-Audit-20261106/returned/biological-summary.json"
+    },
+    {
+      "path": "biology/returned/rna-reference-recovery.csv",
+      "bytes": 14820,
+      "sha256": "7015cdb18a217bc4bca150701dd2afb70b8a209c3b77e62071abab78b67700f2",
+      "source": "RustScenic-Biology-Results-Audit-20261106/returned/rna-reference-recovery.csv"
+    },
+    {
+      "path": "biology/returned/package/PROTOCOL.txt",
+      "bytes": 6982,
+      "sha256": "ba317450b3119f298f68b0a5916ffdf90abf4ad5451c64b62cc27db9013f7e20",
+      "source": "RustScenic-Biology-Results-Audit-20261106/returned/package/PROTOCOL.txt"
+    },
+    {
+      "path": "biology/returned/package/analysis_worker.py",
+      "bytes": 6498,
+      "sha256": "3de09ded9f5e300257a88b50a3a764f8023cf636801a3479e23961e58dc34825",
+      "source": "RustScenic-Biology-Results-Audit-20261106/returned/package/analysis_worker.py"
+    },
+    {
+      "path": "biology/returned/package/utility.py",
+      "bytes": 6621,
+      "sha256": "22fe671d46c9e4b0f147ea76f5a57f24cb72242a80bef0a0fcd4dc5128416d4a",
+      "source": "RustScenic-Biology-Results-Audit-20261106/returned/package/utility.py"
+    },
+    {
+      "path": "signed-diagnostic/AUDIT.txt",
+      "bytes": 6777,
+      "sha256": "1fbe93d100ee87fee6d10f258d48d49f48c53bb38976cf0d2b32f24321691866",
+      "source": "RustScenic-Biological-Fidelity-20261107/AUDIT.txt"
+    },
+    {
+      "path": "signed-diagnostic/audit-receipt.json",
+      "bytes": 4377,
+      "sha256": "2a1fdcff76697f9d15f31f668c89a601450b8bfb26f7b139849053d88f327070",
+      "source": "RustScenic-Biological-Fidelity-20261107/audit-receipt.json"
+    },
+    {
+      "path": "signed-diagnostic/paired-common-tf-comparison.csv",
+      "bytes": 3900,
+      "sha256": "adc1736e2d52eec63971dabadf9c9a1661751af47c4e40d1191af6b7144d8cba",
+      "source": "RustScenic-Biological-Fidelity-20261107/paired-common-tf-comparison.csv"
+    },
+    {
+      "path": "signed-diagnostic/signed-target-composition.csv",
+      "bytes": 6912,
+      "sha256": "315e4f6877b0407ff1367b3e1db52ef3ce37060e33720b480ec6bcb192030aa0",
+      "source": "RustScenic-Biological-Fidelity-20261107/signed-target-composition.csv"
+    },
+    {
+      "path": "signed-diagnostic/per-class-diagnostic.csv",
+      "bytes": 35843,
+      "sha256": "e8da8ebbc1b2231595e9630c3772a7c07ae03c7247760164482530cf2927c0c7",
+      "source": "RustScenic-Biological-Fidelity-20261107/per-class-diagnostic.csv"
+    },
+    {
+      "path": "external/AUDIT.txt",
+      "bytes": 8009,
+      "sha256": "14c30edf90ad7fb536dcabbad22310747dec1ab69327ca6dbd0be529ffe80ff5",
+      "source": "RustScenic-Confirmation-Results-Audit-20261107/AUDIT.txt"
+    },
+    {
+      "path": "external/verified-results.json",
+      "bytes": 28660,
+      "sha256": "ce09e4105da3e2dab831b34945dcb68f3fed644810f6e73056d1d8168608850e",
+      "source": "RustScenic-Confirmation-Results-Audit-20261107/verified-results.json"
+    },
+    {
+      "path": "external/integrity-audit.json",
+      "bytes": 3562,
+      "sha256": "ff06924ffbc3fe78dcf967dd3a82c08c2a45b4348a5ff14f863f415a921c83d2",
+      "source": "RustScenic-Confirmation-Results-Audit-20261107/integrity-audit.json"
+    },
+    {
+      "path": "external/primary-class-summary.csv",
+      "bytes": 1586,
+      "sha256": "12ed29289ea13b1b6b89be707f91a3981c28fe1053fc5bdc968b7fae5a5b86c3",
+      "source": "RustScenic-Confirmation-Results-Audit-20261107/primary-class-summary.csv"
+    },
+    {
+      "path": "external/returned/biology-folds.csv",
+      "bytes": 62043,
+      "sha256": "756b0df1e1c8331b364862ddb9a74c999b289bfe2bd7b86dcb79b41558f2649c",
+      "source": "RustScenic-Confirmation-Results-Audit-20261107/returned/biology-folds.csv"
+    },
+    {
+      "path": "external/returned/biological-summary.json",
+      "bytes": 9456,
+      "sha256": "20837a01732c0b337a3cea6b821afa812543786c3f93cad5905b7a336af50948",
+      "source": "RustScenic-Confirmation-Results-Audit-20261107/returned/biological-summary.json"
+    },
+    {
+      "path": "external/returned/external-coverage.json",
+      "bytes": 141149,
+      "sha256": "a10919c2f10a1d17966a397463f627170798fd028a213a159f01439aacbb198a",
+      "source": "RustScenic-Confirmation-Results-Audit-20261107/returned/external-coverage.json"
+    },
+    {
+      "path": "external/returned/package/PROTOCOL.txt",
+      "bytes": 5506,
+      "sha256": "af5b61ab27dff4ff047bd2d80fb65a5474f3ee7295c64694fd45d12503f0f517",
+      "source": "RustScenic-Confirmation-Results-Audit-20261107/returned/package/PROTOCOL.txt"
+    },
+    {
+      "path": "external/returned/package/DATA-NOTICES.txt",
+      "bytes": 1353,
+      "sha256": "464b3dc330f638c3c84970254a391e4168e877338a18b36779632e3f8dcd52cf",
+      "source": "RustScenic-Confirmation-Results-Audit-20261107/returned/package/DATA-NOTICES.txt"
+    },
+    {
+      "path": "external/returned/package/runtime-pins.json",
+      "bytes": 228,
+      "sha256": "c53d33cbd4b9f3872f63449702d74ad8b561ec669117ad8b0b0731159a26c504",
+      "source": "RustScenic-Confirmation-Results-Audit-20261107/returned/package/runtime-pins.json"
+    },
+    {
+      "path": "external/returned/package/network-provenance.json",
+      "bytes": 5721,
+      "sha256": "e73b5d53ab7d355e6f2f0077bc27ae59e51c6203001fc4e361d4896eeab625d6",
+      "source": "RustScenic-Confirmation-Results-Audit-20261107/returned/package/network-provenance.json"
+    },
+    {
+      "path": "scoring/AUDIT.txt",
+      "bytes": 5124,
+      "sha256": "35eb373f955642e004c7554a0993b86ef92a5ecb18e718636353820966e5fe37",
+      "source": "RustScenic-Scoring-Results-Audit-20261108/AUDIT.txt"
+    },
+    {
+      "path": "scoring/audit-receipt.json",
+      "bytes": 930,
+      "sha256": "7ac24089584a6c3fc03714955d8f121a2779395d150a763de43af5e7701ce304",
+      "source": "RustScenic-Scoring-Results-Audit-20261108/audit-receipt.json"
+    },
+    {
+      "path": "scoring/verified-results.json",
+      "bytes": 11915,
+      "sha256": "68eeeacd992ba45ddfd1832d21ca213835f465afbeba2d6e3fa6cd6c04aea185",
+      "source": "RustScenic-Scoring-Results-Audit-20261108/verified-results.json"
+    },
+    {
+      "path": "scoring/integrity.json",
+      "bytes": 145,
+      "sha256": "dd696b4a8655f0fe9b6b9d56bb1355826159732e8319f2b5ac8d6b5979e03b03",
+      "source": "RustScenic-Scoring-Results-Audit-20261108/integrity.json"
+    },
+    {
+      "path": "scoring/returned/scoring-performance.csv",
+      "bytes": 1406,
+      "sha256": "ff12c295949a8931a2c8e6993e7e6a96510b4480ff039570ed5a60f8465b06ee",
+      "source": "RustScenic-Scoring-Results-Audit-20261108/returned/scoring-performance.csv"
+    },
+    {
+      "path": "scoring/returned/numerical-checks.json",
+      "bytes": 1275,
+      "sha256": "451071b1beb3342d8ca06cf2789add983ed713598c57366077645fd53242bb52",
+      "source": "RustScenic-Scoring-Results-Audit-20261108/returned/numerical-checks.json"
+    },
+    {
+      "path": "scoring/returned/biology/seeded/verification.json",
+      "bytes": 216743,
+      "sha256": "7f7aafe0f4c4ff28967bc597ea742623e2f8b800069a4ffd7990cbfd3959306d",
+      "source": "RustScenic-Scoring-Results-Audit-20261108/returned/biology/seeded/verification.json"
+    },
+    {
+      "path": "rna-inference/analysis/RESULTS-REVIEW.txt",
+      "bytes": 6145,
+      "sha256": "6dee3f16ec6245f50a683044b24fa5e2f447a47edf4c1c2a7abb39fa4ffd18c7",
+      "source": "RustScenic-Huangfu-Combined-Results-20261028/analysis/RESULTS-REVIEW.txt"
+    },
+    {
+      "path": "rna-inference/analysis/audit.json",
+      "bytes": 1538,
+      "sha256": "ea49288976c019e19af0e55c9ff1b9d2ad8766b0491d2868bc2671e0a443fb6a",
+      "source": "RustScenic-Huangfu-Combined-Results-20261028/analysis/audit.json"
+    },
+    {
+      "path": "rna-inference/analysis/reference-comparison.csv",
+      "bytes": 543,
+      "sha256": "8fc5c79db69c738de1a673b0c8d219a099969548ccad96dad4ce205d7b87bcef",
+      "source": "RustScenic-Huangfu-Combined-Results-20261028/analysis/reference-comparison.csv"
+    },
+    {
+      "path": "rna-inference/analysis/reference-summary.csv",
+      "bytes": 1784,
+      "sha256": "c215273ae4bb8ece9664a3a3d11cfee249dd2b86f3a46fa5d5492b1acfd39749",
+      "source": "RustScenic-Huangfu-Combined-Results-20261028/analysis/reference-summary.csv"
+    },
+    {
+      "path": "rna-inference/analysis/multiome-output-summary.csv",
+      "bytes": 517,
+      "sha256": "a8c87c32e4d3ccc568ccfbd0f6668c2d35770691762dfbeb8963821c38e5b81b",
+      "source": "RustScenic-Huangfu-Combined-Results-20261028/analysis/multiome-output-summary.csv"
+    },
+    {
+      "path": "grn/summary.json",
+      "bytes": 2439,
+      "sha256": "f3227289c673ab7b02ee6f36f012bed61e57d96048189ec0875ffe16c288080c",
+      "source": "repository/docs/benchmarks/huangfu-atlas-20261026/summary.json"
+    },
+    {
+      "path": "grn/measurements.csv",
+      "bytes": 490,
+      "sha256": "dd31f3e8a8fe7acc94cc0854a50459ad178bedae60c3cabb0a8c63eaad1ead8c",
+      "source": "repository/docs/benchmarks/huangfu-atlas-20261026/measurements.csv"
+    },
+    {
+      "path": "grn/scaling-measurements.csv",
+      "bytes": 921,
+      "sha256": "2703a8e6ac3b2880904e8f68975003a19cc8d793961ada13cf6cf1ca7ec2bce7",
+      "source": "repository/docs/benchmarks/huangfu-atlas-20261026/scaling-measurements.csv"
+    },
+    {
+      "path": "grn/scaling-provenance.json",
+      "bytes": 2577,
+      "sha256": "9b1901c7a14bb251b2aa2b957b517c2197e7a63b0a3a693e1f9d54c21c0220ce",
+      "source": "repository/docs/benchmarks/huangfu-atlas-20261026/scaling-provenance.json"
+    },
+    {
+      "path": "grn/benchmark-source-record.md",
+      "bytes": 2908,
+      "sha256": "94cf7347c28bef399aa9c2830da470c9d4a9019b2530dbc9fbb24c5bf4ba9730",
+      "source": "repository/docs/benchmarks/huangfu-atlas-20261026/benchmark-source-record.md"
+    },
+    {
+      "path": "workflow/workflows.py",
+      "bytes": 21027,
+      "sha256": "cb47806e25a26cb9dfd7ca07113840c6d54caab3b714f98cf8d2b70992a3da34",
+      "source": "RustScenic-Atlas-Scaling-20261028/rustscenic-atlas-scaling/workflows.py"
+    },
+    {
+      "path": "workflow/data_io.py",
+      "bytes": 3046,
+      "sha256": "53a95a8a0da580f56f10e6f5a10892e64d9aa71d894e437900abb2dab6f6b624",
+      "source": "RustScenic-Atlas-Scaling-20261028/rustscenic-atlas-scaling/data_io.py"
+    },
+    {
+      "path": "scoring/package/build.json",
+      "bytes": 967,
+      "sha256": "f5c7aac9847f69af7c01c9086637b8d2211873fdae135334e2c03d44d0e7a50d",
+      "source": "RustScenic-Scoring-Confirmation-20261107/rustscenic-scoring-confirmation/build.json"
+    },
+    {
+      "path": "scoring/package/runtime-pins.json",
+      "bytes": 228,
+      "sha256": "c53d33cbd4b9f3872f63449702d74ad8b561ec669117ad8b0b0731159a26c504",
+      "source": "RustScenic-Scoring-Confirmation-20261107/rustscenic-scoring-confirmation/runtime-pins.json"
+    },
+    {
+      "path": "scoring/package/worker.py",
+      "bytes": 5268,
+      "sha256": "2a6a582b03844d2b0f2747ec91fff60e7ed4131762100f578916e0bc80fc43f7",
+      "source": "RustScenic-Scoring-Confirmation-20261107/rustscenic-scoring-confirmation/worker.py"
+    },
+    {
+      "path": "scoring/package/scoring.py",
+      "bytes": 5280,
+      "sha256": "3662fa719798db550777a76e7f90ee8dad78d1a0a7d4c1fadb3db8c36ac2befb",
+      "source": "RustScenic-Scoring-Confirmation-20261107/rustscenic-scoring-confirmation/scoring.py"
+    },
+    {
+      "path": "scoring/package/summarise.py",
+      "bytes": 6866,
+      "sha256": "709f34efe5320768d1ac82204afe1b5fda19d96096458ef09197f47327f43103",
+      "source": "RustScenic-Scoring-Confirmation-20261107/rustscenic-scoring-confirmation/summarise.py"
+    },
+    {
+      "path": "scoring/package/utility.py",
+      "bytes": 6621,
+      "sha256": "22fe671d46c9e4b0f147ea76f5a57f24cb72242a80bef0a0fcd4dc5128416d4a",
+      "source": "RustScenic-Scoring-Confirmation-20261107/rustscenic-scoring-confirmation/utility.py"
+    },
+    {
+      "path": "scoring/package/network-provenance.json",
+      "bytes": 5721,
+      "sha256": "e73b5d53ab7d355e6f2f0077bc27ae59e51c6203001fc4e361d4896eeab625d6",
+      "source": "RustScenic-Scoring-Confirmation-20261107/rustscenic-scoring-confirmation/network-provenance.json"
+    },
+    {
+      "path": "scaling/engines/atlas-100000-777-rustscenic.json",
+      "bytes": 3540,
+      "sha256": "afe2a1e68743e97aacdea7a48ab88fc60e407528abca3c7fc5487b785ddb5f02",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/atlas-n100000-seed777/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/atlas-100000-777-reference.json",
+      "bytes": 3379,
+      "sha256": "19e27db34b66dc54feb67dfb73f1f3aa43915aeedb56e715fa6464e37083381e",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/atlas-n100000-seed777/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/atlas-100000-778-rustscenic.json",
+      "bytes": 3540,
+      "sha256": "ef9564ca53ec4612b260f1f4d01e2ffb7327afd6c809a7d733a5ddf1000cda68",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/atlas-n100000-seed778/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/atlas-100000-778-reference.json",
+      "bytes": 3390,
+      "sha256": "e23eeb311982d4f586feb21c7b5f3451feab1f4d929d1c73f4ee4fc1706b83d2",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/atlas-n100000-seed778/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/atlas-100000-779-rustscenic.json",
+      "bytes": 3542,
+      "sha256": "e23d94690fc824fdd1cc84663f84c72c0b5e9400939d2b3bbd520a491e1f486a",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/atlas-n100000-seed779/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/atlas-100000-779-reference.json",
+      "bytes": 3389,
+      "sha256": "4a2453f9e02b4e08ef071d709577f1b1053990c03b3bbf89443f345f53ad6b3a",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/atlas-n100000-seed779/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/bmmc-10000-777-rustscenic.json",
+      "bytes": 5616,
+      "sha256": "6fb07c2fa8424b0520862b78757556e263ec0bf8a38a855a6835a8406c3d745e",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/bmmc-n10000-seed777/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/bmmc-10000-777-reference.json",
+      "bytes": 5407,
+      "sha256": "e756a1001a9dfdbf68ba9641bec1968998754f4f18b623be39a37ec5eef9872e",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/bmmc-n10000-seed777/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/bmmc-10000-778-rustscenic.json",
+      "bytes": 5617,
+      "sha256": "ede4dda4a8fa042e03c79a85069d00b384cb1e005b2500b6fac0d7fa625942fd",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/bmmc-n10000-seed778/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/bmmc-10000-778-reference.json",
+      "bytes": 5404,
+      "sha256": "3baec6e094789d9d5847d4eae33001855aeb52a3d596bc8d51cf764054e5fb2f",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/bmmc-n10000-seed778/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/bmmc-10000-779-rustscenic.json",
+      "bytes": 5622,
+      "sha256": "34acd5c79724f8051e2c1881103d77f7cfdc130276c3dab4ee61b9207270cd6d",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/bmmc-n10000-seed779/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/bmmc-10000-779-reference.json",
+      "bytes": 5404,
+      "sha256": "e9dba72b17a78b99d9579c57c3af07b9293af20728b01ef75a1c7fbd56c8bbae",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/bmmc-n10000-seed779/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/bmmc-50000-777-rustscenic.json",
+      "bytes": 5617,
+      "sha256": "cf78d3e12276dfb2534a602ecb9fbd780eb581005c603621c344f80b94fecbfb",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/bmmc-n50000-seed777/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/bmmc-50000-777-reference.json",
+      "bytes": 5407,
+      "sha256": "f20710438dd8a462fa2ddc14f4af69cf9f1a0a1fc78d5492d2ebe980080d54f0",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/bmmc-n50000-seed777/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/bmmc-50000-778-rustscenic.json",
+      "bytes": 5614,
+      "sha256": "b0e748a1648da2f45fbcb78f02ff537d8f9b5b3f06e2b63a19119d2f20f36348",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/bmmc-n50000-seed778/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/bmmc-50000-778-reference.json",
+      "bytes": 5406,
+      "sha256": "7c2649f6528ff97b44a4f313c7c57450d4b14f9b544d7020f47df129cee7f044",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/bmmc-n50000-seed778/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/bmmc-50000-779-rustscenic.json",
+      "bytes": 5616,
+      "sha256": "1f35fade3d62fbcad632373602124ddd09916ded3df2c6905b206339bf2c9534",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/bmmc-n50000-seed779/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/bmmc-50000-779-reference.json",
+      "bytes": 5407,
+      "sha256": "f20a1d270008308105d27e7bdd5e0556890ebb976331c11d076bcbd8a4f065ec",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/bmmc-n50000-seed779/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-100000-777-rustscenic.json",
+      "bytes": 5614,
+      "sha256": "34a307b0a030f7a14481a6e44f57053e8c2d8bbc400c5ae351120fb8c85a4d9b",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/hdma-n100000-seed777/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-100000-777-reference.json",
+      "bytes": 5401,
+      "sha256": "5b00ae12dc251a94a31987a6b1d66d185bdfc84875ad325715c55dd6629afbb2",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/hdma-n100000-seed777/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-100000-778-rustscenic.json",
+      "bytes": 5615,
+      "sha256": "68f4d37e6a4b055902f5de5aa88f476350741ce30ee32804448e0281fa4247be",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/hdma-n100000-seed778/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-100000-778-reference.json",
+      "bytes": 5399,
+      "sha256": "1da44fcdcab2b14a3090313fb3016301e8b988088f604b511af607e9f501de59",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/hdma-n100000-seed778/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-100000-779-rustscenic.json",
+      "bytes": 5614,
+      "sha256": "531b5d380172830d71a4627057c025d60a8456a4326c38af5ab3ef337c21940e",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/hdma-n100000-seed779/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-100000-779-reference.json",
+      "bytes": 5398,
+      "sha256": "25d8db01f8f440ffc4dd3c25f4758b8e8cd49d0ff22c4682b2f6a7de8872013d",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/hdma-n100000-seed779/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-500000-777-rustscenic.json",
+      "bytes": 5618,
+      "sha256": "deb4be4ce00a75788bd231038625b5a1c7938b843fa9fe8382c11482fb6c731f",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/hdma-n500000-seed777/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-500000-777-reference.json",
+      "bytes": 5400,
+      "sha256": "059bc38e5fcca8048c500b41c1c4c88f5affa20443f9af88a9b7338ea4eada04",
+      "source": "RustScenic-Recovery-Results-Audit-20261102/returned/results/hdma-n500000-seed777/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/atlas-1306127-777-rustscenic.json",
+      "bytes": 3539,
+      "sha256": "8454da3a1d57363b0b596795603d4af82c101bfc8d4cc0d16d659dfee79dda46",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/atlas-n1306127-seed777/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/atlas-1306127-777-reference.json",
+      "bytes": 3387,
+      "sha256": "9ff5ddb9db19a1943228ef38936ed19d96e63e0c83371ebd9b63431a38a0d03e",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/atlas-n1306127-seed777/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/atlas-1306127-778-rustscenic.json",
+      "bytes": 3530,
+      "sha256": "4dd70879a54a0ddd37435a2705cb89cd66dcfb64a6a6cd3c59bceddea7feae41",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/atlas-n1306127-seed778/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/atlas-1306127-778-reference.json",
+      "bytes": 3377,
+      "sha256": "08b197e88ac2ccc21b5eb44a086cbf3aae7f3ec29edeaf5a1bd1f6f29e0018b5",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/atlas-n1306127-seed778/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/atlas-1306127-779-rustscenic.json",
+      "bytes": 3534,
+      "sha256": "0d947fcc0781fafd80269682ecd29075660ba3ced2fa2999a161b05af5804bee",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/atlas-n1306127-seed779/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/atlas-1306127-779-reference.json",
+      "bytes": 3392,
+      "sha256": "ad25394195650ad3fa89e4ebc40627cfebaed74dbbe1f43d955933d24d063c81",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/atlas-n1306127-seed779/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-500000-778-rustscenic.json",
+      "bytes": 5618,
+      "sha256": "38492df3f49e58599ac517c51b8881d90955b8847df1c1dd211efa7e3688a0f4",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n500000-seed778/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-500000-778-reference.json",
+      "bytes": 5406,
+      "sha256": "cd07ad9f844155a50132f1d26c4fadcf131341cfa7d9f063e8df10228fc7e134",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n500000-seed778/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-500000-779-rustscenic.json",
+      "bytes": 5616,
+      "sha256": "f5319a28a8e3f5c9a21a6ea680e6e878c5c54e104712015264b8dc70e4aa4edf",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n500000-seed779/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-500000-779-reference.json",
+      "bytes": 5403,
+      "sha256": "f93dfd2f7b9e062776eb70e1f63bc256b574e16f855f92ae7f22191a9ad3357d",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n500000-seed779/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-817740-777-rustscenic.json",
+      "bytes": 5616,
+      "sha256": "d145f8012ba63b2d3aa2ab275e318ab6c7ac53914d7d8d2a83cc9d1194a3afca",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n817740-seed777/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-817740-777-reference.json",
+      "bytes": 5399,
+      "sha256": "2435fb1d38034e34e38fbcfd83f23425cad9a921fccc0317ca276d2c777d293c",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n817740-seed777/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-817740-778-rustscenic.json",
+      "bytes": 5617,
+      "sha256": "a7816a1b50d69135c21842c060c3f667bb3bb42341e9bab28fb8817d05c52b24",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n817740-seed778/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-817740-778-reference.json",
+      "bytes": 5402,
+      "sha256": "b91dbfef003b9ebeb19612b37bb84e8f2b17b9c807045e5479080ec130b0477e",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n817740-seed778/reference/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-817740-779-rustscenic.json",
+      "bytes": 5616,
+      "sha256": "fd040db339815475c007c5649ab6ce127ca6b9c4cc7aecceea5e70715a3cec9b",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n817740-seed779/rustscenic/engine.json"
+    },
+    {
+      "path": "scaling/engines/hdma-817740-779-reference.json",
+      "bytes": 5395,
+      "sha256": "1b6551a593d33c53bc929602bbe6a475ec5c688161b4958bd68e457a74f293c7",
+      "source": "RustScenic-Final-Results-Audit-20261106/returned/results/hdma-n817740-seed779/reference/engine.json"
+    },
+    {
+      "path": "scaling/stage-timings.csv",
+      "bytes": 36666,
+      "sha256": "551f3ccae60a3f1f757a13d7e7f8df01a67101103374961065e7694081374b92",
+      "source": "derived from the 42 selected engine records"
+    },
+    {
+      "path": "scaling/engine-provenance.json",
+      "bytes": 39816,
+      "sha256": "439f1693faafe5098337a3107be941922020a684c38db56ce884ec5d9d0802f0",
+      "source": "derived from the 42 selected engine records"
+    },
+    {
+      "path": "directional/AUDIT-RECEIPT.json",
+      "bytes": 3466,
+      "sha256": "2583bdd61f919da6749aff13c8feeda6be54a3a520b33be23b758591c864c0c9",
+      "source": "Huangfu directional confirmation returned 2026-11-09; AUDIT-RECEIPT.json"
+    },
+    {
+      "path": "directional/AUDIT.txt",
+      "bytes": 3125,
+      "sha256": "1e7e1ce28d2b171cf312073858893968027f6f956922fb398e44c3829581ab26",
+      "source": "Huangfu directional confirmation returned 2026-11-09; AUDIT.txt"
+    },
+    {
+      "path": "directional/package/PROTOCOL.md",
+      "bytes": 2739,
+      "sha256": "dd253d41101efdd2ca4bcdcb1f7385431a0110d6d98f4b7b7433c62c9f25784b",
+      "source": "Huangfu directional confirmation returned 2026-11-09; package/PROTOCOL.md"
+    },
+    {
+      "path": "directional/package/SHA256SUMS",
+      "bytes": 7338,
+      "sha256": "b2870ecf8c11abfbb4e586fad9604993d687e75ef387340df59d2276edfbbbc9",
+      "source": "Huangfu directional confirmation returned 2026-11-09; package/SHA256SUMS"
+    },
+    {
+      "path": "directional/package/build.json",
+      "bytes": 582,
+      "sha256": "4da20b7aafbbd4f5f85125ee9fad2aa2219170c69d479646eec9a7c3d01f9f80",
+      "source": "Huangfu directional confirmation returned 2026-11-09; package/build.json"
+    },
+    {
+      "path": "directional/package/network-provenance.json",
+      "bytes": 5721,
+      "sha256": "e73b5d53ab7d355e6f2f0077bc27ae59e51c6203001fc4e361d4896eeab625d6",
+      "source": "Huangfu directional confirmation returned 2026-11-09; package/network-provenance.json"
+    },
+    {
+      "path": "directional/package/polarity.py",
+      "bytes": 3481,
+      "sha256": "da640a47b85b88271e3abb5f3693168412aeb34e58e46303077e489ff72696d5",
+      "source": "Huangfu directional confirmation returned 2026-11-09; package/polarity.py"
+    },
+    {
+      "path": "directional/package/runtime-pins.json",
+      "bytes": 157,
+      "sha256": "7ea3c97a74d180be8794be1dcd72529a6eb684204b25ce85d946021532fb2529",
+      "source": "Huangfu directional confirmation returned 2026-11-09; package/runtime-pins.json"
+    },
+    {
+      "path": "directional/package/scoring.py",
+      "bytes": 4051,
+      "sha256": "3496e24aff8af14e867a5740f96c04c2e8dc1c8a256788a00903c1aea40a5ce0",
+      "source": "Huangfu directional confirmation returned 2026-11-09; package/scoring.py"
+    },
+    {
+      "path": "directional/package/summarise.py",
+      "bytes": 5521,
+      "sha256": "127a700e90111746f7705b329ec855cf0db89ef6e8c49e2915951e6010db4a78",
+      "source": "Huangfu directional confirmation returned 2026-11-09; package/summarise.py"
+    },
+    {
+      "path": "directional/package/utility.py",
+      "bytes": 6621,
+      "sha256": "22fe671d46c9e4b0f147ea76f5a57f24cb72242a80bef0a0fcd4dc5128416d4a",
+      "source": "Huangfu directional confirmation returned 2026-11-09; package/utility.py"
+    },
+    {
+      "path": "directional/package/worker.py",
+      "bytes": 5974,
+      "sha256": "2b728364bb066c8cbbdfaaf9b478ddc6fabc72645d4fb10dc862d5ddcc04f5d9",
+      "source": "Huangfu directional confirmation returned 2026-11-09; package/worker.py"
+    },
+    {
+      "path": "directional/per-class-donor-means.csv",
+      "bytes": 6246,
+      "sha256": "3aeb61fcc1b60b46ba5ef1f527c0ce6d9fd4e4ca79938b44aae9306ec1140ada",
+      "source": "Huangfu directional confirmation returned 2026-11-09; per-class-donor-means.csv"
+    },
+    {
+      "path": "directional/returned/READY.json",
+      "bytes": 293,
+      "sha256": "d9df35b8e1b0f8f6df7a72f2520d99fe584db6b18b718796bfbc242065e622e4",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/READY.json"
+    },
+    {
+      "path": "directional/returned/SUMMARY.json",
+      "bytes": 2297,
+      "sha256": "6a3c808f561bb842baf78e0098fe32a568378f80464d6b3ccb6c458a250eca29",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/SUMMARY.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/directional/complete.json",
+      "bytes": 1252,
+      "sha256": "d4537df2e805f2f9220c24bb798885908b71db7fe96af4951de2524918784d79",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/directional/complete.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/directional/coverage.json",
+      "bytes": 2318,
+      "sha256": "c694c905193f826e7e156ef6502a01686c69e4cb60d6eb95a85bebcfcfba6f93",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/directional/coverage.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/directional/environment.json",
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/directional/environment.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/directional/memory.csv",
+      "bytes": 31084,
+      "sha256": "a8bbb02824f757bdd71f2e38329e282a0c87202ea463548e5ab1d0de1f313599",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/directional/memory.csv"
+    },
+    {
+      "path": "directional/returned/atlas/777/directional/monitor.json",
+      "bytes": 818,
+      "sha256": "c5e811a3d5fe41e9cf227493ce053a611271b34812e80af7b769af1290721e32",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/directional/monitor.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/directional/network.json",
+      "bytes": 108,
+      "sha256": "8b996d1f08155143a78b65fd75523e45c138ec8b21480515e0c804a823ced151",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/directional/network.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/directional/phase.json",
+      "bytes": 24,
+      "sha256": "3b625f687e09b5e1303da28be51b227d4a4102980cf7901bac47f3aa84dbcee5",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/directional/phase.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/directional/prior-sample-check.json",
+      "bytes": 50,
+      "sha256": "64d13978e5a4b7b59f00a53e381425564c5ad7636dc55958aaf675a511bc3b62",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/directional/prior-sample-check.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/directional/run.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/directional/run.log"
+    },
+    {
+      "path": "directional/returned/atlas/777/directional/score-summary.json",
+      "bytes": 8777,
+      "sha256": "bf043ebdcd63b42c7275949ad853da2d5d624a28d8f6be984da21edf20e00978",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/directional/score-summary.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/directional/signatures.json",
+      "bytes": 47396,
+      "sha256": "569650d0ee1a9c3a72c821fa913b3818b1ab5a2733daeb0cc0623dcf49f362b3",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/directional/signatures.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/union/complete.json",
+      "bytes": 1110,
+      "sha256": "ec54d2d8ee771b87b98f30e980a2617c19a09086f8e16be18582e7952fd1ec25",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/union/complete.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/union/coverage.json",
+      "bytes": 1056,
+      "sha256": "5382485b0c06d0decd1349a17f9a37585f78b7190d2ce1551139f2153f9be62b",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/union/coverage.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/union/environment.json",
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/union/environment.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/union/memory.csv",
+      "bytes": 31311,
+      "sha256": "2c2c9b80eaf3afa98e91c63f06d116d9a33f625b54e20840d9b6b61130fe3e35",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/union/memory.csv"
+    },
+    {
+      "path": "directional/returned/atlas/777/union/monitor.json",
+      "bytes": 807,
+      "sha256": "d24c8f58e395dcba7d3337d6b6bcdf7dd14c2fead601c2a780b6ef1832e51cff",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/union/monitor.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/union/network.json",
+      "bytes": 108,
+      "sha256": "8b996d1f08155143a78b65fd75523e45c138ec8b21480515e0c804a823ced151",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/union/network.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/union/phase.json",
+      "bytes": 24,
+      "sha256": "3b625f687e09b5e1303da28be51b227d4a4102980cf7901bac47f3aa84dbcee5",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/union/phase.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/union/run.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/union/run.log"
+    },
+    {
+      "path": "directional/returned/atlas/777/union/score-summary.json",
+      "bytes": 6011,
+      "sha256": "574c445d6faab47416f7201f73c99bc98b141c73ae010129d263f44c7f848224",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/union/score-summary.json"
+    },
+    {
+      "path": "directional/returned/atlas/777/union/signatures.json",
+      "bytes": 46111,
+      "sha256": "90f541add67310985506431b3e99bce56e2984a00eecc9fe7d8eb9623af7d5a7",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/777/union/signatures.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/directional/complete.json",
+      "bytes": 1252,
+      "sha256": "382406166d18ba28eb417fb2e0ed3ba751a8c9caf363cc6041ce349d2125cf7f",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/directional/complete.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/directional/coverage.json",
+      "bytes": 2318,
+      "sha256": "069c99f690b0821b1cc3b34f0b9de21f4d5eea748b307a2e9b899348a62b9142",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/directional/coverage.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/directional/environment.json",
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/directional/environment.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/directional/memory.csv",
+      "bytes": 30819,
+      "sha256": "88401988ed0b876ffaa5a07fbe70633460eee50e9e708d50106a1446edf224ad",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/directional/memory.csv"
+    },
+    {
+      "path": "directional/returned/atlas/778/directional/monitor.json",
+      "bytes": 816,
+      "sha256": "2f6a24c2e52d6a5aea11662436b0866d55b26558cfabdc8c5c692c545ab3e413",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/directional/monitor.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/directional/network.json",
+      "bytes": 108,
+      "sha256": "273a9313d01760920e2debd5024398c0f3ec92ad3d48d00948d1d42db6d741f4",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/directional/network.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/directional/phase.json",
+      "bytes": 24,
+      "sha256": "3b625f687e09b5e1303da28be51b227d4a4102980cf7901bac47f3aa84dbcee5",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/directional/phase.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/directional/prior-sample-check.json",
+      "bytes": 50,
+      "sha256": "64d13978e5a4b7b59f00a53e381425564c5ad7636dc55958aaf675a511bc3b62",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/directional/prior-sample-check.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/directional/run.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/directional/run.log"
+    },
+    {
+      "path": "directional/returned/atlas/778/directional/score-summary.json",
+      "bytes": 8789,
+      "sha256": "2b513cc041d64cf2c248d33ee81fdb88e3e1959e50275c133a2d07043007a197",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/directional/score-summary.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/directional/signatures.json",
+      "bytes": 46955,
+      "sha256": "523e9abaab446864372ebc87ee107663a584ece63e32c460569af258bd78b0e1",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/directional/signatures.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/union/complete.json",
+      "bytes": 1110,
+      "sha256": "7a94ae2b5cf010bfe62c5eea6bc6f2d15a7d61d2022cc5480d84a9f90ca7c3ec",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/union/complete.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/union/coverage.json",
+      "bytes": 1042,
+      "sha256": "933d4abda5cdf6409be249045a9af5fdedcf010dcc943f8228825f63579a0381",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/union/coverage.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/union/environment.json",
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/union/environment.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/union/memory.csv",
+      "bytes": 30687,
+      "sha256": "8f5e90ca8b95b6930e147874b4de558127dbed7631fbae45f2fcf270476cce32",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/union/memory.csv"
+    },
+    {
+      "path": "directional/returned/atlas/778/union/monitor.json",
+      "bytes": 806,
+      "sha256": "966eecb62d11ca0e88b86d89f53aae159f3a1e7f03c991155c52bc981d4e6e84",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/union/monitor.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/union/network.json",
+      "bytes": 108,
+      "sha256": "273a9313d01760920e2debd5024398c0f3ec92ad3d48d00948d1d42db6d741f4",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/union/network.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/union/phase.json",
+      "bytes": 24,
+      "sha256": "3b625f687e09b5e1303da28be51b227d4a4102980cf7901bac47f3aa84dbcee5",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/union/phase.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/union/run.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/union/run.log"
+    },
+    {
+      "path": "directional/returned/atlas/778/union/score-summary.json",
+      "bytes": 5939,
+      "sha256": "49c9873d9cfd5fc71896392d1e371d1b342b7c296286c267ed3a8233cf19e448",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/union/score-summary.json"
+    },
+    {
+      "path": "directional/returned/atlas/778/union/signatures.json",
+      "bytes": 45655,
+      "sha256": "2865419acb6918488fa6b6fdbcd66e7f6b277c8fed8d0db682d4087c342099c4",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/778/union/signatures.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/directional/complete.json",
+      "bytes": 1252,
+      "sha256": "38ff8e16fced100d4c4a6d704ab8569f9ef411ded594f688b3cf91a5bf26388b",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/directional/complete.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/directional/coverage.json",
+      "bytes": 2293,
+      "sha256": "67787668a47658f700996469ba6314203aa3306636226292f7e79131cce21b2b",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/directional/coverage.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/directional/environment.json",
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/directional/environment.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/directional/memory.csv",
+      "bytes": 32054,
+      "sha256": "58c52f9a34d1d78a3b12b7bb9900fb525524da8d61f2f34ce700ef60bf72027a",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/directional/memory.csv"
+    },
+    {
+      "path": "directional/returned/atlas/779/directional/monitor.json",
+      "bytes": 818,
+      "sha256": "8c95f5aae697b2da20786e2f8d046fc1692c3674856e42630f52aaa283dd4d07",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/directional/monitor.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/directional/network.json",
+      "bytes": 108,
+      "sha256": "b25b4154920a36ff6b9077f1da025161049b7cbfc8e82bc0a25f0576f3fcdc2c",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/directional/network.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/directional/phase.json",
+      "bytes": 24,
+      "sha256": "3b625f687e09b5e1303da28be51b227d4a4102980cf7901bac47f3aa84dbcee5",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/directional/phase.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/directional/prior-sample-check.json",
+      "bytes": 50,
+      "sha256": "64d13978e5a4b7b59f00a53e381425564c5ad7636dc55958aaf675a511bc3b62",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/directional/prior-sample-check.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/directional/run.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/directional/run.log"
+    },
+    {
+      "path": "directional/returned/atlas/779/directional/score-summary.json",
+      "bytes": 8695,
+      "sha256": "534cf0eea4b9e04de586d9004401be88af44b44aac750adbc52c284f0707593e",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/directional/score-summary.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/directional/signatures.json",
+      "bytes": 45636,
+      "sha256": "fda284318288abdc0e2e221ccadf007dc5a9eee9b420d0fd9abd8e0c5b9577d8",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/directional/signatures.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/union/complete.json",
+      "bytes": 1110,
+      "sha256": "c4a58c11bc6eb7a43b8b8ba3d2e53deb6fb0aecf1aafd197c524e067d9548c6b",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/union/complete.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/union/coverage.json",
+      "bytes": 1057,
+      "sha256": "e114646d728639fc38cc0fcdd7c9cc522c21b66022ca346bb7ec59146ccaf723",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/union/coverage.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/union/environment.json",
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/union/environment.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/union/memory.csv",
+      "bytes": 36307,
+      "sha256": "8333acdb11c1c8a7b1449baecd7d4c4513e4aa73252957b551e7b67b8db613cd",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/union/memory.csv"
+    },
+    {
+      "path": "directional/returned/atlas/779/union/monitor.json",
+      "bytes": 806,
+      "sha256": "3b1be14296d138a1cd0bd34c3824e8556081bc8e67111729cbce89180b473888",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/union/monitor.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/union/network.json",
+      "bytes": 108,
+      "sha256": "b25b4154920a36ff6b9077f1da025161049b7cbfc8e82bc0a25f0576f3fcdc2c",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/union/network.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/union/phase.json",
+      "bytes": 24,
+      "sha256": "3b625f687e09b5e1303da28be51b227d4a4102980cf7901bac47f3aa84dbcee5",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/union/phase.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/union/run.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/union/run.log"
+    },
+    {
+      "path": "directional/returned/atlas/779/union/score-summary.json",
+      "bytes": 6015,
+      "sha256": "0a33c74ac89bb0ce1a3a4f28a85d5d4548f51c7c942fd5c5cdd10cbf22ac40ff",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/union/score-summary.json"
+    },
+    {
+      "path": "directional/returned/atlas/779/union/signatures.json",
+      "bytes": 44378,
+      "sha256": "43ba59ddebf703c5b49e71094e854a1dbb7ada8fe9af65ca6d9b83e475d27fa1",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/atlas/779/union/signatures.json"
+    },
+    {
+      "path": "directional/returned/biological-summary.json",
+      "bytes": 9299,
+      "sha256": "7ea8c16a547c015ba1c0124aefad58f229b5289db1eee9bc90c47080a3a440df",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/biological-summary.json"
+    },
+    {
+      "path": "directional/returned/biology/complete.json",
+      "bytes": 2366,
+      "sha256": "a1dbde7d99fb70de37bb9b7cdca0ce15f88629dc21d640133a2503b93d1579c3",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/biology/complete.json"
+    },
+    {
+      "path": "directional/returned/biology/environment.json",
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/biology/environment.json"
+    },
+    {
+      "path": "directional/returned/biology/memory.csv",
+      "bytes": 56433,
+      "sha256": "8c441e7d05b9078224c99cbc569ea716e77337343deb44995e88be9fb019fa7f",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/biology/memory.csv"
+    },
+    {
+      "path": "directional/returned/biology/monitor.json",
+      "bytes": 711,
+      "sha256": "063a54ff910e263b96ecd281cd8e576a657f13f7951970ab93c15ecafd3da062",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/biology/monitor.json"
+    },
+    {
+      "path": "directional/returned/biology/phase.json",
+      "bytes": 26,
+      "sha256": "afe649a1877c31cfeade15d16d8190edd1432cdc2338f85ff9ed7ed316bc8662",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/biology/phase.json"
+    },
+    {
+      "path": "directional/returned/biology/run.log",
+      "bytes": 5040,
+      "sha256": "6e7ffd258cec72e0f8d13d6552ba7f997f277f1ab98268ab78ecf95040a9c40e",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/biology/run.log"
+    },
+    {
+      "path": "directional/returned/biology/verification.json",
+      "bytes": 493285,
+      "sha256": "76de95ad562ae45e96dcd1d976244513a7ae72dafe1e768c6e11a72c45897cd4",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/biology/verification.json"
+    },
+    {
+      "path": "directional/returned/logs/281494885.err",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/logs/281494885.err"
+    },
+    {
+      "path": "directional/returned/logs/281494885.out",
+      "bytes": 1748,
+      "sha256": "e59976a0dc0a9fc995b87a13aa902a9595b13f11d7a2a5f389b3df83dc8923a6",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/logs/281494885.out"
+    },
+    {
+      "path": "directional/returned/return-manifest.json",
+      "bytes": 14866,
+      "sha256": "9f6597b94ce6c8c04c6486271b936094a6f05bdbffb487de6b2ce7761b873715",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/return-manifest.json"
+    },
+    {
+      "path": "directional/returned/scoring-performance.csv",
+      "bytes": 1990,
+      "sha256": "0d9cea7ef76c0f436ed4bb2f50e30300bfc39dd3439cee5759b2c092df1528c0",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/scoring-performance.csv"
+    },
+    {
+      "path": "directional/returned/submission.log",
+      "bytes": 2116,
+      "sha256": "05269fb3dfd00f373798720acc1267fd64ec2806f1a5a95d5f34a1d96373313e",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/submission.log"
+    },
+    {
+      "path": "directional/returned/submitted.json",
+      "bytes": 216,
+      "sha256": "832b22fb6cf59fe985cff617fda31671cd51e0ec2eb97decbc7c29dcfc21aae2",
+      "source": "Huangfu directional confirmation returned 2026-11-09; returned/submitted.json"
+    },
+    {
+      "path": "directional/verified-donor-folds.csv",
+      "bytes": 15626,
+      "sha256": "4900843969f6fddf13b0edfdf30865da68d0dcb814aab191bcae91006613c358",
+      "source": "Huangfu directional confirmation returned 2026-11-09; verified-donor-folds.csv"
+    },
+    {
+      "path": "directional/verified-per-class.csv",
+      "bytes": 168513,
+      "sha256": "cd0590a6b8c4ff5a15e0db4bc87f32c9cf0e6a1e46b4983c89696557f7b9ad35",
+      "source": "Huangfu directional confirmation returned 2026-11-09; verified-per-class.csv"
+    }
+  ],
+  "integrated_source_matches_hpc": [
+    "crates/rustscenic-aucell/src/lib.rs",
+    "crates/rustscenic-py/src/lib.rs",
+    "python/rustscenic/aucell.py",
+    "python/rustscenic/_rustscenic.pyi"
+  ],
+  "scope": "Small evidence and exact summaries, not a replacement for raw return archives or HPC-only full arrays."
+}

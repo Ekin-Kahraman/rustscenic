@@ -1,0 +1,649 @@
+seed,method,version,donor,label,f1
+777,rustscenic,union,10886,B1 B,0.56
+777,rustscenic,union,10886,CD14+ Mono,0.7530487804878049
+777,rustscenic,union,10886,CD16+ Mono,0.5234375
+777,rustscenic,union,10886,CD4+ T activated,0.12
+777,rustscenic,union,10886,CD4+ T naive,0.14018691588785046
+777,rustscenic,union,10886,CD8+ T,0.25949367088607594
+777,rustscenic,union,10886,Erythroblast,0.9054054054054054
+777,rustscenic,union,10886,G/M prog,0.2222222222222222
+777,rustscenic,union,10886,HSC,0.17857142857142858
+777,rustscenic,union,10886,ID2-hi myeloid prog,0.1891891891891892
+777,rustscenic,union,10886,ILC,0.2222222222222222
+777,rustscenic,union,10886,Lymph prog,0.3076923076923077
+777,rustscenic,union,10886,MK/E prog,0.49382716049382713
+777,rustscenic,union,10886,NK,0.48934707903780067
+777,rustscenic,union,10886,Naive CD20+ B,0.3541666666666667
+777,rustscenic,union,10886,Normoblast,0.7419354838709677
+777,rustscenic,union,10886,Plasma cell,0.125
+777,rustscenic,union,10886,Proerythroblast,0.7777777777777778
+777,rustscenic,union,10886,Transitional B,0.3076923076923077
+777,rustscenic,union,10886,cDC2,0.628099173553719
+777,rustscenic,union,10886,pDC,0.7384615384615385
+777,rustscenic,union,12710,CD14+ Mono,0.7379784102060843
+777,rustscenic,union,12710,CD16+ Mono,0.459214501510574
+777,rustscenic,union,12710,CD4+ T activated,0.33974358974358976
+777,rustscenic,union,12710,CD4+ T naive,0.2907488986784141
+777,rustscenic,union,12710,CD8+ T,0.25142857142857145
+777,rustscenic,union,12710,Erythroblast,0.8465116279069768
+777,rustscenic,union,12710,G/M prog,0.2127659574468085
+777,rustscenic,union,12710,HSC,0.3829787234042553
+777,rustscenic,union,12710,Lymph prog,0.6118421052631579
+777,rustscenic,union,12710,MK/E prog,0.35789473684210527
+777,rustscenic,union,12710,NK,0.48333333333333334
+777,rustscenic,union,12710,Naive CD20+ B,0.5641025641025641
+777,rustscenic,union,12710,Normoblast,0.8349788434414669
+777,rustscenic,union,12710,Proerythroblast,0.6517857142857143
+777,rustscenic,union,12710,Transitional B,0.32160804020100503
+777,rustscenic,union,12710,cDC2,0.423728813559322
+777,rustscenic,union,12710,pDC,0.5423728813559322
+777,rustscenic,union,16710,B1 B,0.5454545454545454
+777,rustscenic,union,16710,CD14+ Mono,0.7530562347188264
+777,rustscenic,union,16710,CD16+ Mono,0.49557522123893805
+777,rustscenic,union,16710,CD4+ T activated,0.36752136752136755
+777,rustscenic,union,16710,CD4+ T naive,0.0821917808219178
+777,rustscenic,union,16710,CD8+ T,0.30413223140495865
+777,rustscenic,union,16710,Erythroblast,0.8831168831168831
+777,rustscenic,union,16710,HSC,0.38095238095238093
+777,rustscenic,union,16710,ILC,0.17475728155339806
+777,rustscenic,union,16710,NK,0.6773547094188377
+777,rustscenic,union,16710,Naive CD20+ B,0.3238095238095238
+777,rustscenic,union,16710,Normoblast,0.6666666666666666
+777,rustscenic,union,16710,Plasma cell,0.2727272727272727
+777,rustscenic,union,16710,Proerythroblast,0.7777777777777778
+777,rustscenic,union,16710,cDC2,0.297029702970297
+777,rustscenic,union,16710,pDC,0.8064516129032258
+777,rustscenic,signed,10886,B1 B,0.7891156462585034
+777,rustscenic,signed,10886,CD14+ Mono,0.7831325301204819
+777,rustscenic,signed,10886,CD16+ Mono,0.5584905660377358
+777,rustscenic,signed,10886,CD4+ T activated,0.15752895752895754
+777,rustscenic,signed,10886,CD4+ T naive,0.23779193205944799
+777,rustscenic,signed,10886,CD8+ T,0.24149108589951376
+777,rustscenic,signed,10886,Erythroblast,0.9066666666666666
+777,rustscenic,signed,10886,G/M prog,0.27906976744186046
+777,rustscenic,signed,10886,HSC,0.07692307692307693
+777,rustscenic,signed,10886,ID2-hi myeloid prog,0.17886178861788618
+777,rustscenic,signed,10886,ILC,0.2391304347826087
+777,rustscenic,signed,10886,Lymph prog,0.4444444444444444
+777,rustscenic,signed,10886,MK/E prog,0.3728813559322034
+777,rustscenic,signed,10886,NK,0.4806991988346686
+777,rustscenic,signed,10886,Naive CD20+ B,0.7050359712230215
+777,rustscenic,signed,10886,Normoblast,0.7241379310344828
+777,rustscenic,signed,10886,Plasma cell,0.17777777777777778
+777,rustscenic,signed,10886,Proerythroblast,0.717948717948718
+777,rustscenic,signed,10886,Transitional B,0.2702702702702703
+777,rustscenic,signed,10886,cDC2,0.6495726495726496
+777,rustscenic,signed,10886,pDC,0.7878787878787878
+777,rustscenic,signed,12710,CD14+ Mono,0.8114075436982521
+777,rustscenic,signed,12710,CD16+ Mono,0.5845070422535211
+777,rustscenic,signed,12710,CD4+ T activated,0.4246153846153846
+777,rustscenic,signed,12710,CD4+ T naive,0.16113744075829384
+777,rustscenic,signed,12710,CD8+ T,0.358695652173913
+777,rustscenic,signed,12710,Erythroblast,0.861021331609567
+777,rustscenic,signed,12710,G/M prog,0.2898550724637681
+777,rustscenic,signed,12710,HSC,0.4146341463414634
+777,rustscenic,signed,12710,Lymph prog,0.5975609756097561
+777,rustscenic,signed,12710,MK/E prog,0.2992125984251969
+777,rustscenic,signed,12710,NK,0.390625
+777,rustscenic,signed,12710,Naive CD20+ B,0.6655462184873949
+777,rustscenic,signed,12710,Normoblast,0.8370044052863436
+777,rustscenic,signed,12710,Proerythroblast,0.669683257918552
+777,rustscenic,signed,12710,Transitional B,0.45081967213114754
+777,rustscenic,signed,12710,cDC2,0.45569620253164556
+777,rustscenic,signed,12710,pDC,0.6774193548387096
+777,rustscenic,signed,16710,B1 B,0.6455696202531646
+777,rustscenic,signed,16710,CD14+ Mono,0.7058064516129032
+777,rustscenic,signed,16710,CD16+ Mono,0.4730077120822622
+777,rustscenic,signed,16710,CD4+ T activated,0.45901639344262296
+777,rustscenic,signed,16710,CD4+ T naive,0.05128205128205128
+777,rustscenic,signed,16710,CD8+ T,0.3855421686746988
+777,rustscenic,signed,16710,Erythroblast,0.9047619047619048
+777,rustscenic,signed,16710,HSC,0.3448275862068966
+777,rustscenic,signed,16710,ILC,0.3829787234042553
+777,rustscenic,signed,16710,NK,0.6786850477200425
+777,rustscenic,signed,16710,Naive CD20+ B,0.5294117647058824
+777,rustscenic,signed,16710,Normoblast,0.8
+777,rustscenic,signed,16710,Plasma cell,0.25
+777,rustscenic,signed,16710,Proerythroblast,0.6666666666666666
+777,rustscenic,signed,16710,cDC2,0.34146341463414637
+777,rustscenic,signed,16710,pDC,0.7096774193548387
+777,reference,union,10886,B1 B,0.5507246376811594
+777,reference,union,10886,CD14+ Mono,0.7701674277016742
+777,reference,union,10886,CD16+ Mono,0.5107913669064749
+777,reference,union,10886,CD4+ T activated,0.1398834304746045
+777,reference,union,10886,CD4+ T naive,0.17701149425287357
+777,reference,union,10886,CD8+ T,0.4891908585546634
+777,reference,union,10886,Erythroblast,0.8918918918918919
+777,reference,union,10886,G/M prog,0.24561403508771928
+777,reference,union,10886,HSC,0.18867924528301888
+777,reference,union,10886,ID2-hi myeloid prog,0.37681159420289856
+777,reference,union,10886,ILC,0.29708222811671087
+777,reference,union,10886,Lymph prog,0.3783783783783784
+777,reference,union,10886,MK/E prog,0.4
+777,reference,union,10886,NK,0.5637583892617449
+777,reference,union,10886,Naive CD20+ B,0.5645161290322581
+777,reference,union,10886,Normoblast,0.7096774193548387
+777,reference,union,10886,Plasma cell,0.2033898305084746
+777,reference,union,10886,Proerythroblast,0.717948717948718
+777,reference,union,10886,Transitional B,0.3448275862068966
+777,reference,union,10886,cDC2,0.5526315789473685
+777,reference,union,10886,pDC,0.6486486486486487
+777,reference,union,12710,CD14+ Mono,0.8092165898617512
+777,reference,union,12710,CD16+ Mono,0.539568345323741
+777,reference,union,12710,CD4+ T activated,0.2907801418439716
+777,reference,union,12710,CD4+ T naive,0.2803030303030303
+777,reference,union,12710,CD8+ T,0.26582278481012656
+777,reference,union,12710,Erythroblast,0.8387096774193549
+777,reference,union,12710,G/M prog,0.379746835443038
+777,reference,union,12710,HSC,0.45454545454545453
+777,reference,union,12710,Lymph prog,0.5783132530120482
+777,reference,union,12710,MK/E prog,0.3559322033898305
+777,reference,union,12710,NK,0.46774193548387094
+777,reference,union,12710,Naive CD20+ B,0.7707006369426752
+777,reference,union,12710,Normoblast,0.7965367965367965
+777,reference,union,12710,Proerythroblast,0.6842105263157895
+777,reference,union,12710,Transitional B,0.40236686390532544
+777,reference,union,12710,cDC2,0.5
+777,reference,union,12710,pDC,0.42105263157894735
+777,reference,union,16710,B1 B,0.5734265734265734
+777,reference,union,16710,CD14+ Mono,0.6154900616860863
+777,reference,union,16710,CD16+ Mono,0.40279394644935973
+777,reference,union,16710,CD4+ T activated,0.4747663551401869
+777,reference,union,16710,CD4+ T naive,0.13043478260869565
+777,reference,union,16710,CD8+ T,0.5306122448979592
+777,reference,union,16710,Erythroblast,0.868421052631579
+777,reference,union,16710,HSC,0.16666666666666666
+777,reference,union,16710,ILC,0.3953488372093023
+777,reference,union,16710,NK,0.6890756302521008
+777,reference,union,16710,Naive CD20+ B,0.6046511627906976
+777,reference,union,16710,Normoblast,0.6153846153846154
+777,reference,union,16710,Plasma cell,0.3333333333333333
+777,reference,union,16710,Proerythroblast,0.8
+777,reference,union,16710,cDC2,0.36363636363636365
+777,reference,union,16710,pDC,0.6428571428571429
+777,reference,signed,10886,B1 B,0.5507246376811594
+777,reference,signed,10886,CD14+ Mono,0.7701674277016742
+777,reference,signed,10886,CD16+ Mono,0.5107913669064749
+777,reference,signed,10886,CD4+ T activated,0.14
+777,reference,signed,10886,CD4+ T naive,0.1791044776119403
+777,reference,signed,10886,CD8+ T,0.4891908585546634
+777,reference,signed,10886,Erythroblast,0.8918918918918919
+777,reference,signed,10886,G/M prog,0.24561403508771928
+777,reference,signed,10886,HSC,0.18867924528301888
+777,reference,signed,10886,ID2-hi myeloid prog,0.37681159420289856
+777,reference,signed,10886,ILC,0.29708222811671087
+777,reference,signed,10886,Lymph prog,0.3783783783783784
+777,reference,signed,10886,MK/E prog,0.4
+777,reference,signed,10886,NK,0.5637583892617449
+777,reference,signed,10886,Naive CD20+ B,0.5645161290322581
+777,reference,signed,10886,Normoblast,0.7096774193548387
+777,reference,signed,10886,Plasma cell,0.2033898305084746
+777,reference,signed,10886,Proerythroblast,0.717948717948718
+777,reference,signed,10886,Transitional B,0.3448275862068966
+777,reference,signed,10886,cDC2,0.5526315789473685
+777,reference,signed,10886,pDC,0.6486486486486487
+777,reference,signed,12710,CD14+ Mono,0.8092165898617512
+777,reference,signed,12710,CD16+ Mono,0.539568345323741
+777,reference,signed,12710,CD4+ T activated,0.2907801418439716
+777,reference,signed,12710,CD4+ T naive,0.2803030303030303
+777,reference,signed,12710,CD8+ T,0.26582278481012656
+777,reference,signed,12710,Erythroblast,0.8387096774193549
+777,reference,signed,12710,G/M prog,0.379746835443038
+777,reference,signed,12710,HSC,0.45454545454545453
+777,reference,signed,12710,Lymph prog,0.5783132530120482
+777,reference,signed,12710,MK/E prog,0.3559322033898305
+777,reference,signed,12710,NK,0.46774193548387094
+777,reference,signed,12710,Naive CD20+ B,0.7707006369426752
+777,reference,signed,12710,Normoblast,0.7965367965367965
+777,reference,signed,12710,Proerythroblast,0.6842105263157895
+777,reference,signed,12710,Transitional B,0.40236686390532544
+777,reference,signed,12710,cDC2,0.5
+777,reference,signed,12710,pDC,0.42105263157894735
+777,reference,signed,16710,B1 B,0.5833333333333334
+777,reference,signed,16710,CD14+ Mono,0.6154900616860863
+777,reference,signed,16710,CD16+ Mono,0.40279394644935973
+777,reference,signed,16710,CD4+ T activated,0.4747663551401869
+777,reference,signed,16710,CD4+ T naive,0.13043478260869565
+777,reference,signed,16710,CD8+ T,0.5306122448979592
+777,reference,signed,16710,Erythroblast,0.868421052631579
+777,reference,signed,16710,HSC,0.16666666666666666
+777,reference,signed,16710,ILC,0.3953488372093023
+777,reference,signed,16710,NK,0.6890756302521008
+777,reference,signed,16710,Naive CD20+ B,0.609375
+777,reference,signed,16710,Normoblast,0.6153846153846154
+777,reference,signed,16710,Plasma cell,0.3333333333333333
+777,reference,signed,16710,Proerythroblast,0.8
+777,reference,signed,16710,cDC2,0.36363636363636365
+777,reference,signed,16710,pDC,0.6428571428571429
+778,rustscenic,union,10886,B1 B,0.5283018867924528
+778,rustscenic,union,10886,CD14+ Mono,0.7771084337349398
+778,rustscenic,union,10886,CD16+ Mono,0.6098360655737705
+778,rustscenic,union,10886,CD4+ T activated,0.14885193982581155
+778,rustscenic,union,10886,CD4+ T naive,0.12128418549346016
+778,rustscenic,union,10886,CD8+ T,0.2401263823064771
+778,rustscenic,union,10886,Erythroblast,0.9054054054054054
+778,rustscenic,union,10886,G/M prog,0.18181818181818182
+778,rustscenic,union,10886,HSC,0.08695652173913043
+778,rustscenic,union,10886,ID2-hi myeloid prog,0.21739130434782608
+778,rustscenic,union,10886,ILC,0.21852731591448932
+778,rustscenic,union,10886,Lymph prog,0.42857142857142855
+778,rustscenic,union,10886,MK/E prog,0.525
+778,rustscenic,union,10886,NK,0.51818856718634
+778,rustscenic,union,10886,Naive CD20+ B,0.40707964601769914
+778,rustscenic,union,10886,Normoblast,0.7540983606557377
+778,rustscenic,union,10886,Plasma cell,0.1686746987951807
+778,rustscenic,union,10886,Proerythroblast,0.7142857142857143
+778,rustscenic,union,10886,Transitional B,0.3076923076923077
+778,rustscenic,union,10886,cDC2,0.628099173553719
+778,rustscenic,union,10886,pDC,0.7301587301587301
+778,rustscenic,union,12710,CD14+ Mono,0.8037209302325582
+778,rustscenic,union,12710,CD16+ Mono,0.7049808429118773
+778,rustscenic,union,12710,CD4+ T activated,0.32558139534883723
+778,rustscenic,union,12710,CD4+ T naive,0.21782178217821782
+778,rustscenic,union,12710,CD8+ T,0.2222222222222222
+778,rustscenic,union,12710,Erythroblast,0.8888888888888888
+778,rustscenic,union,12710,G/M prog,0.23170731707317074
+778,rustscenic,union,12710,HSC,0.3486238532110092
+778,rustscenic,union,12710,Lymph prog,0.6127167630057804
+778,rustscenic,union,12710,MK/E prog,0.31683168316831684
+778,rustscenic,union,12710,NK,0.4189189189189189
+778,rustscenic,union,12710,Naive CD20+ B,0.50199203187251
+778,rustscenic,union,12710,Normoblast,0.9224137931034483
+778,rustscenic,union,12710,Proerythroblast,0.6755555555555556
+778,rustscenic,union,12710,Transitional B,0.4744186046511628
+778,rustscenic,union,12710,cDC2,0.4098360655737705
+778,rustscenic,union,12710,pDC,0.5
+778,rustscenic,union,16710,B1 B,0.5503355704697986
+778,rustscenic,union,16710,CD14+ Mono,0.7272727272727273
+778,rustscenic,union,16710,CD16+ Mono,0.5
+778,rustscenic,union,16710,CD4+ T activated,0.3912248628884826
+778,rustscenic,union,16710,CD4+ T naive,0.14864864864864866
+778,rustscenic,union,16710,CD8+ T,0.3146067415730337
+778,rustscenic,union,16710,Erythroblast,0.963855421686747
+778,rustscenic,union,16710,HSC,0.15384615384615385
+778,rustscenic,union,16710,ILC,0.36363636363636365
+778,rustscenic,union,16710,NK,0.6804347826086956
+778,rustscenic,union,16710,Naive CD20+ B,0.42857142857142855
+778,rustscenic,union,16710,Normoblast,0.9473684210526315
+778,rustscenic,union,16710,Plasma cell,0.18181818181818182
+778,rustscenic,union,16710,Proerythroblast,0.8421052631578947
+778,rustscenic,union,16710,cDC2,0.375
+778,rustscenic,union,16710,pDC,0.7246376811594203
+778,rustscenic,signed,10886,B1 B,0.618421052631579
+778,rustscenic,signed,10886,CD14+ Mono,0.7905604719764012
+778,rustscenic,signed,10886,CD16+ Mono,0.6236559139784946
+778,rustscenic,signed,10886,CD4+ T activated,0.16322869955156952
+778,rustscenic,signed,10886,CD4+ T naive,0.1057810578105781
+778,rustscenic,signed,10886,CD8+ T,0.45980066445182727
+778,rustscenic,signed,10886,Erythroblast,0.9271523178807947
+778,rustscenic,signed,10886,G/M prog,0.35555555555555557
+778,rustscenic,signed,10886,HSC,0.10526315789473684
+778,rustscenic,signed,10886,ID2-hi myeloid prog,0.30303030303030304
+778,rustscenic,signed,10886,ILC,0.2582278481012658
+778,rustscenic,signed,10886,Lymph prog,0.42857142857142855
+778,rustscenic,signed,10886,MK/E prog,0.6060606060606061
+778,rustscenic,signed,10886,NK,0.5207296849087893
+778,rustscenic,signed,10886,Naive CD20+ B,0.6016260162601627
+778,rustscenic,signed,10886,Normoblast,0.7457627118644068
+778,rustscenic,signed,10886,Plasma cell,0.12987012987012986
+778,rustscenic,signed,10886,Proerythroblast,0.7142857142857143
+778,rustscenic,signed,10886,Transitional B,0.46511627906976744
+778,rustscenic,signed,10886,cDC2,0.5547445255474452
+778,rustscenic,signed,10886,pDC,0.746268656716418
+778,rustscenic,signed,12710,CD14+ Mono,0.8278388278388278
+778,rustscenic,signed,12710,CD16+ Mono,0.6861313868613139
+778,rustscenic,signed,12710,CD4+ T activated,0.3389830508474576
+778,rustscenic,signed,12710,CD4+ T naive,0.3050847457627119
+778,rustscenic,signed,12710,CD8+ T,0.28415300546448086
+778,rustscenic,signed,12710,Erythroblast,0.9074550128534704
+778,rustscenic,signed,12710,G/M prog,0.3057324840764331
+778,rustscenic,signed,12710,HSC,0.3655913978494624
+778,rustscenic,signed,12710,Lymph prog,0.6130030959752322
+778,rustscenic,signed,12710,MK/E prog,0.34285714285714286
+778,rustscenic,signed,12710,NK,0.5416666666666666
+778,rustscenic,signed,12710,Naive CD20+ B,0.5697674418604651
+778,rustscenic,signed,12710,Normoblast,0.9269005847953217
+778,rustscenic,signed,12710,Proerythroblast,0.6944444444444444
+778,rustscenic,signed,12710,Transitional B,0.5195729537366548
+778,rustscenic,signed,12710,cDC2,0.46153846153846156
+778,rustscenic,signed,12710,pDC,0.45901639344262296
+778,rustscenic,signed,16710,B1 B,0.6219512195121951
+778,rustscenic,signed,16710,CD14+ Mono,0.7359798361688721
+778,rustscenic,signed,16710,CD16+ Mono,0.4980443285528031
+778,rustscenic,signed,16710,CD4+ T activated,0.2619047619047619
+778,rustscenic,signed,16710,CD4+ T naive,0.08484848484848485
+778,rustscenic,signed,16710,CD8+ T,0.34146341463414637
+778,rustscenic,signed,16710,Erythroblast,0.9761904761904762
+778,rustscenic,signed,16710,HSC,0.3
+778,rustscenic,signed,16710,ILC,0.4423076923076923
+778,rustscenic,signed,16710,NK,0.7228637413394919
+778,rustscenic,signed,16710,Naive CD20+ B,0.45652173913043476
+778,rustscenic,signed,16710,Normoblast,1.0
+778,rustscenic,signed,16710,Plasma cell,0.20408163265306123
+778,rustscenic,signed,16710,Proerythroblast,0.7777777777777778
+778,rustscenic,signed,16710,cDC2,0.41025641025641024
+778,rustscenic,signed,16710,pDC,0.7123287671232876
+778,reference,union,10886,B1 B,0.593103448275862
+778,reference,union,10886,CD14+ Mono,0.764525993883792
+778,reference,union,10886,CD16+ Mono,0.5579937304075235
+778,reference,union,10886,CD4+ T activated,0.1511111111111111
+778,reference,union,10886,CD4+ T naive,0.17272727272727273
+778,reference,union,10886,CD8+ T,0.49298597194388777
+778,reference,union,10886,Erythroblast,0.9281045751633987
+778,reference,union,10886,G/M prog,0.3508771929824561
+778,reference,union,10886,HSC,0.0784313725490196
+778,reference,union,10886,ID2-hi myeloid prog,0.2857142857142857
+778,reference,union,10886,ILC,0.23927765237020315
+778,reference,union,10886,Lymph prog,0.4
+778,reference,union,10886,MK/E prog,0.5205479452054794
+778,reference,union,10886,NK,0.616692426584235
+778,reference,union,10886,Naive CD20+ B,0.5984251968503937
+778,reference,union,10886,Normoblast,0.7586206896551724
+778,reference,union,10886,Plasma cell,0.16842105263157894
+778,reference,union,10886,Proerythroblast,0.75
+778,reference,union,10886,Transitional B,0.14814814814814814
+778,reference,union,10886,cDC2,0.6119402985074627
+778,reference,union,10886,pDC,0.5294117647058824
+778,reference,union,12710,CD14+ Mono,0.7760910815939279
+778,reference,union,12710,CD16+ Mono,0.6571428571428571
+778,reference,union,12710,CD4+ T activated,0.2704626334519573
+778,reference,union,12710,CD4+ T naive,0.24324324324324326
+778,reference,union,12710,CD8+ T,0.15584415584415584
+778,reference,union,12710,Erythroblast,0.90153452685422
+778,reference,union,12710,G/M prog,0.2953020134228188
+778,reference,union,12710,HSC,0.4186046511627907
+778,reference,union,12710,Lymph prog,0.6857142857142857
+778,reference,union,12710,MK/E prog,0.3053435114503817
+778,reference,union,12710,NK,0.42735042735042733
+778,reference,union,12710,Naive CD20+ B,0.7378964941569283
+778,reference,union,12710,Normoblast,0.9194029850746268
+778,reference,union,12710,Proerythroblast,0.6877828054298643
+778,reference,union,12710,Transitional B,0.4864864864864865
+778,reference,union,12710,cDC2,0.4318181818181818
+778,reference,union,12710,pDC,0.2608695652173913
+778,reference,union,16710,B1 B,0.6107784431137725
+778,reference,union,16710,CD14+ Mono,0.5779359430604982
+778,reference,union,16710,CD16+ Mono,0.42303664921465967
+778,reference,union,16710,CD4+ T activated,0.40670859538784065
+778,reference,union,16710,CD4+ T naive,0.17777777777777778
+778,reference,union,16710,CD8+ T,0.4638109305760709
+778,reference,union,16710,Erythroblast,0.9629629629629629
+778,reference,union,16710,HSC,0.2
+778,reference,union,16710,ILC,0.3541666666666667
+778,reference,union,16710,NK,0.7200878155872668
+778,reference,union,16710,Naive CD20+ B,0.5263157894736842
+778,reference,union,16710,Normoblast,0.9090909090909091
+778,reference,union,16710,Plasma cell,0.21621621621621623
+778,reference,union,16710,Proerythroblast,0.8421052631578947
+778,reference,union,16710,cDC2,0.36363636363636365
+778,reference,union,16710,pDC,0.56
+778,reference,signed,10886,B1 B,0.593103448275862
+778,reference,signed,10886,CD14+ Mono,0.764525993883792
+778,reference,signed,10886,CD16+ Mono,0.5579937304075235
+778,reference,signed,10886,CD4+ T activated,0.1511111111111111
+778,reference,signed,10886,CD4+ T naive,0.17272727272727273
+778,reference,signed,10886,CD8+ T,0.49298597194388777
+778,reference,signed,10886,Erythroblast,0.9281045751633987
+778,reference,signed,10886,G/M prog,0.3508771929824561
+778,reference,signed,10886,HSC,0.0784313725490196
+778,reference,signed,10886,ID2-hi myeloid prog,0.2857142857142857
+778,reference,signed,10886,ILC,0.23927765237020315
+778,reference,signed,10886,Lymph prog,0.4
+778,reference,signed,10886,MK/E prog,0.5205479452054794
+778,reference,signed,10886,NK,0.616692426584235
+778,reference,signed,10886,Naive CD20+ B,0.5984251968503937
+778,reference,signed,10886,Normoblast,0.7586206896551724
+778,reference,signed,10886,Plasma cell,0.16842105263157894
+778,reference,signed,10886,Proerythroblast,0.75
+778,reference,signed,10886,Transitional B,0.14814814814814814
+778,reference,signed,10886,cDC2,0.6119402985074627
+778,reference,signed,10886,pDC,0.5294117647058824
+778,reference,signed,12710,CD14+ Mono,0.7760910815939279
+778,reference,signed,12710,CD16+ Mono,0.6571428571428571
+778,reference,signed,12710,CD4+ T activated,0.2704626334519573
+778,reference,signed,12710,CD4+ T naive,0.24324324324324326
+778,reference,signed,12710,CD8+ T,0.15584415584415584
+778,reference,signed,12710,Erythroblast,0.90153452685422
+778,reference,signed,12710,G/M prog,0.2953020134228188
+778,reference,signed,12710,HSC,0.4186046511627907
+778,reference,signed,12710,Lymph prog,0.6857142857142857
+778,reference,signed,12710,MK/E prog,0.3053435114503817
+778,reference,signed,12710,NK,0.42735042735042733
+778,reference,signed,12710,Naive CD20+ B,0.7378964941569283
+778,reference,signed,12710,Normoblast,0.9194029850746268
+778,reference,signed,12710,Proerythroblast,0.6877828054298643
+778,reference,signed,12710,Transitional B,0.4864864864864865
+778,reference,signed,12710,cDC2,0.4318181818181818
+778,reference,signed,12710,pDC,0.2608695652173913
+778,reference,signed,16710,B1 B,0.6107784431137725
+778,reference,signed,16710,CD14+ Mono,0.5779359430604982
+778,reference,signed,16710,CD16+ Mono,0.42303664921465967
+778,reference,signed,16710,CD4+ T activated,0.40670859538784065
+778,reference,signed,16710,CD4+ T naive,0.17777777777777778
+778,reference,signed,16710,CD8+ T,0.4638109305760709
+778,reference,signed,16710,Erythroblast,0.9629629629629629
+778,reference,signed,16710,HSC,0.2
+778,reference,signed,16710,ILC,0.3541666666666667
+778,reference,signed,16710,NK,0.7200878155872668
+778,reference,signed,16710,Naive CD20+ B,0.5263157894736842
+778,reference,signed,16710,Normoblast,0.9090909090909091
+778,reference,signed,16710,Plasma cell,0.21621621621621623
+778,reference,signed,16710,Proerythroblast,0.8421052631578947
+778,reference,signed,16710,cDC2,0.36363636363636365
+778,reference,signed,16710,pDC,0.56
+779,rustscenic,union,10886,B1 B,0.4875
+779,rustscenic,union,10886,CD14+ Mono,0.7687595712098009
+779,rustscenic,union,10886,CD16+ Mono,0.6178343949044586
+779,rustscenic,union,10886,CD4+ T activated,0.14726840855106887
+779,rustscenic,union,10886,CD4+ T naive,0.23867403314917127
+779,rustscenic,union,10886,CD8+ T,0.2549173878835563
+779,rustscenic,union,10886,Erythroblast,0.9210526315789473
+779,rustscenic,union,10886,G/M prog,0.24561403508771928
+779,rustscenic,union,10886,HSC,0.08955223880597014
+779,rustscenic,union,10886,ID2-hi myeloid prog,0.21428571428571427
+779,rustscenic,union,10886,ILC,0.16666666666666666
+779,rustscenic,union,10886,Lymph prog,0.5185185185185185
+779,rustscenic,union,10886,MK/E prog,0.3855421686746988
+779,rustscenic,union,10886,NK,0.4931506849315068
+779,rustscenic,union,10886,Naive CD20+ B,0.44
+779,rustscenic,union,10886,Normoblast,0.7333333333333333
+779,rustscenic,union,10886,Plasma cell,0.2153846153846154
+779,rustscenic,union,10886,Proerythroblast,0.8421052631578947
+779,rustscenic,union,10886,Transitional B,0.5128205128205128
+779,rustscenic,union,10886,cDC2,0.6386554621848739
+779,rustscenic,union,10886,pDC,0.7246376811594203
+779,rustscenic,union,12710,CD14+ Mono,0.8250460405156538
+779,rustscenic,union,12710,CD16+ Mono,0.7384615384615385
+779,rustscenic,union,12710,CD4+ T activated,0.3920265780730897
+779,rustscenic,union,12710,CD4+ T naive,0.22885572139303484
+779,rustscenic,union,12710,CD8+ T,0.24581005586592178
+779,rustscenic,union,12710,Erythroblast,0.9053968253968254
+779,rustscenic,union,12710,G/M prog,0.2929936305732484
+779,rustscenic,union,12710,HSC,0.37383177570093457
+779,rustscenic,union,12710,Lymph prog,0.6026490066225165
+779,rustscenic,union,12710,MK/E prog,0.3140495867768595
+779,rustscenic,union,12710,NK,0.45517241379310347
+779,rustscenic,union,12710,Naive CD20+ B,0.5681818181818182
+779,rustscenic,union,12710,Normoblast,0.9074626865671642
+779,rustscenic,union,12710,Proerythroblast,0.691764705882353
+779,rustscenic,union,12710,Transitional B,0.40336134453781514
+779,rustscenic,union,12710,cDC2,0.42592592592592593
+779,rustscenic,union,12710,pDC,0.37142857142857144
+779,rustscenic,union,16710,B1 B,0.5106382978723404
+779,rustscenic,union,16710,CD14+ Mono,0.7203065134099617
+779,rustscenic,union,16710,CD16+ Mono,0.5063938618925832
+779,rustscenic,union,16710,CD4+ T activated,0.42526315789473684
+779,rustscenic,union,16710,CD4+ T naive,0.1044776119402985
+779,rustscenic,union,16710,CD8+ T,0.30354131534569984
+779,rustscenic,union,16710,Erythroblast,0.9156626506024096
+779,rustscenic,union,16710,HSC,0.2222222222222222
+779,rustscenic,union,16710,ILC,0.171875
+779,rustscenic,union,16710,NK,0.6629422718808193
+779,rustscenic,union,16710,Naive CD20+ B,0.42718446601941745
+779,rustscenic,union,16710,Normoblast,0.8571428571428571
+779,rustscenic,union,16710,Plasma cell,0.30303030303030304
+779,rustscenic,union,16710,Proerythroblast,0.7058823529411765
+779,rustscenic,union,16710,cDC2,0.3448275862068966
+779,rustscenic,union,16710,pDC,0.7323943661971831
+779,rustscenic,signed,10886,B1 B,0.6712328767123288
+779,rustscenic,signed,10886,CD14+ Mono,0.7827380952380952
+779,rustscenic,signed,10886,CD16+ Mono,0.6153846153846154
+779,rustscenic,signed,10886,CD4+ T activated,0.18437900128040974
+779,rustscenic,signed,10886,CD4+ T naive,0.11233211233211234
+779,rustscenic,signed,10886,CD8+ T,0.3775438596491228
+779,rustscenic,signed,10886,Erythroblast,0.9103448275862069
+779,rustscenic,signed,10886,G/M prog,0.2916666666666667
+779,rustscenic,signed,10886,HSC,0.029411764705882353
+779,rustscenic,signed,10886,ID2-hi myeloid prog,0.27848101265822783
+779,rustscenic,signed,10886,ILC,0.25
+779,rustscenic,signed,10886,Lymph prog,0.2857142857142857
+779,rustscenic,signed,10886,MK/E prog,0.43243243243243246
+779,rustscenic,signed,10886,NK,0.5101500441306267
+779,rustscenic,signed,10886,Naive CD20+ B,0.6440677966101694
+779,rustscenic,signed,10886,Normoblast,0.7419354838709677
+779,rustscenic,signed,10886,Plasma cell,0.2711864406779661
+779,rustscenic,signed,10886,Proerythroblast,0.7619047619047619
+779,rustscenic,signed,10886,Transitional B,0.32432432432432434
+779,rustscenic,signed,10886,cDC2,0.6218487394957983
+779,rustscenic,signed,10886,pDC,0.7323943661971831
+779,rustscenic,signed,12710,CD14+ Mono,0.8389982110912343
+779,rustscenic,signed,12710,CD16+ Mono,0.7186147186147186
+779,rustscenic,signed,12710,CD4+ T activated,0.45317220543806647
+779,rustscenic,signed,12710,CD4+ T naive,0.24888888888888888
+779,rustscenic,signed,12710,CD8+ T,0.29069767441860467
+779,rustscenic,signed,12710,Erythroblast,0.8938053097345132
+779,rustscenic,signed,12710,G/M prog,0.2916666666666667
+779,rustscenic,signed,12710,HSC,0.34
+779,rustscenic,signed,12710,Lymph prog,0.6058823529411764
+779,rustscenic,signed,12710,MK/E prog,0.35294117647058826
+779,rustscenic,signed,12710,NK,0.4793388429752066
+779,rustscenic,signed,12710,Naive CD20+ B,0.6363636363636364
+779,rustscenic,signed,12710,Normoblast,0.8763040238450075
+779,rustscenic,signed,12710,Proerythroblast,0.7315914489311164
+779,rustscenic,signed,12710,Transitional B,0.4672131147540984
+779,rustscenic,signed,12710,cDC2,0.46153846153846156
+779,rustscenic,signed,12710,pDC,0.5769230769230769
+779,rustscenic,signed,16710,B1 B,0.6174496644295302
+779,rustscenic,signed,16710,CD14+ Mono,0.755114693118413
+779,rustscenic,signed,16710,CD16+ Mono,0.5273224043715847
+779,rustscenic,signed,16710,CD4+ T activated,0.5435897435897435
+779,rustscenic,signed,16710,CD4+ T naive,0.25333333333333335
+779,rustscenic,signed,16710,CD8+ T,0.4126506024096386
+779,rustscenic,signed,16710,Erythroblast,0.8974358974358975
+779,rustscenic,signed,16710,HSC,0.09090909090909091
+779,rustscenic,signed,16710,ILC,0.28846153846153844
+779,rustscenic,signed,16710,NK,0.6472491909385113
+779,rustscenic,signed,16710,Naive CD20+ B,0.48
+779,rustscenic,signed,16710,Normoblast,0.8
+779,rustscenic,signed,16710,Plasma cell,0.15384615384615385
+779,rustscenic,signed,16710,Proerythroblast,0.7777777777777778
+779,rustscenic,signed,16710,cDC2,0.35294117647058826
+779,rustscenic,signed,16710,pDC,0.782608695652174
+779,reference,union,10886,B1 B,0.6206896551724138
+779,reference,union,10886,CD14+ Mono,0.7680491551459293
+779,reference,union,10886,CD16+ Mono,0.5963855421686747
+779,reference,union,10886,CD4+ T activated,0.15274463007159905
+779,reference,union,10886,CD4+ T naive,0.2408026755852843
+779,reference,union,10886,CD8+ T,0.48443337484433374
+779,reference,union,10886,Erythroblast,0.9342105263157895
+779,reference,union,10886,G/M prog,0.2978723404255319
+779,reference,union,10886,HSC,0.12
+779,reference,union,10886,ID2-hi myeloid prog,0.3157894736842105
+779,reference,union,10886,ILC,0.21818181818181817
+779,reference,union,10886,Lymph prog,0.6923076923076923
+779,reference,union,10886,MK/E prog,0.4375
+779,reference,union,10886,NK,0.5634517766497462
+779,reference,union,10886,Naive CD20+ B,0.6423357664233577
+779,reference,union,10886,Normoblast,0.7666666666666667
+779,reference,union,10886,Plasma cell,0.21428571428571427
+779,reference,union,10886,Proerythroblast,0.7894736842105263
+779,reference,union,10886,Transitional B,0.45161290322580644
+779,reference,union,10886,cDC2,0.6846846846846847
+779,reference,union,10886,pDC,0.5777777777777777
+779,reference,union,12710,CD14+ Mono,0.8783433994823123
+779,reference,union,12710,CD16+ Mono,0.7798165137614679
+779,reference,union,12710,CD4+ T activated,0.34838709677419355
+779,reference,union,12710,CD4+ T naive,0.17592592592592593
+779,reference,union,12710,CD8+ T,0.21052631578947367
+779,reference,union,12710,Erythroblast,0.9062103929024081
+779,reference,union,12710,G/M prog,0.3583815028901734
+779,reference,union,12710,HSC,0.3116883116883117
+779,reference,union,12710,Lymph prog,0.7374631268436578
+779,reference,union,12710,MK/E prog,0.3305785123966942
+779,reference,union,12710,NK,0.5625
+779,reference,union,12710,Naive CD20+ B,0.8081761006289309
+779,reference,union,12710,Normoblast,0.9085365853658537
+779,reference,union,12710,Proerythroblast,0.7162162162162162
+779,reference,union,12710,Transitional B,0.6455026455026455
+779,reference,union,12710,cDC2,0.6153846153846154
+779,reference,union,12710,pDC,0.43478260869565216
+779,reference,union,16710,B1 B,0.5034013605442177
+779,reference,union,16710,CD14+ Mono,0.7490636704119851
+779,reference,union,16710,CD16+ Mono,0.5298013245033113
+779,reference,union,16710,CD4+ T activated,0.4248927038626609
+779,reference,union,16710,CD4+ T naive,0.10084033613445378
+779,reference,union,16710,CD8+ T,0.5495608531994981
+779,reference,union,16710,Erythroblast,0.9879518072289156
+779,reference,union,16710,HSC,0.26666666666666666
+779,reference,union,16710,ILC,0.3958333333333333
+779,reference,union,16710,NK,0.6863207547169812
+779,reference,union,16710,Naive CD20+ B,0.5426356589147286
+779,reference,union,16710,Normoblast,0.9473684210526315
+779,reference,union,16710,Plasma cell,0.16901408450704225
+779,reference,union,16710,Proerythroblast,0.9
+779,reference,union,16710,cDC2,0.4050632911392405
+779,reference,union,16710,pDC,0.631578947368421
+779,reference,signed,10886,B1 B,0.6206896551724138
+779,reference,signed,10886,CD14+ Mono,0.7680491551459293
+779,reference,signed,10886,CD16+ Mono,0.5963855421686747
+779,reference,signed,10886,CD4+ T activated,0.15262321144674085
+779,reference,signed,10886,CD4+ T naive,0.23883928571428573
+779,reference,signed,10886,CD8+ T,0.48443337484433374
+779,reference,signed,10886,Erythroblast,0.9342105263157895
+779,reference,signed,10886,G/M prog,0.2978723404255319
+779,reference,signed,10886,HSC,0.12
+779,reference,signed,10886,ID2-hi myeloid prog,0.3157894736842105
+779,reference,signed,10886,ILC,0.21818181818181817
+779,reference,signed,10886,Lymph prog,0.6923076923076923
+779,reference,signed,10886,MK/E prog,0.4375
+779,reference,signed,10886,NK,0.5634517766497462
+779,reference,signed,10886,Naive CD20+ B,0.6423357664233577
+779,reference,signed,10886,Normoblast,0.7666666666666667
+779,reference,signed,10886,Plasma cell,0.21428571428571427
+779,reference,signed,10886,Proerythroblast,0.7894736842105263
+779,reference,signed,10886,Transitional B,0.45161290322580644
+779,reference,signed,10886,cDC2,0.6846846846846847
+779,reference,signed,10886,pDC,0.5777777777777777
+779,reference,signed,12710,CD14+ Mono,0.8783433994823123
+779,reference,signed,12710,CD16+ Mono,0.7798165137614679
+779,reference,signed,12710,CD4+ T activated,0.34838709677419355
+779,reference,signed,12710,CD4+ T naive,0.17592592592592593
+779,reference,signed,12710,CD8+ T,0.21052631578947367
+779,reference,signed,12710,Erythroblast,0.9062103929024081
+779,reference,signed,12710,G/M prog,0.3583815028901734
+779,reference,signed,12710,HSC,0.3116883116883117
+779,reference,signed,12710,Lymph prog,0.7374631268436578
+779,reference,signed,12710,MK/E prog,0.3305785123966942
+779,reference,signed,12710,NK,0.5625
+779,reference,signed,12710,Naive CD20+ B,0.8081761006289309
+779,reference,signed,12710,Normoblast,0.9085365853658537
+779,reference,signed,12710,Proerythroblast,0.7178329571106095
+779,reference,signed,12710,Transitional B,0.6455026455026455
+779,reference,signed,12710,cDC2,0.6153846153846154
+779,reference,signed,12710,pDC,0.43478260869565216
+779,reference,signed,16710,B1 B,0.5034013605442177
+779,reference,signed,16710,CD14+ Mono,0.7490636704119851
+779,reference,signed,16710,CD16+ Mono,0.5298013245033113
+779,reference,signed,16710,CD4+ T activated,0.42398286937901497
+779,reference,signed,16710,CD4+ T naive,0.10084033613445378
+779,reference,signed,16710,CD8+ T,0.5495608531994981
+779,reference,signed,16710,Erythroblast,0.9879518072289156
+779,reference,signed,16710,HSC,0.26666666666666666
+779,reference,signed,16710,ILC,0.3958333333333333
+779,reference,signed,16710,NK,0.6863207547169812
+779,reference,signed,16710,Naive CD20+ B,0.5426356589147286
+779,reference,signed,16710,Normoblast,0.9473684210526315
+779,reference,signed,16710,Plasma cell,0.16901408450704225
+779,reference,signed,16710,Proerythroblast,0.9
+779,reference,signed,16710,cDC2,0.4050632911392405
+779,reference,signed,16710,pDC,0.631578947368421

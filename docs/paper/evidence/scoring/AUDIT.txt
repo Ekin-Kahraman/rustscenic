@@ -1,0 +1,88 @@
+Huangfu scoring confirmation: verified results, 8 November 2026
+
+Verdict
+The seeded native AUCell correction passed independent HPC confirmation. No
+additional confirmation run is indicated for this fix. This closes the scoring
+compatibility and cost check; it does not establish biological equivalence or
+paper acceptance. Nothing has been sent, uploaded or published by this audit.
+
+Integrity and execution
+- Archive SHA256: 913b3de11736b4c1f9b5d161fbeaeca583af4c0e0e90ae81f21edc8c066d75b1
+- All 195 returned file hashes/sizes verified against the return manifest.
+- All 18 tasks completed, smoke=false, using the exact packaged manifest.
+- Loaded baseline/candidate native extension hashes match the shipped wheels.
+- Same node (lc06e55), 16 allocated CPUs, pinned dependencies in every task.
+- Input hash matches the original 817,740-cell, 5,000-gene HDMA matrix.
+- Compute job succeeded in 723 seconds (12.05 minutes). LSF peak memory for the
+  full job was 1,900 MB against the correctly requested 32,000 MB total.
+
+Numerical checks
+- Rechecked all 12 returned corrected external matrices, 12,315 cells each.
+  Maximum absolute difference versus the shared reference: 3.300890139e-08.
+- Every corrected external matrix is bit-exact with the previously audited local
+  native result. Default scorer checks passed for both published and candidate
+  builds against all 12 original native matrices in the HPC report.
+- Checked the 10,000 returned atlas cells for each of three frozen networks.
+  Corrected full-run samples match the independently scored samples exactly.
+  Maximum difference versus the fresh shared scorer: 3.121852876e-08.
+- All atlas signatures varied across the sample; these are not vacuous zero tests.
+- Full baseline/unseeded HDF5 hashes match for each of the three atlas networks,
+  supporting unchanged legacy behaviour across every cell. The 15 full HDF5
+  files remain on HPC as designed; local numerical reinspection covers returned
+  samples, while complete-file hashes and the full checks are recorded on HPC.
+
+Runtime and memory
+Ratios are median paired candidate/baseline values over three network seeds.
+All arms used the same inputs/signatures and rotated order in one allocation.
+Lower ratios indicate lower cost.
+
+Corrected build versus published v0.5.0:
+- Scoring + signed contrast time: 0.928426, 7.16% less time.
+- Full scoring/export stage time: 0.973271, 2.67% less time.
+- Peak sampled process-tree PSS: 0.908883, 9.11% lower.
+
+Seeded correction versus the SAME candidate build with old tie ordering:
+- Scoring + contrast time: 1.004175, 0.42% extra time.
+- Peak sampled process-tree PSS: 1.034812, 3.48% higher median paired memory.
+
+These are scoring-stage measurements. They do not replace the earlier whole-
+pipeline or arboreto benchmarks. They support absence of a material regression,
+not a new broad speedup claim. Small differences across three runs are descriptive;
+memory varied between runs. Every reported memory peak was independently
+recomputed from memory.csv; no missing PSS samples were found. PSS is sampled,
+not an exact hardware peak. Different summary statistics must not be mixed:
+medians of raw values are in verified-results.json; percentages above use paired
+ratios, so a ratio of the raw medians can differ.
+
+Biological endpoint
+All 96 classifier confusion matrices were rechecked against donor cell counts
+and labels; macro-F1 and balanced accuracy were recomputed. All fits converged.
+Donor-paired summaries and bootstrap intervals reproduced from the returned folds.
+
+20,000-cell frozen networks, eight external donors:
+- Previous native signed macro-F1: 0.682917594
+- Corrected native signed macro-F1: 0.692891580
+- Same RustScenic networks, shared scorer: 0.692901947
+- SCENIC+ networks, shared scorer: 0.711326496
+- Corrected minus SCENIC+: -0.018434916, paired donor bootstrap
+  95% interval [-0.03448375303507012, -0.0029634137479954276].
+- Observed change from old native: +0.009974 macro-F1. Its paired donor interval
+  includes zero; do not claim statistically established biological improvement.
+
+At 5,000 training cells, corrected macro-F1 is 0.606447
+versus 0.662094 for SCENIC+ networks. Retain this result as well.
+
+The scorer discrepancy is resolved. The remaining network-level utility gap is
+not. Exactly 92/96 classifier confusion matrices match the shared scorer; small
+float32 differences can alter boundary predictions. Five folds also differ from
+the prior local classifier despite bit-identical native score matrices, by at
+most two counts in any confusion-matrix entry. This is consistent with downstream
+solver/platform sensitivity, not a remaining difference in native scores. No
+new network inference or classifier fitting was needed for this audit.
+
+Next step
+Integrate the verified opt-in seed support and consolidate the methods/results
+with the exact scope, previous controls and remaining biological trade-off.
+Do not silently replace the old union endpoint, claim universal superiority, or
+present reused donor data as an untouched new validation cohort. No further
+scoring-only package is warranted by these results.

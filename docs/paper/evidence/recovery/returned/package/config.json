@@ -1,0 +1,66 @@
+{
+  "release": "rustscenic-0.5.0",
+  "threads": 16,
+  "sample_interval_seconds": 1.0,
+  "memory_limit_mb": 120000,
+  "method_timeout_seconds": 28800,
+  "grn": {
+    "n_estimators": 5000,
+    "learning_rate": 0.01,
+    "max_features": 0.1,
+    "subsample": 0.9,
+    "max_depth": 3,
+    "early_stop_window": 25
+  },
+  "topics": {
+    "n_topics": 30,
+    "iterations": 500
+  },
+  "panels": {
+    "atlas": {
+      "genes": 3000,
+      "tfs": 256,
+      "sizes": [
+        100000,
+        1306127
+      ]
+    },
+    "bmmc": {
+      "genes": 5000,
+      "tfs": 256,
+      "peaks": 20000,
+      "sizes": [
+        10000,
+        50000
+      ]
+    },
+    "hdma": {
+      "genes": 5000,
+      "tfs": 256,
+      "peaks": 20000,
+      "sizes": [
+        100000,
+        500000,
+        817740
+      ]
+    }
+  },
+  "seeds": [
+    777,
+    778,
+    779
+  ],
+  "scheduler": {
+    "queue": "premium",
+    "pair_walltime": "18:00",
+    "preparation_walltime": "12:00",
+    "memory_per_core_mb": 8000,
+    "parallel_pairs": 2
+  },
+  "claim_scope": "Configured complete analysis workflows from shared QC-filtered matrices. Includes native topic modelling for multiome and real cisTarget motif enrichment. Excludes raw-read alignment, peak calling and motif database construction. Native pruning, enhancer-link and regulon algorithms differ. No presumption of biological equivalence or superiority.",
+  "protocol": "final-atlas-recovery-v3-20261029",
+  "minimum_free_gib": 200,
+  "large_multiome_method_timeout_seconds": 57600,
+  "large_multiome_pair_walltime": "34:00",
+  "mallet_max_heap": "96g"
+}

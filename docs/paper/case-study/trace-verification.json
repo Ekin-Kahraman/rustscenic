@@ -1,0 +1,340 @@
+{
+  "sources": {
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Paper-Validation-20261106/rustscenic-paper-validation/holdout-inputs/atac.h5": {
+      "sha256": "acc110d5aaed9132c78dad1bf70e11aea1801b3f9268e5abb011a45e3505d9ab",
+      "bytes": 142952484
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Paper-Validation-20261106/rustscenic-paper-validation/holdout-inputs/cell-metadata.tsv": {
+      "sha256": "fcdacc50d6dd9752401245405f9feeb07016ca20f55c2f36bfd01cfe31f47dcc",
+      "bytes": 1387448
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Paper-Validation-20261106/rustscenic-paper-validation/holdout-inputs/gene-coordinates.tsv": {
+      "sha256": "cbdece040964823ef3736faf718add4001f62ade16018283e3be06e4d17b680d",
+      "bytes": 194693
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Paper-Validation-20261106/rustscenic-paper-validation/holdout-inputs/peaks.tsv": {
+      "sha256": "912742484388dede07f20f4712507d9865d02d0ff45a928efd9cd099d128ad59",
+      "bytes": 953287
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Paper-Validation-20261106/rustscenic-paper-validation/holdout-inputs/rna.h5": {
+      "sha256": "8a078ba55da019b3af9ab831cb236acd026390aa73e61dbfefddf5ec2baff579",
+      "bytes": 71843005
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Paper-Validation-20261106/rustscenic-paper-validation/holdout-inputs/tfs.txt": {
+      "sha256": "601d2ea00ad84ca0aba33f5f180d6aa7965f638982a575a4ca1f61e50f3b20e7",
+      "bytes": 7318
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Paper-Validation-20261106/rustscenic-paper-validation/holdout-inputs/motifs/ranks.json": {
+      "sha256": "d9b0cd7837c0612fb4670057555558fd1274d68dd28bea0b53456bf8153e1724",
+      "bytes": 1737115
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Paper-Validation-20261106/rustscenic-paper-validation/holdout-inputs/motifs/ranks.21bit": {
+      "sha256": "99c3d7d1d85a2cdc6490fd3961c465a48c1949dda998f419980b9445187e1123",
+      "bytes": 653027067
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Paper-Validation-20261106/rustscenic-paper-validation/holdout-inputs/motifs/human-gene-annotations.tbl": {
+      "sha256": "781e16a079a7219c0fe71f7098e6de45f76556ac492931d5d35e41f3e26cfad7",
+      "bytes": 50098928
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Paper-Validation-20261106/rustscenic-paper-validation/holdout-inputs/motifs/screen-overlap-mapping.tsv": {
+      "sha256": "37212c860b83dd6a207dc0ed51719eeeafe35ac68ad47a56f1d3f43bbf70db60",
+      "bytes": 2018450
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/rustscenic/topic-peak.parquet": {
+      "sha256": "7cae608825782be2ea2c98dbc7d83324a975db3d581aa4c153c0f870168b27db",
+      "bytes": 17690354
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/rustscenic/cell-topic.parquet": {
+      "sha256": "e32f9b41ba8fa9985c1b8db5f8a38fb2573fd1903fcbaf21810ed821a3b4d242",
+      "bytes": 918772
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/rustscenic/region-motif-scores.parquet": {
+      "sha256": "5f6dd9f9e3534613d9d74602c2ebd95b40f62e35a2e6c42a82f69a4b4d141c36",
+      "bytes": 66128
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/rustscenic/grn.parquet": {
+      "sha256": "0edecf78437cbd285bd9cda71ecc444c24646a2bb34a1f1bf981d0250550eec5",
+      "bytes": 7305849
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/rustscenic/regulons.json": {
+      "sha256": "6b54ff99c22d12d3a418f8a9d55a744f2e193fd7456827d55171e4ae94f94cb9",
+      "bytes": 140663
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/rustscenic/full-motif-evidence.parquet": {
+      "sha256": "8a71c028368b66e41838bf5028bffd70be34234626c94c723e5bc011e25fb5a2",
+      "bytes": 1924534
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/reference/topic-peak.parquet": {
+      "sha256": "9aedf18204338079eb23120d2953083445bc3eb3dffbac543a3bdcc14c0c95d5",
+      "bytes": 18891852
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/reference/cell-topic.parquet": {
+      "sha256": "656b4c8ccca129b426c517c034a2458960fbc918d3bed6d009bb4b8af7f419a3",
+      "bytes": 1506477
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/reference/region-motif-scores.parquet": {
+      "sha256": "20697794a6577b159237b8a3176e186544c5f1de01fb697e2df90905b2ef179b",
+      "bytes": 80451
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/reference/grn.parquet": {
+      "sha256": "e10bc4e7e8b910449e65ec216f836a0f5dd722320390ea8a104455ae0b9101e2",
+      "bytes": 8617526
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/reference/regulons.json": {
+      "sha256": "e9dbc3a15076473d6160941ef05e71165e8846265d48fe219ac7734f3963cd65",
+      "bytes": 12848
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/reference/full-motif-evidence.parquet": {
+      "sha256": "131b60ab76e3398a545db372942ba90ca2751eece3d3d7604a35c849cecaddc3",
+      "bytes": 4702191
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/rustscenic/topic-peak.parquet": {
+      "sha256": "5ba620faab119c02a5e9da430f18af8acfb7cb60339286df0fc6900d3743d55a",
+      "bytes": 17690354
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/rustscenic/cell-topic.parquet": {
+      "sha256": "b9b025b63045df3a8360e7033c134088668e045e35e346f265a5ee5e00ae1e7a",
+      "bytes": 918154
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/rustscenic/region-motif-scores.parquet": {
+      "sha256": "ff7d283c4f9e95b8974807f3e69a17adda70111287db90ec45dab2f93b61d779",
+      "bytes": 65565
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/rustscenic/grn.parquet": {
+      "sha256": "c9f38ea1bbdd9b8b3d61100724379cf12d9227b9f5cef02f7591caaec3348f1f",
+      "bytes": 7297357
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/rustscenic/regulons.json": {
+      "sha256": "06162198f3fb694f6128ba3732ae941d4d238168663cd5569e22d9a7e379963c",
+      "bytes": 141825
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/rustscenic/full-motif-evidence.parquet": {
+      "sha256": "5cd71a9bf26d3793bfbce45c9529d5aaa5186b5ad89ede8cfc1a772e9bd0ede1",
+      "bytes": 1820411
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/reference/topic-peak.parquet": {
+      "sha256": "a14a7f92906032a3bfbd2711da73dfccb9e2c663fc7995e84ae378a51b9061e1",
+      "bytes": 18898515
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/reference/cell-topic.parquet": {
+      "sha256": "8561e5afd5753fc57c2d2f22bc90ee098e86590dda4695a5f409e725c8321826",
+      "bytes": 1505669
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/reference/region-motif-scores.parquet": {
+      "sha256": "9fb2cb9fd794f77fe216fc184acc78b32c29261847f0c5e1db5ce89abb0e018f",
+      "bytes": 80813
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/reference/grn.parquet": {
+      "sha256": "1dad01174e207a831f9b9768fa95f723e7d2624b7b7ac8a380f66f58a6279b64",
+      "bytes": 8648979
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/reference/regulons.json": {
+      "sha256": "48dc82325193c79e05c3bdebf678bf9c83f1bbbc4326cd5c95f4acb669d714a2",
+      "bytes": 10167
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/reference/full-motif-evidence.parquet": {
+      "sha256": "764921a30dc5372698263960c830588c625f8811134504865a6313a81d6afc53",
+      "bytes": 4500948
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/rustscenic/topic-peak.parquet": {
+      "sha256": "91bfa55216aad60df0b15990a56d92ee4c627b147ab3dcd17d1bd20fbceee585",
+      "bytes": 17690354
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/rustscenic/cell-topic.parquet": {
+      "sha256": "3bfb983f7bffa230238127500d3c954b7fb98eb102cd1bd3d2ad6ffdc1afe381",
+      "bytes": 918054
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/rustscenic/region-motif-scores.parquet": {
+      "sha256": "15e267475e9c88cbea09161bf1e11812854cd91aa1638311718be570b3e9230c",
+      "bytes": 65758
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/rustscenic/grn.parquet": {
+      "sha256": "b0dfb14c584fd2aedb6545d00dd519e223ddb8267e91622afff0ade033de439f",
+      "bytes": 7291234
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/rustscenic/regulons.json": {
+      "sha256": "96f44e8b61eae7736e5a8f7325323afe754dd0eaf7db456441b5b626c735815d",
+      "bytes": 141148
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/rustscenic/full-motif-evidence.parquet": {
+      "sha256": "b4b97ea9e7c1de1a88c85adfb4a425f40a54d4e69b57a7c9a577c8ea8dffc318",
+      "bytes": 1919308
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/reference/topic-peak.parquet": {
+      "sha256": "38e764214400e732362f841f35c58d42b9c3ac28a9aa230fce624103c2b7b3ec",
+      "bytes": 18893692
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/reference/cell-topic.parquet": {
+      "sha256": "922d9c16bc4cc26152fa30c4b6ab7f4f1496e4e4774351bd26816bc6097ae110",
+      "bytes": 1506908
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/reference/region-motif-scores.parquet": {
+      "sha256": "521f7f725ca8860c11279a4568b16a2ef6c72a618bc769037f78af80b52fc545",
+      "bytes": 78332
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/reference/grn.parquet": {
+      "sha256": "79b1ab141246edb1a19aa0ac7c92dd070bd64bb86223614afd28f41698a482aa",
+      "bytes": 8605676
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/reference/regulons.json": {
+      "sha256": "2f76c90735e5fa63d5ed24a33534b7a2cf7af5311603372fedb79b8a3a3a6770",
+      "bytes": 17399
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/reference/full-motif-evidence.parquet": {
+      "sha256": "912064312d60b244ee1e8e26a608a66cbe9e5cad4abc4471e38850050d3124c7",
+      "bytes": 4662546
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/rustscenic/topic-peak.parquet": {
+      "sha256": "a5950e66ea3eca184cd58cc76fba12964718b535a7691ab44f2da897108bb36a",
+      "bytes": 17690341
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/rustscenic/cell-topic.parquet": {
+      "sha256": "a9ca95f69c91c825f8744716fcedfc44c13b8a96cb200de21b7b7b0fa7df4e2e",
+      "bytes": 3660190
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/rustscenic/region-motif-scores.parquet": {
+      "sha256": "925fa3e4ac11a77b60be314d7c468f267704b3e5016b3ddbd4f4e989a78b18bb",
+      "bytes": 66061
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/rustscenic/grn.parquet": {
+      "sha256": "0fbcd79aa243f530599b9028231199f309419c60e3974a9bf1b8fda8a7eeed7e",
+      "bytes": 7050733
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/rustscenic/regulons.json": {
+      "sha256": "5f65ec58506de29874761e6e28af1a9bc6dc16134c675562147b447da4a11428",
+      "bytes": 151598
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/rustscenic/full-motif-evidence.parquet": {
+      "sha256": "29f9e71e1697023256bfc75c8b9e492b3e764776f393d4a62b344a785c73092a",
+      "bytes": 1943449
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/reference/topic-peak.parquet": {
+      "sha256": "28dce5b79463c40dd5c040cdfae04e054abeb6d4b8936fda7b245010a2c5c595",
+      "bytes": 19419922
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/reference/cell-topic.parquet": {
+      "sha256": "2a280a89c980b18fa6e7b018a5eb8b7ddb3c7ae5d7b6504c32955e2de2a13cd4",
+      "bytes": 5896050
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/reference/region-motif-scores.parquet": {
+      "sha256": "ebc54f249e3015edaa3326c93d5b9a2037b507ba339da244802307cef9307e09",
+      "bytes": 79207
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/reference/grn.parquet": {
+      "sha256": "63f0d1afd3b26456a7e51fc5c9007e922c53022065d9464bbff11d43c79397b0",
+      "bytes": 8202241
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/reference/regulons.json": {
+      "sha256": "75f947f10cb7fcc9680744a75a85e24925dbf0b1f3d3682c5be13080c1cbbc7c",
+      "bytes": 26625
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/reference/full-motif-evidence.parquet": {
+      "sha256": "44e5b1cfe2a793457d2312ebfa7020e09f0dbf852d2b11ff90edc5b6fbbd2b8a",
+      "bytes": 4735191
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/rustscenic/topic-peak.parquet": {
+      "sha256": "a30e694cf3bef791d5e6369f9d88e7d98e25c98e5c3129b5ca403fdce979870c",
+      "bytes": 17690354
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/rustscenic/cell-topic.parquet": {
+      "sha256": "8bd3942828c8aab170749774f1ec44c8907b9415424c37ccb603857d7d200a8d",
+      "bytes": 3661174
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/rustscenic/region-motif-scores.parquet": {
+      "sha256": "876037c0183746bbc2a0999969022285da260311ff855ba6bdbcaf3703cac689",
+      "bytes": 66137
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/rustscenic/grn.parquet": {
+      "sha256": "3d293dab587b896d5406ee370d070c67eefd0edfdbb6ac1d32cd0e45867c6689",
+      "bytes": 7042898
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/rustscenic/regulons.json": {
+      "sha256": "ffa23064e902f048439d6dbe89b015a64cea2f832f0c7b1e4271c72b6c05de2a",
+      "bytes": 148833
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/rustscenic/full-motif-evidence.parquet": {
+      "sha256": "1492f9bc5c3d58860cf486b44f50e84f38d41f6fa5ab4aa0cb94788950914b15",
+      "bytes": 2000876
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/reference/topic-peak.parquet": {
+      "sha256": "c6e307c1075f7f3e1ad45a707944aa67bb3e917f0f3c6db1aeb4864877f15445",
+      "bytes": 19415420
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/reference/cell-topic.parquet": {
+      "sha256": "6d82eacea67580a39ee9555578cb88471ac7ad96bfc759a0137a3617d6ff8a66",
+      "bytes": 5901000
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/reference/region-motif-scores.parquet": {
+      "sha256": "9000ed978a11657e5037f250cde169f529b843df98162820139ad4563e50b368",
+      "bytes": 79171
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/reference/grn.parquet": {
+      "sha256": "b237340a18dfa8b6fb8a9ac3063bcfc6044eb29a895ff47ac752b294cc6a0154",
+      "bytes": 8201694
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/reference/regulons.json": {
+      "sha256": "d969cf0f1698b5ae417f8f25abe2d23b77982ff7bfcf768aa3e8deb0e630ee9b",
+      "bytes": 26525
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/reference/full-motif-evidence.parquet": {
+      "sha256": "5055b0d19e6e0a5231febb65a4519e806cbd308fb594c1d83242563cf24ba0fb",
+      "bytes": 4652192
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/rustscenic/topic-peak.parquet": {
+      "sha256": "7e3f797dbfc40a4b8e43819ec13f644c384af04180dd513bb28c35dfd6bef9e8",
+      "bytes": 17690354
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/rustscenic/cell-topic.parquet": {
+      "sha256": "429c212f51dd8ba36a66023a71315439b2dd8648f1e70305769721f49059aa64",
+      "bytes": 3660811
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/rustscenic/region-motif-scores.parquet": {
+      "sha256": "27bdbdc51ceec447126aa2234cb4078f7f282c213deb07d8ac3ccf96943067f6",
+      "bytes": 65431
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/rustscenic/grn.parquet": {
+      "sha256": "bc0656c71bcc0a6a018e23cecbc189e9c0c1663c551276bf3a5b38d80bc26cda",
+      "bytes": 7056487
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/rustscenic/regulons.json": {
+      "sha256": "c4a234f138985ac560320f7d3f1b0c608bf81301ea7f9d18178a9b9f5e42482c",
+      "bytes": 144260
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/rustscenic/full-motif-evidence.parquet": {
+      "sha256": "056ee7289c8fdea5786f4ac804458f3415c7984b2e52e19e748fb3006e8deb47",
+      "bytes": 1910131
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/reference/topic-peak.parquet": {
+      "sha256": "338039b80c683992610fdab4e1b6a17bc06c76522a4d96f8390faaf0da81941d",
+      "bytes": 19420634
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/reference/cell-topic.parquet": {
+      "sha256": "843595d736e84c364b316df7d0099b909af6511218e3ba1577cb85e6fb701b7a",
+      "bytes": 5897847
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/reference/region-motif-scores.parquet": {
+      "sha256": "a2c57814c31ace683ad0cb2346929633290db2809df0a9eeb0a385a81fa82f62",
+      "bytes": 79562
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/reference/grn.parquet": {
+      "sha256": "98ee1085767ac6127f835265163b49e0278ebbcaa627b682fa354084eaf69a8e",
+      "bytes": 8199246
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/reference/regulons.json": {
+      "sha256": "3981b5491adba41ff5ebf4f490e4dad91fa017076a799569d63b79716cdaa89a",
+      "bytes": 30992
+    },
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/reference/full-motif-evidence.parquet": {
+      "sha256": "90b797cddd1e266eecb4e8f23ab7a850ffaf3483a3006b9af64b20e6633bf94f",
+      "bytes": 4691027
+    }
+  },
+  "decoded_blocks_verified": 331,
+  "motif_count": 5876,
+  "query_region_count": 42337,
+  "topic_sets": 360,
+  "rank_cutoff": 9186,
+  "rank_contribution_nonzeros": 2058542,
+  "no_network_or_topic_fitting": true,
+  "no_threshold_changes": true
+}

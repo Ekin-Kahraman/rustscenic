@@ -1,6 +1,20 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 - 2026-11-09
+
+- Add the audited `rustscenic validated` RNA and paired RNA+ATAC recipes,
+  regulator-coverage reports and explicit directional activity. Preserve
+  existing pipeline defaults and inferred networks.
+- Consolidate 21 matched workflow pairs and the independent directional
+  confirmation. Performance belongs to the recorded v0.5.0 workflows; the
+  new scoring option has separate cost evidence on 817,740 cells.
+
+- Add optional `rustscenic.aucell.score(..., seed=...)` for reproducible,
+  pySCENIC-compatible ordering of equal expression values. Dense and sparse
+  Rust kernels use a gene-sized permutation without shuffling or densifying
+  the expression matrix. Omitting the seed preserves existing outputs.
+  Real-data numerical agreement and scoring cost were independently confirmed
+  on HPC; this does not imply equivalent inferred networks or biological accuracy.
 
 - Count distinct matching TF symbols in the `grn` CLI JSON `n_tfs_used`
   and status header when a TF list repeats names. Preserve the supplied TF

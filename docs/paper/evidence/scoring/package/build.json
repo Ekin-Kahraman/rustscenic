@@ -1,0 +1,19 @@
+{
+  "base_commit": "e624c6a2c288620ab46534aed634abc0180815e5",
+  "wheels": {
+    "baseline": {
+      "wheel": "wheels/baseline/rustscenic-0.5.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "3750a705775641333c47085cb6e3e27e74932f138a8d507b616aad904e4897bc",
+      "extension": "rustscenic/_rustscenic.abi3.so",
+      "extension_sha256": "a7fc736e723c6704ee672d48e36f3041e106c413cdc242cd427fa2511cc537b3"
+    },
+    "candidate": {
+      "wheel": "wheels/candidate/rustscenic-0.5.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "ecd63c5683d525151c0d56fbe5a53785e671da5360ba785c5f33455ecb993e51",
+      "extension": "rustscenic/_rustscenic.abi3.so",
+      "extension_sha256": "30e615e4fd4534a5a6485744e5dae5d98fa350d87397fe56109cacd24bec01b7"
+    }
+  },
+  "build": "maturin 1.13.1, ziglang 0.13.0, --release --locked --zig --target x86_64-unknown-linux-gnu --compatibility manylinux2014",
+  "seed": 20261106
+}

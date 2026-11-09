@@ -1,0 +1,1100 @@
+{
+  "worker_count": 30,
+  "returned_worker_hashes_checked": 378,
+  "deliberately_omitted_full_activity_arrays": 42,
+  "classification_folds_recomputed": 1064,
+  "nonconverged_folds": [],
+  "unassessed_folds": [
+    [
+      "reuse/hdma-777-reference_common.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-777-reference_native.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-777-rust_common.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-777-rust_native.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-777-tf-expression.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-778-reference_common.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-778-reference_native.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-778-rust_common.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-778-rust_native.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-778-tf-expression.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-779-reference_common.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-779-reference_native.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-779-rust_common.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-779-rust_native.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-779-tf-expression.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ],
+    [
+      "reuse/hdma-expression-pca50.json",
+      {
+        "donor": "HDMA-4",
+        "status": "not_assessed",
+        "reason": "insufficient cells/classes"
+      }
+    ]
+  ],
+  "unseen_test_labels": [
+    [
+      "reuse/hdma-777-reference_common.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_common.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_common.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_common.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_common.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_common.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_common.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_native.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_native.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_native.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_native.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_native.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_native.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-reference_native.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_common.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_common.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_common.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_common.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_common.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_common.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_common.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_native.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_native.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_native.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_native.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_native.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_native.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-rust_native.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-tf-expression.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-777-tf-expression.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-777-tf-expression.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-777-tf-expression.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-777-tf-expression.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-tf-expression.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-777-tf-expression.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_common.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_common.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_common.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_common.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_common.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_common.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_common.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_native.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_native.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_native.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_native.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_native.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_native.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-reference_native.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_common.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_common.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_common.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_common.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_common.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_common.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_common.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_native.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_native.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_native.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_native.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_native.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_native.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-rust_native.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-tf-expression.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-778-tf-expression.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-778-tf-expression.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-778-tf-expression.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-778-tf-expression.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-tf-expression.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-778-tf-expression.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_common.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_common.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_common.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_common.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_common.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_common.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_common.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_native.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_native.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_native.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_native.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_native.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_native.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-reference_native.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_common.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_common.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_common.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_common.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_common.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_common.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_common.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_native.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_native.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_native.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_native.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_native.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_native.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-rust_native.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-tf-expression.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-779-tf-expression.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-779-tf-expression.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-779-tf-expression.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-779-tf-expression.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-tf-expression.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-779-tf-expression.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ],
+    [
+      "reuse/hdma-expression-pca50.json",
+      "HDMA-1",
+      [
+        "Muscle myoblasts"
+      ]
+    ],
+    [
+      "reuse/hdma-expression-pca50.json",
+      "HDMA-10",
+      [
+        "Adrenal endothelial"
+      ]
+    ],
+    [
+      "reuse/hdma-expression-pca50.json",
+      "HDMA-15",
+      [
+        "Thymus medullary TEC (myoid Type I)",
+        "Thymus medullary TEC (myoid Type IIa)",
+        "Thymus medullary TEC (myoid)",
+        "Thymus medullary TEC (neuromuscular)",
+        "Thymus vascular smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-expression-pca50.json",
+      "HDMA-18",
+      [
+        "Thyroid endothelial",
+        "Thyroid fibroblast",
+        "Thyroid parathyroid",
+        "Thyroid skeletal muscle",
+        "Thyroid smooth muscle"
+      ]
+    ],
+    [
+      "reuse/hdma-expression-pca50.json",
+      "HDMA-20",
+      [
+        "StomachEsophagus epithelial basal/keratinocyte",
+        "StomachEsophagus keratinocytes/tuft cells"
+      ]
+    ],
+    [
+      "reuse/hdma-expression-pca50.json",
+      "HDMA-6",
+      [
+        "Brain smooth muscle cells"
+      ]
+    ],
+    [
+      "reuse/hdma-expression-pca50.json",
+      "HDMA-9",
+      [
+        "Skin epidermal progenitor",
+        "Thymus B cells"
+      ]
+    ]
+  ],
+  "metric_mismatches": [],
+  "train_test_identity_checks": [
+    "bmmc-train20000-seed777/reference",
+    "bmmc-train20000-seed777/rustscenic",
+    "bmmc-train20000-seed778/reference",
+    "bmmc-train20000-seed778/rustscenic",
+    "bmmc-train20000-seed779/reference",
+    "bmmc-train20000-seed779/rustscenic",
+    "bmmc-train5000-seed777/reference",
+    "bmmc-train5000-seed777/rustscenic",
+    "bmmc-train5000-seed778/reference",
+    "bmmc-train5000-seed778/rustscenic",
+    "bmmc-train5000-seed779/reference",
+    "bmmc-train5000-seed779/rustscenic"
+  ],
+  "reference_metrics_recomputed": 48,
+  "reused_grns_verified": 18
+}

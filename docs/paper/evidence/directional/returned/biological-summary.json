@@ -1,0 +1,322 @@
+{
+  "20000": {
+    "directional_vs_contrast": {
+      "balanced_accuracy": {
+        "difference": 0.0043908029984631725,
+        "donor_differences": {
+          "patient_101": 0.027854902360806122,
+          "patient_1015": -0.01105719616665024,
+          "patient_1016": -0.061230118273757794,
+          "patient_1039": -0.007697016965532821,
+          "patient_107": 0.04978508192793907,
+          "patient_1244": 0.02980990240757131,
+          "patient_1256": -0.0097702314060516,
+          "patient_1488": 0.017431100103381336
+        },
+        "donors": 8,
+        "left_mean": 0.7826372697197795,
+        "paired_donor_bootstrap_ci95": [
+          -0.019417030533881344,
+          0.02492344063347672
+        ],
+        "right_mean": 0.7782464667213164
+      },
+      "macro_f1": {
+        "difference": 0.019440573866046723,
+        "donor_differences": {
+          "patient_101": 0.013905041465990586,
+          "patient_1015": 0.02048137185893073,
+          "patient_1016": -0.008648480336771347,
+          "patient_1039": -0.008220742955794003,
+          "patient_107": 0.06144871421181719,
+          "patient_1244": 0.04007971791905007,
+          "patient_1256": 0.01419237885369895,
+          "patient_1488": 0.022286589911451604
+        },
+        "donors": 8,
+        "left_mean": 0.7123321533677947,
+        "paired_donor_bootstrap_ci95": [
+          0.004865654760800093,
+          0.03470626217137458
+        ],
+        "right_mean": 0.6928915795017478
+      }
+    },
+    "directional_vs_scenicplus": {
+      "balanced_accuracy": {
+        "difference": -0.014982772007863507,
+        "donor_differences": {
+          "patient_101": -0.01488787134633629,
+          "patient_1015": -0.02213554541457896,
+          "patient_1016": -0.021477395606260496,
+          "patient_1039": -0.00014268653736404513,
+          "patient_107": -0.0243516243516243,
+          "patient_1244": -0.033467743950591156,
+          "patient_1256": -0.017976576238391218,
+          "patient_1488": 0.014577267382238412
+        },
+        "donors": 8,
+        "left_mean": 0.7826372697197795,
+        "paired_donor_bootstrap_ci95": [
+          -0.023889165850297038,
+          -0.004481017376139513
+        ],
+        "right_mean": 0.7976200417276431
+      },
+      "macro_f1": {
+        "difference": 0.0010741886119400579,
+        "donor_differences": {
+          "patient_101": 0.0026402830296602398,
+          "patient_1015": -0.001626975283906873,
+          "patient_1016": 0.00432126156224466,
+          "patient_1039": 0.004327199239442692,
+          "patient_107": -0.0005204613375162648,
+          "patient_1244": 0.0031198628615306534,
+          "patient_1256": -0.011068542444372165,
+          "patient_1488": 0.00740088126843752
+        },
+        "donors": 8,
+        "left_mean": 0.7123321533677947,
+        "paired_donor_bootstrap_ci95": [
+          -0.0030189228076717145,
+          0.004276571019399461
+        ],
+        "right_mean": 0.7112579647558545
+      }
+    },
+    "seed_means": [
+      {
+        "macro_f1": 0.6906256071165277,
+        "method": "rustscenic",
+        "mode": "contrast",
+        "seed": 777
+      },
+      {
+        "macro_f1": 0.7081142952776937,
+        "method": "rustscenic",
+        "mode": "directional",
+        "seed": 777
+      },
+      {
+        "macro_f1": 0.6834349022387293,
+        "method": "rustscenic",
+        "mode": "contrast",
+        "seed": 778
+      },
+      {
+        "macro_f1": 0.7059532654084753,
+        "method": "rustscenic",
+        "mode": "directional",
+        "seed": 778
+      },
+      {
+        "macro_f1": 0.7046142291499866,
+        "method": "rustscenic",
+        "mode": "contrast",
+        "seed": 779
+      },
+      {
+        "macro_f1": 0.7229288994172149,
+        "method": "rustscenic",
+        "mode": "directional",
+        "seed": 779
+      },
+      {
+        "macro_f1": 0.7170064515353651,
+        "method": "reference",
+        "mode": "contrast",
+        "seed": 777
+      },
+      {
+        "macro_f1": 0.7170064515353651,
+        "method": "reference",
+        "mode": "directional",
+        "seed": 777
+      },
+      {
+        "macro_f1": 0.6927991576269319,
+        "method": "reference",
+        "mode": "contrast",
+        "seed": 778
+      },
+      {
+        "macro_f1": 0.6927991576269319,
+        "method": "reference",
+        "mode": "directional",
+        "seed": 778
+      },
+      {
+        "macro_f1": 0.7239682851052663,
+        "method": "reference",
+        "mode": "contrast",
+        "seed": 779
+      },
+      {
+        "macro_f1": 0.7239682851052663,
+        "method": "reference",
+        "mode": "directional",
+        "seed": 779
+      }
+    ]
+  },
+  "5000": {
+    "directional_vs_contrast": {
+      "balanced_accuracy": {
+        "difference": 0.038100232705681567,
+        "donor_differences": {
+          "patient_101": 0.037990179859663686,
+          "patient_1015": 0.014827291400926534,
+          "patient_1016": 0.04684717562651464,
+          "patient_1039": 0.02968519246328305,
+          "patient_107": 0.054263725692297315,
+          "patient_1244": 0.09213119788979718,
+          "patient_1256": -0.009595556804931071,
+          "patient_1488": 0.0386526555179012
+        },
+        "donors": 8,
+        "left_mean": 0.749545648675394,
+        "paired_donor_bootstrap_ci95": [
+          0.01914609818578595,
+          0.057583704296289284
+        ],
+        "right_mean": 0.7114454159697124
+      },
+      "macro_f1": {
+        "difference": 0.0573806046820861,
+        "donor_differences": {
+          "patient_101": 0.05667357021674024,
+          "patient_1015": 0.03290180021227296,
+          "patient_1016": 0.05677397600701961,
+          "patient_1039": 0.03539602406864317,
+          "patient_107": 0.07575225931889584,
+          "patient_1244": 0.11220155598298298,
+          "patient_1256": 0.03396306553453332,
+          "patient_1488": 0.05538258611560065
+        },
+        "donors": 8,
+        "left_mean": 0.6638277824171483,
+        "paired_donor_bootstrap_ci95": [
+          0.0420653661709383,
+          0.0762926987126503
+        ],
+        "right_mean": 0.6064471777350622
+      }
+    },
+    "directional_vs_scenicplus": {
+      "balanced_accuracy": {
+        "difference": -0.008814493562188927,
+        "donor_differences": {
+          "patient_101": -0.00788034858342146,
+          "patient_1015": -0.09393319260809152,
+          "patient_1016": 0.11246577437663308,
+          "patient_1039": -0.014375770719054382,
+          "patient_107": -0.041149776864062404,
+          "patient_1244": 0.010289136918607333,
+          "patient_1256": -0.02706077153927633,
+          "patient_1488": -0.008870999478845731
+        },
+        "donors": 8,
+        "left_mean": 0.749545648675394,
+        "paired_donor_bootstrap_ci95": [
+          -0.04332104594971524,
+          0.0332280391232089
+        ],
+        "right_mean": 0.758360142237583
+      },
+      "macro_f1": {
+        "difference": 0.0017334013960354777,
+        "donor_differences": {
+          "patient_101": 0.016967855088930173,
+          "patient_1015": -0.05772050781657867,
+          "patient_1016": 0.0702712810296039,
+          "patient_1039": -0.0010805079800570994,
+          "patient_107": -0.0203872762763897,
+          "patient_1244": 0.019551539084296854,
+          "patient_1256": -0.014653314622704805,
+          "patient_1488": 0.0009181426611831744
+        },
+        "donors": 8,
+        "left_mean": 0.6638277824171483,
+        "paired_donor_bootstrap_ci95": [
+          -0.021513336322409017,
+          0.02681133710317612
+        ],
+        "right_mean": 0.6620943810211128
+      }
+    },
+    "seed_means": [
+      {
+        "macro_f1": 0.559685995112942,
+        "method": "rustscenic",
+        "mode": "contrast",
+        "seed": 777
+      },
+      {
+        "macro_f1": 0.6218972470837616,
+        "method": "rustscenic",
+        "mode": "directional",
+        "seed": 777
+      },
+      {
+        "macro_f1": 0.560397901795348,
+        "method": "rustscenic",
+        "mode": "contrast",
+        "seed": 778
+      },
+      {
+        "macro_f1": 0.6331702342440052,
+        "method": "rustscenic",
+        "mode": "directional",
+        "seed": 778
+      },
+      {
+        "macro_f1": 0.6992576362968964,
+        "method": "rustscenic",
+        "mode": "contrast",
+        "seed": 779
+      },
+      {
+        "macro_f1": 0.7364158659236781,
+        "method": "rustscenic",
+        "mode": "directional",
+        "seed": 779
+      },
+      {
+        "macro_f1": 0.6577435518813269,
+        "method": "reference",
+        "mode": "contrast",
+        "seed": 777
+      },
+      {
+        "macro_f1": 0.6577435518813269,
+        "method": "reference",
+        "mode": "directional",
+        "seed": 777
+      },
+      {
+        "macro_f1": 0.6398293141221498,
+        "method": "reference",
+        "mode": "contrast",
+        "seed": 778
+      },
+      {
+        "macro_f1": 0.6398293141221498,
+        "method": "reference",
+        "mode": "directional",
+        "seed": 778
+      },
+      {
+        "macro_f1": 0.6887102770598617,
+        "method": "reference",
+        "mode": "contrast",
+        "seed": 779
+      },
+      {
+        "macro_f1": 0.6887102770598617,
+        "method": "reference",
+        "mode": "directional",
+        "seed": 779
+      }
+    ]
+  }
+}

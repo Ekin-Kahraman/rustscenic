@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "scope": "Presentation only; underlying data and analysis unchanged",
+  "previous_figure_source_sha256": "d666ea3efd6af99677de360aec2b0cc21ea00365a40530d7d0425c42e16ae122",
+  "current_figure_source_sha256": "85b92a530e82ec26e2621e780829f9c8b52b7a4acc214696485077931109d331",
+  "palette": {
+    "rustscenic": "#D46F40",
+    "reference": "#57616C",
+    "text": "#24292F",
+    "grid": "#D8DFE5"
+  },
+  "outputs": {
+    "biological-case-study.pdf": "4ba7aa7db33414d3c87d38f6adf77f5f9ba321089f8df203410f9bafebcb7a6a",
+    "biological-case-study.png": "1c97d8c8ea49308f7e983fa0cdf162a7f8ea1bc14b31ec2adfb34d6c39ca4057",
+    "biological-case-study.svg": "159c91f565467b25830f620a549aa5993e19a2c8f67db0e6af08b6c6b5839e31"
+  },
+  "historical_audit": "final-verification.json remains the record of the original analysis audit"
+}

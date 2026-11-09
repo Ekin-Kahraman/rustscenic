@@ -1,0 +1,109 @@
+RustScenic biological validation, frozen 6 November 2026
+
+Purpose
+Test whether the measured computational gains retain useful biological results.
+This is a separate validation experiment, not a replacement performance panel.
+No benchmark timing, original feature selection or completed output is changed.
+
+1. Reuse the completed atlas outputs
+Reanalyse BMMC 50,000 and HDMA 817,740 cells at seeds 777, 778 and 779.
+Use the existing fixed 10,000-cell activity samples. Compare all native TF
+signatures and the identical intersection of TF names, with the same cells,
+donor folds and fixed balanced L2 logistic classifier. Add RNA expression
+(50 training-fold PCs) and expression of the common TFs as baselines.
+Average algorithm seeds within donors before paired donor bootstrap intervals.
+Networks used all unlabelled cells: this arm is transductive, not unseen-donor
+network transfer. Count missing, constant and zero-scoring signatures explicitly.
+
+2. Prospective BMMC donor transfer
+Use released paired RNA/ATAC counts from GSE194122. Freeze three test donors by
+a SHA256 ordering of donor IDs with seed 20261106. Sample 20,000 cells from the
+other seven donors and 10,000 test cells, without using cell-type labels.
+Select features only on the 20,000 training cells: 5,000 protein-coding genes,
+including all 1,176 eligible expressed TFs, and 20,000 accessible regions within
+150 kb of selected gene TSSs. SPI1, GATA1, PAX5, EBF1 and TCF7 are all included
+by this rule, not added after inspecting the new outcomes.
+
+Run RustScenic 0.5.0 and SCENIC+ 1.0a2 at 5,000 and 20,000 training cells,
+seeds 777/778/779: six matched pairs, twelve fresh workflow fits. Both sizes
+share the vocabulary selected from the 20,000 training cells, never test donors.
+Every learned network, topic model and motif selection excludes the test cells.
+Use the previously audited native workflows, full authentic motif rankings,
+30 topics and 500 topic iterations. SCENIC+ keeps adjusted GSEA p < 0.05.
+Do not relax thresholds or select favourable seeds if a method returns few TFs.
+
+Primary endpoint: balanced accuracy and macro F1 on each unseen donor using
+common TF signatures and one shared pySCENIC AUCell scoring implementation.
+Train the fixed classifier only on the designated training donors. Report
+all-signature results separately, including signature counts. Retain unseen
+test classes as errors. Feature scaling, PCA and PC scaling are fitted on training cells.
+No hyperparameter search, success threshold or noninferiority margin is fitted
+to the results. Three held-out donors give limited biological uncertainty;
+three algorithm seeds are not three additional biological replicates.
+
+Controls and secondary endpoints:
+- 50-PC expression and common-TF expression baselines, trained identically.
+- Ten within-training-donor label permutations per method/feature set at seed777.
+- Five size-matched random-target regulon controls per method at seed777.
+- Same-signature RustScenic versus pySCENIC AUCell agreement, to separate
+  activity-scoring differences from network differences.
+- A self-target sensitivity check removes each TF's own gene from its signature
+  for both methods. This tests dependence on TF expression while preserving the
+  original networks and primary results.
+- TF-region signature classification using the same scorer on observed ATAC
+  counts in train/test cells; no test-cell topic fitting or imputation.
+- Predeclared lineage activity AUROC in held-out donors only, using the earlier
+  BMMC marker list. Missing regulons remain missing, not successful negatives.
+- Empty outputs, feature coverage, zero scores and convergence are retained.
+
+3. Independent RNA experimental reference recovery
+Reuse all eighteen completed GRN fits on BEELINE mESC, hESC and mDC real data.
+Add native motif refinement and activity scoring for each method and seed,
+using full authentic species-matched cisTarget motifs and unchanged ranks.
+Gene IDs stay in the original BEELINE uppercase convention; database symbols
+are mapped only when uppercase conversion is unambiguous. Record missing genes.
+The baseline API's mouse-gene filename is only an alias; its manifest records
+the actual mouse or human database used. No mouse database is used for hESC.
+
+Evaluate original and motif-pruned predictions against the same experimental
+ChIP references and the mESC loss/gain-of-function reference. Reference labels
+never enter model or feature fitting. Keep the original candidate universe;
+missing predictions receive score zero. Use average precision, prevalence,
+tie-aware top-50 recovery and per-TF metrics. Also report support and recall
+among retained edges, compared with uniform and original-GRN baselines at the
+same per-TF edge counts, so reduced coverage is not confused with precision.
+Pruned networks retain original
+GRN importance on retained edges. Include the already measured Pearson baseline.
+Unlisted links are unlabelled, not experimentally confirmed negatives. ChIP
+binding and perturbation responses do not establish direct causal regulation.
+
+Interpretation and paper scope
+Report favourable and unfavourable results, all seeds, empty signatures and
+failed runs. The local common-TF reanalysis already shows that the previous
+all-signature classification advantage is not evidence of biological superiority.
+This package tests biological utility and reference recovery. It does not add
+independent functional enhancer-gene validation, which would require a suitable
+matched experimental reference dataset. A paper claiming enhanced causal or
+enhancer prediction accuracy would need that additional evidence.
+These results can support an implementation/scalability paper if the biological
+findings support its stated scope. Execution completion is not paper acceptance.
+
+Execution and resources
+No atlas-scale inference is repeated. Existing recovery environments, Java,
+MALLET and large atlas matrices are reused. New smaller inputs and experimental
+references are bundled; no new public downloads are required on HPC.
+Preparation: 4 cores, 32 GB, 2 h. Holdout pairs: 16 cores, 256 GB each, at most
+two pairs concurrently, 72 h job limit; each method has a 24 h / 240 GB guard.
+RNA refinement: 16 cores, 64 GB, one dataset job concurrently, 24 h job limit;
+each of its six refinements has a 3 h / 60 GB guard. Existing-output checks:
+4 cores, 64 GB, 12 h. These are conservative allocation limits, not predictions
+of runtime. LSF rusage memory is specified per core and -M as total job memory.
+Use at least 50 GiB free scratch. Results are restartable, checksummed and kept
+separate from old outputs. Return archives split automatically above 900 MiB.
+
+Sources
+BMMC: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE194122
+BEELINE: https://doi.org/10.1038/s41592-019-0690-6
+SCENIC+: https://doi.org/10.1038/s41592-023-01938-4
+cisTarget: https://resources.aertslab.org/cistarget/databases/
+Original input and returned-network SHA256 manifests are included.

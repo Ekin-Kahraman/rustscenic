@@ -1,0 +1,30 @@
+{
+  "archive_sha256": "9a9358f4db7a887d54d9122b1ee458dbf82224850e9700796a51bf3e2209162c",
+  "package_files_checked": 92,
+  "output_files_checked": 66,
+  "runs_checked": 26,
+  "changes_from_sent_zip": [
+    "bootstrap.py",
+    "job.sh"
+  ],
+  "change_review": "Only reference shared-library setup changed: library path and local gflags alias. Scientific scripts, inputs, settings and wheel match sent ZIP.",
+  "reference_ap_rows_independently_recomputed": 28,
+  "reference_ap_max_absolute_deviation": 2.5767468893045375e-06,
+  "model_reference_ap_max_absolute_deviation": 8.326672684688674e-17,
+  "pearson_reference_ap_max_absolute_deviation": 2.5767468893045375e-06,
+  "pearson_recheck_note": "Local correlation recomputation has tiny AP differences, at most 0.00000258; ordering versus both inference methods unchanged on every reference. Original Linux values retained in summaries.",
+  "multiome_raw_comparisons_rechecked": 4,
+  "multiome_3009_cell_medians": {
+    "rust_seconds": 4.034178428351879,
+    "scenicplus_seconds": 144.28133308142424,
+    "rust_sampled_pss_mb": 282.944512,
+    "scenicplus_sampled_pss_mb": 6855.970816,
+    "workflow_speed_ratio": 35.764737639621174,
+    "sampled_pss_reduction_pct": 95.87302047232052,
+    "scope": "Different regulatory algorithms; shared prepared inputs. Excludes preparation, motif enrichment, topics and loading. Not equivalent full pipelines."
+  },
+  "eregulon_triplet_seed_stability_median_jaccard": {
+    "rustscenic": 0.6292875989445911,
+    "scenicplus": 0.32558139534883723
+  }
+}

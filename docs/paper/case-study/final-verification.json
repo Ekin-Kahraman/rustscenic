@@ -1,0 +1,44 @@
+{
+  "status": "passed",
+  "independent_audit": "INDEPENDENT-AUDIT.md",
+  "independent_audit_sha256": "696cd04d1e1a6967705d36b943510a266d62413d0c787a7632aaec7f5f69a2a7",
+  "environment": {
+    "python": "3.13.9",
+    "numpy": "2.3.5",
+    "pandas": "2.3.3",
+    "scipy": "1.16.3",
+    "scikit-learn": "1.7.2",
+    "h5py": "3.15.1",
+    "pyarrow": "21.0.0",
+    "matplotlib": "3.10.8",
+    "pytest": "8.4.2"
+  },
+  "verification": {
+    "source_files": 150,
+    "unchanged_core_sources": 40,
+    "rank_blocks": 331,
+    "regulator_run_nes_maxima": 60,
+    "raw_donor_aurocs": 218,
+    "random_and_self_removal_aurocs": 270,
+    "training_topic_aurocs": 1800,
+    "focused_tests_passed": 5,
+    "paper_source_files_reverified": 118,
+    "paper_corrected_confusion_matrices_reverified": 96
+  },
+  "engine_changed": false,
+  "existing_performance_claims_changed": false,
+  "network_fits": 0,
+  "classifier_fits": 0,
+  "hpc_jobs": 0,
+  "pushed": false,
+  "messages_sent": false,
+  "analysis_sources": {
+    "validation/biological_case_study/PROTOCOL.md": "81a8566d2ca6964f2e4b4a179f8f134802efc486405f400e823fb38175946c5a",
+    "validation/biological_case_study/case_study.py": "8079a93233bd94e4a7b925bfdd5248f5f9b1f1d1d4340e3432422e74d1aa5281",
+    "validation/biological_case_study/figure.py": "d666ea3efd6af99677de360aec2b0cc21ea00365a40530d7d0425c42e16ae122",
+    "validation/biological_case_study/requirements.txt": "e43c4c02a115ae20b94e2d17fb992d704e165a1277b339ed3c2591105f4de732",
+    "validation/biological_case_study/test_case_study.py": "4a1aab9a85a5eacaf186d8b55d3b174822c4cb841abca8582eb9efe2bc9ee223",
+    "validation/biological_case_study/trace.py": "e76ffd13f084f207de94c74d9e7f12bd8aeaa80eb2417d3f9ade18204133b7a8"
+  },
+  "base_commit": "4793b20808afc75cf0dc360b1755a4425e172583"
+}

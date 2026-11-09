@@ -1,0 +1,98 @@
+RustScenic: Huangfu combined validation review
+28 October 2026
+
+Assessment
+All 26 production runs completed. The package provides useful performance and
+reference-retrieval evidence, but does not establish biological equivalence to
+SCENIC+ or superior biological predictions. A research software/methods paper
+remains a reasonable direction; broad biological superiority is unsupported.
+
+Execution and provenance
+18 RNA inference runs: three datasets, two methods, three algorithm seeds.
+8 paired RNA/ATAC regulatory-workflow runs: 1,000 cells once and 3,009 cells
+with three seeds, for RustScenic 0.5.0 and published SCENIC+ 1.0a2.
+Minerva allocation 278395381, lh06c20, 16 allocated CPUs, Xeon Platinum 8268.
+92 package-file checksums and 66 output-file checksums verified.
+All 26 engine and monitor records report complete with exit code zero.
+Both environments report the same RustScenic native-extension hash.
+Compared with the sent ZIP, only bootstrap.py and job.sh changed: shared-library
+setup fixes. Scientific code, parameters, frozen inputs and wheel are unchanged.
+No inference was rerun locally for this review.
+
+Performance
+The established 1,306,127-cell RNA headline is unchanged: core GRN inference
+31.34 versus 96.00 minutes, 2.97 versus 13.93 GB sampled process-tree PSS,
+3.06x faster and 78.7% lower measured memory than sparse Dask arboreto.
+Against optimized sparse multiprocessing arboreto, the corresponding figures
+are 2.94x faster and 54.5% lower PSS. Preparation/loading excluded.
+That atlas evidence is included from the previous experiment, not a new run.
+
+New 3,009-cell multiome results, medians over seeds 777, 778 and 779:
+RustScenic: 4.034 seconds; 282.945 MB peak sampled analysis process-tree PSS.
+SCENIC+: 144.281 seconds; 6,855.971 MB peak sampled analysis process-tree PSS.
+Observed workflow ratio: 35.76x; measured PSS reduction: 95.87%.
+These are different regulatory algorithms operating on shared prepared inputs.
+Rust uses correlation-based region-gene linking and native regulon assembly;
+SCENIC+ uses GBM region-gene importance and GSEA assembly. The test excludes
+raw-data preparation, motif enrichment, topics and loading. It is not an
+equivalent full-pipeline SCENIC+ speedup or an atlas-scale multiome result.
+The same shared FIMO motif inputs cover only 19 of 128 inferred TFs.
+Keep this exploratory comparison separate from the atlas headline.
+
+Independent RNA experimental-reference retrieval
+Metric: average precision (AP), mean over three algorithm seeds.
+Reference                    RustScenic   arboreto MP   abs Pearson
+Mouse ESC ChIP-seq             0.296365     0.295540      0.309565
+Mouse ESC perturbation        0.136357     0.139579      0.150172
+Human ESC ChIP-seq             0.148705     0.149481      0.156616
+Mouse dendritic ChIP-seq       0.048797     0.049924      0.054291
+
+Rust differs from arboreto by +0.28%, -2.31%, -0.52% and -2.26% relative AP
+respectively. This is descriptive similarity, not a formal equivalence test.
+Absolute Pearson has higher AP on all four references than either GBM method.
+Rust AP/prevalence ranges from about 1.01 to 1.24 across reference means.
+Most ChIP reference enrichment is weak; do not translate AP into accuracy.
+Unlisted interactions are unlabelled, not experimentally disproven negatives.
+ChIP binding is not proof of functional regulation; perturbation may be indirect.
+Algorithm seeds are not independent biological replicates.
+All 24 model/reference AP rows were independently reproduced from raw networks
+to within 8.4e-17. Local Pearson recomputation differs by at most 2.58e-6 AP;
+the ordering is unchanged on all four references. Original Linux values above.
+
+Multiome output assessment
+All eight workflows produce nonempty networks and finite activity matrices,
+with correctly aligned cell identities. This confirms functional outputs.
+At 3,009 cells, between-method TF-gene rank correlation is about 0.526-0.530.
+TF-region-gene triplet Jaccard between methods is 0.160-0.309 across three seeds.
+These are materially different predictions, not interchangeable networks.
+Rust triplet stability across seeds has median Jaccard 0.629; SCENIC+ 0.326.
+Higher repeatability here does not establish higher biological accuracy.
+Common-TF gene activity agreement is variable; per-seed median Spearman is
+0.292, 0.512 and 0.372 over only 6, 6 and 4 shared TFs respectively.
+No SCENIC+ GSEA module survives adjusted p < 0.05 in any of the four comparisons.
+Main outputs use the published permissive adjusted-p-value threshold of 1.
+Both native workflows emit warnings: Rust about TF loss during intersections;
+SCENIC+ GSEA about divide-by-zero/invalid intermediate calculations. Returned
+activity matrices are finite. These warnings and sparse motif coverage reinforce
+the limited scope of this pilot and require disclosure, not a validation pass.
+
+Recommended next work
+1. Retain the existing atlas performance headline and archive these results.
+2. Before another HPC run, check gene/region activity implementations on
+   identical regulator target sets to separate scoring differences from changes
+   in inferred networks. Use the existing returned inputs and outputs locally.
+3. Review a focused biological example against an independent experimental
+   reference and include Pearson and arboreto. Mo's prostate paper/data can
+   supply a relevant case once access, assay type and labels are confirmed.
+4. Present the new SCENIC+ experiment as a scoped workflow comparison with
+   algorithm differences and validation limitations, not a replacement for
+   a controlled full-pipeline comparison.
+No Slack messages, public claims, GitHub updates or launch posts were sent.
+
+Evidence files
+audit.json: verified integrity counts and computed performance/stability values.
+reference-comparison.csv: AP means and relative differences.
+reference-summary.csv: AP ranges, prevalence enrichment and top-50 recovery.
+multiome-output-summary.csv: independent raw-output agreement checks.
+../audit_results.py: reproducible read-only audit; uses the existing local
+scientific Python environment and does not execute downloaded inference code.

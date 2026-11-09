@@ -1,0 +1,380 @@
+{
+  "block_size": 4096,
+  "cells": 817740,
+  "features": 90,
+  "full_scores_bytes": 353986520,
+  "full_scores_sha256": "e40d0cb3452288a5b68df2c2a7556fc2862cd81bec1846b2713262ddf35438ab",
+  "genes": 5000,
+  "input_signatures": 90,
+  "mode": "directional",
+  "output_array_bytes": 294386400,
+  "per_signature": {
+    "ARID5B_activator": {
+      "mean": 0.027085505773720903,
+      "nonzero": 409635
+    },
+    "ATF2_activator": {
+      "mean": 0.0468767394162991,
+      "nonzero": 359931
+    },
+    "ATF6_activator": {
+      "mean": 0.02673380618407036,
+      "nonzero": 188066
+    },
+    "BACH2_activator": {
+      "mean": 0.023754556343049998,
+      "nonzero": 732975
+    },
+    "BACH2_repressor": {
+      "mean": 0.06477708104967031,
+      "nonzero": 549136
+    },
+    "BCL11B_repressor": {
+      "mean": 0.0382269900761056,
+      "nonzero": 390869
+    },
+    "CHD1_activator": {
+      "mean": 0.033333407404530876,
+      "nonzero": 752284
+    },
+    "CHD2_activator": {
+      "mean": 0.03899542624957518,
+      "nonzero": 652409
+    },
+    "CREB3L2_activator": {
+      "mean": 0.0301280297568852,
+      "nonzero": 556143
+    },
+    "CREB5_activator": {
+      "mean": 0.04140946742994579,
+      "nonzero": 752449
+    },
+    "CREB5_repressor": {
+      "mean": 0.032949720579999495,
+      "nonzero": 320359
+    },
+    "CUX1_activator": {
+      "mean": 0.05639617649330054,
+      "nonzero": 677739
+    },
+    "EBF1_activator": {
+      "mean": 0.020426682399058007,
+      "nonzero": 506255
+    },
+    "EBF1_repressor": {
+      "mean": 0.036749806643474686,
+      "nonzero": 348712
+    },
+    "ELF1_activator": {
+      "mean": 0.02447800978859408,
+      "nonzero": 800746
+    },
+    "ELF1_repressor": {
+      "mean": 0.10586316253112431,
+      "nonzero": 718156
+    },
+    "ELF2_activator": {
+      "mean": 0.024410011120515728,
+      "nonzero": 799071
+    },
+    "EP300_activator": {
+      "mean": 0.03916914640376949,
+      "nonzero": 722623
+    },
+    "ETS1_activator": {
+      "mean": 0.026102761224231944,
+      "nonzero": 817115
+    },
+    "ETS1_repressor": {
+      "mean": 0.07441060886842342,
+      "nonzero": 738820
+    },
+    "ETV6_activator": {
+      "mean": 0.02262495525700443,
+      "nonzero": 808699
+    },
+    "FLI1_activator": {
+      "mean": 0.024694391670244807,
+      "nonzero": 816788
+    },
+    "FLI1_repressor": {
+      "mean": 0.05246802663626876,
+      "nonzero": 291716
+    },
+    "FOXO3_activator": {
+      "mean": 0.027132480249463308,
+      "nonzero": 714999
+    },
+    "FOXO3_repressor": {
+      "mean": 0.07573251808694355,
+      "nonzero": 348777
+    },
+    "FOXP2_activator": {
+      "mean": 0.041979816518004295,
+      "nonzero": 402093
+    },
+    "KLF12_activator": {
+      "mean": 0.049926100967492434,
+      "nonzero": 817191
+    },
+    "KLF7_activator": {
+      "mean": 0.0364344158798047,
+      "nonzero": 817528
+    },
+    "KLF7_repressor": {
+      "mean": 0.05261839010765687,
+      "nonzero": 330350
+    },
+    "MEF2A_activator": {
+      "mean": 0.0370143436459048,
+      "nonzero": 815954
+    },
+    "MEF2C_activator": {
+      "mean": 0.03989511041036375,
+      "nonzero": 813601
+    },
+    "MEF2C_repressor": {
+      "mean": 0.0685800275446694,
+      "nonzero": 774567
+    },
+    "MEIS1_activator": {
+      "mean": 0.044720500813483936,
+      "nonzero": 585034
+    },
+    "MEIS1_repressor": {
+      "mean": 0.03176753008489681,
+      "nonzero": 297343
+    },
+    "MITF_activator": {
+      "mean": 0.05106901986161367,
+      "nonzero": 673400
+    },
+    "MITF_repressor": {
+      "mean": 0.03654668384790336,
+      "nonzero": 555053
+    },
+    "MTA3_activator": {
+      "mean": 0.04255425380531322,
+      "nonzero": 679414
+    },
+    "NCALD_activator": {
+      "mean": 0.042278637031474824,
+      "nonzero": 596456
+    },
+    "NFAT5_activator": {
+      "mean": 0.030735979675820323,
+      "nonzero": 464265
+    },
+    "NFYC_activator": {
+      "mean": 0.031145250426324718,
+      "nonzero": 625066
+    },
+    "NR3C1_activator": {
+      "mean": 0.0359827418004945,
+      "nonzero": 782442
+    },
+    "NR3C1_repressor": {
+      "mean": 0.0475503771703931,
+      "nonzero": 569758
+    },
+    "NRF1_activator": {
+      "mean": 0.006655213970403399,
+      "nonzero": 111989
+    },
+    "PBX1_activator": {
+      "mean": 0.04341359894136982,
+      "nonzero": 817638
+    },
+    "PBX1_repressor": {
+      "mean": 0.056839286993384426,
+      "nonzero": 684590
+    },
+    "PBX3_activator": {
+      "mean": 0.03795103010627259,
+      "nonzero": 815255
+    },
+    "PDLIM5_activator": {
+      "mean": 0.06706585977467819,
+      "nonzero": 752513
+    },
+    "PDLIM5_repressor": {
+      "mean": 0.05384510923879448,
+      "nonzero": 691902
+    },
+    "PHF21A_activator": {
+      "mean": 0.06782920130546699,
+      "nonzero": 762759
+    },
+    "PLAGL1_activator": {
+      "mean": 0.02924781247816459,
+      "nonzero": 795147
+    },
+    "PLAGL1_repressor": {
+      "mean": 0.05298830503614718,
+      "nonzero": 542393
+    },
+    "POU2F1_activator": {
+      "mean": 0.04467192129284877,
+      "nonzero": 806598
+    },
+    "PPARG_activator": {
+      "mean": 0.020864976720906467,
+      "nonzero": 533193
+    },
+    "PRRX1_activator": {
+      "mean": 0.07111249352250286,
+      "nonzero": 775439
+    },
+    "PRRX1_repressor": {
+      "mean": 0.059387260861443046,
+      "nonzero": 670074
+    },
+    "RARB_activator": {
+      "mean": 0.05845737276264982,
+      "nonzero": 816410
+    },
+    "RARB_repressor": {
+      "mean": 0.02682486426915539,
+      "nonzero": 196222
+    },
+    "RB1_activator": {
+      "mean": 0.017408544937441834,
+      "nonzero": 400412
+    },
+    "RCOR1_activator": {
+      "mean": 0.034588814923063,
+      "nonzero": 767478
+    },
+    "RFX2_activator": {
+      "mean": 0.03281742318416295,
+      "nonzero": 441582
+    },
+    "RFX3_activator": {
+      "mean": 0.02633866159597481,
+      "nonzero": 721883
+    },
+    "RFX7_activator": {
+      "mean": 0.021362163112000523,
+      "nonzero": 601888
+    },
+    "RORA_activator": {
+      "mean": 0.04181335023457252,
+      "nonzero": 724964
+    },
+    "RORB_repressor": {
+      "mean": 0.05641767636783772,
+      "nonzero": 601417
+    },
+    "RUNX1_activator": {
+      "mean": 0.011387493292885862,
+      "nonzero": 307167
+    },
+    "SOX5_activator": {
+      "mean": 0.0552567046677521,
+      "nonzero": 817272
+    },
+    "SOX5_repressor": {
+      "mean": 0.03514097849176636,
+      "nonzero": 669964
+    },
+    "SOX6_repressor": {
+      "mean": 0.02940922382289185,
+      "nonzero": 335744
+    },
+    "SP3_activator": {
+      "mean": 0.030327800652675364,
+      "nonzero": 669505
+    },
+    "SREBF2_activator": {
+      "mean": 0.015527875113270017,
+      "nonzero": 564871
+    },
+    "STAT3_activator": {
+      "mean": 0.016350620825786543,
+      "nonzero": 132028
+    },
+    "TBX20_activator": {
+      "mean": 0.049731392222046575,
+      "nonzero": 703579
+    },
+    "TCF12_activator": {
+      "mean": 0.04468557949499167,
+      "nonzero": 780086
+    },
+    "TCF12_repressor": {
+      "mean": 0.04336349877859107,
+      "nonzero": 248607
+    },
+    "TCF4_repressor": {
+      "mean": 0.02791237976397192,
+      "nonzero": 427640
+    },
+    "TFDP2_activator": {
+      "mean": 0.02718109523085827,
+      "nonzero": 760850
+    },
+    "THRB_activator": {
+      "mean": 0.026013214203642655,
+      "nonzero": 763013
+    },
+    "THRB_repressor": {
+      "mean": 0.042398189775648465,
+      "nonzero": 340751
+    },
+    "TRPS1_repressor": {
+      "mean": 0.03387344197486948,
+      "nonzero": 667897
+    },
+    "UBE2K_activator": {
+      "mean": 0.02678996702718708,
+      "nonzero": 403892
+    },
+    "ZBTB20_activator": {
+      "mean": 0.07540759914721883,
+      "nonzero": 802116
+    },
+    "ZBTB20_repressor": {
+      "mean": 0.059884842271486875,
+      "nonzero": 348446
+    },
+    "ZEB1_activator": {
+      "mean": 0.06525525067844429,
+      "nonzero": 457672
+    },
+    "ZEB1_repressor": {
+      "mean": 0.01851360274469759,
+      "nonzero": 210122
+    },
+    "ZFHX3_activator": {
+      "mean": 0.03694393738150347,
+      "nonzero": 561519
+    },
+    "ZNF148_activator": {
+      "mean": 0.039218176942762174,
+      "nonzero": 751394
+    },
+    "ZNF385D_activator": {
+      "mean": 0.04345755104070121,
+      "nonzero": 809353
+    },
+    "ZNF385D_repressor": {
+      "mean": 0.019371564684998975,
+      "nonzero": 539934
+    },
+    "ZNF704_activator": {
+      "mean": 0.04899571822459425,
+      "nonzero": 802601
+    },
+    "ZNF91_activator": {
+      "mean": 0.03466211757471947,
+      "nonzero": 429141
+    }
+  },
+  "signature_sha256": "4b364651feb9a8dcf0cf3cbd58ab29aa3b1742bc167028b2cf3bf0a96d2625c4",
+  "stage_elapsed_seconds": 57.74635177478194,
+  "timings": {
+    "read_seconds": 37.49117140285671,
+    "score_seconds": 19.52226186916232,
+    "write_seconds": 0.2915329448878765
+  }
+}

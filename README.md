@@ -52,11 +52,11 @@
   <a href="https://doi.org/10.5281/zenodo.20246040">Cite the software</a>
 </p>
 
-- **1.3 million real cells:** RNA gene regulatory network (GRN) inference in
-  **31m20s on 16 CPU cores**,
-  using 2,095 selected genes and 256 transcription factors.
-- **3× faster than arboreto** in matched 1.3 million-cell comparisons;
-  **~80% lower physical memory** in the measured Intel-node comparison.
+- **14.4× faster, 57% lower measured peak memory than SCENIC+** on
+  **817,740 paired RNA+ATAC cells** in our configured workflow benchmark.
+- **4× faster, 96.6% lower measured peak memory than pySCENIC** on
+  **1.3 million real RNA cells**. Three seeds, 16 CPUs, selected feature panels;
+  [algorithms and outputs differ](docs/paper/METHODS.md#workflow-comparison-and-algorithm-differences).
 - **704 human cell labels:** precomputed exploratory networks from CELLxGENE
   Census, [openly available on Zenodo](https://doi.org/10.5281/zenodo.23548341).
   Explore the endothelial-cell example below or download the full collection.
@@ -65,7 +65,7 @@
 
 ## Get started
 
-Current release: `v0.5.1`. Regular CPython **3.10–3.14**; Linux, macOS and Windows.
+Current release: `v0.6.0`. Regular CPython **3.10–3.14**; Linux, macOS and Windows.
 Runs on CPUs; no GPU or Rust setup needed with prebuilt packages.
 
 ```bash
@@ -73,7 +73,7 @@ python -m pip install rustscenic
 python -c "import rustscenic; print(rustscenic.__version__)"
 ```
 
-Expected version: `0.5.1`. For a clean environment, see
+Expected version: `0.6.0`. For a clean environment, see
 [Installation](site_docs/installation.md).
 
 Prefer Conda packages? Follow the [Bioconda install instructions](site_docs/installation.md#install-with-bioconda)
@@ -91,6 +91,11 @@ saves network edges, per-cell activity scores and run settings. For a local
 script, follow the [PBMC3k walkthrough](QUICKSTART.md).
 
 ### Analyse your own data
+
+For **motif-supported networks and cell activity**, use the
+[audited RNA or paired RNA+ATAC workflow](site_docs/validated-workflow.md).
+It records retained regulators, uses verified seeded scoring and never
+substitutes unfiltered candidates when motif filtering fails.
 
 Use an RNA AnnData file (`rna.h5ad`) with cells × genes, log-normalised
 expression in `adata.X` and gene symbols in `adata.var_names`.
@@ -199,6 +204,56 @@ releases remain MIT.
 ## Performance
 
 <p align="center">
+  <a href="docs/paper/RESULTS.md">
+    <picture>
+      <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/benchmarks/atlas-workflows-20261109/scenicplus-mobile-dark.svg">
+      <source media="(max-width: 600px)" srcset="docs/benchmarks/atlas-workflows-20261109/scenicplus-mobile.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="docs/benchmarks/atlas-workflows-20261109/scenicplus-dark.svg">
+      <source media="(min-width: 601px)" srcset="docs/benchmarks/atlas-workflows-20261109/scenicplus.svg">
+      <img src="docs/benchmarks/atlas-workflows-20261109/scenicplus.png" width="1120" alt="Configured RNA+ATAC workflows on 817,740 real cells: RustScenic 102.55 minutes and 149.88 GB peak sampled PSS versus SCENIC+ 1,474.23 minutes and 349.05 GB. 14.4 times faster, 57.1 percent lower measured peak memory. Three seeds, 16 CPUs; algorithms and outputs differ.">
+    </picture>
+  </a>
+</p>
+
+**14.4× faster analysis and 57% lower measured peak memory** than SCENIC+ on
+**817,740 paired RNA+ATAC cells**. Median workflow time: **102.5 vs 1,474.2
+minutes**; peak measured memory: **149.88 vs 349.05 GB**.
+
+**4× faster with 96.6% lower measured peak memory** than pySCENIC on
+**1.3 million real RNA cells**: **42.3 vs 168.4 minutes**.
+
+Medians of three matched seeds on 16 CPUs. Prepared-input loading through
+export; raw-data preparation excluded. RNA: 3,000 genes; paired: 5,000 genes
+and 20,000 regions; both use 256 TFs. Memory is sampled process-tree PSS.
+Measured with v0.5.0 and the documented workflow adapter; method-specific
+linking, pruning and assembly produce different networks.
+
+**Biological utility:** separate activity directions closed the average external
+macro-F1 gap: **0.7123 vs 0.7113** for SCENIC+ networks on 12,315 cells from
+eight donors. This reused-cohort confirmation retains a 1.5-point recall gap.
+[Results, controls and conditions](docs/paper/RESULTS.md) ·
+[Run the audited workflow](site_docs/validated-workflow.md)
+
+<details>
+<summary>RNA workflow: 1.3 million cells versus pySCENIC</summary>
+
+<picture>
+  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/benchmarks/atlas-workflows-20261109/pyscenic-mobile-dark.svg">
+  <source media="(max-width: 600px)" srcset="docs/benchmarks/atlas-workflows-20261109/pyscenic-mobile.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/benchmarks/atlas-workflows-20261109/pyscenic-dark.svg">
+  <source media="(min-width: 601px)" srcset="docs/benchmarks/atlas-workflows-20261109/pyscenic.svg">
+  <img src="docs/benchmarks/atlas-workflows-20261109/pyscenic.png" width="1120" alt="Configured RNA workflow: 3.98 times faster and 96.6 percent lower measured peak memory than pySCENIC at 1,306,127 cells, using 3,000 genes, 256 TFs and 16 CPUs.">
+</picture>
+
+Peak PSS: **4.56 vs 134.88 GB**. Three matched seeds; algorithms and outputs
+differ. [Individual runs and all seven dataset sizes](docs/paper/RESULTS.md).
+
+</details>
+
+<details>
+<summary>Core network inference: 1.3 million cells versus arboreto</summary>
+
+<p align="center">
   <a href="docs/benchmarks/huangfu-atlas-20261026/benchmark-source-record.md">
     <picture>
       <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="docs/benchmarks/huangfu-atlas-20261026/figure-mobile-dark-brand.svg">
@@ -223,6 +278,8 @@ the separate result is **2.94× faster with 54.5% lower PSS**.
 
 [Measurements, seeds and conditions](docs/benchmarks/huangfu-atlas-20261026/benchmark-source-record.md) ·
 [SCENIC+ comparisons and output agreement](site_docs/benchmarks.md)
+
+</details>
 
 <details>
 <summary>Earlier 20,000-cell benchmark and real-RNA scaling</summary>
@@ -384,7 +441,7 @@ without rerunning the analysis.**
 [Benchmarks](site_docs/benchmarks.md) ·
 [Validation](site_docs/validation.md) ·
 [Scope](site_docs/limitations.md) ·
-[Release notes](docs/releases/v0.5.1.md)
+[Release notes](docs/releases/v0.6.0.md)
 
 <br>
 

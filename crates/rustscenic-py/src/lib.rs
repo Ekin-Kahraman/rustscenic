@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict, PyList};
 use rayon::prelude::*;
 
-use rustscenic_aucell::{aucell_sparse_csr, aucell_view};
+use rustscenic_aucell::{aucell_sparse_csr_with_order, aucell_view_with_order};
 use rustscenic_grn::{
     correlation::{
         correlations_dense_view, correlations_sparse_csc, regulations_from_correlations,
@@ -808,17 +808,19 @@ fn filter_grn_edges(
 ///
 /// Returns (n_cells, n_regulons) f32 matrix of normalized recovery AUCs.
 #[pyfunction]
-#[pyo3(signature = (expression, regulon_names, regulon_gene_indices, top_frac = 0.05))]
+#[pyo3(signature = (expression, regulon_names, regulon_gene_indices, top_frac = 0.05, gene_order = None))]
 fn aucell_score<'py>(
     py: Python<'py>,
     expression: PyReadonlyArray2<'py, f32>,
     regulon_names: Vec<String>,
     regulon_gene_indices: Vec<Vec<usize>>,
     top_frac: f32,
+    gene_order: Option<Vec<usize>>,
 ) -> PyResult<AucellPyResult> {
     let arr = expression.as_array();
     let n_cells = arr.shape()[0];
     let n_genes = arr.shape()[1];
+    validate_aucell_gene_order(gene_order.as_deref(), n_genes)?;
     let expression_max = validate_finite_array2_max(arr, "expression matrix")?;
 
     if regulon_names.len() != regulon_gene_indices.len() {
@@ -844,7 +846,9 @@ fn aucell_score<'py>(
         .zip(regulon_gene_indices)
         .collect();
 
-    let out: Vec<f32> = py.detach(|| aucell_view(arr, &regulons, top_frac));
+    let out: Vec<f32> = py.detach(|| {
+        aucell_view_with_order(arr, &regulons, top_frac, gene_order.as_deref())
+    });
     let n_regulons = regulons.len();
 
     let arr2 = ndarray::Array2::from_shape_vec((n_cells, n_regulons), out).map_err(
@@ -868,6 +872,7 @@ fn aucell_score<'py>(
     regulon_names,
     regulon_gene_indices,
     top_frac = 0.05,
+    gene_order = None,
 ))]
 fn aucell_score_sparse_csr<'py>(
     py: Python<'py>,
@@ -878,7 +883,9 @@ fn aucell_score_sparse_csr<'py>(
     regulon_names: Vec<String>,
     regulon_gene_indices: Vec<Vec<usize>>,
     top_frac: f32,
+    gene_order: Option<Vec<usize>>,
 ) -> PyResult<AucellPyResult> {
+    validate_aucell_gene_order(gene_order.as_deref(), n_genes)?;
     let col_idx_raw = col_idx
         .as_slice()
         .map_err(|_| pyo3::exceptions::PyValueError::new_err("col_idx must be contiguous"))?;
@@ -936,7 +943,7 @@ fn aucell_score_sparse_csr<'py>(
         .zip(regulon_gene_indices)
         .collect();
     let out = py.detach(|| {
-        aucell_sparse_csr(
+        aucell_sparse_csr_with_order(
             &row_ptr_usize,
             col_idx_raw,
             data,
@@ -944,6 +951,7 @@ fn aucell_score_sparse_csr<'py>(
             n_genes,
             &regulons,
             top_frac,
+            gene_order.as_deref(),
         )
     });
     let n_regulons = regulons.len();
@@ -954,6 +962,20 @@ fn aucell_score_sparse_csr<'py>(
         PyArray2::from_owned_array(py, arr2).unbind(),
         expression_max,
     ))
+}
+
+fn validate_aucell_gene_order(order: Option<&[usize]>, n_genes: usize) -> PyResult<()> {
+    if let Some(order) = order {
+        let mut seen = vec![false; n_genes];
+        if order.len() != n_genes || order.iter().any(|&g| {
+            g >= n_genes || std::mem::replace(&mut seen[g], true)
+        }) {
+            return Err(pyo3::exceptions::PyValueError::new_err(
+                "gene_order must be a permutation of gene indices",
+            ));
+        }
+    }
+    Ok(())
 }
 
 /// Map regulon gene names onto a feature axis.

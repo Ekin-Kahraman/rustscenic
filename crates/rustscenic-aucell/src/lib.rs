@@ -55,8 +55,19 @@ pub fn aucell_view(
     regulons: &[(String, Vec<usize>)],
     top_frac: f32,
 ) -> Vec<f32> {
+    aucell_view_with_order(expression, regulons, top_frac, None)
+}
+
+/// Optional gene permutation controls ties without copying the expression matrix.
+pub fn aucell_view_with_order(
+    expression: ArrayView2<'_, f32>,
+    regulons: &[(String, Vec<usize>)],
+    top_frac: f32,
+    gene_order: Option<&[usize]>,
+) -> Vec<f32> {
     let n_cells = expression.shape()[0];
     let n_genes = expression.shape()[1];
+    let priorities = gene_priorities(n_genes, gene_order);
     assert!(
         top_frac > 0.0 && top_frac <= 1.0,
         "top_frac must be in (0, 1]"
@@ -115,7 +126,10 @@ pub fn aucell_view(
                 let va = row[a as usize];
                 let vb = row[b as usize];
                 match vb.partial_cmp(&va) {
-                    Some(std::cmp::Ordering::Equal) | None => a.cmp(&b),
+                    Some(std::cmp::Ordering::Equal) | None => match &priorities {
+                        Some(p) => p[a as usize].cmp(&p[b as usize]),
+                        None => a.cmp(&b),
+                    },
                     Some(ord) => ord,
                 }
             };
@@ -178,6 +192,23 @@ pub fn aucell_sparse_csr(
     regulons: &[(String, Vec<usize>)],
     top_frac: f32,
 ) -> Vec<f32> {
+    aucell_sparse_csr_with_order(row_ptr, col_idx, data, n_cells, n_genes, regulons, top_frac, None)
+}
+
+/// Rank sparse entries in permutation coordinates, including implicit zeros.
+/// Only the gene-sized priority vector changes; CSR data stays in place.
+#[allow(clippy::too_many_arguments)]
+pub fn aucell_sparse_csr_with_order(
+    row_ptr: &[usize],
+    col_idx: &[i32],
+    data: &[f32],
+    n_cells: usize,
+    n_genes: usize,
+    regulons: &[(String, Vec<usize>)],
+    top_frac: f32,
+    gene_order: Option<&[usize]>,
+) -> Vec<f32> {
+    let priorities = gene_priorities(n_genes, gene_order);
     assert_eq!(row_ptr.len(), n_cells + 1, "row_ptr size mismatch");
     assert_eq!(col_idx.len(), data.len(), "CSR index/data size mismatch");
     assert!(
@@ -203,7 +234,7 @@ pub fn aucell_sparse_csr(
         return out;
     }
 
-    let memberships = gene_regulon_memberships(n_genes, regulons);
+    let memberships = gene_regulon_memberships(n_genes, regulons, priorities.as_deref());
     let regulon_lens: Vec<u64> = regulons
         .iter()
         .map(|(_, genes)| genes.len() as u64)
@@ -232,7 +263,8 @@ pub fn aucell_sparse_csr(
             let end = row_ptr[cell_idx + 1];
 
             for k in start..end {
-                let gene = col_idx[k] as u32;
+                let physical_gene = col_idx[k] as usize;
+                let gene = priorities.as_ref().map_or(physical_gene, |p| p[physical_gene]) as u32;
                 let value = data[k];
                 if value > 0.0 {
                     positives.push((gene, value));
@@ -323,12 +355,34 @@ pub fn aucell_sparse_csr(
     out
 }
 
-fn gene_regulon_memberships(n_genes: usize, regulons: &[(String, Vec<usize>)]) -> Vec<Vec<usize>> {
+fn gene_priorities(n_genes: usize, order: Option<&[usize]>) -> Option<Vec<usize>> {
+    order.map(|order| {
+        assert_eq!(
+            order.len(), n_genes,
+            "gene_order must be a permutation of gene indices"
+        );
+        let mut priorities = vec![usize::MAX; n_genes];
+        for (priority, &gene) in order.iter().enumerate() {
+            assert!(
+                gene < n_genes && priorities[gene] == usize::MAX,
+                "gene_order must be a permutation of gene indices"
+            );
+            priorities[gene] = priority;
+        }
+        priorities
+    })
+}
+
+fn gene_regulon_memberships(
+    n_genes: usize,
+    regulons: &[(String, Vec<usize>)],
+    priorities: Option<&[usize]>,
+) -> Vec<Vec<usize>> {
     let mut memberships = vec![Vec::new(); n_genes];
     for (regulon_idx, (_, genes)) in regulons.iter().enumerate() {
         for &gene in genes {
             if gene < n_genes {
-                memberships[gene].push(regulon_idx);
+                memberships[priorities.map_or(gene, |p| p[gene])].push(regulon_idx);
             }
         }
     }

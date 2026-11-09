@@ -41,6 +41,7 @@ def score(
     *,
     top_frac: float = 0.05,
     chunk_size: int = 10_000,
+    seed: int | None = None,
 ) -> pd.DataFrame:
     """Compute per-cell regulon activity matrix.
 
@@ -64,6 +65,12 @@ def score(
         Kept for API compatibility. Sparse SciPy/AnnData inputs are scored by
         the Rust CSR kernel without dense materialisation; dense inputs ignore
         this setting.
+    seed
+        Optional seed for pySCENIC-compatible tie ordering. Equal expression
+        values follow one NumPy RandomState gene permutation, shared by all
+        cells. Use the same seed and gene axis as the reference comparison.
+        None preserves the existing gene-order tie behaviour. This adds only
+        gene-sized scratch space; the expression matrix is not shuffled.
 
     Returns
     -------
@@ -156,6 +163,9 @@ def score(
             UserWarning, stacklevel=2,
         )
 
+    order_kwargs = {} if seed is None else {
+        "gene_order": np.random.RandomState(seed).permutation(len(gene_names)).tolist()
+    }
     import scipy.sparse as sp
     if sp.issparse(X_raw):
         X_csr = X_raw.tocsr().astype(np.float32, copy=False)
@@ -170,18 +180,21 @@ def score(
             reg_names,
             reg_gene_indices,
             top_frac,
+            **order_kwargs,
         ))
     else:
         X = as_float32_array(X_raw)
         backend_symbol = "aucell_score"
         auc, expression_max = _unpack_aucell_result(
-            _aucell_score(X, reg_names, reg_gene_indices, top_frac)
+            _aucell_score(X, reg_names, reg_gene_indices, top_frac, **order_kwargs)
         )
     warn_if_max_likely_unnormalized(expression_max, stacklevel=3)
     df = pd.DataFrame(np.asarray(auc), index=cell_names, columns=reg_names)
     # Store per-regulon coverage as metadata so downstream code can
     # diagnose low-overlap regulons without rerunning.
     df.attrs["regulon_coverage"] = coverage
+    if seed is not None:
+        df.attrs["aucell_seed"] = int(seed)
     df.attrs["rust_backend"] = {
         "engine": "rust",
         "symbols": backend_symbols + [backend_symbol],

@@ -1,0 +1,111 @@
+{
+  "status": "passed",
+  "source_files_verified": 212,
+  "selected_runs": 42,
+  "matched_pairs": 21,
+  "corrected_confusion_matrices_verified": 96,
+  "directional_confusion_matrices_verified": 192,
+  "directional_intervals_reproduced": true,
+  "source_statistics_recomputed": true,
+  "model_fits_performed": 0,
+  "environment": {
+    "python": "3.13.9",
+    "numpy": "2.5.4",
+    "pandas": "3.1.1",
+    "matplotlib": "3.11.2"
+  },
+  "outputs": [
+    {
+      "path": "RESULTS.md",
+      "sha256": "1bbed2c47a98aae6e23d38a9f9ad2f0666cd0c189b6fb98b00efcbfb580ffdf1"
+    },
+    {
+      "path": "figures/01-workflow-scaling.pdf",
+      "sha256": "c9b30700874aaf5a553ba781578274b5977b6aabde924413b03e55d455d3cf89"
+    },
+    {
+      "path": "figures/01-workflow-scaling.png",
+      "sha256": "e1c152f398d41919b30d09302535beb981af80e131beb23cc7ab4fbf6e23b6b6"
+    },
+    {
+      "path": "figures/01-workflow-scaling.svg",
+      "sha256": "294754b4cfac580e2c77cdc994d5298f5fa4c1034c10baf19db30fec142ff226"
+    },
+    {
+      "path": "figures/02-biological-utility.pdf",
+      "sha256": "8a8939045265999854956f0246a1b81042ecbfca49880f73ea65a887e525638f"
+    },
+    {
+      "path": "figures/02-biological-utility.png",
+      "sha256": "3368a55d643d7105fd1bd7c5c5e73e2bf849d5631afc8c416e3dd5b29b2a6f7f"
+    },
+    {
+      "path": "figures/02-biological-utility.svg",
+      "sha256": "5e49187844a566074006124d1f6e11e71e199b052f53404983a00e94ccf1dd30"
+    },
+    {
+      "path": "figures/03-rna-reference-recovery.pdf",
+      "sha256": "ffd852b5e35bb02646ca7e490488a4e5e5bb595fd265f8e344fedaf2244fb253"
+    },
+    {
+      "path": "figures/03-rna-reference-recovery.png",
+      "sha256": "3fda0031b5e51f01edb6d8dca1baae95045dd4bb6edbc0a9b44df302759b7e8a"
+    },
+    {
+      "path": "figures/03-rna-reference-recovery.svg",
+      "sha256": "7884c74f098df9bf4ceb075ff01b1a06056e8175e8268f9ce896ef4fa5afc6b7"
+    },
+    {
+      "path": "tables/bmmc-original-utility.csv",
+      "sha256": "a38a795c08407cc4109c186d379ba848f754a29cbff27548dad80038506159ac"
+    },
+    {
+      "path": "tables/bmmc-signed-diagnostic.csv",
+      "sha256": "f97d35407ab2e3099abbef2cf05f2f95ee6cfce0357569e1eacebeddd8349b81"
+    },
+    {
+      "path": "tables/directional-confirmation-comparisons.csv",
+      "sha256": "3a3687e4996227b23b66fe87caeb55af55b8e6bd7c7e0c829360fc0727a752a2"
+    },
+    {
+      "path": "tables/directional-confirmation-folds.csv",
+      "sha256": "85b2a8bdc54d05b511365d113e2ce472b78f44248ccc2ef53cb23eeaa1348b61"
+    },
+    {
+      "path": "tables/directional-confirmation-performance.csv",
+      "sha256": "137fd8867672903c4abef6f51d06290bad49a0150c74cb979381e16b3f355586"
+    },
+    {
+      "path": "tables/kang-corrected-folds.csv",
+      "sha256": "4fec31f6a0e7a6517bd244b2611c6aab351fe2c561713ccaa0c000b0964d7bbb"
+    },
+    {
+      "path": "tables/kang-final-comparison.csv",
+      "sha256": "434ca978a0d71825b0cb2c8597bf635edd085b78043cabc3e07e6eca7fb85923"
+    },
+    {
+      "path": "tables/kang-original-endpoints-and-controls.csv",
+      "sha256": "32d11892c106620e807eb156589b1de1859f6f1ebd0379220c3a27daaa50fc8f"
+    },
+    {
+      "path": "tables/rna-reference-recovery.csv",
+      "sha256": "0fa2984ec23fb30bd18554ff8c0eb3c32ff7379257fce6dfe5451b3e67eb3dfa"
+    },
+    {
+      "path": "tables/scoring-confirmation-runs.csv",
+      "sha256": "1d8441505229626f6790dcb6a4847390778defd0e235e6eb81a1851f543761ea"
+    },
+    {
+      "path": "tables/workflow-performance.csv",
+      "sha256": "9e76b5018d66d22c7b61ffa4f02cf5893b9be29820fad081ee6c9a2b8c4724aa"
+    },
+    {
+      "path": "tables/workflow-runs.csv",
+      "sha256": "d5de88c08d2ff9a0a4b903065859fbac7f629b3d31a049e8912b12f7d756361b"
+    },
+    {
+      "path": "tables/workflow-stage-timings.csv",
+      "sha256": "8ca75e3e6ab215f518919af46f891ec27c7d431c7e6d31e37c96b744f6dbba6b"
+    }
+  ]
+}

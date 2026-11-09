@@ -1,0 +1,39 @@
+{
+  "outputs": {
+    "coverage.json": {
+      "bytes": 2318,
+      "sha256": "069c99f690b0821b1cc3b34f0b9de21f4d5eea748b307a2e9b899348a62b9142"
+    },
+    "environment.json": {
+      "bytes": 6705,
+      "sha256": "7589e61edd8ae004e9677677d0132bbbe9710196be203e8d58521d07186ca97a"
+    },
+    "full-scores.h5": {
+      "bytes": 353986520,
+      "sha256": "3c5dd765327b3e1ed5ad5a01c68ae377b9958164bfe2ee0932d0cae387c9f7ce"
+    },
+    "network.json": {
+      "bytes": 108,
+      "sha256": "273a9313d01760920e2debd5024398c0f3ec92ad3d48d00948d1d42db6d741f4"
+    },
+    "prior-sample-check.json": {
+      "bytes": 50,
+      "sha256": "64d13978e5a4b7b59f00a53e381425564c5ad7636dc55958aaf675a511bc3b62"
+    },
+    "sampled-scores.parquet": {
+      "bytes": 1724207,
+      "sha256": "8bf329c67f835c382633462f056547094ed6d699f2b97ba2038f9e1a3e930583"
+    },
+    "score-summary.json": {
+      "bytes": 8789,
+      "sha256": "2b513cc041d64cf2c248d33ee81fdb88e3e1959e50275c133a2d07043007a197"
+    },
+    "signatures.json": {
+      "bytes": 46955,
+      "sha256": "523e9abaab446864372ebc87ee107663a584ece63e32c460569af258bd78b0e1"
+    }
+  },
+  "package": "b2870ecf8c11abfbb4e586fad9604993d687e75ef387340df59d2276edfbbbc9",
+  "smoke": false,
+  "status": "complete"
+}

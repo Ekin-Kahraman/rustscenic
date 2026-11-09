@@ -1,0 +1,1710 @@
+{
+  "structurally_checked_model_outputs": 16,
+  "input_panel_and_metadata_hashes_verified_against_original_zip": {
+    "atlas-panel.json": "f3b0c04658a56314e21611fe6dbab74c12a2009022b590797737fcbf10e6b3ea",
+    "bmmc-panel.json": "84743b43980e666893faf2254e8217968d64c2fb0c649f82be0503c37f4b8d0b",
+    "hdma-panel.json": "f2765be072162874b008752131486e64b5acd83d60c825d02c116d0daf1e26b5",
+    "bmmc/cell-metadata.tsv": "42ca7f67f5193b06456510fbe3afeb7c83cebd3416f542687b2451dc7e703ef3",
+    "hdma/cell-metadata.tsv": "686d0be78d878373b552e1aa3296b04acde8c8d83ff7cfb389797e1845b70789"
+  },
+  "all_completed_pair_network_rank_correlations_recomputed": 8,
+  "seed_stability_comparisons_recomputed": 22,
+  "runs": [
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "seed": 777,
+      "method": "rustscenic",
+      "grn_edges": 213889,
+      "raw_self_edges": 0,
+      "gene_regulons": 55,
+      "regulons_containing_their_own_tf": 0,
+      "regulon_target_sizes": {
+        "n": 55,
+        "median": 14.0,
+        "mean": 16.945454545454545,
+        "min": 6.0,
+        "max": 37.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 55,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 13533,
+      "marker_coverage": []
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "seed": 777,
+      "method": "reference",
+      "grn_edges": 206625,
+      "raw_self_edges": 0,
+      "gene_regulons": 51,
+      "regulons_containing_their_own_tf": 0,
+      "regulon_target_sizes": {
+        "n": 51,
+        "median": 17.0,
+        "mean": 20.901960784313726,
+        "min": 6.0,
+        "max": 47.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 51,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 318,
+      "marker_coverage": []
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "seed": 778,
+      "method": "rustscenic",
+      "grn_edges": 213501,
+      "raw_self_edges": 0,
+      "gene_regulons": 62,
+      "regulons_containing_their_own_tf": 0,
+      "regulon_target_sizes": {
+        "n": 62,
+        "median": 14.5,
+        "mean": 15.35483870967742,
+        "min": 5.0,
+        "max": 32.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 62,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 13651,
+      "marker_coverage": []
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "seed": 778,
+      "method": "reference",
+      "grn_edges": 211514,
+      "raw_self_edges": 0,
+      "gene_regulons": 60,
+      "regulons_containing_their_own_tf": 0,
+      "regulon_target_sizes": {
+        "n": 60,
+        "median": 18.0,
+        "mean": 19.983333333333334,
+        "min": 6.0,
+        "max": 45.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 60,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 293,
+      "marker_coverage": []
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "seed": 779,
+      "method": "rustscenic",
+      "grn_edges": 213295,
+      "raw_self_edges": 0,
+      "gene_regulons": 54,
+      "regulons_containing_their_own_tf": 0,
+      "regulon_target_sizes": {
+        "n": 54,
+        "median": 14.5,
+        "mean": 17.074074074074073,
+        "min": 6.0,
+        "max": 39.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 54,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 13650,
+      "marker_coverage": []
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "seed": 779,
+      "method": "reference",
+      "grn_edges": 209075,
+      "raw_self_edges": 0,
+      "gene_regulons": 57,
+      "regulons_containing_their_own_tf": 0,
+      "regulon_target_sizes": {
+        "n": 57,
+        "median": 15.0,
+        "mean": 18.596491228070175,
+        "min": 6.0,
+        "max": 44.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 57,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 261,
+      "marker_coverage": []
+    },
+    {
+      "cells": 500000,
+      "dataset": "hdma",
+      "seed": 778,
+      "method": "rustscenic",
+      "grn_edges": 334485,
+      "raw_self_edges": 0,
+      "gene_regulons": 69,
+      "regulons_containing_their_own_tf": 0,
+      "regulon_target_sizes": {
+        "n": 69,
+        "median": 32.0,
+        "mean": 47.68115942028985,
+        "min": 5.0,
+        "max": 232.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 69,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        },
+        "region": {
+          "signatures": 69,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 33011,
+      "marker_coverage": [
+        {
+          "TF": "HNF4A",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "CRX",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "NEUROD2",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "MYOD1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "TBX5",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": true,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": true
+        },
+        {
+          "TF": "SPI1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        }
+      ],
+      "enhancer_triplets": 3673,
+      "used_negative_region_gene_links": 0
+    },
+    {
+      "cells": 500000,
+      "dataset": "hdma",
+      "seed": 778,
+      "method": "reference",
+      "grn_edges": 339195,
+      "raw_self_edges": 256,
+      "gene_regulons": 6,
+      "regulons_containing_their_own_tf": 4,
+      "regulon_target_sizes": {
+        "n": 6,
+        "median": 64.5,
+        "mean": 91.33333333333333,
+        "min": 17.0,
+        "max": 192.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 6,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        },
+        "region": {
+          "signatures": 6,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 89561,
+      "marker_coverage": [
+        {
+          "TF": "HNF4A",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "CRX",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "NEUROD2",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "MYOD1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "TBX5",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": true,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": true
+        },
+        {
+          "TF": "SPI1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        }
+      ],
+      "enhancer_triplets": 889,
+      "used_negative_region_gene_links": 0
+    },
+    {
+      "cells": 500000,
+      "dataset": "hdma",
+      "seed": 779,
+      "method": "rustscenic",
+      "grn_edges": 334832,
+      "raw_self_edges": 0,
+      "gene_regulons": 66,
+      "regulons_containing_their_own_tf": 0,
+      "regulon_target_sizes": {
+        "n": 66,
+        "median": 30.5,
+        "mean": 49.46969696969697,
+        "min": 5.0,
+        "max": 237.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 66,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        },
+        "region": {
+          "signatures": 66,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 33308,
+      "marker_coverage": [
+        {
+          "TF": "HNF4A",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "CRX",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "NEUROD2",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "MYOD1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "TBX5",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": true,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": true
+        },
+        {
+          "TF": "SPI1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        }
+      ],
+      "enhancer_triplets": 3665,
+      "used_negative_region_gene_links": 0
+    },
+    {
+      "cells": 500000,
+      "dataset": "hdma",
+      "seed": 779,
+      "method": "reference",
+      "grn_edges": 338544,
+      "raw_self_edges": 256,
+      "gene_regulons": 5,
+      "regulons_containing_their_own_tf": 4,
+      "regulon_target_sizes": {
+        "n": 5,
+        "median": 90.0,
+        "mean": 95.2,
+        "min": 55.0,
+        "max": 133.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 5,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        },
+        "region": {
+          "signatures": 5,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 89063,
+      "marker_coverage": [
+        {
+          "TF": "HNF4A",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "CRX",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "NEUROD2",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "MYOD1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "TBX5",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": true,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": true
+        },
+        {
+          "TF": "SPI1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        }
+      ],
+      "enhancer_triplets": 765,
+      "used_negative_region_gene_links": 0
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "seed": 777,
+      "method": "rustscenic",
+      "grn_edges": 339294,
+      "raw_self_edges": 0,
+      "gene_regulons": 67,
+      "regulons_containing_their_own_tf": 0,
+      "regulon_target_sizes": {
+        "n": 67,
+        "median": 34.0,
+        "mean": 50.8955223880597,
+        "min": 5.0,
+        "max": 240.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 67,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        },
+        "region": {
+          "signatures": 67,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 32700,
+      "marker_coverage": [
+        {
+          "TF": "HNF4A",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "CRX",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "NEUROD2",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "MYOD1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "TBX5",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": true,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": true
+        },
+        {
+          "TF": "SPI1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        }
+      ],
+      "enhancer_triplets": 3825,
+      "used_negative_region_gene_links": 0
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "seed": 777,
+      "method": "reference",
+      "grn_edges": 337803,
+      "raw_self_edges": 256,
+      "gene_regulons": 5,
+      "regulons_containing_their_own_tf": 4,
+      "regulon_target_sizes": {
+        "n": 5,
+        "median": 83.0,
+        "mean": 100.6,
+        "min": 52.0,
+        "max": 159.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 5,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        },
+        "region": {
+          "signatures": 5,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 89926,
+      "marker_coverage": [
+        {
+          "TF": "HNF4A",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "CRX",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "NEUROD2",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "MYOD1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "TBX5",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": true,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": true
+        },
+        {
+          "TF": "SPI1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        }
+      ],
+      "enhancer_triplets": 828,
+      "used_negative_region_gene_links": 0
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "seed": 778,
+      "method": "rustscenic",
+      "grn_edges": 338967,
+      "raw_self_edges": 0,
+      "gene_regulons": 66,
+      "regulons_containing_their_own_tf": 0,
+      "regulon_target_sizes": {
+        "n": 66,
+        "median": 34.0,
+        "mean": 51.04545454545455,
+        "min": 5.0,
+        "max": 244.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 66,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        },
+        "region": {
+          "signatures": 66,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 32773,
+      "marker_coverage": [
+        {
+          "TF": "HNF4A",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "CRX",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "NEUROD2",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "MYOD1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "TBX5",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": true,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": true
+        },
+        {
+          "TF": "SPI1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        }
+      ],
+      "enhancer_triplets": 3749,
+      "used_negative_region_gene_links": 0
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "seed": 778,
+      "method": "reference",
+      "grn_edges": 340978,
+      "raw_self_edges": 256,
+      "gene_regulons": 6,
+      "regulons_containing_their_own_tf": 4,
+      "regulon_target_sizes": {
+        "n": 6,
+        "median": 72.0,
+        "mean": 80.83333333333333,
+        "min": 33.0,
+        "max": 144.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 6,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        },
+        "region": {
+          "signatures": 6,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 88788,
+      "marker_coverage": [
+        {
+          "TF": "HNF4A",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "CRX",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "NEUROD2",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "MYOD1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "TBX5",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": true,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": true
+        },
+        {
+          "TF": "SPI1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        }
+      ],
+      "enhancer_triplets": 812,
+      "used_negative_region_gene_links": 0
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "seed": 779,
+      "method": "rustscenic",
+      "grn_edges": 339281,
+      "raw_self_edges": 0,
+      "gene_regulons": 67,
+      "regulons_containing_their_own_tf": 0,
+      "regulon_target_sizes": {
+        "n": 67,
+        "median": 31.0,
+        "mean": 48.82089552238806,
+        "min": 5.0,
+        "max": 234.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 67,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        },
+        "region": {
+          "signatures": 67,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 32563,
+      "marker_coverage": [
+        {
+          "TF": "HNF4A",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "CRX",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "NEUROD2",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "MYOD1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "TBX5",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": true,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": true
+        },
+        {
+          "TF": "SPI1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        }
+      ],
+      "enhancer_triplets": 3656,
+      "used_negative_region_gene_links": 0
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "seed": 779,
+      "method": "reference",
+      "grn_edges": 335506,
+      "raw_self_edges": 256,
+      "gene_regulons": 5,
+      "regulons_containing_their_own_tf": 4,
+      "regulon_target_sizes": {
+        "n": 5,
+        "median": 102.0,
+        "mean": 106.6,
+        "min": 48.0,
+        "max": 163.0
+      },
+      "activity": {
+        "gene": {
+          "signatures": 5,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        },
+        "region": {
+          "signatures": 5,
+          "constant_signatures": 0,
+          "zero_signatures": 0
+        }
+      },
+      "motif_rows": 88856,
+      "marker_coverage": [
+        {
+          "TF": "HNF4A",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "CRX",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "NEUROD2",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "MYOD1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        },
+        {
+          "TF": "TBX5",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": true,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": true
+        },
+        {
+          "TF": "SPI1",
+          "has_final_gene_regulon": false,
+          "has_grn_edges": false,
+          "has_region_motif_evidence": false,
+          "in_selected_tf_panel": false
+        }
+      ],
+      "enhancer_triplets": 870,
+      "used_negative_region_gene_links": 0
+    }
+  ],
+  "agreements": [
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "seed": 777,
+      "grn_rank_spearman": 0.622328912413015,
+      "regulon_names": {
+        "jaccard": 0.5588235294117647,
+        "left": 55,
+        "right": 51,
+        "shared": 38
+      },
+      "target_jaccard_shared_regulons": {
+        "n": 38,
+        "median": 0.26790697674418606,
+        "mean": 0.2950945123859185,
+        "min": 0.0,
+        "max": 0.625
+      },
+      "gene_activity_sample_spearman": {
+        "n": 38,
+        "median": 0.6076549476469426,
+        "mean": 0.5996054983423372,
+        "min": 0.02953017110908382,
+        "max": 0.9001608979824528
+      },
+      "gene_activity_reported_allcell_spearman": {
+        "n": 38,
+        "median": 0.6089711626554376,
+        "mean": 0.5962251433623698,
+        "min": 0.01323881182277669,
+        "max": 0.9008417121395522
+      }
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "seed": 778,
+      "grn_rank_spearman": 0.6208822290017629,
+      "regulon_names": {
+        "jaccard": 0.6052631578947368,
+        "left": 62,
+        "right": 60,
+        "shared": 46
+      },
+      "target_jaccard_shared_regulons": {
+        "n": 46,
+        "median": 0.3038461538461539,
+        "mean": 0.3194664427320311,
+        "min": 0.05555555555555555,
+        "max": 0.8888888888888888
+      },
+      "gene_activity_sample_spearman": {
+        "n": 46,
+        "median": 0.6573426308712265,
+        "mean": 0.5866808598375758,
+        "min": -0.05790564972560997,
+        "max": 0.9563571751652536
+      },
+      "gene_activity_reported_allcell_spearman": {
+        "n": 46,
+        "median": 0.6586612607401852,
+        "mean": 0.585078991701286,
+        "min": -0.08221520981040183,
+        "max": 0.9561420198405938
+      }
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "seed": 779,
+      "grn_rank_spearman": 0.620108056393655,
+      "regulon_names": {
+        "jaccard": 0.5416666666666666,
+        "left": 54,
+        "right": 57,
+        "shared": 39
+      },
+      "target_jaccard_shared_regulons": {
+        "n": 39,
+        "median": 0.2727272727272727,
+        "mean": 0.28413939114292713,
+        "min": 0.05263157894736842,
+        "max": 0.6078431372549019
+      },
+      "gene_activity_sample_spearman": {
+        "n": 39,
+        "median": 0.6945662698248684,
+        "mean": 0.5902565270248715,
+        "min": 0.019591862776490075,
+        "max": 0.8951148191125617
+      },
+      "gene_activity_reported_allcell_spearman": {
+        "n": 39,
+        "median": 0.6976967216136067,
+        "mean": 0.5887190148056,
+        "min": 0.024100004838872088,
+        "max": 0.8935459923918357
+      }
+    },
+    {
+      "cells": 500000,
+      "dataset": "hdma",
+      "seed": 778,
+      "grn_rank_spearman": 0.7284323482175262,
+      "regulon_names": {
+        "jaccard": 0.08695652173913043,
+        "left": 69,
+        "right": 6,
+        "shared": 6
+      },
+      "target_jaccard_shared_regulons": {
+        "n": 6,
+        "median": 0.24591611479028697,
+        "mean": 0.227266329146512,
+        "min": 0.06474820143884892,
+        "max": 0.3333333333333333
+      },
+      "gene_activity_sample_spearman": {
+        "n": 6,
+        "median": 0.6008768007363481,
+        "mean": 0.5756843171759014,
+        "min": 0.306809683206349,
+        "max": 0.722748048566607
+      },
+      "gene_activity_reported_allcell_spearman": {
+        "n": 6,
+        "median": 0.603247200879842,
+        "mean": 0.578055821031099,
+        "min": 0.3154455285444703,
+        "max": 0.7217090229811337
+      },
+      "region_activity_sample_spearman": {
+        "n": 6,
+        "median": 0.4033726846968042,
+        "mean": 0.4551640263583817,
+        "min": 0.30211416140779335,
+        "max": 0.8052770072941381
+      },
+      "region_activity_reported_allcell_spearman": {
+        "n": 6,
+        "median": 0.40746880718193956,
+        "mean": 0.4587504075994184,
+        "min": 0.3063185778020365,
+        "max": 0.8103521484676208
+      },
+      "enhancer_triplets": {
+        "left": 3673,
+        "right": 889,
+        "shared": 365,
+        "jaccard": 0.08696688110555159
+      }
+    },
+    {
+      "cells": 500000,
+      "dataset": "hdma",
+      "seed": 779,
+      "grn_rank_spearman": 0.7300290733725958,
+      "regulon_names": {
+        "jaccard": 0.07575757575757576,
+        "left": 66,
+        "right": 5,
+        "shared": 5
+      },
+      "target_jaccard_shared_regulons": {
+        "n": 5,
+        "median": 0.2564102564102564,
+        "mean": 0.25939907855857225,
+        "min": 0.208,
+        "max": 0.2937062937062937
+      },
+      "gene_activity_sample_spearman": {
+        "n": 5,
+        "median": 0.6347161514162423,
+        "mean": 0.5801676926484719,
+        "min": 0.30901398591053575,
+        "max": 0.7054610197973263
+      },
+      "gene_activity_reported_allcell_spearman": {
+        "n": 5,
+        "median": 0.6359093449777866,
+        "mean": 0.5819314629798636,
+        "min": 0.3224470064707442,
+        "max": 0.7049472052531687
+      },
+      "region_activity_sample_spearman": {
+        "n": 5,
+        "median": 0.47822034774080496,
+        "mean": 0.5139409599418665,
+        "min": 0.29466533779921256,
+        "max": 0.7914594598862285
+      },
+      "region_activity_reported_allcell_spearman": {
+        "n": 5,
+        "median": 0.4731279310460213,
+        "mean": 0.5174617141072821,
+        "min": 0.3035210233980788,
+        "max": 0.7945197930433859
+      },
+      "enhancer_triplets": {
+        "left": 3665,
+        "right": 765,
+        "shared": 321,
+        "jaccard": 0.07812119737162326
+      }
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "seed": 777,
+      "grn_rank_spearman": 0.7506708231866569,
+      "regulon_names": {
+        "jaccard": 0.07462686567164178,
+        "left": 67,
+        "right": 5,
+        "shared": 5
+      },
+      "target_jaccard_shared_regulons": {
+        "n": 5,
+        "median": 0.26174496644295303,
+        "mean": 0.26031592926106195,
+        "min": 0.21138211382113822,
+        "max": 0.32978723404255317
+      },
+      "gene_activity_sample_spearman": {
+        "n": 5,
+        "median": 0.6264142731583979,
+        "mean": 0.5930232178633693,
+        "min": 0.32166113264061474,
+        "max": 0.7355527389429931
+      },
+      "gene_activity_reported_allcell_spearman": {
+        "n": 5,
+        "median": 0.6227469122104878,
+        "mean": 0.587447469412964,
+        "min": 0.3183403259304563,
+        "max": 0.738137716942957
+      },
+      "region_activity_sample_spearman": {
+        "n": 5,
+        "median": 0.5345010726042955,
+        "mean": 0.48982959914313623,
+        "min": 0.20487462496868236,
+        "max": 0.8095067898978202
+      },
+      "region_activity_reported_allcell_spearman": {
+        "n": 5,
+        "median": 0.5395447946461851,
+        "mean": 0.4919240458139442,
+        "min": 0.21281627048645269,
+        "max": 0.8113613011555016
+      },
+      "enhancer_triplets": {
+        "left": 3825,
+        "right": 828,
+        "shared": 344,
+        "jaccard": 0.07983290786725458
+      }
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "seed": 778,
+      "grn_rank_spearman": 0.7476689985729487,
+      "regulon_names": {
+        "jaccard": 0.09090909090909091,
+        "left": 66,
+        "right": 6,
+        "shared": 6
+      },
+      "target_jaccard_shared_regulons": {
+        "n": 6,
+        "median": 0.2364684263280989,
+        "mean": 0.22580974915919977,
+        "min": 0.08571428571428572,
+        "max": 0.32222222222222224
+      },
+      "gene_activity_sample_spearman": {
+        "n": 6,
+        "median": 0.5790157894847192,
+        "mean": 0.5777456093264531,
+        "min": 0.3251138221798308,
+        "max": 0.7753028188777933
+      },
+      "gene_activity_reported_allcell_spearman": {
+        "n": 6,
+        "median": 0.57275423360668,
+        "mean": 0.5739461021860017,
+        "min": 0.3263029459710962,
+        "max": 0.7698710634948189
+      },
+      "region_activity_sample_spearman": {
+        "n": 6,
+        "median": 0.37414095519121054,
+        "mean": 0.42052371321951004,
+        "min": 0.19445403515644435,
+        "max": 0.7982040677041659
+      },
+      "region_activity_reported_allcell_spearman": {
+        "n": 6,
+        "median": 0.36383467426824695,
+        "mean": 0.4129323316352865,
+        "min": 0.1877143788969281,
+        "max": 0.798845555393078
+      },
+      "enhancer_triplets": {
+        "left": 3749,
+        "right": 812,
+        "shared": 341,
+        "jaccard": 0.08080568720379147
+      }
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "seed": 779,
+      "grn_rank_spearman": 0.7506591744309198,
+      "regulon_names": {
+        "jaccard": 0.07462686567164178,
+        "left": 67,
+        "right": 5,
+        "shared": 5
+      },
+      "target_jaccard_shared_regulons": {
+        "n": 5,
+        "median": 0.2857142857142857,
+        "mean": 0.28831054892374475,
+        "min": 0.25,
+        "max": 0.33447098976109213
+      },
+      "gene_activity_sample_spearman": {
+        "n": 5,
+        "median": 0.6365323163564472,
+        "mean": 0.5965329478415594,
+        "min": 0.35180815578046515,
+        "max": 0.7066833016825244
+      },
+      "gene_activity_reported_allcell_spearman": {
+        "n": 5,
+        "median": 0.6300175756290932,
+        "mean": 0.5917890529734875,
+        "min": 0.34446827113643735,
+        "max": 0.6975002080033317
+      },
+      "region_activity_sample_spearman": {
+        "n": 5,
+        "median": 0.41377075680485803,
+        "mean": 0.4647840306322822,
+        "min": 0.32555642842099086,
+        "max": 0.8091218839539334
+      },
+      "region_activity_reported_allcell_spearman": {
+        "n": 5,
+        "median": 0.4151541712401872,
+        "mean": 0.46043000945063467,
+        "min": 0.31277093242047765,
+        "max": 0.8140913817227012
+      },
+      "enhancer_triplets": {
+        "left": 3656,
+        "right": 870,
+        "shared": 369,
+        "jaccard": 0.08876593697377917
+      }
+    }
+  ],
+  "seed_stability": [
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "jaccard": 0.36225596529284165,
+      "kind": "regulon_targets",
+      "left": 932,
+      "method": "rustscenic",
+      "right": 952,
+      "seed_a": 777,
+      "seed_b": 778,
+      "shared": 501
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "jaccard": 0.3794642857142857,
+      "kind": "regulon_targets",
+      "left": 932,
+      "method": "rustscenic",
+      "right": 922,
+      "seed_a": 777,
+      "seed_b": 779,
+      "shared": 510
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "jaccard": 0.38200589970501475,
+      "kind": "regulon_targets",
+      "left": 952,
+      "method": "rustscenic",
+      "right": 922,
+      "seed_a": 778,
+      "seed_b": 779,
+      "shared": 518
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "jaccard": 0.3628158844765343,
+      "kind": "regulon_targets",
+      "left": 1066,
+      "method": "reference",
+      "right": 1199,
+      "seed_a": 777,
+      "seed_b": 778,
+      "shared": 603
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "jaccard": 0.34471853257432006,
+      "kind": "regulon_targets",
+      "left": 1066,
+      "method": "reference",
+      "right": 1060,
+      "seed_a": 777,
+      "seed_b": 779,
+      "shared": 545
+    },
+    {
+      "cells": 1306127,
+      "dataset": "atlas",
+      "jaccard": 0.35107655502392343,
+      "kind": "regulon_targets",
+      "left": 1199,
+      "method": "reference",
+      "right": 1060,
+      "seed_a": 778,
+      "seed_b": 779,
+      "shared": 587
+    },
+    {
+      "cells": 500000,
+      "dataset": "hdma",
+      "jaccard": 0.6367041198501873,
+      "kind": "regulon_targets",
+      "left": 3290,
+      "method": "rustscenic",
+      "right": 3265,
+      "seed_a": 778,
+      "seed_b": 779,
+      "shared": 2550
+    },
+    {
+      "cells": 500000,
+      "dataset": "hdma",
+      "jaccard": 0.6401430487259723,
+      "kind": "signed_enhancer_triplets",
+      "left": 3673,
+      "method": "rustscenic",
+      "right": 3665,
+      "seed_a": 778,
+      "seed_b": 779,
+      "shared": 2864
+    },
+    {
+      "cells": 500000,
+      "dataset": "hdma",
+      "jaccard": 0.6814449917898193,
+      "kind": "regulon_targets",
+      "left": 548,
+      "method": "reference",
+      "right": 476,
+      "seed_a": 778,
+      "seed_b": 779,
+      "shared": 415
+    },
+    {
+      "cells": 500000,
+      "dataset": "hdma",
+      "jaccard": 0.5009074410163339,
+      "kind": "signed_enhancer_triplets",
+      "left": 889,
+      "method": "reference",
+      "right": 765,
+      "seed_a": 778,
+      "seed_b": 779,
+      "shared": 552
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "jaccard": 0.6394195888754535,
+      "kind": "regulon_targets",
+      "left": 3410,
+      "method": "rustscenic",
+      "right": 3369,
+      "seed_a": 777,
+      "seed_b": 778,
+      "shared": 2644
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "jaccard": 0.6383300886869998,
+      "kind": "signed_enhancer_triplets",
+      "left": 3825,
+      "method": "rustscenic",
+      "right": 3749,
+      "seed_a": 777,
+      "seed_b": 778,
+      "shared": 2951
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "jaccard": 0.6557620817843867,
+      "kind": "regulon_targets",
+      "left": 3410,
+      "method": "rustscenic",
+      "right": 3271,
+      "seed_a": 777,
+      "seed_b": 779,
+      "shared": 2646
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "jaccard": 0.6572884359769605,
+      "kind": "signed_enhancer_triplets",
+      "left": 3825,
+      "method": "rustscenic",
+      "right": 3656,
+      "seed_a": 777,
+      "seed_b": 779,
+      "shared": 2967
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "jaccard": 0.6500994035785288,
+      "kind": "regulon_targets",
+      "left": 3369,
+      "method": "rustscenic",
+      "right": 3271,
+      "seed_a": 778,
+      "seed_b": 779,
+      "shared": 2616
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "jaccard": 0.6529017857142857,
+      "kind": "signed_enhancer_triplets",
+      "left": 3749,
+      "method": "rustscenic",
+      "right": 3656,
+      "seed_a": 778,
+      "seed_b": 779,
+      "shared": 2925
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "jaccard": 0.7034482758620689,
+      "kind": "regulon_targets",
+      "left": 503,
+      "method": "reference",
+      "right": 485,
+      "seed_a": 777,
+      "seed_b": 778,
+      "shared": 408
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "jaccard": 0.44876325088339225,
+      "kind": "signed_enhancer_triplets",
+      "left": 828,
+      "method": "reference",
+      "right": 812,
+      "seed_a": 777,
+      "seed_b": 778,
+      "shared": 508
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "jaccard": 0.7589134125636672,
+      "kind": "regulon_targets",
+      "left": 503,
+      "method": "reference",
+      "right": 533,
+      "seed_a": 777,
+      "seed_b": 779,
+      "shared": 447
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "jaccard": 0.7505154639175258,
+      "kind": "signed_enhancer_triplets",
+      "left": 828,
+      "method": "reference",
+      "right": 870,
+      "seed_a": 777,
+      "seed_b": 779,
+      "shared": 728
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "jaccard": 0.6525974025974026,
+      "kind": "regulon_targets",
+      "left": 485,
+      "method": "reference",
+      "right": 533,
+      "seed_a": 778,
+      "seed_b": 779,
+      "shared": 402
+    },
+    {
+      "cells": 817740,
+      "dataset": "hdma",
+      "jaccard": 0.4146341463414634,
+      "kind": "signed_enhancer_triplets",
+      "left": 812,
+      "method": "reference",
+      "right": 870,
+      "seed_a": 778,
+      "seed_b": 779,
+      "shared": 493
+    }
+  ],
+  "primary_utilities": [
+    {
+      "path": "results/hdma-n817740-seed777/reference-biological-utility.json",
+      "signatures": 5,
+      "sample_cells": 20000,
+      "donor_folds": 22,
+      "balanced_accuracy": {
+        "n": 22,
+        "median": 0.10213832450034441,
+        "mean": 0.1251801449108174,
+        "min": 0.017475610934028787,
+        "max": 0.4138719893138304
+      },
+      "macro_f1": {
+        "n": 22,
+        "median": 0.09174170335333369,
+        "mean": 0.10378554700921659,
+        "min": 0.025119574106812672,
+        "max": 0.33829720812198794
+      },
+      "converged_folds": 22,
+      "marker_checks": [
+        {
+          "TF": "HNF4A",
+          "expected_cell_types": [
+            "hepatocyte"
+          ],
+          "status": "missing_regulon"
+        },
+        {
+          "TF": "CRX",
+          "expected_cell_types": [
+            "cone",
+            "rod photoreceptor"
+          ],
+          "status": "missing_regulon"
+        },
+        {
+          "TF": "NEUROD2",
+          "expected_cell_types": [
+            "excitatory neuron"
+          ],
+          "status": "missing_regulon"
+        },
+        {
+          "TF": "MYOD1",
+          "expected_cell_types": [
+            "myoblast",
+            "myocyte"
+          ],
+          "status": "missing_regulon"
+        },
+        {
+          "TF": "TBX5",
+          "expected_cell_types": [
+            "cardiomyocyte"
+          ],
+          "status": "missing_regulon"
+        },
+        {
+          "TF": "SPI1",
+          "expected_cell_types": [
+            "macrophage",
+            "monocyte",
+            "microglia"
+          ],
+          "status": "missing_regulon"
+        }
+      ]
+    },
+    {
+      "path": "results/hdma-n817740-seed777/rustscenic-biological-utility.json",
+      "signatures": 67,
+      "sample_cells": 20000,
+      "donor_folds": 22,
+      "balanced_accuracy": {
+        "n": 22,
+        "median": 0.3083981406897649,
+        "mean": 0.3191074323772728,
+        "min": 0.14491039019611063,
+        "max": 0.7074065866465163
+      },
+      "macro_f1": {
+        "n": 22,
+        "median": 0.27459474185506827,
+        "mean": 0.2866660415989659,
+        "min": 0.17154807987654372,
+        "max": 0.6207583514324129
+      },
+      "converged_folds": 22,
+      "marker_checks": [
+        {
+          "TF": "HNF4A",
+          "expected_cell_types": [
+            "hepatocyte"
+          ],
+          "status": "missing_regulon"
+        },
+        {
+          "TF": "CRX",
+          "expected_cell_types": [
+            "cone",
+            "rod photoreceptor"
+          ],
+          "status": "missing_regulon"
+        },
+        {
+          "TF": "NEUROD2",
+          "expected_cell_types": [
+            "excitatory neuron"
+          ],
+          "status": "missing_regulon"
+        },
+        {
+          "TF": "MYOD1",
+          "expected_cell_types": [
+            "myoblast",
+            "myocyte"
+          ],
+          "status": "missing_regulon"
+        },
+        {
+          "TF": "TBX5",
+          "expected_cell_types": [
+            "cardiomyocyte"
+          ],
+          "status": "missing_regulon"
+        },
+        {
+          "TF": "SPI1",
+          "expected_cell_types": [
+            "macrophage",
+            "monocyte",
+            "microglia"
+          ],
+          "status": "missing_regulon"
+        }
+      ]
+    }
+  ],
+  "independent_portable_sample_replication": [],
+  "limits": [
+    "Full-array all-cell correlations cannot be regenerated locally because full arrays remain on HPC. Portable-sample correlations are independent sanity checks.",
+    "HPC 20k-cell utility metrics were independently checked against their confusion matrices. A distinct 10k-cell BMMC replication was fitted locally.",
+    "Networks use all unlabelled cells. Donor holdout tests the supervised classifier, not out-of-sample network inference.",
+    "Different numbers of returned TF signatures prevent interpreting classification gains as a matched-feature accuracy comparison.",
+    "Missing predefined lineage regulons prevent a positive result for that predeclared plausibility test. Correlation and classification do not establish causal edge accuracy."
+  ]
+}

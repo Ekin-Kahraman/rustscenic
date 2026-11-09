@@ -1,0 +1,197 @@
+{
+  "complete_comparison_pairs": 21,
+  "selected_successful_model_runs": 42,
+  "groups": [
+    {
+      "dataset": "atlas",
+      "cells": 100000,
+      "reference": "pySCENIC 0.12.1",
+      "paired_seeds": 3,
+      "rust_minutes": 1.8736027439124883,
+      "reference_minutes": 6.821995087713003,
+      "speedup": 3.641110747664257,
+      "rust_peak_pss_gb": 0.537096192,
+      "reference_peak_pss_gb": 10.584408064,
+      "memory_reduction_percent": 94.92559065417379,
+      "sources": [
+        "recovery-20261029"
+      ]
+    },
+    {
+      "dataset": "atlas",
+      "cells": 1306127,
+      "reference": "pySCENIC 0.12.1",
+      "paired_seeds": 3,
+      "rust_minutes": 42.31420841976069,
+      "reference_minutes": 168.38201726526023,
+      "speedup": 3.9793257053256372,
+      "rust_peak_pss_gb": 4.562530304,
+      "reference_peak_pss_gb": 134.87719526400002,
+      "memory_reduction_percent": 96.61727077355843,
+      "sources": [
+        "resource-followup-20261102"
+      ]
+    },
+    {
+      "dataset": "bmmc",
+      "cells": 10000,
+      "reference": "SCENIC+ 1.0a2",
+      "paired_seeds": 3,
+      "rust_minutes": 2.1860451038616397,
+      "reference_minutes": 20.36247235496218,
+      "speedup": 9.314753990661929,
+      "rust_peak_pss_gb": 4.05492736,
+      "reference_peak_pss_gb": 13.389462528,
+      "memory_reduction_percent": 69.71553300574725,
+      "sources": [
+        "recovery-20261029"
+      ]
+    },
+    {
+      "dataset": "bmmc",
+      "cells": 50000,
+      "reference": "SCENIC+ 1.0a2",
+      "paired_seeds": 3,
+      "rust_minutes": 12.493886592146008,
+      "reference_minutes": 79.60051663153185,
+      "speedup": 6.371157289163395,
+      "rust_peak_pss_gb": 10.142048256,
+      "reference_peak_pss_gb": 33.998217216,
+      "memory_reduction_percent": 70.16888211648045,
+      "sources": [
+        "recovery-20261029"
+      ]
+    },
+    {
+      "dataset": "hdma",
+      "cells": 100000,
+      "reference": "SCENIC+ 1.0a2",
+      "paired_seeds": 3,
+      "rust_minutes": 12.12774987757827,
+      "reference_minutes": 150.59221048840942,
+      "speedup": 12.41715998503759,
+      "rust_peak_pss_gb": 18.227790848,
+      "reference_peak_pss_gb": 44.759576576,
+      "memory_reduction_percent": 59.27622144268964,
+      "sources": [
+        "recovery-20261029"
+      ]
+    },
+    {
+      "dataset": "hdma",
+      "cells": 500000,
+      "reference": "SCENIC+ 1.0a2",
+      "paired_seeds": 3,
+      "rust_minutes": 57.90763743779001,
+      "reference_minutes": 747.0441112857002,
+      "speedup": 12.900614570716122,
+      "rust_peak_pss_gb": 91.531001856,
+      "reference_peak_pss_gb": 214.94736998399998,
+      "memory_reduction_percent": 57.41701707594129,
+      "sources": [
+        "recovery-20261029",
+        "resource-followup-20261102"
+      ]
+    },
+    {
+      "dataset": "hdma",
+      "cells": 817740,
+      "reference": "SCENIC+ 1.0a2",
+      "paired_seeds": 3,
+      "rust_minutes": 102.54749860915666,
+      "reference_minutes": 1474.2324783219644,
+      "speedup": 14.376093988803813,
+      "rust_peak_pss_gb": 149.87772416,
+      "reference_peak_pss_gb": 349.054030848,
+      "memory_reduction_percent": 57.061740901291536,
+      "sources": [
+        "resource-followup-20261102"
+      ]
+    }
+  ],
+  "extension_hashes_unchanged": {
+    "atlas-n1306127-seed778": {
+      "_rustscenic.abi3.so": "a7fc736e723c6704ee672d48e36f3041e106c413cdc242cd427fa2511cc537b3"
+    },
+    "atlas-n1306127-seed779": {
+      "_rustscenic.abi3.so": "a7fc736e723c6704ee672d48e36f3041e106c413cdc242cd427fa2511cc537b3"
+    },
+    "atlas-n1306127-seed777": {
+      "_rustscenic.abi3.so": "a7fc736e723c6704ee672d48e36f3041e106c413cdc242cd427fa2511cc537b3"
+    },
+    "hdma-n817740-seed777": {
+      "_rustscenic.abi3.so": "a7fc736e723c6704ee672d48e36f3041e106c413cdc242cd427fa2511cc537b3"
+    },
+    "hdma-n500000-seed779": {
+      "_rustscenic.abi3.so": "a7fc736e723c6704ee672d48e36f3041e106c413cdc242cd427fa2511cc537b3"
+    },
+    "hdma-n817740-seed779": {
+      "_rustscenic.abi3.so": "a7fc736e723c6704ee672d48e36f3041e106c413cdc242cd427fa2511cc537b3"
+    },
+    "hdma-n817740-seed778": {
+      "_rustscenic.abi3.so": "a7fc736e723c6704ee672d48e36f3041e106c413cdc242cd427fa2511cc537b3"
+    },
+    "hdma-n500000-seed778": {
+      "_rustscenic.abi3.so": "a7fc736e723c6704ee672d48e36f3041e106c413cdc242cd427fa2511cc537b3"
+    }
+  },
+  "prepared_metadata": {
+    "atlas": {
+      "input_manifest_sha256": "f3002eabd7b1e61eeda46331f2b21c007dcf5ea2d134def65db59225ca8a7001",
+      "keys": [
+        "cell_order_seed",
+        "cells",
+        "dataset",
+        "files",
+        "genes",
+        "panel_sha256",
+        "pilot_subset",
+        "source_real_cells",
+        "source_sha256",
+        "tfs"
+      ]
+    },
+    "bmmc": {
+      "input_manifest_sha256": "b70b1f19902db85fded985c0b67d250b6c519d9eb721e1571bce59eb07a70688",
+      "keys": [
+        "atac_representation",
+        "cells",
+        "dataset",
+        "files",
+        "genes",
+        "labels_used_for_feature_or_model_selection",
+        "normalisation",
+        "peaks",
+        "selection_cells",
+        "selection_seed",
+        "source_sha256",
+        "tfs"
+      ],
+      "cell_metadata_matches_frozen_original": true
+    },
+    "hdma": {
+      "input_manifest_sha256": "1e011441494bee355236b8ac0d5ecc43d091eba408cdfc0186089bba23152f77",
+      "keys": [
+        "atac_representation",
+        "cell_permutation_seed",
+        "cells",
+        "cells_duplicated_or_simulated",
+        "dataset",
+        "feature_selection_uses_evaluation_labels",
+        "files",
+        "genes",
+        "local_test",
+        "normalisation",
+        "paired_rna_atac_same_cells",
+        "panel_sha256",
+        "peaks",
+        "selection_cells",
+        "source_records",
+        "source_verification",
+        "tfs"
+      ],
+      "cell_metadata_matches_frozen_original": true
+    }
+  },
+  "selection_rule": "Use each completed follow-up pair in full; otherwise retain the original successful pair. Never mix method timings from different allocations. Original failed attempts remain archived."
+}

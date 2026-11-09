@@ -434,15 +434,15 @@ def _warn_if_catastrophic_drop_counts(
     if n_output >= max(1, n_input_tfs // 2):
         return
     reason = (
-        "try use_grn_intersection=False - the GRN ∩ enhancer-link step "
-        "dropped most TFs, which usually means GRN gene names and "
-        "enhancer_links `gene` column use different conventions (symbol "
-        "vs ENSEMBL)"
+        "TFs can be removed by motif support, GRN/enhancer overlap or size "
+        "filters. Check gene and peak naming before interpreting absence. "
+        "use_grn_intersection=False changes the evidence requirement and "
+        "should not be used merely to retain more TFs"
         if use_grn_intersection
         else (
             "check that cistarget `peak_id` values overlap "
-            "enhancer_links `peak_id` values - the two sets appear to "
-            "be keyed differently"
+            "enhancer_links `peak_id` values; insufficient motif support "
+            "and size filters can also remove TFs"
         )
     )
     warnings.warn(

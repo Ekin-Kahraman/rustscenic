@@ -1,0 +1,65 @@
+[
+  {
+    "passed": true,
+    "test": "external-baseline"
+  },
+  {
+    "passed": true,
+    "test": "external-unseeded"
+  },
+  {
+    "passed": true,
+    "test": "external-seeded"
+  },
+  {
+    "max_absolute_error": 2.8292338027924302e-08,
+    "passed": true,
+    "test": "atlas-probe-777",
+    "tolerance": 1e-07
+  },
+  {
+    "max_absolute_error": 0.0,
+    "passed": true,
+    "test": "whole-atlas-legacy-777",
+    "tolerance": 0.0
+  },
+  {
+    "max_absolute_error": 2.8292338027924302e-08,
+    "passed": true,
+    "test": "full-run-sample-777"
+  },
+  {
+    "max_absolute_error": 2.848088442863883e-08,
+    "passed": true,
+    "test": "atlas-probe-778",
+    "tolerance": 1e-07
+  },
+  {
+    "max_absolute_error": 0.0,
+    "passed": true,
+    "test": "whole-atlas-legacy-778",
+    "tolerance": 0.0
+  },
+  {
+    "max_absolute_error": 2.848088442863883e-08,
+    "passed": true,
+    "test": "full-run-sample-778"
+  },
+  {
+    "max_absolute_error": 3.121852876208919e-08,
+    "passed": true,
+    "test": "atlas-probe-779",
+    "tolerance": 1e-07
+  },
+  {
+    "max_absolute_error": 0.0,
+    "passed": true,
+    "test": "whole-atlas-legacy-779",
+    "tolerance": 0.0
+  },
+  {
+    "max_absolute_error": 3.121852876208919e-08,
+    "passed": true,
+    "test": "full-run-sample-779"
+  }
+]

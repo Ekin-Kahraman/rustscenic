@@ -1,0 +1,66 @@
+{
+  "status": "passed",
+  "verified_classifier_folds": 384,
+  "max_common_scorer_absolute_error": 4.718447854656915e-16,
+  "same_tf_roster": true,
+  "same_network_targets_before_after": true,
+  "train_test_donors_disjoint": true,
+  "all_corrected_matrices_reproduced_exactly": true,
+  "original_inputs_sha256": {
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/rustscenic/eregulon-edges.parquet": "e7d63c5e3e8291e79f22d7e141ec19415fa4f62ee71f59e30594daf28b7ff592",
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed777/reference/eregulon-edges.parquet": "7000c59948f4cbe6e7306603edb7446a81589b1a439035979f66c293dfa41dfd",
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/rustscenic/eregulon-edges.parquet": "a9180c26d1f5dfe778faa4b97db2a9417941f93e2153cdc09fb39ed8d47bd77f",
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed778/reference/eregulon-edges.parquet": "54ff96913741ebf2d18b3144a6654d9b18ee8da50dd45fa8804063c27f35b189",
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/rustscenic/eregulon-edges.parquet": "1bfcaba5658031ec224c3dbaebb73d6091b70df99c936b06b615353c0b76e580",
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train5000-seed779/reference/eregulon-edges.parquet": "4795ad8aacc16e69dfcd4274c87ed19524b9bf63296a66a9c62babb54538cdd7",
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/rustscenic/eregulon-edges.parquet": "edfb650cd0e4ae1dcefc2c587c40273d0b2fa5ddb2d1b97dbb6e30394623de9a",
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed777/reference/eregulon-edges.parquet": "f53530817741c505ffaa30f46d047e5d70ca47e7571f8276af4d12916d7c3728",
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/rustscenic/eregulon-edges.parquet": "ad4c96fe88a203e7e0427af82275d4721840c7657f27c4142584b372e5795854",
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed778/reference/eregulon-edges.parquet": "ca429f038003a14eed9591eb5f8e4ef8ffc53d05667228d0036cc62f3cdffa9f",
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/rustscenic/eregulon-edges.parquet": "29e0328898054bf46f7a2f30d9c5f0bcf4c61a0349dffcb8d4ceae26cf09e89e",
+    "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Results-Audit-20261106/returned/results/bmmc-train20000-seed779/reference/eregulon-edges.parquet": "c2b543101e5782b2b7b190d14cb7972f5d522b773f88ef2ee7c8775a8c9cc193"
+  },
+  "diagnostic_summary": [
+    {
+      "training_cells": 5000,
+      "method": "reference",
+      "union_f1": 0.42676675256185015,
+      "signed_f1": 0.4267805051430552,
+      "union_balanced_accuracy": 0.45369377404299155,
+      "signed_balanced_accuracy": 0.45370939987269465
+    },
+    {
+      "training_cells": 5000,
+      "method": "rustscenic",
+      "union_f1": 0.368848760421906,
+      "signed_f1": 0.40592210465030687,
+      "union_balanced_accuracy": 0.418479895470919,
+      "signed_balanced_accuracy": 0.4509677108497841
+    },
+    {
+      "training_cells": 20000,
+      "method": "reference",
+      "union_f1": 0.5124868794038323,
+      "signed_f1": 0.512593389434839,
+      "union_balanced_accuracy": 0.55690753515016,
+      "signed_balanced_accuracy": 0.5570001277427525
+    },
+    {
+      "training_cells": 20000,
+      "method": "rustscenic",
+      "union_f1": 0.4819830071695442,
+      "signed_f1": 0.5120736136575049,
+      "union_balanced_accuracy": 0.5346536258296767,
+      "signed_balanced_accuracy": 0.5607829769546682
+    }
+  ],
+  "native_macro_f1": {
+    "union": 0.4813588687268985,
+    "signed": 0.5118509919793985
+  },
+  "limitations": [
+    "Previously inspected test donors: post hoc diagnostic, not independent confirmation.",
+    "Cell-type classification is not edge truth or functional validation.",
+    "No new atlas-scale runtime or memory measurement."
+  ]
+}

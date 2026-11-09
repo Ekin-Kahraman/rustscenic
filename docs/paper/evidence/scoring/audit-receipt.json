@@ -1,0 +1,20 @@
+{
+  "status": "independent_hpc_scoring_fix_confirmed",
+  "archive_sha256": "913b3de11736b4c1f9b5d161fbeaeca583af4c0e0e90ae81f21edc8c066d75b1",
+  "tasks_verified": 18,
+  "manifest_files_verified": 195,
+  "external_score_matrices_verified": 12,
+  "atlas_sample_rows_per_network": 10000,
+  "network_seeds": 3,
+  "classifier_fold_metrics_recomputed": 96,
+  "classifier_refits_in_this_audit": 0,
+  "biological_equivalence_established": false,
+  "messages_sent": false,
+  "files_sha256": {
+    "integrity.json": "dd696b4a8655f0fe9b6b9d56bb1355826159732e8319f2b5ac8d6b5979e03b03",
+    "verified-results.json": "68eeeacd992ba45ddfd1832d21ca213835f465afbeba2d6e3fa6cd6c04aea185",
+    "audit.py": "38cc80f793a59f80057216d83d3e2a90f45e24ab3fee7024b8e1e22ee27e30e3",
+    "audit.log": "fe06add972799721ffe58baabef5b03859e38a1ef8f2fbdc5f875818050ae3d6",
+    "AUDIT.txt": "35eb373f955642e004c7554a0993b86ef92a5ecb18e718636353820966e5fe37"
+  }
+}
