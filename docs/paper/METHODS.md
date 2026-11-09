@@ -29,8 +29,10 @@ performance analysis uses 5,000 selected genes, 20,000 selected regions and
 Dataset URLs and source checksums are in `evidence/recovery/returned/package/sources.json`.
 
 Each matched pair used the same prepared input, host, allocation and 16 CPU
-cores. Seeds were 777, 778 and 779. CPU models vary across allocations, so
-curves across cell counts are descriptive, not a fixed-hardware complexity fit.
+cores. Both arms limited OpenMP, BLAS, NumExpr and vecLib pools to one thread;
+explicit stage workers and Rayon used 16. Seeds were 777, 778 and 779.
+CPU models vary across allocations, so curves across cell counts are
+descriptive, not a fixed-hardware complexity fit.
 The final grid retains the latest completed pair together; it never pairs an
 old Rust time with a rerun reference time. Original failed attempts remain
 documented, including resource failures. Their absence from completed timing
@@ -68,7 +70,9 @@ refinement harness, so the manifest, not the alias, establishes species.
 These differences affect both cost and predictions. In particular, Pearson
 linking is not an accelerated execution of the same GBM linking calculation.
 The paper must not attribute the complete workflow ratios solely to language.
-Exact source is retained under `evidence/workflow` and `evidence/recovery`.
+The [measured workflow source](evidence/recovery/returned/package/workflows.py)
+calls the [bounded adapter](evidence/recovery/returned/package/bounded.py).
+The earlier source remains under `evidence/workflow` for provenance.
 
 ## Timing, memory and summaries
 
@@ -145,10 +149,10 @@ or densifying the expression matrix. Default callers retain legacy behaviour.
 Gene axis, signatures, coverage, threshold and seed must also match.
 
 The independently returned candidate source matches the integrated four core
-files byte for byte. The Linux candidate identifies as development 0.5.1; the
-build/native hash, not that reused version string, identifies the experiment.
-It must receive a distinct release identity before public deposition. Public
-0.5.1 is not evidence that this fix is already released.
+files byte for byte. The Linux candidate used development 0.5.1 metadata; its
+build/native hash identifies the experiment. The fix is now published in
+[v0.6.0](https://github.com/Ekin-Kahraman/rustscenic/releases/tag/v0.6.0).
+Public v0.5.1 predates this fix.
 
 All 12 external matrices reproduce, with maximum reference discrepancy below
 3.31e-8. Atlas cost was assessed on 817,740 cells and three frozen networks,

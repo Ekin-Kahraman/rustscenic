@@ -65,7 +65,7 @@
 
 ## Get started
 
-Current release: `v0.6.0`. Regular CPython **3.10–3.14**; Linux, macOS and Windows.
+Current release: `v0.6.1`. Regular CPython **3.10–3.14**; Linux, macOS and Windows.
 Runs on CPUs; no GPU or Rust setup needed with prebuilt packages.
 
 ```bash
@@ -73,7 +73,7 @@ python -m pip install rustscenic
 python -c "import rustscenic; print(rustscenic.__version__)"
 ```
 
-Expected version: `0.6.0`. For a clean environment, see
+Expected version: `0.6.1`. For a clean environment, see
 [Installation](site_docs/installation.md).
 
 Prefer Conda packages? Follow the [Bioconda install instructions](site_docs/installation.md#install-with-bioconda)
@@ -441,7 +441,7 @@ without rerunning the analysis.**
 [Benchmarks](site_docs/benchmarks.md) ·
 [Validation](site_docs/validation.md) ·
 [Scope](site_docs/limitations.md) ·
-[Release notes](docs/releases/v0.6.0.md)
+[Release notes](docs/releases/v0.6.1.md)
 
 <br>
 

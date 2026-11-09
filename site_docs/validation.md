@@ -11,7 +11,7 @@ runtime, memory use and biological checks.
 
 | Signal | Evidence |
 | --- | --- |
-| Published package | [v0.6.0 on GitHub](https://github.com/Ekin-Kahraman/rustscenic/releases/tag/v0.6.0) and [PyPI](https://pypi.org/project/rustscenic/0.6.0/). |
+| Published package | [v0.6.1 on GitHub](https://github.com/Ekin-Kahraman/rustscenic/releases/tag/v0.6.1) and [PyPI](https://pypi.org/project/rustscenic/0.6.1/). |
 | Biological confirmation | Separate activity directions closed the mean external macro-F1 gap: **0.7123 vs 0.7113** for SCENIC+ networks on 12,315 cells from eight donors. Reused-cohort confirmation; [full results and the remaining recall gap](https://github.com/Ekin-Kahraman/rustscenic/blob/v0.6.0/docs/paper/RESULTS.md). |
 | Controlled benchmark path | `validation/head_to_head/head_to_head_summary.json` records machine, seed, Python versions, runtime, peak RSS and output signatures. |
 | Lab validation | Huang Lab collaborator artefacts include Kamath dopaminergic neurons and 10x human brain GEM-X multiome runs. |

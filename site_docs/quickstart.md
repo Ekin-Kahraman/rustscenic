@@ -1,6 +1,6 @@
 # Quickstart
 
-Infer a gene network and score candidate gene-set activity with **v0.6.0**.
+Infer a gene network and score candidate gene-set activity with **v0.6.1**.
 Start with [Installation](installation.md), or
 [run PBMC3k](https://github.com/Ekin-Kahraman/rustscenic/blob/main/QUICKSTART.md)
 for a complete example that downloads its own data.
