@@ -24,8 +24,8 @@ jobs:
       PYTHONPATH: ""
       MPLBACKEND: Agg
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Install notebook execution tools
@@ -71,7 +71,7 @@ jobs:
           PY
       - name: Upload executed notebook and run provenance
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pbmc3k-public-wheel-notebook
           path: ${{ runner.temp }}/pbmc3k-notebook-evidence
