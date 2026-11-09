@@ -1,6 +1,6 @@
 # Installation
 
-RustScenic **v0.6.0** supports regular CPython **3.10–3.14** on Linux, macOS and Windows.
+RustScenic **v0.6.1** supports regular CPython **3.10–3.14** on Linux, macOS and Windows.
 Prebuilt packages need no Rust setup. Core analysis runs on CPUs without Java,
 Dask, CUDA or Snakemake.
 
@@ -20,7 +20,7 @@ python -m pip install rustscenic
 python -c "import rustscenic; print(rustscenic.__version__)"
 ```
 
-Expected version: `0.6.0`.
+Expected version: `0.6.1`.
 
 <details markdown="1">
 <summary>Using venv instead of Conda</summary>

@@ -16,7 +16,7 @@ stages, with measured workflow gains and an explicit biological trade-off.
   includes local cost measurements and an explicit researcher-facing option.
 - [Independent directional confirmation](evidence/directional/AUDIT.txt): verified
   external F1, remaining recall differences and atlas scoring/storage costs.
-- [Evidence manifest](evidence/manifest.json): 212 checksummed source files.
+- [Evidence manifest](evidence/manifest.json): 213 checksummed source files.
 - [Build verification](build-verification.json): reproduced statistics and output hashes.
 
 Rebuild all tables and the three scientific figures from the repository root:

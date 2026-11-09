@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.1 - 2026-11-09
+
+- Fix PyPI description links and images with a generated, version-pinned
+  package README. Preserve the GitHub README wording, layout and figures.
+- Update the PBMC3k notebook to the verified public v0.6.0 package and correct
+  the quickstart release link.
+- Archive the exact HPC workflow runner and document its thread settings.
+  Preserve all measured results and historical evidence.
+
+Analysis code, defaults and scientific results are unchanged from v0.6.0.
+
 ## 0.6.0 - 2026-11-09
 
 - Add the audited `rustscenic validated` RNA and paired RNA+ATAC recipes,

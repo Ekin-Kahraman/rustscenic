@@ -187,8 +187,8 @@ def _promote_fixture(root: Path) -> Path:
 
 
 def test_live_release_passes_default_and_tag_validation():
-    assert validate_repository(ROOT) == "0.6.0"
-    assert validate_repository(ROOT, tag="v0.6.0") == "0.6.0"
+    assert validate_repository(ROOT) == "0.6.1"
+    assert validate_repository(ROOT, tag="v0.6.1") == "0.6.1"
     with pytest.raises(ReleaseValidationError, match="release-candidate.json"):
         validate_repository(ROOT, candidate=True)
 
