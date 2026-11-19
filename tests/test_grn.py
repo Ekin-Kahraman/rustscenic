@@ -433,6 +433,35 @@ class TestGrnEarlyStopping:
 
         assert out.attrs["grn_fit"]["fitted_trees_min"] < 20
 
+    def test_paired_oob_trains_longer_than_cross_mask_on_signal(self):
+        # Target g2 is a strong function of TF g0, so held-out loss keeps
+        # falling. Same-mask stopping must not halt at the first check; the
+        # cross-mask monitor compares unrelated OOB subsets and may.
+        rng = np.random.default_rng(0)
+        g0 = rng.gamma(2.0, 1.0, size=600)
+        g1 = rng.gamma(2.0, 1.0, size=600)
+        frame = pd.DataFrame(
+            {"g0": g0, "g1": g1, "g2": 3.0 * g0 + rng.normal(0, 0.1, size=600)}
+        ).astype(np.float32)
+        kwargs = dict(
+            tf_names=["g0", "g1"],
+            n_estimators=200,
+            early_stop_window=25,
+            seed=42,
+            verbose=False,
+        )
+        paired = grn.infer(frame, early_stop_mode="paired_oob", **kwargs)
+        again = grn.infer(frame, early_stop_mode="paired_oob", **kwargs)
+
+        assert paired.attrs["grn_fit"]["early_stop_mode"] == "paired_oob"
+        pd.testing.assert_frame_equal(paired, again)
+        trees = paired.groupby("target").importance.sum()
+        assert trees["g2"] == pytest.approx(200, abs=1e-3)
+
+    def test_unknown_early_stop_mode_is_rejected(self, small_expr):
+        with pytest.raises(ValueError, match="paired_oob"):
+            grn.infer(small_expr, tf_names=["g0", "g1"], early_stop_mode="oob", verbose=False)
+
     def test_legacy_mode_is_explicit_and_deterministic(self, small_expr):
         kwargs = dict(
             tf_names=["g0", "g1"],

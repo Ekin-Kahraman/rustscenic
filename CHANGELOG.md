@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Add `early_stop_mode="paired_oob"` for GRN inference (API, `grn` CLI and
+  pipeline). It applies arboreto's 25-round monitor to same-mask out-of-bag
+  improvements, the definition scikit-learn used before 1.3 and GRNBoost2 was
+  published against. From scikit-learn 1.3 the improvement compares two
+  different random out-of-bag subsets, which stops most targets at the first
+  check (median 25 to 29 trees). The default remains `"arboreto"`, so existing
+  results and the published benchmarks are unchanged. `paired_oob` fits more
+  trees and takes correspondingly longer.
+
 ## 0.6.1 - 2026-11-09
 
 - Fix PyPI description links and images with a generated, version-pinned

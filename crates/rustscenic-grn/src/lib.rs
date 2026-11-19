@@ -114,6 +114,9 @@ pub enum EarlyStopMode {
     Arboreto,
     /// Historical RustScenic two-point comparison of in-bag MSE.
     LegacyInbag,
+    /// Arboreto's monitor over same-mask OOB improvements (scikit-learn < 1.3,
+    /// GRNBoost2 as published).
+    PairedOob,
 }
 
 struct ResolvedTfCols {

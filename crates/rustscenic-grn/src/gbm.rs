@@ -9,6 +9,14 @@
 //! strictly negative.  The historical in-bag two-point rule remains available
 //! through [`crate::EarlyStopMode::LegacyInbag`]. Disabled with window=0.
 //!
+//! [`crate::EarlyStopMode::PairedOob`] applies the same monitor to same-mask
+//! OOB improvements (loss before minus loss after the round, on that round's
+//! own OOB rows). This is the definition scikit-learn used before 1.3 and the
+//! one GRNBoost2 was designed against. From 1.3 scikit-learn subtracts the
+//! previous round's OOB loss, measured on a different random OOB subset, so
+//! the trailing mean telescopes into a comparison of two unrelated subsets and
+//! the monitor fires at the first check for about half of all targets.
+//!
 //! `exclude_feature` is passed through to the tree builder so targets that are
 //! themselves TFs don't include their own expression column as a predictor.
 
@@ -126,7 +134,7 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
             scratch
                 .sample_idx
                 .extend((0..n_samples).map(|row| row as u32));
-        } else if cfg.early_stop_mode == EarlyStopMode::Arboreto {
+        } else if cfg.early_stop_mode != EarlyStopMode::LegacyInbag {
             let n_inbag = ((cfg.subsample * n_samples as f32) as usize)
                 .max(1)
                 .min(n_samples);
@@ -173,8 +181,10 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
                 let d = scratch.residuals[k];
                 mse_inbag += d * d;
                 inbag_pos += 1;
-            } else if cfg.early_stop_mode == EarlyStopMode::Arboreto {
-                if i == 0 {
+            } else if cfg.early_stop_mode != EarlyStopMode::LegacyInbag {
+                // Round zero is always same-mask. PairedOob keeps every round
+                // same-mask (GRNBoost2 as published, scikit-learn < 1.3).
+                if i == 0 || cfg.early_stop_mode == EarlyStopMode::PairedOob {
                     oob_score_before += old_residual * old_residual;
                 }
                 let d = scratch.residuals[k];
@@ -194,10 +204,10 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
 
         n_fit += 1;
 
-        if cfg.early_stop_mode == EarlyStopMode::Arboreto {
+        if cfg.early_stop_mode != EarlyStopMode::LegacyInbag {
             if cfg.subsample < 1.0 && n_oob > 0 {
                 let current_oob_score = oob_score_after / n_oob as f32;
-                let prior_score = if i == 0 {
+                let prior_score = if i == 0 || cfg.early_stop_mode == EarlyStopMode::PairedOob {
                     oob_score_before / n_oob as f32
                 } else {
                     previous_oob_score.unwrap_or(current_oob_score)
@@ -206,7 +216,7 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
                     .monitor_history
                     .push(prior_score - current_oob_score);
                 previous_oob_score = Some(current_oob_score);
-                if should_stop(&scratch.monitor_history, window, EarlyStopMode::Arboreto) {
+                if should_stop(&scratch.monitor_history, window, cfg.early_stop_mode) {
                     break;
                 }
             }
@@ -237,7 +247,7 @@ fn should_stop(history: &[f32], window: usize, mode: EarlyStopMode) -> bool {
         return false;
     }
     match mode {
-        EarlyStopMode::Arboreto => {
+        EarlyStopMode::Arboreto | EarlyStopMode::PairedOob => {
             history.len() >= window
                 && history[history.len() - window..].iter().sum::<f32>() / (window as f32) < 0.0
         }
@@ -328,6 +338,53 @@ mod tests {
         assert_eq!(imp[0], 0.0, "excluded feature must have zero importance");
         // Since feature 0 was excluded, some gain must go elsewhere
         assert!(imp[1] + imp[2] > 0.0);
+    }
+
+    fn lcg(state: &mut u64) -> f32 {
+        *state = state
+            .wrapping_mul(6364136223846793005)
+            .wrapping_add(1442695040888963407);
+        ((*state >> 40) as f32) / ((1u64 << 24) as f32)
+    }
+
+    fn fitted_trees(y: &[f32], x: &[f32], n: usize, nf: usize, mode: EarlyStopMode) -> usize {
+        let bm = BinnedMatrix::from_dense(x, n, nf);
+        let cfg = GrnConfig {
+            n_estimators: 300,
+            learning_rate: 0.01,
+            max_features: 1.0,
+            subsample: 0.9,
+            max_depth: 3,
+            early_stop_window: 25,
+            early_stop_mode: mode,
+            seed: 11,
+            target_block_size: 0,
+        };
+        let mut scratch = GbmScratch::new(n, nf, cfg.n_estimators);
+        fit_and_importances_binned_with_scratch(&bm, y, &cfg, None, &mut scratch).1
+    }
+
+    #[test]
+    fn paired_oob_keeps_training_a_predictable_target() {
+        let (n, nf) = (2000, 8);
+        let mut state = 7u64;
+        let x: Vec<f32> = (0..n * nf).map(|_| lcg(&mut state)).collect();
+        let y: Vec<f32> = (0..n)
+            .map(|i| 3.0 * x[i * nf] + 0.3 * lcg(&mut state))
+            .collect();
+        // Every round still improves held-out loss, so same-mask stopping
+        // must run to the ceiling.
+        assert_eq!(fitted_trees(&y, &x, n, nf, EarlyStopMode::PairedOob), 300);
+    }
+
+    #[test]
+    fn paired_oob_stops_on_an_unpredictable_target() {
+        let (n, nf) = (2000, 8);
+        let mut state = 99u64;
+        let x: Vec<f32> = (0..n * nf).map(|_| lcg(&mut state)).collect();
+        let y: Vec<f32> = (0..n).map(|_| lcg(&mut state)).collect();
+        let trees = fitted_trees(&y, &x, n, nf, EarlyStopMode::PairedOob);
+        assert!((25..300).contains(&trees), "fitted {trees} trees on noise");
     }
 
     #[test]

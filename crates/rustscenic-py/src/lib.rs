@@ -486,8 +486,9 @@ fn parse_early_stop_mode(value: &str) -> PyResult<EarlyStopMode> {
     match value {
         "arboreto" => Ok(EarlyStopMode::Arboreto),
         "legacy_inbag" => Ok(EarlyStopMode::LegacyInbag),
+        "paired_oob" => Ok(EarlyStopMode::PairedOob),
         _ => Err(pyo3::exceptions::PyValueError::new_err(format!(
-            "early_stop_mode must be 'arboreto' or 'legacy_inbag', got {value:?}"
+            "early_stop_mode must be 'arboreto', 'paired_oob' or 'legacy_inbag', got {value:?}"
         ))),
     }
 }

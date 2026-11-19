@@ -320,7 +320,10 @@ def run(
         much faster on high-TF datasets, but change edge rankings and
         should be treated as a speed/quality tradeoff.
     grn_early_stop_mode
-        ``"arboreto"`` (default) uses the trailing mean of OOB improvements.
+        ``"arboreto"`` (default) uses the trailing mean of OOB improvements
+        as arboreto computes it on scikit-learn 1.3 or later.
+        ``"paired_oob"`` uses same-mask improvements, as GRNBoost2 was
+        published; it trains predictable targets for longer.
         ``"legacy_inbag"`` reproduces historical RustScenic early stopping.
     grn_regulon_polarities
         ``"both"`` (default) computes TF-target Pearson correlations and
@@ -405,9 +408,9 @@ def run(
             f"'unsigned', got {grn_regulon_polarities!r}"
         )
     grn_early_stop_mode = str(grn_early_stop_mode)
-    if grn_early_stop_mode not in {"arboreto", "legacy_inbag"}:
+    if grn_early_stop_mode not in {"arboreto", "paired_oob", "legacy_inbag"}:
         raise ValueError(
-            "grn_early_stop_mode must be 'arboreto' or 'legacy_inbag', "
+            "grn_early_stop_mode must be 'arboreto', 'paired_oob' or 'legacy_inbag', "
             f"got {grn_early_stop_mode!r}"
         )
     grn_early_stop_window = int(grn_early_stop_window)

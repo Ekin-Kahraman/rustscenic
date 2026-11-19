@@ -511,9 +511,11 @@ def main(argv: list[str] | None = None) -> int:
     pg.add_argument("--max-depth", type=int, default=3); pg.add_argument("--early-stop-window", type=int, default=25)
     pg.add_argument(
         "--early-stop-mode",
-        choices=["arboreto", "legacy_inbag"],
+        choices=["arboreto", "paired_oob", "legacy_inbag"],
         default="arboreto",
-        help="OOB arboreto semantics (default) or historical RustScenic in-bag rule.",
+        help="Cross-mask OOB monitor as arboreto on scikit-learn >= 1.3 (default), "
+        "same-mask OOB monitor as GRNBoost2 was published (paired_oob), "
+        "or the historical RustScenic in-bag rule.",
     )
     pg.add_argument(
         "--target-block-size",
@@ -600,7 +602,7 @@ def main(argv: list[str] | None = None) -> int:
     pp.add_argument("--grn-early-stop-window", type=int, default=25)
     pp.add_argument(
         "--grn-early-stop-mode",
-        choices=["arboreto", "legacy_inbag"],
+        choices=["arboreto", "paired_oob", "legacy_inbag"],
         default="arboreto",
     )
     pp.add_argument(
