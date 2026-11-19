@@ -39,6 +39,7 @@ def infer(
     max_depth: int = 3,
     early_stop_window: int = 25,
     early_stop_mode: str = "arboreto",
+    max_bins: int = 65535,
     top_targets_per_tf: int | None = None,
     min_importance: float | None = None,
     seed: int = 777,
@@ -87,11 +88,23 @@ def infer(
     early_stop_mode
         ``"arboreto"`` (default) uses the trailing mean of out-of-bag
         improvements, matching arboreto with modern scikit-learn semantics.
+        ``"paired_oob"`` applies the same monitor to same-mask improvements
+        (loss before minus loss after each round on that round's own
+        out-of-bag rows), the definition scikit-learn used before 1.3 and
+        GRNBoost2 was designed against. It trains predictable targets for
+        longer and costs correspondingly more time.
         ``"legacy_inbag"`` retains RustScenic's historical two-point in-bag
         MSE rule for reproducing older RustScenic artefacts. Set
         ``early_stop_window=0`` to disable either rule. Arboreto OOB stopping
         also has no OOB rows at ``subsample=1.0`` and therefore fits to the
         estimator ceiling.
+    max_bins
+        Bin budget per TF, from 3 to 65,535. The default gives every distinct
+        TF value its own bin, so candidate split thresholds are scikit-learn's
+        (values one float32 rounding step apart can share a bin, and TFs with
+        more than 65,535 distinct values have adjacent values merged). Smaller budgets merge distinct values and can be
+        faster; ``255`` reproduces RustScenic 0.6 networks, which diverge from
+        arboreto's at tens of thousands of cells.
     seed
         Seed passed to the Rust GRN backend's random-number generator.
     verbose
@@ -150,10 +163,13 @@ def infer(
         target_block_size_for_rust = int(target_block_size)
         if target_block_size_for_rust < 1:
             raise ValueError("target_block_size must be None or a positive integer")
+    max_bins = int(max_bins)
+    if not 3 <= max_bins <= 65535:
+        raise ValueError(f"max_bins must be between 3 and 65535, got {max_bins}")
     early_stop_mode = str(early_stop_mode)
-    if early_stop_mode not in {"arboreto", "legacy_inbag"}:
+    if early_stop_mode not in {"arboreto", "paired_oob", "legacy_inbag"}:
         raise ValueError(
-            "early_stop_mode must be 'arboreto' or 'legacy_inbag', "
+            "early_stop_mode must be 'arboreto', 'paired_oob' or 'legacy_inbag', "
             f"got {early_stop_mode!r}"
         )
 
@@ -192,6 +208,7 @@ def infer(
             f"[rustscenic.grn] fitting GRNBoost2 - {X.shape[0]:,} cells × "
             f"{X.shape[1]:,} genes × {len(tfs_list)} TFs × "
             f"n_estimators={n_estimators} (early-stop mode={early_stop_mode}, "
+            f"max_bins={max_bins}, "
             f"window={early_stop_window}). "
             f"Running in parallel, this can take seconds to tens of minutes "
             f"depending on shape...",
@@ -218,6 +235,7 @@ def infer(
         target_block_size_for_rust,
         top_targets_for_rust,
         min_importance_for_rust,
+        max_bins,
     )
     if sp.issparse(X):
         backend_symbol = "grn_infer_sparse_csc"
@@ -305,6 +323,7 @@ def infer(
     }
     df.attrs["grn_fit"] = {
         "early_stop_mode": early_stop_mode,
+        "max_bins": max_bins,
         "early_stop_window": int(early_stop_window),
         "n_estimators_ceiling": int(n_estimators),
         "subsample": float(subsample),

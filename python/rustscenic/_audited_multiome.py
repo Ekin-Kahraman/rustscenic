@@ -21,9 +21,11 @@ from scipy import sparse
 
 from rustscenic import aucell, cistarget, enhancer, eregulon, grn, topics
 
+# max_bins=255 keeps the audited v0.6 GRN binning, so the recipe reproduces its
+# audited results; grn.infer itself defaults to exact binning from v0.7.0.
 GRN_SETTINGS = dict(n_estimators=5000, learning_rate=.01, max_features=.1,
                     subsample=.9, max_depth=3, early_stop_window=25,
-                    early_stop_mode="arboreto")
+                    early_stop_mode="arboreto", max_bins=255)
 _SUPPORT_COLUMNS = ["TF", "peak_id", "motif", "auc", "nes"]
 _SCORE_COLUMNS = ["region_set", "motif", "auc", "nes"]
 

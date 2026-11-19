@@ -47,6 +47,7 @@ SEED = 0
     [
         ({"grn_early_stop_mode": "unknown"}, "grn_early_stop_mode"),
         ({"grn_early_stop_window": -1}, "grn_early_stop_window"),
+        ({"grn_max_bins": 2}, "grn_max_bins"),
         ({"grn_top_targets": 0}, "grn_top_targets"),
         ({"grn_rho_threshold": 0.0}, "grn_rho_threshold"),
         ({"grn_rho_threshold": np.nan}, "grn_rho_threshold"),

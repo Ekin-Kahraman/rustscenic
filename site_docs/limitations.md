@@ -19,8 +19,10 @@ assembly.
 - Motif ranking databases are external inputs because public databases can be
   hundreds of megabytes to tens of gigabytes.
 - GRN edge rankings are independently implemented and can differ from arboreto
-  at fine grain because RustScenic uses an independent histogram-tree builder;
-  the early-stop monitor and fitted-tree distribution are validated separately.
+  at fine grain because RustScenic uses an independent histogram-tree builder
+  and random-number stream; the early-stop monitor and fitted-tree distribution
+  are validated separately. Before v0.7.0, TF values were merged into at most
+  255 bins, which lowered agreement with arboreto at tens of thousands of cells.
 - Topic modelling ships both Online VB and collapsed Gibbs paths. The Gibbs path
   is the stronger sparse scATAC option at larger topic counts.
 - The million-cell benchmark measures RNA gene-network inference, not a complete

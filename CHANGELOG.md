@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.7.0 - 2026-11-19
+
+- GRN inference now bins each TF exactly by default: every distinct value gets
+  its own bin (up to 65,535), so candidate split thresholds match
+  scikit-learn's. RustScenic 0.6 merged values into at most 255 bins. In a
+  pre-specified replication at 20,000 cells, that quantisation made target
+  rankings diverge from arboreto's by more than arboreto's own seed-to-seed
+  variation (protocol fidelity 0.74 to 0.84, against a 0.90 criterion); post
+  hoc refits with exact binning gave 0.95 to 0.99. The replication record is
+  to be archived with the accompanying manuscript. Networks therefore change
+  from 0.6. The new
+  `max_bins` option (API, `grn --max-bins`, pipeline `grn_max_bins`) restores
+  0.6 behaviour with `max_bins=255`. Bin indices are stored as 16-bit
+  integers, so the binned TF matrix takes 2 bytes per cell per TF instead of 1.
+- Split search computes gains only for the bins a node occupies and resets
+  only those bins, instead of every bin of the TF. Networks are bit-identical.
+  On 1,469 bone-marrow targets (20,000 cells, 1,069 TFs, 10-core laptop),
+  exact binning took 99.6 to 100.9 s before this change and 93.5 to 95.5 s
+  after, against 90.1 to 93.8 s for v0.6.1's 255 bins. On the full input
+  (5,000 genes), v0.7.0 took 4.9% longer than v0.6.1 with the same peak memory.
+- `max_bins` must be at least 3: when values are merged the top bin stays
+  empty (v0.6 behaviour), so a budget of 2 could not split.
+- The audited `rustscenic validated` RNA and paired recipes pin
+  `max_bins=255`, so they keep reproducing their audited results.
+- The type stubs for the compiled GRN functions list `max_bins`.
+- Add `early_stop_mode="paired_oob"` for GRN inference (API, `grn` CLI and
+  pipeline). It applies arboreto's 25-round monitor to same-mask out-of-bag
+  improvements, the definition scikit-learn used before 1.3 and GRNBoost2 was
+  published against. From scikit-learn 1.3 the improvement compares two
+  different random out-of-bag subsets, which stops about half of targets at
+  the first check (median 25 to 29 trees). The default stopping rule remains
+  `"arboreto"`. `paired_oob` fits more trees and takes correspondingly longer.
+
 ## 0.6.1 - 2026-11-09
 
 - Fix PyPI description links and images with a generated, version-pinned

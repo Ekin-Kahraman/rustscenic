@@ -27,6 +27,7 @@ def grn_infer(
     target_block_size: int = 0,
     top_targets_per_tf: int | None = None,
     min_importance: float | None = None,
+    max_bins: int = 65535,
 ) -> tuple[list[str], list[str], npt.NDArray[np.float32], int, int, list[str], float, dict[str, int | float]]:
     """Infer (TF, target, importance) edges from an expression matrix.
 
@@ -54,6 +55,7 @@ def grn_infer_sparse_csc(
     target_block_size: int = 0,
     top_targets_per_tf: int | None = None,
     min_importance: float | None = None,
+    max_bins: int = 65535,
 ) -> tuple[list[str], list[str], npt.NDArray[np.float32], int, int, list[str], float, dict[str, int | float]]:
     """Infer sparse GRN edges and TF overlap metadata without full densification."""
 

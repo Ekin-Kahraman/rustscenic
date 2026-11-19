@@ -433,6 +433,35 @@ class TestGrnEarlyStopping:
 
         assert out.attrs["grn_fit"]["fitted_trees_min"] < 20
 
+    def test_paired_oob_trains_longer_than_cross_mask_on_signal(self):
+        # Target g2 is a strong function of TF g0, so held-out loss keeps
+        # falling. Same-mask stopping must not halt at the first check; the
+        # cross-mask monitor compares unrelated OOB subsets and may.
+        rng = np.random.default_rng(0)
+        g0 = rng.gamma(2.0, 1.0, size=600)
+        g1 = rng.gamma(2.0, 1.0, size=600)
+        frame = pd.DataFrame(
+            {"g0": g0, "g1": g1, "g2": 3.0 * g0 + rng.normal(0, 0.1, size=600)}
+        ).astype(np.float32)
+        kwargs = dict(
+            tf_names=["g0", "g1"],
+            n_estimators=200,
+            early_stop_window=25,
+            seed=42,
+            verbose=False,
+        )
+        paired = grn.infer(frame, early_stop_mode="paired_oob", **kwargs)
+        again = grn.infer(frame, early_stop_mode="paired_oob", **kwargs)
+
+        assert paired.attrs["grn_fit"]["early_stop_mode"] == "paired_oob"
+        pd.testing.assert_frame_equal(paired, again)
+        trees = paired.groupby("target").importance.sum()
+        assert trees["g2"] == pytest.approx(200, abs=1e-3)
+
+    def test_unknown_early_stop_mode_is_rejected(self, small_expr):
+        with pytest.raises(ValueError, match="paired_oob"):
+            grn.infer(small_expr, tf_names=["g0", "g1"], early_stop_mode="oob", verbose=False)
+
     def test_legacy_mode_is_explicit_and_deterministic(self, small_expr):
         kwargs = dict(
             tf_names=["g0", "g1"],
@@ -448,6 +477,41 @@ class TestGrnEarlyStopping:
         assert first.attrs["grn_fit"]["early_stop_mode"] == "legacy_inbag"
         pd.testing.assert_frame_equal(first, second)
         assert first.attrs["grn_fit"] == second.attrs["grn_fit"]
+
+
+class TestGrnBinning:
+    @staticmethod
+    def _frame(levels=None):
+        rng = np.random.default_rng(3)
+        g0 = rng.gamma(2.0, 1.0, size=800)
+        g1 = rng.gamma(2.0, 1.0, size=800)
+        if levels is not None:
+            g0 = np.round(g0 * levels / g0.max())
+            g1 = np.round(g1 * levels / g1.max())
+        g2 = np.sin(g0) + 0.5 * g1 + rng.normal(0, 0.2, size=800)
+        return pd.DataFrame({"g0": g0, "g1": g1, "g2": g2}).astype(np.float32)
+
+    _kwargs = dict(tf_names=["g0", "g1"], n_estimators=60, early_stop_window=0, seed=5, verbose=False)
+
+    def test_default_budget_is_exact_and_recorded(self):
+        frame = self._frame()
+        default = grn.infer(frame, **self._kwargs)
+        explicit = grn.infer(frame, max_bins=65535, **self._kwargs)
+        assert default.attrs["grn_fit"]["max_bins"] == 65535
+        pd.testing.assert_frame_equal(default, explicit)
+
+    def test_smaller_budget_only_matters_beyond_its_distinct_values(self):
+        many = self._frame()  # 800 distinct values per TF
+        few = self._frame(levels=100)  # at most 101 distinct values per TF
+        assert not grn.infer(many, **self._kwargs).equals(grn.infer(many, max_bins=255, **self._kwargs))
+        pd.testing.assert_frame_equal(
+            grn.infer(few, **self._kwargs), grn.infer(few, max_bins=255, **self._kwargs)
+        )
+
+    @pytest.mark.parametrize("max_bins", [2, 65536])
+    def test_out_of_range_budget_is_rejected(self, small_expr, max_bins):
+        with pytest.raises(ValueError, match="max_bins"):
+            grn.infer(small_expr, tf_names=["g0", "g1"], max_bins=max_bins, verbose=False)
 
 
 class TestGrnProvenance:
