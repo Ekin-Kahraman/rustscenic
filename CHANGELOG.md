@@ -18,7 +18,8 @@
   only those bins, instead of every bin of the TF. Networks are bit-identical.
   On 1,469 bone-marrow targets (20,000 cells, 1,069 TFs, 10-core laptop),
   exact binning took 99.6 to 100.9 s before this change and 93.5 to 95.5 s
-  after, against 90.1 to 93.8 s for v0.6.1's 255 bins.
+  after, against 90.1 to 93.8 s for v0.6.1's 255 bins. On the full input
+  (5,000 genes), v0.7.0 took 4.9% longer than v0.6.1 with the same peak memory.
 - `max_bins` must be at least 3: when values are merged the top bin stays
   empty (v0.6 behaviour), so a budget of 2 could not split.
 - The audited `rustscenic validated` RNA and paired recipes pin
