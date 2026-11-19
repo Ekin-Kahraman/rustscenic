@@ -76,10 +76,6 @@ python -c "import rustscenic; print(rustscenic.__version__)"
 Expected version: `0.7.0`. For a clean environment, see
 [Installation](site_docs/installation.md).
 
-Upgrading from v0.6? GRN inference now gives each distinct TF value its own
-bin, so default networks differ from v0.6; `max_bins=255` reproduces them. See
-the [v0.7.0 release notes](docs/releases/v0.7.0.md).
-
 Prefer Conda packages? Follow the [Bioconda install instructions](site_docs/installation.md#install-with-bioconda)
 for Linux or Intel macOS.
 
