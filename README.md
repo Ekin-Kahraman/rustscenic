@@ -65,7 +65,7 @@
 
 ## Get started
 
-Current release: `v0.6.1`. Regular CPython **3.10–3.14**; Linux, macOS and Windows.
+Current release: `v0.7.0`. Regular CPython **3.10–3.14**; Linux, macOS and Windows.
 Runs on CPUs; no GPU or Rust setup needed with prebuilt packages.
 
 ```bash
@@ -73,8 +73,12 @@ python -m pip install rustscenic
 python -c "import rustscenic; print(rustscenic.__version__)"
 ```
 
-Expected version: `0.6.1`. For a clean environment, see
+Expected version: `0.7.0`. For a clean environment, see
 [Installation](site_docs/installation.md).
+
+Upgrading from v0.6? GRN inference now gives each distinct TF value its own
+bin, so default networks differ from v0.6; `max_bins=255` reproduces them. See
+the [v0.7.0 release notes](docs/releases/v0.7.0.md).
 
 Prefer Conda packages? Follow the [Bioconda install instructions](site_docs/installation.md#install-with-bioconda)
 for Linux or Intel macOS.
@@ -441,7 +445,7 @@ without rerunning the analysis.**
 [Benchmarks](site_docs/benchmarks.md) ·
 [Validation](site_docs/validation.md) ·
 [Scope](site_docs/limitations.md) ·
-[Release notes](docs/releases/v0.6.1.md)
+[Release notes](docs/releases/v0.7.0.md)
 
 <br>
 
