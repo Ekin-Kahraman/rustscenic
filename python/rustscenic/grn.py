@@ -99,10 +99,10 @@ def infer(
         also has no OOB rows at ``subsample=1.0`` and therefore fits to the
         estimator ceiling.
     max_bins
-        Bin budget per TF, from 2 to 65,535. The default gives every distinct
+        Bin budget per TF, from 3 to 65,535. The default gives every distinct
         TF value its own bin, so candidate split thresholds are scikit-learn's
-        exact ones (for TFs with more than 65,535 distinct values, adjacent
-        values are merged). Smaller budgets merge distinct values and can be
+        (values one float32 rounding step apart can share a bin, and TFs with
+        more than 65,535 distinct values have adjacent values merged). Smaller budgets merge distinct values and can be
         faster; ``255`` reproduces RustScenic 0.6 networks, which diverge from
         arboreto's at tens of thousands of cells.
     seed
@@ -164,8 +164,8 @@ def infer(
         if target_block_size_for_rust < 1:
             raise ValueError("target_block_size must be None or a positive integer")
     max_bins = int(max_bins)
-    if not 2 <= max_bins <= 65535:
-        raise ValueError(f"max_bins must be between 2 and 65535, got {max_bins}")
+    if not 3 <= max_bins <= 65535:
+        raise ValueError(f"max_bins must be between 3 and 65535, got {max_bins}")
     early_stop_mode = str(early_stop_mode)
     if early_stop_mode not in {"arboreto", "paired_oob", "legacy_inbag"}:
         raise ValueError(

@@ -508,7 +508,7 @@ class TestGrnBinning:
             grn.infer(few, **self._kwargs), grn.infer(few, max_bins=255, **self._kwargs)
         )
 
-    @pytest.mark.parametrize("max_bins", [1, 65536])
+    @pytest.mark.parametrize("max_bins", [2, 65536])
     def test_out_of_range_budget_is_rejected(self, small_expr, max_bins):
         with pytest.raises(ValueError, match="max_bins"):
             grn.infer(small_expr, tf_names=["g0", "g1"], max_bins=max_bins, verbose=False)

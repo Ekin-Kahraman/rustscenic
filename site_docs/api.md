@@ -28,10 +28,16 @@ Use this when you need a GRNBoost2-style TF-target edge table without depending
 on arboreto and dask at runtime. The default monitor stops when the strict mean
 of the last 25 scikit-learn-style OOB improvements is negative, including the
 stopping tree, matching arboreto's trailing-window rule. Set
+`early_stop_mode="paired_oob"` to apply the same monitor to same-mask OOB
+improvements (scikit-learn before 1.3; trains longer),
 `early_stop_mode="legacy_inbag"` to reproduce RustScenic's historical in-bag
 two-point monitor, or `early_stop_window=0` to disable stopping. With
 `subsample=1.0`, arboreto mode has no OOB rows and also fits to the estimator
 ceiling.
+
+From v0.7.0 each distinct TF value gets its own bin (`max_bins=65535`, the
+default), so candidate split thresholds are scikit-learn's. `max_bins=255`
+reproduces v0.6 networks.
 
 Flat target scheduling no longer blocks targets. `target_block_size` remains
 accepted for API compatibility but does not change execution.

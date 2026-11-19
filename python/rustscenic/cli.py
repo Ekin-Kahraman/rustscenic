@@ -522,7 +522,7 @@ def main(argv: list[str] | None = None) -> int:
         "--max-bins",
         type=int,
         default=65535,
-        help="Bin budget per TF (2-65535). The default keeps every distinct value, "
+        help="Bin budget per TF (3-65535). The default keeps every distinct value, "
         "matching scikit-learn's exact thresholds; 255 reproduces RustScenic 0.6.",
     )
     pg.add_argument(
@@ -613,7 +613,12 @@ def main(argv: list[str] | None = None) -> int:
         choices=["arboreto", "paired_oob", "legacy_inbag"],
         default="arboreto",
     )
-    pp.add_argument("--grn-max-bins", type=int, default=65535)
+    pp.add_argument(
+        "--grn-max-bins",
+        type=int,
+        default=65535,
+        help="GRN bin budget per TF (3-65535); 255 reproduces RustScenic 0.6.",
+    )
     pp.add_argument(
         "--grn-target-block-size",
         type=int,

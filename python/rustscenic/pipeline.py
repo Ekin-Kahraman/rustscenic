@@ -422,8 +422,8 @@ def run(
     if grn_early_stop_window < 0:
         raise ValueError("grn_early_stop_window must be non-negative")
     grn_max_bins = int(grn_max_bins)
-    if not 2 <= grn_max_bins <= 65535:
-        raise ValueError(f"grn_max_bins must be between 2 and 65535, got {grn_max_bins}")
+    if not 3 <= grn_max_bins <= 65535:
+        raise ValueError(f"grn_max_bins must be between 3 and 65535, got {grn_max_bins}")
     grn_top_targets = int(grn_top_targets)
     if grn_top_targets < 1:
         raise ValueError(f"grn_top_targets must be >= 1, got {grn_top_targets}")

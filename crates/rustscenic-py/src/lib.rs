@@ -491,12 +491,12 @@ fn grn_edges_to_py(
 }
 
 fn validate_max_bins(max_bins: usize) -> PyResult<usize> {
-    let limit = rustscenic_grn::histogram::MAX_BINS;
-    if (2..=limit).contains(&max_bins) {
+    use rustscenic_grn::histogram::{MAX_BINS, MIN_BINS};
+    if (MIN_BINS..=MAX_BINS).contains(&max_bins) {
         Ok(max_bins)
     } else {
         Err(pyo3::exceptions::PyValueError::new_err(format!(
-            "max_bins must be between 2 and {limit}, got {max_bins}"
+            "max_bins must be between {MIN_BINS} and {MAX_BINS}, got {max_bins}"
         )))
     }
 }

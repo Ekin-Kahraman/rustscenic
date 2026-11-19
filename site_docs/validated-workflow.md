@@ -2,7 +2,7 @@
 
 Turn prepared RNA, or paired RNA+ATAC, into **motif-supported regulatory networks and per-cell activity**. One command writes the networks, activity tables, regulator coverage and run manifest.
 
-RustScenic v0.6.0 exposes the native recipes used in the paper with the verified seeded AUCell correction. It does not change the inference kernels or require pySCENIC, SCENIC+, Dask or Java. The existing flexible `pipeline` command remains available.
+RustScenic v0.6.0 exposes the native recipes used in the paper with the verified seeded AUCell correction. It does not change the inference kernels or require pySCENIC, SCENIC+, Dask or Java. The existing flexible `pipeline` command remains available. From v0.7.0, `grn.infer` and `pipeline` bin TF values exactly by default; these recipes keep the audited 255-bin GRN setting so they reproduce their audited results.
 
 Install with `python -m pip install --upgrade rustscenic`. The `validated` command requires v0.6.0 or later.
 

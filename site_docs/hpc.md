@@ -94,8 +94,13 @@ memory curve leaves safe headroom for motif data and final writes.
 
 - `early_stop_mode="arboreto"` is the default. It uses the strict mean of the
   exact trailing OOB-improvement window and retains the stopping tree.
+- `early_stop_mode="paired_oob"` applies the same monitor to same-mask OOB
+  improvements (scikit-learn before 1.3). It trains predictable targets for
+  longer and costs correspondingly more time.
 - `early_stop_mode="legacy_inbag"` preserves the historical RustScenic
   two-point in-bag rule. Use it only for an explicitly labelled legacy rerun.
+- `max_bins=65535` (the default from v0.7.0) gives each distinct TF value its
+  own bin. `max_bins=255` reproduces v0.6 networks.
 - `early_stop_window=0` disables stopping. This can fit all 5,000 trees for
   every target and materially increase runtime.
 - `subsample=1.0` leaves no OOB rows, so `arboreto` mode also fits to the

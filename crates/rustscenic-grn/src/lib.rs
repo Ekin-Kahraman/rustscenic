@@ -13,8 +13,8 @@
 //! `max_bins` the candidate split thresholds are sklearn's exact ones; a smaller
 //! budget adds histogram quantisation (RustScenic 0.6 used 255 bins).
 //!
-//! Measured against arboreto on 10x Multiome 3k (n_estimators=5000, 2588 cells
-//! × 1457 TFs, deep audit 2026-04-18):
+//! Measured with 255-bin quantisation against arboreto on 10x Multiome 3k
+//! (n_estimators=5000, 2588 cells × 1457 TFs, deep audit 2026-04-18):
 //!     - per-edge Spearman on 816k common edges: 0.58
 //!     - per-target TF-rank Spearman: mean 0.57, median 0.60
 //!     - top-100 edge Jaccard: 0.10, top-1000: 0.30, top-100k: 0.32

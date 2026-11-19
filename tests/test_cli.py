@@ -85,6 +85,45 @@ def test_grn_cli_counts_unique_matching_tfs_without_changing_inference(
     }
 
 
+def test_grn_cli_forwards_and_records_bin_budget(tmp_path, monkeypatch):
+    import numpy as np
+    import rustscenic.cli
+    import rustscenic.grn
+
+    expression_path = tmp_path / "expression.tsv"
+    x = np.linspace(0.1, 1.0, 64)
+    pd.DataFrame(
+        {"TF_A": x, "G1": 2.0 * x + 0.1, "G2": 3.0 * (1.0 - x)},
+        index=[f"c{i}" for i in range(len(x))],
+    ).to_csv(expression_path, sep="\t")
+    tf_path = tmp_path / "tfs.txt"
+    tf_path.write_text("TF_A\n")
+
+    forwarded = []
+    infer = rustscenic.grn.infer
+
+    def recording_infer(expression, tfs, **kwargs):
+        forwarded.append(kwargs["max_bins"])
+        return infer(expression, tfs, **kwargs)
+
+    monkeypatch.setattr(rustscenic.grn, "infer", recording_infer)
+    recorded = []
+    for extra in ([], ["--max-bins", "255"]):
+        output_path = tmp_path / f"net{len(extra)}.tsv"
+        rc = rustscenic.cli.main(
+            [
+                "grn", "--expression", str(expression_path),
+                "--tfs", str(tf_path), "--output", str(output_path),
+                "--n-estimators", "8", "--early-stop-window", "0", *extra,
+            ]
+        )
+        assert rc == 0
+        recorded.append(
+            json.loads(output_path.with_suffix(".json").read_text())["grn_fit"]["max_bins"]
+        )
+    assert forwarded == recorded == [65535, 255]
+
+
 def test_aucell_cli_groups_long_form_regulons_by_name(tmp_path, monkeypatch):
     import rustscenic.aucell
     import rustscenic.cli

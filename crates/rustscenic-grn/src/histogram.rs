@@ -20,10 +20,16 @@ use rayon::prelude::*;
 /// default budget: exact for any feature with at most 65,535 distinct values.
 pub const MAX_BINS: usize = 65535;
 
+/// Smallest bin budget. When values are merged the last cut point is the
+/// largest value (RustScenic 0.6 behaviour, kept so 255 bins reproduce 0.6),
+/// so the top bin stays empty: a budget of 2 would leave one usable bin and no
+/// split.
+pub const MIN_BINS: usize = 3;
+
 fn check_max_bins(max_bins: usize) {
     assert!(
-        (2..=MAX_BINS).contains(&max_bins),
-        "max_bins must be between 2 and {MAX_BINS}, got {max_bins}"
+        (MIN_BINS..=MAX_BINS).contains(&max_bins),
+        "max_bins must be between {MIN_BINS} and {MAX_BINS}, got {max_bins}"
     );
 }
 
@@ -259,9 +265,13 @@ fn assign_bins_from_values(
 pub struct NodeHist {
     pub sum_y: Vec<f32>,
     pub count: Vec<u32>,
+    occupied: Vec<u32>,
     left_s_arr: Vec<f32>,
     left_n_arr: Vec<u32>,
     gains: Vec<f32>,
+    /// Leading bins that may still hold counts. `best_split` zeroes the bins
+    /// it reads, so the next `accumulate` only clears after an unconsumed one.
+    dirty: usize,
 }
 
 impl NodeHist {
@@ -269,9 +279,11 @@ impl NodeHist {
         Self {
             sum_y: vec![0.0; n_bins],
             count: vec![0; n_bins],
+            occupied: vec![0; n_bins],
             left_s_arr: vec![0.0; n_bins],
             left_n_arr: vec![0; n_bins],
             gains: vec![0.0; n_bins],
+            dirty: 0,
         }
     }
 
@@ -288,9 +300,19 @@ impl NodeHist {
         y: &[f32],
         sample_idx: &[u32],
     ) {
-        self.clear(binned.n_bins_per_feature[feature] as usize);
+        if self.dirty > 0 {
+            self.clear(self.dirty);
+        }
+        let n_bins = binned.n_bins_per_feature[feature] as usize;
+        // The writes below are unchecked, so the buffer must hold every bin.
+        let capacity = self.count.len().min(self.sum_y.len());
+        assert!(
+            n_bins <= capacity,
+            "histogram buffer holds {capacity} bins, feature has {n_bins}"
+        );
+        self.dirty = n_bins;
         // Column-major: feature's bin column lives at [base, base+n_samples).
-        // The whole column fits in L1/L2 for typical (≤100k samples × 1B
+        // The whole column fits in L1/L2 for typical (≤100k samples × 2 B
         // each) shapes, so each `bins[base + s]` access hits cache once.
         let base = feature * binned.n_samples;
         let col = &binned.bins[base..base + binned.n_samples];
@@ -317,11 +339,51 @@ impl NodeHist {
         if n_bins < 2 {
             return None;
         }
-        let total_n: u32 = self.count[..n_bins].iter().sum();
+
+        // Pass 1: list the occupied bins in ascending order. With exact binning
+        // a feature has up to one bin per distinct value, so below the root
+        // most bins are empty, and the later passes touch only occupied bins.
+        // Skipping empty bins changes no result: an empty bin adds zero to the
+        // prefix sums, and its candidate split repeats the gain of the previous
+        // occupied bin, which the lowest-bin tie-break below already prefers.
+        // The compaction is branch-free: always write, advance only past an
+        // occupied bin.
+        let count = &self.count[..n_bins];
+        let occupied = &mut self.occupied[..n_bins];
+        let mut n_occ = 0usize;
+        for (k, &c) in count.iter().enumerate() {
+            // n_occ <= k < n_bins == occupied.len().
+            unsafe { *occupied.get_unchecked_mut(n_occ) = k as u32 };
+            n_occ += usize::from(c != 0);
+        }
+        let occupied = &occupied[..n_occ];
+
+        // Pass 2: inclusive prefix sums of (sum_y, count) over occupied bins,
+        // in bin order, so every partial sum and the totals equal a running sum
+        // over all bins exactly. Each bin is zeroed once read, which leaves the
+        // histogram clear for the next accumulate without a full-width reset.
+        let left_s_arr = &mut self.left_s_arr[..n_occ];
+        let left_n_arr = &mut self.left_n_arr[..n_occ];
+        let sum_y = &mut self.sum_y[..n_bins];
+        let count = &mut self.count[..n_bins];
+        let mut acc_s = 0.0_f32;
+        let mut acc_n = 0u32;
+        for (j, &k) in occupied.iter().enumerate() {
+            let k = k as usize;
+            acc_s += sum_y[k];
+            acc_n += count[k];
+            sum_y[k] = 0.0;
+            count[k] = 0;
+            left_s_arr[j] = acc_s;
+            left_n_arr[j] = acc_n;
+        }
+        if n_bins >= self.dirty {
+            self.dirty = 0;
+        }
+        let (total_s, total_n) = (acc_s, acc_n);
         if total_n < 2 {
             return None;
         }
-        let total_s: f32 = self.sum_y[..n_bins].iter().sum();
         // Gain = parent_var - (left_var + right_var). Expanding the
         // sum-of-squared-deviations form, every sum_y_sq term cancels
         // algebraically, leaving this equivalent -- and strictly more stable, no
@@ -330,52 +392,35 @@ impl NodeHist {
         // from the hottest inner loop).
         let total_term = (total_s * total_s) / (total_n as f32);
 
-        let n_splits = n_bins - 1;
-
-        // Pass 1: inclusive prefix sums of (sum_y, count). The f32 accumulation
-        // order is identical to the original running-sum loop, so left_s_arr[k]
-        // equals the old `left_s` at iteration k exactly.
-        let left_s_arr = &mut self.left_s_arr;
-        let left_n_arr = &mut self.left_n_arr;
-        let mut acc_s = 0.0_f32;
-        let mut acc_n = 0u32;
-        for k in 0..n_splits {
-            acc_s += self.sum_y[k];
-            acc_n += self.count[k];
-            left_s_arr[k] = acc_s;
-            left_n_arr[k] = acc_n;
-        }
-
-        // Pass 2: branch-free per-candidate gain. The division is unconditional
-        // so it autovectorises to _mm256_div_ps on x86-64-v3 (IEEE divide is
-        // bit-identical scalar-vs-SIMD, no reassociation). Empty-child candidates
-        // (left_n==0 or right_n==0) produce NaN and are masked to -inf via a
-        // branchless select, reproducing the original `continue`/`break` skips.
-        let gains = &mut self.gains;
-        for k in 0..n_splits {
-            let left_n = left_n_arr[k];
+        // Pass 3: branch-free per-candidate gain. The division is unconditional
+        // so it autovectorises (IEEE divide is bit-identical scalar-vs-SIMD, no
+        // reassociation). The last occupied bin leaves an empty right child;
+        // its NaN or infinite gain is masked to -inf.
+        let gains = &mut self.gains[..n_occ];
+        for j in 0..n_occ {
+            let left_n = left_n_arr[j];
             let right_n = total_n - left_n;
-            let left_s = left_s_arr[k];
+            let left_s = left_s_arr[j];
             let r_s = total_s - left_s;
             let g =
                 (left_s * left_s) / (left_n as f32) + (r_s * r_s) / (right_n as f32) - total_term;
-            gains[k] = if left_n != 0 && right_n != 0 {
+            gains[j] = if left_n != 0 && right_n != 0 {
                 g
             } else {
                 f32::NEG_INFINITY
             };
         }
 
-        // Pass 3: argmax with the original tie-break - strict `>` so the lowest
+        // Pass 4: argmax with the original tie-break - strict `>` so the lowest
         // bin wins on ties, best seeded at 0.0 so only positive gains count.
         let mut best_gain = 0.0_f32;
         let mut best_bin = 0usize;
         let mut best_left_n = 0u32;
-        for k in 0..n_splits {
-            if gains[k] > best_gain {
-                best_gain = gains[k];
-                best_bin = k;
-                best_left_n = left_n_arr[k];
+        for j in 0..n_occ {
+            if gains[j] > best_gain {
+                best_gain = gains[j];
+                best_bin = occupied[j] as usize;
+                best_left_n = left_n_arr[j];
             }
         }
 
@@ -478,6 +523,91 @@ mod tests {
         assert!(bin > 0 && bin < MAX_BINS - 1);
     }
 
+    /// The split search before v0.7: every bin, strict `>` so the lowest bin wins.
+    fn full_scan_split(sum_y: &[f32], count: &[u32]) -> Option<(usize, f32, u32)> {
+        let n_bins = count.len();
+        if n_bins < 2 {
+            return None;
+        }
+        let total_n: u32 = count.iter().sum();
+        if total_n < 2 {
+            return None;
+        }
+        let total_s: f32 = sum_y.iter().sum();
+        let total_term = (total_s * total_s) / (total_n as f32);
+        let (mut acc_s, mut acc_n) = (0.0_f32, 0u32);
+        let mut best = (0usize, 0.0_f32, 0u32);
+        for k in 0..n_bins - 1 {
+            acc_s += sum_y[k];
+            acc_n += count[k];
+            let right_n = total_n - acc_n;
+            let r_s = total_s - acc_s;
+            let g = (acc_s * acc_s) / (acc_n as f32) + (r_s * r_s) / (right_n as f32) - total_term;
+            if acc_n != 0 && right_n != 0 && g > best.1 {
+                best = (k, g, acc_n);
+            }
+        }
+        (best.1 > 0.0).then_some(best)
+    }
+
+    #[test]
+    fn occupied_bin_split_matches_full_scan_across_calls() {
+        // Features with all-distinct, zero-inflated, constant and few-level
+        // values; targets with ties. One NodeHist is reused across features and
+        // nodes, and some histograms are left unconsumed.
+        let n = 400;
+        let mut state = 12345u64;
+        let mut next = || {
+            state = state
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            (state >> 33) as usize
+        };
+        let mut x = vec![0.0_f32; n * 4];
+        for s in 0..n {
+            x[s * 4] = s as f32;
+            x[s * 4 + 1] = if next() % 4 == 0 {
+                (next() % 50) as f32
+            } else {
+                0.0
+            };
+            x[s * 4 + 2] = 1.0;
+            x[s * 4 + 3] = (next() % 7) as f32;
+        }
+        // Integer targets give exact sums and many tied gains; fractional ones
+        // make the f32 summation order matter.
+        let y_int: Vec<f32> = (0..n).map(|_| (next() % 5) as f32 - 2.0).collect();
+        let y_frac: Vec<f32> = (0..n)
+            .map(|_| (next() % 1000) as f32 * 0.0137 - 6.1)
+            .collect();
+        let bm = BinnedMatrix::from_dense(&x, n, 4, MAX_BINS);
+        let mut hist = NodeHist::zeros(MAX_BINS);
+        for round in 0..400 {
+            let size = 1 + next() % n;
+            let samples: Vec<u32> = (0..n as u32).filter(|_| next() % n < size).collect();
+            let f = next() % 4;
+            let n_bins = bm.n_bins_per_feature[f] as usize;
+            let y = if round % 2 == 0 { &y_int } else { &y_frac };
+            hist.accumulate(&bm, f, y, &samples);
+            if round % 7 == 0 {
+                continue;
+            }
+            let mut sum_y = vec![0.0_f32; n_bins];
+            let mut count = vec![0u32; n_bins];
+            for &s in &samples {
+                let b = bm.bins[f * n + s as usize] as usize;
+                sum_y[b] += y[s as usize];
+                count[b] += 1;
+            }
+            let bits = |r: Option<(usize, f32, u32)>| r.map(|(b, g, l)| (b, g.to_bits(), l));
+            assert_eq!(
+                bits(hist.best_split(n_bins)),
+                bits(full_scan_split(&sum_y, &count)),
+                "round {round}, feature {f}"
+            );
+        }
+    }
+
     #[test]
     fn default_budget_gives_one_bin_per_distinct_value() {
         // 300 distinct values, each twice, shuffled: exact binning is the value's rank.
@@ -504,13 +634,13 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "max_bins must be between 2 and 65535")]
-    fn budget_below_two_is_rejected() {
-        BinnedMatrix::from_dense(&[0.0, 1.0], 2, 1, 1);
+    #[should_panic(expected = "max_bins must be between 3 and 65535")]
+    fn budget_below_three_is_rejected() {
+        BinnedMatrix::from_dense(&[0.0, 1.0], 2, 1, 2);
     }
 
     #[test]
-    #[should_panic(expected = "max_bins must be between 2 and 65535")]
+    #[should_panic(expected = "max_bins must be between 3 and 65535")]
     fn budget_above_storage_is_rejected() {
         BinnedMatrix::from_dense(&[0.0, 1.0], 2, 1, MAX_BINS + 1);
     }
