@@ -284,6 +284,7 @@ struct PreparedRegulonIndices {
     target_block_size = 0,
     top_targets_per_tf = None,
     min_importance = None,
+    max_bins = 65535,
 ))]
 #[allow(clippy::too_many_arguments)]
 fn grn_infer<'py>(
@@ -302,6 +303,7 @@ fn grn_infer<'py>(
     target_block_size: usize,
     top_targets_per_tf: Option<usize>,
     min_importance: Option<f32>,
+    max_bins: usize,
 ) -> PyResult<GrnInferFilteredPyResult> {
     let arr = expression.as_array();
     let n_cells = arr.shape()[0];
@@ -315,6 +317,7 @@ fn grn_infer<'py>(
     }
     let expression_max = validate_finite_array2_max(arr, "expression matrix")?;
     let early_stop_mode = parse_early_stop_mode(early_stop_mode)?;
+    let max_bins = validate_max_bins(max_bins)?;
     let cfg = GrnConfig {
         n_estimators,
         learning_rate,
@@ -323,6 +326,7 @@ fn grn_infer<'py>(
         max_depth,
         early_stop_window,
         early_stop_mode,
+        max_bins,
         seed,
         target_block_size,
     };
@@ -365,6 +369,7 @@ fn grn_infer<'py>(
     target_block_size = 0,
     top_targets_per_tf = None,
     min_importance = None,
+    max_bins = 65535,
 ))]
 #[allow(clippy::too_many_arguments)]
 fn grn_infer_sparse_csc<'py>(
@@ -387,6 +392,7 @@ fn grn_infer_sparse_csc<'py>(
     target_block_size: usize,
     top_targets_per_tf: Option<usize>,
     min_importance: Option<f32>,
+    max_bins: usize,
 ) -> PyResult<GrnInferFilteredPyResult> {
     if gene_names.len() != n_genes {
         return Err(pyo3::exceptions::PyValueError::new_err(format!(
@@ -405,6 +411,7 @@ fn grn_infer_sparse_csc<'py>(
     let expression_max = validate_csc_arrays(&indptr, indices, data, n_cells, n_genes)?;
 
     let early_stop_mode = parse_early_stop_mode(early_stop_mode)?;
+    let max_bins = validate_max_bins(max_bins)?;
     let cfg = GrnConfig {
         n_estimators,
         learning_rate,
@@ -413,6 +420,7 @@ fn grn_infer_sparse_csc<'py>(
         max_depth,
         early_stop_window,
         early_stop_mode,
+        max_bins,
         seed,
         target_block_size,
     };
@@ -480,6 +488,17 @@ fn grn_edges_to_py(
         expression_max,
         fit_summary.unbind(),
     ))
+}
+
+fn validate_max_bins(max_bins: usize) -> PyResult<usize> {
+    let limit = rustscenic_grn::histogram::MAX_BINS;
+    if (2..=limit).contains(&max_bins) {
+        Ok(max_bins)
+    } else {
+        Err(pyo3::exceptions::PyValueError::new_err(format!(
+            "max_bins must be between 2 and {limit}, got {max_bins}"
+        )))
+    }
 }
 
 fn parse_early_stop_mode(value: &str) -> PyResult<EarlyStopMode> {

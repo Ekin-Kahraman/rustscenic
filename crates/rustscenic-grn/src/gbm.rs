@@ -286,7 +286,7 @@ mod tests {
             x[i * nf + 3] = ((i * 7) as f32) * 0.5 % 1.0;
             y[i] = 3.0 * a + 0.1 * x[i * nf + 1];
         }
-        let bm = BinnedMatrix::from_dense(&x, n, nf);
+        let bm = BinnedMatrix::from_dense(&x, n, nf, MAX_BINS);
         let cfg = GrnConfig {
             n_estimators: 500,
             learning_rate: 0.1,
@@ -295,6 +295,7 @@ mod tests {
             max_depth: 3,
             early_stop_window: 25,
             early_stop_mode: EarlyStopMode::Arboreto,
+            max_bins: MAX_BINS,
             seed: 42,
             target_block_size: 0,
         };
@@ -322,7 +323,7 @@ mod tests {
             x[i * nf + 2] = ((i * 17) as f32) * 0.13 % 1.0;
             y[i] = 5.0 * a;
         }
-        let bm = BinnedMatrix::from_dense(&x, n, nf);
+        let bm = BinnedMatrix::from_dense(&x, n, nf, MAX_BINS);
         let cfg = GrnConfig {
             n_estimators: 200,
             learning_rate: 0.1,
@@ -331,6 +332,7 @@ mod tests {
             max_depth: 3,
             early_stop_window: 0,
             early_stop_mode: EarlyStopMode::Arboreto,
+            max_bins: MAX_BINS,
             seed: 7,
             target_block_size: 0,
         };
@@ -348,7 +350,7 @@ mod tests {
     }
 
     fn fitted_trees(y: &[f32], x: &[f32], n: usize, nf: usize, mode: EarlyStopMode) -> usize {
-        let bm = BinnedMatrix::from_dense(x, n, nf);
+        let bm = BinnedMatrix::from_dense(x, n, nf, MAX_BINS);
         let cfg = GrnConfig {
             n_estimators: 300,
             learning_rate: 0.01,
@@ -357,6 +359,7 @@ mod tests {
             max_depth: 3,
             early_stop_window: 25,
             early_stop_mode: mode,
+            max_bins: MAX_BINS,
             seed: 11,
             target_block_size: 0,
         };

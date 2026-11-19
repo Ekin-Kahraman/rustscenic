@@ -2,14 +2,23 @@
 
 ## Unreleased
 
+- GRN inference now bins each TF exactly by default: every distinct value gets
+  its own bin (up to 65,535), so candidate split thresholds match
+  scikit-learn's. RustScenic 0.6 merged values into at most 255 bins. At tens
+  of thousands of cells that quantisation made target rankings diverge from
+  arboreto's by more than arboreto's own seed-to-seed variation (protocol
+  fidelity 0.74 to 0.84 at 20,000 cells, against a 0.90 criterion); exact
+  binning gives 0.95 to 0.99. Networks therefore change from 0.6. The new
+  `max_bins` option (API, `grn --max-bins`, pipeline `grn_max_bins`) restores
+  0.6 behaviour with `max_bins=255`. Bin indices are stored as 16-bit
+  integers, so the binned TF matrix takes 2 bytes per cell per TF instead of 1.
 - Add `early_stop_mode="paired_oob"` for GRN inference (API, `grn` CLI and
   pipeline). It applies arboreto's 25-round monitor to same-mask out-of-bag
   improvements, the definition scikit-learn used before 1.3 and GRNBoost2 was
   published against. From scikit-learn 1.3 the improvement compares two
   different random out-of-bag subsets, which stops most targets at the first
-  check (median 25 to 29 trees). The default remains `"arboreto"`, so existing
-  results and the published benchmarks are unchanged. `paired_oob` fits more
-  trees and takes correspondingly longer.
+  check (median 25 to 29 trees). The default stopping rule remains
+  `"arboreto"`. `paired_oob` fits more trees and takes correspondingly longer.
 
 ## 0.6.1 - 2026-11-09
 

@@ -158,6 +158,7 @@ def test_pipeline_cli_forwards_full_multiome_stage_options(tmp_path, monkeypatch
             "--grn-max-features", "0.25",
             "--grn-early-stop-window", "13",
             "--grn-early-stop-mode", "legacy_inbag",
+            "--grn-max-bins", "4095",
             "--grn-target-block-size", "11",
             "--grn-top-targets", "9",
             "--grn-regulon-polarities", "activating",
@@ -196,6 +197,7 @@ def test_pipeline_cli_forwards_full_multiome_stage_options(tmp_path, monkeypatch
     assert captured["grn_max_features"] == 0.25
     assert captured["grn_early_stop_window"] == 13
     assert captured["grn_early_stop_mode"] == "legacy_inbag"
+    assert captured["grn_max_bins"] == 4095
     assert captured["grn_target_block_size"] == 11
     assert captured["grn_top_targets"] == 9
     assert captured["grn_regulon_polarities"] == "activating"

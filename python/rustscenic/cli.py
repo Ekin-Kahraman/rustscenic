@@ -80,7 +80,7 @@ def cmd_grn(args: argparse.Namespace) -> int:
         n_estimators=args.n_estimators, learning_rate=args.learning_rate,
         max_features=args.max_features, subsample=args.subsample,
         max_depth=args.max_depth, early_stop_window=args.early_stop_window,
-        early_stop_mode=args.early_stop_mode,
+        early_stop_mode=args.early_stop_mode, max_bins=args.max_bins,
         seed=args.seed, target_block_size=args.target_block_size,
     )
     wall = time.monotonic() - t0
@@ -415,6 +415,7 @@ def cmd_pipeline(args: argparse.Namespace) -> int:
         grn_max_features=args.grn_max_features,
         grn_early_stop_window=args.grn_early_stop_window,
         grn_early_stop_mode=args.grn_early_stop_mode,
+        grn_max_bins=args.grn_max_bins,
         grn_target_block_size=args.grn_target_block_size,
         grn_top_targets=args.grn_top_targets,
         grn_regulon_polarities=args.grn_regulon_polarities,
@@ -518,6 +519,13 @@ def main(argv: list[str] | None = None) -> int:
         "or the historical RustScenic in-bag rule.",
     )
     pg.add_argument(
+        "--max-bins",
+        type=int,
+        default=65535,
+        help="Bin budget per TF (2-65535). The default keeps every distinct value, "
+        "matching scikit-learn's exact thresholds; 255 reproduces RustScenic 0.6.",
+    )
+    pg.add_argument(
         "--target-block-size",
         type=int,
         default=None,
@@ -605,6 +613,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=["arboreto", "paired_oob", "legacy_inbag"],
         default="arboreto",
     )
+    pp.add_argument("--grn-max-bins", type=int, default=65535)
     pp.add_argument(
         "--grn-target-block-size",
         type=int,

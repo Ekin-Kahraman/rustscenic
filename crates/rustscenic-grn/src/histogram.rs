@@ -1,18 +1,31 @@
 //! Histogram binning for fast split finding.
 //!
-//! Each feature is pre-binned into at most 255 buckets using quantile cut-points.
-//! A node-level histogram of (sum_y, count) across bins lets us score
-//! every candidate threshold in O(bins) rather than O(n) per feature per split.
+//! Each feature is pre-binned once. With the default budget every distinct
+//! value gets its own bin (up to 65,535 per feature), so the candidate
+//! thresholds are exactly scikit-learn's: midpoints between consecutive
+//! distinct values. A node-level histogram of (sum_y, count) across bins then
+//! scores every candidate threshold in O(bins) rather than O(n log n) per
+//! feature per split.
 //!
-//! This is the LightGBM trick. Semantics remain sklearn-compatible up to
-//! bin-quantization error; at 255 bins the effect on feature-importance ranks
-//! is negligible (validated by the real-time audit against arboreto).
+//! A smaller `max_bins` merges distinct values into bins spaced uniformly over
+//! the sorted distinct values. RustScenic 0.6 used 255; at tens of thousands of
+//! cells that quantisation makes target rankings diverge from arboreto's beyond
+//! arboreto's own seed-to-seed variation, which is why the default is exact.
 
 use ndarray::ArrayView2;
 use rand::RngCore;
 use rayon::prelude::*;
 
-pub const MAX_BINS: usize = 255; // fits in u8 with 0 reserved as "unassigned"
+/// Largest bin budget per feature (bin indices are stored as u16). This is the
+/// default budget: exact for any feature with at most 65,535 distinct values.
+pub const MAX_BINS: usize = 65535;
+
+fn check_max_bins(max_bins: usize) {
+    assert!(
+        (2..=MAX_BINS).contains(&max_bins),
+        "max_bins must be between 2 and {MAX_BINS}, got {max_bins}"
+    );
+}
 
 /// Column-major binned features. `bins[f * n_samples + s]` = bin index of
 /// sample s on feature f. Column-major because the dominant op (NodeHist
@@ -21,7 +34,7 @@ pub const MAX_BINS: usize = 255; // fits in u8 with 0 reserved as "unassigned"
 /// cache. Switching to column-major fits each column in L1/L2 for the
 /// typical (3k–100k samples × 30k features) shape.
 pub struct BinnedMatrix {
-    pub bins: Vec<u8>,
+    pub bins: Vec<u16>,
     pub n_samples: usize,
     pub n_features: usize,
     pub n_bins_per_feature: Vec<u16>, // actual bin count per feature (≤ MAX_BINS)
@@ -30,8 +43,8 @@ pub struct BinnedMatrix {
 impl BinnedMatrix {
     /// Build bins using quantile cut points per feature.
     /// Cells with the same value can end up in the same bin - we dedup cut points.
-    pub fn from_dense(x: &[f32], n_samples: usize, n_features: usize) -> Self {
-        Self::from_dense_columns_impl(x, n_samples, n_features, n_features, None)
+    pub fn from_dense(x: &[f32], n_samples: usize, n_features: usize, max_bins: usize) -> Self {
+        Self::from_dense_columns_impl(x, n_samples, n_features, n_features, None, max_bins)
     }
 
     /// Build bins for selected columns from a row-major dense matrix.
@@ -43,6 +56,7 @@ impl BinnedMatrix {
         n_samples: usize,
         n_source_features: usize,
         feature_cols: &[usize],
+        max_bins: usize,
     ) -> Self {
         Self::from_dense_columns_impl(
             x,
@@ -50,6 +64,7 @@ impl BinnedMatrix {
             n_source_features,
             feature_cols.len(),
             Some(feature_cols),
+            max_bins,
         )
     }
 
@@ -58,14 +73,19 @@ impl BinnedMatrix {
     /// Row-major callers should use `from_dense_columns` for cache-friendly
     /// source reads. This view path is for valid strided arrays from PyO3,
     /// avoiding a full matrix copy before binning.
-    pub fn from_dense_columns_view(x: ArrayView2<'_, f32>, feature_cols: &[usize]) -> Self {
+    pub fn from_dense_columns_view(
+        x: ArrayView2<'_, f32>,
+        feature_cols: &[usize],
+        max_bins: usize,
+    ) -> Self {
+        check_max_bins(max_bins);
         let n_samples = x.shape()[0];
         let n_source_features = x.shape()[1];
         assert!(feature_cols.iter().all(|&col| col < n_source_features));
         reject_nan_view(x);
 
         let n_output_features = feature_cols.len();
-        let mut bins = vec![0u8; n_samples * n_output_features];
+        let mut bins = vec![0u16; n_samples * n_output_features];
         let mut n_bins_per_feature = vec![1u16; n_output_features];
 
         bins.par_chunks_mut(n_samples)
@@ -74,7 +94,7 @@ impl BinnedMatrix {
             .for_each(|(f, (bin_col, n_bins_slot))| {
                 let source_f = feature_cols[f];
                 let values: Vec<f32> = (0..n_samples).map(|s| x[(s, source_f)]).collect();
-                assign_bins_from_values(&values, bin_col, n_bins_slot);
+                assign_bins_from_values(&values, bin_col, n_bins_slot, max_bins);
             });
 
         Self {
@@ -96,14 +116,16 @@ impl BinnedMatrix {
         n_samples: usize,
         n_source_features: usize,
         feature_cols: &[usize],
+        max_bins: usize,
     ) -> Self {
+        check_max_bins(max_bins);
         assert_eq!(indptr.len(), n_source_features + 1);
         assert_eq!(indices.len(), data.len());
         assert!(feature_cols.iter().all(|&col| col < n_source_features));
         reject_nan(data);
 
         let n_output_features = feature_cols.len();
-        let mut bins = vec![0u8; n_samples * n_output_features];
+        let mut bins = vec![0u16; n_samples * n_output_features];
         let mut n_bins_per_feature = vec![1u16; n_output_features];
 
         bins.par_chunks_mut(n_samples)
@@ -118,7 +140,7 @@ impl BinnedMatrix {
                     assert!(row < n_samples);
                     values[row] += data[p];
                 }
-                assign_bins_from_values(&values, bin_col, n_bins_slot);
+                assign_bins_from_values(&values, bin_col, n_bins_slot, max_bins);
             });
 
         Self {
@@ -135,14 +157,16 @@ impl BinnedMatrix {
         n_source_features: usize,
         n_output_features: usize,
         feature_cols: Option<&[usize]>,
+        max_bins: usize,
     ) -> Self {
+        check_max_bins(max_bins);
         assert_eq!(x.len(), n_samples * n_source_features);
         if let Some(cols) = feature_cols {
             assert_eq!(cols.len(), n_output_features);
             assert!(cols.iter().all(|&col| col < n_source_features));
         }
         reject_nan(x);
-        let mut bins = vec![0u8; n_samples * n_output_features];
+        let mut bins = vec![0u16; n_samples * n_output_features];
         let mut n_bins_per_feature = vec![1u16; n_output_features];
 
         bins.par_chunks_mut(n_samples)
@@ -153,7 +177,7 @@ impl BinnedMatrix {
                 let values: Vec<f32> = (0..n_samples)
                     .map(|s| x[s * n_source_features + source_f])
                     .collect();
-                assign_bins_from_values(&values, bin_col, n_bins_slot);
+                assign_bins_from_values(&values, bin_col, n_bins_slot, max_bins);
             });
 
         Self {
@@ -187,13 +211,18 @@ fn reject_nan_view(values: ArrayView2<'_, f32>) {
     }
 }
 
-fn assign_bins_from_values(values: &[f32], bin_col: &mut [u8], n_bins_slot: &mut u16) {
-    // Build cut points: sorted unique values, downsampled to MAX_BINS-1 edges.
+fn assign_bins_from_values(
+    values: &[f32],
+    bin_col: &mut [u16],
+    n_bins_slot: &mut u16,
+    max_bins: usize,
+) {
+    // Build cut points: sorted unique values, downsampled to max_bins-1 edges.
     let mut sorted = values.to_vec();
     sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
     sorted.dedup();
 
-    let edges = if sorted.len() <= MAX_BINS {
+    let edges = if sorted.len() <= max_bins {
         // one bin per unique value pair; edges are midpoints between consecutive unique values
         let mut e = Vec::with_capacity(sorted.len().saturating_sub(1));
         for w in sorted.windows(2) {
@@ -201,8 +230,8 @@ fn assign_bins_from_values(values: &[f32], bin_col: &mut [u8], n_bins_slot: &mut
         }
         e
     } else {
-        // downsample unique values to MAX_BINS - 1 edges (uniform in sorted-value index)
-        let n_edges = MAX_BINS - 1;
+        // downsample unique values to max_bins - 1 edges (uniform in sorted-value index)
+        let n_edges = max_bins - 1;
         let stride = (sorted.len() - 1) as f32 / n_edges as f32;
         (0..n_edges)
             .map(|i| {
@@ -221,7 +250,7 @@ fn assign_bins_from_values(values: &[f32], bin_col: &mut [u8], n_bins_slot: &mut
     // bin column lives contiguously.
     for (s, &v) in values.iter().enumerate() {
         let b = edges.partition_point(|&e| e < v);
-        bin_col[s] = b.min(MAX_BINS - 1) as u8;
+        bin_col[s] = b.min(max_bins - 1) as u16;
     }
 }
 
@@ -230,6 +259,9 @@ fn assign_bins_from_values(values: &[f32], bin_col: &mut [u8], n_bins_slot: &mut
 pub struct NodeHist {
     pub sum_y: Vec<f32>,
     pub count: Vec<u32>,
+    left_s_arr: Vec<f32>,
+    left_n_arr: Vec<u32>,
+    gains: Vec<f32>,
 }
 
 impl NodeHist {
@@ -237,6 +269,9 @@ impl NodeHist {
         Self {
             sum_y: vec![0.0; n_bins],
             count: vec![0; n_bins],
+            left_s_arr: vec![0.0; n_bins],
+            left_n_arr: vec![0; n_bins],
+            gains: vec![0.0; n_bins],
         }
     }
 
@@ -277,7 +312,7 @@ impl NodeHist {
     /// Scan thresholds left→right, return best split (bin_edge, gain, left_count).
     /// Gain = parent_var - (left_var + right_var), variances as in sklearn
     /// (sum of squared deviations, NOT divided by n).
-    pub fn best_split(&self, n_bins: usize) -> Option<(usize, f32, u32)> {
+    pub fn best_split(&mut self, n_bins: usize) -> Option<(usize, f32, u32)> {
         let n_bins = n_bins.min(self.count.len());
         if n_bins < 2 {
             return None;
@@ -300,8 +335,8 @@ impl NodeHist {
         // Pass 1: inclusive prefix sums of (sum_y, count). The f32 accumulation
         // order is identical to the original running-sum loop, so left_s_arr[k]
         // equals the old `left_s` at iteration k exactly.
-        let mut left_s_arr = [0.0_f32; MAX_BINS];
-        let mut left_n_arr = [0u32; MAX_BINS];
+        let left_s_arr = &mut self.left_s_arr;
+        let left_n_arr = &mut self.left_n_arr;
         let mut acc_s = 0.0_f32;
         let mut acc_n = 0u32;
         for k in 0..n_splits {
@@ -316,7 +351,7 @@ impl NodeHist {
         // bit-identical scalar-vs-SIMD, no reassociation). Empty-child candidates
         // (left_n==0 or right_n==0) produce NaN and are masked to -inf via a
         // branchless select, reproducing the original `continue`/`break` skips.
-        let mut gains = [0.0_f32; MAX_BINS];
+        let gains = &mut self.gains;
         for k in 0..n_splits {
             let left_n = left_n_arr[k];
             let right_n = total_n - left_n;
@@ -365,7 +400,7 @@ mod tests {
         let n = 100;
         let nf = 1;
         let x: Vec<f32> = (0..n).map(|i| i as f32).collect();
-        let bm = BinnedMatrix::from_dense(&x, n, nf);
+        let bm = BinnedMatrix::from_dense(&x, n, nf, MAX_BINS);
         // Earlier values → smaller bins
         assert!(bm.bins[0] <= bm.bins[50]);
         assert!(bm.bins[50] <= bm.bins[99]);
@@ -389,8 +424,8 @@ mod tests {
             }
         }
 
-        let direct = BinnedMatrix::from_dense_columns(&x, n, nf, &selected);
-        let copied = BinnedMatrix::from_dense(&materialised, n, selected.len());
+        let direct = BinnedMatrix::from_dense_columns(&x, n, nf, &selected, MAX_BINS);
+        let copied = BinnedMatrix::from_dense(&materialised, n, selected.len(), MAX_BINS);
 
         assert_eq!(direct.n_features, copied.n_features);
         assert_eq!(direct.n_bins_per_feature, copied.n_bins_per_feature);
@@ -414,8 +449,9 @@ mod tests {
         let indices = vec![1, 3, 5, 0, 2, 4, 1, 3, 5, 0, 2, 4];
         let data = vec![2.0, 1.0, 3.0, 1.0, 4.0, 2.0, 3.0, 7.0, 1.0, 5.0, 1.0, 6.0];
 
-        let direct = BinnedMatrix::from_csc_columns(&indptr, &indices, &data, n, nf, &selected);
-        let copied = BinnedMatrix::from_dense_columns(&dense, n, nf, &selected);
+        let direct =
+            BinnedMatrix::from_csc_columns(&indptr, &indices, &data, n, nf, &selected, MAX_BINS);
+        let copied = BinnedMatrix::from_dense_columns(&dense, n, nf, &selected, MAX_BINS);
 
         assert_eq!(direct.n_features, copied.n_features);
         assert_eq!(direct.n_bins_per_feature, copied.n_bins_per_feature);
@@ -429,7 +465,7 @@ mod tests {
         let nf = 1;
         let x: Vec<f32> = (0..n).map(|i| i as f32).collect();
         let y: Vec<f32> = (0..n).map(|i| if i < 50 { -1.0 } else { 1.0 }).collect();
-        let bm = BinnedMatrix::from_dense(&x, n, nf);
+        let bm = BinnedMatrix::from_dense(&x, n, nf, MAX_BINS);
         let mut h = NodeHist::zeros(MAX_BINS);
         h.accumulate(&bm, 0, &y, &(0..n as u32).collect::<Vec<_>>());
         let (bin, gain, left_n) = h
@@ -440,5 +476,42 @@ mod tests {
         assert_eq!(left_n, 50);
         // Bin boundary should be around the transition
         assert!(bin > 0 && bin < MAX_BINS - 1);
+    }
+
+    #[test]
+    fn default_budget_gives_one_bin_per_distinct_value() {
+        // 300 distinct values, each twice, shuffled: exact binning is the value's rank.
+        let n = 600;
+        let x: Vec<f32> = (0..n).map(|i| ((i * 7919) % 300) as f32 * 0.5).collect();
+        let bm = BinnedMatrix::from_dense(&x, n, 1, MAX_BINS);
+        assert_eq!(bm.n_bins_per_feature[0], 300);
+        for (s, &v) in x.iter().enumerate() {
+            assert_eq!(bm.bins[s] as f32, v * 2.0);
+        }
+    }
+
+    #[test]
+    fn smaller_budget_merges_distinct_values_in_order() {
+        let n = 1000;
+        let x: Vec<f32> = (0..n).map(|i| i as f32).collect();
+        let bm = BinnedMatrix::from_dense(&x, n, 1, 255);
+        assert_eq!(bm.n_bins_per_feature[0], 255);
+        assert_eq!(bm.bins[0], 0);
+        // RustScenic 0.6 behaviour, kept so max_bins=255 reproduces 0.6 networks:
+        // the last cut point equals the largest value, so the top bin stays empty.
+        assert_eq!(bm.bins[n - 1], 253);
+        assert!(bm.bins.windows(2).all(|w| w[0] <= w[1]));
+    }
+
+    #[test]
+    #[should_panic(expected = "max_bins must be between 2 and 65535")]
+    fn budget_below_two_is_rejected() {
+        BinnedMatrix::from_dense(&[0.0, 1.0], 2, 1, 1);
+    }
+
+    #[test]
+    #[should_panic(expected = "max_bins must be between 2 and 65535")]
+    fn budget_above_storage_is_rejected() {
+        BinnedMatrix::from_dense(&[0.0, 1.0], 2, 1, MAX_BINS + 1);
     }
 }

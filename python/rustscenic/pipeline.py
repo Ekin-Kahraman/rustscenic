@@ -218,6 +218,7 @@ def run(
     grn_max_features: float = 0.1,
     grn_early_stop_window: int = 25,
     grn_early_stop_mode: str = "arboreto",
+    grn_max_bins: int = 65535,
     grn_target_block_size: int | None = None,
     grn_top_targets: int = 50,
     grn_regulon_polarities: str = "both",
@@ -325,6 +326,10 @@ def run(
         ``"paired_oob"`` uses same-mask improvements, as GRNBoost2 was
         published; it trains predictable targets for longer.
         ``"legacy_inbag"`` reproduces historical RustScenic early stopping.
+    grn_max_bins
+        Bin budget per TF in GRN boosting, passed to ``grn.infer`` as
+        ``max_bins``. The default keeps every distinct value (scikit-learn's
+        exact thresholds); ``255`` reproduces RustScenic 0.6.
     grn_regulon_polarities
         ``"both"`` (default) computes TF-target Pearson correlations and
         emits separate ``<TF>_activator`` and ``<TF>_repressor`` regulons.
@@ -416,6 +421,9 @@ def run(
     grn_early_stop_window = int(grn_early_stop_window)
     if grn_early_stop_window < 0:
         raise ValueError("grn_early_stop_window must be non-negative")
+    grn_max_bins = int(grn_max_bins)
+    if not 2 <= grn_max_bins <= 65535:
+        raise ValueError(f"grn_max_bins must be between 2 and 65535, got {grn_max_bins}")
     grn_top_targets = int(grn_top_targets)
     if grn_top_targets < 1:
         raise ValueError(f"grn_top_targets must be >= 1, got {grn_top_targets}")
@@ -622,6 +630,7 @@ def run(
         max_features=grn_max_features,
         early_stop_window=grn_early_stop_window,
         early_stop_mode=grn_early_stop_mode,
+        max_bins=grn_max_bins,
         target_block_size=grn_target_block_size,
         seed=seed,
         verbose=False,

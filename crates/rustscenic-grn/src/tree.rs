@@ -23,7 +23,7 @@ pub enum Node {
     },
     Split {
         feature: usize,
-        bin_threshold: u8,
+        bin_threshold: u16,
         gain: f32,
         left: usize,
         right: usize,
@@ -171,13 +171,13 @@ fn build_node_rec(
         binned.n_features,
     );
 
-    let mut best: Option<(usize, u8, f32)> = None;
+    let mut best: Option<(usize, u16, f32)> = None;
     for &f in &scratch.feat_sub {
         hist_buf.accumulate(binned, f, y, samples);
         if let Some((bin, gain, _)) = hist_buf.best_split(binned.n_bins_per_feature[f] as usize) {
             match best {
-                None => best = Some((f, bin as u8, gain)),
-                Some((_, _, g)) if gain > g => best = Some((f, bin as u8, gain)),
+                None => best = Some((f, bin as u16, gain)),
+                Some((_, _, g)) if gain > g => best = Some((f, bin as u16, gain)),
                 _ => {}
             }
         }
@@ -380,7 +380,7 @@ mod tests {
             .iter()
             .map(|v| if *v < 1.0 { -1.0 } else { 1.0 })
             .collect();
-        let bm = BinnedMatrix::from_dense(&x, 40, 1);
+        let bm = BinnedMatrix::from_dense(&x, 40, 1, crate::histogram::MAX_BINS);
         let sample_idx: Vec<u32> = (0..40).collect();
         let mut rng = StdRng::seed_from_u64(0);
         let mut tree = Tree { nodes: Vec::new() };
@@ -422,7 +422,7 @@ mod tests {
             x[i * nf + 1] = b;
             y[i] = if a > 0.5 { 1.0 } else { -1.0 };
         }
-        let bm = BinnedMatrix::from_dense(&x, n, nf);
+        let bm = BinnedMatrix::from_dense(&x, n, nf, crate::histogram::MAX_BINS);
         let sample_idx: Vec<u32> = (0..n as u32).collect();
         let mut tree = Tree { nodes: Vec::new() };
         let mut gains = vec![0.0_f32; nf];
@@ -466,7 +466,7 @@ mod tests {
                 3.0 * b
             };
         }
-        let bm = BinnedMatrix::from_dense(&x, n, nf);
+        let bm = BinnedMatrix::from_dense(&x, n, nf, crate::histogram::MAX_BINS);
         let mut rng = StdRng::seed_from_u64(1);
         let mut tree = Tree { nodes: Vec::new() };
         let mut gains = vec![0.0_f32; nf];
@@ -506,7 +506,7 @@ mod tests {
             x[i * nf + 2] = ((i * 13) as f32) * 0.5 % 1.0;
             y[i] = 5.0 * a;
         }
-        let bm = BinnedMatrix::from_dense(&x, n, nf);
+        let bm = BinnedMatrix::from_dense(&x, n, nf, crate::histogram::MAX_BINS);
         let mut rng = StdRng::seed_from_u64(7);
         let mut tree = Tree { nodes: Vec::new() };
         let mut gains = vec![0.0_f32; nf];

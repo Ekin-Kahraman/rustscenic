@@ -9,7 +9,9 @@
 //! - Feature importance = sklearn-normalized split gains × n_estimators_fit
 //!   (per arboreto/core.py:168)
 //!
-//! Not bit-identical to sklearn (different RNG tape + histogram quantization).
+//! Not bit-identical to sklearn (different RNG tape). With the default
+//! `max_bins` the candidate split thresholds are sklearn's exact ones; a smaller
+//! budget adds histogram quantisation (RustScenic 0.6 used 255 bins).
 //!
 //! Measured against arboreto on 10x Multiome 3k (n_estimators=5000, 2588 cells
 //! × 1457 TFs, deep audit 2026-04-18):
@@ -133,6 +135,10 @@ pub struct GrnConfig {
     pub max_depth: usize,
     pub early_stop_window: usize,
     pub early_stop_mode: EarlyStopMode,
+    /// Bin budget per TF. The default, [`histogram::MAX_BINS`], keeps every
+    /// distinct value up to 65,535, giving scikit-learn's exact candidate
+    /// thresholds. 255 reproduces RustScenic 0.6 networks.
+    pub max_bins: usize,
     pub seed: u64,
     /// Retained for API compatibility. No longer affects execution: targets are
     /// fit in a single flat parallel pass over all genes (no blocking).
@@ -149,6 +155,7 @@ impl Default for GrnConfig {
             max_depth: 3,
             early_stop_window: 25,
             early_stop_mode: EarlyStopMode::Arboreto,
+            max_bins: histogram::MAX_BINS,
             seed: 777,
             target_block_size: 0,
         }
@@ -218,7 +225,8 @@ pub fn infer_indices_with_overlap(
     // Bin selected TF columns directly from the row-major expression matrix.
     // Per-target "drop self-TF" is handled by excluding that feature at fit
     // time rather than rebuilding the matrix.
-    let binned_all = BinnedMatrix::from_dense_columns(expression, n_cells, n_genes, &tf_cols);
+    let binned_all =
+        BinnedMatrix::from_dense_columns(expression, n_cells, n_genes, &tf_cols, cfg.max_bins);
 
     let gene_to_tf_col: HashMap<usize, usize> = tf_cols
         .iter()
@@ -276,7 +284,7 @@ pub fn infer_indices_view_with_overlap(
         return (Vec::new(), summary);
     }
 
-    let binned_all = BinnedMatrix::from_dense_columns_view(expression, &tf_cols);
+    let binned_all = BinnedMatrix::from_dense_columns_view(expression, &tf_cols, cfg.max_bins);
     let gene_to_tf_col: HashMap<usize, usize> = tf_cols
         .iter()
         .enumerate()
@@ -351,8 +359,15 @@ pub fn infer_indices_sparse_csc_with_overlap(
         return (Vec::new(), summary);
     }
 
-    let binned_all =
-        BinnedMatrix::from_csc_columns(indptr, indices, data, n_cells, n_genes, &tf_cols);
+    let binned_all = BinnedMatrix::from_csc_columns(
+        indptr,
+        indices,
+        data,
+        n_cells,
+        n_genes,
+        &tf_cols,
+        cfg.max_bins,
+    );
     let gene_to_tf_col: HashMap<usize, usize> = tf_cols
         .iter()
         .enumerate()
