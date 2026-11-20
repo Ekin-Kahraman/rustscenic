@@ -1,0 +1,2 @@
+Error: identical(colnames(assigned), cells$barcode) is not TRUE
+Execution halted

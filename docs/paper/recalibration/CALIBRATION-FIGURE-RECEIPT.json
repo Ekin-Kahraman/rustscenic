@@ -1,0 +1,16 @@
+[
+  {
+    "dataset": "k562",
+    "distinct_pairs": 26000,
+    "raw_p05_fraction": 0.04680769230769231,
+    "median_effect": -0.0020979559155660703,
+    "effects_outside_histogram": 33
+  },
+  {
+    "dataset": "rpe1",
+    "distinct_pairs": 26000,
+    "raw_p05_fraction": 0.048615384615384616,
+    "median_effect": 0.00119820067243438,
+    "effects_outside_histogram": 53
+  }
+]

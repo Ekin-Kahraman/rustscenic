@@ -1,0 +1,11 @@
+test_absent_predictions_never_gain_emitted_hits (test_corrected_evaluation.EvaluationRegression.test_absent_predictions_never_gain_emitted_hits) ... ok
+test_bh_matches_known_monotone_adjustment (test_corrected_evaluation.EvaluationRegression.test_bh_matches_known_monotone_adjustment) ... ok
+test_constant_expression_is_invariant_to_pool_size (test_corrected_evaluation.EvaluationRegression.test_constant_expression_is_invariant_to_pool_size) ... ok
+test_pool_before_log_removes_constructed_small_pool_bias (test_corrected_evaluation.EvaluationRegression.test_pool_before_log_removes_constructed_small_pool_bias) ... ok
+test_qc_missingness_effect_threshold_and_self_exclusion (test_corrected_evaluation.EvaluationRegression.test_qc_missingness_effect_threshold_and_self_exclusion) ... ok
+test_tf_gene_permutations_preserve_bh (test_corrected_evaluation.EvaluationRegression.test_tf_gene_permutations_preserve_bh) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.007s
+
+OK

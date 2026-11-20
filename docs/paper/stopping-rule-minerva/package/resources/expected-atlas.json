@@ -1,0 +1,15 @@
+{
+  "cell_order_seed": 20261028,
+  "cells": 1306127,
+  "dataset": "10x E18 mouse brain 1M neurons",
+  "files": {
+    "rna.h5": "e5408f2840ff0f3f8939394f80b1c8f367d63a6615d67c000491155203a13e5e",
+    "tfs.txt": "83328d1aa15fe7a623b1e220fc70fe5d01c86b0081f7012f29f8cf9086b23113"
+  },
+  "genes": 3000,
+  "panel_sha256": "f3b0c04658a56314e21611fe6dbab74c12a2009022b590797737fcbf10e6b3ea",
+  "pilot_subset": false,
+  "source_real_cells": 1306127,
+  "source_sha256": "255a36ee92de25cb3568faa2c27d31fe6d0db30f285c5c977be8d6245de14044",
+  "tfs": 256
+}

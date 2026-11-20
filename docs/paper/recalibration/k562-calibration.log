@@ -1,0 +1,49 @@
+CALIBRATION k562 median-a group size 5 
+Constructing negative control pairs.
+ ✓
+Generating permutation resamples.
+ ✓
+Running calibration_check in parallel.
+Change directories to /Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/results/k562/logs/sceptre_logs/ and view the files calibration_check_*.out for progress updates.
+ ✓
+  dataset      run       seed construct_group_size     n    p05    p01  p001
+1    k562 median-a 2026111201                    5 10000 0.0465 0.0091 0.001
+     p50 bh05   median_lfc     mean_lfc seconds pass
+1 0.4958    0 -0.003995814 -0.008897233  63.009 TRUE
+CALIBRATION k562 median-b group size 5 
+Constructing negative control pairs.
+ ✓
+Generating permutation resamples.
+ ✓
+Running calibration_check in parallel.
+Change directories to /Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/results/k562/logs/sceptre_logs/ and view the files calibration_check_*.out for progress updates.
+ ✓
+  dataset      run       seed construct_group_size     n    p05    p01  p001
+1    k562 median-b 2026111202                    5 10000 0.0465 0.0091 0.001
+     p50 bh05   median_lfc     mean_lfc seconds pass
+1 0.4958    0 -0.003995814 -0.008897233  24.634 TRUE
+CALIBRATION k562 single group size 1 
+Constructing negative control pairs.
+ ✓
+Generating permutation resamples.
+ ✓
+Running calibration_check in parallel.
+Change directories to /Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/results/k562/logs/sceptre_logs/ and view the files calibration_check_*.out for progress updates.
+ ✓
+  dataset    run       seed construct_group_size    n   p05        p01
+1    k562 single 2026111203                    1 3000 0.054 0.01066667
+         p001       p50 bh05 median_lfc   mean_lfc seconds pass
+1 0.001333333 0.5093333    0 0.02004464 0.02528683  12.543 TRUE
+CALIBRATION k562 upper group size 13 
+Constructing negative control pairs.
+ ✓
+Generating permutation resamples.
+ ✓
+Running calibration_check in parallel.
+Change directories to /Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/results/k562/logs/sceptre_logs/ and view the files calibration_check_*.out for progress updates.
+ ✓
+  dataset   run       seed construct_group_size    n   p05        p01
+1    k562 upper 2026111204                   13 3000 0.048 0.01066667
+         p001       p50 bh05    median_lfc     mean_lfc seconds pass
+1 0.001333333 0.4973333    0 -0.0006333377 -0.003666764  12.868 TRUE
+ALL CALIBRATION CHECKS PASSED k562 

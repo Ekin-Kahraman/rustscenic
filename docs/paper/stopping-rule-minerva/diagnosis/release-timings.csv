@@ -1,0 +1,7 @@
+input,run,build,max_bins,seed,mode,inference_s,max_rss_bytes
+"BMMC 20,000",rc070-bmmc-arboreto-777-a,v0.7.0 release candidate,65535,777,arboreto,285.528,665534464
+"BMMC 20,000",rc070-bmmc-arboreto-777-b,v0.7.0 release candidate,65535,777,arboreto,284.639,663945216
+"BMMC 20,000",release-u8-bmmc-arboreto-777-b,v0.6.1 local build,255,777,arboreto,271.965,664666112
+"BMMC 20,000",release-u8-bmmc-arboreto-777-c,v0.6.1 local build,255,777,arboreto,271.714,665714688
+"Atlas 1,306,127",rc070-atlas1306127-arboreto-777,v0.7.0 release candidate,65535,777,arboreto,5494.516,4706795520
+"Atlas 1,306,127",release-u8-atlas1306127-arboreto-777,v0.6.1 local build,255,777,arboreto,5065.111,4647895040

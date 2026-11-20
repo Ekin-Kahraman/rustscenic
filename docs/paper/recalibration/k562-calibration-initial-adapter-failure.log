@@ -1,0 +1,7 @@
+Error in run_qc_pt_1(sceptre_object, n_nonzero_trt_thresh, n_nonzero_cntrl_thresh,  : 
+  All cells were removed as part of cellwise QC. Consider relaxing the cellwise QC thresholds (`response_n_umis_range`, `response_n_nonzero_range`, `p_mito_threshold`). Additionally, consider switching from a low-MOI to high-MOI analysis.
+Calls: run_qc ... run_qc_pt_2 -> compute_pairwise_qc_information -> run_qc_pt_1
+In addition: Warning message:
+In run_qc_pt_1(sceptre_object, n_nonzero_trt_thresh, n_nonzero_cntrl_thresh,  :
+  A large percentage of cells (100%) contain two or more gRNAs. Consider switching from a low-MOI to a high-MOI analysis.
+Execution halted

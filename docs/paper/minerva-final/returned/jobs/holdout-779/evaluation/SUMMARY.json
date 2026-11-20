@@ -1,0 +1,7 @@
+{
+  "interpretation": "Independent K562 study; capture-half effect concordance, not donor replication or direct-edge accuracy",
+  "metric_rows": 1416,
+  "protocol_sha256": "84a712e1c7627737079d47f20aa99c8efc7813136e0db4590ab6639747625451",
+  "seed": 779,
+  "status": "complete"
+}

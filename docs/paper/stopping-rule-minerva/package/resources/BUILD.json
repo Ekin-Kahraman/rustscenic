@@ -1,0 +1,23 @@
+{
+  "rustscenic_wheel": {
+    "file": "rustscenic-0.6.1-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+    "sha256": "ff7d8766dd031d0bc48a728e5ac997296680817231a8811c08c67adb43a4db6c",
+    "source": "RustScenic v0.6.1 (commit e59dc76b0ba37f76e8875709c515b24b0ce12772) plus resources/KERNEL-PATCH.diff",
+    "patch_sha256": "877c723128c0c1b22515e2e60d85a58729cbd0afdeb795cea7264d2516c99f8e",
+    "change": "Adds early_stop_mode=\"paired_oob\" (same-mask out-of-bag improvement). The default, early_stop_mode=\"arboreto\", is unchanged.",
+    "built": "2026-11-12 on macOS arm64 by cross-compilation: maturin 1.13.1, rustc 1.94.1, zig 0.15.2 as linker, target x86_64-unknown-linux-gnu, --release, manylinux_2_17 compliance checked by maturin",
+    "command": "maturin build --release --manifest-path crates/rustscenic-py/Cargo.toml --target x86_64-unknown-linux-gnu --zig --compatibility manylinux_2_17",
+    "not_a_release": "Local build for this replication. It is not published on PyPI or GitHub and differs from the official 0.6.1 wheel only by the patch.",
+    "checks": [
+      "Loaded and run in a linux/amd64 python:3.11-slim container (glibc 2.41): preflight output identical to the macOS arm64 build of the same source",
+      "Rust sources and grn.py unchanged since the macOS wheel frozen for the 12 November BEELINE confirmation (sha256 c3e0a90c68b6da8e2366dee7dc712333f977958d899ec7754ebe7c8195850977)",
+      "Kernel tests 6 of 6; Python GRN and CLI tests 74 of 74 on the macOS build"
+    ]
+  },
+  "scikit_learn_wheel": {
+    "file": "scikit_learn-1.2.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+    "sha256": "bf036ea7ef66115e0d49655f16febfa547886deba20149555a41d28f56fd6d3c",
+    "source": "https://pypi.org/project/scikit-learn/1.2.2/ (unmodified, downloaded 2026-11-12)",
+    "use": "Placed first on PYTHONPATH for the reference_original arm only, so arboreto 0.1.6 runs on the last scikit-learn before the 1.3 change."
+  }
+}

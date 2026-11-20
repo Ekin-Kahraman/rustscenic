@@ -1,0 +1,35 @@
+{
+  "TFs": 256,
+  "candidate_ranking": {
+    "ranked_tfs": 256,
+    "raw_edges": 423869,
+    "top_edges": 12800
+  },
+  "cells": 1306127,
+  "genes": 6000,
+  "grn_correlation_s": 64.99307817034423,
+  "grn_fit": {
+    "early_stop_mode": "arboreto",
+    "early_stop_window": 25,
+    "fitted_trees_max": 626,
+    "fitted_trees_mean": 52.719,
+    "fitted_trees_median": 28.0,
+    "fitted_trees_min": 25,
+    "learning_rate": 0.01,
+    "max_depth": 3,
+    "max_features": 0.1,
+    "min_importance": null,
+    "n_estimators_ceiling": 5000,
+    "seed": 777,
+    "subsample": 0.9,
+    "target_block_size_effective": null,
+    "target_block_size_requested": null,
+    "target_count": 6000,
+    "top_targets_per_tf": null
+  },
+  "grn_inference_s": 7107.830809816718,
+  "input_preparation_s": 191.81871563196182,
+  "recipe_scope": "GRN and correlation only",
+  "seed": 777,
+  "status": "complete"
+}

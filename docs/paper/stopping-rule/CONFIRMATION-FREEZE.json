@@ -1,0 +1,39 @@
+{
+  "frozen_utc": "2026-11-12T21:01:07.926208+00:00",
+  "statement": "Hashed before the confirmation inputs directory existed and before any confirmation network or score was computed.",
+  "confirmation_inputs_present_at_freeze": false,
+  "protocol_sha256": "68e1244abc8115808c6f002b5d7dfc290112faa66906cfa533cf1c7c815ab461",
+  "scripts_sha256": {
+    "stage_confirmation.py": "bb5165acfb599d8b50dd273ae97e18833cce44d9b93b6e89ace3f05f50aeb712",
+    "beeline_arms.py": "7fd941606929b540aa63cc640c74979917dd171eb40f126c9fe4280f3d8b2513",
+    "beeline_score.py": "11d37092c1b8e792b83827dab502a51e309c12cc8b49c3b51f8b3cc5a8a9e4d2",
+    "beeline_regulons.py": "e89130ed0d44654c4b289abe6fb586a4a7ba3a640da5462732fec1406b7cbfbd",
+    "reference_paired.py": "c1eae66a707ee0983d31b69e8c4ff0b6544ede59155d726f10ae18e6db84a837"
+  },
+  "unchanged_dependencies_sha256": {
+    "prepare_inputs.py (28 Oct)": "06d93e071c773984de25b6b36cd2c14f4018b962c4959e386e796f86059d1197",
+    "reference_metrics.py (6 Nov)": "321991931dd6ac962351765e98b309b31114fbfcdd9c13d7648c1a5c611cafac",
+    "grn_reference.py (12 Nov package)": "a87bde99218804d7ad0c453b7032ed42e9741d9ff51b5416ec4ffea559fc4c41",
+    "recipe.py (12 Nov package)": "07a29f8476a5900052a9338f6ae29c222944015cc5010b499c04aba5517f93e7"
+  },
+  "kernel": {
+    "base": "v0.6.1 (e59dc76)",
+    "branch": "fix/paired-oob-early-stop (uncommitted working tree)",
+    "diff_vs_v0.6.1_sha256": "24648415dec4848af078d03354310f1edb77fb19b968c324d32c474d2ea2c204",
+    "diff_lines": 183,
+    "wheel": "rustscenic-0.6.1-cp310-abi3-macosx_11_0_arm64.whl",
+    "wheel_sha256": "c3e0a90c68b6da8e2366dee7dc712333f977958d899ec7754ebe7c8195850977"
+  },
+  "run_settings": {
+    "seeds": [
+      777,
+      778,
+      779
+    ],
+    "bootstrap_resamples": 2000,
+    "bootstrap_seed": 20261112,
+    "bootstrap_references": "primary (first listed) reference per dataset",
+    "threads": 10
+  },
+  "development_basis": "results/beeline-dev (hESC, mDC, mESC): trees ratio 6.7-7.9, stability ratio 1.86-2.14, fidelity ratio 0.978-0.986 in both stopping definitions"
+}

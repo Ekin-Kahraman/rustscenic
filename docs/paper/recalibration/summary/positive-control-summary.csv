@@ -1,0 +1,3 @@
+dataset,assayed_targets,self_in_panel,qc_passing_finite,significant_down,adequate_knockdown,median_log2_effect
+k562,202,172,122,117,116,-1.9807760856213
+rpe1,245,189,66,59,59,-2.042000102067885

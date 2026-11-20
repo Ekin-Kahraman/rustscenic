@@ -1,0 +1,13 @@
+Constructing negative control pairs.
+ ✓
+Generating permutation resamples.
+ ✓
+Running calibration_check in parallel.
+Change directories to /Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/results/k562/logs/sceptre_logs/ and view the files calibration_check_*.out for progress updates.
+ ✓
+  dataset                 run       seed construct_group_size     n    p05
+1    k562 distinct-validation 2026111202                    5 10000 0.0446
+     p01  p001    p50 bh05   median_lfc    mean_lfc distinct_pool_available
+1 0.0098 7e-04 0.4932    0 -0.004507576 -0.01012772                   10000
+  pass
+1 TRUE

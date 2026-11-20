@@ -1,0 +1,19 @@
+   dataset                          networks    rule                      TFs  within_pySCENIC  within_RustScenic  between  fidelity
+atlas20000 atlas20000-cap255-arboreto-{seed} current                  all TFs            0.465              0.390    0.389     0.836
+atlas20000 atlas20000-cap255-arboreto-{seed} current     exact (<=255 values)            0.506              0.469    0.478     0.945
+atlas20000 atlas20000-cap255-arboreto-{seed} current compressed (>255 values)            0.444              0.349    0.343     0.772
+atlas20000 atlas20000-cap65535-arboreto-{seed} current                  all TFs            0.465              0.426    0.441     0.949
+atlas20000 atlas20000-cap65535-arboreto-{seed} current     exact (<=255 values)            0.506              0.463    0.480     0.948
+atlas20000 atlas20000-cap65535-arboreto-{seed} current compressed (>255 values)            0.444              0.408    0.422     0.949
+atlas20000 atlas20000-cap255-paired_oob-{seed} original                  all TFs            0.687              0.658    0.627     0.913
+atlas20000 atlas20000-cap255-paired_oob-{seed} original     exact (<=255 values)            0.688              0.666    0.672     0.977
+atlas20000 atlas20000-cap255-paired_oob-{seed} original compressed (>255 values)            0.687              0.654    0.604     0.880
+atlas20000 atlas20000-cap65535-paired_oob-{seed} original                  all TFs            0.687              0.672    0.677     0.985
+atlas20000 atlas20000-cap65535-paired_oob-{seed} original     exact (<=255 values)            0.688              0.672    0.675     0.982
+atlas20000 atlas20000-cap65535-paired_oob-{seed} original compressed (>255 values)            0.687              0.672    0.678     0.987
+   bmmc cap1023-arboreto-{seed} current                  all TFs            0.291              0.269    0.268     0.921
+   bmmc cap1023-arboreto-{seed} current     exact (<=255 values)            0.293              0.305    0.296     1.010
+   bmmc cap1023-arboreto-{seed} current compressed (>255 values)            0.291              0.267    0.267     0.916
+   bmmc cap4095-arboreto-{seed} current                  all TFs            0.291              0.275    0.281     0.967
+   bmmc cap4095-arboreto-{seed} current     exact (<=255 values)            0.293              0.285    0.289     0.988
+   bmmc cap4095-arboreto-{seed} current compressed (>255 values)            0.291              0.275    0.281     0.965

@@ -48,7 +48,7 @@
     "allowed_hit_count": 32,
     "exists": true,
     "ok": true,
-    "package_dir": "/Users/ekin/projects/bio/rustscenic-biological-fidelity/python/rustscenic",
+    "package_dir": "python/rustscenic",
     "pattern_count": 62,
     "violation_count": 0,
     "violations": []

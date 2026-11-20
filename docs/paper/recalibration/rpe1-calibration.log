@@ -1,0 +1,49 @@
+CALIBRATION rpe1 median-a group size 4 
+Constructing negative control pairs.
+ ✓
+Generating permutation resamples.
+ ✓
+Running calibration_check in parallel.
+Change directories to /Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/results/rpe1/logs/sceptre_logs/ and view the files calibration_check_*.out for progress updates.
+ ✓
+  dataset      run       seed construct_group_size     n    p05    p01  p001
+1    rpe1 median-a 2026111201                    4 10000 0.0503 0.0103 8e-04
+     p50 bh05   median_lfc    mean_lfc seconds pass
+1 0.4961    0 -0.001985064 -0.01152419  88.534 TRUE
+CALIBRATION rpe1 median-b group size 4 
+Constructing negative control pairs.
+ ✓
+Generating permutation resamples.
+ ✓
+Running calibration_check in parallel.
+Change directories to /Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/results/rpe1/logs/sceptre_logs/ and view the files calibration_check_*.out for progress updates.
+ ✓
+  dataset      run       seed construct_group_size     n    p05    p01  p001
+1    rpe1 median-b 2026111202                    4 10000 0.0503 0.0103 8e-04
+     p50 bh05   median_lfc    mean_lfc seconds pass
+1 0.4961    0 -0.001985064 -0.01152419   12.11 TRUE
+CALIBRATION rpe1 single group size 1 
+Constructing negative control pairs.
+ ✓
+Generating permutation resamples.
+ ✓
+Running calibration_check in parallel.
+Change directories to /Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/results/rpe1/logs/sceptre_logs/ and view the files calibration_check_*.out for progress updates.
+ ✓
+  dataset    run       seed construct_group_size    n   p05        p01
+1    rpe1 single 2026111203                    1 3000 0.049 0.01066667
+          p001   p50 bh05 median_lfc   mean_lfc seconds pass
+1 0.0006666667 0.502    0 0.02723601 0.02694282   2.916 TRUE
+CALIBRATION rpe1 upper group size 10 
+Constructing negative control pairs.
+ ✓
+Generating permutation resamples.
+ ✓
+Running calibration_check in parallel.
+Change directories to /Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/results/rpe1/logs/sceptre_logs/ and view the files calibration_check_*.out for progress updates.
+ ✓
+  dataset   run       seed construct_group_size    n   p05         p01
+1    rpe1 upper 2026111204                   10 3000 0.047 0.009666667
+         p001       p50 bh05   median_lfc    mean_lfc seconds pass
+1 0.001333333 0.5036667    0 -0.003327037 -0.00651895   8.703 TRUE
+ALL CALIBRATION CHECKS PASSED rpe1 

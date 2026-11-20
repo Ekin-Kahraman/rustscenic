@@ -1,0 +1,7 @@
+CALIBRATION k562 median-a group size 5 
+Constructing negative control pairs.
+ ✓
+Generating permutation resamples.
+ ✓
+Running calibration_check in parallel.
+Change directories to /Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/results/k562/logs/sceptre_logs/ and view the files calibration_check_*.out for progress updates.

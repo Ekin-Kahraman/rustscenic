@@ -1,0 +1,92 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "check": "k562 input integrity",
+      "status": "passed",
+      "files": 6
+    },
+    {
+      "check": "k562 calibration",
+      "status": "passed",
+      "distinct_pairs": 26000,
+      "BH_discoveries": 0
+    },
+    {
+      "check": "k562 response labels",
+      "status": "passed",
+      "rows": 1009828,
+      "R_BH_agreement": true
+    },
+    {
+      "check": "k562 scoring coverage and invariants",
+      "status": "passed",
+      "ranking_rows": 11865,
+      "coverage_rows": 5454
+    },
+    {
+      "check": "k562 independently recomputed real-network AP sample",
+      "status": "passed",
+      "rows": 987,
+      "TFs": 17,
+      "selection": "fixed lexical stride"
+    },
+    {
+      "check": "rpe1 input integrity",
+      "status": "passed",
+      "files": 6
+    },
+    {
+      "check": "rpe1 calibration",
+      "status": "passed",
+      "distinct_pairs": 26000,
+      "BH_discoveries": 0
+    },
+    {
+      "check": "rpe1 response labels",
+      "status": "passed",
+      "rows": 1224811,
+      "R_BH_agreement": true
+    },
+    {
+      "check": "rpe1 scoring coverage and invariants",
+      "status": "passed",
+      "ranking_rows": 15057,
+      "coverage_rows": 6615
+    },
+    {
+      "check": "rpe1 independently recomputed real-network AP sample",
+      "status": "passed",
+      "rows": 1050,
+      "TFs": 17,
+      "selection": "fixed lexical stride"
+    },
+    {
+      "check": "All macro summaries reconstructed",
+      "status": "passed",
+      "rows": 126
+    },
+    {
+      "check": "All paired differences and bootstrap intervals reconstructed",
+      "status": "passed",
+      "rows": 144
+    },
+    {
+      "check": "Prior activity replay retained",
+      "status": "passed",
+      "rows": 2457,
+      "scope": "Recomputed contrasts and ranks from returned AUCell group means; per-cell AUCell not rerun"
+    }
+  ],
+  "model_refits": 0,
+  "scripts": {
+    "analysis_paths.py": "107c2c870f2fd4545995314c2044b09ac28ab7dc7d5be03fdbc1a3a6cf4b9755",
+    "prepare_counts.py": "f553229553911b6a1f66b2192c00fd9c1f946980cc7af654c9860ef85cbf30a5",
+    "recalibrate.R": "3b3344dec8a65341a34c257752aad8e6b52b6994fcf68cec747494ddb8b36bb7",
+    "validate_distinct.R": "9993b483ccd5d557159f8111c2b524f46e4a7e166dfb3fed2be365a174b2be36",
+    "corrected_evaluation.py": "a432ca06ca44a3b7df5d9d70a53a3d2087ee6b847b600df991cf2ce4e6029279",
+    "score_saved_networks.py": "433529e276219553dcc518ce7a0f4cd1c6c48ee08190b59be27c9bf2de320d5d",
+    "verify_bh.R": "46daddfbbf510a1263cc385463e2a00c0d746e6248267c5d6c7979ad0afe2abd",
+    "verify_recalibration.py": "8f382eea6e0822e5fa9e110d1218fa11fca506d9e34014c58b61bbb9a1f05ee9"
+  }
+}

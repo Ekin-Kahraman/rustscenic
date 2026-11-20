@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "discovery_inspected": false,
+  "distinct_validation_pairs": 10000,
+  "distinct_validation_overlap_with_median_a": 0,
+  "median_b_is_duplicate": true,
+  "unique_counted_tests": 26000,
+  "scope": "Empirical calibration diagnostic, not independent biological replication or proof of universal FDR"
+}

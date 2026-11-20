@@ -1,0 +1,21 @@
+{
+  "analysis_memory_samples": 2332,
+  "analysis_peak_pss_mb": 4661.548032,
+  "analysis_pss_incomplete_samples": 0,
+  "command": [
+    "/sc/arion/scratch/huangl21/rustscenic-recovery/work/reference/bin/python",
+    "/sc/arion/scratch/huangl21/rustscenic-minerva-final/scaling.py",
+    "atlas-rna",
+    "/sc/arion/scratch/huangl21/rustscenic-recovery",
+    "/sc/arion/scratch/huangl21/rustscenic-minerva-final/work/jobs/atlas-rna/standard",
+    "16"
+  ],
+  "exit_code": 0,
+  "memory_samples": 2343,
+  "peak_summed_rss_mb": 4681.158656,
+  "peak_tree_pss_mb": 4661.548032,
+  "process_wall_s": 2452.374313119799,
+  "pss_incomplete_samples": 0,
+  "status": "complete",
+  "timeout_seconds": 7200
+}

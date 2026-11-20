@@ -1,4 +1,10 @@
 # Preserve checksummed evidence and generated artefacts across checkouts.
-evidence/** -text -whitespace linguist-generated=true
+evidence/** -text linguist-generated=true
 figures/** -text linguist-generated=true
-verification/*.log -text -whitespace linguist-generated=true
+verification/*.log -text linguist-generated=true
+stopping-rule/** -text -whitespace linguist-generated=true
+stopping-rule-minerva/** -text -whitespace linguist-generated=true
+minerva-final/** -text -whitespace linguist-generated=true
+recalibration/** -text -whitespace linguist-generated=true
+case-study/** -text -whitespace linguist-generated=true
+tables/** -text linguist-generated=true

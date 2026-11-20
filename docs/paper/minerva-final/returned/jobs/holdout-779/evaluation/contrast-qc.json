@@ -1,0 +1,2162 @@
+[
+  {
+    "control_construct": "NegCtrl0_NegCtrl0;NegCtrl0_NegCtrl0",
+    "halves": [
+      {
+        "control_cells": 923,
+        "target_cells": 258,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 916,
+        "target_cells": 278,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "control_construct": "NegCtrl10_NegCtrl0;NegCtrl10_NegCtrl0",
+    "halves": [
+      {
+        "control_cells": 831,
+        "target_cells": 350,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 835,
+        "target_cells": 359,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "control_construct": "NegCtrl11_NegCtrl0;NegCtrl11_NegCtrl0",
+    "halves": [
+      {
+        "control_cells": 898,
+        "target_cells": 283,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 929,
+        "target_cells": 265,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "control_construct": "NegCtrl1_NegCtrl0;NegCtrl1_NegCtrl0",
+    "halves": [
+      {
+        "control_cells": 891,
+        "target_cells": 290,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 902,
+        "target_cells": 292,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "AHR",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 273,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 285,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "CEBPA",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 235,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 225,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "CEBPB",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 254,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 234,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "CEBPE",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 614,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 619,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "DLX2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 387,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 345,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "EGR1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 164,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 158,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "ETS2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 623,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 578,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "FEV",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 358,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 346,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "FOSB",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 327,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 303,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "FOXA1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 437,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 414,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "FOXA3",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 239,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 255,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "FOXF1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 438,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 436,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "FOXL2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 310,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 342,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "FOXO4",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 108,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 107,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "HES7",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 76,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 882,
+        "target_cells": 41,
+        "usable_gemgroups": 3
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "HNF4A",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 118,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 119,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "HOXA13",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 162,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 112,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "HOXB9",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 371,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 330,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "HOXC13",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 183,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 202,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "IKZF3",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 357,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 324,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "IRF1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 210,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 217,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "ISL2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 283,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 299,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "JUN",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 143,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 123,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "KLF1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 1031,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 929,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "KMT2A",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 128,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 113,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "LHX1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 181,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 194,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "LYL1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 192,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 240,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "MAPK1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 410,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 355,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "MEIS1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 393,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 383,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "OSR2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 502,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 501,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "POU3F2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 185,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 174,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "PRDM1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 155,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 142,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "RHOXF2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 180,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 148,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "RREB1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 184,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 147,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "SNAI1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 241,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 226,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "SPI1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 296,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 317,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "TBX2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 353,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 337,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "TBX3",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 370,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 321,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "TP73",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 126,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 122,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "ZBTB1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 346,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 347,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "TF": "ZBTB25",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 367,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 373,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.25
+  },
+  {
+    "control_construct": "NegCtrl0_NegCtrl0;NegCtrl0_NegCtrl0",
+    "halves": [
+      {
+        "control_cells": 923,
+        "target_cells": 258,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 916,
+        "target_cells": 278,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "control_construct": "NegCtrl10_NegCtrl0;NegCtrl10_NegCtrl0",
+    "halves": [
+      {
+        "control_cells": 831,
+        "target_cells": 350,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 835,
+        "target_cells": 359,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "control_construct": "NegCtrl11_NegCtrl0;NegCtrl11_NegCtrl0",
+    "halves": [
+      {
+        "control_cells": 898,
+        "target_cells": 283,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 929,
+        "target_cells": 265,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "control_construct": "NegCtrl1_NegCtrl0;NegCtrl1_NegCtrl0",
+    "halves": [
+      {
+        "control_cells": 891,
+        "target_cells": 290,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 902,
+        "target_cells": 292,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "AHR",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 273,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 285,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "CEBPA",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 235,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 225,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "CEBPB",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 254,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 234,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "CEBPE",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 614,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 619,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "DLX2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 387,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 345,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "EGR1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 164,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 158,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "ETS2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 623,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 578,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "FEV",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 358,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 346,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "FOSB",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 327,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 303,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "FOXA1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 437,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 414,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "FOXA3",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 239,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 255,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "FOXF1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 438,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 436,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "FOXL2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 310,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 342,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "FOXO4",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 108,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 107,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "HES7",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 76,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 882,
+        "target_cells": 41,
+        "usable_gemgroups": 3
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "HNF4A",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 118,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 119,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "HOXA13",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 162,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 112,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "HOXB9",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 371,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 330,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "HOXC13",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 183,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 202,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "IKZF3",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 357,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 324,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "IRF1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 210,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 217,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "ISL2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 283,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 299,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "JUN",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 143,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 123,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "KLF1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 1031,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 929,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "KMT2A",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 128,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 113,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "LHX1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 181,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 194,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "LYL1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 192,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 240,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "MAPK1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 410,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 355,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "MEIS1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 393,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 383,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "OSR2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 502,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 501,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "POU3F2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 185,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 174,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "PRDM1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 155,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 142,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "RHOXF2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 180,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 148,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "RREB1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 184,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 147,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "SNAI1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 241,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 226,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "SPI1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 296,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 317,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "TBX2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 353,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 337,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "TBX3",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 370,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 321,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "TP73",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 126,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 122,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "ZBTB1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 346,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 347,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "TF": "ZBTB25",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 367,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 373,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 0.5
+  },
+  {
+    "control_construct": "NegCtrl0_NegCtrl0;NegCtrl0_NegCtrl0",
+    "halves": [
+      {
+        "control_cells": 923,
+        "target_cells": 258,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 916,
+        "target_cells": 278,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "control_construct": "NegCtrl10_NegCtrl0;NegCtrl10_NegCtrl0",
+    "halves": [
+      {
+        "control_cells": 831,
+        "target_cells": 350,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 835,
+        "target_cells": 359,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "control_construct": "NegCtrl11_NegCtrl0;NegCtrl11_NegCtrl0",
+    "halves": [
+      {
+        "control_cells": 898,
+        "target_cells": 283,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 929,
+        "target_cells": 265,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "control_construct": "NegCtrl1_NegCtrl0;NegCtrl1_NegCtrl0",
+    "halves": [
+      {
+        "control_cells": 891,
+        "target_cells": 290,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 902,
+        "target_cells": 292,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "AHR",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 273,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 285,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "CEBPA",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 235,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 225,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "CEBPB",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 254,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 234,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "CEBPE",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 614,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 619,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "DLX2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 387,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 345,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "EGR1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 164,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 158,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "ETS2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 623,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 578,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "FEV",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 358,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 346,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "FOSB",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 327,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 303,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "FOXA1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 437,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 414,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "FOXA3",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 239,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 255,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "FOXF1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 438,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 436,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "FOXL2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 310,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 342,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "FOXO4",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 108,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 107,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "HES7",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 76,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 882,
+        "target_cells": 41,
+        "usable_gemgroups": 3
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "HNF4A",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 118,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 119,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "HOXA13",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 162,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 112,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "HOXB9",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 371,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 330,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "HOXC13",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 183,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 202,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "IKZF3",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 357,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 324,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "IRF1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 210,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 217,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "ISL2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 283,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 299,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "JUN",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 143,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 123,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "KLF1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 1031,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 929,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "KMT2A",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 128,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 113,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "LHX1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 181,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 194,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "LYL1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 192,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 240,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "MAPK1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 410,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 355,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "MEIS1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 393,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 383,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "OSR2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 502,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 501,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "POU3F2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 185,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 174,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "PRDM1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 155,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 142,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "RHOXF2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 180,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 148,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "RREB1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 184,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 147,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "SNAI1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 241,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 226,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "SPI1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 296,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 317,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "TBX2",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 353,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 337,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "TBX3",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 370,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 321,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "TP73",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 126,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 122,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "ZBTB1",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 346,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 347,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  },
+  {
+    "TF": "ZBTB25",
+    "halves": [
+      {
+        "control_cells": 1181,
+        "target_cells": 367,
+        "usable_gemgroups": 4
+      },
+      {
+        "control_cells": 1194,
+        "target_cells": 373,
+        "usable_gemgroups": 4
+      }
+    ],
+    "threshold": 1.0
+  }
+]

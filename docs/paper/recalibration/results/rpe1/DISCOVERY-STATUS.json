@@ -1,0 +1,9 @@
+{
+  "status": "complete",
+  "dataset": "rpe1",
+  "pairs": 1224811,
+  "qc_pass": 1137685,
+  "finite_p": 1137685,
+  "significant": 130474,
+  "scope": "Post-hoc corrected response analysis; no model refits"
+}

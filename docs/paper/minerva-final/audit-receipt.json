@@ -1,0 +1,375 @@
+{
+  "archived_arrays": {
+    "verified": 42
+  },
+  "lsf_success_logs": [
+    "lsf/holdout-777-282056345.out",
+    "lsf/holdout-779-282056347.out",
+    "lsf/atlas-paired-282056344.out",
+    "lsf/holdout-778-282056346.out",
+    "lsf/atlas-rna-282056343.out",
+    "lsf/biology-282056342.out"
+  ],
+  "monitors": [
+    {
+      "analysis_memory_samples": 0,
+      "analysis_peak_pss_mb": null,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 28,
+      "path": "jobs/holdout-778/evaluation/monitor.json",
+      "peak_summed_rss_mb": 1535.901696,
+      "peak_tree_pss_mb": 1485.09184,
+      "process_wall_s": 28.554051861166954,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 3600
+    },
+    {
+      "analysis_memory_samples": 61,
+      "analysis_peak_pss_mb": 807.709696,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 81,
+      "path": "jobs/holdout-778/rustscenic/monitor.json",
+      "peak_summed_rss_mb": 850.612224,
+      "peak_tree_pss_mb": 807.709696,
+      "process_wall_s": 83.37672382034361,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 14400
+    },
+    {
+      "analysis_memory_samples": 1089,
+      "analysis_peak_pss_mb": 2746.566656,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 1131,
+      "path": "jobs/holdout-778/reference/monitor.json",
+      "peak_summed_rss_mb": 19055.857664,
+      "peak_tree_pss_mb": 5801.900032,
+      "process_wall_s": 1306.8853081315756,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 14400
+    },
+    {
+      "analysis_memory_samples": 5859,
+      "analysis_peak_pss_mb": 44000.346112,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 5924,
+      "path": "jobs/atlas-paired/standard/monitor.json",
+      "peak_summed_rss_mb": 44070.612992,
+      "peak_tree_pss_mb": 44000.346112,
+      "process_wall_s": 6271.4423568323255,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 25200
+    },
+    {
+      "analysis_memory_samples": 0,
+      "analysis_peak_pss_mb": null,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 31,
+      "path": "jobs/holdout-779/evaluation/monitor.json",
+      "peak_summed_rss_mb": 1098.235904,
+      "peak_tree_pss_mb": 1069.089792,
+      "process_wall_s": 31.591500487178564,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 3600
+    },
+    {
+      "analysis_memory_samples": 62,
+      "analysis_peak_pss_mb": 955.910144,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 66,
+      "path": "jobs/holdout-779/rustscenic/monitor.json",
+      "peak_summed_rss_mb": 984.322048,
+      "peak_tree_pss_mb": 955.910144,
+      "process_wall_s": 67.94693670608103,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 14400
+    },
+    {
+      "analysis_memory_samples": 1106,
+      "analysis_peak_pss_mb": 2594.353152,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 1146,
+      "path": "jobs/holdout-779/reference/monitor.json",
+      "peak_summed_rss_mb": 19058.683904,
+      "peak_tree_pss_mb": 5801.781248,
+      "process_wall_s": 1320.864303972572,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 14400
+    },
+    {
+      "analysis_memory_samples": 0,
+      "analysis_peak_pss_mb": null,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 27,
+      "path": "jobs/holdout-777/evaluation/monitor.json",
+      "peak_summed_rss_mb": 1093.677056,
+      "peak_tree_pss_mb": 1055.364096,
+      "process_wall_s": 27.53825105726719,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 3600
+    },
+    {
+      "analysis_memory_samples": 62,
+      "analysis_peak_pss_mb": 959.93856,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 66,
+      "path": "jobs/holdout-777/rustscenic/monitor.json",
+      "peak_summed_rss_mb": 994.566144,
+      "peak_tree_pss_mb": 959.93856,
+      "process_wall_s": 68.0436480101198,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 14400
+    },
+    {
+      "analysis_memory_samples": 1103,
+      "analysis_peak_pss_mb": 2778.473472,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 1144,
+      "path": "jobs/holdout-777/reference/monitor.json",
+      "peak_summed_rss_mb": 19187.560448,
+      "peak_tree_pss_mb": 5880.937472,
+      "process_wall_s": 1323.534067876637,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 14400
+    },
+    {
+      "analysis_memory_samples": 6835,
+      "analysis_peak_pss_mb": 42032.161792,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 7040,
+      "path": "jobs/atlas-rna/wide/monitor.json",
+      "peak_summed_rss_mb": 44850.540544,
+      "peak_tree_pss_mb": 44704.992256,
+      "process_wall_s": 7383.948017803952,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 14400
+    },
+    {
+      "analysis_memory_samples": 2332,
+      "analysis_peak_pss_mb": 4661.548032,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 2343,
+      "path": "jobs/atlas-rna/standard/monitor.json",
+      "peak_summed_rss_mb": 4681.158656,
+      "peak_tree_pss_mb": 4661.548032,
+      "process_wall_s": 2452.374313119799,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 7200
+    },
+    {
+      "analysis_memory_samples": 0,
+      "analysis_peak_pss_mb": null,
+      "analysis_pss_incomplete_samples": 0,
+      "exit_code": 0,
+      "memory_samples": 56,
+      "path": "jobs/biology/monitor.json",
+      "peak_summed_rss_mb": 618.070016,
+      "peak_tree_pss_mb": 604.243968,
+      "process_wall_s": 57.69055716879666,
+      "pss_incomplete_samples": 0,
+      "status": "complete",
+      "timeout_seconds": 1200
+    }
+  ],
+  "native_extension_sha256": "32e452b4ebe4ee5ecc3241d91e29ce7a9552543fe4feaab1a15ee76164793966",
+  "output_hashes_verified": [
+    "jobs/atlas-paired/standard/eregulon_edges.parquet",
+    "jobs/atlas-paired/standard/grn.parquet",
+    "jobs/atlas-paired/standard/manifest.json",
+    "jobs/atlas-paired/standard/motif_evidence.parquet",
+    "jobs/atlas-paired/standard/region_regulons.json",
+    "jobs/atlas-paired/standard/region_to_gene.parquet",
+    "jobs/atlas-paired/standard/regulator_coverage.parquet",
+    "jobs/atlas-paired/standard/regulons.json",
+    "jobs/atlas-rna/standard/candidate_regulons.json",
+    "jobs/atlas-rna/standard/grn.parquet",
+    "jobs/atlas-rna/standard/manifest.json",
+    "jobs/atlas-rna/standard/motif_evidence.parquet",
+    "jobs/atlas-rna/standard/regulator_coverage.parquet",
+    "jobs/atlas-rna/standard/regulons.json",
+    "jobs/holdout-778/rustscenic/grn.parquet",
+    "jobs/holdout-778/rustscenic/manifest.json",
+    "jobs/holdout-778/rustscenic/regulator_coverage.parquet",
+    "jobs/holdout-778/rustscenic/regulons.json",
+    "jobs/holdout-778/rustscenic/grn.parquet",
+    "jobs/holdout-778/rustscenic/regulons.json",
+    "jobs/holdout-778/reference/grn.parquet",
+    "jobs/holdout-778/reference/regulons.json",
+    "jobs/holdout-779/rustscenic/grn.parquet",
+    "jobs/holdout-779/rustscenic/manifest.json",
+    "jobs/holdout-779/rustscenic/regulator_coverage.parquet",
+    "jobs/holdout-779/rustscenic/regulons.json",
+    "jobs/holdout-779/rustscenic/grn.parquet",
+    "jobs/holdout-779/rustscenic/regulons.json",
+    "jobs/holdout-779/reference/grn.parquet",
+    "jobs/holdout-779/reference/regulons.json",
+    "jobs/holdout-777/rustscenic/grn.parquet",
+    "jobs/holdout-777/rustscenic/manifest.json",
+    "jobs/holdout-777/rustscenic/regulator_coverage.parquet",
+    "jobs/holdout-777/rustscenic/regulons.json",
+    "jobs/holdout-777/rustscenic/grn.parquet",
+    "jobs/holdout-777/rustscenic/regulons.json",
+    "jobs/holdout-777/reference/grn.parquet",
+    "jobs/holdout-777/reference/regulons.json"
+  ],
+  "package_signature": "da6202c2e7b08fdd1435faf2e8961dd677f37ec15ca7eb76d49253867510f6c4",
+  "replay": [
+    "jobs/holdout-777/evaluation/SUMMARY.json",
+    "jobs/holdout-777/evaluation/coverage.csv",
+    "jobs/holdout-777/evaluation/rankings.csv",
+    "jobs/holdout-777/evaluation/null-control-contrasts.csv",
+    "jobs/holdout-777/evaluation/contrast-qc.json",
+    "jobs/holdout-777/evaluation/response-labels.npz",
+    "jobs/holdout-778/evaluation/SUMMARY.json",
+    "jobs/holdout-778/evaluation/coverage.csv",
+    "jobs/holdout-778/evaluation/rankings.csv",
+    "jobs/holdout-778/evaluation/null-control-contrasts.csv",
+    "jobs/holdout-778/evaluation/contrast-qc.json",
+    "jobs/holdout-778/evaluation/response-labels.npz",
+    "jobs/holdout-779/evaluation/SUMMARY.json",
+    "jobs/holdout-779/evaluation/coverage.csv",
+    "jobs/holdout-779/evaluation/rankings.csv",
+    "jobs/holdout-779/evaluation/null-control-contrasts.csv",
+    "jobs/holdout-779/evaluation/contrast-qc.json",
+    "jobs/holdout-779/evaluation/response-labels.npz",
+    "holdout-summary/macro-metrics.csv",
+    "holdout-summary/paired-differences.csv",
+    "holdout-summary/status.json",
+    "jobs/biology/rna-coverage.csv",
+    "jobs/biology/SUMMARY.json",
+    "jobs/biology/atac-rankings.csv",
+    "jobs/biology/rna-rankings.csv",
+    "jobs/biology/rna-summary.csv",
+    "jobs/biology/gata1-proseq.csv",
+    "jobs/biology/response-labels.npz"
+  ],
+  "retained_on_hpc_only": [
+    {
+      "bytes": 82446543,
+      "name": "cell_topic.parquet",
+      "receipt": "jobs/atlas-paired/standard/SUMMARY.json",
+      "sha256": "75730f023e7fd9d0a85f8afd09ad51ec10e7ecc21a1888ff42cadc08d726aa9c"
+    },
+    {
+      "bytes": 107734980,
+      "name": "gene_activity.parquet",
+      "receipt": "jobs/atlas-paired/standard/SUMMARY.json",
+      "sha256": "ffe9c45f662c7ce8fca0fa18d358e4d97ce60d96e73944480ad33d2782b80826"
+    },
+    {
+      "bytes": 3,
+      "name": "n_eregulons.json",
+      "receipt": "jobs/atlas-paired/standard/SUMMARY.json",
+      "sha256": "4393447bd3c1d55ea7f97417ecb1b36a691ccaacaaf2ebd21c59a5acf825fb7b"
+    },
+    {
+      "bytes": 108590321,
+      "name": "region_activity.parquet",
+      "receipt": "jobs/atlas-paired/standard/SUMMARY.json",
+      "sha256": "9c4d34a7ff3f6e9b9131351b91997a305bbe1aa88bf45ca87a3b306257aa4e7a"
+    },
+    {
+      "bytes": 51070,
+      "name": "region_motif_scores.parquet",
+      "receipt": "jobs/atlas-paired/standard/SUMMARY.json",
+      "sha256": "8f1ec32efc9a1bc071382a79d9b355bf0a886548384d114c453215ff3c436dfe"
+    },
+    {
+      "bytes": 17703547,
+      "name": "topic_peak.parquet",
+      "receipt": "jobs/atlas-paired/standard/SUMMARY.json",
+      "sha256": "5651db3cf57984d72e823714652c9b5f4e45728fe83541012c9a5cea51f1b772"
+    },
+    {
+      "bytes": 103473940,
+      "name": "gene_activity.parquet",
+      "receipt": "jobs/atlas-rna/standard/SUMMARY.json",
+      "sha256": "d7f2ed7c4099bab21e99a879cbf795c437e1ed743cd148c5225bac40f3507f97"
+    },
+    {
+      "bytes": 573255,
+      "name": "candidate_regulons.json",
+      "receipt": "jobs/holdout-778/rustscenic/PREDICTIONS-FROZEN.json",
+      "sha256": "2bb675f35915c5687b19f83e07dddc9006dbcf04981de84c9eade323ce44d255"
+    },
+    {
+      "bytes": 745088,
+      "name": "gene_activity.parquet",
+      "receipt": "jobs/holdout-778/rustscenic/PREDICTIONS-FROZEN.json",
+      "sha256": "e9902927f91b4cd22bd96bca577099adf4fdcd5bc27bafa3fde9cfc33436ce1b"
+    },
+    {
+      "bytes": 1152777,
+      "name": "motif_evidence.parquet",
+      "receipt": "jobs/holdout-778/rustscenic/PREDICTIONS-FROZEN.json",
+      "sha256": "e6eb3efed5d7c126c32d8e704ee559ef8424feab5900b0c330e75c8067a1e89e"
+    },
+    {
+      "bytes": 574893,
+      "name": "candidate_regulons.json",
+      "receipt": "jobs/holdout-779/rustscenic/PREDICTIONS-FROZEN.json",
+      "sha256": "edfe7d35a5186baeb5014ae0e0185241dd86ef8de03735b8de3f3391c6e6e35e"
+    },
+    {
+      "bytes": 719647,
+      "name": "gene_activity.parquet",
+      "receipt": "jobs/holdout-779/rustscenic/PREDICTIONS-FROZEN.json",
+      "sha256": "76e352409a9892c60fd1ecc783eed346222bfb7a960a43e693c88a15e7db1201"
+    },
+    {
+      "bytes": 1168282,
+      "name": "motif_evidence.parquet",
+      "receipt": "jobs/holdout-779/rustscenic/PREDICTIONS-FROZEN.json",
+      "sha256": "1a6f6a8e6fb99fc1b81a40e2baf94761ebd4a9d241acd16e0bdfa1d629b71529"
+    },
+    {
+      "bytes": 574450,
+      "name": "candidate_regulons.json",
+      "receipt": "jobs/holdout-777/rustscenic/PREDICTIONS-FROZEN.json",
+      "sha256": "96121b02b09e1a042c4a9847ee3e6db4033ca4284c56cbd3c0fb260cc6c443ca"
+    },
+    {
+      "bytes": 728481,
+      "name": "gene_activity.parquet",
+      "receipt": "jobs/holdout-777/rustscenic/PREDICTIONS-FROZEN.json",
+      "sha256": "941c518ab8cc0e408d822d9273a9aaa42cfb8eb511047fa76b7970e2d4311dff"
+    },
+    {
+      "bytes": 1166320,
+      "name": "motif_evidence.parquet",
+      "receipt": "jobs/holdout-777/rustscenic/PREDICTIONS-FROZEN.json",
+      "sha256": "7033c284564e7e269aabc3219f7558730516a8578ff987d8f2fb2fedb83f635e"
+    }
+  ],
+  "returned_source_files": [
+    "PROTOCOL.md",
+    "HOLDOUT-PROTOCOL.md",
+    "inputs/networks-provenance.json",
+    "inputs/screen/sources.json",
+    "inputs/holdout/provenance.json"
+  ],
+  "status": "passed"
+}

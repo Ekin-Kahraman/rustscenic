@@ -1,0 +1,41 @@
+{
+  "TFs": 256,
+  "cells": 1306127,
+  "gene_correlation_s": {
+    "3000": 9.921349566429853,
+    "6000": 64.99307817034423
+  },
+  "gene_network_s": {
+    "3000": 2421.974950907752,
+    "6000": 7107.830809816718
+  },
+  "gene_network_wide_to_standard_ratio": 2.9347251535994276,
+  "memory": {
+    "3000_full_workflow_process_pss_mb": 4661.548032,
+    "6000_GRN_only_process_pss_mb": 44704.992256
+  },
+  "sampled_stage_pss": {
+    "grn_correlation": {
+      "3000": {
+        "peak_pss_mb": 4661.548032,
+        "samples": 10
+      },
+      "6000": {
+        "peak_pss_mb": 42032.161792,
+        "samples": 62
+      }
+    },
+    "grn_inference": {
+      "3000": {
+        "peak_pss_mb": 4423.762944,
+        "samples": 2313
+      },
+      "6000": {
+        "peak_pss_mb": 40943.675392,
+        "samples": 6773
+      }
+    }
+  },
+  "scope": "Same allocation and cells. Timings compare the named stages. Whole-process peaks cover different stage sets.",
+  "seed": 777
+}

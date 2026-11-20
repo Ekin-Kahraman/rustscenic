@@ -1,0 +1,3 @@
+dataset,evaluation_cells,control_cells,captures,total_targeted_TFs,self_gene_in_panel,self_QC_pass,significant_down,adequate_KD,fraction_down_among_QC_pass,self_below_treatment_detection_QC,self_below_control_detection_QC,median_eligible_log2_effect
+k562,30778,2157,48,202,172,122,117,116,0.9590163934426229,50,0,-1.9807760856213
+rpe1,28720,2316,56,245,189,66,59,59,0.8939393939393939,123,0,-2.042000102067885

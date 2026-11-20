@@ -1,0 +1,11 @@
+Generating permutation resamples.
+ ✓
+Running power_check in parallel.
+Change directories to /Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/results/k562/logs/sceptre_logs/ and view the files power_check_*.out for progress updates.
+ ✓
+Generating permutation resamples.
+ ✓
+Running discovery_analysis in parallel.
+Change directories to /Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/results/k562/logs/sceptre_logs/ and view the files discovery_analysis_*.out for progress updates.
+ ✓
+DISCOVERY COMPLETE k562 

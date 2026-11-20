@@ -1,0 +1,57 @@
+{
+  "source": "BEELINE-Networks.zip",
+  "source_sha256": "d54fc6ed6529141e85f94803d2c730a8173a3e867026227528ff1ae832765607",
+  "processing": "first two columns as TF and target, upper-cased, self-links and duplicates removed",
+  "references": {
+    "human-nonspecific-chip": {
+      "member": "Networks/human/Non-specific-ChIP-seq-network.csv",
+      "member_sha256": "e4fa3dcb23e2cdaf9f815ee299174f1ebc7b210b5444453354df4ed7312fcdac",
+      "links": 385902,
+      "TFs": 2157
+    },
+    "human-string": {
+      "member": "Networks/human/STRING-network.csv",
+      "member_sha256": "316a0befe3203b3d751d7b8beea3eeddc1139e6def71b42159051d5de5e9830e",
+      "links": 99146,
+      "TFs": 1489
+    },
+    "mouse-nonspecific-chip": {
+      "member": "Networks/mouse/Non-Specific-ChIP-seq-network.csv",
+      "member_sha256": "3326a17972f50f5447a221aff918c6aee075a768ed02d465a9f71499345c6e9c",
+      "links": 99990,
+      "TFs": 1452
+    },
+    "mouse-string": {
+      "member": "Networks/mouse/STRING-network.csv",
+      "member_sha256": "76aa9be9ce02243acde0deab46ea65e0e9bc641a69e1e86b334fbc31bea63e43",
+      "links": 78567,
+      "TFs": 1350
+    }
+  },
+  "panel_coverage": {
+    "bmmc (human) / human-nonspecific-chip": {
+      "supported_TFs": 463,
+      "eligible_links": 38664,
+      "panel_TFs": 1069,
+      "panel_genes": 5000
+    },
+    "bmmc (human) / human-string": {
+      "supported_TFs": 483,
+      "eligible_links": 16696,
+      "panel_TFs": 1069,
+      "panel_genes": 5000
+    },
+    "atlas (mouse) / mouse-nonspecific-chip": {
+      "supported_TFs": 128,
+      "eligible_links": 2144,
+      "panel_TFs": 256,
+      "panel_genes": 3000
+    },
+    "atlas (mouse) / mouse-string": {
+      "supported_TFs": 111,
+      "eligible_links": 794,
+      "panel_TFs": 256,
+      "panel_genes": 3000
+    }
+  }
+}
