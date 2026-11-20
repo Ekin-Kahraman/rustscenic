@@ -15,7 +15,8 @@
 //! one GRNBoost2 was designed against. From 1.3 scikit-learn subtracts the
 //! previous round's OOB loss, measured on a different random OOB subset, so
 //! the trailing mean telescopes into a comparison of two unrelated subsets and
-//! the monitor fires at the first check for about half of all targets.
+//! the monitor often fires at the first check (for 19% to 44% of targets in
+//! replication runs on 20,000 to 1,306,127 cells).
 //!
 //! `exclude_feature` is passed through to the tree builder so targets that are
 //! themselves TFs don't include their own expression column as a predictor.
