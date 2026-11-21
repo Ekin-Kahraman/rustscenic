@@ -29,10 +29,8 @@ performance analysis uses 5,000 selected genes, 20,000 selected regions and
 Dataset URLs and source checksums are in `evidence/recovery/returned/package/sources.json`.
 
 Each matched pair used the same prepared input, host, allocation and 16 CPU
-cores. Both arms limited OpenMP, BLAS, NumExpr and vecLib pools to one thread;
-explicit stage workers and Rayon used 16. Seeds were 777, 778 and 779.
-CPU models vary across allocations, so curves across cell counts are
-descriptive, not a fixed-hardware complexity fit.
+cores. Seeds were 777, 778 and 779. CPU models vary across allocations, so
+curves across cell counts are descriptive, not a fixed-hardware complexity fit.
 The final grid retains the latest completed pair together; it never pairs an
 old Rust time with a rerun reference time. Original failed attempts remain
 documented, including resource failures. Their absence from completed timing
@@ -70,9 +68,7 @@ refinement harness, so the manifest, not the alias, establishes species.
 These differences affect both cost and predictions. In particular, Pearson
 linking is not an accelerated execution of the same GBM linking calculation.
 The paper must not attribute the complete workflow ratios solely to language.
-The [measured workflow source](evidence/recovery/returned/package/workflows.py)
-calls the [bounded adapter](evidence/recovery/returned/package/bounded.py).
-The earlier source remains under `evidence/workflow` for provenance.
+Exact source is retained under `evidence/workflow` and `evidence/recovery`.
 
 ## Timing, memory and summaries
 
@@ -149,10 +145,10 @@ or densifying the expression matrix. Default callers retain legacy behaviour.
 Gene axis, signatures, coverage, threshold and seed must also match.
 
 The independently returned candidate source matches the integrated four core
-files byte for byte. The Linux candidate used development 0.5.1 metadata; its
-build/native hash identifies the experiment. The fix is now published in
-[v0.6.0](https://github.com/Ekin-Kahraman/rustscenic/releases/tag/v0.6.0).
-Public v0.5.1 predates this fix.
+files byte for byte. The Linux candidate identifies as development 0.5.1; the
+build/native hash, not that reused version string, identifies the experiment.
+It must receive a distinct release identity before public deposition. Public
+0.5.1 is not evidence that this fix is already released.
 
 All 12 external matrices reproduce, with maximum reference discrepancy below
 3.31e-8. Atlas cost was assessed on 817,740 cells and three frozen networks,
@@ -212,3 +208,72 @@ over three algorithm seeds; dotted lines show reference prevalence. Original
 GRN, absolute-Pearson and motif-pruned results use the same candidate universe
 within each reference. Weak absolute performance, unlabelled non-reference
 edges and low retained-edge recall limit biological interpretation.
+
+
+## Final Minerva confirmation and independent K562 assessment
+
+The [final audit](minerva-final/README.md) supplements the earlier figures with
+one-seed v0.6.1 release confirmation, a wider RNA panel, functional-analysis
+replay and a three-seed independent K562 assessment. Follow the unchanged
+[general protocol](minerva-final/returned/PROTOCOL.md) and
+[K562 protocol](minerva-final/returned/HOLDOUT-PROTOCOL.md) for exact input hashes,
+feature selection, fitting and evaluation. The primary K562 outcome and all
+sensitivity thresholds, per-TF coverage and null contrasts are retained in
+`minerva-final/returned/`. AP is a ranking metric, not percent edge accuracy;
+expected top-budget hits include tied absent predictions. Technical capture
+halves are not donor replicates. The compact evidence source manifest and local
+replay receipt are separate from the older three-figure build verification.
+
+## Post-hoc calibrated Replogle evaluation
+
+The later K562 essential-gene and RPE1 screens from Replogle et al. used frozen
+5,000-gene panels, 8,534/9,169 training controls and 30,778/28,720 held-out
+evaluation cells, including 2,157/2,316 controls across 48/56 technical captures.
+Raw source counts, cell/guide/capture axes, exact staged aggregates and disjoint
+training/evaluation barcodes were verified. All six saved prediction sets were
+reused. The regulator list includes cofactors; motif annotation and training
+predictor availability are reported separately.
+
+The original log-before-pooling response heuristic was biased in control-only
+comparisons. Its outcomes were already inspected, so the replacement is explicitly
+post hoc. A hashed plan preceded corrected comparisons. Unmodified SCEPTRE 0.99.1
+(commit `20c33349c2c5a0df66589e37f67238e67c53bcb0`) used low-MOI, two-sided,
+negative-control-cell comparisons, permutation resampling, the default
+skew-normal approximation and `~ log(full_ncounts) + batch`. Existing guide-pair
+constructs were binary assignment indicators, with maximum assignment threshold
+one and target-wise union; they were not measured guide UMI counts. Original
+cells were retained and pairwise QC required seven nonzero cells in each group.
+
+Each context had 10,000 typical-size control pairs, 10,000 additional distinct
+pairs, 3,000 single-construct pairs and 3,000 upper-size pairs. The initially
+requested repeat was identical because the upstream sampler fixes its native
+seed; it was retained but counted once. The amendment and operational gates are
+preserved. All 52,000 distinct pairs passed the planned checks with zero BH 5%
+discoveries. Shared cells/constructs mean these are not independent biological
+replicates. Own-target tests were a separate power check: 117/122 and 59/66
+QC-passing pairs decreased significantly, with 172/189 own-target genes present
+in the respective panels. Strong suppression can itself cause detection-QC failure.
+
+Discovery excluded self-pairs and applied cohort-wide BH q <= 0.05, followed by
+an absolute log2-fold-change threshold of 0.5, retaining 0.25/1.0 sensitivities.
+This effect-filtered subset has no separate guaranteed FDR. Failed/untested pairs
+were unavailable; non-significant tested pairs were benchmark nonresponders,
+acknowledging incomplete power and indirect effects. Ranking was unsigned.
+The original 156/117-regulator primary rosters were preserved, with all 202/245
+assayed regulators in coverage/secondary tables. At the primary threshold,
+155/117 had both response classes; K562 ZNF468 had no called response. Missing
+network predictions remained zero ties. AP averages seeds within TF before
+equal-TF aggregation and 5,000 TF-bootstrap resamples (seed 20261112). These
+conditional intervals are not donor-level equivalence tests. All-roster emitted
+precision also retains tested TFs without a called response.
+
+Independent R multiple-testing checks, a separate real-network AP calculation,
+summary/interval reconstruction and six regression tests passed. The prior
+activity diagnostic was verified against its saved group-mean replay, without
+recomputing per-cell AUCell. The [report](recalibration/REPORT.md),
+[plan](recalibration/RECALIBRATION-PLAN.md), [amendment](recalibration/CALIBRATION-AMENDMENT.md)
+and [reproduction guide](recalibration/REPRODUCE.md) retain all settings, coverage,
+sensitivities and source tables.
+
+Sources: [Replogle et al., Cell 2022](https://doi.org/10.1016/j.cell.2022.05.013)
+and [Barry et al., Genome Biology 2024](https://doi.org/10.1186/s13059-024-03254-2).

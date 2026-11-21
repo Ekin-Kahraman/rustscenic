@@ -1,0 +1,3 @@
+Error in fwrite(s@discovery_pairs_with_info, file.path(out, "pair-qc.csv.gz")) : 
+  Compression in fwrite uses zlib library. Its header files were not found at the time data.table was compiled. To enable fwrite compression, please reinstall data.table and study the output for further guidance.
+Execution halted

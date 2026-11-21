@@ -1,0 +1,27 @@
+{
+  "written": "2026-11-12, before any standard-configuration BMMC activity result was computed",
+  "scope": "Textbook haematopoietic lineage regulators mapped to the BMMC annotation of GSE194122. Primary set is the five regulators the paper already committed to on 8 November. The extended set is secondary. BMMC is development data; these lists are not tuned afterwards.",
+  "groups": {
+    "B": ["Naive CD20+ B", "Transitional B", "B1 B"],
+    "T": ["CD8+ T", "CD4+ T activated", "CD4+ T naive", "CD8+ T naive"],
+    "Cytotoxic": ["NK", "CD8+ T"],
+    "Mono": ["CD14+ Mono", "CD16+ Mono"],
+    "Myeloid": ["CD14+ Mono", "CD16+ Mono", "cDC2", "G/M prog", "ID2-hi myeloid prog"],
+    "Erythroid": ["Proerythroblast", "Erythroblast", "Normoblast", "MK/E prog"],
+    "pDC": ["pDC"],
+    "DC": ["pDC", "cDC2"],
+    "Plasma": ["Plasma cell"],
+    "HSPC": ["HSC", "Lymph prog", "MK/E prog", "G/M prog"]
+  },
+  "primary": {"SPI1": "Myeloid", "GATA1": "Erythroid", "PAX5": "B", "EBF1": "B", "TCF7": "T"},
+  "extended": {
+    "POU2F2": "B", "BACH2": "B", "SPIB": "DC",
+    "LEF1": "T", "BCL11B": "T", "GATA3": "T",
+    "TBX21": "Cytotoxic", "EOMES": "Cytotoxic", "RUNX3": "Cytotoxic",
+    "CEBPA": "Myeloid", "CEBPB": "Mono", "CEBPD": "Mono", "MAFB": "Mono", "KLF4": "Mono",
+    "IRF8": "DC", "TCF4": "pDC", "RUNX2": "pDC",
+    "KLF1": "Erythroid", "TAL1": "Erythroid", "NFE2": "Erythroid", "GFI1B": "Erythroid",
+    "XBP1": "Plasma", "PRDM1": "Plasma", "IRF4": "Plasma",
+    "GATA2": "HSPC", "MEIS1": "HSPC", "HLF": "HSPC", "MECOM": "HSPC", "ERG": "HSPC"
+  }
+}

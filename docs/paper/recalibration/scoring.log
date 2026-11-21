@@ -1,0 +1,11 @@
+/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/score_saved_networks.py:14: DtypeWarning: Columns (9) have mixed types. Specify dtype option on import or set low_memory=False.
+  d=pd.read_csv(results/'discovery.csv');panel=json.loads((P/f'inputs/{dataset}/panel.json').read_text());genes=np.array(panel['genes']);targets=panel['target_tfs'];primary=set((B/f'inputs/{dataset}/primary-tfs.txt').read_text().splitlines())
+scored k562 777
+scored k562 778
+scored k562 779
+/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112/score_saved_networks.py:14: DtypeWarning: Columns (9) have mixed types. Specify dtype option on import or set low_memory=False.
+  d=pd.read_csv(results/'discovery.csv');panel=json.loads((P/f'inputs/{dataset}/panel.json').read_text());genes=np.array(panel['genes']);targets=panel['target_tfs'];primary=set((B/f'inputs/{dataset}/primary-tfs.txt').read_text().splitlines())
+scored rpe1 777
+scored rpe1 778
+scored rpe1 779
+SAVED NETWORK SCORING COMPLETE

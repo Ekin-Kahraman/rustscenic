@@ -1,0 +1,19 @@
+{"which": "255", "rustscenic": "0.7.0", "module": "<temporary audit directory>/venv/lib/python3.11/site-packages/rustscenic/__init__.py", "grn_fit": {"early_stop_mode": "arboreto", "max_bins": 255, "early_stop_window": 25, "n_estimators_ceiling": 5000, "subsample": 0.9, "seed": 777, "learning_rate": 0.01, "max_features": 0.1, "max_depth": 3, "top_targets_per_tf": null, "min_importance": null, "target_block_size_requested": null, "target_block_size_effective": null, "target_count": 5000, "fitted_trees_min": 25, "fitted_trees_max": 190, "fitted_trees_mean": 28.3914, "fitted_trees_median": 26.0}, "cells_sha256": "3e3a92e651e805016c5385f36826f609399a8828a122a6312f2836f06ad41367", "genes_sha256": "3eaad0a0f72a3de270ed2081047e154f63f526a94cfbd41b678a0adfa429c749", "n_genes": 5000, "n_tfs": 1069, "n_cells": 20000, "inference_s": 286.25788095919415, "maxrss_bytes": 585334784, "trees_mean": 28.3914, "edges": 447816, "reference": "<local working copy>/RustScenic-Stopping-Rule-Minerva-20261113/return-20261118/audit/extracted/jobs/bmmc-777/native_cross/network.parquet", "reference_edges": 447816, "reference_dtypes": {"TF": "category", "target": "category", "importance": "float32"}, "equals_ordered": true, "equals_sorted": true, "unmatched": 0, "max_abs_diff": 0.0, "float32_bits_identical": true}
+      287.31 real      2634.43 user         6.29 sys
+           609665024  maximum resident set size
+                   0  average shared memory size
+                   0  average unshared data size
+                   0  average unshared stack size
+               77119  page reclaims
+                 271  page faults
+                   0  swaps
+                   0  block input operations
+                   0  block output operations
+                   0  messages sent
+                   0  messages received
+                   0  signals received
+                 600  voluntary context switches
+             1560008  involuntary context switches
+      10837638775957  instructions retired
+       9123961802516  cycles elapsed
+           880772392  peak memory footprint

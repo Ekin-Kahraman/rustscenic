@@ -1,0 +1,42 @@
+[
+  {
+    "dataset": "atlas20000",
+    "max_bins": 65535,
+    "reference": "diagnosis/native-bins/atlas20000-cap65535-arboreto-777/network.parquet",
+    "edges": 195688,
+    "reference_edges": 195688,
+    "unmatched": 0,
+    "max_abs_diff": 0.0,
+    "identical": true
+  },
+  {
+    "dataset": "atlas20000",
+    "max_bins": 255,
+    "reference": "diagnosis/native-bins/atlas20000-cap255-arboreto-777/network.parquet",
+    "edges": 205762,
+    "reference_edges": 205762,
+    "unmatched": 0,
+    "max_abs_diff": 0.0,
+    "identical": true
+  },
+  {
+    "dataset": "bmmc",
+    "max_bins": 65535,
+    "reference": "diagnosis/native-bins/cap65535-arboreto-777/network.parquet",
+    "edges": 426122,
+    "reference_edges": 426122,
+    "unmatched": 0,
+    "max_abs_diff": 0.0,
+    "identical": true
+  },
+  {
+    "dataset": "bmmc",
+    "max_bins": 255,
+    "reference": "return-20261118/audit/extracted/jobs/bmmc-777/native_cross/network.parquet",
+    "edges": 447816,
+    "reference_edges": 447816,
+    "unmatched": 0,
+    "max_abs_diff": 0.0,
+    "identical": true
+  }
+]

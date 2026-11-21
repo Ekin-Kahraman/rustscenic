@@ -1,0 +1,11 @@
+dataset,group,distinct_construct_groups,treatment_min,treatment_q05,treatment_median,treatment_q95,treatment_max,control_median
+k562,median-a,100,68,78.0,107.0,147.0,163,2050.0
+k562,validation,100,68,80.0,106.0,147.0,163,2051.0
+k562,single,96,8,11.0,22.0,43.0,52,2135.0
+k562,upper,100,204,230.0,280.0,367.0,399,1877.0
+k562,discovery-targets,202,5,28.150000000000002,114.0,329.29999999999984,992,2157.0
+rpe1,median-a,100,37,50.0,85.0,120.0,132,2231.0
+rpe1,validation,100,37,51.0,85.0,120.0,132,2231.0
+rpe1,single,97,7,10.0,22.0,41.0,47,2294.0
+rpe1,upper,100,129,168.0,207.0,260.0,283,2109.0
+rpe1,discovery-targets,245,6,13.200000000000001,72.0,230.59999999999988,3580,2316.0

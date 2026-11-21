@@ -1,0 +1,13 @@
+threshold,construct,status,eligible_genes,response_genes
+0.25,NegCtrl0_NegCtrl0;NegCtrl0_NegCtrl0,evaluable,11942,821
+0.25,NegCtrl10_NegCtrl0;NegCtrl10_NegCtrl0,evaluable,11955,549
+0.25,NegCtrl11_NegCtrl0;NegCtrl11_NegCtrl0,evaluable,12020,760
+0.25,NegCtrl1_NegCtrl0;NegCtrl1_NegCtrl0,evaluable,11990,798
+0.5,NegCtrl0_NegCtrl0;NegCtrl0_NegCtrl0,evaluable,11942,124
+0.5,NegCtrl10_NegCtrl0;NegCtrl10_NegCtrl0,evaluable,11955,62
+0.5,NegCtrl11_NegCtrl0;NegCtrl11_NegCtrl0,evaluable,12020,110
+0.5,NegCtrl1_NegCtrl0;NegCtrl1_NegCtrl0,evaluable,11990,117
+1.0,NegCtrl0_NegCtrl0;NegCtrl0_NegCtrl0,evaluable,11942,1
+1.0,NegCtrl10_NegCtrl0;NegCtrl10_NegCtrl0,evaluable,11955,0
+1.0,NegCtrl11_NegCtrl0;NegCtrl11_NegCtrl0,evaluable,12020,0
+1.0,NegCtrl1_NegCtrl0;NegCtrl1_NegCtrl0,evaluable,11990,2

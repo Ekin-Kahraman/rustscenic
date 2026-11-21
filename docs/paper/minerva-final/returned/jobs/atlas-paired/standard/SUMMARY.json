@@ -1,0 +1,75 @@
+{
+  "candidate_ranking": {
+    "ranked_tfs": 256,
+    "raw_edges": 339294,
+    "top_edges": 12670
+  },
+  "cells": 817740,
+  "files": {
+    "cell_topic.parquet": {
+      "bytes": 82446543,
+      "sha256": "75730f023e7fd9d0a85f8afd09ad51ec10e7ecc21a1888ff42cadc08d726aa9c"
+    },
+    "eregulon_edges.parquet": {
+      "bytes": 61977,
+      "sha256": "12e282af276c31cbc35dde036d0caf9da5850dc1ae6d44aac0406f0611dd2c36"
+    },
+    "gene_activity.parquet": {
+      "bytes": 107734980,
+      "sha256": "ffe9c45f662c7ce8fca0fa18d358e4d97ce60d96e73944480ad33d2782b80826"
+    },
+    "grn.parquet": {
+      "bytes": 5399162,
+      "sha256": "67766fcd434f1355306cd1159bb5c160ab19902dfaba55a59a3346ac79d5a086"
+    },
+    "manifest.json": {
+      "bytes": 13056,
+      "sha256": "c90a718cc20a5cb8f64fc1eb48228d10a2fddbd967d3fabc2ae73833fd848be9"
+    },
+    "motif_evidence.parquet": {
+      "bytes": 1774945,
+      "sha256": "c169905da321d50dd3afd3b3dc4ef8753b7ab9a945435b252923753e8d88cce4"
+    },
+    "n_eregulons.json": {
+      "bytes": 3,
+      "sha256": "4393447bd3c1d55ea7f97417ecb1b36a691ccaacaaf2ebd21c59a5acf825fb7b"
+    },
+    "region_activity.parquet": {
+      "bytes": 108590321,
+      "sha256": "9c4d34a7ff3f6e9b9131351b91997a305bbe1aa88bf45ca87a3b306257aa4e7a"
+    },
+    "region_motif_scores.parquet": {
+      "bytes": 51070,
+      "sha256": "8f1ec32efc9a1bc071382a79d9b355bf0a886548384d114c453215ff3c436dfe"
+    },
+    "region_regulons.json": {
+      "bytes": 115583,
+      "sha256": "f2aa7a6b1d0dfd7ce437ff262ac360e2a55d10358ebc2d2957fd96f6b4e3fde3"
+    },
+    "region_to_gene.parquet": {
+      "bytes": 766245,
+      "sha256": "2cc60c8d4e322461e83661bfecc66c29937d37297984bb1a2f7c806e812747a8"
+    },
+    "regulator_coverage.parquet": {
+      "bytes": 5329,
+      "sha256": "682c7c5f8c45efe698c473fa45569015ed289a02939f5e13970d8f38477d1234"
+    },
+    "regulons.json": {
+      "bytes": 47396,
+      "sha256": "569650d0ee1a9c3a72c821fa913b3818b1ab5a2733daeb0cc0623dcf49f362b3"
+    },
+    "topic_peak.parquet": {
+      "bytes": 17703547,
+      "sha256": "5651db3cf57984d72e823714652c9b5f4e45728fe83541012c9a5cea51f1b772"
+    }
+  },
+  "full_outputs_dir": "/sc/arion/scratch/huangl21/rustscenic-minerva-final/work/jobs/atlas-paired/standard/full",
+  "genes": 5000,
+  "input_load_s": 56.19043521210551,
+  "peaks": 20000,
+  "prepared_input_through_export_s": 6261.014807755128,
+  "rustscenic": "0.6.1",
+  "seed": 777,
+  "status": "complete",
+  "workflow_s_including_standard_export": 6204.824372543022
+}

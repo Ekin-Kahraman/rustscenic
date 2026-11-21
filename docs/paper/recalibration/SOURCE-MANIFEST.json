@@ -1,0 +1,797 @@
+{
+  "created_utc": "2026-11-12T19:13:39.272301+00:00",
+  "local_analysis_directory": "/Users/ekin/Desktop/RustScenic/RustScenic-Biology-Recalibration-20261112",
+  "compact_copy": "/Users/ekin/Projects/bio/rustscenic-biological-fidelity/docs/paper/recalibration",
+  "sceptre_commit": "20c33349c2c5a0df66589e37f67238e67c53bcb0",
+  "sceptre_source_unchanged": true,
+  "sceptre_binary_sha256": "a8a9b35578cee4ea68766e4439e8c590c47f2f9828f98d1c62cfae8b88379462",
+  "scope": "Working evidence copy; full raw/per-pair files remain local; no public deposit or message sent",
+  "files": [
+    {
+      "path": "CALIBRATION-AMENDMENT.md",
+      "bytes": 1211,
+      "sha256": "1f2eb0980ce69b4262179785cf05348a2c5a1d0aa86234adef60d319492890fd",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "CALIBRATION-FIGURE-RECEIPT.json",
+      "bytes": 375,
+      "sha256": "6f39a193d65250a513a777e52d951375eb9469421f66f2c3f08ca3e396ad6c4c",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "IMPLEMENTATION-NOTES.md",
+      "bytes": 1395,
+      "sha256": "032ec713a834e0e5dd2fc0ba5d4c99a31329728d284084933ad58a930302d2f5",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "Python-analysis-versions.csv",
+      "bytes": 1371,
+      "sha256": "40df590687d1dee25da6b7cf7f50275d0fd1e2e52a6831d813eee4afe9a9f82e",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "Python-plotting-versions.csv",
+      "bytes": 1174,
+      "sha256": "8037c57df9f428f857df6028c4b6adf36f25540b06cba88cf22a1853e8b7ace1",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "R-package-versions.csv",
+      "bytes": 1210,
+      "sha256": "938d3acd84906cf87c6e3cd701521fe68ea2708e4e288e31bd02a449db6a3a6d",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "RECALIBRATION-PLAN.md",
+      "bytes": 5795,
+      "sha256": "158d9a1144f10965fadd7fa4c478a2338b5b44d103bd24836f0b10c7453d8100",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "RECALIBRATION-PLAN.sha256",
+      "bytes": 88,
+      "sha256": "aaa292564069895982f54352337d6c73200aa959a7352ff126db7c4bcf0c9c11",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "REPORT.md",
+      "bytes": 20628,
+      "sha256": "3af90cb82751d2dc87285bdba21fb073f7b8f5b87f024bc11cc0c96850436968",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "REPRODUCE.md",
+      "bytes": 5591,
+      "sha256": "b4abaf9b893ec2b93f2bce00f86dbed013f37769bafab5840f0871e5caa81da1",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "SCORING-STATUS.json",
+      "bytes": 235,
+      "sha256": "a3e08e6ecab210b6a5dc0d5e5a86b1e8e94b8557b8d3cf49f6860fa649314f65",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "VERIFICATION.json",
+      "bytes": 2689,
+      "sha256": "90c89eb0f6f9ba94dd09db0a5f8f6e394c983aaa7c9f9d9e145a3c73b407e68e",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "analysis_paths.py",
+      "bytes": 424,
+      "sha256": "107c2c870f2fd4545995314c2044b09ac28ab7dc7d5be03fdbc1a3a6cf4b9755",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "control-diagnostics.log",
+      "bytes": 2403,
+      "sha256": "ff7d8cfcb5d991302e0d5d341e42851bb5bfffd6eeb7693653ceabdea3a7bf44",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "control_diagnostics.py",
+      "bytes": 4033,
+      "sha256": "5c57ce592328e93d5f5547428fd5f25370803e115af7394fba0e8f8654740765",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "corrected_evaluation.py",
+      "bytes": 1845,
+      "sha256": "a432ca06ca44a3b7df5d9d70a53a3d2087ee6b847b600df991cf2ce4e6029279",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "discovery-profile.txt",
+      "bytes": 208683,
+      "sha256": "fc4feebfef3c722e8b7bd36b19d55968be7964e763d6511fbd257b52865294ce",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "figures/calibration.pdf",
+      "bytes": 61599,
+      "sha256": "ef3da7972e67ed76ccd72c97a25691aded4eed5962ed19f45791636ac20951a4",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "figures/calibration.png",
+      "bytes": 241952,
+      "sha256": "ccbbac312a4be495954c35e0fe0ab26d66359a04db3589f333f1001cfa506052",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "figures/calibration.svg",
+      "bytes": 190046,
+      "sha256": "4bd0f9a0ef8439c718653dd5e457e0a4970180dff7f1be482c8b626ff8bcca01",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "figures/response-recovery.pdf",
+      "bytes": 25652,
+      "sha256": "88b17fbca3f1bbdec9ca85be8da3527abffccdc71d2cb033221fbf62e90fc805",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "figures/response-recovery.png",
+      "bytes": 242913,
+      "sha256": "a520c073e02031fad4d6996c51e6955adeec3759f6aed7b7b02a129cc449316d",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "figures/response-recovery.svg",
+      "bytes": 55710,
+      "sha256": "760ee7fa055d324b2af0695267868bf28530525aec904e14a16f5edd63b46f9c",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "fork-diagnostic.txt",
+      "bytes": 107886,
+      "sha256": "1aa36af65515e1615929f97e5ef2df45afb8b7936328b6c73e5932c061e64642",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "independent-R-BH.log",
+      "bytes": 121,
+      "sha256": "f7aa9e316f2cecb4d6b9af24c83ed48e855f21cebb2aa5c95fda9d5ed9b91ca4",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "inputs/k562/cells.tsv.gz",
+      "bytes": 681756,
+      "sha256": "03e82d09a1abeb4be6cff1bb081595ffe7ee85aa2036da57830fa0418870b502",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "inputs/k562/counts.i.bin.gz",
+      "bytes": 125616330,
+      "sha256": "99411c8496652aca9348e45edade8c01ff2d0645b17982cd25ff596e85b8f46b",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "inputs/k562/counts.p.bin.gz",
+      "bytes": 106428,
+      "sha256": "d03ab7fdd6dd09728d96bfcf900215c861c1d89bd20cd2092823ec56ba55e27d",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "inputs/k562/counts.x.bin.gz",
+      "bytes": 59855736,
+      "sha256": "2be64e937193f77bd4db5f230c800d8f57f851d64773527856efd6787b19466f",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "inputs/k562/genes.txt",
+      "bytes": 31572,
+      "sha256": "b47f92678fdaf853feb85900f90dd894ada455c50a2da13370e28ac9d2b4549b",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "inputs/k562/metadata.json",
+      "bytes": 1075,
+      "sha256": "a376c5cd5beed702f9bee179428797259c37386991ad54064ead36023b8e1753",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "inputs/k562/primary-tfs.txt",
+      "bytes": 952,
+      "sha256": "fd255029624c66fcb8d0b951675c97903bf68a23f88f2cd8c312cc5c2519b895",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "inputs/rpe1/cells.tsv.gz",
+      "bytes": 653430,
+      "sha256": "fe5e20b091c7fc6bce32314681f6bc988237df26f8edac7afd62d234e3cb60e6",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "inputs/rpe1/counts.i.bin.gz",
+      "bytes": 114442395,
+      "sha256": "b0a94249f6760c1ee40255354c2b5e9bcd52aadb2eed5f7b5c2d9601a2f3c32f",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "inputs/rpe1/counts.p.bin.gz",
+      "bytes": 99125,
+      "sha256": "6ded10cd58881ed1ef48b18d5afadb29e45f5463b444b3522e9cc5d9fbb9905f",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "inputs/rpe1/counts.x.bin.gz",
+      "bytes": 53885807,
+      "sha256": "bfa1120447f7bdd327d9d834cae7d85c234cb14360b8985d3453189842394332",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "inputs/rpe1/genes.txt",
+      "bytes": 31274,
+      "sha256": "8040677db549497088666e97a9d213594207d43fede537c01a4dd84a7dc5201c",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "inputs/rpe1/metadata.json",
+      "bytes": 1087,
+      "sha256": "d46d5d6c89813943a379c90e9f6d57eb4df0d365327c8aec2baaadaf981d45e7",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "inputs/rpe1/primary-tfs.txt",
+      "bytes": 730,
+      "sha256": "77aa82b5f0a1fed792965d982919048d6cd0005f61316ac31781919b230a19e9",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "install-sceptre.log",
+      "bytes": 7350,
+      "sha256": "8463c7813b91561fff2dc60a83544e014b66740e4dba7466fd34431076115972",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "k562-calibration-assignment-axis-check.log",
+      "bytes": 81,
+      "sha256": "47a5c43f711d9fe0a2b5e180ca32fb396e61e13f16ab47ed9ed9cae48460a2b6",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "k562-calibration-csv-adapter-failure.log",
+      "bytes": 312,
+      "sha256": "a8022ba960f978da8822d0577664dd0ea86ccf7c3e90fbe80bb50b2846d9ac80",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "k562-calibration-fork-stall.log",
+      "bytes": 352,
+      "sha256": "3b491238685712e9e143ca77abded0c49a8177018621f7ef0b7552137af99842",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "k562-calibration-initial-adapter-failure.log",
+      "bytes": 655,
+      "sha256": "a6371f1305af091968646270e6ce296319923abe7a56aec7dec32b58eb304fd8",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "k562-calibration.log",
+      "bytes": 2528,
+      "sha256": "ad99225b1936f266b61663741cd1c8717c78db8201e87649754dea87f80d0a49",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "k562-discovery.log",
+      "bytes": 565,
+      "sha256": "895eec7c78b2eb472dd5be2e59889ff97225b94c0e4040585b3bad59bf3732f3",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "k562-validation.log",
+      "bytes": 633,
+      "sha256": "42e88df8e156fd5dab42174c00cff972c6bb3c0c5abb860cd53c014afc3f3a82",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "make_report.py",
+      "bytes": 18683,
+      "sha256": "093b71ea0d2e3776fd079264780f29e931755b3a729439ec429991f9215542af",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "plot_calibration.py",
+      "bytes": 2936,
+      "sha256": "15c694e3278df4eaffecfa08dfc639839948cf6d797d0a7ef42396499284f1e4",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "plot_results.py",
+      "bytes": 3998,
+      "sha256": "37844a21fb6201c21cf6975ca78580a1d4a22981a43e4136a56db6a306eda352",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "preparation.log",
+      "bytes": 2010,
+      "sha256": "ec2425978324f0de13651a3d78e2dd2a2547ade26b169062507aa0bcb5ab364e",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "prepare_counts.py",
+      "bytes": 3784,
+      "sha256": "f553229553911b6a1f66b2192c00fd9c1f946980cc7af654c9860ef85cbf30a5",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "preserve_evidence.py",
+      "bytes": 3695,
+      "sha256": "0e34ffcc5992306c4acf574aa7df927f7b57fe5b125532f3645ec2fa4cb947cf",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "recalibrate.R",
+      "bytes": 6193,
+      "sha256": "3b3344dec8a65341a34c257752aad8e6b52b6994fcf68cec747494ddb8b36bb7",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "report.log",
+      "bytes": 44,
+      "sha256": "93180a5dd668bf1d5f954087ec61f0abe1e2462149d7a66ca51e40cf59fec4de",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/CALIBRATION-STATUS.json",
+      "bytes": 324,
+      "sha256": "d47f3fae160a1903a81e1fbcbe3e6ab11f9a635f5d10ace43d3eb5afed9419d7",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/DISCOVERY-STATUS.json",
+      "bytes": 203,
+      "sha256": "6d035bd83501cffa8dc61d7b48fec63982acac90fef27b69ddbc4b32b5b9a7a4",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/R-session.txt",
+      "bytes": 722,
+      "sha256": "2ad95779439ae7b7729ef8ebf0aba3d29e329dc606e72c0851ff22a485dfba35",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/calibration-distinct-pool.csv",
+      "bytes": 3215937,
+      "sha256": "74f1303135da68fc19e687fa2f79adebeebbdd1b534053bf81a9f7d1d911e34c",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/calibration-median-a.csv",
+      "bytes": 1608111,
+      "sha256": "29fa91f8267147573aac62dd4bf2d8e21a6ffc067d12bea0667b155a9acc5901",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/calibration-median-b.csv",
+      "bytes": 1608111,
+      "sha256": "29fa91f8267147573aac62dd4bf2d8e21a6ffc067d12bea0667b155a9acc5901",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/calibration-single.csv",
+      "bytes": 299732,
+      "sha256": "3811113441bd2c9680f183ef86c58c952b08edb04ca52d1203c607285649d44a",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/calibration-summary.csv",
+      "bytes": 622,
+      "sha256": "f5a7c788ba14c4f8612bfb629477338efa60a9b4459a1226821140e6ab40b749",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/calibration-upper.csv",
+      "bytes": 846679,
+      "sha256": "fd5dde3f414b7552d78b010374a0af9ad3aa372a444e9c0d8a145a024fe1bc24",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/calibration-validation.csv",
+      "bytes": 1607953,
+      "sha256": "45ebec28bca2108a1234b8c37141369b6b4a4bb853da0b2f9f7d3f291ff2f1a5",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/construct-map.csv",
+      "bytes": 22299,
+      "sha256": "a5ceb475c942d3813967b6fcec25a1a1f87ac52770b55ac8bd8ab01a12a40833",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/corrected-pair-results.parquet",
+      "bytes": 31930005,
+      "sha256": "255629326582f268334281032993e2e7c9d3764f261d22d5cedd567eb8ebb040",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "results/k562/discovery.csv",
+      "bytes": 92575388,
+      "sha256": "d29def9ffe315714112c2fa1a591b20e85158a6e95a764bd81e5ffa65045968e",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "results/k562/logs/sceptre_logs/calibration_check_1.out",
+      "bytes": 28583,
+      "sha256": "5c69306e122c579585a0699a63a5fe1ab4331e0cea2744174ee9ba7be473f755",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/logs/sceptre_logs/calibration_check_2.out",
+      "bytes": 28532,
+      "sha256": "80b7111ef07f560b52edd2d1a1424ebea0140ebf24ce1ecfb048dc25193c53be",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/logs/sceptre_logs/discovery_analysis_1.out",
+      "bytes": 28995,
+      "sha256": "9f621d29f503011c42bafda660508e73d87bf7f64786d84bbd7ae57db1f3e10c",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/logs/sceptre_logs/discovery_analysis_2.out",
+      "bytes": 28997,
+      "sha256": "7f97187b62d2c1fb8cd6b5df9651e71af183a811d118cd059bd8d5cf9214d54c",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/logs/sceptre_logs/power_check_1.out",
+      "bytes": 696,
+      "sha256": "5cdd509af822e18a431c48c06465911a4ba16ff50960cfc8765080bda1e7cb0e",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/logs/sceptre_logs/power_check_2.out",
+      "bytes": 694,
+      "sha256": "4f37d52a8241a17478b872e31e133d9eafc9f038cfcd4a46f8914a0271092dc2",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/object.rds",
+      "bytes": 1151763959,
+      "sha256": "95027053cbf11f9ef4a81c5c44e53ea22a64914aebb275d9884d52dac0f42c79",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "results/k562/pair-qc.csv",
+      "bytes": 25577431,
+      "sha256": "9a1cd1bf5c3187f8a9cc4414605e88603a813eacd43280d3532539110bd88569",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "results/k562/positive-controls-with-q.csv",
+      "bytes": 16442,
+      "sha256": "1e5c2fa1522e887f3fd4679cf2f2b665e07e824b02dcf32deba2dc2f81874347",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/positive-controls.csv",
+      "bytes": 13682,
+      "sha256": "d0989f11ea81142764ef254cea05729c34466ed70a4137afa8693f2bbd30c247",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/qc-summary.txt",
+      "bytes": 1299,
+      "sha256": "54102d66a49be13b84b8f3574db3fb6bc3c9cd966388743c00bd331f9be1c182",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/k562/validation-summary.csv",
+      "bytes": 235,
+      "sha256": "c1258ac4ff1bf87058016ef76efdf4793e980e7d2a5eb1e1b3c46d63b0086e97",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/CALIBRATION-STATUS.json",
+      "bytes": 324,
+      "sha256": "d47f3fae160a1903a81e1fbcbe3e6ab11f9a635f5d10ace43d3eb5afed9419d7",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/DISCOVERY-STATUS.json",
+      "bytes": 206,
+      "sha256": "152622bb3c2b70b6b2f3c4e65be34ed6228967e6a9a20fa69fadb21c9da9b80c",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/R-session.txt",
+      "bytes": 722,
+      "sha256": "2ad95779439ae7b7729ef8ebf0aba3d29e329dc606e72c0851ff22a485dfba35",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/calibration-distinct-pool.csv",
+      "bytes": 2907736,
+      "sha256": "b956d38db169c97886f4a23656181b598db21545e7fdd09c856b2c589289a12c",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/calibration-median-a.csv",
+      "bytes": 1454212,
+      "sha256": "5782f7a2503636265fc707f90f3d031ced9eec91f22e488660fe37e5a99625a5",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/calibration-median-b.csv",
+      "bytes": 1454212,
+      "sha256": "5782f7a2503636265fc707f90f3d031ced9eec91f22e488660fe37e5a99625a5",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/calibration-single.csv",
+      "bytes": 299331,
+      "sha256": "635a5bdd4ecc9def40fef8abfbc995485180f311495d3868e0696eb2113a93d5",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/calibration-summary.csv",
+      "bytes": 605,
+      "sha256": "c14d24de6fe7d1849f40d124d4116f48dd868ff0a3f99f1d7526be12752ee569",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/calibration-upper.csv",
+      "bytes": 710014,
+      "sha256": "678192c5b03d7a8b7430c0112e2b60d00f21ccb93f55301adcd5814d854cb4ff",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/calibration-validation.csv",
+      "bytes": 1453651,
+      "sha256": "fe4b079921384c04cd8c9fbaa76afa887cb2341eba4e5ef4a05fb6ed89a8ef14",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/construct-map.csv",
+      "bytes": 26744,
+      "sha256": "71cd2a5f6afde76ae3ef357108c7b08075faeef3d898a52985984c4eabe029f1",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/corrected-pair-results.parquet",
+      "bytes": 39358341,
+      "sha256": "cb248cad31314a96cd4447376a8ae2183a41bfe0a1163985dd47b8a21d0f55cf",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "results/rpe1/discovery.csv",
+      "bytes": 109000529,
+      "sha256": "10f0c6bf4d08b346ad3ea45a184fe54f53d180d356f5a17e3d7e2cffa3f09bb3",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "results/rpe1/logs/sceptre_logs/calibration_check_1.out",
+      "bytes": 28434,
+      "sha256": "71f22704a96fa091b04a3ba324f7aa731ec144cfa51c016e31790f18a6e73fd6",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/logs/sceptre_logs/calibration_check_2.out",
+      "bytes": 28436,
+      "sha256": "f0a0f16cbb2018e5095eef118a5a715b4bab36a6e869e73e4dbeb3e0c7472794",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/logs/sceptre_logs/discovery_analysis_1.out",
+      "bytes": 28928,
+      "sha256": "cf7cd220e6c8aabc46fde9a0541897f8fa2461b5223ceb63d5e2a6138101c3c4",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/logs/sceptre_logs/discovery_analysis_2.out",
+      "bytes": 29001,
+      "sha256": "1395b7dbac617288e7c8411f0682e9188e70dab40b7649c3f4023357dddb46e3",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/logs/sceptre_logs/power_check_1.out",
+      "bytes": 377,
+      "sha256": "03ae5130b3725d5fd6f549d1473ebcd170c98a8c075c1b272bfd93229fe1044e",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/logs/sceptre_logs/power_check_2.out",
+      "bytes": 379,
+      "sha256": "42c12968bdf7db4ce0a6cc5480bb3f6639b74ca18d8d36c6e453366431a781be",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/object.rds",
+      "bytes": 1067093267,
+      "sha256": "b6c8236a2a67c7e0f602bf2e759f5350af7a5a9532963e5c785cb6476387260c",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "results/rpe1/pair-qc.csv",
+      "bytes": 30721308,
+      "sha256": "2dcde42f5333f17bb007ff9ba85d42018437290d97930d46263d2d72059c590d",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "results/rpe1/positive-controls-with-q.csv",
+      "bytes": 11696,
+      "sha256": "3a004374694431e4965af4a4d912ef378f696416b3406fcb40738ed9a02171a8",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/positive-controls.csv",
+      "bytes": 10133,
+      "sha256": "afddf84d09451baf7d048b3a17a681c06195d4f9998ba9789fd11f2414a1f2bf",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/qc-summary.txt",
+      "bytes": 1299,
+      "sha256": "c315822648c61172fefc898ccc97c1f2431a8bb0d5b8cf16802802f267c0bdd1",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "results/rpe1/validation-summary.csv",
+      "bytes": 237,
+      "sha256": "9e6a99d6eca46b7a82ff7dc5e1b1213f4a0af83442988d77f6be8ba004100860",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "rpe1-calibration.log",
+      "bytes": 2516,
+      "sha256": "5790ed4d681d718156cc98bb631ac07890e64eb09c824c7894e639d277faada6",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "rpe1-discovery.log",
+      "bytes": 565,
+      "sha256": "0860ef0c8b55d4f9d1de5b6b83b69276d9017dd9439f6d0fbbb39dd730c0feec",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "rpe1-validation.log",
+      "bytes": 635,
+      "sha256": "e11ff87321f7659fbd46282ff48b91604d950f018031934c9ca6b7daf7218b67",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "score_saved_networks.py",
+      "bytes": 8527,
+      "sha256": "433529e276219553dcc518ce7a0f4cd1c6c48ee08190b59be27c9bf2de320d5d",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "scoring.log",
+      "bytes": 1015,
+      "sha256": "0133b0b3a1ac16bdfc0ba9218f312baa2ea803e35fa0e44fad29528f00e66a8e",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/control-calibration.csv",
+      "bytes": 506,
+      "sha256": "ee3e2ed4956613f77a6a108e36862099ab250325ee0da7dd4e2976eab1520874",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/control-sample-sizes.csv",
+      "bytes": 674,
+      "sha256": "6c7022f7a3c221eb486cf832a83651985f6258b618cf2ecdc755fe688ab35ac1",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/coverage-macro.csv",
+      "bytes": 1055,
+      "sha256": "3f7cb22340187190d4c97ab29c9fa6e5b79b1cc2b509ce621e80045d975f3063",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/coverage-per-TF.csv",
+      "bytes": 971488,
+      "sha256": "4e954061f83b8c3402b8edc3f18ba8294b1b9fca1b25a72419f43b146b177e20",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/figure-ap-differences.csv",
+      "bytes": 1088,
+      "sha256": "621a02542529889e0893860539d7750251ab54f2f917caf9b5d1af85424dd0b6",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/label-coverage.csv",
+      "bytes": 1313,
+      "sha256": "0824529a8c10da37131f2b6a22a70e87cb554efa135d31c288a40737878b5560",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/macro-metrics.csv",
+      "bytes": 18292,
+      "sha256": "eaf500a0886698bfea9de5fdba6454c8bf1a8f1cc9182c2a86f19603bdf67af9",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/matched-budget-macro.csv",
+      "bytes": 577,
+      "sha256": "ea011b101e8c9d7bc5900ba156efbc0c4824b2fe0ff23c8b6401859b560e87d8",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/matched-budget-per-TF.csv",
+      "bytes": 17566,
+      "sha256": "d725b8158718f5321d8d2185c94e89cf2acffb5a43c5fd9266942194b66bcc67",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/paired-differences.csv",
+      "bytes": 29021,
+      "sha256": "cf0c4778d3cd888c2a6cbef63e7e6555e46f93d823a54961567c7322d8806e66",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/positive-control-coverage.csv",
+      "bytes": 410,
+      "sha256": "e4b83ff7505a0db934279626c7de497dce0fd6e334f996a82b00a9add4388485",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/positive-control-summary.csv",
+      "bytes": 194,
+      "sha256": "027faa47950157cf531c6cb9ee814bea58e713206713721456d7469335278426",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "summary/rankings-per-TF.csv",
+      "bytes": 3318122,
+      "sha256": "bcbafe9f3c306cd45174f196ad981e9d4d641e481ae0694cd4b5a22424a60845",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "test_corrected_evaluation.py",
+      "bytes": 2112,
+      "sha256": "46306e3b3d8da3d4f1c1ec196a09931ae5cbe4c6ac59b143fd92e7686c6d6178",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "tests.log",
+      "bytes": 1018,
+      "sha256": "2f6bd2e83a568977c547c138b8d9a76357041876a181f3632caa695b6fb41fd8",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "validate_distinct.R",
+      "bytes": 2237,
+      "sha256": "9993b483ccd5d557159f8111c2b524f46e4a7e166dfb3fed2be365a174b2be36",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "verification/k562-r-bh.bin",
+      "bytes": 8078624,
+      "sha256": "a5f891497312148eb614f838f48fdc0e0077c51e5e438e3e8a3f94b5ca27162f",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "verification/rpe1-r-bh.bin",
+      "bytes": 9798488,
+      "sha256": "4455cdfd413a0b1212854de90eb38c2614a0ef4a29ca6c3cc29ad8192af91625",
+      "included_in_compact_copy": false
+    },
+    {
+      "path": "verification.log",
+      "bytes": 3189,
+      "sha256": "6dd05db017ba7eb03241bda3ed971f46f695851fab14d15e9f283b17e38dc9c8",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "verify_bh.R",
+      "bytes": 703,
+      "sha256": "46daddfbbf510a1263cc385463e2a00c0d746e6248267c5d6c7979ad0afe2abd",
+      "included_in_compact_copy": true
+    },
+    {
+      "path": "verify_recalibration.py",
+      "bytes": 11341,
+      "sha256": "8f382eea6e0822e5fa9e110d1218fa11fca506d9e34014c58b61bbb9a1f05ee9",
+      "included_in_compact_copy": true
+    }
+  ]
+}

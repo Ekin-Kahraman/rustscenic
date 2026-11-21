@@ -1,6 +1,6 @@
 {
   "status": "passed",
-  "source_files_verified": 213,
+  "source_files_verified": 212,
   "selected_runs": 42,
   "matched_pairs": 21,
   "corrected_confusion_matrices_verified": 96,
@@ -17,7 +17,7 @@
   "outputs": [
     {
       "path": "RESULTS.md",
-      "sha256": "1bbed2c47a98aae6e23d38a9f9ad2f0666cd0c189b6fb98b00efcbfb580ffdf1"
+      "sha256": "d08300edd71d510c6365860b43c0158596bdb32681a4cd26f9f7405c18c1a56e"
     },
     {
       "path": "figures/01-workflow-scaling.pdf",

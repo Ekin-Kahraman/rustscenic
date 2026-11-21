@@ -1,0 +1,37 @@
+dataset,check,subject,observed,current,original,confirmatory,bar,result
+atlas100000,trees,RustScenic,15.237936218269935,29.712444444444444,452.7563333333333,False,3.0,descriptive
+atlas100000,stability,RustScenic,2.02079689048236,0.3328631491422171,0.6726488167427584,False,1.5,descriptive
+atlas100000,trees,pySCENIC,14.827398731415915,29.797,441.812,False,3.0,descriptive
+atlas100000,stability,pySCENIC,,,,False,1.5,descriptive
+atlas100000,fidelity,current rule,,0.3320123046824528,,False,0.9,descriptive
+atlas100000,fidelity,original rule,,0.6002377950336953,,False,0.9,descriptive
+atlas1306127,trees,RustScenic,28.051436779634223,48.49966666666667,1360.4853333333333,False,3.0,descriptive
+atlas1306127,stability,RustScenic,,,,False,1.5,descriptive
+atlas1306127,trees,pySCENIC,,,,False,3.0,descriptive
+atlas1306127,stability,pySCENIC,,,,False,1.5,descriptive
+atlas1306127,fidelity,current rule,,,,False,0.9,descriptive
+atlas1306127,fidelity,original rule,,,,False,0.9,descriptive
+atlas20000,trees,RustScenic,8.571221524397043,26.908999999999995,230.643,True,3.0,met
+atlas20000,stability,RustScenic,1.680990534073451,0.39069623994499264,0.6567566810456223,True,1.5,met
+atlas20000,trees,pySCENIC,8.524159542751727,26.982666666666663,230.00455555555558,True,3.0,met
+atlas20000,stability,pySCENIC,1.4763845475281998,0.46536452181003934,0.687056988968192,True,1.5,not met
+atlas20000,fidelity,current rule,0.837303065918086,0.38965114088104996,0.46536452181003934,True,0.9,not met
+atlas20000,fidelity,original rule,0.9113320835906777,0.6261370773019197,0.687056988968192,True,0.9,met
+atlas500000,trees,RustScenic,23.66288129332635,38.80433333333333,918.2223333333334,False,3.0,descriptive
+atlas500000,stability,RustScenic,,,,False,1.5,descriptive
+atlas500000,trees,pySCENIC,,,,False,3.0,descriptive
+atlas500000,stability,pySCENIC,,,,False,1.5,descriptive
+atlas500000,fidelity,current rule,,,,False,0.9,descriptive
+atlas500000,fidelity,original rule,,,,False,0.9,descriptive
+bmmc,trees,RustScenic,12.162565663450579,28.36433333333333,344.9830666666667,True,3.0,met
+bmmc,stability,RustScenic,2.5193979654266845,0.23266811204181936,0.5861835680978276,True,1.5,met
+bmmc,trees,pySCENIC,11.962768747945262,28.592466666666667,342.0450666666666,True,3.0,met
+bmmc,stability,pySCENIC,2.23976452768916,0.2911523290844333,0.6521126588373946,True,1.5,met
+bmmc,fidelity,current rule,0.7629761065024826,0.22214227044397042,0.2911523290844333,True,0.9,not met
+bmmc,fidelity,original rule,0.741855053122158,0.48377307116344703,0.6521126588373946,True,0.9,not met
+hdma817740,trees,RustScenic,,61.5436,,False,3.0,descriptive
+hdma817740,stability,RustScenic,,,,False,1.5,descriptive
+hdma817740,trees,pySCENIC,,,,False,3.0,descriptive
+hdma817740,stability,pySCENIC,,,,False,1.5,descriptive
+hdma817740,fidelity,current rule,,,,False,0.9,descriptive
+hdma817740,fidelity,original rule,,,,False,0.9,descriptive

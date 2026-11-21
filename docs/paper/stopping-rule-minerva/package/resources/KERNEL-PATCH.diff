@@ -1,0 +1,299 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 6a38e8e..d7fad55 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,5 +1,16 @@
+ # Changelog
+ 
++## Unreleased
++
++- Add `early_stop_mode="paired_oob"` for GRN inference (API, `grn` CLI and
++  pipeline). It applies arboreto's 25-round monitor to same-mask out-of-bag
++  improvements, the definition scikit-learn used before 1.3 and GRNBoost2 was
++  published against. From scikit-learn 1.3 the improvement compares two
++  different random out-of-bag subsets, which stops most targets at the first
++  check (median 25 to 29 trees). The default remains `"arboreto"`, so existing
++  results and the published benchmarks are unchanged. `paired_oob` fits more
++  trees and takes correspondingly longer.
++
+ ## 0.6.1 - 2026-11-09
+ 
+ - Fix PyPI description links and images with a generated, version-pinned
+diff --git a/crates/rustscenic-grn/src/gbm.rs b/crates/rustscenic-grn/src/gbm.rs
+index 9c2fc7f..b87e736 100644
+--- a/crates/rustscenic-grn/src/gbm.rs
++++ b/crates/rustscenic-grn/src/gbm.rs
+@@ -9,6 +9,14 @@
+ //! strictly negative.  The historical in-bag two-point rule remains available
+ //! through [`crate::EarlyStopMode::LegacyInbag`]. Disabled with window=0.
+ //!
++//! [`crate::EarlyStopMode::PairedOob`] applies the same monitor to same-mask
++//! OOB improvements (loss before minus loss after the round, on that round's
++//! own OOB rows). This is the definition scikit-learn used before 1.3 and the
++//! one GRNBoost2 was designed against. From 1.3 scikit-learn subtracts the
++//! previous round's OOB loss, measured on a different random OOB subset, so
++//! the trailing mean telescopes into a comparison of two unrelated subsets and
++//! the monitor fires at the first check for about half of all targets.
++//!
+ //! `exclude_feature` is passed through to the tree builder so targets that are
+ //! themselves TFs don't include their own expression column as a predictor.
+ 
+@@ -126,7 +134,7 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
+             scratch
+                 .sample_idx
+                 .extend((0..n_samples).map(|row| row as u32));
+-        } else if cfg.early_stop_mode == EarlyStopMode::Arboreto {
++        } else if cfg.early_stop_mode != EarlyStopMode::LegacyInbag {
+             let n_inbag = ((cfg.subsample * n_samples as f32) as usize)
+                 .max(1)
+                 .min(n_samples);
+@@ -173,8 +181,10 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
+                 let d = scratch.residuals[k];
+                 mse_inbag += d * d;
+                 inbag_pos += 1;
+-            } else if cfg.early_stop_mode == EarlyStopMode::Arboreto {
+-                if i == 0 {
++            } else if cfg.early_stop_mode != EarlyStopMode::LegacyInbag {
++                // Round zero is always same-mask. PairedOob keeps every round
++                // same-mask (GRNBoost2 as published, scikit-learn < 1.3).
++                if i == 0 || cfg.early_stop_mode == EarlyStopMode::PairedOob {
+                     oob_score_before += old_residual * old_residual;
+                 }
+                 let d = scratch.residuals[k];
+@@ -194,10 +204,10 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
+ 
+         n_fit += 1;
+ 
+-        if cfg.early_stop_mode == EarlyStopMode::Arboreto {
++        if cfg.early_stop_mode != EarlyStopMode::LegacyInbag {
+             if cfg.subsample < 1.0 && n_oob > 0 {
+                 let current_oob_score = oob_score_after / n_oob as f32;
+-                let prior_score = if i == 0 {
++                let prior_score = if i == 0 || cfg.early_stop_mode == EarlyStopMode::PairedOob {
+                     oob_score_before / n_oob as f32
+                 } else {
+                     previous_oob_score.unwrap_or(current_oob_score)
+@@ -206,7 +216,7 @@ pub fn fit_and_importances_binned_with_scratch<'a>(
+                     .monitor_history
+                     .push(prior_score - current_oob_score);
+                 previous_oob_score = Some(current_oob_score);
+-                if should_stop(&scratch.monitor_history, window, EarlyStopMode::Arboreto) {
++                if should_stop(&scratch.monitor_history, window, cfg.early_stop_mode) {
+                     break;
+                 }
+             }
+@@ -237,7 +247,7 @@ fn should_stop(history: &[f32], window: usize, mode: EarlyStopMode) -> bool {
+         return false;
+     }
+     match mode {
+-        EarlyStopMode::Arboreto => {
++        EarlyStopMode::Arboreto | EarlyStopMode::PairedOob => {
+             history.len() >= window
+                 && history[history.len() - window..].iter().sum::<f32>() / (window as f32) < 0.0
+         }
+@@ -330,6 +340,53 @@ mod tests {
+         assert!(imp[1] + imp[2] > 0.0);
+     }
+ 
++    fn lcg(state: &mut u64) -> f32 {
++        *state = state
++            .wrapping_mul(6364136223846793005)
++            .wrapping_add(1442695040888963407);
++        ((*state >> 40) as f32) / ((1u64 << 24) as f32)
++    }
++
++    fn fitted_trees(y: &[f32], x: &[f32], n: usize, nf: usize, mode: EarlyStopMode) -> usize {
++        let bm = BinnedMatrix::from_dense(x, n, nf);
++        let cfg = GrnConfig {
++            n_estimators: 300,
++            learning_rate: 0.01,
++            max_features: 1.0,
++            subsample: 0.9,
++            max_depth: 3,
++            early_stop_window: 25,
++            early_stop_mode: mode,
++            seed: 11,
++            target_block_size: 0,
++        };
++        let mut scratch = GbmScratch::new(n, nf, cfg.n_estimators);
++        fit_and_importances_binned_with_scratch(&bm, y, &cfg, None, &mut scratch).1
++    }
++
++    #[test]
++    fn paired_oob_keeps_training_a_predictable_target() {
++        let (n, nf) = (2000, 8);
++        let mut state = 7u64;
++        let x: Vec<f32> = (0..n * nf).map(|_| lcg(&mut state)).collect();
++        let y: Vec<f32> = (0..n)
++            .map(|i| 3.0 * x[i * nf] + 0.3 * lcg(&mut state))
++            .collect();
++        // Every round still improves held-out loss, so same-mask stopping
++        // must run to the ceiling.
++        assert_eq!(fitted_trees(&y, &x, n, nf, EarlyStopMode::PairedOob), 300);
++    }
++
++    #[test]
++    fn paired_oob_stops_on_an_unpredictable_target() {
++        let (n, nf) = (2000, 8);
++        let mut state = 99u64;
++        let x: Vec<f32> = (0..n * nf).map(|_| lcg(&mut state)).collect();
++        let y: Vec<f32> = (0..n).map(|_| lcg(&mut state)).collect();
++        let trees = fitted_trees(&y, &x, n, nf, EarlyStopMode::PairedOob);
++        assert!((25..300).contains(&trees), "fitted {trees} trees on noise");
++    }
++
+     #[test]
+     fn arboreto_monitor_uses_strict_trailing_window_mean() {
+         let positive = vec![0.2, -0.1, -0.1];
+diff --git a/crates/rustscenic-grn/src/lib.rs b/crates/rustscenic-grn/src/lib.rs
+index ca9e99f..c5cbaed 100644
+--- a/crates/rustscenic-grn/src/lib.rs
++++ b/crates/rustscenic-grn/src/lib.rs
+@@ -114,6 +114,9 @@ pub enum EarlyStopMode {
+     Arboreto,
+     /// Historical RustScenic two-point comparison of in-bag MSE.
+     LegacyInbag,
++    /// Arboreto's monitor over same-mask OOB improvements (scikit-learn < 1.3,
++    /// GRNBoost2 as published).
++    PairedOob,
+ }
+ 
+ struct ResolvedTfCols {
+diff --git a/crates/rustscenic-py/src/lib.rs b/crates/rustscenic-py/src/lib.rs
+index 92b527e..63ff7fa 100644
+--- a/crates/rustscenic-py/src/lib.rs
++++ b/crates/rustscenic-py/src/lib.rs
+@@ -486,8 +486,9 @@ fn parse_early_stop_mode(value: &str) -> PyResult<EarlyStopMode> {
+     match value {
+         "arboreto" => Ok(EarlyStopMode::Arboreto),
+         "legacy_inbag" => Ok(EarlyStopMode::LegacyInbag),
++        "paired_oob" => Ok(EarlyStopMode::PairedOob),
+         _ => Err(pyo3::exceptions::PyValueError::new_err(format!(
+-            "early_stop_mode must be 'arboreto' or 'legacy_inbag', got {value:?}"
++            "early_stop_mode must be 'arboreto', 'paired_oob' or 'legacy_inbag', got {value:?}"
+         ))),
+     }
+ }
+diff --git a/python/rustscenic/cli.py b/python/rustscenic/cli.py
+index e847f30..9a3f504 100644
+--- a/python/rustscenic/cli.py
++++ b/python/rustscenic/cli.py
+@@ -511,9 +511,11 @@ def main(argv: list[str] | None = None) -> int:
+     pg.add_argument("--max-depth", type=int, default=3); pg.add_argument("--early-stop-window", type=int, default=25)
+     pg.add_argument(
+         "--early-stop-mode",
+-        choices=["arboreto", "legacy_inbag"],
++        choices=["arboreto", "paired_oob", "legacy_inbag"],
+         default="arboreto",
+-        help="OOB arboreto semantics (default) or historical RustScenic in-bag rule.",
++        help="Cross-mask OOB monitor as arboreto on scikit-learn >= 1.3 (default), "
++        "same-mask OOB monitor as GRNBoost2 was published (paired_oob), "
++        "or the historical RustScenic in-bag rule.",
+     )
+     pg.add_argument(
+         "--target-block-size",
+@@ -600,7 +602,7 @@ def main(argv: list[str] | None = None) -> int:
+     pp.add_argument("--grn-early-stop-window", type=int, default=25)
+     pp.add_argument(
+         "--grn-early-stop-mode",
+-        choices=["arboreto", "legacy_inbag"],
++        choices=["arboreto", "paired_oob", "legacy_inbag"],
+         default="arboreto",
+     )
+     pp.add_argument(
+diff --git a/python/rustscenic/grn.py b/python/rustscenic/grn.py
+index 376806a..dae314a 100644
+--- a/python/rustscenic/grn.py
++++ b/python/rustscenic/grn.py
+@@ -87,6 +87,11 @@ def infer(
+     early_stop_mode
+         ``"arboreto"`` (default) uses the trailing mean of out-of-bag
+         improvements, matching arboreto with modern scikit-learn semantics.
++        ``"paired_oob"`` applies the same monitor to same-mask improvements
++        (loss before minus loss after each round on that round's own
++        out-of-bag rows), the definition scikit-learn used before 1.3 and
++        GRNBoost2 was designed against. It trains predictable targets for
++        longer and costs correspondingly more time.
+         ``"legacy_inbag"`` retains RustScenic's historical two-point in-bag
+         MSE rule for reproducing older RustScenic artefacts. Set
+         ``early_stop_window=0`` to disable either rule. Arboreto OOB stopping
+@@ -151,9 +156,9 @@ def infer(
+         if target_block_size_for_rust < 1:
+             raise ValueError("target_block_size must be None or a positive integer")
+     early_stop_mode = str(early_stop_mode)
+-    if early_stop_mode not in {"arboreto", "legacy_inbag"}:
++    if early_stop_mode not in {"arboreto", "paired_oob", "legacy_inbag"}:
+         raise ValueError(
+-            "early_stop_mode must be 'arboreto' or 'legacy_inbag', "
++            "early_stop_mode must be 'arboreto', 'paired_oob' or 'legacy_inbag', "
+             f"got {early_stop_mode!r}"
+         )
+ 
+diff --git a/python/rustscenic/pipeline.py b/python/rustscenic/pipeline.py
+index 761b4cd..16a3bb3 100644
+--- a/python/rustscenic/pipeline.py
++++ b/python/rustscenic/pipeline.py
+@@ -320,7 +320,10 @@ def run(
+         much faster on high-TF datasets, but change edge rankings and
+         should be treated as a speed/quality tradeoff.
+     grn_early_stop_mode
+-        ``"arboreto"`` (default) uses the trailing mean of OOB improvements.
++        ``"arboreto"`` (default) uses the trailing mean of OOB improvements
++        as arboreto computes it on scikit-learn 1.3 or later.
++        ``"paired_oob"`` uses same-mask improvements, as GRNBoost2 was
++        published; it trains predictable targets for longer.
+         ``"legacy_inbag"`` reproduces historical RustScenic early stopping.
+     grn_regulon_polarities
+         ``"both"`` (default) computes TF-target Pearson correlations and
+@@ -405,9 +408,9 @@ def run(
+             f"'unsigned', got {grn_regulon_polarities!r}"
+         )
+     grn_early_stop_mode = str(grn_early_stop_mode)
+-    if grn_early_stop_mode not in {"arboreto", "legacy_inbag"}:
++    if grn_early_stop_mode not in {"arboreto", "paired_oob", "legacy_inbag"}:
+         raise ValueError(
+-            "grn_early_stop_mode must be 'arboreto' or 'legacy_inbag', "
++            "grn_early_stop_mode must be 'arboreto', 'paired_oob' or 'legacy_inbag', "
+             f"got {grn_early_stop_mode!r}"
+         )
+     grn_early_stop_window = int(grn_early_stop_window)
+diff --git a/tests/test_grn.py b/tests/test_grn.py
+index 4a1247a..5d781c3 100644
+--- a/tests/test_grn.py
++++ b/tests/test_grn.py
+@@ -433,6 +433,35 @@ class TestGrnEarlyStopping:
+ 
+         assert out.attrs["grn_fit"]["fitted_trees_min"] < 20
+ 
++    def test_paired_oob_trains_longer_than_cross_mask_on_signal(self):
++        # Target g2 is a strong function of TF g0, so held-out loss keeps
++        # falling. Same-mask stopping must not halt at the first check; the
++        # cross-mask monitor compares unrelated OOB subsets and may.
++        rng = np.random.default_rng(0)
++        g0 = rng.gamma(2.0, 1.0, size=600)
++        g1 = rng.gamma(2.0, 1.0, size=600)
++        frame = pd.DataFrame(
++            {"g0": g0, "g1": g1, "g2": 3.0 * g0 + rng.normal(0, 0.1, size=600)}
++        ).astype(np.float32)
++        kwargs = dict(
++            tf_names=["g0", "g1"],
++            n_estimators=200,
++            early_stop_window=25,
++            seed=42,
++            verbose=False,
++        )
++        paired = grn.infer(frame, early_stop_mode="paired_oob", **kwargs)
++        again = grn.infer(frame, early_stop_mode="paired_oob", **kwargs)
++
++        assert paired.attrs["grn_fit"]["early_stop_mode"] == "paired_oob"
++        pd.testing.assert_frame_equal(paired, again)
++        trees = paired.groupby("target").importance.sum()
++        assert trees["g2"] == pytest.approx(200, abs=1e-3)
++
++    def test_unknown_early_stop_mode_is_rejected(self, small_expr):
++        with pytest.raises(ValueError, match="paired_oob"):
++            grn.infer(small_expr, tf_names=["g0", "g1"], early_stop_mode="oob", verbose=False)
++
+     def test_legacy_mode_is_explicit_and_deterministic(self, small_expr):
+         kwargs = dict(
+             tf_names=["g0", "g1"],

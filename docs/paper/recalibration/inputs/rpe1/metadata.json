@@ -1,0 +1,28 @@
+{
+  "dataset": "rpe1",
+  "cells": 28720,
+  "genes": 5000,
+  "nnz": 78156778,
+  "source_sha256": "12d6a0cf9378c4f09411e27f0ce07b59f1d97731bd576d6fadf112f6f088d1a4",
+  "source_aggregate_exact": true,
+  "training_cells_disjoint": true,
+  "median_nt_construct_cells": 18.0,
+  "median_target_cells": 72.0,
+  "q90_target_cells": 170.39999999999998,
+  "calibration_group_sizes": [
+    1,
+    4,
+    10
+  ],
+  "primary_TFs": 117,
+  "all_target_TFs": 245,
+  "plan_sha256": "158d9a1144f10965fadd7fa4c478a2338b5b44d103bd24836f0b10c7453d8100",
+  "files": {
+    "counts.i.bin.gz": "b0a94249f6760c1ee40255354c2b5e9bcd52aadb2eed5f7b5c2d9601a2f3c32f",
+    "primary-tfs.txt": "77aa82b5f0a1fed792965d982919048d6cd0005f61316ac31781919b230a19e9",
+    "genes.txt": "8040677db549497088666e97a9d213594207d43fede537c01a4dd84a7dc5201c",
+    "cells.tsv.gz": "fe5e20b091c7fc6bce32314681f6bc988237df26f8edac7afd62d234e3cb60e6",
+    "counts.p.bin.gz": "6ded10cd58881ed1ef48b18d5afadb29e45f5463b444b3522e9cc5d9fbb9905f",
+    "counts.x.bin.gz": "bfa1120447f7bdd327d9d834cae7d85c234cb14360b8985d3453189842394332"
+  }
+}

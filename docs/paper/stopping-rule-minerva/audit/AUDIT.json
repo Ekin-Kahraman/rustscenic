@@ -1,0 +1,433 @@
+{
+  "transport": {
+    "archive_sha256": "9666d5c7b9da91014c38301e29be9183027e1e277344b7b172bf35d85f92b98d",
+    "transport_ok": true
+  },
+  "integrity": {
+    "inventory": {
+      "files": 525,
+      "mismatched_or_missing": []
+    },
+    "package_identical_to_sent": true,
+    "package_files_differing": [],
+    "protocol_sha256": "cd35e196ac8a52df6ab57bfdc00d7727d6a40053e6a46b2398e35edabccea55b",
+    "protocol_matches_sent": true,
+    "arm_output_hash_failures": [
+      "jobs/atlas100000-777/reference_original/memory.csv",
+      "jobs/atlas20000-779/native_cross/memory.csv",
+      "jobs/atlas20000-779/reference_cross/memory.csv",
+      "jobs/bmmc-777/reference_original/memory.csv",
+      "jobs/bmmc-778/reference_cross/memory.csv",
+      "jobs/bmmc-778/reference_original/memory.csv",
+      "jobs/bmmc-779/reference_cross/memory.csv",
+      "jobs/bmmc-779/reference_original/memory.csv",
+      "jobs/hdma817740-777/pearson/memory.csv"
+    ]
+  },
+  "completeness": {
+    "jobs": {
+      "bmmc-777": "complete",
+      "bmmc-778": "complete",
+      "bmmc-779": "complete",
+      "atlas20000-777": "complete",
+      "atlas20000-778": "complete",
+      "atlas20000-779": "complete",
+      "atlas100000-777": "complete",
+      "atlas100000-778": "complete",
+      "atlas100000-779": "complete",
+      "atlas500000-777": "complete",
+      "atlas1306127-777": "complete",
+      "hdma817740-777": "no_worker_completion"
+    },
+    "jobs_complete": 11,
+    "arms_complete": 43,
+    "arms_expected": 44,
+    "arm_status": {
+      "atlas100000-777/native_cross": "complete",
+      "atlas100000-777/native_same": "complete",
+      "atlas100000-777/pearson": "complete",
+      "atlas100000-777/reference_cross": "complete",
+      "atlas100000-777/reference_original": "complete",
+      "atlas100000-778/native_cross": "complete",
+      "atlas100000-778/native_same": "complete",
+      "atlas100000-779/native_cross": "complete",
+      "atlas100000-779/native_same": "complete",
+      "atlas1306127-777/native_cross": "complete",
+      "atlas1306127-777/native_same": "complete",
+      "atlas1306127-777/pearson": "complete",
+      "atlas20000-777/native_cross": "complete",
+      "atlas20000-777/native_same": "complete",
+      "atlas20000-777/pearson": "complete",
+      "atlas20000-777/reference_cross": "complete",
+      "atlas20000-777/reference_original": "complete",
+      "atlas20000-778/native_cross": "complete",
+      "atlas20000-778/native_same": "complete",
+      "atlas20000-778/reference_cross": "complete",
+      "atlas20000-778/reference_original": "complete",
+      "atlas20000-779/native_cross": "complete",
+      "atlas20000-779/native_same": "complete",
+      "atlas20000-779/reference_cross": "complete",
+      "atlas20000-779/reference_original": "complete",
+      "atlas500000-777/native_cross": "complete",
+      "atlas500000-777/native_same": "complete",
+      "atlas500000-777/pearson": "complete",
+      "bmmc-777/native_cross": "complete",
+      "bmmc-777/native_same": "complete",
+      "bmmc-777/pearson": "complete",
+      "bmmc-777/reference_cross": "complete",
+      "bmmc-777/reference_original": "complete",
+      "bmmc-778/native_cross": "complete",
+      "bmmc-778/native_same": "complete",
+      "bmmc-778/reference_cross": "complete",
+      "bmmc-778/reference_original": "complete",
+      "bmmc-779/native_cross": "complete",
+      "bmmc-779/native_same": "complete",
+      "bmmc-779/reference_cross": "complete",
+      "bmmc-779/reference_original": "complete",
+      "hdma817740-777/native_cross": "complete",
+      "hdma817740-777/pearson": "complete"
+    },
+    "stage_errors": {},
+    "reference_original_used": "scikit-learn 1.2.2",
+    "preflight_native_ok": true
+  },
+  "confirmatory": {
+    "checks": 12,
+    "met": 8,
+    "not_met": 4,
+    "not_evaluable": 0,
+    "no_loss_rule": true,
+    "improves_rule": true
+  },
+  "agreement_with_returned_summary": {
+    "checks": [
+      {
+        "dataset": "bmmc",
+        "check": "trees",
+        "subject": "RustScenic",
+        "returned": 12.162565663450577,
+        "recomputed": 12.162565663450579,
+        "abs_difference": 1.7763568394002505e-15
+      },
+      {
+        "dataset": "bmmc",
+        "check": "stability",
+        "subject": "RustScenic",
+        "returned": 2.519397965426685,
+        "recomputed": 2.5193979654266845,
+        "abs_difference": 4.440892098500626e-16
+      },
+      {
+        "dataset": "bmmc",
+        "check": "trees",
+        "subject": "pySCENIC",
+        "returned": 11.962768747945262,
+        "recomputed": 11.962768747945262,
+        "abs_difference": 0.0
+      },
+      {
+        "dataset": "bmmc",
+        "check": "stability",
+        "subject": "pySCENIC",
+        "returned": 2.2397645276891596,
+        "recomputed": 2.23976452768916,
+        "abs_difference": 4.440892098500626e-16
+      },
+      {
+        "dataset": "bmmc",
+        "check": "fidelity",
+        "subject": "current rule",
+        "returned": 0.7629761065024824,
+        "recomputed": 0.7629761065024826,
+        "abs_difference": 2.220446049250313e-16
+      },
+      {
+        "dataset": "bmmc",
+        "check": "fidelity",
+        "subject": "original rule",
+        "returned": 0.741855053122158,
+        "recomputed": 0.741855053122158,
+        "abs_difference": 0.0
+      },
+      {
+        "dataset": "atlas20000",
+        "check": "trees",
+        "subject": "RustScenic",
+        "returned": 8.57122152439704,
+        "recomputed": 8.571221524397043,
+        "abs_difference": 1.7763568394002505e-15
+      },
+      {
+        "dataset": "atlas20000",
+        "check": "stability",
+        "subject": "RustScenic",
+        "returned": 1.6809905340734512,
+        "recomputed": 1.680990534073451,
+        "abs_difference": 2.220446049250313e-16
+      },
+      {
+        "dataset": "atlas20000",
+        "check": "trees",
+        "subject": "pySCENIC",
+        "returned": 8.524159542751725,
+        "recomputed": 8.524159542751727,
+        "abs_difference": 1.7763568394002505e-15
+      },
+      {
+        "dataset": "atlas20000",
+        "check": "stability",
+        "subject": "pySCENIC",
+        "returned": 1.4763845475281998,
+        "recomputed": 1.4763845475281998,
+        "abs_difference": 0.0
+      },
+      {
+        "dataset": "atlas20000",
+        "check": "fidelity",
+        "subject": "current rule",
+        "returned": 0.837303065918086,
+        "recomputed": 0.837303065918086,
+        "abs_difference": 0.0
+      },
+      {
+        "dataset": "atlas20000",
+        "check": "fidelity",
+        "subject": "original rule",
+        "returned": 0.9113320835906777,
+        "recomputed": 0.9113320835906777,
+        "abs_difference": 0.0
+      },
+      {
+        "dataset": "atlas100000",
+        "check": "trees",
+        "subject": "RustScenic",
+        "returned": 15.237936218269935,
+        "recomputed": 15.237936218269935,
+        "abs_difference": 0.0
+      },
+      {
+        "dataset": "atlas100000",
+        "check": "stability",
+        "subject": "RustScenic",
+        "returned": 2.02079689048236,
+        "recomputed": 2.02079689048236,
+        "abs_difference": 0.0
+      },
+      {
+        "dataset": "atlas100000",
+        "check": "trees",
+        "subject": "pySCENIC",
+        "returned": 14.827398731415915,
+        "recomputed": 14.827398731415915,
+        "abs_difference": 0.0
+      },
+      {
+        "dataset": "atlas500000",
+        "check": "trees",
+        "subject": "RustScenic",
+        "returned": 23.66288129332635,
+        "recomputed": 23.66288129332635,
+        "abs_difference": 0.0
+      },
+      {
+        "dataset": "atlas1306127",
+        "check": "trees",
+        "subject": "RustScenic",
+        "returned": 28.051436779634223,
+        "recomputed": 28.051436779634223,
+        "abs_difference": 0.0
+      },
+      {
+        "dataset": "hdma817740",
+        "check": "trees",
+        "subject": "RustScenic",
+        "returned": null,
+        "recomputed": NaN,
+        "abs_difference": null
+      }
+    ],
+    "recovery": [
+      {
+        "dataset": "atlas20000",
+        "reference": "mouse-nonspecific-chip",
+        "comparison": "native_same minus native_cross",
+        "max_abs_difference": 9.194034422677078e-17
+      },
+      {
+        "dataset": "atlas20000",
+        "reference": "mouse-nonspecific-chip",
+        "comparison": "reference_original minus reference_cross",
+        "max_abs_difference": 9.367506770274758e-17
+      },
+      {
+        "dataset": "atlas20000",
+        "reference": "mouse-nonspecific-chip",
+        "comparison": "native_same minus pearson",
+        "max_abs_difference": 6.787105599759258e-17
+      },
+      {
+        "dataset": "atlas20000",
+        "reference": "mouse-nonspecific-chip",
+        "comparison": "native_cross minus pearson",
+        "max_abs_difference": 8.673617379884035e-17
+      },
+      {
+        "dataset": "atlas20000",
+        "reference": "mouse-nonspecific-chip",
+        "comparison": "native_same minus reference_original",
+        "max_abs_difference": 7.299391126258659e-17
+      },
+      {
+        "dataset": "atlas20000",
+        "reference": "mouse-nonspecific-chip",
+        "comparison": "native_cross minus reference_cross",
+        "max_abs_difference": 7.546047120499111e-17
+      },
+      {
+        "dataset": "atlas20000",
+        "reference": "mouse-string",
+        "comparison": "native_same minus native_cross",
+        "max_abs_difference": 8.847089727481716e-17
+      },
+      {
+        "dataset": "atlas20000",
+        "reference": "mouse-string",
+        "comparison": "reference_original minus reference_cross",
+        "max_abs_difference": 1.0408340855860843e-16
+      },
+      {
+        "dataset": "atlas20000",
+        "reference": "mouse-string",
+        "comparison": "native_same minus pearson",
+        "max_abs_difference": 8.326672684688674e-17
+      },
+      {
+        "dataset": "atlas20000",
+        "reference": "mouse-string",
+        "comparison": "native_cross minus pearson",
+        "max_abs_difference": 8.673617379884035e-17
+      },
+      {
+        "dataset": "atlas20000",
+        "reference": "mouse-string",
+        "comparison": "native_same minus reference_original",
+        "max_abs_difference": 7.573152174811248e-17
+      },
+      {
+        "dataset": "atlas20000",
+        "reference": "mouse-string",
+        "comparison": "native_cross minus reference_cross",
+        "max_abs_difference": 6.158268339717665e-17
+      },
+      {
+        "dataset": "bmmc",
+        "reference": "human-nonspecific-chip",
+        "comparison": "native_same minus native_cross",
+        "max_abs_difference": 9.020562075079397e-17
+      },
+      {
+        "dataset": "bmmc",
+        "reference": "human-nonspecific-chip",
+        "comparison": "reference_original minus reference_cross",
+        "max_abs_difference": 9.226560487851643e-17
+      },
+      {
+        "dataset": "bmmc",
+        "reference": "human-nonspecific-chip",
+        "comparison": "native_same minus pearson",
+        "max_abs_difference": 4.2500725161431774e-17
+      },
+      {
+        "dataset": "bmmc",
+        "reference": "human-nonspecific-chip",
+        "comparison": "native_cross minus pearson",
+        "max_abs_difference": 9.324138683375338e-17
+      },
+      {
+        "dataset": "bmmc",
+        "reference": "human-nonspecific-chip",
+        "comparison": "native_same minus reference_original",
+        "max_abs_difference": 1.3877787807814457e-17
+      },
+      {
+        "dataset": "bmmc",
+        "reference": "human-nonspecific-chip",
+        "comparison": "native_cross minus reference_cross",
+        "max_abs_difference": 9.790345617544105e-17
+      },
+      {
+        "dataset": "bmmc",
+        "reference": "human-string",
+        "comparison": "native_same minus native_cross",
+        "max_abs_difference": 9.150666335777657e-17
+      },
+      {
+        "dataset": "bmmc",
+        "reference": "human-string",
+        "comparison": "reference_original minus reference_cross",
+        "max_abs_difference": 3.155028321932818e-17
+      },
+      {
+        "dataset": "bmmc",
+        "reference": "human-string",
+        "comparison": "native_same minus pearson",
+        "max_abs_difference": 6.461844948013606e-17
+      },
+      {
+        "dataset": "bmmc",
+        "reference": "human-string",
+        "comparison": "native_cross minus pearson",
+        "max_abs_difference": 6.613633252161577e-17
+      },
+      {
+        "dataset": "bmmc",
+        "reference": "human-string",
+        "comparison": "native_same minus reference_original",
+        "max_abs_difference": 3.9207461062507054e-17
+      },
+      {
+        "dataset": "bmmc",
+        "reference": "human-string",
+        "comparison": "native_cross minus reference_cross",
+        "max_abs_difference": 5.421010862427522e-20
+      }
+    ],
+    "returned_all_met": false,
+    "returned_reference_recovery": {
+      "comparison": "RustScenic, original rule minus current rule, pooled AP",
+      "improves": true,
+      "no_loss": true,
+      "pairs": [
+        {
+          "AP_difference": 0.0013969874321622944,
+          "dataset": "bmmc",
+          "high": 0.002350535606586361,
+          "low": 0.00057762355313489,
+          "reference": "human-nonspecific-chip"
+        },
+        {
+          "AP_difference": 0.0012184662701803916,
+          "dataset": "bmmc",
+          "high": 0.001667745265018838,
+          "low": 0.0008838085195630366,
+          "reference": "human-string"
+        },
+        {
+          "AP_difference": 0.004642119535941888,
+          "dataset": "atlas20000",
+          "high": 0.009179249069448087,
+          "low": 0.001523925625735692,
+          "reference": "mouse-nonspecific-chip"
+        },
+        {
+          "AP_difference": 0.005912686969432774,
+          "dataset": "atlas20000",
+          "high": 0.011321144807133589,
+          "low": 0.0028970583651887027,
+          "reference": "mouse-string"
+        }
+      ],
+      "status": "complete"
+    }
+  }
+}

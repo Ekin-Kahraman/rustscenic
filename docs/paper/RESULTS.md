@@ -121,4 +121,4 @@ ratios are 0.928426 and 0.908883. Small three-run differences are descriptive;
 they do not revise the full-workflow performance figures above.
 
 See METHODS.md for endpoint chronology, controls, parameter differences and
-figure captions. Full retained HPC output arrays still require durable archival.
+figure captions. See READINESS.md for remaining submission requirements.

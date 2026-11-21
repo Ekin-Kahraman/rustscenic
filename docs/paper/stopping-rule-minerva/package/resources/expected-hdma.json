@@ -1,0 +1,51 @@
+{
+  "atac_representation": "Observed fragment overlaps in fixed published hg38 caCREs, counted with BPCells 0.3.1 mode=overlaps, then binarised for both topic engines.",
+  "cell_permutation_seed": 20261028,
+  "cells": 817740,
+  "cells_duplicated_or_simulated": false,
+  "dataset": "Human Development Multiomic Atlas (HDMA), Liu et al., Nature 2026",
+  "feature_selection_uses_evaluation_labels": false,
+  "files": {
+    "atac.h5": "f1e5a8e2561e7c2adefbe77387d7a1be41a7a629271f1f66f88e226052187236",
+    "cell-metadata.tsv": "686d0be78d878373b552e1aa3296b04acde8c8d83ff7cfb389797e1845b70789",
+    "gene-coordinates.tsv": "7fe32982ffd647d1a70f8f0c8a34ac117ea92c15b2a1b8856da74087df46243d",
+    "motifs/human-gene-annotations.tbl": "781e16a079a7219c0fe71f7098e6de45f76556ac492931d5d35e41f3e26cfad7",
+    "motifs/screen-overlap-mapping.tsv": "844ca1828adce6e2cf758042eff665dcba1b1bab18ad0e23703195ef8ace5b36",
+    "motifs/screen-projected.feather": "9b52a292a0e3595323eb2776f8af707f0caf4f8915faa698974215e3ef05a398",
+    "motifs/screen-projected.json": "19c3a26edd9d370d24aedabf485066b38718a2786df7af4af0ffe057fdb81803",
+    "peaks.tsv": "565a891b131c2a735788fd0cd7b0030807208d3c4158922ba65e1f3b48890808",
+    "preparation-r-session.txt": "878c650e8e4955d1ae42e67497209553ae34d31128bb3670ff6b9d86e8a8cdf7",
+    "rna.h5": "b035954b590b6d8293c4a1c3343b638f6b585aa683904f002ffe1a3bb05a63a1",
+    "screen-overlap-mapping.tsv": "844ca1828adce6e2cf758042eff665dcba1b1bab18ad0e23703195ef8ace5b36",
+    "tfs.txt": "a283121bd278756809049e49fd40150cbc40b72d0d1a6c1079ef455d4cf40f92"
+  },
+  "genes": 5000,
+  "local_test": false,
+  "normalisation": "Published RNA_raw_merged: log1p 10000-count library-normalised original RNA assay; common float32 conversion, no second normalisation.",
+  "paired_rna_atac_same_cells": true,
+  "panel_sha256": "f2765be072162874b008752131486e64b5acd83d60c825d02c116d0daf1e26b5",
+  "peaks": 20000,
+  "selection_cells": 10000,
+  "source_records": [
+    15053816,
+    17427146
+  ],
+  "source_verification": {
+    "biological_donors": 23,
+    "cell_types": 134,
+    "donor_mapping": "Supplementary Table 1 sample -> tissue_bioID, exact many-to-one match for every cell",
+    "global_cacres_sha256": "533f7cc5cac12333654bad0cbb6300ced862465c1872f37518e29001a358b1ed",
+    "label_mapping": "Supplementary Table 2 Cluster -> L2_annot",
+    "metadata_sha256": "b816f55da3cfc2a43605347a7a838f9fdc68362ab888934c3be47b7570486999",
+    "paired_cells": 817740,
+    "publication": "https://doi.org/10.1038/s41586-026-10326-9",
+    "record_ids": [
+      15053816,
+      17427146
+    ],
+    "rna_resource": "RNA_raw_merged is log-normalised in the authors preparation code; not integer raw counts despite its name. It is used directly.",
+    "samples": 76,
+    "supplementary_tables_sha256": "d2ce755caaee0e61e49643055bf8fdc7bc1d5b6170776b7a71c6ded2ea6d7699"
+  },
+  "tfs": 256
+}

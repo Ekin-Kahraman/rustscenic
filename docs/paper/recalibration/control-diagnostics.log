@@ -1,0 +1,14 @@
+dataset             group  distinct_construct_groups  treatment_min  treatment_q05  treatment_median  treatment_q95  treatment_max  control_median
+   k562          median-a                        100             68          78.00             107.0          147.0            163          2050.0
+   k562        validation                        100             68          80.00             106.0          147.0            163          2051.0
+   k562            single                         96              8          11.00              22.0           43.0             52          2135.0
+   k562             upper                        100            204         230.00             280.0          367.0            399          1877.0
+   k562 discovery-targets                        202              5          28.15             114.0          329.3            992          2157.0
+   rpe1          median-a                        100             37          50.00              85.0          120.0            132          2231.0
+   rpe1        validation                        100             37          51.00              85.0          120.0            132          2231.0
+   rpe1            single                         97              7          10.00              22.0           41.0             47          2294.0
+   rpe1             upper                        100            129         168.00             207.0          260.0            283          2109.0
+   rpe1 discovery-targets                        245              6          13.20              72.0          230.6           3580          2316.0
+dataset  evaluation_cells  control_cells  captures  total_targeted_TFs  self_gene_in_panel  self_QC_pass  significant_down  adequate_KD  fraction_down_among_QC_pass  self_below_treatment_detection_QC  self_below_control_detection_QC  median_eligible_log2_effect
+   k562             30778           2157        48                 202                 172           122               117          116                     0.959016                                 50                                0                    -1.980776
+   rpe1             28720           2316        56                 245                 189            66                59           59                     0.893939                                123                                0                    -2.042000

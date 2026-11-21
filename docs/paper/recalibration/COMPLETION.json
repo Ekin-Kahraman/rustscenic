@@ -1,0 +1,21 @@
+{
+  "status": "complete",
+  "discovery_tests": 2120690,
+  "ranking_rows": 26922,
+  "negative_control_pairs": 52000,
+  "negative_control_BH_discoveries": 0,
+  "regression_tests_passed": 6,
+  "independent_AP_rows_verified": 2037,
+  "macro_summaries_verified": 126,
+  "paired_intervals_verified": 144,
+  "figures_visually_reviewed": [
+    "calibration",
+    "response-recovery"
+  ],
+  "compact_files_verified": 113,
+  "source_manifest_sha256": "bae170e3e2bf0278cee0eaa0075a2b78bb80c03c2cbc409cace32a0a9d470322",
+  "report_sha256": "3af90cb82751d2dc87285bdba21fb073f7b8f5b87f024bc11cc0c96850436968",
+  "sent_messages": 0,
+  "published": false,
+  "publication_scope": "Scalability and useful activity signals with limited calibrated response recovery; no general accuracy upgrade"
+}

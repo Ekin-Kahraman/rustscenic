@@ -1,0 +1,9 @@
+{
+  "status": "complete",
+  "dataset": "k562",
+  "pairs": 1009828,
+  "qc_pass": 983005,
+  "finite_p": 983005,
+  "significant": 67759,
+  "scope": "Post-hoc corrected response analysis; no model refits"
+}

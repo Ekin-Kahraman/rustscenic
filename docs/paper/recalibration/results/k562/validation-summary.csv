@@ -1,0 +1,2 @@
+dataset,run,seed,construct_group_size,n,p05,p01,p001,p50,bh05,median_lfc,mean_lfc,distinct_pool_available,pass
+k562,distinct-validation,2026111202,5,10000,0.0446,0.0098,7e-04,0.4932,0,-0.0045075756191474,-0.0101277174331256,10000,TRUE

@@ -1,0 +1,47 @@
+{
+  "candidate_ranking": {
+    "ranked_tfs": 256,
+    "raw_edges": 213889,
+    "top_edges": 12800
+  },
+  "cells": 1306127,
+  "files": {
+    "candidate_regulons.json": {
+      "bytes": 173467,
+      "sha256": "34e94cbb93096ed6867cb383ea78de5621cce93498992dad8ae13f76a2a49c8f"
+    },
+    "gene_activity.parquet": {
+      "bytes": 103473940,
+      "sha256": "d7f2ed7c4099bab21e99a879cbf795c437e1ed743cd148c5225bac40f3507f97"
+    },
+    "grn.parquet": {
+      "bytes": 3579711,
+      "sha256": "96313a128c6aa92cce478ecc23c7dac754f1a0d77d84812dda851937cd2d5ced"
+    },
+    "manifest.json": {
+      "bytes": 9150,
+      "sha256": "6eb9d5a752270276652c9239e9d287e69c592a85dfbd65e998b4cb97d95da03c"
+    },
+    "motif_evidence.parquet": {
+      "bytes": 198303,
+      "sha256": "d1631cf909bbad8dda6e11ba4b0b2c58ee6c5a4677bd2725a38bef99e0f0432f"
+    },
+    "regulator_coverage.parquet": {
+      "bytes": 5224,
+      "sha256": "71566ed612caa01ac2482a95ea6fe47690411e12590c600950e338611b88645b"
+    },
+    "regulons.json": {
+      "bytes": 13670,
+      "sha256": "4683475fbf9f3a66ec5404dcb4dbd79eaca78ac78bc73295efa7be1f073ad7ee"
+    }
+  },
+  "full_outputs_dir": "/sc/arion/scratch/huangl21/rustscenic-minerva-final/work/jobs/atlas-rna/standard/full",
+  "genes": 3000,
+  "input_load_s": 5.872460480779409,
+  "peaks": null,
+  "prepared_input_through_export_s": 2446.750376081094,
+  "rustscenic": "0.6.1",
+  "seed": 777,
+  "status": "complete",
+  "workflow_s_including_standard_export": 2440.8779156003147
+}

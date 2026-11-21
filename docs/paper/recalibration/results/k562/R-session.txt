@@ -1,0 +1,22 @@
+R version 4.5.2 (2025-10-31)
+Platform: aarch64-apple-darwin25.0.0
+Running under: macOS Tahoe 26.6.2
+
+Matrix products: default
+BLAS:   /opt/homebrew/Cellar/openblas/0.3.30/lib/libopenblasp-r0.3.30.dylib 
+LAPACK: /opt/homebrew/Cellar/r/4.5.2_1/lib/R/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] C.UTF-8/C.UTF-8/C.UTF-8/C/C.UTF-8/C.UTF-8
+
+time zone: Europe/London
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] jsonlite_2.0.0    data.table_1.18.0 Matrix_1.7-4      sceptre_0.99.1   
+
+loaded via a namespace (and not attached):
+[1] compiler_4.5.2 tools_4.5.2    Rcpp_1.1.1     grid_4.5.2     lattice_0.22-7

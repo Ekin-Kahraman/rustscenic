@@ -1,0 +1,36 @@
+An object of class sceptre_object.
+
+Attributes of the data:
+	• 28720 cells (28720 after cellwise QC)
+	• 5000 responses
+	• Low multiplicity-of-infection 
+	• 259 targeting gRNAs (distributed across 245 targets) 
+	• 113 non-targeting gRNAs 
+	• 7 covariates (batch, full_ncounts, grna_n_nonzero, grna_n_umis, response_n_nonzero, response_n_umis, response_p_mito)
+
+Analysis status:
+	✓ import_data()
+	✓ set_analysis_parameters()
+	✓ assign_grnas()
+	✓ run_qc()
+	✗ run_calibration_check()
+	✗ run_power_check()
+	✗ run_discovery_analysis()
+
+Analysis parameters: 
+	• Discovery pairs: data frame with 1224811 pairs (1137685 after pairwise QC)
+	• Positive control pairs: data frame with 189 pairs (66 after pairwise QC)
+	• Sidedness of test: both
+	• Control group: non-targeting cells
+	• Resampling mechanism: permutations
+	• gRNA integration strategy: union
+	• Resampling approximation: skew normal
+	• Multiple testing adjustment: BH at level 0.05
+	• N nonzero treatment cells threshold: 7
+	• N nonzero control cells threshold: 7
+	• Formula object: log(full_ncounts) + batch
+
+gRNA-to-cell assignment information:
+	• Assignment method: maximum
+	• Mean N cells per gRNA: 77.2
+	• Mean N gRNAs per cell (MOI): not computed when using "maximum" assignment method

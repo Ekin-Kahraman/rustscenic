@@ -1,0 +1,24 @@
+[
+  {
+    "rustscenic": "0.7.0",
+    "max_bins": 65535,
+    "reference": "atlas20000-cap65535-arboreto-777",
+    "edges": 195688,
+    "reference_edges": 195688,
+    "equals_ordered": true,
+    "unmatched": 0,
+    "max_abs_diff": 0.0,
+    "inference_s": 41.602407875005156
+  },
+  {
+    "rustscenic": "0.7.0",
+    "max_bins": 255,
+    "reference": "atlas20000-cap255-arboreto-777",
+    "edges": 205762,
+    "reference_edges": 205762,
+    "equals_ordered": true,
+    "unmatched": 0,
+    "max_abs_diff": 0.0,
+    "inference_s": 40.88910891697742
+  }
+]
