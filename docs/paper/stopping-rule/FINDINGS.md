@@ -357,7 +357,7 @@ with median 0.896 (7 at or above 0.9). The full run took 22 minutes and 2.2 GB
 on a ten-core laptop.
 
 The manuscript's statement that PAX5 and EBF1 are absent "in both workflows"
-describes the restricted paired configuration (256 TFs, 20,000 regions), not
+describes the restricted paired configuration (5,000 genes including 1,176 candidate TFs, 20,000 regions), not
 RNA regulon inference. TCF7 remains a real gap: only a repressing regulon forms,
 while LEF1, which shares its motif family, is recovered.
 
