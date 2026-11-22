@@ -1,0 +1,10 @@
+# Post hoc: bone-marrow exact-bin (max_bins=65535) refits scored with score_fidelity.py against the returned pySCENIC networks.
+# Run 22 November 2026: score_fidelity.py <returned jobs> <native-bins> cap65535-{arboreto,paired_oob}-{seed} {current,original} per-tf-binning-bmmc.csv bmmc
+dataset                 networks    rule                      TFs  within_pySCENIC  within_RustScenic  between  fidelity
+   bmmc cap65535-arboreto-{seed} current                  all TFs            0.291              0.275    0.281     0.966
+   bmmc cap65535-arboreto-{seed} current     exact (<=255 values)            0.293              0.284    0.289     0.988
+   bmmc cap65535-arboreto-{seed} current compressed (>255 values)            0.291              0.274    0.281     0.965
+dataset                   networks     rule                      TFs  within_pySCENIC  within_RustScenic  between  fidelity
+   bmmc cap65535-paired_oob-{seed} original                  all TFs            0.652              0.636    0.642     0.985
+   bmmc cap65535-paired_oob-{seed} original     exact (<=255 values)            0.637              0.618    0.620     0.973
+   bmmc cap65535-paired_oob-{seed} original compressed (>255 values)            0.653              0.637    0.644     0.986

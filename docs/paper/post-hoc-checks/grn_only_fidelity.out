@@ -1,0 +1,2 @@
+arboreto_mp_sparse: within_arboreto=0.4600 within_rustscenic=0.4088 between=0.4040 fidelity=0.8784 TFs=256
+arboreto_sparse: within_arboreto=0.4600 within_rustscenic=0.4088 between=0.4040 fidelity=0.8784 TFs=256

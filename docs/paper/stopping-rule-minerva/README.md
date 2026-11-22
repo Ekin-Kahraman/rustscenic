@@ -1,7 +1,9 @@
 # Stopping-rule replication at 20,000 cells and the binning fix
 
-This folder holds the compact evidence for the manuscript section "Independent
-replication at 20,000 cells exposes and resolves a binning artefact".
+This folder holds the compact evidence for the manuscript sections "A pre-specified
+test at 20,000 cells met 8 of 12 checks, and the original rule's cost grew with cell
+number" and "The fidelity shortfall traces to 255-bin quantisation and is corrected by
+exact binning in post hoc refits" (Figure 3).
 
 ## What is confirmatory and what is post hoc
 
@@ -32,9 +34,11 @@ replication at 20,000 cells exposes and resolves a binning artefact".
 | `diagnosis/tree-count-effect.csv` | Stopping-rule tree counts between and within tools |
 | `diagnosis/per-tf-binning-bmmc.csv`, `unique-values-atlas20000.csv` | Distinct values per TF |
 | `diagnosis/binning-causal-test.csv` | arboreto on RustScenic's bin indices, 1,000 BMMC targets |
+| `diagnosis/fidelity-bmmc-exact.txt` | Protocol fidelity for the bone-marrow exact-bin refits shown in Figure 3 |
 | `diagnosis/fidelity-queue.txt` | Protocol fidelity for local refits (255, 1,023, 4,095 and exact bins) |
 | `diagnosis/queue-summary.csv`, `queue-fits.tsv` | Time and peak memory of local refits |
 | `diagnosis/verify-default.json` | Bit-for-bit checks of the finished `max_bins` implementation |
+| `diagnosis/published-wheel-check/` | Bit-for-bit checks of the published 0.7.0 and 0.6.1 wheels |
 
 ## Reproducing the post hoc analyses
 

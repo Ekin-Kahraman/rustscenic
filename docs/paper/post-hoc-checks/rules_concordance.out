@@ -1,0 +1,17 @@
+# (1) Spearman: trees per target vs max |rho| over TFs (seed 777); seed-to-seed Spearman of tree counts
+bmmc        reference_cross     rho_pred=0.2288 rho_seeds=0.1849-0.2038 share_at_25=0.3865 n=5000
+bmmc        reference_original  rho_pred=0.9039 rho_seeds=0.9687-0.9690 share_at_25=0.0344 n=5000
+bmmc        native_cross        rho_pred=0.3057 rho_seeds=0.1855-0.2026 share_at_25=0.3945 n=5000
+bmmc        native_same         rho_pred=0.9020 rho_seeds=0.9689-0.9699 share_at_25=0.0257 n=5000
+atlas20000  reference_cross     rho_pred=0.2047 rho_seeds=0.0974-0.1180 share_at_25=0.4254 n=3000
+atlas20000  reference_original  rho_pred=0.8584 rho_seeds=0.9697-0.9714 share_at_25=0.2049 n=3000
+atlas20000  native_cross        rho_pred=0.2265 rho_seeds=0.1149-0.1353 share_at_25=0.4303 n=3000
+atlas20000  native_same         rho_pred=0.8573 rho_seeds=0.9728-0.9743 share_at_25=0.2003 n=3000
+# (2) regulons, BMMC
+pySCENIC          consensus current=90 original=153 shared=79 retained=0.878 | identity J within cur=0.527 orig=0.614 across(same seed)=0.464 | target J within cur=0.275 orig=0.467 across=0.291
+RustScenic-div    consensus current=86 original=174 shared=77 retained=0.895 | identity J within cur=0.531 orig=0.673 across(same seed)=0.447 | target J within cur=0.313 orig=0.576 across=0.349
+RustScenic-top50  consensus current=38 original=89 shared=28 retained=0.737 | identity J within cur=0.371 orig=0.516 across(same seed)=0.338 | target J within cur=0.222 orig=0.603 across=0.296
+# (3) lineage activity AUROC by rule, BMMC (regulator present under both rules, same seed)
+pySCENIC   reference              n=56 median_cur=0.932 median_orig=0.918 median_diff=-0.0004 improved=0.46
+RustScenic diverse_importance     n=58 median_cur=0.913 median_orig=0.911 median_diff=-0.0021 improved=0.45
+RustScenic original               n=36 median_cur=0.871 median_orig=0.886 median_diff=+0.0016 improved=0.53

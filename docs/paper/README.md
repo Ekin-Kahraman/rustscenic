@@ -1,6 +1,6 @@
 # RustScenic paper evidence
 
-Paper evidence directory, updated 12 November 2026.
+Paper evidence directory, updated 22 November 2026.
 
 **Positioning:** a scalable Rust implementation of core SCENIC-style analysis
 stages, with measured workflow gains and an explicit biological trade-off.
@@ -19,7 +19,10 @@ stages, with measured workflow gains and an explicit biological trade-off.
 - [Stopping-rule replication and binning fix](stopping-rule-minerva/README.md):
   the pre-specified HPC replication at 20,000 cells (8 of 12 checks met), the
   post hoc diagnosis of 255-bin TF quantisation, exact-binning refits, cost and
-  Figure 5 (`stopping-rule-minerva/make_figure.py`).
+  Figure 3 (`stopping-rule-minerva/make_figure.py`).
+- [Post hoc checks](post-hoc-checks/README.md): checks added after an internal
+  review of the preprint draft: atlas-scale fidelity of the benchmarked 0.5
+  engine, tree-count correlations and regulon concordance between stopping rules.
 - [Verified results](RESULTS.md): complete performance and biological tables.
 - [Methods and captions](METHODS.md): comparison scope, endpoint history and figures.
 - [Audited researcher workflow](../../site_docs/validated-workflow.md): local
